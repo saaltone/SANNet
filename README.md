@@ -1,4 +1,4 @@
-# SANNet- Neural Network Framework
+# SANNet - Neural Network Framework
 
 ## Background
 SANNet is an artificial neural network framework that provides functionalities to build multi-layer neural networks. It has been born from long term interest towards artificial neural networks and curiosity to understand inner workings of neural networks.
