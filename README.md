@@ -17,7 +17,7 @@ Framework implements most typically used optimization methods starting from basi
 Framework provides few regularization methods: drop-out, gradient clipping, early stopping and L1/L2/Lp regularization. Lp regularization is an experimental method and mathematically direct extension of L1/L2 methods.
 
 ## Normalization
-Framework support following normalization methods: batch normalization, layer normalization ad weight normalization.
+Framework supports following normalization methods: batch normalization, layer normalization ad weight normalization.
 
 ## Metrics
 Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed.
