@@ -3,7 +3,7 @@ package core.reinforcement;
 /**
  * Class that implements efficient structure to maintain sample along their priorities and fetch by priority.<br>
  * <br>
- * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay<br>
+ * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay and https://github.com/jaromiru/AI-blog/blob/master/SumTree.py<br>
  *
  */
 public class SumTree {
