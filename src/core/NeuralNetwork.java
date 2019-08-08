@@ -223,19 +223,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * This is also used to define sequence length in sequence training for recurrent layers.<br>
      *
      */
-    private int trainingSamplesPerStep;
+    private int trainingSamplesPerStep = 1;
 
     /**
      * Flag if training samples are to be taken in order of training sample set or taken randomly from training sample set.
      *
      */
-    private boolean trainingSampleInOrder;
+    private boolean trainingSampleInOrder = true;
 
     /**
      * Flag if samples inside training sample batch are to be kept in order or shuffled.
      *
      */
-    private boolean trainingShuffleSamples;
+    private boolean trainingShuffleSamples = false;
 
     /**
      * If true scales learning rate by factor mini batch size divided by 100.
@@ -254,19 +254,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * This is also used to define sequence length in sequence validation for recurrent layers.<br>
      *
      */
-    private int validationSamplesPerStep;
+    private int validationSamplesPerStep = 1;
 
     /**
      * Flag if validation samples are to be taken in order of validation sample set or taken randomly from validation sample set.
      *
      */
-    private boolean validationSampleInOrder;
+    private boolean validationSampleInOrder = true;
 
     /**
      * Flag if samples inside validation sample batch are to be kept in order or shuffled.
      *
      */
-    private boolean validationShuffleSamples;
+    private boolean validationShuffleSamples = false;
 
     /**
      * Random number generator for neural network class.
@@ -901,6 +901,15 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Returns connectors of neural network.
+     *
+     * @return connectors of neural network.
+     */
+    public ArrayList<Connector> getConnectors() {
+        return connectors;
+    }
+
+    /**
      * Builds neural network.<br>
      * Connects layers to each other with connectors.<br>
      * Initializes layers.<br>
@@ -966,18 +975,12 @@ public class NeuralNetwork implements Runnable, Serializable {
         trainIns = new LinkedHashMap<>();
         trainOuts = new LinkedHashMap<>();
 
-        trainingSamplesPerStep = 0;
-        trainingSampleInOrder = false;
         trainingSampleAt = 0;
-        trainingShuffleSamples = true;
 
         testIns = new LinkedHashMap<>();
         testOuts = new LinkedHashMap<>();
 
-        validationSamplesPerStep = 0;
-        validationSampleInOrder = false;
         validationSampleAt = 0;
-        validationShuffleSamples = true;
 
         if (earlyStopping != null) {
             earlyStopping.setTrainingError(trainingError);
@@ -1724,6 +1727,33 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Returns amount of samples to be included to training batch.
+     *
+     * @return amount of samples to be included to training batch.
+     */
+    public int getTrainingSamplesPerStep() {
+        return trainingSamplesPerStep;
+    }
+
+    /**
+     * Returns true if sampling is done sequentially from training sample set otherwise false.
+     *
+     * @return true if sampling is done sequentially from training sample set otherwise false.
+     */
+    public boolean getTrainingSampleInOrder() {
+        return trainingSampleInOrder;
+    }
+
+    /**
+     * Returns true if sample batch is shuffled otherwise original order is maintained.
+     *
+     * @return true if sample batch is shuffled otherwise original order is maintained.
+     */
+    public boolean getTrainingShuffleSamples() {
+        return trainingShuffleSamples;
+    }
+
+    /**
      * Sets scaling of learning rate according to mini batch size.<br>
      * If true scales learning rate by factor mini batch size divided by 100.<br>
      *
@@ -1748,6 +1778,33 @@ public class NeuralNetwork implements Runnable, Serializable {
         validationSampleInOrder = sampleInOrder;
         validationShuffleSamples = shuffleSamples;
         validationSampleAt = 0;
+    }
+
+    /**
+     * Returns amount of samples to be included to validation batch.
+     *
+     * @return amount of samples to be included to validation batch.
+     */
+    public int getValidationSamplesPerStep() {
+        return validationSamplesPerStep;
+    }
+
+    /**
+     * Returns true if sampling is done sequentially from validation sample set otherwise false.
+     *
+     * @return true if sampling is done sequentially from validation sample set otherwise false.
+     */
+    public boolean getValidationSampleInOrder() {
+        return validationSampleInOrder;
+    }
+
+    /**
+     * Returns true if sample batch is shuffled otherwise original order is maintained.
+     *
+     * @return true if sample batch is shuffled otherwise original order is maintained.
+     */
+    public boolean getValidationShuffleSamples() {
+        return validationShuffleSamples;
     }
 
     /**
@@ -1837,11 +1894,6 @@ public class NeuralNetwork implements Runnable, Serializable {
         verboseValidationStatus();
     }
 
-    /**
-     * Makes deep copy of neural network by using object serialization.
-     *
-     * @return copy of this neural network.
-     */
     /**
      * Makes deep copy of neural network by using object serialization.
      *

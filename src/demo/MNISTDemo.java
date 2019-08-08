@@ -43,11 +43,11 @@ public class MNISTDemo {
             HashMap<Integer, LinkedHashMap<Integer, Matrix>> trainMNIST = getMNISTData(true);
             HashMap<Integer, LinkedHashMap<Integer, Matrix>> testMNIST = getMNISTData(false);
 
-//            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).getRows(), trainMNIST.get(1).get(0).getRows());
+            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).getRows(), trainMNIST.get(1).get(0).getRows());
 
             // Modify <path> to point to your own file path.
             String persistenceName = "<path>/MNIST_NN";
-            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
+ //           neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
 
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);

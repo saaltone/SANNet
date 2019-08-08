@@ -8,7 +8,6 @@ package core.preprocess;
 
 import core.NeuralNetworkException;
 import utils.Matrix;
-import utils.MatrixException;
 
 import java.util.LinkedHashMap;
 
@@ -62,7 +61,6 @@ public class Normalizer {
      *
      * @param data data to be normalized.
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
     public void minMax(LinkedHashMap<Integer, Matrix> data, boolean adjust) throws NeuralNetworkException {
