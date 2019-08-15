@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Class that implements deep inforcement solution solving travelling salesman problem.
+ * Class that implements deep reinforcement learning solution solving travelling salesman problem.
  *
  */
 public class TSP implements Environment {
@@ -173,7 +173,7 @@ public class TSP implements Environment {
     public static void main(String[] args) {
         TSP tsp;
         try {
-            tsp = new TSP(50);
+            tsp = new TSP(20);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
                 int illegalMoves = tsp.route(tour % 10 == 0);
