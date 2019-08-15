@@ -1,3 +1,9 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2019 Simo Aaltonen
+ *
+ ********************************************************/
+
 package core.reinforcement;
 
 import core.NeuralNetworkException;
@@ -33,6 +39,18 @@ public interface Agent {
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
     void endEpisode() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+
+    /**
+     * Ends episode and stores samples of episode into replay buffer.
+     * Cycles QNN and updates TNN neural networks.
+     *
+     * @param updateValue if true updates current state action value otherwise not.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    void endEpisode(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
 
     /**
      * Predict next action by using QNN and taking argmax of predicted values as target action.<br>

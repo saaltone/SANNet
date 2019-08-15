@@ -1,7 +1,12 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2019 Simo Aaltonen
+ *
+ ********************************************************/
+
 package core.reinforcement;
 
 import utils.Matrix;
-import utils.MatrixException;
 
 import java.util.*;
 
@@ -101,7 +106,6 @@ public class ReplayBuffer {
      * Adds sample into replay buffer. Removes old ones exceeding buffer capacity by FIFO principle.
      *
      * @param sample sample to be stored.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void add(Sample sample) {
         setPriority(sample);

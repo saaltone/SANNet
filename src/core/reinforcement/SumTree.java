@@ -1,3 +1,9 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2019 Simo Aaltonen
+ *
+ ********************************************************/
+
 package core.reinforcement;
 
 /**

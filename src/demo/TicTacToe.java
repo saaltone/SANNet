@@ -440,9 +440,8 @@ public class TicTacToe implements Environment {
      *
      * @param agent agent that is taking action.
      * @return action taken
-     * @throws AgentException throws exception if action was not in list of available ones.
      */
-    public int requestAction(Agent agent) throws AgentException {
+    public int requestAction(Agent agent) {
         ArrayList<Integer> availableActions = getAvailableActions();
         return availableActions.get(random.nextInt(availableActions.size()));
     }
@@ -452,9 +451,8 @@ public class TicTacToe implements Environment {
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
-     * @throws AgentException throws exception if action was not in list of available ones.
      */
-    public void commitAction(Agent agent, int action) throws AgentException {
+    public void commitAction(Agent agent, int action) {
         gameBoard.makeMove(action, currentPlayer == GameStatus.NOUGHT ? NOUGHT : CROSS);
         gameStatus = gameBoard.updateGameStatus();
     }
@@ -604,7 +602,7 @@ public class TicTacToe implements Environment {
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(LossFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetwork.setLossFunction(LossFunctionType.HUBER);
         neuralNetwork.setNeuralNetworkName(neuralNetworkName);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(50);

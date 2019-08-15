@@ -50,7 +50,6 @@ public class ReadTextFile {
                 countSkipRows++;
             }
             String line = scanner.nextLine();
-//            System.out.println(line);
             text += line;
         }
         text = text.toLowerCase();

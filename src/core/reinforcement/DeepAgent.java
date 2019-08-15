@@ -77,13 +77,19 @@ public class DeepAgent implements Agent, Serializable {
      * Gamma (discount) factor for target (TD) value calculation.
      *
      */
-    private double gamma = 0.8;
+    private double gamma = 0.85;
+
+    /**
+     * Current epsilon value.
+     *
+     */
+    private double epsilon;
 
     /**
      * Epsilon value for probability of exploration (random action) instead of exploitation.
      *
      */
-    private double epsilon = 1;
+    private double epsilonInitial = 1;
 
     /**
      * Minimum value for epsilon.
@@ -95,7 +101,13 @@ public class DeepAgent implements Agent, Serializable {
      * Decay rate for epsilon.
      *
      */
-    private double epsilonDecay = 0.99;
+    private double epsilonDecayRate = 0.99;
+
+    /**
+     * If true epsilon decays along episode count otherwise decays by epsilon decay rate.
+     *
+     */
+    private boolean epsilonDecayByEpisode = true;
 
     /**
      * If true invalid actions are stored into agent's replay buffer.
@@ -131,6 +143,7 @@ public class DeepAgent implements Agent, Serializable {
         this.environment = environment;
         this.QNN = QNN;
         resetReplayBuffer();
+        epsilon = epsilonInitial;
     }
 
     /**
@@ -146,6 +159,7 @@ public class DeepAgent implements Agent, Serializable {
         this.QNN = QNN;
         resetReplayBuffer();
         setParams(new DynamicParam(params, getParamDefs()));
+        epsilon = epsilonInitial;
     }
 
     /**
@@ -160,9 +174,10 @@ public class DeepAgent implements Agent, Serializable {
         paramDefs.put("updateTNNCycle", DynamicParam.ParamType.INT);
         paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilon", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonDecay", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("epsilonDecayByEpisode", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("storeInvalidActions", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("replayBufferSize", DynamicParam.ParamType.INT);
         paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
@@ -176,9 +191,10 @@ public class DeepAgent implements Agent, Serializable {
      *     - trainCycle: number of episodes after which QNN gets trained. Default value 10.<br>
      *     - doubleQ: If true Double Deep Q Learning (QNN and TNN) is applied otherwise just single QNN is used. Default value 0.95.<br>
      *     - updateTNNCycle: number of episodes after which TNN gets updated. Default value 10.<br>
-     *     - epsilon: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
+     *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.<br>
      *     - epsilonDecay: Decay rate of epsilon. Default value 0.99.<br>
+     *     - epsilonDecayByEpisode: If true epsilon decays along episode count otherwise decays by epsilon decay rate. Default value true.<br>
      *     - storeInvalidActions: If true If true agent records invalid actions into replay buffer. Default value true.<br>
      *     - replayBufferSize: Size of replay buffer. Default value 2000.<br>
      *     - alpha: proportional prioritization factor for samples in replay buffer. Default value 0.6.<br>
@@ -191,9 +207,10 @@ public class DeepAgent implements Agent, Serializable {
         if (params.hasParam("doubleQ")) doubleQ = params.getValueAsBoolean("doubleQ");
         if (params.hasParam("updateTNNCycle")) updateTNNCycle = params.getValueAsInteger("updateTNNCycle");
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
-        if (params.hasParam("epsilon")) epsilon = params.getValueAsDouble("epsilon");
+        if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
         if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
-        if (params.hasParam("epsilonDecay")) epsilonDecay = params.getValueAsDouble("epsilonDecay");
+        if (params.hasParam("epsilonDecayRate")) epsilonDecayRate = params.getValueAsDouble("epsilonDecayRate");
+        if (params.hasParam("epsilonDecayByEpisode")) epsilonDecayByEpisode = params.getValueAsBoolean("epsilonDecayByEpisode");
         if (params.hasParam("storeInvalidActions")) storeInvalidActions = params.getValueAsBoolean("storeInvalidActions");
         if (params.hasParam("replayBufferSize")) replayBuffer.setSize(params.getValueAsInteger("replayBufferSize"));
         if (params.hasParam("alpha")) replayBuffer.setAlpha(params.getValueAsDouble("alpha"));
@@ -292,8 +309,11 @@ public class DeepAgent implements Agent, Serializable {
         if (updateValue) updateValue();
         while (!samples.empty()) replayBuffer.add(samples.pop().copy());
         cycle();
-        if (epsilon > epsilonMin) epsilon *= epsilonDecay;
         totalEpisodes++;
+        if (epsilon > epsilonMin) {
+            if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalEpisodes;
+            else epsilon *= epsilonDecayRate;
+        }
     }
 
     /**

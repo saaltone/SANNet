@@ -22,10 +22,10 @@ public class Adadelta implements Optimizer, Serializable {
     private static final long serialVersionUID = 1620048040058081811L;
 
     /**
-     * Learning rate for Adadelta. Default value 0.1.
+     * Learning rate for Adadelta. Default value 1.
      *
      */
-    private double learningRate = 0.1;
+    private double learningRate = 1;
 
     /**
      * Epsilon term for Adadelta. Default value 10E-8.<br>
