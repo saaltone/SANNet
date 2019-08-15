@@ -14,7 +14,8 @@ package core.loss;
  *     CROSS_ENTROPY,
  *     KULLBACK_LEIBLER,
  *     NEGATIVE_LOG_LIKELIHOOD,
- *     POISSON
+ *     POISSON,
+ *     HUBER
  *
  */
 public enum LossFunctionType {
@@ -23,7 +24,8 @@ public enum LossFunctionType {
     CROSS_ENTROPY,
     KULLBACK_LEIBLER,
     NEGATIVE_LOG_LIKELIHOOD,
-    POISSON
+    POISSON,
+    HUBER
 
 }
 

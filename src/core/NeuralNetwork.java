@@ -707,11 +707,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param lossFunctionType type of loss function.
      * @throws NeuralNetworkException throws exception if setting of loss function fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setLossFunction(LossFunctionType lossFunctionType) throws NeuralNetworkException {
+    public void setLossFunction(LossFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
         if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
         LossFunction lossFunction = new LossFunction(lossFunctionType);
+        getOutputLayer().setLossFunction(lossFunction);
+    }
+
+    public void setLossFunction(LossFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
+        checkStarted();
+        if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
+        LossFunction lossFunction = new LossFunction(lossFunctionType, params);
         getOutputLayer().setLossFunction(lossFunction);
     }
 

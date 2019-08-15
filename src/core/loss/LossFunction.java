@@ -6,9 +6,12 @@
 
 package core.loss;
 
+import utils.DynamicParam;
+import utils.DynamicParamException;
 import utils.Matrix;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * Defines class for loss function of neural network.<br>
@@ -39,11 +42,32 @@ public class LossFunction implements Serializable {
     private LossFunctionType functionType;
 
     /**
+     * Alpha value for Huber loss.
+     *
+     */
+    private double huber_delta = 1;
+
+    /**
      * Constructor for loss function.
      *
      * @param functionType type of loss function.
+     * @throws DynamicParamException throws exception if parameters are not properly given.
      */
-    public LossFunction(LossFunctionType functionType) {
+    public LossFunction(LossFunctionType functionType) throws DynamicParamException {
+        this(functionType, null);
+    }
+
+    /**
+     * Constructor for loss function.
+     * <br>
+     * Supported parameters are:<br>
+     *     - alpha: default value for Huber loss 0.5.<br>
+     *
+     * @param functionType type of loss function.
+     * @param params parameters as DynamicParam type for activation function.
+     * @throws DynamicParamException throws exception if parameters are not properly given.
+     */
+    public LossFunction(LossFunctionType functionType, String params) throws DynamicParamException {
         this.functionType = functionType;
         switch(functionType) {
             case MEAN_SQUARED_ERROR:
@@ -69,6 +93,15 @@ public class LossFunction implements Serializable {
             case POISSON:
                 function = (Matrix.MatrixBiOperation & Serializable) (target, pred) -> pred - target * Math.log((pred > 0 ? pred : 10E-8));
                 derivative = (Matrix.MatrixBiOperation & Serializable) (target, pred) -> 1 - target / (pred > 0 ? pred : 10E-8);
+            case HUBER:
+                if (params != null) {
+                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+                    paramDefs.put("delta", DynamicParam.ParamType.DOUBLE);
+                    DynamicParam dParams = new DynamicParam(params, paramDefs);
+                    if (dParams.hasParam("delta")) huber_delta = dParams.getValueAsDouble("delta");
+                }
+                function = (Matrix.MatrixBiOperation & Serializable) (target, pred) -> Math.abs(pred - target) <= huber_delta ? 0.5 * Math.pow(pred - target, 2) : huber_delta * Math.abs(pred - target) - 0.5 * Math.pow(huber_delta, 2);
+                derivative = (Matrix.MatrixBiOperation & Serializable) (target, pred) -> Math.abs(pred - target) <= huber_delta ? pred - target : huber_delta * Math.signum(pred - target);
                 break;
             default:
                 break;
