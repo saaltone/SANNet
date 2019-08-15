@@ -10,6 +10,9 @@ SANNet is written on Java and has been built from group up starting from impleme
 ## Layers, activation and loss functions
 Framework provides vanilla feedforward layer, recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, GRU layer) and convolutional layers (convolutional layer, max / average pooling layer). It supports multiple layer activation functions and loss functions for output layer. Additionally there are multiple initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations.
 
+## Reinforcement learning
+Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards. It supports both basic reinforcement learning with single Q Neural Network but also double Q learning with Q Neural Network that takes actions and separate Target Neural Network that estimates long term value of action.
+
 ## Optimization
 Framework implements most typically used optimization methods starting from basic vanilla gradient descent up to more sofisticated parameter optimization methods such as Adam and AMSGrad.
 
