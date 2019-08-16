@@ -77,13 +77,31 @@ public class TSP implements Environment {
      * Ordered list of visited cities.
      *
      */
-    private ArrayList<Integer> visitedCities = new ArrayList<>();
+    private ArrayList<Integer> visitedCities;
+
+    /**
+     * Ordered list of visited cities for previous tour.
+     *
+     */
+    private ArrayList<Integer> visitedCitiesPrevious = null;
+
+    /**
+     * Ordered list of visited cities for shortest tour.
+     *
+     */
+    private ArrayList<Integer> visitedCitiesMin = null;
+
+    /**
+     * Ordered list of visited cities for longest tour.
+     *
+     */
+    private ArrayList<Integer> visitedCitiesMax = null;
 
     /**
      * Start city from where travelling salesman start journey from.
      *
      */
-    private int startCity;
+    private final int startCity = 0;
 
     /**
      * Total distance that travelling salesman has travelled.
@@ -149,8 +167,8 @@ public class TSP implements Environment {
      *
      */
     private void resetRoute() {
-        visitedCities.clear();
-        startCity = 0;
+        visitedCitiesPrevious = visitedCities;
+        visitedCities = new ArrayList<>();
         visitedCities.add(startCity);
         totalDistance = 0;
         updateState();
@@ -166,6 +184,42 @@ public class TSP implements Environment {
     }
 
     /**
+     * Returns shortest route found by deep agent (travelling salesman) as indices of cities.
+     *
+     * @return shortest route as indices of cities.
+     */
+    public ArrayList<Integer> getShortestRoute() {
+        return visitedCitiesMin;
+    }
+
+    /**
+     * Returns longest route found by deep agent (travelling salesman) as indices of cities.
+     *
+     * @return longest route as indices of cities.
+     */
+    public ArrayList<Integer> getLongestRoute() {
+        return visitedCitiesMax;
+    }
+
+    /**
+     * Returns latest (shortest) route found by deep agent (travelling salesman) as indices of cities.
+     *
+     * @return latest (shortest) route as indices of cities.
+     */
+    public ArrayList<Integer> getLatestRoute() {
+        return visitedCities;
+    }
+
+    /**
+     * Gets list of cities added into hashmap by indices starting from zero.
+     *
+     * @return list of cities.
+     */
+    public HashMap<Integer, City> getCities() {
+        return cities;
+    }
+
+    /**
      * Main function for travelling sales man.
      *
      * @param args not used.
@@ -173,7 +227,7 @@ public class TSP implements Environment {
     public static void main(String[] args) {
         TSP tsp;
         try {
-            tsp = new TSP(20);
+            tsp = new TSP(50);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
                 int illegalMoves = tsp.route(tour % 10 == 0);
@@ -269,8 +323,14 @@ public class TSP implements Environment {
             double distance = getDistance(cities.get(fromCity), cities.get(toCity));
             totalDistance += distance;
             if (isTerminalState()) {
-                minDistance = Math.min(minDistance, totalDistance);
-                maxDistance = Math.max(maxDistance, totalDistance);
+                if (totalDistance < minDistance) {
+                    minDistance = totalDistance;
+                    visitedCitiesMin = visitedCities;
+                }
+                if (totalDistance > maxDistance) {
+                    maxDistance = totalDistance;
+                    visitedCitiesMax = visitedCities;
+                }
             }
             return 0.5 * (maxDistance / cities.size() - distance);
         }
@@ -306,7 +366,8 @@ public class TSP implements Environment {
     }
 
     /**
-     * Implementa JPanel that draws journey of travelling salesman.
+     * Implements JPanel that draws journey of travelling salesman.<br>
+     * Routes between cities that are unchanged are drawn by black color and changed routes by red color.<br>
      *
      */
     class TSPPanel extends JPanel {
@@ -318,13 +379,31 @@ public class TSP implements Environment {
         private final ArrayList<Integer> drawCities = new ArrayList<>();
 
         /**
+         * List of previous cities.
+         *
+         */
+        private final ArrayList<Integer> previousDrawCities = new ArrayList<>();
+
+        /**
+         * If there is list of previous cities.
+         *
+         */
+        private boolean previousExists = false;
+
+        /**
          * Add cities in order to be drawn.
          *
          * @param newDrawCities list of cities to be drawn.
          */
-        public void addCities(ArrayList<Integer> newDrawCities) {
+        public void addCities(ArrayList<Integer> newDrawCities, ArrayList<Integer> newPreviousDrawCities) {
             drawCities.clear();
             drawCities.addAll(newDrawCities);
+            if (newPreviousDrawCities != null) {
+                previousDrawCities.clear();
+                previousDrawCities.addAll(newPreviousDrawCities);
+                previousExists = true;
+            }
+            else previousExists = false;
         }
 
         /**
@@ -336,13 +415,27 @@ public class TSP implements Environment {
             super.paintComponent(g);
             if (drawCities.isEmpty()) return;
             City lastCity = null;
+            int lastCityIndex = -1;
+            int previousLastCityIndex = -2;
             for (int index = 0; index < drawCities.size() - 1; index++) {
                 City city1 = cities.get(drawCities.get(index));
                 City city2 = cities.get(drawCities.get(index + 1));
                 lastCity = city2;
+                lastCityIndex = drawCities.get(index + 1);
+                if (previousExists) {
+                    if (drawCities.get(index).equals(previousDrawCities.get(index)) && drawCities.get(index + 1).equals(previousDrawCities.get(index + 1))) g.setColor(Color.BLACK);
+                    else g.setColor(Color.RED);
+                    previousLastCityIndex = previousDrawCities.get(index + 1);
+                }
+                else g.setColor(Color.BLACK);
                 g.drawLine(50 + (int)(city1.x * 40), 50 + (int)(city1.y * 40), 50 + (int)(city2.x * 40), 50 + (int)(city2.y * 40));
             }
             if (lastCity != null) {
+                if (previousExists) {
+                    if (lastCityIndex == previousLastCityIndex) g.setColor(Color.BLACK);
+                    else g.setColor(Color.RED);
+                }
+                else g.setColor(Color.BLACK);
                 City initialCity = cities.get(startCity);
                 g.drawLine(50 + (int)(lastCity.x * 40), 50 + (int)(lastCity.y * 40), 50 + (int)(initialCity.x * 40), 50 + (int)(initialCity.y * 40));
             }
@@ -429,7 +522,7 @@ public class TSP implements Environment {
             jFrame.remove(tspPanel);
             tspPanel = new TSPPanel();
             jFrame.add(tspPanel);
-            tspPanel.addCities(visitedCities);
+            tspPanel.addCities(visitedCities, visitedCitiesPrevious);
             jFrame.revalidate();
             tspPanel.paintImmediately(0, 0, 400, 400);
         }
@@ -473,8 +566,8 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
