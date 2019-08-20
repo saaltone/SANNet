@@ -18,39 +18,38 @@ import java.io.IOException;
 public interface Agent {
 
     /**
-     * Starts new episode.
+     * Starts new agent step and commits previous step if not yet committed.
      *
-     */
-    void newEpisode();
-
-    /**
-     * Takes next episode step.
-     *
-     */
-    void nextEpisodeStep();
-
-    /**
-     * Ends episode and stores samples of episode into replay buffer.
-     * Cycles QNN and updates TNN neural networks.
-     *
+     * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    void endEpisode() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void newStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
 
     /**
-     * Ends episode and stores samples of episode into replay buffer.
-     * Cycles QNN and updates TNN neural networks.
+     * Commits agent step.
+     *
+     * @throws AgentException throws exception if new agent step is not initiated.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    void commitStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+
+    /**
+     * Commits agent step.
      *
      * @param updateValue if true updates current state action value otherwise not.
+     * @throws AgentException throws exception if new agent step is not initiated.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    void endEpisode(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void commitStep(boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
 
     /**
      * Predict next action by using QNN and taking argmax of predicted values as target action.<br>
@@ -62,8 +61,10 @@ public interface Agent {
      * @throws AgentException throws exception if there are no actions available for agent to take or action taken is not in list of available actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException;
+    boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Updates value of state action pair.<br>

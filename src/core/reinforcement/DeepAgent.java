@@ -59,7 +59,7 @@ public class DeepAgent implements Agent, Serializable {
      * Cycle in episode steps for Neural Network training.
      *
      */
-    private int trainCycle = 10;
+    private int trainCycle = 100;
 
     /**
      * If true uses separate target network for value estimation.
@@ -68,10 +68,10 @@ public class DeepAgent implements Agent, Serializable {
     private boolean doubleQ = true;
 
     /**
-     * Cycle in episode steps for Target Neural Network update.
+     * Cycle in steps for Target Neural Network update.
      *
      */
-    private int updateTNNCycle = 30;
+    private int updateTNNCycle = 300;
 
     /**
      * Gamma (discount) factor for target (TD) value calculation.
@@ -116,12 +116,6 @@ public class DeepAgent implements Agent, Serializable {
     private boolean storeInvalidActions = false;
 
     /**
-     * Stack to store samples for an episode.
-     *
-     */
-    private transient Stack<Sample> samples;
-
-    /**
      * Tuple of episode step.
      *
      */
@@ -131,7 +125,13 @@ public class DeepAgent implements Agent, Serializable {
      * Total numbers of episodes.
      *
      */
-    private int totalEpisodes = 0;
+    private int totalSteps = 0;
+
+    /**
+     * If true step is committed to replay memory and new step can be initiated.
+     *
+     */
+    private boolean stepCommitted = false;
 
     /**
      * Constructor for agent.
@@ -176,7 +176,7 @@ public class DeepAgent implements Agent, Serializable {
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecay", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("epsilonDecayRate", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonDecayByEpisode", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("storeInvalidActions", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("replayBufferSize", DynamicParam.ParamType.INT);
@@ -188,9 +188,10 @@ public class DeepAgent implements Agent, Serializable {
      * Sets parameters used for DeepAgent.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - trainCycle: number of episodes after which QNN gets trained. Default value 10.<br>
+     *     - trainCycle: number of steps after which QNN gets trained. Default value 100.<br>
      *     - doubleQ: If true Double Deep Q Learning (QNN and TNN) is applied otherwise just single QNN is used. Default value 0.95.<br>
-     *     - updateTNNCycle: number of episodes after which TNN gets updated. Default value 10.<br>
+     *     - updateTNNCycle: number of step after which TNN gets updated. Default value 300.<br>
+     *     - gamma: Discount value for Q learning. Default value 0.85.<br>
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.<br>
      *     - epsilonDecay: Decay rate of epsilon. Default value 0.99.<br>
@@ -267,52 +268,60 @@ public class DeepAgent implements Agent, Serializable {
     }
 
     /**
-     * Starts new episode.
+     * Starts new agent step and commits previous step if not yet committed.
      *
-     */
-    public void newEpisode() {
-        samples = new Stack<>();
-    }
-
-    /**
-     * Takes next episode step.
-     *
-     */
-    public void nextEpisodeStep() {
-        samples.push(sample = new Sample());
-    }
-
-    /**
-     * Ends episode and stores samples of episode into replay buffer.
-     * Cycles QNN and updates TNN neural networks.
-     *
+     * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void endEpisode() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        endEpisode(true);
+    public void newStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        commitStep(false);
+        sample = new Sample();
+        stepCommitted = false;
+        totalSteps++;
     }
 
     /**
-     * Ends episode and stores samples of episode into replay buffer.
-     * Cycles QNN and updates TNN neural networks.
+     * Commits agent step.
+     *
+     * @throws AgentException throws exception if new agent step is not initiated.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    public void commitStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        commitStep(false);
+    }
+
+    /**
+     * Commits agent step.
      *
      * @param updateValue if true updates current state action value otherwise not.
+     * @throws AgentException throws exception if new agent step is not initiated.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void endEpisode(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        if (updateValue) updateValue();
-        while (!samples.empty()) replayBuffer.add(samples.pop().copy());
-        cycle();
-        totalEpisodes++;
-        if (epsilon > epsilonMin) {
-            if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalEpisodes;
-            else epsilon *= epsilonDecayRate;
+    public void commitStep(boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        if (!stepCommitted && sample != null) {
+            if (updateValue) updateValue();
+
+            replayBuffer.add(sample.copy());
+
+            totalSteps++;
+
+            cycle();
+
+            if (epsilon > epsilonMin) {
+                if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalSteps;
+                else epsilon *= epsilonDecayRate;
+            }
+
+            stepCommitted = true;
         }
     }
 
@@ -335,8 +344,10 @@ public class DeepAgent implements Agent, Serializable {
      * @throws AgentException throws exception if there are no actions available for agent to take or action taken is not in list of available actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException {
+    public boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException, IOException, ClassNotFoundException {
         sample.state = environment.getState();
         sample.values = QNN.predict(sample.state);
 
@@ -350,7 +361,7 @@ public class DeepAgent implements Agent, Serializable {
             if (!sample.validAction) {
                 if (storeInvalidActions) {
                     updateValue();
-                    addToReplayBuffer();
+                    newStep();
                 }
                 return false;
             }
@@ -395,10 +406,6 @@ public class DeepAgent implements Agent, Serializable {
         sample.values.setValue(sample.action, 0, target);
     }
 
-    public void addToReplayBuffer() throws MatrixException {
-        replayBuffer.add(sample.copy());
-    }
-
     /**
      * Cycles agent.<br>
      * Trains QNN with QNN training cycle using replay buffer samples for experience replay.<br>
@@ -409,18 +416,16 @@ public class DeepAgent implements Agent, Serializable {
      * @throws ClassNotFoundException throws exception if copying of QNN as TNN fails.
      */
     private void cycle() throws NeuralNetworkException, IOException, ClassNotFoundException {
-        if (totalEpisodes > 0) {
-            if (doubleQ && totalEpisodes % updateTNNCycle == 0) {
-                TNN.stop();
-                TNN = QNN.copy();
-                TNN.start();
-            }
-            if (totalEpisodes % trainCycle == 0) {
-                LinkedHashMap<Integer, Matrix> states = new LinkedHashMap<>();
-                LinkedHashMap<Integer, Matrix> values = new LinkedHashMap<>();
-                replayBuffer.getSamples(QNN.getTrainingSamplesPerStep(), states, values);
-                QNN.train(states, values);
-            }
+        if (doubleQ && totalSteps % updateTNNCycle == 0) {
+            TNN.stop();
+            TNN = QNN.copy();
+            TNN.start();
+        }
+        if (totalSteps % trainCycle == 0) {
+            LinkedHashMap<Integer, Matrix> states = new LinkedHashMap<>();
+            LinkedHashMap<Integer, Matrix> values = new LinkedHashMap<>();
+            replayBuffer.getSamples(QNN.getTrainingSamplesPerStep(), states, values);
+            QNN.train(states, values);
         }
     }
 
