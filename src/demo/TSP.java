@@ -492,17 +492,17 @@ public class TSP implements Environment {
      *
      * @param redraw if true current journey is drawn to window.
      * @return number of illegal moves taken by deep agent.
+     * @throws AgentException throws exception if agent operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private int route(boolean redraw) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private int route(boolean redraw) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         int illegalMoves = 0;
         resetRoute();
-        getAgent().newEpisode();
         while (!(visitedCities.size() == cities.size() + 1)) {
-            getAgent().nextEpisodeStep();
+            getAgent().newStep();
             try {
                 if (!getAgent().act(false)) {
                     illegalMoves++;
@@ -516,7 +516,7 @@ public class TSP implements Environment {
             getAgent().updateValue();
         }
 
-        getAgent().endEpisode(false);
+        getAgent().commitStep();
 
         if (redraw) {
             jFrame.remove(tspPanel);
@@ -549,7 +549,7 @@ public class TSP implements Environment {
      */
     private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN);
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
         agent.start();
         return agent;
     }

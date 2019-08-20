@@ -363,7 +363,16 @@ public class TicTacToe implements Environment {
         cross = createAgent(GameStatus.CROSS);
     }
 
-    private void playGames() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    /**
+     * Plays given number of games.
+     *
+     * @throws AgentException throws exception if agent operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of neural network fails.
+     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
+     */
+    private void playGames() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         int drawCountTemp = 0;
         int playerNoughtWonCountTemp = 0;
         int playerCrossWonCountTemp = 0;
@@ -490,21 +499,20 @@ public class TicTacToe implements Environment {
     /**
      * Plays single episode of game.
      *
+     * @throws AgentException throws exception if agent operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of neural network fails.
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    private void playGame() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private void playGame() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         currentPlayer = random.nextInt(2) == 0 ? GameStatus.NOUGHT : GameStatus.CROSS;
         gameBoard = new GameBoard(boardSize);
         gameStatus = GameStatus.ONGOING;
         ArrayList<Matrix> gameStates = new ArrayList<>();
         gameStates.add(gameBoard.getState().copy());
-        nought.newEpisode();
-        cross.newEpisode();
         do {
-            getAgent().nextEpisodeStep();
+            getAgent().newStep();
             try {
                 if (!getAgent().act(false)) {
                     illegalMoves++;
@@ -525,8 +533,8 @@ public class TicTacToe implements Environment {
 
         } while (gameStatus == GameStatus.ONGOING);
 
-        nought.endEpisode();
-        cross.endEpisode();
+        nought.commitStep(true);
+        cross.commitStep(true);
 
         if (allMoves == 450 && illegalMoves == 0 && gameStatus == GameStatus.DRAW) printGame(gameStates, gameStatus);
 
@@ -552,7 +560,7 @@ public class TicTacToe implements Environment {
      */
     private void printBoard(Matrix gameState) {
         for (int row = 0; row < 2 * boardSize + 1; row++) System.out.print("-");
-        System.out.println("");
+        System.out.println();
         for (int row = 0; row < boardSize; row++) {
             for (int col = 0; col < boardSize; col++) {
                 if (col == 0) System.out.print("|");
@@ -562,10 +570,10 @@ public class TicTacToe implements Environment {
                 if (posStatus == CROSS) System.out.print("X");
                 System.out.print("|");
             }
-            System.out.println("");
+            System.out.println();
         }
         for (int row = 0; row < 2 * boardSize + 1; row++) System.out.print("-");
-        System.out.println("");
+        System.out.println();
     }
 
     /**
@@ -579,7 +587,7 @@ public class TicTacToe implements Environment {
      */
     private DeepAgent createAgent(GameStatus player) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(player == GameStatus.NOUGHT ? "Nought" : "Cross", boardSize * boardSize, boardSize * boardSize);
-        DeepAgent agent = new DeepAgent(this, QNN);
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * 9) + ", updateTNNCycle = " + (30 * 9) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0.999");
         agent.start();
         return agent;
     }
