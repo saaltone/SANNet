@@ -8,6 +8,7 @@ import core.layer.LayerType;
 import core.loss.LossFunctionType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
+import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.DeepAgent;
@@ -24,9 +25,10 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Class that defined maze in where agent takes journeys.<br>
+ * Class that defines maze in where agent takes journeys.<br>
  *
  * Reference: https://rosettacode.org/wiki/Maze_generation<br>
  *
@@ -337,7 +339,7 @@ public class Maze implements Environment, ActionListener {
          * Agent's maze history as current and past positions.
          *
          */
-        private LinkedList<MazeAgent> mazeAgentHistory = new LinkedList<>();
+        private final ConcurrentLinkedQueue<MazeAgent> mazeAgentHistory = new ConcurrentLinkedQueue<>();
 
         /**
          * Sets maze to be drawn.
@@ -377,16 +379,14 @@ public class Maze implements Environment, ActionListener {
                 }
             }
             if (mazeAgentHistory != null) {
-                Iterator iterator = mazeAgentHistory.descendingIterator();
+                Iterator iterator = mazeAgentHistory.iterator();
                 Graphics2D g2d = (Graphics2D)g;
-                boolean head = true;
                 while (iterator.hasNext()) {
                     MazeAgent mazeAgent = (MazeAgent)iterator.next();
-                    if (head) g.setColor(Color.RED);
+                    if (!iterator.hasNext()) g.setColor(Color.RED);
                     else g.setColor(Color.BLUE);
                     Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
                     g2d.fill(circle);
-                    head = false;
                 }
             }
         }
@@ -397,7 +397,7 @@ public class Maze implements Environment, ActionListener {
      * Size of maze.
      *
      */
-    private int size = 80;
+    private int size = 60;
 
     /**
      * Array structure that contains maze.
