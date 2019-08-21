@@ -208,8 +208,8 @@ public class ActivationFunction implements Serializable {
                 derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> -2 * value * Math.exp(-1 * Math.pow(value, 2) / 2);
                 break;
             case SIN:
-                function = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.cos(0.5 * Math.PI - value);
-                derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> value > -0.5 * Math.PI && value < 0.5 * Math.PI ? Math.cos(value) : 0;
+                function = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.sin(value);
+                derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.cos(value);
                 break;
             default:
                 break;
