@@ -8,7 +8,6 @@ import core.layer.LayerType;
 import core.loss.LossFunctionType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
-import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.DeepAgent;
@@ -149,6 +148,18 @@ public class Maze implements Environment, ActionListener {
         int visitCount;
 
         /**
+         * Previous time step of cell.
+         *
+         */
+        long previousCellTimeStep = 0;
+
+        /**
+         * Current time step of cell.
+         *
+         */
+        long cellTimeStep = 0;
+
+        /**
          * Neighbors of cell.
          *
          */
@@ -272,6 +283,7 @@ public class Maze implements Environment, ActionListener {
          */
         public void incrementCount() {
             visitCount++;
+            if (cellTimeStep - previousCellTimeStep > 100) visitCount = 1;
         }
 
         /**
@@ -281,6 +293,11 @@ public class Maze implements Environment, ActionListener {
          */
         public int getVisitCount() {
             return visitCount;
+        }
+
+        public void updateCellTimeStep(long timeStep) {
+            previousCellTimeStep = cellTimeStep;
+            cellTimeStep = timeStep;
         }
 
     }
@@ -398,6 +415,12 @@ public class Maze implements Environment, ActionListener {
      *
      */
     private int size = 60;
+
+    /**
+     * Current time step.
+     *
+     */
+    private long timeStep = 0;
 
     /**
      * Array structure that contains maze.
@@ -584,6 +607,7 @@ public class Maze implements Environment, ActionListener {
             if (maze[x][y].isOpen()) {
                 MazeAgent mazeAgent = new MazeAgent(x, y, -1);
                 mazeAgentCurrent = mazeAgent;
+                maze[x][y].updateCellTimeStep(++timeStep);
                 maze[x][y].incrementCount();
                 mazeAgentHistory.addLast(mazeAgent);
                 initialized = true;
@@ -736,6 +760,7 @@ public class Maze implements Environment, ActionListener {
         mazeAgentCurrent = new MazeAgent(x, y, action);
         if (mazeAgentHistory.size() == agentHistorySize) mazeAgentHistory.pollFirst();
         mazeAgentHistory.addLast(mazeAgentCurrent);
+        maze[x][y].updateCellTimeStep(++timeStep);
         maze[x][y].incrementCount();
         updateState();
     }
@@ -751,7 +776,7 @@ public class Maze implements Environment, ActionListener {
         if (!validAction) return 0;
         else {
             if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) return 0;
-            else return 0.1 + 3 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 4);
+            else return 0.1 + 3 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3);
         }
     }
 
@@ -786,7 +811,7 @@ public class Maze implements Environment, ActionListener {
      */
     private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, updateTNNCycle = 30, epsilonMin = 0.2, alpha = 1, gamma = 0.6, replayBufferSize = 20000");
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, updateTNNCycle = 30, alpha = 0.3, gamma = 0.7, replayBufferSize = 20000, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonMin = 0.0");
         agent.start();
         return agent;
     }
@@ -803,12 +828,16 @@ public class Maze implements Environment, ActionListener {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.GELU), "width = " + 100);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.GELU), "width = " + 100);
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.GELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.ELU), "width = " + 20);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = " + 20);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.GELU), "width = " + 20);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.ELU), "width = " + 20);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = " + 20);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.GELU), "width = " + 20);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
+        neuralNetwork.addNormalizer(6, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(LossFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(10);
