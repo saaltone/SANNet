@@ -227,7 +227,7 @@ public class TSP implements Environment {
     public static void main(String[] args) {
         TSP tsp;
         try {
-            tsp = new TSP(50);
+            tsp = new TSP(10);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
                 int illegalMoves = tsp.route(tour % 10 == 0);
@@ -332,7 +332,7 @@ public class TSP implements Environment {
                     visitedCitiesMax = visitedCities;
                 }
             }
-            return 0.5 * (maxDistance / cities.size() - distance);
+            return 2 * (maxDistance / cities.size() - distance);
         }
     }
 
@@ -549,7 +549,7 @@ public class TSP implements Environment {
      */
     private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0");
         agent.start();
         return agent;
     }
