@@ -74,6 +74,12 @@ public class DeepAgent implements Agent, Serializable {
     private int updateTNNCycle = 300;
 
     /**
+     * Learning rate for target value update.
+     *
+     */
+    private double learningRate = 1;
+
+    /**
      * Gamma (discount) factor for target (TD) value calculation.
      *
      */
@@ -134,6 +140,18 @@ public class DeepAgent implements Agent, Serializable {
     private boolean stepCommitted = false;
 
     /**
+     * If true agent has already taken action and has existing state. Used as flag for next step operation.
+     *
+     */
+    private boolean hasPreviousState = false;
+
+    /**
+     * If true agent is in training mode.
+     *
+     */
+    private boolean isTraining = true;
+
+    /**
      * Constructor for agent.
      *
      * @param environment reference to environment where agent resides, takes actions and receives rewards.
@@ -191,6 +209,7 @@ public class DeepAgent implements Agent, Serializable {
      *     - trainCycle: number of steps after which QNN gets trained. Default value 100.<br>
      *     - doubleQ: If true Double Deep Q Learning (QNN and TNN) is applied otherwise just single QNN is used. Default value 0.95.<br>
      *     - updateTNNCycle: number of step after which TNN gets updated. Default value 300.<br>
+     *     - learningRate: Learnng rate for target value update. Default value 1.<br>
      *     - gamma: Discount value for Q learning. Default value 0.85.<br>
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.<br>
@@ -207,6 +226,7 @@ public class DeepAgent implements Agent, Serializable {
         if (params.hasParam("trainCycle")) trainCycle = params.getValueAsInteger("trainCycle");
         if (params.hasParam("doubleQ")) doubleQ = params.getValueAsBoolean("doubleQ");
         if (params.hasParam("updateTNNCycle")) updateTNNCycle = params.getValueAsInteger("updateTNNCycle");
+        if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
         if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
         if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
@@ -215,6 +235,15 @@ public class DeepAgent implements Agent, Serializable {
         if (params.hasParam("storeInvalidActions")) storeInvalidActions = params.getValueAsBoolean("storeInvalidActions");
         if (params.hasParam("replayBufferSize")) replayBuffer.setSize(params.getValueAsInteger("replayBufferSize"));
         if (params.hasParam("alpha")) replayBuffer.setAlpha(params.getValueAsDouble("alpha"));
+    }
+
+    /**
+     * Sets epsilon value.
+     *
+     * @param epsilon new epsilon value.
+     */
+    public void setEpsilon(double epsilon) {
+        this.epsilon = epsilon;
     }
 
     /**
@@ -270,6 +299,43 @@ public class DeepAgent implements Agent, Serializable {
     /**
      * Starts new agent step and commits previous step if not yet committed.
      *
+     * @param isTraining if true agent is in training mode.
+     * @param updateValue if true state action value is update prior committing step.
+     * @throws AgentException not applicable to this operation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    public void newStep(boolean isTraining, boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        this.isTraining = isTraining;
+        if (isTraining) {
+            if (hasPreviousState && updateValue) updateValue();
+            hasPreviousState = true;
+            commitStep(false);
+            stepCommitted = false;
+            totalSteps++;
+        }
+        sample = new Sample();
+    }
+
+    /**
+     * Starts new agent step and commits previous step if not yet committed.
+     *
+     * @param isTraining if true agent is in training mode.
+     * @throws AgentException not applicable to this operation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    public void newStep(boolean isTraining) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        newStep(isTraining, false);
+    }
+
+    /**
+     * Starts new agent step and commits previous step if not yet committed.
+     *
      * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
@@ -277,10 +343,7 @@ public class DeepAgent implements Agent, Serializable {
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
     public void newStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        commitStep(false);
-        sample = new Sample();
-        stepCommitted = false;
-        totalSteps++;
+        newStep(isTraining, false);
     }
 
     /**
@@ -307,7 +370,7 @@ public class DeepAgent implements Agent, Serializable {
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
     public void commitStep(boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        if (!stepCommitted && sample != null) {
+        if (!stepCommitted && sample != null && isTraining) {
             if (updateValue) updateValue();
 
             replayBuffer.add(sample.copy());
@@ -382,6 +445,7 @@ public class DeepAgent implements Agent, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void updateValue() throws NeuralNetworkException, MatrixException {
+        if (!isTraining) return;
         double value = sample.values.getValue(sample.action, 0);
 
         sample.targetState = environment.getState();
@@ -401,9 +465,8 @@ public class DeepAgent implements Agent, Serializable {
 
         sample.reward = environment.requestReward(this, sample.validAction);
 
-        double target = sample.reward + gamma * targetValue;
-        sample.delta = target - value;
-        sample.values.setValue(sample.action, 0, target);
+        sample.delta = learningRate * (sample.reward + gamma * targetValue - value);
+        sample.values.setValue(sample.action, 0, value + sample.delta);
     }
 
     /**

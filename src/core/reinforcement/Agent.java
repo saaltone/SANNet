@@ -18,6 +18,45 @@ import java.io.IOException;
 public interface Agent {
 
     /**
+     * Sets epsilon value.
+     *
+     * @param epsilon new epsilon value.
+     */
+    void setEpsilon(double epsilon);
+
+    /**
+     * Returns current epsilon value.
+     *
+     * @return current epsilon value.
+     */
+    double getEpsilon();
+
+    /**
+     * Starts new agent step and commits previous step if not yet committed.
+     *
+     * @param isTraining if true agent is in training mode.
+     * @param updateValue if true state action value is update prior committing step.
+     * @throws AgentException not applicable to this operation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    void newStep(boolean isTraining, boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+
+    /**
+     * Starts new agent step and commits previous step if not yet committed.
+     *
+     * @param isTraining if true agent is in training mode.
+     * @throws AgentException not applicable to this operation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if cloning of Q Neural Network fails.
+     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     */
+    void newStep(boolean isTraining) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+
+    /**
      * Starts new agent step and commits previous step if not yet committed.
      *
      * @throws AgentException not applicable to this operation.
