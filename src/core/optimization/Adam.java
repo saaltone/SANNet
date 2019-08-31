@@ -28,13 +28,6 @@ public class Adam implements Optimizer, Serializable {
     private double learningRate = 0.001;
 
     /**
-     * Epsilon term for Adam. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Beta1 term for Adam. Default value 0.9.
      *
      */
@@ -192,6 +185,12 @@ public class Adam implements Optimizer, Serializable {
         Matrix vM_hat = vM.divide(1 - Math.pow(beta2, iter));
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
+        /**
+         * Epsilon term for Adam. Default value 10E-8.<br>
+         * Term provides mathematical stability for optimizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         M.subtract(vM_hat.add(epsilon).sqrt().mulinv().multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
 
         iter++;

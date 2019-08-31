@@ -37,12 +37,6 @@ public class ReplayBuffer {
     private double alpha = 0.6;
 
     /**
-     * Epsilon term avoids zero priority values.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Reference to sum tree maintaining priorities of samples.
      *
      */
@@ -118,6 +112,11 @@ public class ReplayBuffer {
      * @param sample sample for which priority is to be calculated and set.
      */
     private void setPriority(Sample sample) {
+        /**
+         * Epsilon term avoids zero priority values.<br>
+         *
+         */
+        double epsilon = 10E-8;
         sample.priority = Math.pow(Math.abs(sample.delta) + epsilon, alpha);
     }
 

@@ -73,19 +73,19 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      */
     private class GameBoard {
 
-        GameSlot[][] gameBoard;
+        final GameSlot[][] gameBoard;
 
         /**
          * Current state of game (game board).
          *
          */
-        private Matrix state;
+        private final Matrix state;
 
         /**
          * Size of game board (size x size)
          *
          */
-        private int size;
+        private final int size;
 
         /**
          * Initializes game board.
@@ -141,7 +141,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * @return position as row and col
          */
         private int[] getPos(int action) {
-            int pos[] = new int[2];
+            int[] pos = new int[2];
             pos[0] = action % size;
             pos[1] = action / size;
             return pos;
@@ -281,7 +281,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * Lock that is used to synchronize GUI and tic tac toe threads with each other.
          *
          */
-        private Lock guiLock = new ReentrantLock();
+        private final Lock guiLock = new ReentrantLock();
 
         /**
          * Sets gameBoard to be drawn.
@@ -341,19 +341,19 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Reward structure i.e. rewards returned to agent during game per action taken.
      *
      */
-    public class RewardStructure {
-        double WIN = 20; // 5
-        double DRAW = 10; // 3
-        double LOST = 0; // 0
-        double MOVE = 0; // 0
-        double ILLEGAL_MOVE = 0;
+    public static class RewardStructure {
+        final double WIN = 20; // 5
+        final double DRAW = 10; // 3
+        final double LOST = 0; // 0
+        final double MOVE = 0; // 0
+        final double ILLEGAL_MOVE = 0;
     }
 
     /**
      * Reward structure.
      *
      */
-    private RewardStructure rewardStructure = new RewardStructure();
+    private final RewardStructure rewardStructure = new RewardStructure();
 
     /**
      * Deep agent for player nought.
@@ -371,7 +371,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Size of game board (size x size).
      *
      */
-    private int boardSize = 3;
+    private final int boardSize = 3;
 
     /**
      * Game board.
@@ -431,7 +431,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Number of games to be played.
      *
      */
-    private int numberOfGames = 500000000;
+    private final int numberOfGames = 500000000;
 
     /**
      * Sum of all game moves taken.
@@ -467,55 +467,55 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Root panel holding both tic tac toe and radio button panels.
      *
      */
-    private JPanel jRootPanel = new JPanel();
+    private final JPanel jRootPanel = new JPanel();
 
     /**
      * Tic tac toe panel that is used to show tic tac toe game grid.
      *
      */
-    private TicTacToePanel ticTacToePanel = new TicTacToePanel();
+    private final TicTacToePanel ticTacToePanel = new TicTacToePanel();
 
     /**
      * Panel that holds radio buttons.
      *
      */
-    private JPanel jRadioButtonPanel = new JPanel();
+    private final JPanel jRadioButtonPanel = new JPanel();
 
     /**
      * Radio button that is used to choose nought as human game role.
      *
      */
-    private JRadioButton noughtRadioButton = new JRadioButton("Nought");
+    private final JRadioButton noughtRadioButton = new JRadioButton("Nought");
 
     /**
      * Radio button that is used to choose auto mode where agents are playing against each other (default choice).
      *
      */
-    private JRadioButton autoRadioButton = new JRadioButton("Auto", true);
+    private final JRadioButton autoRadioButton = new JRadioButton("Auto", true);
 
     /**
      * Radio button that is used to choose cross as human game role.
      *
      */
-    private JRadioButton crossRadioButton = new JRadioButton("Cross");
+    private final JRadioButton crossRadioButton = new JRadioButton("Cross");
 
     /**
      * Button group for game mode selection.
      *
      */
-    private ButtonGroup gameModeButtonGroup = new ButtonGroup();
+    private final ButtonGroup gameModeButtonGroup = new ButtonGroup();
 
     /**
      * Lock that is used to synchronize GUI (radio button events) and tic tac toe threads with each other.
      *
      */
-    private Lock lock = new ReentrantLock();
+    private final Lock lock = new ReentrantLock();
 
     /**
      * Condition for lock.
      *
      */
-    private Condition humanAction = lock.newCondition();
+    private final Condition humanAction = lock.newCondition();
 
     /**
      * Main function for tic tac toe.

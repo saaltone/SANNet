@@ -35,13 +35,13 @@ public class DeepAgent implements Agent, Serializable {
      * Reference to environment where agent resides in.
      *
      */
-    private Environment environment;
+    private final Environment environment;
 
     /**
      * Reference to Q Neural Network.
      *
      */
-    private NeuralNetwork QNN;
+    private final NeuralNetwork QNN;
 
     /**
      * Reference to Target Neural Network.
@@ -301,13 +301,12 @@ public class DeepAgent implements Agent, Serializable {
      *
      * @param isTraining if true agent is in training mode.
      * @param updateValue if true state action value is update prior committing step.
-     * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void newStep(boolean isTraining, boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void newStep(boolean isTraining, boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         this.isTraining = isTraining;
         if (isTraining) {
             if (hasPreviousState && updateValue) updateValue();
@@ -323,39 +322,36 @@ public class DeepAgent implements Agent, Serializable {
      * Starts new agent step and commits previous step if not yet committed.
      *
      * @param isTraining if true agent is in training mode.
-     * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void newStep(boolean isTraining) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void newStep(boolean isTraining) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         newStep(isTraining, false);
     }
 
     /**
      * Starts new agent step and commits previous step if not yet committed.
      *
-     * @throws AgentException not applicable to this operation.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void newStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void newStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         newStep(isTraining, false);
     }
 
     /**
      * Commits agent step.
      *
-     * @throws AgentException throws exception if new agent step is not initiated.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void commitStep() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void commitStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         commitStep(false);
     }
 
@@ -363,13 +359,12 @@ public class DeepAgent implements Agent, Serializable {
      * Commits agent step.
      *
      * @param updateValue if true updates current state action value otherwise not.
-     * @throws AgentException throws exception if new agent step is not initiated.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void commitStep(boolean updateValue) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void commitStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         if (!stepCommitted && sample != null && isTraining) {
             if (updateValue) updateValue();
 

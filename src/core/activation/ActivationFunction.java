@@ -130,11 +130,11 @@ public class ActivationFunction implements Serializable {
                 derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> 2 * Math.exp(value) / Math.pow(Math.exp(value) + 1, 2);
                 break;
             case EXPONENTIAL:
-                function = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.exp(value);
-                derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.exp(value);
+                function = (Matrix.MatrixUniOperation & Serializable) Math::exp;
+                derivative = (Matrix.MatrixUniOperation & Serializable) Math::exp;
                 break;
             case TANH:
-                function = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.tanh(value);
+                function = (Matrix.MatrixUniOperation & Serializable) Math::tanh;
                 derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> 1 - Math.pow(Math.tanh(value), 2);
                 break;
             case TANSIG:
@@ -200,7 +200,7 @@ public class ActivationFunction implements Serializable {
                 derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> 0.5 * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3)))) + (value * (0.134145 * Math.pow(value, 2) + 1) * Math.pow(1 / Math.cosh((0.044715 * Math.pow(value, 3) + value) * Math.sqrt(2 / Math.PI)), 2)) / Math.sqrt(2 * Math.PI);
                 break;
             case SOFTMAX:
-                function = (Matrix.MatrixUniOperation & Serializable) (value) -> Math.exp(value);
+                function = (Matrix.MatrixUniOperation & Serializable) Math::exp;
                 derivative = (Matrix.MatrixUniOperation & Serializable) (value) -> 1;
                 break;
             case GAUSSIAN:

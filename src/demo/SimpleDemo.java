@@ -91,7 +91,7 @@ public class SimpleDemo {
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.setLossFunction(LossFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetwork.setLossFunction(LossFunctionType.HUBER);
         return neuralNetwork;
     }
 

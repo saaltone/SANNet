@@ -31,7 +31,7 @@ public class GradientClipping implements Regularization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
+    private final Connector connector;
 
     /**
      * Threshold for gradient clipping.

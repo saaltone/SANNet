@@ -39,7 +39,7 @@ public class LossFunction implements Serializable {
      * Type of loss function.
      *
      */
-    private LossFunctionType functionType;
+    private final LossFunctionType functionType;
 
     /**
      * Alpha value for Huber loss.

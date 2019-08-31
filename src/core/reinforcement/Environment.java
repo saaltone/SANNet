@@ -51,18 +51,16 @@ public interface Environment {
      *
      * @param agent agent that is taking action.
      * @return action taken
-     * @throws AgentException throws exception if action was not in list of available ones.
      */
-    int requestAction(Agent agent) throws AgentException;
+    int requestAction(Agent agent);
 
     /**
      * Takes specific action.
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
-     * @throws AgentException throws exception if action was not in list of available ones.
      */
-    void commitAction(Agent agent, int action) throws AgentException;
+    void commitAction(Agent agent, int action);
 
     /**
      * Requests immediate reward from environment after taking action.

@@ -44,13 +44,13 @@ public class Maze implements Environment, ActionListener {
          * First cell to be connected.
          *
          */
-        private Cell cell1;
+        private final Cell cell1;
 
         /**
          * Second cell to be connected.
          *
          */
-        private Cell cell2;
+        private final Cell cell2;
 
         /**
          * If true cells are connected.
@@ -127,13 +127,13 @@ public class Maze implements Environment, ActionListener {
          * X position of cell.
          *
          */
-        int x;
+        final int x;
 
         /**
          * Y position of cell.
          *
          */
-        int y;
+        final int y;
 
         /**
          * If true cell has been visited. Used in maze construction phase.
@@ -163,7 +163,7 @@ public class Maze implements Environment, ActionListener {
          * Neighbors of cell.
          *
          */
-        Neighbor[] neighbors;
+        final Neighbor[] neighbors;
 
         /**
          * Constructor for cell.
@@ -261,7 +261,7 @@ public class Maze implements Environment, ActionListener {
          * @return if true cell is connected to given direction.
          */
         public boolean isConnected(int neighbor) {
-            return neighbors[neighbor] == null ? false : neighbors[neighbor].connected;
+            return neighbors[neighbor] != null && neighbors[neighbor].connected;
         }
 
         /**
@@ -306,25 +306,25 @@ public class Maze implements Environment, ActionListener {
      * Class that defines maze agent.
      *
      */
-    class MazeAgent {
+    static class MazeAgent {
 
         /**
          * X position of maze agent.
          *
          */
-        int x;
+        final int x;
 
         /**
          * Y position of maze agent.
          *
          */
-        int y;
+        final int y;
 
         /**
          * Action taken by maze agent.
          *
          */
-        int action;
+        final int action;
 
         /**
          * Constructor for maze agent.
@@ -389,22 +389,20 @@ public class Maze implements Environment, ActionListener {
             g.setColor(Color.BLACK);
             for (int x = 0; x < maze.length; x++) {
                 for (int y = 0; y < maze[x].length; y++) {
-                    if (maze[x][y].neighbors[0] != null) if (!maze[x][y].neighbors[0].connected) g.drawLine((x + 0) * 10, (y + 0) * 10, (x + 0) * 10, (y + 1) * 10);
-                    if (maze[x][y].neighbors[1] != null) if (!maze[x][y].neighbors[1].connected) g.drawLine((x + 1) * 10, (y + 0) * 10, (x + 1) * 10, (y + 1) * 10);
-                    if (maze[x][y].neighbors[2] != null) if (!maze[x][y].neighbors[2].connected) g.drawLine((x + 0) * 10, (y + 0) * 10, (x + 1) * 10, (y + 0) * 10);
-                    if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x + 0) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[0] != null) if (!maze[x][y].neighbors[0].connected) g.drawLine((x) * 10, (y) * 10, (x) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[1] != null) if (!maze[x][y].neighbors[1].connected) g.drawLine((x + 1) * 10, (y) * 10, (x + 1) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[2] != null) if (!maze[x][y].neighbors[2].connected) g.drawLine((x) * 10, (y) * 10, (x + 1) * 10, (y) * 10);
+                    if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
                 }
             }
-            if (mazeAgentHistory != null) {
-                Iterator iterator = mazeAgentHistory.iterator();
-                Graphics2D g2d = (Graphics2D)g;
-                while (iterator.hasNext()) {
-                    MazeAgent mazeAgent = (MazeAgent)iterator.next();
-                    if (!iterator.hasNext()) g.setColor(Color.RED);
-                    else g.setColor(Color.BLUE);
-                    Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
-                    g2d.fill(circle);
-                }
+            Iterator iterator = mazeAgentHistory.iterator();
+            Graphics2D g2d = (Graphics2D)g;
+            while (iterator.hasNext()) {
+                MazeAgent mazeAgent = (MazeAgent)iterator.next();
+                if (!iterator.hasNext()) g.setColor(Color.RED);
+                else g.setColor(Color.BLUE);
+                Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
+                g2d.fill(circle);
             }
         }
 
@@ -438,7 +436,7 @@ public class Maze implements Environment, ActionListener {
      * Reference to maze JPanel class.
      *
      */
-    private MazePanel mazePanel = new MazePanel();
+    private final MazePanel mazePanel = new MazePanel();
 
     /**
      * JFrame for maze.
@@ -456,13 +454,13 @@ public class Maze implements Environment, ActionListener {
      * Linked list to store agent's history.
      *
      */
-    private LinkedList<MazeAgent> mazeAgentHistory = new LinkedList<>();
+    private final LinkedList<MazeAgent> mazeAgentHistory = new LinkedList<>();
 
     /**
      * Size of agent's history. Remembers given number of previous moves and uses then as input for agent state.
      *
      */
-    private int agentHistorySize = 12;
+    private final int agentHistorySize = 12;
 
     /**
      * Reference to deep agent.
@@ -595,9 +593,9 @@ public class Maze implements Environment, ActionListener {
      */
     public void initMaze() {
         boolean initialized = false;
-        for (int x = 0; x < maze.length; x++) {
-            for (int y = 0; y < maze[x].length; y++) {
-                maze[x][y].visitCount = 0;
+        for (Cell[] cells : maze) {
+            for (Cell cell : cells) {
+                cell.visitCount = 0;
             }
         }
         int x = size / 2;

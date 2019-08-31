@@ -27,7 +27,7 @@ public class BatchNormalization implements Normalization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
+    private final Connector connector;
 
     /**
      * If true neural network is in state otherwise false.
@@ -81,20 +81,6 @@ public class BatchNormalization implements Normalization, Serializable {
      *
      */
     private boolean meanOnly = false;
-
-    /**
-     * Epsilon term for batch normalization. Default value 10E-8.<br>
-     * Term provides mathematical stability for normalizer.<br>
-     *
-     */
-    private double epsilon = 10E-8;
-
-    /**
-     * Smoothing factor for rolling mean and average calculation.<br>
-     * Calculates avgSmoothFactor * current value + (1 - avgSmoothFactor) * new value.<br>
-     *
-     */
-    private double avgSmoothFactor = 0.9;
 
     /**
      * Constructor for batch normalization class.
@@ -182,9 +168,15 @@ public class BatchNormalization implements Normalization, Serializable {
      */
     public void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException {
         if (ins.size() < 2) return;
+        /**
+         * Epsilon term for batch normalization. Default value 10E-8.<br>
+         * Term provides mathematical stability for normalizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         if (isTraining) {
             clear();
-            batchSize = (double)ins.size();
+            batchSize = ins.size();
             int rows = ins.get(ins.firstKey()).getRows();
             int cols = ins.get(ins.firstKey()).getCols();
 
@@ -193,6 +185,12 @@ public class BatchNormalization implements Normalization, Serializable {
             for (Matrix input : ins.values()) mean.add(input, mean);
             mean.divide(batchSize, mean);
 
+            /**
+             * Smoothing factor for rolling mean and average calculation.<br>
+             * Calculates avgSmoothFactor * current value + (1 - avgSmoothFactor) * new value.<br>
+             *
+             */
+            double avgSmoothFactor = 0.9;
             if (avgMean == null) avgMean = mean;
             else avgMean = mean.multiply(1 - avgSmoothFactor).add(avgMean.multiply(avgSmoothFactor));
 

@@ -28,7 +28,7 @@ public class LayerNormalization implements Normalization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
+    private final Connector connector;
 
     /**
      * If true neural network is in state otherwise false.
@@ -62,13 +62,6 @@ public class LayerNormalization implements Normalization, Serializable {
      *
      */
     private boolean meanOnly = false;
-
-    /**
-     * Epsilon term for layer normalization. Default value 10E-8.<br>
-     * Term provides mathematical stability for normalizer.<br>
-     *
-     */
-    private double epsilon = 10E-8;
 
     /**
      * Constructor for layer normalization class.
@@ -145,6 +138,12 @@ public class LayerNormalization implements Normalization, Serializable {
      */
     public void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException {
         if (ins.get(ins.firstKey()).getSize() < 2) return;
+        /**
+         * Epsilon term for layer normalization. Default value 10E-8.<br>
+         * Term provides mathematical stability for normalizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         if (isTraining) {
             reset();
             for (Integer index : ins.keySet()) {
@@ -156,7 +155,7 @@ public class LayerNormalization implements Normalization, Serializable {
                 Matrix unMeanIn = input.subtract(mean);
                 unMeanIns.put(index, unMeanIn);
 
-                double iSqrVar = 1;
+                double iSqrVar;
                 if (!meanOnly) {
                     // Calculate variance
                     double var = input.var() + epsilon;

@@ -28,9 +28,8 @@ public interface Optimizer {
     /**
      * Resets optimizer state.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void reset() throws MatrixException;
+    void reset();
 
     /**
      * Sets relative size of mini batch.

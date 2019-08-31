@@ -109,7 +109,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * Abstract matrix reset function to be implemented by underlying matrix data structure class implementation.<br>
      * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
      */
-    public abstract void resetMatrix();
+    protected abstract void resetMatrix();
 
     /**
      * Returns value from uniform distribution within -range to +range.
@@ -281,9 +281,8 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param row row of value to be added.
      * @param col column of value to be added.
      * @param value to be added.
-     * @throws MatrixException thrown if input row or column is beyond matrix dimensions range.
      */
-    public void addValue(int row, int col, double value) throws MatrixException {
+    public void addValue(int row, int col, double value) {
         setValue(row, col, getValue(row, col) + value);
     }
 
@@ -294,9 +293,8 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param row row of value to be decreased.
      * @param col column of value to be decreased.
      * @param value to be decreased.
-     * @throws MatrixException thrown if input row or column is beyond matrix dimensions range.
      */
-    public void decValue(int row, int col, double value) throws MatrixException {
+    public void decValue(int row, int col, double value) {
         setValue(row, col, getValue(row, col) - value);
     }
 
@@ -307,9 +305,8 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param row row of value to be multiplied.
      * @param col column of value to be multiplied.
      * @param value to be multiplied.
-     * @throws MatrixException thrown if input row or column is beyond matrix dimensions range.
      */
-    public void mulValue(int row, int col, double value) throws MatrixException {
+    public void mulValue(int row, int col, double value) {
         setValue(row, col, getValue(row, col) * value);
     }
 
@@ -320,9 +317,8 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param row row of value to be divided.
      * @param col column of value to be divided.
      * @param value to be divided.
-     * @throws MatrixException thrown if input row or column is beyond matrix dimensions range.
      */
-    public void divValue(int row, int col, double value) throws MatrixException {
+    public void divValue(int row, int col, double value) {
         setValue(row, col, getValue(row, col) / value);
     }
 
@@ -537,7 +533,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void add(Matrix other, Matrix result) throws MatrixException {
-        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 + value2);
+        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) Double::sum);
     }
 
     /**
@@ -549,7 +545,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix add(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 + value2);
+        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) Double::sum);
     }
 
     /**
@@ -726,7 +722,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix abs() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> Math.abs(value));
+        return apply ((Matrix.MatrixUniOperation & Serializable) Math::abs);
     }
 
     /**
@@ -737,7 +733,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public void abs(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> Math.abs(value));
+        apply (result, (Matrix.MatrixUniOperation & Serializable) Math::abs);
     }
 
     /**
@@ -825,7 +821,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
     public void max(Matrix other, Matrix result) throws MatrixException {
-        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> Math.max(value1, value2));
+        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) Math::max);
     }
 
     /**
@@ -837,7 +833,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix max(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> Math.max(value1, value2));
+        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) Math::max);
     }
 
     /**
@@ -849,7 +845,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
     public void min(Matrix other, Matrix result) throws MatrixException {
-        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> Math.min(value1, value2));
+        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) Math::min);
     }
 
     /**
@@ -861,7 +857,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix min(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> Math.min(value1, value2));
+        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) Math::min);
     }
 
     /**
@@ -898,7 +894,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix sgn() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> Math.signum(value));
+        return apply ((Matrix.MatrixUniOperation & Serializable) Math::signum);
     }
 
     /**
@@ -909,7 +905,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public void sgn(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> Math.signum(value));
+        apply (result, (Matrix.MatrixUniOperation & Serializable) Math::signum);
     }
 
     /**
@@ -1819,7 +1815,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
      *
      */
-    public abstract void resetMask();
+    protected abstract void resetMask();
 
     /**
      * Sets bernoulli probability to mask specific element of this matrix.

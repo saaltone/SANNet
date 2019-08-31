@@ -28,13 +28,6 @@ public class AMSGrad implements Optimizer, Serializable {
     private double learningRate = 0.001;
 
     /**
-     * Epsilon term for AMSGrad. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Beta1 term for AMSGrad. Default value 0.9.
      *
      */
@@ -189,6 +182,12 @@ public class AMSGrad implements Optimizer, Serializable {
         vM_temp.max(v.get(M), vM);
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
+        /**
+         * Epsilon term for AMSGrad. Default value 10E-8.<br>
+         * Term provides mathematical stability for optimizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         M.subtract(vM.add(epsilon).sqrt().mulinv().multiply(mM).multiply(learningRate * miniBatchFactor), M);
 
         iter++;

@@ -38,7 +38,7 @@ public class DynamicParam implements Serializable {
      * Class that handles and stores parameter type value pair.
      *
      */
-    private class TypeValue {
+    private static class TypeValue {
         /**
          * Defines parameter type.
          *
@@ -246,7 +246,7 @@ public class DynamicParam implements Serializable {
      * Hashmap used to store parameter list.
      *
      */
-    private HashMap<String, TypeValue> paramList = new HashMap<>();
+    private final HashMap<String, TypeValue> paramList = new HashMap<>();
 
     /**
      * Constructor to build dynamic parameter list.
@@ -258,7 +258,7 @@ public class DynamicParam implements Serializable {
     public DynamicParam(String params, HashMap<String, ParamType> nameTypes) throws DynamicParamException {
         String[] paramsList = params.split(",");
         if (paramsList.length == 0) throw new DynamicParamException("No parameters found.");
-        for (int index = 0; index < paramsList.length; index++) setParamByVal(paramsList[index], nameTypes);
+        for (String s : paramsList) setParamByVal(s, nameTypes);
     }
 
     /**

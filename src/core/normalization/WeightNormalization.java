@@ -27,13 +27,7 @@ public class WeightNormalization implements Normalization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
-
-    /**
-     * Indicates to regularizer or normalizer if neural network is in training mode.
-     *
-     */
-    private transient boolean isTraining;
+    private final Connector connector;
 
     /**
      * Tree map for un-normalized weights.
@@ -113,7 +107,10 @@ public class WeightNormalization implements Normalization, Serializable {
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
+        /**
+         * Indicates to regularizer or normalizer if neural network is in training mode.
+         *
+         */
     }
 
     /**

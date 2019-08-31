@@ -43,16 +43,16 @@ public class ReadTextFile {
         LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> inputData = new LinkedHashMap<>();
         LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> outputData = new LinkedHashMap<>();
         int countSkipRows = 0;
-        String text = "";
+        StringBuilder text = new StringBuilder();
         while (scanner.hasNextLine()) {
             while (countSkipRows < skipRowsFromStart) {
                 scanner.nextLine();
                 countSkipRows++;
             }
             String line = scanner.nextLine();
-            text += line;
+            text.append(line);
         }
-        text = text.toLowerCase();
+        text = new StringBuilder(text.toString().toLowerCase());
 
         int length = Math.min(text.length() - numOfCharsIn, text.length() - numOfCharsOut - deltaInOut) + 1;
         for (int pos = 0; pos < length; pos++) {
@@ -105,7 +105,7 @@ public class ReadTextFile {
      * @param charAt character to be mapped.
      * @return mapped character value.
      */
-    public static int charToInt(int charAt) {
+    private static int charToInt(int charAt) {
         int mappedChar = 0;
         if (charAt >= 48 && charAt <= 57) mappedChar = charAt - 47;
         if (charAt >= 97 && charAt <= 122) mappedChar = charAt - 86;

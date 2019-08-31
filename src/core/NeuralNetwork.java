@@ -578,10 +578,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Resets normalization for all neural network connectors (layers).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization() throws MatrixException, NeuralNetworkException {
+    public void resetNormalization() throws NeuralNetworkException {
         checkStarted();
         for (Connector connector : connectors) connector.resetNormalization();
     }
@@ -590,10 +589,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Resets normalization of specific type for all neural network connectors (layers).
      *
      * @param normalizationType normalization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization(NormalizationType normalizationType) throws MatrixException, NeuralNetworkException {
+    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
         for (Connector connector : connectors) connector.resetNormalization(normalizationType);
     }
@@ -602,10 +600,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Resets normalization for specific neural network connector (layer).
      *
      * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization(int connectorIndex) throws MatrixException, NeuralNetworkException {
+    public void resetNormalization(int connectorIndex) throws NeuralNetworkException {
         checkStarted();
         if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
         connectors.get(connectorIndex).resetNormalization();
@@ -616,10 +613,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
      * @param normalizationType normalization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization(int connectorIndex, NormalizationType normalizationType) throws MatrixException, NeuralNetworkException {
+    public void resetNormalization(int connectorIndex, NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
         if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
         connectors.get(connectorIndex).resetNormalization(normalizationType);
@@ -681,10 +677,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Resets optimizer for all neural network connectors (layers).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
      */
-    public void resetOptimizer() throws MatrixException, NeuralNetworkException {
+    public void resetOptimizer() throws NeuralNetworkException {
         checkStarted();
         for (Connector connector : connectors) connector.resetOptimizer();
     }
@@ -693,10 +688,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Resets optimizer for specific neural network connector (layer).
      *
      * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
      */
-    public void resetOptimizer(int connectorIndex) throws MatrixException, NeuralNetworkException {
+    public void resetOptimizer(int connectorIndex) throws NeuralNetworkException {
         checkStarted();
         if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
         connectors.get(connectorIndex).resetOptimizer();
@@ -933,8 +927,8 @@ public class NeuralNetwork implements Runnable, Serializable {
             Connector connector = HiddenLayer.Connect(layers.get(layerID), layers.get(layerID + 1));
             connectors.add(connector);
         }
-        for (int layerID = 0; layerID < layers.size(); layerID++) {
-            layers.get(layerID).initialize();
+        for (AbstractLayer layer : layers) {
+            layer.initialize();
         }
     }
 
@@ -1203,7 +1197,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             throw new NeuralNetworkException("No training inputs and outputs set");
         }
         this.reset = reset;
-        nextState(ExecutionState.TRAIN, false);
+        nextState(ExecutionState.TRAIN);
         if (waitToComplete) waitToComplete();
     }
 
@@ -1320,7 +1314,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             lock.unlock();
             throw new NeuralNetworkException("No prediction inputs set");
         }
-        nextState(ExecutionState.PREDICT, false);
+        nextState(ExecutionState.PREDICT);
         if (waitToComplete) {
             waitToComplete();
             return new LinkedHashMap<>(getOutput());
@@ -1435,18 +1429,16 @@ public class NeuralNetwork implements Runnable, Serializable {
             lock.unlock();
             throw new NeuralNetworkException("No validation inputs and actual set");
         }
-        nextState(ExecutionState.VALIDATE, false);
+        nextState(ExecutionState.VALIDATE);
         if (waitToComplete) waitToComplete();
     }
 
     /**
      * Sets next state for neural network.
+     *  @param executionState next state for neural network.
      *
-     * @param executionState next state for neural network.
-     * @param setLock if true sets lock for neural network otherwise not.
      */
-    private void nextState(ExecutionState executionState, boolean setLock) {
-        if (setLock) lock.lock();
+    private void nextState(ExecutionState executionState) {
         this.executionState = executionState;
         execute.signal();
         lock.unlock();
@@ -1632,9 +1624,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Predicts using given test set inputs.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private void predictInput() throws MatrixException {
+    private void predictInput() {
         TreeMap<Integer, Matrix> inputs = new TreeMap<>();
         int index = 0;
         for (Matrix input : testIns.values()) inputs.put(index++, input);

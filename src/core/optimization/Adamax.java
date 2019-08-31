@@ -28,13 +28,6 @@ public class Adamax implements Optimizer, Serializable {
     private double learningRate = 0.001;
 
     /**
-     * Epsilon term for Adamax. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Beta1 term for Adamax. Default value 0.9.
      *
      */

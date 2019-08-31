@@ -34,7 +34,7 @@ public class Metrics {
      * Class that handles calculation of regression error.
      *
      */
-    public class Regression {
+    static class Regression {
         /**
          * Number of error samples cumulated.
          *
@@ -99,7 +99,7 @@ public class Metrics {
      * Class that handles calculation of classification error.
      *
      */
-    public class Classification {
+    public static class Classification {
         /**
          * True positive counts for each feature.
          *
@@ -972,10 +972,10 @@ public class Metrics {
         }
         System.out.println("Confusion matrix (actual value as rows, predicted value as columns):");
         int[][] confusionMatrix = classification.getConfusion();
-        for (int i = 0; i < confusionMatrix.length; i++) {
+        for (int[] matrix : confusionMatrix) {
             System.out.print("[");
             for (int j = 0; j < confusionMatrix[0].length; j++) {
-                System.out.print(confusionMatrix[i][j]);
+                System.out.print(matrix[j]);
                 if (j < confusionMatrix[0].length - 1) System.out.print(" ");
             }
             System.out.println("]");

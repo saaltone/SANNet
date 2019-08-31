@@ -30,9 +30,8 @@ public interface Normalization {
     /**
      * Resets normalizer state.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void reset() throws MatrixException;
+    void reset();
 
     /**
      * Indicates to normalizer if neural network is in training mode.

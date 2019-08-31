@@ -156,7 +156,7 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws NeuralNetworkException {
-        toNonConvolutionalLayer = forward.hasNLayer() && !forward.getNLayer().isConvolutionalLayer();
+        toNonConvolutionalLayer = forward.hasNLayer() && forward.getNLayer().isConvolutionalLayer();
 
         widthIn = backward.getPLayer().getWidth();
         heightIn = backward.getPLayer().getHeight();

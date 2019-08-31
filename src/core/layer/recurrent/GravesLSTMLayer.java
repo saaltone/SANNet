@@ -126,13 +126,13 @@ public class GravesLSTMLayer extends AbstractExecutionLayer {
      * Tanh activation function needed for Graves LSTM
      *
      */
-    private ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
+    private final ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
 
     /**
      * Sigmoid activation function needed for Graves LSTM
      *
      */
-    private ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
+    private final ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
 
     /**
      * Flag if tanh operation is performed also for last output function.

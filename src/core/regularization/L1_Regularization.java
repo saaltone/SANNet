@@ -30,7 +30,7 @@ public class L1_Regularization implements Regularization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
+    private final Connector connector;
 
     /**
      * Regularization rate.

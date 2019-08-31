@@ -34,19 +34,19 @@ public class TSP implements Environment {
      * Class that defines city with coordinates x and y.
      *
      */
-    private class City {
+    private static class City {
 
         /**
          * Coordinate x of city.
          *
          */
-        double x;
+        final double x;
 
         /**
          * Coordinate y of city.
          *
          */
-        double y;
+        final double y;
 
         /**
          * Constructor for city.
@@ -71,7 +71,7 @@ public class TSP implements Environment {
      * Hashmap for storing cities.
      *
      */
-    private HashMap<Integer, City> cities = new HashMap<>();
+    private final HashMap<Integer, City> cities = new HashMap<>();
 
     /**
      * Ordered list of visited cities.

@@ -24,19 +24,19 @@ public class SumTree {
      * Maximum available index of sample defined by capacity of sum tree.
      *
      */
-    private int maxIndex;
+    private final int maxIndex;
 
     /**
      * Samples stored into sum tree.
      *
      */
-    private Sample[] samples;
+    private final Sample[] samples;
 
     /**
      * Array containing structure of sum tree.
      *
      */
-    private double[] sumTree;
+    private final double[] sumTree;
 
     /**
      * Constructor for sum tree.

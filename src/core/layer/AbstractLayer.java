@@ -52,7 +52,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Index of layer.
      *
      */
-    private int layerIndex;
+    private final int layerIndex;
 
     /**
      * Lock for synchronizing neural network layer thread operations.
@@ -106,19 +106,19 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Width of neural network layer. Also known as number of neural network layer nodes.
      *
      */
-    protected int width;
+    int width;
 
     /**
      * Height of neural network layer. Relevant for convolutional layers.
      *
      */
-    protected int height = 1;
+    int height = 1;
 
     /**
      * Depth of neural network layer. Relevant for convolutional layers.
      *
      */
-    protected int depth = 1;
+    int depth = 1;
 
     /**
      * Tree map for storing outputs of neural network layer.
@@ -183,7 +183,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param executionLayer execution layer reference to be set.
      */
-    public void setExecutionLayer(Layer executionLayer) {
+    void setExecutionLayer(Layer executionLayer) {
         this.executionLayer = executionLayer;
     }
 
@@ -192,7 +192,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param forward reference to forward connector.
      */
-    public void setForward(Connector forward) {
+    private void setForward(Connector forward) {
         this.forward = forward;
         if (executionLayer != null) executionLayer.setForward(forward);
     }
@@ -202,7 +202,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @return forward connector.
      */
-    public Connector getForward() {
+    Connector getForward() {
         return forward;
     }
 
@@ -211,7 +211,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param backward reference to backward connector.
      */
-    public void setBackward(Connector backward) {
+    private void setBackward(Connector backward) {
         this.backward = backward;
         if (executionLayer != null) executionLayer.setBackward(backward);
     }
@@ -276,7 +276,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * @return true if execution layer is convolutional layer type otherwise false.
      */
     public boolean isConvolutionalLayer() {
-        return executionLayer != null && executionLayer.isConvolutionalLayer();
+        return executionLayer == null || !executionLayer.isConvolutionalLayer();
     }
 
     /**
@@ -476,7 +476,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Waits that layer execution step is completed.
      *
      */
-    protected void waitToComplete() {
+    void waitToComplete() {
         lock.lock();
         try {
             while (executionState != ExecutionState.IDLE) complete.await();
@@ -554,7 +554,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected void forwardProcess() throws MatrixException, NeuralNetworkException {
+    private void forwardProcess() throws MatrixException, NeuralNetworkException {
         executionLayer.forwardProcess();
     }
 
@@ -563,7 +563,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void backwardProcess() throws MatrixException {
+    void backwardProcess() throws MatrixException {
         executionLayer.backwardProcess();
     }
 

@@ -28,13 +28,6 @@ public class Adagrad implements Optimizer, Serializable {
     private double learningRate = 0.01;
 
     /**
-     * Epsilon term for Adagrad. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Hash map to store gradients from previous steps.
      *
      */
@@ -134,6 +127,12 @@ public class Adagrad implements Optimizer, Serializable {
 
         dM2Sum.add(dM.multiply(dM), dM2Sum);
 
+        /**
+         * Epsilon term for Adagrad. Default value 10E-8.<br>
+         * Term provides mathematical stability for optimizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         M.subtract(dM.multiply(dM2Sum.add(epsilon).sqrt().mulinv().multiply(learningRate * miniBatchFactor)), M);
     }
 

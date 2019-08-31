@@ -13,6 +13,7 @@ import core.loss.LossFunctionType;
 import core.metrics.MetricsType;
 import core.optimization.*;
 import core.preprocess.*;
+import core.regularization.RegularizationType;
 import utils.*;
 import core.*;
 
@@ -37,8 +38,7 @@ public class TextSeqDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            // Modify <path> to point to your own file path.
-            String persistenceName = "<path>/TextSeqNN";
+            String persistenceName = "/home/jack/Downloads/TextSeqNN";
             int numOfInputs = 5;
             HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
@@ -98,11 +98,12 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
+        neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 200");
         neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
+        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.1");
         neuralNetwork.setLossFunction(LossFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
@@ -115,9 +116,7 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     private static HashMap<Integer, LinkedHashMap<Integer, Matrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        // Modify <path> to point to your own file path and chosen your text_file.
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = ReadTextFile.readFile("<path>/text_file.txt", numOfInputs, 1, numOfInputs, 0);
-        return data;
+        return ReadTextFile.readFile("/home/jack/Downloads/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
     }
 
 }

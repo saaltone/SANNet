@@ -45,9 +45,8 @@ public class ResilientPropagation implements Optimizer, Serializable {
      * Constructor for Resilient Propagation.
      *
      * @param params parameters for Resilient Propagation (not relevant).
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ResilientPropagation(String params) throws DynamicParamException {
+    public ResilientPropagation(String params) {
         setParams(null);
     }
 
@@ -55,9 +54,8 @@ public class ResilientPropagation implements Optimizer, Serializable {
      * Sets parameters used for Resilient Propagation. Not needed for Resilient Propagation.
      *
      * @param params parameters used for Resilient Propagation (not relevant).
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setParams(DynamicParam params) throws DynamicParamException {
+    public void setParams(DynamicParam params) {
     }
 
     /**

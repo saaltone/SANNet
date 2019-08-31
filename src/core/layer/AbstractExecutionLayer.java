@@ -40,7 +40,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * Reference to parent layer that handles neural network layer state handling and initiates primary functions (train, predict, validate etc.)
      *
      */
-    protected AbstractLayer parent;
+    protected final AbstractLayer parent;
 
     /**
      * Width of neural network layer. Also known as number of neural network layer nodes.
@@ -107,7 +107,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      *
      * @return parameters used for recurrent layer.
      */
-    public abstract HashMap<String, DynamicParam.ParamType> getParamDefs();
+    protected abstract HashMap<String, DynamicParam.ParamType> getParamDefs();
 
     /**
      * Sets parameters used for layer.<br>
@@ -116,7 +116,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * @param params parameters used for recurrent layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public abstract void setParams(DynamicParam params) throws DynamicParamException;
+    protected abstract void setParams(DynamicParam params) throws DynamicParamException;
 
     public String getTypeByName() throws NeuralNetworkException  {
         return LayerFactory.getLayerTypeByName(this);
@@ -299,7 +299,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * @return true if neural network layer output is flattened otherwise false.
      */
     private boolean flattenedOutput() {
-        return (isConvolutionalLayer() && forward.getNLayer() != null) && !forward.getNLayer().isConvolutionalLayer();
+        return (isConvolutionalLayer() && forward.getNLayer() != null) && forward.getNLayer().isConvolutionalLayer();
     }
 
     /**

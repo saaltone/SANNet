@@ -30,9 +30,8 @@ public interface Regularization {
     /**
      * Resets regularizer state.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void reset() throws MatrixException;
+    void reset();
 
     /**
      * Indicates to regularizer if neural network is in training mode.
@@ -56,9 +55,8 @@ public interface Regularization {
      * This operation assumes execution post activation.<br>
      *
      * @param outs input samples for forward step.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void forwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException;
+    void forwardPost(TreeMap<Integer, Matrix> outs);
 
     /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.

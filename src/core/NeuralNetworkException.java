@@ -16,7 +16,7 @@ public class NeuralNetworkException extends Exception {
      * Verbal text of exception cause.
      *
      */
-    String cause;
+    private final String cause;
 
     /**
      * Default constructor for exception.

@@ -114,7 +114,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * If true convolution operation and gradient is calculated as convolution (flipped filter) otherwise as cross-correlation.
      *
      */
-    private boolean asConvolution = true;
+    private final boolean asConvolution = true;
 
     /**
      * Constructor for convolutional layer.
@@ -184,7 +184,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws NeuralNetworkException {
-        toNonConvolutionalLayer = forward.hasNLayer() && !forward.getNLayer().isConvolutionalLayer();
+        toNonConvolutionalLayer = forward.hasNLayer() && forward.getNLayer().isConvolutionalLayer();
 
         widthIn = backward.getPLayer().getWidth();
         heightIn = backward.getPLayer().getHeight();

@@ -32,13 +32,6 @@ public class RMSProp implements Optimizer, Serializable {
     private double learningRate = 0.001;
 
     /**
-     * Epsilon term for RMSProp. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Gamma term for RMSProp. Default value 0.9.
      *
      */
@@ -147,6 +140,12 @@ public class RMSProp implements Optimizer, Serializable {
 
         eg2.put(M, mEg2 = mEg2.multiply(gamma).add(dM.power(2).multiply(1 - gamma)));
 
+        /**
+         * Epsilon term for RMSProp. Default value 10E-8.<br>
+         * Term provides mathematical stability for optimizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         M.subtract(mEg2.add(epsilon).sqrt().mulinv().multiply(learningRate * miniBatchFactor).multiply(dM), M);
     }
 

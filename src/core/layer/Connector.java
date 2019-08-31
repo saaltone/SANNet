@@ -38,13 +38,13 @@ public class Connector implements Serializable {
      * Reference to previous neural network layer.
      *
      */
-    private AbstractLayer pLayer;
+    private final AbstractLayer pLayer;
 
     /**
      * Reference to next neural network layer.
      *
      */
-    private AbstractLayer nLayer;
+    private final AbstractLayer nLayer;
 
     /**
      * Set of weights to be managed.
@@ -154,7 +154,7 @@ public class Connector implements Serializable {
      *
      */
     public void resetGrad() {
-        for (Matrix W : dWs.keySet()) dWs.put(W, new TreeMap<>());
+        dWs.replaceAll((w, v) -> new TreeMap<>());
     }
 
     /**
@@ -372,10 +372,9 @@ public class Connector implements Serializable {
      * Resets specific normalization for the connector (next layer).
      *
      * @param normalizationType normalization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reset of normalizer fails.
      */
-    public void resetNormalization(NormalizationType normalizationType) throws MatrixException, NeuralNetworkException {
+    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
         Normalization resetNormalization = null;
         for (Normalization normalization : normalizers) {
             if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
@@ -388,9 +387,8 @@ public class Connector implements Serializable {
     /**
      * Resets all normalization for the connector (next layer).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void resetNormalization() throws MatrixException {
+    public void resetNormalization() {
         for (Normalization normalization : normalizers) normalization.reset();
     }
 
@@ -416,9 +414,8 @@ public class Connector implements Serializable {
     /**
      * Resets optimizer for connector (next layer).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void resetOptimizer() throws MatrixException {
+    public void resetOptimizer() {
         if (optimizer!= null) optimizer.reset();
     }
 
@@ -575,9 +572,8 @@ public class Connector implements Serializable {
      * This operation assumes regularization post forward step.<br>
      *
      * @param outs output samples for forward step.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void regulateForwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException {
+    public void regulateForwardPost(TreeMap<Integer, Matrix> outs) {
         if (getNLayer() instanceof OutputLayer) return;
         for (Regularization regularizer : regularizers) regularizer.forwardPost(outs);
     }

@@ -88,13 +88,13 @@ public class GRULayer extends AbstractExecutionLayer {
      * Tanh activation function needed for GRU
      *
      */
-    private ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
+    private final ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
 
     /**
      * Sigmoid activation function needed for GRU
      *
      */
-    private ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
+    private final ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
 
     /**
      * Stores previous output of layer.

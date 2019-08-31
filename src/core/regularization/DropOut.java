@@ -32,13 +32,13 @@ public class DropOut implements Regularization, Serializable {
      * Reference to connector between previous and next layer.
      *
      */
-    private Connector connector;
+    private final Connector connector;
 
     /**
      * True if next layer if hidden layer otherwise false.
      *
      */
-    private boolean toHiddenLayer;
+    private final boolean toHiddenLayer;
 
     /**
      * If true neural network is in state otherwise false.
@@ -138,7 +138,7 @@ public class DropOut implements Regularization, Serializable {
         if (!toHiddenLayer) return;
         for (Matrix W : connector.getReg()) {
             if (isTraining) {
-                if (maskBySample || (!maskBySample && W.colMaskStackSize() == 0)) {
+                if (maskBySample || W.colMaskStackSize() == 0) {
                     W.setMaskProba(probability);
                     W.setMask();
                     W.maskColByProba();

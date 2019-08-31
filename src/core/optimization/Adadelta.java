@@ -28,13 +28,6 @@ public class Adadelta implements Optimizer, Serializable {
     private double learningRate = 1;
 
     /**
-     * Epsilon term for Adadelta. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
-
-    /**
      * Gamma term for Adadelta. Default value 0.95.
      *
      */
@@ -154,6 +147,12 @@ public class Adadelta implements Optimizer, Serializable {
         else ed2.put(M, mEd2 = new DMatrix(M.getRows(), M.getCols()));
 
         mEg2 = mEg2.multiply(gamma).add(dM.power(2).multiply(1 - gamma));
+        /**
+         * Epsilon term for Adadelta. Default value 10E-8.<br>
+         * Term provides mathematical stability for optimizer.<br>
+         *
+         */
+        double epsilon = 10E-8;
         Matrix Ed = mEd2.add(epsilon).sqrt().multiply(mEg2.add(epsilon).sqrt().mulinv()).multiply(dM);
         M.subtract(Ed.multiply(learningRate * miniBatchFactor), M);
         mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
