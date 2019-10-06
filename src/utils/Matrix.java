@@ -88,6 +88,30 @@ public abstract class Matrix implements Cloneable, Serializable {
     protected double scalingConstant = 1;
 
     /**
+     * Row where slice starts at. Used or crosscorrelation and convolutional operators.
+     *
+     */
+    private int sliceAtRow = 0;
+
+    /**
+     * Column where slice starts at. Used or crosscorrelation and convolutional operators.
+     *
+     */
+    private int sliceAtCol = 0;
+
+    /**
+     * Size of slice in rows. Used or crosscorrelation and convolutional operators.
+     *
+     */
+    private int sliceRowSize = 0;
+
+    /**
+     * Size of slice in columnss. Used or crosscorrelation and convolutional operators.
+     *
+     */
+    private int sliceColSize = 0;
+
+    /**
      * Autogradient for matrix.
      *
      */
@@ -102,6 +126,11 @@ public abstract class Matrix implements Cloneable, Serializable {
      * Default constructor for matrix class
      */
     public Matrix() {
+    }
+
+    public void initializeSlice() {
+        sliceRowSize = getRows();
+        sliceColSize = getCols();
     }
 
     /**
@@ -1417,52 +1446,112 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates convolution operation between source (this) matrix and target matrix.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or target matrix is masked.<br>
+     * Defines size of slice with specific row and column size.
      *
-     * @param target target matrix.
-     * @param result result matrix of convolution operation.
-     * @param stride stride of convolution operation.
-     * @return result matrix of convolution operation.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param sliceRowSize slice size in rows.
+     * @param sliceColSize slice size in columns.
+     * @throws MatrixException throws exception if requested slice does not fit inside matrix.
      */
-    public Matrix convolve(Matrix target, Matrix result, int stride) throws MatrixException {
-        int targetRows = target.getRows();
-        int targetCols = target.getCols();
-        int targetMaxRow = targetRows - 1;
-        int targetMaxCol = targetCols - 1;
-        int resultRows = result.getRows();
-        int resultCols = result.getCols();
-        if (resultRows + targetMaxRow != getRows() || resultCols + targetMaxCol != getCols()) {
-            throw new MatrixException("Dimensions of source (this) matrix: " + getRows() + "x" + getCols() + " target matrix: " + targetRows + "x" + targetCols + " and result matrix: " + resultRows + "x" + resultCols + " are not matching.");
-        }
-        if (!masked && !target.isMasked()) {
-            for (int resultRow = 0; resultRow < resultRows; resultRow++) {
-                for (int resultCol = 0; resultCol < resultCols; resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            value += getValue(stride * resultRow + targetRow, stride * resultCol + targetCol) * target.getValue(targetMaxRow - targetRow, targetMaxCol - targetCol);
-                        }
-                    }
-                    result.addValue(resultRow, resultCol, value);
+    public void setSliceSize(int sliceRowSize, int sliceColSize) throws MatrixException {
+        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
+        this.sliceRowSize = sliceRowSize;
+        this.sliceColSize = sliceColSize;
+    }
+
+    /**
+     * Defines slice at specific row and column.
+     *
+     * @param sliceAtRow slice at row
+     * @param sliceAtCol slice at column
+     * @return returns this matrix.
+     * @throws MatrixException throws exception if requested slice does not fit inside matrix.
+     */
+    public Matrix sliceAt(int sliceAtRow, int sliceAtCol) throws MatrixException {
+        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
+        this.sliceAtRow = sliceAtRow;
+        this.sliceAtCol = sliceAtCol;
+        return this;
+    }
+
+    /**
+     * Defines slice at specific row and column give specific row and column size.
+     *
+     * @param sliceAtRow slice at row
+     * @param sliceAtCol slice at column
+     * @param sliceRowSize slice size in rows.
+     * @param sliceColSize slice size in columns.
+     * @return returns this matrix.
+     * @throws MatrixException throws exception if requested slice does not fit inside matrix.
+     */
+    public Matrix sliceAt(int sliceAtRow, int sliceAtCol, int sliceRowSize, int sliceColSize) throws MatrixException {
+        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
+        this.sliceAtRow = sliceAtRow;
+        this.sliceAtCol = sliceAtCol;
+        this.sliceRowSize = sliceRowSize;
+        this.sliceColSize = sliceColSize;
+        return this;
+    }
+
+    /**
+     * Get row where slice is started at.
+     *
+     * @return row where slice is started at.
+     */
+    public int getSliceAtRow() {
+        return sliceAtRow;
+    }
+
+    /**
+     * Get column where slice is started at.
+     *
+     * @return column where slice is started at.
+     */
+    public int getSliceAtCol() {
+        return sliceAtCol;
+    }
+
+    /**
+     * Returns size of slice in rows.
+     *
+     * @return size of slice in rows.
+     */
+    public int getSliceRowSize() {
+        return sliceRowSize;
+    }
+
+    /**
+     * Returns size of slice in columns.
+     *
+     * @return size of slice in columns.
+     */
+    public int getSliceColSize() {
+        return sliceColSize;
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double convolve(Matrix filter) throws MatrixException {
+        double result = 0;
+        if (!masked) {
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    result += getValue(getSliceAtRow() + row, getSliceAtCol() + col) * filter.getValue(filter.getSliceAtRow() + filter.getSliceRowSize() - 1 - row, filter.getSliceAtCol() + filter.getSliceColSize() - 1 - col);
                 }
             }
         }
         else {
-            for (int resultRow = 0; resultRow < resultRows; resultRow++) {
-                for (int resultCol = 0; resultCol < resultCols; resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            boolean maskedEntry = isMasked(stride * resultRow + targetRow, stride * resultCol + targetCol) || target.isMasked(targetMaxRow - targetRow, targetMaxCol - targetCol);
-                            if (!maskedEntry) {
-                                value += getValue(stride * resultRow + targetRow, stride * resultCol + targetCol) * target.getValue(targetMaxRow - targetRow, targetMaxCol - targetCol);
-                            }
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row) && !filter.getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col) && !filter.getMask(row, col) && !filter.getColMask(col)) {
+                            result += getValue(getSliceAtRow() + row, getSliceAtCol() + col) * filter.getValue(filter.getSliceAtRow() + filter.getSliceRowSize() - 1 - row, filter.getSliceAtCol() + filter.getSliceColSize() - 1 - col);
                         }
                     }
-                    result.addValue(resultRow, resultCol, value);
                 }
             }
         }
@@ -1470,70 +1559,26 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates convolution operation between source (this) matrix and target matrix.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or target matrix is masked.<br>
+     * Calculates gradient of convolution.
      *
-     * @param target target matrix.
-     * @param stride stride of convolution operation.
-     * @return result matrix of convolution operation. Calculates result side automatically.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param gradValue inner gradient value.
+     * @param result gradient of convolution operation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix convolve(Matrix target, int stride) throws MatrixException {
-        return convolve(target, getNewMatrix((getRows() - target.getRows()) / stride + 1, (getCols() - target.getCols()) / stride + 1), stride);
-    }
-
-    /**
-     * Calculates weight (dW) and output gradients towards previous layer (dEoP) for convolution operation.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or Wf or outP matrix is masked.<br>
-     *
-     * @param Wf weight (filter) matrix.
-     * @param outP output matrix of previous layer.
-     * @param dW gradients for weights (filters).
-     * @param dEoP output gradient towards previous layer.
-     * @param stride stride used for convolutional layer.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
-     */
-    public void convolveGrad(Matrix Wf, Matrix outP, Matrix dW, Matrix dEoP,  int stride) throws MatrixException {
-        int sourceRows = getRows();
-        int sourceCols = getCols();
-        int targetRows = Wf.getRows();
-        int targetCols = Wf.getCols();
-        int targetMaxRow = targetRows - 1;
-        int targetMaxCol = targetCols - 1;
-        int resultMaxRow = sourceRows + targetMaxRow - 1;
-        int resultMaxCol = sourceCols + targetMaxCol - 1;
-        if (outP.getRows() != getRows() + dW.getRows() - 1 || outP.getCols() != getCols() + dW.getCols() - 1) {
-            throw new MatrixException("Dimensions of source (dEi) matrix: " + getRows() + "x" + getCols() + " previous output (outP) matrix: " + outP.getRows() + "x" + outP.getCols() + " and result (dW) matrix: " + dW.getRows() + "x" + dW.getCols() + " are not matching.");
-        }
-        if (dEoP.getRows() != getRows() + Wf.getRows() - 1 || dEoP.getCols() != getCols() + Wf.getCols() - 1) {
-            throw new MatrixException("Dimensions of source (dEi) matrix: " + getRows() + "x" + getCols() + " previous gradient (dEoP) matrix: " + dEoP.getRows() + "x" + dEoP.getCols() + " and weight (W) matrix: " + Wf.getRows() + "x" + Wf.getCols() + " are not matching.");
-        }
-        if (!masked && !Wf.isMasked() && !outP.isMasked()) {
-            for (int sourceRow = 0; sourceRow < sourceRows; sourceRow++) {
-                for (int sourceCol = 0; sourceCol < sourceCols; sourceCol++) {
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            dW.addValue(targetRow, targetCol, getValue(sourceRow, sourceCol) * outP.getValue(resultMaxRow - (stride * sourceRow + targetRow), resultMaxCol - (stride * sourceCol + targetCol)));
-                            dEoP.addValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol, getValue(sourceRow, sourceCol) * Wf.getValue(targetMaxRow - targetRow, targetMaxCol - targetCol));
-                        }
-                    }
+    public void convolveGrad(double gradValue, Matrix result) throws MatrixException {
+        if (!masked) {
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    result.addValue(result.getSliceAtRow() + row, result.getSliceAtCol() + col, getValue(getSliceAtRow() + getSliceRowSize() - 1 - row, getSliceAtCol() + getSliceColSize() - 1 - col) * gradValue);
                 }
             }
         }
         else {
-            for (int sourceRow = 0; sourceRow < sourceRows; sourceRow++) {
-                for (int sourceCol = 0; sourceCol < sourceCols; sourceCol++) {
-                    if (!isMasked(sourceRow, sourceCol)) {
-                        for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                            for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                                boolean maskedEntry = Wf.isMasked(targetMaxRow - targetRow, targetMaxCol - targetCol) || outP.isMasked(resultMaxRow - (stride * sourceRow + targetRow), resultMaxCol - (stride * sourceCol + targetCol));
-                                if (!maskedEntry) {
-                                    dW.addValue(targetRow, targetCol, getValue(sourceRow, sourceCol) * outP.getValue(resultMaxRow - (stride * sourceRow + targetRow), resultMaxCol - (stride * sourceCol + targetCol)));
-                                    dEoP.addValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol, getValue(sourceRow, sourceCol) * Wf.getValue(targetMaxRow - targetRow, targetMaxCol - targetCol));
-                                }
-                            }
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col)) {
+                            result.addValue(result.getSliceAtRow() + row, result.getSliceAtCol() + col, getValue(getSliceAtRow() + getSliceRowSize() - 1 - row, getSliceAtCol() + getSliceColSize() - 1 - col) * gradValue);
                         }
                     }
                 }
@@ -1542,52 +1587,29 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates cross-correlation operation between source (this) matrix and target matrix.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or target matrix is masked.<br>
+     * Calculates cross-correlation between this matrix and filter matrix.
      *
-     * @param target target matrix.
-     * @param result result matrix of cross-correlation operation.
-     * @param stride stride of cross-correlation operation.
-     * @return result matrix of cross-correlation operation.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param filter filter matrix.
+     * @return calculated value of cross-correlation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix crosscorrelate(Matrix target, Matrix result, int stride) throws MatrixException {
-        int targetRows = target.getRows();
-        int targetCols = target.getCols();
-        int targetMaxRow = targetRows - 1;
-        int targetMaxCol = targetCols - 1;
-        int resultRows = result.getRows();
-        int resultCols = result.getCols();
-        if (resultRows + targetMaxRow != getRows() || resultCols + targetMaxCol != getCols()) {
-            throw new MatrixException("Dimensions of source (this) matrix: " + getRows() + "x" + getCols() + " target matrix: " + targetRows + "x" + targetCols + " and result matrix: " + resultRows + "x" + resultCols + " are not matching.");
-        }
-        if (!masked && !target.isMasked()) {
-            for (int resultRow = 0; resultRow < resultRows; resultRow++) {
-                for (int resultCol = 0; resultCol < resultCols; resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            value += getValue(stride * resultRow + targetRow, stride * resultCol + targetCol) * target.getValue(targetRow, targetCol);
-                        }
-                    }
-                    result.addValue(resultRow, resultCol, value);
+    public double crosscorrelate(Matrix filter) throws MatrixException {
+        double result = 0;
+        if (!masked) {
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    result += getValue(getSliceAtRow() + row, getSliceAtCol() + col) * filter.getValue(filter.getSliceAtRow() + row, filter.getSliceAtCol() + col);
                 }
             }
         }
         else {
-            for (int resultRow = 0; resultRow < resultRows; resultRow++) {
-                for (int resultCol = 0; resultCol < resultCols; resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            boolean maskedEntry = isMasked(stride * resultRow + targetRow, stride * resultCol + targetCol) || target.isMasked(targetRow, targetCol);
-                            if (!maskedEntry) {
-                                value += getValue(stride * resultRow + targetRow, stride * resultCol + targetCol) * target.getValue(targetRow, targetCol);
-                            }
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row) && !filter.getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col) && !filter.getMask(row, col) && !filter.getColMask(col)) {
+                            result += getValue(getSliceAtRow() + row, getSliceAtCol() + col) * filter.getValue(filter.getSliceAtRow() + row, filter.getSliceAtCol() + col);
                         }
                     }
-                    result.addValue(resultRow, resultCol, value);
                 }
             }
         }
@@ -1595,66 +1617,26 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates cross-correlation operation between source (this) matrix and target matrix.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or target matrix is masked.<br>
+     * Calculates gradient of cross-correlation.
      *
-     * @param target target matrix.
-     * @param stride stride of cross-correlation operation.
-     * @return result matrix of cross-correlation operation. Calculates result side automatically.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param gradValue inner gradient value.
+     * @param result gradient of cross-correlation operation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix crosscorrelate(Matrix target, int stride) throws MatrixException {
-        return crosscorrelate(target, getNewMatrix((getRows() - target.getRows()) / stride + 1, (getCols() - target.getCols()) / stride + 1), stride);
-    }
-
-    /**
-     * Calculates weight (dW) and output gradients towards previous layer (dEoP) for cross-correlation operation.<br>
-     * Uses given stride for source matrix.<br>
-     * Applies masking element wise if this or Wf or outP matrix is masked.<br>
-     *
-     * @param Wf weight (filter) matrix.
-     * @param outP output matrix of previous layer.
-     * @param dW gradients for weights (filters).
-     * @param dEoP output gradient towards previous layer.
-     * @param stride stride used for convolutional layer.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
-     */
-    public void crosscorrelateGrad(Matrix Wf, Matrix outP, Matrix dW, Matrix dEoP,  int stride) throws MatrixException {
-        int sourceRows = getRows();
-        int sourceCols = getCols();
-        int targetRows = Wf.getRows();
-        int targetCols = Wf.getCols();
-        if (outP.getRows() != getRows() + dW.getRows() - 1 || outP.getCols() != getCols() + dW.getCols() - 1) {
-            throw new MatrixException("Dimensions of source (dEi) matrix: " + getRows() + "x" + getCols() + " previous output (outP) matrix: " + outP.getRows() + "x" + outP.getCols() + " and result (dW) matrix: " + dW.getRows() + "x" + dW.getCols() + " are not matching.");
-        }
-        if (dEoP.getRows() != getRows() + Wf.getRows() - 1 || dEoP.getCols() != getCols() + Wf.getCols() - 1) {
-            throw new MatrixException("Dimensions of source (dEi) matrix: " + getRows() + "x" + getCols() + " previous gradient (dEoP) matrix: " + dEoP.getRows() + "x" + dEoP.getCols() + " and weight (W) matrix: " + Wf.getRows() + "x" + Wf.getCols() + " are not matching.");
-        }
-        if (!masked && !Wf.isMasked() && !outP.isMasked()) {
-            for (int sourceRow = 0; sourceRow < sourceRows; sourceRow++) {
-                for (int sourceCol = 0; sourceCol < sourceCols; sourceCol++) {
-                    for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                        for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                            dW.addValue(targetRow, targetCol, getValue(sourceRow, sourceCol) * outP.getValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol));
-                            dEoP.addValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol, getValue(sourceRow, sourceCol) * Wf.getValue(targetRow, targetCol));
-                        }
-                    }
+    public void crosscorrelateGrad(double gradValue, Matrix result) throws MatrixException {
+        if (!masked) {
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    result.addValue(result.getSliceAtRow() + row, result.getSliceAtCol() + col, getValue(getSliceAtRow() + row, getSliceAtCol() + col) * gradValue);
                 }
             }
         }
         else {
-            for (int sourceRow = 0; sourceRow < sourceRows; sourceRow++) {
-                for (int sourceCol = 0; sourceCol < sourceCols; sourceCol++) {
-                    if (!isMasked(sourceRow, sourceCol)) {
-                        for (int targetRow = 0; targetRow < targetRows; targetRow++) {
-                            for (int targetCol = 0; targetCol < targetCols; targetCol++) {
-                                boolean maskedEntry = Wf.isMasked(targetRow, targetCol) || outP.isMasked(stride * sourceRow + targetRow, stride * sourceCol + targetCol);
-                                if (!maskedEntry) {
-                                    dW.addValue(targetRow, targetCol, getValue(sourceRow, sourceCol) * outP.getValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol));
-                                    dEoP.addValue(stride * sourceRow + targetRow, stride * sourceCol + targetCol, getValue(sourceRow, sourceCol) * Wf.getValue(targetRow, targetCol));
-                                }
-                            }
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col)) {
+                            result.addValue(result.getSliceAtRow() + row, result.getSliceAtCol() + col, getValue(getSliceAtRow() + row, getSliceAtCol() + col) * gradValue);
                         }
                     }
                 }

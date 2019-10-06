@@ -84,6 +84,7 @@ public class SMatrix extends Matrix {
     public SMatrix(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
+        initializeSlice();
     }
 
     /**
@@ -99,6 +100,7 @@ public class SMatrix extends Matrix {
         this.rows = rows;
         this.cols = cols;
         init(initialization, inputs, outputs);
+        initializeSlice();
     }
 
     /**
@@ -112,26 +114,37 @@ public class SMatrix extends Matrix {
         this.rows = rows;
         this.cols = cols;
         init(initialization);
+        initializeSlice();
     }
 
     /**
      * Constructor for sparse matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param cols defines number of columns in matrix.
      * @param data clones matrix data from given matrix data.
      */
-    public SMatrix(HashMap<Integer, Double> data) {
+    public SMatrix(int rows, int cols, HashMap<Integer, Double> data) {
+        this.rows = rows;
+        this.cols = cols;
         for (Integer index : data.keySet()) matrix.put(index, data.get(index));
+        initializeSlice();
     }
 
     /**
      * Constructor for sparse matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param cols defines number of columns in matrix.
      * @param data matrix data.
      * @param referTo if true creates matrix with reference to given matrix data otherwise clones the data.
      */
-    public SMatrix(HashMap<Integer, Double> data, boolean referTo) {
+    public SMatrix(int rows, int cols, HashMap<Integer, Double> data, boolean referTo) {
+        this.rows = rows;
+        this.cols = cols;
         if (referTo) matrix.putAll(data);
         else for (Integer index : data.keySet()) matrix.put(index, data.get(index));
+        initializeSlice();
     }
 
     /**
@@ -140,6 +153,7 @@ public class SMatrix extends Matrix {
      */
     public void resetMatrix() {
         matrix = new HashMap<>();
+        initializeSlice();
     }
 
     /**

@@ -64,6 +64,7 @@ public class DMatrix extends Matrix {
      */
     public DMatrix(int rows, int cols) {
         matrix = new double[rows][cols];
+        initializeSlice();
     }
 
     /**
@@ -78,6 +79,7 @@ public class DMatrix extends Matrix {
     public DMatrix(int rows, int cols, Init initialization, int inputs, int outputs) {
         matrix = new double[rows][cols];
         init(initialization, inputs, outputs);
+        initializeSlice();
     }
 
     /**
@@ -90,6 +92,7 @@ public class DMatrix extends Matrix {
     public DMatrix(int rows, int cols, Init initialization) {
         matrix = new double[rows][cols];
         init(initialization);
+        initializeSlice();
     }
 
     /**
@@ -99,6 +102,7 @@ public class DMatrix extends Matrix {
      */
     public DMatrix(double[][] data) {
         matrix = data.clone();
+        initializeSlice();
     }
 
     /**
@@ -110,6 +114,7 @@ public class DMatrix extends Matrix {
     public DMatrix(double[][] data, boolean referTo) {
         if (referTo) matrix = data;
         else matrix = data.clone();
+        initializeSlice();
     }
 
     /**
@@ -118,6 +123,7 @@ public class DMatrix extends Matrix {
      */
     public void resetMatrix() {
         matrix = new double[matrix.length][matrix[0].length];
+        initializeSlice();
     }
 
     /**

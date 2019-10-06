@@ -97,12 +97,12 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UniFunctionType.RELU), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = 40");
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), "width = 40");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-//        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
+//        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION, "meanOnly = true");
         neuralNetwork.setLossFunction(BiFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
