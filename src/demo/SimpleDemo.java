@@ -7,9 +7,7 @@
 package demo;
 
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
-import core.loss.LossFunctionType;
 import core.metrics.MetricsType;
 import core.optimization.*;
 import core.preprocess.*;
@@ -87,11 +85,11 @@ public class SimpleDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.ELU), "width = 20");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.ELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = 20");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.setLossFunction(LossFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
         return neuralNetwork;
     }
 

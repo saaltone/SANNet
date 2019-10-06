@@ -34,7 +34,7 @@ public class Metrics {
      * Class that handles calculation of regression error.
      *
      */
-    static class Regression {
+    public static class Regression {
         /**
          * Number of error samples cumulated.
          *

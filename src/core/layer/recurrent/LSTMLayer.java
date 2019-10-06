@@ -8,25 +8,23 @@ package core.layer.recurrent;
 
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
 import utils.*;
 
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Class for Long Short Term Memory (LSTM)<br>
  * <br>
- * Reference: https://www.cs.toronto.edu/~tingwuwang/rnn_tutorial.pdf<br>
+ * Reference: https://en.wikipedia.org/wiki/Long_short-term_memory<br>
  * <br>
  * Equations applied for forward operation:<br>
  *   i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate<br>
  *   f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate<br>
+ *   o = sigmoid(Wo * x + Uo * out(t-1) + bo) → Output gate<br>
  *   s = tanh(Ws * x + Us * out(t-1) + bs) → State update<br>
  *   c = i x s + f x c-1 → Internal cell state<br>
- *   o = sigmoid(Wo * x + Uo * out(t-1) + bo) → Output gate<br>
  *   h = tanh(c) x o or h = c x o → Output<br>
  *
  */
@@ -105,34 +103,34 @@ public class LSTMLayer extends AbstractExecutionLayer {
     private Matrix bs;
 
     /**
+     * Matrix to store previous output.
+     *
+     */
+    private Matrix outPrev;
+
+    /**
+     * Matrix to store previous state.
+     *
+     */
+    private Matrix cPrev;
+
+    /**
      * Tanh activation function needed for LSTM
      *
      */
-    private final ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
+    private ActivationFunction tanh;
 
     /**
      * Sigmoid activation function needed for LSTM
      *
      */
-    private final ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
+    private ActivationFunction sigmoid;
 
     /**
      * Flag if tanh operation is performed also for last output function.
      *
      */
     private boolean doubleTanh = true;
-
-    /**
-     * Flag if state is reset prior start of next training sequence.
-     *
-     */
-    private boolean resetStateTraining = true;
-
-    /**
-     * Flag if state is reset prior start of next test sequence.
-     *
-     */
-    private boolean resetStateTesting = false;
 
     /**
      * Flag if direct (non-recurrent) weights are regulated.
@@ -147,77 +145,19 @@ public class LSTMLayer extends AbstractExecutionLayer {
     private boolean regulateRecurrentWeights = false;
 
     /**
-     * Stores previous output of layer.
-     *
-     */
-    private transient Matrix outPrev = null;
-
-    /**
-     * Stores previous state of layer.
-     *
-     */
-    private transient Matrix cPrev = null;
-
-    /**
-     * Stores outputs of input gate for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> iS;
-
-    /**
-     * Stores outputs of forget gate for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> fS;
-
-    /**
-     * Stores outputs of output gate for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> oS;
-
-    /**
-     * Stores outputs of state prior activation function for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> s_S;
-
-    /**
-     * Stores outputs of state post activation function for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> sS;
-
-    /**
-     * Stores outputs of internal cell state prior activation function for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> c_S;
-
-    /**
-     * Stores outputs of internal cell state post activation function for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> cS;
-
-    /**
      * Constructor for LSTM layer.
      *
      * @param parent reference to parent layer.
      * @param activation activation function used. Not relevant for this layer.
      * @param initialization intialization function for weight.
      * @param params parameters for LSTM layer.
+     * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LSTMLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    public LSTMLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (parent, activation, initialization, params);
+        tanh = new ActivationFunction(UniFunctionType.TANH);
+        sigmoid = new ActivationFunction(UniFunctionType.SIGMOID);
     }
 
     /**
@@ -335,195 +275,46 @@ public class LSTMLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Takes single forward processing step for recurrent layer to process sequence.<br>
-     * Executes LSTM forward step equations, stores intermediate values to cache and writes layer output.<br>
-     * Additionally applies any regularization defined for the layer.<br>
+     * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        backward.regulateForwardPre(getOutsP(), -1);
-        backward.normalizeForwardPre(getOutsP(), 1);
-
-        iS = new TreeMap<>();
-        fS = new TreeMap<>();
-        oS = new TreeMap<>();
-        s_S = new TreeMap<>();
-        sS = new TreeMap<>();
-        c_S = new TreeMap<>();
-        cS = new TreeMap<>();
-
-        parent.resetOuts();
-
-        if (backward.isTraining() && resetStateTraining) {
-            outPrev = null;
-            cPrev = null;
-        }
-        if (!backward.isTraining() && resetStateTesting) {
-            outPrev = null;
-            cPrev = null;
-        }
-
-        for (Integer index : getOutsP().keySet()) {
-            backward.regulateForwardPre(getOutsP(), index);
-
-            Matrix in = getOutsP().get(index);
-
-            // i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate
-            Matrix i = outPrev == null ? Wi.dot(in).add(bi) : Wi.dot(in).add(Ui.dot(outPrev)).add(bi);
-            i.apply(i, sigmoid.getFunction());
-            iS.put(index, i);
-
-            // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
-            Matrix f = outPrev == null ? Wf.dot(in).add(bf) : Wf.dot(in).add(Uf.dot(outPrev)).add(bf);
-            f.apply(f, sigmoid.getFunction());
-            fS.put(index, f);
-
-            // o = sigmoid(Wo * x + Uo * out(t-1) + bo) → Output gate
-            Matrix o = outPrev == null ? Wo.dot(in).add(bo) : Wo.dot(in).add(Uo.dot(outPrev)).add(bo);
-            o.apply(o, sigmoid.getFunction());
-            oS.put(index, o);
-
-            // s = tanh(Ws * x + Us * out(t-1) + bs) → State update
-            Matrix s = outPrev == null ? Ws.dot(in).add(bs) : Ws.dot(in).add(Us.dot(outPrev)).add(bs);
-            s_S.put(index, s);
-            s = s.apply(tanh.getFunction());
-            sS.put(index, s);
-
-            // c = i x s + f x c-1 → Internal cell state
-//            if (index > 0) cPrev = cS.get(index - 1);
-            Matrix c = (cPrev == null) ? i.multiply(s) : i.multiply(s).add(cPrev.multiply(f));
-            cPrev = c;
-            cS.put(index, c);
-
-            // h = tanh(c) x o or h = c x o → Output
-            Matrix c_ = doubleTanh ? c.apply(tanh.getFunction()) : c;
-            c_S.put(index, c_);
-            Matrix h = c_.multiply(o);
-            parent.getOuts().put(index, h);
-
-            outPrev = h;
-
-        }
-
-        backward.regulateForwardPost(parent.getOuts());
-        backward.normalizeForwardPost(parent.getOuts());
-
-        if (forward == null) parent.updateOutputError();
-    }
-
-    /**
-     * Takes single backward processing step for LSTM layer to process sequence.<br>
-     * Calculates gradients for weights and biases and gradient (error signal) towards previous layer.<br>
-     * Additionally applies any regularization defined for the layer.<br>
-     *
+     * @param input input of forward procedure.
+     * @param reset reset recurring inputs of procedure.
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
-        parent.resetOutGrads();
-
-        backward.resetGrad();
-
-        backward.regulateBackward(-1);
-
-        Matrix dhPrev = null;
-        Matrix dcPrev = null;
-        Matrix.MatrixUniOperation oneminusp2 = (value) -> 1 - Math.pow(value, 2);
-
-        TreeMap<Integer, Matrix> dWi = backward.getdWs(Wi);
-        TreeMap<Integer, Matrix> dWf = backward.getdWs(Wf);
-        TreeMap<Integer, Matrix> dWo = backward.getdWs(Wo);
-        TreeMap<Integer, Matrix> dWs = backward.getdWs(Ws);
-        TreeMap<Integer, Matrix> dUi = backward.getdWs(Ui);
-        TreeMap<Integer, Matrix> dUf = backward.getdWs(Uf);
-        TreeMap<Integer, Matrix> dUo = backward.getdWs(Uo);
-        TreeMap<Integer, Matrix> dUs = backward.getdWs(Us);
-        TreeMap<Integer, Matrix> dbi = backward.getdWs(bi);
-        TreeMap<Integer, Matrix> dbf = backward.getdWs(bf);
-        TreeMap<Integer, Matrix> dbo = backward.getdWs(bo);
-        TreeMap<Integer, Matrix> dbs = backward.getdWs(bs);
-        for (Integer index : parent.getOuts().descendingKeySet()) {
-            backward.regulateBackward(index);
-
-            // dh = do + dhPrev
-            Matrix dh = parent.getdEosN().get(index);
-            if (dhPrev != null) dh.add(dhPrev);
-
-            Matrix dou;
-            // do = dh * tanh(c) * dsigmoid(o) -> tanh(c) = c_
-            if (doubleTanh) dou = dh.multiply(c_S.get(index)).multiply(oS.get(index).apply(sigmoid.getDerivative()));
-            // do = dh * c * dsigmoid(o)
-            else dou = dh.multiply(cS.get(index)).multiply(oS.get(index).apply(sigmoid.getDerivative()));
-
-            Matrix dc;
-            // dc = dh * o * dtanh(c) + dcPrev -> dtanh(c) = 1 - c_^2
-            if (doubleTanh) dc = dh.multiply(oS.get(index)).multiply(cS.get(index).apply(tanh.getDerivative()));
-            // dc = dh * o + dcPrev
-            else dc = dh.multiply(oS.get(index));
-            if (dcPrev != null) dc.add(dcPrev);
-
-            // ds = dc * i * dtanh(s)
-            Matrix ds = dc.multiply(iS.get(index)).multiply(s_S.get(index).apply(tanh.getDerivative()));
-
-            // df = dc * ct-1 * dsigmoid(f)
-            Matrix df = null;
-            if (index > 0) df = dc.multiply(cS.get(index -1)).multiply(fS.get(index).apply(sigmoid.getDerivative()));
-
-            // di =  dc * s * dsigmoid(i)
-            Matrix di = dc.multiply(sS.get(index)).multiply(iS.get(index).apply(sigmoid.getDerivative()));
-
-            // Update weight deltas and previous layer delta
-            dhPrev = null;
-
-            Matrix outP = getOutsP().get(index).T();
-            Matrix outH = index > 0 ? parent.getOuts().get(index - 1).T() : null;
-
-            dWo.put(index, dou.dot(outP));
-            dbo.put(index, dou);
-            Matrix dEo = Wo.T().dot(dou);
-
-            if (index > 0) {
-                dUo.put(index, dou.dot(outH));
-                dhPrev = Uo.T().dot(dou);
-            }
-
-            if (df != null) {
-                dWf.put(index, df.dot(outP));
-                dbf.put(index, df);
-                dUf.put(index, df.dot(outH));
-                dEo.add(Wf.T().dot(df), dEo);
-                dhPrev.add(Uf.T().dot(df), dhPrev);
-            }
-
-            dWi.put(index, di.dot(outP));
-            dbi.put(index, di);
-            dEo.add(Wi.T().dot(di), dEo);
-
-            if (index > 0) {
-                dUi.put(index, di.dot(outH));
-                dhPrev.add(Ui.T().dot(di), dhPrev);
-            }
-
-            dWs.put(index, ds.dot(outP));
-            dbs.put(index, ds);
-            dEo.add(Ws.T().dot(ds), dEo);
-
-            if (index > 0) {
-                dUs.put(index, ds.dot(outH));
-                dhPrev.add(Us.T().dot(ds), dhPrev);
-            }
-
-            parent.getdEos().put(index, dEo);
-
-            // dcPrev = dc * f
-            dcPrev = dc.multiply(fS.get(index));
-
+    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
+        if (reset) {
+            outPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
+            cPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
         }
 
-        backward.normalizeBackward();
+        // i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate
+        Matrix i = Wi.dot(input).add(Ui.dot(outPrev)).add(bi);
+        i = i.apply(sigmoid);
 
-        backward.sumGrad();
+        // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
+        Matrix f = Wf.dot(input).add(Uf.dot(outPrev)).add(bf);
+        f = f.apply(sigmoid);
+
+        // o = sigmoid(Wo * x + Uo * out(t-1) + bo) → Output gate
+        Matrix o = Wo.dot(input).add(Uo.dot(outPrev)).add(bo);
+        o = o.apply(sigmoid);
+
+        // s = tanh(Ws * x + Us * out(t-1) + bs) → State update
+        Matrix s = Ws.dot(input).add(Us.dot(outPrev)).add(bs);
+        s = s.apply(tanh);
+
+        // c = i x s + f x c-1 → Internal cell state
+        Matrix c = i.multiply(s).add(cPrev.multiply(f));
+        cPrev = c;
+
+        // h = tanh(c) x o or h = c x o → Output
+        Matrix c_ = doubleTanh ? c.apply(tanh) : c;
+        Matrix h = c_.multiply(o);
+
+        outPrev = h;
+
+        return h;
 
     }
 

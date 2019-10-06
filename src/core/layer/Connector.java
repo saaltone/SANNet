@@ -143,9 +143,11 @@ public class Connector implements Serializable {
         dWSums = new HashMap<>();
         for (Matrix W : dWs.keySet()) {
             TreeMap<Integer, Matrix> dW = dWs.get(W);
-            Matrix dWSum = new DMatrix(dW.get(dW.firstKey()).getRows(), dW.get(dW.firstKey()).getCols());
-            for (Matrix dWItem : dW.values()) dWSum.add(dWItem, dWSum);
-            dWSums.put(W, dWSum);
+            if (dW.size() > 0) {
+                Matrix dWSum = new DMatrix(dW.get(dW.firstKey()).getRows(), dW.get(dW.firstKey()).getCols());
+                for (Matrix dWItem : dW.values()) dWSum.add(dWItem, dWSum);
+                dWSums.put(W, dWSum);
+            }
         }
     }
 
@@ -286,10 +288,9 @@ public class Connector implements Serializable {
      * Resets specific regularization for the connector (next layer).
      *
      * @param regularizationType regularization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reset of regularizer fails.
      */
-    public void resetRegularization(RegularizationType regularizationType) throws MatrixException, NeuralNetworkException {
+    public void resetRegularization(RegularizationType regularizationType) throws NeuralNetworkException {
         Regularization resetRegularization = null;
         for (Regularization regularization : regularizers) {
             if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) {
@@ -302,9 +303,8 @@ public class Connector implements Serializable {
     /**
      * Resets all regularization for the connector (next layer).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void resetRegularization() throws MatrixException {
+    public void resetRegularization() {
         for (Regularization regularization : regularizers) regularization.reset();
     }
 
@@ -441,9 +441,8 @@ public class Connector implements Serializable {
     /**
      * Resets regularizers, normalizers and optimizer of the connector.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reset() throws MatrixException {
+    public void reset() {
         for (Regularization regularization : regularizers) regularization.reset();
         for (Normalization normalization : normalizers) normalization.reset();
         optimizer.reset();
@@ -510,6 +509,15 @@ public class Connector implements Serializable {
     public void stateCompleted(boolean forwardDirection) {
         if (forwardDirection) getNLayer().stateCompleted(true);
         else getPLayer().stateCompleted(false);
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be reset.
+     *
+     * @param allowLayerReset if true allows reset.
+     */
+    public void setAllowLayerReset(boolean allowLayerReset) {
+        getNLayer().setAllowLayerReset(allowLayerReset);
     }
 
     /**
@@ -625,7 +633,9 @@ public class Connector implements Serializable {
     public void update() {
         try {
             for (Regularization regularizer : regularizers) regularizer.update();
-            for (Matrix W : opt) optimizer.optimize(W, dWSums.get(W));
+            for (Matrix W : opt) {
+                if (dWSums.containsKey(W)) optimizer.optimize(W, dWSums.get(W));
+            }
         }
         catch (MatrixException exception) {
             System.out.println(exception.toString());

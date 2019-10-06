@@ -14,7 +14,7 @@ import utils.MatrixException;
 import java.util.TreeMap;
 
 /**
- * Interface definition for neural network layer.
+ * Interface for neural network layer.
  *
  */
 public interface Layer {
@@ -103,6 +103,13 @@ public interface Layer {
      * @return outputs of neural network layer.
      */
     TreeMap<Integer, Matrix> getOuts(TreeMap<Integer, Matrix> outs);
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be reset.
+     *
+     * @param allowLayerReset if true allows reset.
+     */
+    void setAllowLayerReset(boolean allowLayerReset);
 
     /**
      * Initializes neural network layer.<br>

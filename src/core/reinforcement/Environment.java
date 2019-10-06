@@ -11,7 +11,7 @@ import utils.Matrix;
 import java.util.ArrayList;
 
 /**
- * Class that implements interface for environment.
+ * Interface for environment.
  *
  */
 public interface Environment {

@@ -8,13 +8,11 @@ package core.layer.recurrent;
 
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
 import utils.*;
 
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Implements gated recurrent unit (GRU) layer.<br>
@@ -85,34 +83,28 @@ public class GRULayer extends AbstractExecutionLayer {
     private Matrix bh;
 
     /**
+     * Ones matrix for calculation of z
+     *
+     */
+    private Matrix ones;
+
+    /**
+     * Matrix to store previous output
+     *
+     */
+    private Matrix outPrev;
+
+    /**
      * Tanh activation function needed for GRU
      *
      */
-    private final ActivationFunction tanh = new ActivationFunction(ActivationFunctionType.TANH);
+    private ActivationFunction tanh;
 
     /**
      * Sigmoid activation function needed for GRU
      *
      */
-    private final ActivationFunction sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
-
-    /**
-     * Stores previous output of layer.
-     *
-     */
-    private transient Matrix outPrev = null;
-
-    /**
-     * Flag if state is reset prior start of next training sequence.
-     *
-     */
-    private boolean resetStateTraining = true;
-
-    /**
-     * Flag if state is reset prior start of next test sequence.
-     *
-     */
-    private boolean resetStateTesting = false;
+    private ActivationFunction sigmoid;
 
     /**
      * Flag if direct (non-recurrent) weights are regulated.
@@ -127,37 +119,19 @@ public class GRULayer extends AbstractExecutionLayer {
     private boolean regulateRecurrentWeights = false;
 
     /**
-     * Stores outputs of update gate for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> zS;
-
-    /**
-     * Stores outputs of reset gate for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> rS;
-
-    /**
-     * Stores outputs of input activation for each sample.<br>
-     * Used as cache for backpropagation phase.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> hS;
-
-    /**
      * Constructor for GRU layer.
      *
      * @param parent reference to parent layer.
      * @param activation activation function used. Not relevant for this layer.
      * @param initialization intialization function for weight.
      * @param params parameters for GRU layer.
+     * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GRULayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    public GRULayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (parent, activation, initialization, params);
+        tanh = new ActivationFunction(UniFunctionType.TANH);
+        sigmoid = new ActivationFunction(UniFunctionType.SIGMOID);
     }
 
     /**
@@ -260,149 +234,36 @@ public class GRULayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Takes single forward processing step for GRU layer to process sequence.<br>
-     * Executes GRU forward step equations, stores intermediate values to cache and writes layer output.<br>
-     * Additionally applies any regularization defined for the layer.<br>
+     * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        backward.regulateForwardPre(getOutsP(), -1);
-        backward.normalizeForwardPre(getOutsP(), 1);
-
-        zS = new TreeMap<>();
-        rS = new TreeMap<>();
-        hS = new TreeMap<>();
-
-        parent.resetOuts();
-
-        if (backward.isTraining() && resetStateTraining) outPrev = null;
-        if (!backward.isTraining() && resetStateTesting) outPrev = null;
-
-        for (Integer index : getOutsP().keySet()) {
-            backward.regulateForwardPre(getOutsP(), index);
-
-            Matrix in = getOutsP().get(index);
-
-            // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
-            Matrix z = outPrev == null ? Wz.dot(in).add(bz) : Wz.dot(in).add(Uz.dot(outPrev)).add(bz);
-            z.apply(z, sigmoid.getFunction());
-            zS.put(index, z);
-
-            // r = sigmoid(Wr * x + Ur * out(t-1) + br) → Reset gate
-            Matrix r = outPrev == null ? Wr.dot(in).add(br) : Wr.dot(in).add(Ur.dot(outPrev)).add(br);
-            r.apply(r, sigmoid.getFunction());
-            rS.put(index, r);
-
-            // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
-            Matrix h = outPrev == null ? Wh.dot(in).add(bh) : Wh.dot(in).add(Uh.dot(outPrev).multiply(r)).add(bh);
-            h.apply(h, tanh.getFunction());
-            hS.put(index, h);
-
-            // s = (1 - z) x h + z x out(t-1) → Internal state
-            Matrix.MatrixUniOperation oneneg = (value) -> 1 - value;
-            Matrix s = outPrev == null ? z.apply(oneneg).multiply(h) : z.apply(oneneg).multiply(h).add(z.multiply(outPrev));
-            parent.getOuts().put(index, s);
-
-            outPrev = s;
-
-        }
-
-        backward.regulateForwardPost(parent.getOuts());
-        backward.normalizeForwardPost(parent.getOuts());
-
-        if (forward == null) parent.updateOutputError();
-    }
-
-    /**
-     * Takes single backward processing step for GRU layer to process sequence.<br>
-     * Calculates gradients for weights and biases and gradient (error signal) towards previous layer.<br>
-     * Additionally applies any regularization defined for the layer.<br>
-     *
+     * @param input input of forward procedure.
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
-        parent.resetOutGrads();
+    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
+        if (reset) outPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
 
-        backward.resetGrad();
+        // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
+        Matrix z = Wz.dot(input).add(Uz.dot(outPrev)).add(bz);
+        z = z.apply(sigmoid);
 
-        backward.regulateBackward(-1);
+        // r = sigmoid(Wr * x + Ur * out(t-1) + br) → Reset gate
+        Matrix r = Wr.dot(input).add(Ur.dot(outPrev)).add(br);
+        r = r.apply(sigmoid);
 
-        Matrix dsPrev = null;
+        // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
+        Matrix h = Wh.dot(input).add(Uh.dot(outPrev).multiply(r)).add(bh);
+        h = h.apply(tanh);
 
-        TreeMap<Integer, Matrix> dWz = backward.getdWs(Wz);
-        TreeMap<Integer, Matrix> dWr = backward.getdWs(Wr);
-        TreeMap<Integer, Matrix> dWh = backward.getdWs(Wh);
-        TreeMap<Integer, Matrix> dUz = backward.getdWs(Uz);
-        TreeMap<Integer, Matrix> dUr = backward.getdWs(Ur);
-        TreeMap<Integer, Matrix> dUh = backward.getdWs(Uh);
-        TreeMap<Integer, Matrix> dbz = backward.getdWs(bz);
-        TreeMap<Integer, Matrix> dbr = backward.getdWs(br);
-        TreeMap<Integer, Matrix> dbh = backward.getdWs(bh);
-        for (Integer index : parent.getOuts().descendingKeySet()) {
-            backward.regulateBackward(index);
+        // s = (1 - z) x h + z x out(t-1) → Internal state
+        ones = (ones == null) ? new DMatrix(z.getRows(), z.getCols(), Init.ONE) : ones;
+        Matrix s = ones.subtract(z).multiply(h).add(z.multiply(outPrev));
 
-            // ds = do + dsPrev
-            Matrix ds = parent.getdEosN().get(index);
-            if (dsPrev != null) ds.add(dsPrev);
+        outPrev = s;
 
-            // dh = ds * (1 - z) * dtanh(h)
-            Matrix.MatrixUniOperation oneminus = (value) -> 1 - value;
-            Matrix dh = ds.multiply(zS.get(index).apply(oneminus)).multiply(hS.get(index).apply(tanh.getDerivative()));
-
-            // dr = UhT x dh * st-1 * dsigmoid(r)
-            Matrix dr = null;
-            Matrix drp = Uh.T().dot(dh);
-            if (index > 0) dr = drp.multiply(parent.getOuts().get(index - 1)).multiply(rS.get(index).apply(sigmoid.getDerivative()));
-
-            // dz = ds * (st-1 - h) * dsigmoid(z);
-            Matrix dz = null;
-            if (index > 0) dz = ds.multiply(parent.getOuts().get(index - 1).subtract(hS.get(index))).multiply(zS.get(index).apply(sigmoid.getDerivative()));
-
-            Matrix dEo = null;
-            dsPrev = null;
-
-            // Update weight deltas and previous layer delta
-            if (dr != null) {
-                dWr.put(index, dr.dot(getOutsP().get(index).T()));
-                dbr.put(index, dr);
-                dEo = Wr.T().dot(dr);
-
-                dUr.put(index, dr.dot(parent.getOuts().get(index - 1).T()));
-                dsPrev = Ur.T().dot(dr);
-            }
-
-            if (dz != null) {
-                dWz.put(index, dz.dot(getOutsP().get(index).T()));
-                dbz.put(index, dz);
-                if (dEo == null) dEo = Wz.T().dot(dz);
-                else dEo.add(Wz.T().dot(dz), dEo);
-
-                dUz.put(index, dz.dot(parent.getOuts().get(index - 1).T()));
-                if (dsPrev == null) dsPrev = Uz.T().dot(dz).add(ds.multiply(zS.get(index)));
-                else dsPrev.add(Uz.T().dot(dz).add(ds.multiply(zS.get(index))), dsPrev);
-            }
-
-            dWh.put(index, dh.dot(getOutsP().get(index).T()));
-            dbh.put(index, dh);
-            if (dEo == null) dEo = Wh.T().dot(dh);
-            else dEo.add(Wh.T().dot(dh), dEo);
-
-            if (index > 0) {
-                dUh.put(index, dh.dot(parent.getOuts().get(index - 1).multiply(rS.get(index)).T()));
-                if (dsPrev == null) dsPrev = drp.multiply(rS.get(index));
-                else dsPrev.add(drp.multiply(rS.get(index)), dsPrev);
-            }
-
-            parent.getdEos().put(index, dEo);
-
-        }
-
-        backward.normalizeBackward();
-
-        backward.sumGrad();
+        return s;
 
     }
 
 }
+

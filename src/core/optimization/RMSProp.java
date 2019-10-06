@@ -6,11 +6,7 @@
 
 package core.optimization;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
-import utils.DMatrix;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.*;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -146,7 +142,7 @@ public class RMSProp implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        M.subtract(mEg2.add(epsilon).sqrt().mulinv().multiply(learningRate * miniBatchFactor).multiply(dM), M);
+        M.subtract(mEg2.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(dM), M);
     }
 
 }

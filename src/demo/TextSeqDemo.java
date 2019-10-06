@@ -7,9 +7,7 @@
 package demo;
 
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
-import core.loss.LossFunctionType;
 import core.metrics.MetricsType;
 import core.optimization.*;
 import core.preprocess.*;
@@ -38,7 +36,7 @@ public class TextSeqDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            String persistenceName = "/home/jack/Downloads/TextSeqNN";
+            String persistenceName = "<path>/TextSeqNN";
             int numOfInputs = 5;
             HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
@@ -65,6 +63,8 @@ public class TextSeqDemo {
                     if (input.getValue(row, 0) == 1) letters[index++] = row;
                 }
                 for (int pos = 0; pos < 1000; pos++) {
+                    if (pos == 0) neuralNetwork.setAllowLayerReset(true);
+                    else neuralNetwork.setAllowLayerReset(false);
                     int nextLetter = neuralNetwork.predict(input).argmax()[0];
                     System.out.print((char)ReadTextFile.intTochar(nextLetter));
                     for (int charIndex = 0; charIndex < numOfChars - 1; charIndex++) {
@@ -76,6 +76,7 @@ public class TextSeqDemo {
                         input.setValue(letters[charIndex], 0, 1);
                     }
                 }
+                neuralNetwork.setAllowLayerReset(true);
                 System.out.println();
             }
             neuralNetwork.stop();
@@ -100,11 +101,11 @@ public class TextSeqDemo {
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 200");
         neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.1");
-        neuralNetwork.setLossFunction(LossFunctionType.CROSS_ENTROPY);
+        neuralNetwork.setLossFunction(BiFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 
@@ -116,7 +117,8 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     private static HashMap<Integer, LinkedHashMap<Integer, Matrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        return ReadTextFile.readFile("/home/jack/Downloads/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
+        HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = ReadTextFile.readFile("<path>/<file>.txt", numOfInputs, 1, numOfInputs, 0);
+        return data;
     }
 
 }

@@ -13,7 +13,6 @@ import core.layer.AbstractLayer;
 import utils.*;
 
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Implements non-recurrent feed forward layer.
@@ -46,9 +45,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @param activation activation function used.
      * @param initialization intialization function for weight.
      * @param params parameters for feed forward layer.
+     * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FeedforwardLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    public FeedforwardLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (parent, activation, initialization, params);
     }
 
@@ -113,70 +113,19 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Takes single forward processing step for feed forward layer to process input(s).<br>
-     * Applies weight dot product to input and adds bias finally applying activation function (non-linearity).<br>
-     * Additionally applies any regularization defined for the layer.<br>
+     * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        backward.regulateForwardPre(getOutsP(), -1);
-        backward.normalizeForwardPre(getOutsP(), 1);
-
-        parent.resetOuts();
-
-        for (Integer index : getOutsP().keySet()) {
-            backward.regulateForwardPre(getOutsP(), index);
-
-            Matrix output = W.dot(getOutsP().get(index)).add(B);
-            parent.getOuts().put(index, output);
-
-        }
-
-        applyActivationFunction(parent.getOuts());
-
-        backward.regulateForwardPost(parent.getOuts());
-        backward.normalizeForwardPost(parent.getOuts());
-
-        if (forward == null) parent.updateOutputError();
-    }
-
-    /**
-     * Takes single backward processing step for feed forward layer to process input(s).<br>
-     * Calculates gradients for weights and biases and gradient (error signal) towards previous layer.<br>
-     * Additionally applies any regularization defined for the layer.<br>
-     *
+     * @param input input of forward procedure.
+     * @param reset reset recurring inputs of procedure.
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
-        parent.resetOutGrads();
+    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
+        Matrix output = W.dot(input).add(B);
+        output = output.apply(activation);
 
-        backward.resetGrad();
-
-        backward.regulateBackward(-1);
-
-        TreeMap<Integer, Matrix> dW = backward.getdWs(W);
-        TreeMap<Integer, Matrix> dB = backward.getdWs(B);
-        for (Integer index : parent.getOuts().descendingKeySet()) {
-            backward.regulateBackward(index);
-
-            Matrix out = parent.getOuts().get(index);
-            Matrix dEo = parent.getdEosN().get(index);
-            Matrix dEi = getdEi(out, dEo);
-
-            parent.getdEos().put(index, W.T().dot(dEi));
-
-            dW.put(index, dEi.dot(getOutsP().get(index).T()));
-            dB.put(index, dEi);
-
-        }
-
-        backward.normalizeBackward();
-
-        backward.sumGrad();
+        return output;
 
     }
 
 }
-

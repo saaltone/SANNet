@@ -12,8 +12,10 @@ package core.layer;
  *     FEEDFORWARD,
  *     RECURRENT,
  *     LSTM,
+ *     PEEPHOLELSTM,
  *     GRAVESLSTM,
  *     GRU,
+ *     MINGRU,
  *     CONVOLUTIONAL,
  *     POOLING
  *
@@ -23,8 +25,10 @@ public enum LayerType {
     FEEDFORWARD,
     RECURRENT,
     LSTM,
+    PEEPHOLELSTM,
     GRAVESLSTM,
     GRU,
+    MINGRU,
     CONVOLUTIONAL,
     POOLING
 

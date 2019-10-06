@@ -15,7 +15,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import core.activation.ActivationFunction;
 import core.layer.*;
 import core.loss.LossFunction;
-import core.loss.LossFunctionType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.optimization.OptimizerFactory;
@@ -428,10 +427,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Resets regularization for all neural network connectors (layers).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
      */
-    public void resetRegularization() throws MatrixException, NeuralNetworkException {
+    public void resetRegularization() throws NeuralNetworkException {
         checkStarted();
         for (Connector connector : connectors) connector.resetRegularization();
     }
@@ -440,10 +438,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Resets regularization of specific type for all neural network connectors (layers).
      *
      * @param regularizationType regularization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
      */
-    public void resetRegularization(RegularizationType regularizationType) throws MatrixException, NeuralNetworkException {
+    public void resetRegularization(RegularizationType regularizationType) throws NeuralNetworkException {
         checkStarted();
         for (Connector connector : connectors) connector.resetRegularization(regularizationType);
     }
@@ -452,10 +449,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Resets regularization for specific neural network connector (layer).
      *
      * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
      */
-    public void resetRegularization(int connectorIndex) throws MatrixException, NeuralNetworkException {
+    public void resetRegularization(int connectorIndex) throws NeuralNetworkException {
         checkStarted();
         if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
         connectors.get(connectorIndex).resetRegularization();
@@ -466,10 +462,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
      * @param regularizationType regularization method to be reset.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
      */
-    public void resetRegularization(int connectorIndex, RegularizationType regularizationType) throws MatrixException, NeuralNetworkException {
+    public void resetRegularization(int connectorIndex, RegularizationType regularizationType) throws NeuralNetworkException {
         checkStarted();
         if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
         connectors.get(connectorIndex).resetRegularization(regularizationType);
@@ -701,16 +696,15 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param lossFunctionType type of loss function.
      * @throws NeuralNetworkException throws exception if setting of loss function fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setLossFunction(LossFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException {
+    public void setLossFunction(BiFunctionType lossFunctionType) throws NeuralNetworkException {
         checkStarted();
         if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
         LossFunction lossFunction = new LossFunction(lossFunctionType);
         getOutputLayer().setLossFunction(lossFunction);
     }
 
-    public void setLossFunction(LossFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
+    public void setLossFunction(BiFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
         if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
         LossFunction lossFunction = new LossFunction(lossFunctionType, params);
@@ -1041,6 +1035,19 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Sets if recurrent inputs of layer are allowed to be reset.<br>
+     * Useful when long input sequence is applied over multiple inferences (prediction) requests.<br>
+     *
+     * @param allowLayerReset if true recurrent inputs are allowed to be reset.
+     * @throws NeuralNetworkException throws exception if neural network is not started.
+     */
+    public void setAllowLayerReset(boolean allowLayerReset) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        getInputLayer().setAllowLayerReset(allowLayerReset);
+    }
+
+    /**
      * Sets training sample sets of neural network.<br>
      * Equal indices of input and output reflect input output pair of neural network.<br>
      *
@@ -1197,7 +1204,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             throw new NeuralNetworkException("No training inputs and outputs set");
         }
         this.reset = reset;
-        nextState(ExecutionState.TRAIN);
+        nextState(ExecutionState.TRAIN, false);
         if (waitToComplete) waitToComplete();
     }
 
@@ -1314,7 +1321,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             lock.unlock();
             throw new NeuralNetworkException("No prediction inputs set");
         }
-        nextState(ExecutionState.PREDICT);
+        nextState(ExecutionState.PREDICT, false);
         if (waitToComplete) {
             waitToComplete();
             return new LinkedHashMap<>(getOutput());
@@ -1429,16 +1436,18 @@ public class NeuralNetwork implements Runnable, Serializable {
             lock.unlock();
             throw new NeuralNetworkException("No validation inputs and actual set");
         }
-        nextState(ExecutionState.VALIDATE);
+        nextState(ExecutionState.VALIDATE, false);
         if (waitToComplete) waitToComplete();
     }
 
     /**
      * Sets next state for neural network.
-     *  @param executionState next state for neural network.
      *
+     * @param executionState next state for neural network.
+     * @param setLock if true sets lock for neural network otherwise not.
      */
-    private void nextState(ExecutionState executionState) {
+    private void nextState(ExecutionState executionState, boolean setLock) {
+        if (setLock) lock.lock();
         this.executionState = executionState;
         execute.signal();
         lock.unlock();

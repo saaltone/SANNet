@@ -6,6 +6,7 @@
 
 package core.layer;
 
+import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.DynamicParamException;
 import utils.Matrix;
@@ -28,8 +29,9 @@ public class HiddenLayer extends AbstractLayer {
      * @param initialization initialization functio for hidden layer.
      * @param params parameters for hidden layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public HiddenLayer(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws DynamicParamException {
+    public HiddenLayer(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super(layerIndex);
         super.setExecutionLayer(LayerFactory.create(layerType, this, activationFunction, initialization, params));
     }

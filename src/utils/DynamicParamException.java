@@ -16,7 +16,7 @@ public class DynamicParamException extends Exception {
      * Verbal text of exception cause.
      *
      */
-    private final String cause;
+    final String cause;
 
     /**
      * Default constructor for exception.

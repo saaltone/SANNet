@@ -188,7 +188,7 @@ public class AMSGrad implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        M.subtract(vM.add(epsilon).sqrt().mulinv().multiply(mM).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(vM.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(mM).multiply(learningRate * miniBatchFactor), M);
 
         iter++;
 

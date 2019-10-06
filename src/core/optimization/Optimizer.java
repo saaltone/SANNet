@@ -12,7 +12,7 @@ import utils.Matrix;
 import utils.MatrixException;
 
 /**
- * Defines interface for optimizers.
+ * Interface for optimizers.
  *
  */
 public interface Optimizer {

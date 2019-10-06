@@ -28,6 +28,13 @@ public class Adamax implements Optimizer, Serializable {
     private double learningRate = 0.001;
 
     /**
+     * Epsilon term for Adamax. Default value 10E-8.<br>
+     * Term provides mathematical stability for optimizer.<br>
+     *
+     */
+    private final double epsilon = 10E-8;
+
+    /**
      * Beta1 term for Adamax. Default value 0.9.
      *
      */
@@ -172,7 +179,7 @@ public class Adamax implements Optimizer, Serializable {
         if (v.containsKey(M)) vM = v.get(M);
         else v.put(M, vM = new DMatrix(M.getRows(), M.getCols()));
 
-        Matrix dM_abs = dM.abs();
+        Matrix dM_abs = dM.apply(UniFunctionType.ABS);
 
         // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(dM.multiply(1 - beta1), mM);
@@ -187,7 +194,7 @@ public class Adamax implements Optimizer, Serializable {
         Matrix uM = vM.multiply(beta2).max(dM_abs);
 
         // θt+1 = θt − η / ut * mt
-        M.subtract(uM.mulinv().multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(uM.apply(UniFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
 
         iter++;
     }

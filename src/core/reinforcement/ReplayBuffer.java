@@ -16,7 +16,7 @@ import java.util.*;
  * Reference: https://arxiv.org/pdf/1511.05952.pdf<br>
  *
  */
-public class ReplayBuffer {
+class ReplayBuffer {
 
     /**
      * Random number generator.

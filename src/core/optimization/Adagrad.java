@@ -133,7 +133,7 @@ public class Adagrad implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        M.subtract(dM.multiply(dM2Sum.add(epsilon).sqrt().mulinv().multiply(learningRate * miniBatchFactor)), M);
+        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor)), M);
     }
 
 }

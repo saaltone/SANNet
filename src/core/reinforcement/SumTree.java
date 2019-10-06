@@ -12,7 +12,7 @@ package core.reinforcement;
  * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay and https://github.com/jaromiru/AI-blog/blob/master/SumTree.py<br>
  *
  */
-public class SumTree {
+class SumTree {
 
     /**
      * Current index of sample.

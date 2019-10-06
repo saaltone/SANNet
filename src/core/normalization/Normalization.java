@@ -14,7 +14,7 @@ import utils.MatrixException;
 import java.util.TreeMap;
 
 /**
- * Defines interface for normalization functions.
+ * Interface for normalization functions.
  *
  */
 public interface Normalization {

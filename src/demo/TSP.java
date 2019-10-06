@@ -1,21 +1,22 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2019 Simo Aaltonen
+ *
+ ********************************************************/
+
 package demo;
 
 import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
-import core.loss.LossFunctionType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
-import utils.DMatrix;
-import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -139,11 +140,12 @@ public class TSP implements Environment {
      *
      * @param cityAmount number of cities to be visited.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    public TSP(int cityAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         for (int city = 0; city < cityAmount; city++) cities.put(city, new City(10 * random.nextDouble(), 10 * random.nextDouble()));
         agent = createAgent(2 * cityAmount, cityAmount);
     }
@@ -179,7 +181,7 @@ public class TSP implements Environment {
      *
      * @return total distance travelling salesman has travelled.
      */
-    public double getTotalDistance() {
+    private double getTotalDistance() {
         return totalDistance;
     }
 
@@ -227,7 +229,7 @@ public class TSP implements Environment {
     public static void main(String[] args) {
         TSP tsp;
         try {
-            tsp = new TSP(10);
+            tsp = new TSP(50);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
                 int illegalMoves = tsp.route(tour % 10 == 0);
@@ -332,7 +334,7 @@ public class TSP implements Environment {
                     visitedCitiesMax = visitedCities;
                 }
             }
-            return 2 * (maxDistance / cities.size() - distance);
+            return 0.5 * (maxDistance / cities.size() - distance);
         }
     }
 
@@ -352,7 +354,7 @@ public class TSP implements Environment {
      *
      * @return minimum journey travelling salesman has taken.
      */
-    public double getMinDistance() {
+    private double getMinDistance() {
         return minDistance;
     }
 
@@ -361,7 +363,7 @@ public class TSP implements Environment {
      *
      * @return maximum journey travelling salesman has taken.
      */
-    public double getMaxDistance() {
+    private double getMaxDistance() {
         return maxDistance;
     }
 
@@ -395,7 +397,7 @@ public class TSP implements Environment {
          *
          * @param newDrawCities list of cities to be drawn.
          */
-        public void addCities(ArrayList<Integer> newDrawCities, ArrayList<Integer> newPreviousDrawCities) {
+        void addCities(ArrayList<Integer> newDrawCities, ArrayList<Integer> newPreviousDrawCities) {
             drawCities.clear();
             drawCities.addAll(newDrawCities);
             if (newPreviousDrawCities != null) {
@@ -459,7 +461,7 @@ public class TSP implements Environment {
      * Initialized window for travelling salesman problem.
      *
      */
-    public void initWindow() {
+    private void initWindow() {
         JFrame.setDefaultLookAndFeelDecorated(true);
         jFrame = new JFrame("Travelling Salesman Problem");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -483,7 +485,7 @@ public class TSP implements Environment {
      *
      * @return current value of epsilon.
      */
-    public double getEpsilon() {
+    private double getEpsilon() {
         return agent.getEpsilon();
     }
 
@@ -492,26 +494,19 @@ public class TSP implements Environment {
      *
      * @param redraw if true current journey is drawn to window.
      * @return number of illegal moves taken by deep agent.
-     * @throws AgentException throws exception if agent operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private int route(boolean redraw) throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private int route(boolean redraw) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         int illegalMoves = 0;
         resetRoute();
         while (!(visitedCities.size() == cities.size() + 1)) {
             getAgent().newStep();
-            try {
-                if (!getAgent().act(false)) {
-                    illegalMoves++;
-                    getAgent().act(true);
-                }
-            }
-            catch (AgentException agentException) {
-                System.out.println(agentException.toString());
-                System.exit(-1);
+            if (!getAgent().act(false, false)) {
+                illegalMoves++;
+                getAgent().act(false, true);
             }
             getAgent().updateValue();
         }
@@ -534,7 +529,7 @@ public class TSP implements Environment {
      * Stops deep agent.
      *
      */
-    public void stop() {
+    private void stop() {
         agent.stop();
     }
 
@@ -544,12 +539,13 @@ public class TSP implements Environment {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0");
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
         agent.start();
         return agent;
     }
@@ -566,13 +562,13 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + outputSize);
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(LossFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(50);
         neuralNetwork.verboseTraining(100);

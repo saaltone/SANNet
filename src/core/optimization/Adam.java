@@ -191,7 +191,7 @@ public class Adam implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        M.subtract(vM_hat.add(epsilon).sqrt().mulinv().multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(vM_hat.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
 
         iter++;
     }

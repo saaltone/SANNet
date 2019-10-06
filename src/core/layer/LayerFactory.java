@@ -8,13 +8,9 @@ package core.layer;
 
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.layer.convolutional.ConvolutionalLayer;
-import core.layer.convolutional.PoolingLayer;
-import core.layer.feedforward.FeedforwardLayer;
-import core.layer.recurrent.GRULayer;
-import core.layer.recurrent.GravesLSTMLayer;
-import core.layer.recurrent.LSTMLayer;
-import core.layer.recurrent.RecurrentLayer;
+import core.layer.convolutional.*;
+import core.layer.feedforward.*;
+import core.layer.recurrent.*;
 import utils.DynamicParamException;
 import utils.Init;
 
@@ -34,8 +30,9 @@ public class LayerFactory {
      * @param params parameters for layer.
      * @return created neural network layer instance
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public static Layer create(LayerType layerType, AbstractLayer abstractLayer, ActivationFunction activationFunction, Init intialization, String params) throws DynamicParamException {
+    public static Layer create(LayerType layerType, AbstractLayer abstractLayer, ActivationFunction activationFunction, Init intialization, String params) throws DynamicParamException, NeuralNetworkException {
         switch (layerType) {
             case FEEDFORWARD:
                 return new FeedforwardLayer(abstractLayer, activationFunction, intialization, params);
@@ -43,10 +40,14 @@ public class LayerFactory {
                 return new RecurrentLayer(abstractLayer, activationFunction, intialization, params);
             case LSTM:
                 return new LSTMLayer(abstractLayer, activationFunction, intialization, params);
+            case PEEPHOLELSTM:
+                return new PeepholeLSTMLayer(abstractLayer, activationFunction, intialization, params);
             case GRAVESLSTM:
                 return new GravesLSTMLayer(abstractLayer, activationFunction, intialization, params);
             case GRU:
                 return new GRULayer(abstractLayer, activationFunction, intialization, params);
+            case MINGRU:
+                return new MinGRULayer(abstractLayer, activationFunction, intialization, params);
             case CONVOLUTIONAL:
                 return new ConvolutionalLayer(abstractLayer, activationFunction, intialization, params);
             case POOLING:
@@ -66,8 +67,10 @@ public class LayerFactory {
         if (layer instanceof FeedforwardLayer) return LayerType.FEEDFORWARD;
         if (layer instanceof RecurrentLayer) return LayerType.RECURRENT;
         if (layer instanceof LSTMLayer) return LayerType.LSTM;
+        if (layer instanceof PeepholeLSTMLayer) return LayerType.PEEPHOLELSTM;
         if (layer instanceof GravesLSTMLayer) return LayerType.GRAVESLSTM;
         if (layer instanceof GRULayer) return LayerType.GRU;
+        if (layer instanceof MinGRULayer) return LayerType.MINGRU;
         if (layer instanceof ConvolutionalLayer) return LayerType.CONVOLUTIONAL;
         if (layer instanceof PoolingLayer) return LayerType.POOLING;
         throw new NeuralNetworkException("Unknown layer type");
@@ -84,8 +87,10 @@ public class LayerFactory {
         if (layer instanceof FeedforwardLayer) return "FEEDFORWARD";
         if (layer instanceof RecurrentLayer) return "RECURRENT";
         if (layer instanceof LSTMLayer) return "LSTM";
+        if (layer instanceof PeepholeLSTMLayer) return "PEEPHOLELSTM";
         if (layer instanceof GravesLSTMLayer) return "GRAVESLSTM";
         if (layer instanceof GRULayer) return "GRU";
+        if (layer instanceof MinGRULayer) return "MINGRU";
         if (layer instanceof ConvolutionalLayer) return "CONVOLUTIONAL";
         if (layer instanceof PoolingLayer) return "POOLING";
         throw new NeuralNetworkException("Unknown layer type");

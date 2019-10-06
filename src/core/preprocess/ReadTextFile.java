@@ -105,7 +105,7 @@ public class ReadTextFile {
      * @param charAt character to be mapped.
      * @return mapped character value.
      */
-    private static int charToInt(int charAt) {
+    public static int charToInt(int charAt) {
         int mappedChar = 0;
         if (charAt >= 48 && charAt <= 57) mappedChar = charAt - 47;
         if (charAt >= 97 && charAt <= 122) mappedChar = charAt - 86;

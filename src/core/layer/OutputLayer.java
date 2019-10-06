@@ -9,7 +9,6 @@ package core.layer;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.loss.LossFunction;
-import core.loss.LossFunctionType;
 import utils.*;
 
 import java.util.TreeMap;
@@ -24,7 +23,7 @@ public class OutputLayer extends AbstractLayer {
      * Neural network loss function for output layer.
      *
      */
-    private LossFunction lossFunction = new LossFunction(LossFunctionType.MEAN_SQUARED_ERROR);
+    private LossFunction lossFunction = new LossFunction(BiFunctionType.MEAN_SQUARED_ERROR);
 
     /**
      * Neural network output error.
@@ -52,9 +51,10 @@ public class OutputLayer extends AbstractLayer {
      * @param activationFunction activation function for output layer.
      * @param initialization initialization function for output layer.
      * @param params parameters for output layer.
+     * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public OutputLayer(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws DynamicParamException {
+    public OutputLayer(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super(layerIndex);
         super.setExecutionLayer(LayerFactory.create(layerType, this, activationFunction, initialization, params));
     }
@@ -137,7 +137,7 @@ public class OutputLayer extends AbstractLayer {
         if (targets.isEmpty()) return;
         if (targets.size() != getOuts().size()) throw new NeuralNetworkException("Target size: "+ targets.size() + " is not matching with output size: " + getOuts().size());
         for (Integer index : targets.keySet()) {
-            Matrix loss = targets.get(index).applyBi(getOuts().get(index), lossFunction.getFunction());
+            Matrix loss = getOuts().get(index).applyBi(targets.get(index), lossFunction.getFunction());
             error.add(loss, error);
         }
         error.divide(targets.size(), error);
@@ -151,7 +151,7 @@ public class OutputLayer extends AbstractLayer {
     private void calculateOutputDeltas() throws MatrixException {
         douts = new TreeMap<>();
         for (Integer index : targets.keySet()) {
-            douts.put(index, targets.get(index).applyBi(getOuts().get(index), lossFunction.getDerivative()));
+            douts.put(index, getOuts().get(index).applyBi(targets.get(index), lossFunction.getDerivative()));
         }
     }
 

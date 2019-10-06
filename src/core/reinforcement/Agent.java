@@ -12,47 +12,21 @@ import utils.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that implements interface for agent.
+ * Interface for agent.
  *
  */
 public interface Agent {
 
     /**
-     * Sets epsilon value.
-     *
-     * @param epsilon new epsilon value.
-     */
-    void setEpsilon(double epsilon);
-
-    /**
-     * Returns current epsilon value.
-     *
-     * @return current epsilon value.
-     */
-    double getEpsilon();
-
-    /**
      * Starts new agent step and commits previous step if not yet committed.
      *
-     * @param isTraining if true agent is in training mode.
      * @param updateValue if true state action value is update prior committing step.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    void newStep(boolean isTraining, boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
-
-    /**
-     * Starts new agent step and commits previous step if not yet committed.
-     *
-     * @param isTraining if true agent is in training mode.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    void newStep(boolean isTraining) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void newStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
 
     /**
      * Starts new agent step and commits previous step if not yet committed.
@@ -90,15 +64,15 @@ public interface Agent {
      * Predicts random action by epsilon probability (epsilon greedy policy) or if forced.<br>
      * Stores predicted state into target state variable.<br>
      *
+     * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
      * @param forceRandomAction if true forces to take valid random action.
      * @return returns true if action was successfully committed and executed otherwise returns false.
-     * @throws AgentException throws exception if there are no actions available for agent to take or action taken is not in list of available actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException, IOException, ClassNotFoundException;
+    boolean act(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Updates value of state action pair.<br>

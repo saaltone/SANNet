@@ -13,6 +13,7 @@ import java.util.Random;
  * Class that implements matrix with extensive set of matrix operations and masking for matrix.<br>
  * Abstract matrix class to be extended by class providing matrix data structure implementation.<br>
  * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
+ * Supports automated calculation of gradients by recording operations into procedure factory.<br>
  *
  */
 public abstract class Matrix implements Cloneable, Serializable {
@@ -85,6 +86,12 @@ public abstract class Matrix implements Cloneable, Serializable {
      * Scaling constant applied in all matrix operations meaning scalingConstant * operation.
      */
     protected double scalingConstant = 1;
+
+    /**
+     * Autogradient for matrix.
+     *
+     */
+    protected transient ProcedureFactory procedureFactory = null;
 
     /**
      * Random function for matrix class.
@@ -221,6 +228,19 @@ public abstract class Matrix implements Cloneable, Serializable {
         for (int row = 0; row < getRows(); row++) {
             for (int col = 0; col < getCols(); col++) {
                 setValue(row, col, operation.value(row, col));
+            }
+        }
+    }
+
+    /**
+     * Initializes matrix with given value.
+     *
+     * @param value initialization value.
+     */
+    public void initializeToValue(double value) {
+        for (int row = 0; row < getRows(); row++) {
+            for (int col = 0; col < getCols(); col++) {
+                setValue(row, col, value);
             }
         }
     }
@@ -385,12 +405,83 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
+     * Sets procedure factory for matrix.
+     *
+     * @param procedureFactory new procedure factory.
+     */
+    public void setProcedureFactory(ProcedureFactory procedureFactory) {
+        this.procedureFactory = procedureFactory;
+    }
+
+    /**
+     * Returns current procedure factory of matrix.
+     *
+     * @return current procedure factory.
+     */
+    public ProcedureFactory getProcedureFactory() {
+        return procedureFactory;
+    }
+
+    /**
+     * Removes procedure factory.
+     *
+     */
+    public void removeProcedureFactory() {
+        this.procedureFactory = null;
+    }
+
+    /**
+     * Adds uni argument function into procedure factory and propagates procedure factory.
+     *
+     * @param result result matrix
+     * @param uniFunction uniFunction to be applied
+     */
+    private void addToProcedureFactory(Matrix result, UniFunction uniFunction) throws MatrixException {
+        if (procedureFactory != null) {
+            procedureFactory.addExpression(this, result, uniFunction);
+            result.setProcedureFactory(procedureFactory);
+        }
+    }
+
+    /**
+     * Adds bi argument function into procedure factory and propagates procedure factory.
+     *
+     * @param other other matrix
+     * @param result result matrix
+     * @param biFunction function to be applied
+     */
+    private void addToProcedureFactory(Matrix other, Matrix result, BiFunction biFunction) throws MatrixException {
+        ProcedureFactory otherProcedureFactory = other.getProcedureFactory();
+        if (procedureFactory == null && otherProcedureFactory == null) return;
+        if (procedureFactory != null && otherProcedureFactory != null && procedureFactory != otherProcedureFactory) throw new MatrixException("This and other matrices have conflicting procedure factories.");
+        ProcedureFactory currentProcedureFactory = procedureFactory != null ? procedureFactory : otherProcedureFactory;
+        currentProcedureFactory.addExpression(this, other, result, biFunction);
+        result.setProcedureFactory(currentProcedureFactory);
+    }
+
+    /**
+     * Adds bi argument expression into procedure factory and propagates procedure factory.
+     *
+     * @param other other matrix
+     * @param result result matrix
+     * @param type type of expression
+     */
+    private void addToProcedureFactory(Matrix other, Matrix result, Expression.Type type) throws MatrixException {
+        ProcedureFactory otherProcedureFactory = other.getProcedureFactory();
+        if (procedureFactory == null && otherProcedureFactory == null) return;
+        if (procedureFactory != null && otherProcedureFactory != null && procedureFactory != otherProcedureFactory) throw new MatrixException("This and other matrices have conflicting procedure factories.");
+        ProcedureFactory currentProcedureFactory = procedureFactory != null ? procedureFactory : otherProcedureFactory;
+        currentProcedureFactory.addExpression(this, other, result, type);
+        result.setProcedureFactory(currentProcedureFactory);
+    }
+
+    /**
      * Makes current matrix data equal to other matrix data.
      *
      * @param other other matrix to be copied as data of this matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void equal(Matrix other) throws MatrixException {
+    public void setEqualTo(Matrix other) throws MatrixException {
         if (other.getRows() != getRows() || other.getCols() != getCols()) {
             throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getCols());
         }
@@ -409,7 +500,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @return true is data of this and other matrix are equal otherwise false.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public boolean isEqualTo(Matrix other) throws MatrixException {
+    public boolean equals(Matrix other) throws MatrixException {
         if (other.getRows() != getRows() || other.getCols() != getCols()) {
             throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getCols());
         }
@@ -470,6 +561,66 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
+     * Applies uniFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param uniFunctionType uniFunction type to be applied.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix result, UniFunctionType uniFunctionType) throws MatrixException {
+        UniFunction uniFunction = new UniFunction(uniFunctionType);
+        apply(result, uniFunction.getFunction());
+        addToProcedureFactory(result, uniFunction);
+    }
+
+    /**
+     * Applies uniFunction to this matrix and return operation result.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param uniFunctionType uniFunction type to be applied.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix apply(UniFunctionType uniFunctionType) throws MatrixException {
+        UniFunction uniFunction = new UniFunction(uniFunctionType);
+        Matrix result = apply(getNewMatrix(getRows(), getCols()), uniFunction.getFunction());
+        addToProcedureFactory(result, uniFunction);
+        return result;
+    }
+
+    /**
+     * Applies uniFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param uniFunction uniFunction to be applied.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix result, UniFunction uniFunction) throws MatrixException {
+        apply(result, uniFunction.getFunction());
+        addToProcedureFactory(result, uniFunction);
+    }
+
+    /**
+     * Applies uniFunction to this matrix and return operation result.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param uniFunction uniFunction to be applied.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix apply(UniFunction uniFunction) throws MatrixException {
+        Matrix result = apply(getNewMatrix(getRows(), getCols()), uniFunction.getFunction());
+        addToProcedureFactory(result, uniFunction);
+        return result;
+    }
+
+    /**
      * Applies two variable operation to this matrix and other matrix and stores operation result into result matrix.<br>
      * Example of operation can be substraction of other matrix from this matrix or
      * multiplying current matrix with other matrix.<br>
@@ -525,6 +676,70 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
+     * Applies biFunction to this matrix.<br>
+     * Example of operation can be applying power operation to this and other matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param other other matrix
+     * @param result result matrix.
+     * @param biFunctionType biFunction type to be applied.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyBi(Matrix other, Matrix result, BiFunctionType biFunctionType) throws MatrixException {
+        BiFunction biFunction = new BiFunction(biFunctionType);
+        applyBi(other, result, biFunction.getFunction());
+        addToProcedureFactory(other, result, biFunction);
+    }
+
+    /**
+     * Applies biFunction to this matrix and return operation result.<br>
+     * Example of operation can be applying power operation to this and other matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param other other matrix
+     * @param biFunctionType biFunction type to be applied.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix applyBi(Matrix other, BiFunctionType biFunctionType) throws MatrixException {
+        BiFunction biFunction = new BiFunction(biFunctionType);
+        Matrix result = applyBi(other, getNewMatrix(getRows(), getCols()), biFunction.getFunction());
+        addToProcedureFactory(other, result, biFunction);
+        return result;
+    }
+
+    /**
+     * Applies biFunction to this matrix.<br>
+     * Example of operation can be applying power operation to this and other matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param other other matrix
+     * @param result result matrix.
+     * @param biFunction biFunction to be applied.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyBi(Matrix other, Matrix result, BiFunction biFunction) throws MatrixException {
+        applyBi(other, result, biFunction.getFunction());
+        addToProcedureFactory(other, result, biFunction);
+    }
+
+    /**
+     * Applies biFunction to this matrix and return operation result.<br>
+     * Example of operation can be applying power operation to this and other matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param other other matrix
+     * @param biFunction biFunction to be applied.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix applyBi(Matrix other, BiFunction biFunction) throws MatrixException {
+        Matrix result = applyBi(other, getNewMatrix(getRows(), getCols()), biFunction.getFunction());
+        addToProcedureFactory(other, result, biFunction);
+        return result;
+    }
+
+    /**
      * Adds other matrix to this matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -534,6 +749,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     public void add(Matrix other, Matrix result) throws MatrixException {
         applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) Double::sum);
+        addToProcedureFactory(other, result, Expression.Type.ADD);
     }
 
     /**
@@ -545,7 +761,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix add(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) Double::sum);
+        Matrix result = applyBi (other, (Matrix.MatrixBiOperation & Serializable) Double::sum);
+        addToProcedureFactory(other, result, Expression.Type.ADD);
+        return result;
     }
 
     /**
@@ -557,7 +775,10 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public void add(double constant, Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> value + constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        add(constantMatrix, result);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.ADD);
     }
 
     /**
@@ -569,7 +790,11 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix add(double constant) throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> value + constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        Matrix result = add(constantMatrix);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.ADD);
+        return result;
     }
 
     /**
@@ -582,6 +807,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     public void subtract(Matrix other, Matrix result) throws MatrixException {
         applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 - value2);
+        addToProcedureFactory(other, result, Expression.Type.SUB);
     }
 
     /**
@@ -593,7 +819,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix subtract(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 - value2);
+        Matrix result = applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 - value2);
+        addToProcedureFactory(other, result, Expression.Type.SUB);
+        return result;
     }
 
     /**
@@ -605,7 +833,10 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public void subtract(double constant, Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> value - constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        subtract(constantMatrix, result);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.SUB);
     }
 
     /**
@@ -617,7 +848,11 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix subtract(double constant) throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> value - constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        Matrix result = subtract(constantMatrix);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.SUB);
+        return result;
     }
 
     /**
@@ -630,6 +865,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     public void multiply(Matrix other, Matrix result) throws MatrixException {
         applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 * value2);
+        addToProcedureFactory(other, result, Expression.Type.MUL);
     }
 
     /**
@@ -641,7 +877,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix multiply(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 * value2);
+        Matrix result = applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value1 * value2);
+        addToProcedureFactory(other, result, Expression.Type.MUL);
+        return result;
     }
 
     /**
@@ -653,7 +891,10 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public void multiply(double constant, Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> value * constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        multiply(constantMatrix, result);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.MUL);
     }
 
     /**
@@ -665,75 +906,73 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix multiply(double constant) throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> value * constant);
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        Matrix result = multiply(constantMatrix);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.MUL);
+        return result;
     }
 
     /**
-     * Takes element wise square root of this matrix.<br>
+     * Divides this matrix element wise with other matrix.<br>
+     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param other matrix which acts as second variable in the operation.
+     * @param result matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
+     */
+    public void divide(Matrix other, Matrix result) throws MatrixException {
+        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.MAX_VALUE);
+        addToProcedureFactory(other, result, Expression.Type.DIV);
+    }
+
+    /**
+     * Divides this matrix element wise with other matrix.<br>
+     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param other matrix which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public Matrix divide(Matrix other) throws MatrixException {
+        Matrix result = applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.MAX_VALUE);
+        addToProcedureFactory(other, result, Expression.Type.DIV);
+        return result;
+    }
+
+    /**
+     * Divides this matrix element wise with constant.<br>
+     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
+     * @param constant constant used as divider value.
+     * @param result matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
+     */
+    public void divide(double constant, Matrix result) throws MatrixException {
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        divide(constantMatrix, result);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.DIV);
+    }
+
+    /**
+     * Divides this matrix element wise with constant.<br>
+     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param constant constant used as divider value.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
-    public Matrix sqrt() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> value > 0 ? Math.sqrt(value) : 0);
-    }
-
-    /**
-     * Takes element wise square root of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public void sqrt(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> value > 0 ? Math.sqrt(value) : 0);
-    }
-
-    /**
-     * Takes element wise 1 / element operation with this matrix.<br>
-     * In case any element value is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix mulinv() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> value != 0 ? 1 / value : Double.MAX_VALUE);
-    }
-
-    /**
-     * Takes element wise 1 / element operation with this matrix.<br>
-     * In case any element value is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public void mulinv(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> value != 0 ? 1 / value : Double.MAX_VALUE);
-    }
-
-    /**
-     * Takes element wise absolute value of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix abs() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) Math::abs);
-    }
-
-    /**
-     * Takes element wise absolute value of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public void abs(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) Math::abs);
+    public Matrix divide(double constant) throws MatrixException {
+        Matrix constantMatrix = new DMatrix(getRows(), getCols());
+        constantMatrix.initializeToValue(constant);
+        Matrix result = divide(constantMatrix);
+        addToProcedureFactory(constantMatrix, result, Expression.Type.DIV);
+        return result;
     }
 
     /**
@@ -758,58 +997,6 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     public void power(double power, Matrix result) throws MatrixException {
         apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> Math.pow(value, power));
-    }
-
-    /**
-     * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     */
-    public void divide(Matrix other, Matrix result) throws MatrixException {
-        applyBi (other, result, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.MAX_VALUE);
-    }
-
-    /**
-     * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    public Matrix divide(Matrix other) throws MatrixException {
-        return applyBi (other, (Matrix.MatrixBiOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.MAX_VALUE);
-    }
-
-    /**
-     * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant constant used as divider value.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
-     */
-    public void divide(double constant, Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) (value) -> constant != 0 ? value / constant : Double.MAX_VALUE);
-    }
-
-    /**
-     * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant constant used as divider value.
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix divide(double constant) throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) (value) -> constant != 0 ? value / constant : Double.MAX_VALUE);
     }
 
     /**
@@ -887,28 +1074,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Takes element wise sign operation of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix sgn() throws MatrixException {
-        return apply ((Matrix.MatrixUniOperation & Serializable) Math::signum);
-    }
-
-    /**
-     * Takes element wise sign operation of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public void sgn(Matrix result) throws MatrixException {
-        apply (result, (Matrix.MatrixUniOperation & Serializable) Math::signum);
-    }
-
-    /**
      * Takes matrix dot product of this and other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -924,6 +1089,7 @@ public abstract class Matrix implements Cloneable, Serializable {
         if (getRows() != result.getRows() || other.getCols() != result.getCols()) {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getCols());
         }
+        addToProcedureFactory(other, result, Expression.Type.DOT);
         if (!masked || other.isMasked()) {
             for (int row = 0; row < getRows(); row++) {
                 for (int col = 0; col < other.getCols(); col++) {

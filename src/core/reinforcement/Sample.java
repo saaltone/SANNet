@@ -132,8 +132,8 @@ public class Sample {
      * @return true if samples are equal otherwise false.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public boolean isEqualTo(Sample otherSample) throws MatrixException {
-        return state.isEqualTo(otherSample.state);
+    public boolean equals(Sample otherSample) throws MatrixException {
+        return state.equals(otherSample.state);
     }
 
     /**
@@ -142,13 +142,13 @@ public class Sample {
      * @param otherSample other sample
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void equal(Sample otherSample) throws MatrixException {
-        state.equal(otherSample.state);
+    public void setEqualTo(Sample otherSample) throws MatrixException {
+        state.setEqualTo(otherSample.state);
         action = otherSample.action;
         validAction = otherSample.validAction;
         reward = otherSample.reward;
-        targetState.equal(otherSample.targetState);
-        values.equal(otherSample.values);
+        targetState.setEqualTo(otherSample.targetState);
+        values.setEqualTo(otherSample.values);
         terminalState = otherSample.terminalState;
         delta = otherSample.delta;
         priority = otherSample.priority;

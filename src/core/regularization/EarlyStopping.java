@@ -145,7 +145,7 @@ public class EarlyStopping implements Serializable {
      * @param params parameters used for stopping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void setParams(DynamicParam params) throws DynamicParamException {
+    public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("trainingAverageSize")) trainingAverageSize = params.getValueAsInteger("trainingAverageSize");
         if (params.hasParam("trainingStopThreshold")) trainingStopThreshold = params.getValueAsInteger("trainingStopThreshold");
         if (params.hasParam("validationAverageSize")) validationAverageSize = params.getValueAsInteger("validationAverageSize");

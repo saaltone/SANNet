@@ -137,7 +137,7 @@ public class WeightNormalization implements Normalization, Serializable {
      */
     public void forwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException {
         for (Matrix W : connector.getReg()) {
-            W.equal(Ws.get(W));
+            W.setEqualTo(Ws.get(W));
         }
     }
 

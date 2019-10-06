@@ -146,12 +146,6 @@ public class DeepAgent implements Agent, Serializable {
     private boolean hasPreviousState = false;
 
     /**
-     * If true agent is in training mode.
-     *
-     */
-    private boolean isTraining = true;
-
-    /**
      * Constructor for agent.
      *
      * @param environment reference to environment where agent resides, takes actions and receives rewards.
@@ -238,15 +232,6 @@ public class DeepAgent implements Agent, Serializable {
     }
 
     /**
-     * Sets epsilon value.
-     *
-     * @param epsilon new epsilon value.
-     */
-    public void setEpsilon(double epsilon) {
-        this.epsilon = epsilon;
-    }
-
-    /**
      * Returns current epsilon value.
      *
      * @return current epsilon value.
@@ -299,36 +284,19 @@ public class DeepAgent implements Agent, Serializable {
     /**
      * Starts new agent step and commits previous step if not yet committed.
      *
-     * @param isTraining if true agent is in training mode.
      * @param updateValue if true state action value is update prior committing step.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public void newStep(boolean isTraining, boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        this.isTraining = isTraining;
-        if (isTraining) {
-            if (hasPreviousState && updateValue) updateValue();
-            hasPreviousState = true;
-            commitStep(false);
-            stepCommitted = false;
-            totalSteps++;
-        }
+    public void newStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+        if (hasPreviousState && updateValue) updateValue();
+        hasPreviousState = true;
+        commitStep(false);
         sample = new Sample();
-    }
-
-    /**
-     * Starts new agent step and commits previous step if not yet committed.
-     *
-     * @param isTraining if true agent is in training mode.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    public void newStep(boolean isTraining) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        newStep(isTraining, false);
+        stepCommitted = false;
+        totalSteps++;
     }
 
     /**
@@ -340,7 +308,7 @@ public class DeepAgent implements Agent, Serializable {
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
     public void newStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        newStep(isTraining, false);
+        newStep(false);
     }
 
     /**
@@ -365,7 +333,7 @@ public class DeepAgent implements Agent, Serializable {
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
     public void commitStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        if (!stepCommitted && sample != null && isTraining) {
+        if (!stepCommitted && sample != null) {
             if (updateValue) updateValue();
 
             replayBuffer.add(sample.copy());
@@ -397,19 +365,19 @@ public class DeepAgent implements Agent, Serializable {
      * Predicts random action by epsilon probability (epsilon greedy policy) or if forced.<br>
      * Stores predicted state into target state variable.<br>
      *
+     * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
      * @param forceRandomAction if true forces to take valid random action.
      * @return returns true if action was successfully committed and executed otherwise returns false.
-     * @throws AgentException throws exception if there are no actions available for agent to take or action taken is not in list of available actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if cloning of Q Neural Network fails.
      * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public boolean act(boolean forceRandomAction) throws AgentException, NeuralNetworkException, MatrixException, IOException, ClassNotFoundException {
+    public boolean act(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException, IOException, ClassNotFoundException {
         sample.state = environment.getState();
         sample.values = QNN.predict(sample.state);
 
-        if (Math.random() < epsilon || forceRandomAction) {
+        if ((Math.random() < epsilon || forceRandomAction) && !alwaysGreedy) {
             sample.action = environment.requestAction(this);
             sample.validAction = true;
         }
@@ -440,7 +408,6 @@ public class DeepAgent implements Agent, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void updateValue() throws NeuralNetworkException, MatrixException {
-        if (!isTraining) return;
         double value = sample.values.getValue(sample.action, 0);
 
         sample.targetState = environment.getState();

@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
- * Defines class for pooling layer that executed either average or max pooling.<br>
+ * Defines class for pooling layer that executes either average or max pooling.<br>
  * <br>
  * Reference: https://pdfs.semanticscholar.org/5d79/11c93ddcb34cac088d99bd0cae9124e5dcd1.pdf<br>
  *
@@ -100,8 +100,9 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * @param initialization intialization function for weight maps (not relevant for pooling layer).
      * @param params parameters for pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public PoolingLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    public PoolingLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (parent, activation, initialization, params);
     }
 
@@ -218,6 +219,17 @@ public class PoolingLayer extends AbstractExecutionLayer {
      */
     public TreeMap<Integer, Matrix> getOuts(TreeMap<Integer, Matrix> outs) {
         return toNonConvolutionalLayer && allowFlattening ? fouts : outs;
+    }
+
+    /**
+     * Builds forward procedure and implicitly builds backward procedure.
+     *
+     * @param input input of forward procedure.
+     * @param reset reset recurring inputs of procedure.
+     * @return output of forward procedure.
+     */
+    protected Matrix getForwardProcedure(Matrix input, boolean reset) {
+        return null;
     }
 
     /**

@@ -201,7 +201,7 @@ public class BatchNormalization implements Normalization, Serializable {
                 var.divide(batchSize, var);
                 //  Add epsilon for numerical stability, then sqrt
                 var = var.add(epsilon);
-                iSqrVar = var.sqrt().mulinv();
+                iSqrVar = var.apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
 
                 if (avgVar == null) avgVar = var;
                 else avgVar = var.multiply(1 - avgSmoothFactor).add(avgVar.multiply(avgSmoothFactor));
@@ -216,8 +216,7 @@ public class BatchNormalization implements Normalization, Serializable {
             }
         }
         else {
-//            Matrix iAvgSqrVar = avgVar.multiply(ins.size() / (ins.size() - 1)).add(epsilon).sqrt().mulinv();
-            Matrix iAvgSqrVar = avgVar.add(epsilon).sqrt().mulinv();
+            Matrix iAvgSqrVar = avgVar.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
             for (Integer inIndex : ins.keySet()) {
                 Matrix unMeanIn = ins.get(inIndex).subtract(avgMean);
                 if (!meanOnly) ins.put(inIndex, unMeanIn.multiply(iAvgSqrVar));

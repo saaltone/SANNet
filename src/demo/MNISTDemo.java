@@ -7,9 +7,7 @@
 package demo;
 
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
-import core.loss.LossFunctionType;
 import core.metrics.Metrics;
 import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
@@ -45,7 +43,7 @@ public class MNISTDemo {
 
             neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).getRows(), trainMNIST.get(1).get(0).getRows());
 
-            String persistenceName = "/home/jack/Downloads/MNIST_NN";
+            String persistenceName = "<path>/MNIST_NN";
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
 
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
@@ -99,13 +97,13 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(ActivationFunctionType.RELU), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 40");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UniFunctionType.RELU), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = 40");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
-        neuralNetwork.setLossFunction(LossFunctionType.CROSS_ENTROPY);
+//        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
+        neuralNetwork.setLossFunction(BiFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 
@@ -126,7 +124,7 @@ public class MNISTDemo {
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
-        String fileName = trainSet ? "/home/jack/Downloads/mnist_train.csv" : "/home/jack/Downloads/mnist_test_mini.csv";
+        String fileName = trainSet ? "<path>/mnist_train.csv" : "<path>/mnist_test_mini.csv";
         HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
         for (Matrix item : data.get(0).values()) item.divide(255, item);
         for (Integer index : data.get(1).keySet()) {

@@ -4,20 +4,31 @@
  *
  ********************************************************/
 
-package core.activation;
+package utils;
 
 /**
- * Defines supported activation function.<br>
  * Following functions are supported:
+ *     ABS,
+ *     COS,
+ *     COSH,
+ *     EXP,
+ *     LOG,
+ *     LOG10,
+ *     SGN,
+ *     SIN,
+ *     SINH,
+ *     SQRT,
+ *     CBRT,
+ *     TAN,
+ *     TANH,
  *     LINEAR,
  *     SIGMOID,
+ *     SWISH,
  *     HARDSIGMOID,
  *     BIPOLARSIGMOID,
- *     TANH,
  *     TANSIG,
  *     TANHAPPR,
  *     HARDTANH,
- *     EXPONENTIAL,
  *     SOFTPLUS,
  *     SOFTSIGN,
  *     RELU,
@@ -26,19 +37,31 @@ package core.activation;
  *     GELU,
  *     SOFTMAX,
  *     GAUSSIAN,
- *     SIN
- *
+ *     SINACT
  */
-public enum ActivationFunctionType {
+public enum UniFunctionType {
+    ABS,
+    COS,
+    COSH,
+    EXP,
+    LOG,
+    LOG10,
+    SGN,
+    SIN,
+    SINH,
+    SQRT,
+    CBRT,
+    MULINV,
+    TAN,
+    TANH,
     LINEAR,
     SIGMOID,
+    SWISH,
     HARDSIGMOID,
     BIPOLARSIGMOID,
-    TANH,
     TANSIG,
     TANHAPPR,
     HARDTANH,
-    EXPONENTIAL,
     SOFTPLUS,
     SOFTSIGN,
     RELU,
@@ -47,5 +70,5 @@ public enum ActivationFunctionType {
     GELU,
     SOFTMAX,
     GAUSSIAN,
-    SIN
+    SINACT
 }

@@ -124,8 +124,9 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @param initialization intialization function for weight maps.
      * @param params parameters for convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public ConvolutionalLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    public ConvolutionalLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (parent, activation, initialization, params);
     }
 
@@ -266,7 +267,8 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
 
         }
 
-        applyActivationFunction(parent.getOuts());
+
+        for (Matrix out : parent.getOuts().values()) activation.applyFunction(out, true);
 
         backward.regulateForwardPost(parent.getOuts());
         backward.normalizeForwardPost(parent.getOuts());
@@ -285,6 +287,17 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      */
     public TreeMap<Integer, Matrix> getOuts(TreeMap<Integer, Matrix> outs) {
         return toNonConvolutionalLayer && allowFlattening ? fouts : outs;
+    }
+
+    /**
+     * Builds forward procedure and implicitly builds backward procedure.
+     *
+     * @param input input of forward procedure.
+     * @param reset reset recurring inputs of procedure.
+     * @return output of forward procedure.
+     */
+    protected Matrix getForwardProcedure(Matrix input, boolean reset) {
+        return null;
     }
 
     /**
@@ -311,7 +324,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
             backward.regulateBackward(outIndex);
 
             Matrix dEo = dEosN.get(outIndex);
-            Matrix dEi = getdEi(parent.getOuts().get(outIndex), dEo);
+            Matrix dEi = activation.applyGradient(parent.getOuts().get(outIndex), dEo);
 
             for (int channelIndex = 0; channelIndex < channels; channelIndex++) {
                 int inIndex = getInIndex(channelIndex, sampleIndex, channels);

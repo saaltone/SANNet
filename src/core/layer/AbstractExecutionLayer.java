@@ -8,7 +8,6 @@ package core.layer;
 
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.activation.ActivationFunctionType;
 import utils.*;
 
 import java.io.Serializable;
@@ -18,6 +17,7 @@ import java.util.TreeMap;
 /**
  * Abstract class that implements execution layer for actual neural network layers (feed forward layer, recurrent layer etc.)<br>
  * Provides supportive functions for actual neural network layers.<br>
+ * Support automatic gradient i.e. backward gradient calculation for layers supporting it.<br>
  *
  */
 public abstract class AbstractExecutionLayer implements Layer, Serializable {
@@ -64,7 +64,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * Activation function for neural network layer.
      *
      */
-    protected ActivationFunction activation = new ActivationFunction(ActivationFunctionType.ELU);
+    protected ActivationFunction activation;
 
     /**
      * Initialization function for neural network layer.
@@ -73,16 +73,40 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
     protected Init initialization = Init.UNIFORM_XAVIER;
 
     /**
-     * Supportive ones matrix for layer processing.
+     * Procedure for the layer. Procedure contains chain of forward and backward expressions.
      *
      */
-    private Matrix ones;
+    private Procedure procedure = null;
 
     /**
-     * Supportive identity matrix for layer processing.
+     * Flag if state is reset prior start of next training sequence.
      *
      */
-    private Matrix I;
+    protected boolean resetStateTraining = true;
+
+    /**
+     * Flag if state is reset prior start of next test (validate, predict) sequence.
+     *
+     */
+    protected boolean resetStateTesting = true;
+
+    /**
+     * Previous state;
+     *
+     */
+    private transient boolean previousStateTraining;
+
+    /**
+     * If true allows layer recurrent input to be reset between test (validate, predict) sequence.
+     *
+     */
+    private boolean allowLayerReset = true;
+
+    /**
+     * Limits number of backward propagation sequence steps.
+     *
+     */
+    protected int truncateSteps = -1;
 
     /**
      * Constructor for abstract execution layer.
@@ -92,10 +116,14 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * @param initialization initialization function.
      * @param params parameters for neural network layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    protected AbstractExecutionLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException {
+    protected AbstractExecutionLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException, NeuralNetworkException {
         this.parent = parent;
+
         if (activation != null) this.activation = activation;
+        else this.activation = new ActivationFunction(UniFunctionType.ELU);
+
         if (initialization != null) this.initialization = initialization;
 
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
@@ -107,7 +135,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      *
      * @return parameters used for recurrent layer.
      */
-    protected abstract HashMap<String, DynamicParam.ParamType> getParamDefs();
+    public abstract HashMap<String, DynamicParam.ParamType> getParamDefs();
 
     /**
      * Sets parameters used for layer.<br>
@@ -116,8 +144,14 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * @param params parameters used for recurrent layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void setParams(DynamicParam params) throws DynamicParamException;
+    public abstract void setParams(DynamicParam params) throws DynamicParamException;
 
+    /**
+     * Return layer type by name.
+     *
+     * @return layer type by name.
+     * @throws NeuralNetworkException throws exception if operation fails.
+     */
     public String getTypeByName() throws NeuralNetworkException  {
         return LayerFactory.getLayerTypeByName(this);
     }
@@ -216,81 +250,108 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
     }
 
     /**
-     * Applies activation function to the outputs of neural network layer.
+     * Sets if recurrent inputs of layer are allowed to be reset.
      *
-     * @param inputs inputs for activation function.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param allowLayerReset if true allows reset.
      */
-    protected void applyActivationFunction(TreeMap<Integer, Matrix> inputs) throws MatrixException {
-        for (Integer index : inputs.keySet()) applyActivationFunction(inputs.get(index), true);
+    public void setAllowLayerReset(boolean allowLayerReset) {
+        this.allowLayerReset = allowLayerReset;
     }
 
     /**
-     * Applies activation function to the output of neural network layer.
+     * Takes single forward processing step process layer input(s).<br>
+     * Applies automated forward procedure when relevant to layer.<br>
+     * Additionally applies any regularization defined for the layer.<br>
      *
-     * @param input input for activation function.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected void applyActivationFunction(Matrix input) throws MatrixException {
-        applyActivationFunction(input, true);
+    public void forwardProcess() throws MatrixException, NeuralNetworkException {
+        if (procedure == null) defineProcedure();
+
+        backward.regulateForwardPre(getOutsP(), -1);
+        backward.normalizeForwardPre(getOutsP(), 1);
+
+        parent.resetOuts();
+
+        boolean hasDependencies = procedure.hasDependencies();
+
+        if (allowLayerReset && hasDependencies) {
+            if (previousStateTraining != backward.isTraining()) procedure.resetDependencies();
+            else if(resetStateTraining || resetStateTesting) procedure.resetDependencies();
+        }
+        previousStateTraining = backward.isTraining();
+
+        for (Integer index : getOutsP().keySet()) {
+            backward.regulateForwardPre(getOutsP(), index);
+            parent.getOuts().put(index, procedure.calculateExpression(index, getOutsP().get(index)).getMatrix(index));
+            if(!backward.isTraining() && !hasDependencies) procedure.reset(index);
+        }
+        if(!backward.isTraining()) procedure.reset();
+
+        backward.regulateForwardPost(parent.getOuts());
+        backward.normalizeForwardPost(parent.getOuts());
+
+        if (forward == null) parent.updateOutputError();
     }
 
     /**
-     * Applies activation function to the outputs of neural network layer.
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @param inputs inputs for activation function.
-     * @param inplace applies activation function directly to input otherwise returns copy of input.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @return returns inputs after applying of activation function.
      */
-    protected TreeMap<Integer, Matrix> applyActivationFunction(TreeMap<Integer, Matrix> inputs, boolean inplace) throws MatrixException {
-        TreeMap<Integer, Matrix> result = new TreeMap<>();
-        for (Integer index : inputs.keySet()) result.put(index, applyActivationFunction(inputs.get(index), false));
-        return result;
+    private void defineProcedure() throws MatrixException {
+        ProcedureFactory procedureFactory = new ProcedureFactory();
+
+        procedureFactory.registerMatrix(backward.getWs(), true);
+
+        boolean reset = true;
+        while (procedure == null) {
+            Matrix input = new DMatrix(backward.getPLayer().getWidth(), 1, Init.ONE);
+            procedureFactory.newProcedure(input);
+            Matrix output = getForwardProcedure(input, reset);
+            procedure = procedureFactory.endProcedure(output);
+            reset = false;
+        }
     }
 
     /**
-     * Applies activation function to the output of neural network layer.
+     * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input for activation function.
-     * @param inplace applies activation function directly to input otherwise returns copy of input.
-     * @return if inplace returns input matrix otherwise new result matrix.
+     * @param input input of forward procedure.
+     * @param reset reset recurring inputs of procedure.
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix applyActivationFunction(Matrix input, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? input : new DMatrix(input.getRows(), input.getCols());
-        if (activation.getType() != ActivationFunctionType.SOFTMAX) {
-            input.apply(result, activation.getFunction());
-        }
-        else {
-            Matrix outputTemp = input.subtract(input.max()); // stable softmax X - max(X)
-            outputTemp.apply(outputTemp, activation.getFunction());
-            outputTemp.divide(outputTemp.sum(), result); // e^X / sum(e^X)
-        }
-        return result;
-    }
+    protected abstract Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException;
 
     /**
-     * Gets and calculates inner gradient of neural network layer.
+     * Takes single backward processing step to process layer output gradient(s).<br>
+     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
+     * Additionally applies any regularization defined for the layer.<br>
      *
-     * @param out output of neural network layer.
-     * @param dEo output gradient of neural network layer.
-     * @return inner gradient of neural network layer
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getdEi(Matrix out, Matrix dEo) throws MatrixException {
-        if (activation.getType() != ActivationFunctionType.SOFTMAX) {
-            Matrix dAct = out.apply(activation.getDerivative());
-            return dEo.multiply(dAct);
+    public void backwardProcess() throws MatrixException {
+        parent.resetOutGrads();
+
+        backward.resetGrad();
+
+        backward.regulateBackward(-1);
+
+        int errorStep = 0;
+        for (Integer index : parent.getOuts().descendingKeySet()) {
+            backward.regulateBackward(index);
+            parent.getdEos().put(index, procedure.calculateGradient(index, parent.getdEosN().get(index)).getGradient(index));
+            for (Matrix W : backward.getdWs().keySet()) backward.getdWs(W).put(index, procedure.getNode(W).getGradient(index));
+            if (truncateSteps > 0 && ++errorStep >= truncateSteps) break;
         }
-        else {
-            ones = (ones == null) ? new DMatrix(out.getRows(), 1, Init.ONE) : ones;
-            I = (I == null) ? new DMatrix(out.getRows(), out.getRows(), Init.IDENTITY) : I;
-            // dAct has diagonal entries of 1 - out and other entries -out i.e. I - out
-            Matrix dAct = I.subtract(out.dot(ones.T()));
-            // Finally dAct (network layer error) is dotted by output error resulting into input error
-            return dAct.dot(dEo);
-        }
+
+        procedure.reset();
+
+        backward.normalizeBackward();
+
+        backward.sumGrad();
     }
 
     /**

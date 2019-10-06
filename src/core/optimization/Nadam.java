@@ -191,7 +191,7 @@ public class Nadam implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        M.subtract(vM_hat.add(epsilon).sqrt().mulinv().multiply(learningRate * miniBatchFactor).multiply(mM_hat.multiply(beta1).add(dM.multiply((1 - beta1) / (1 - Math.pow(beta1, iter))))), M);
+        M.subtract(vM_hat.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(mM_hat.multiply(beta1).add(dM.multiply((1 - beta1) / (1 - Math.pow(beta1, iter))))), M);
 
         iter++;
     }

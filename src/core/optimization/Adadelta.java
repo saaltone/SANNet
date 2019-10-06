@@ -153,7 +153,7 @@ public class Adadelta implements Optimizer, Serializable {
          *
          */
         double epsilon = 10E-8;
-        Matrix Ed = mEd2.add(epsilon).sqrt().multiply(mEg2.add(epsilon).sqrt().mulinv()).multiply(dM);
+        Matrix Ed = mEd2.add(epsilon).apply(UniFunctionType.SQRT).multiply(mEg2.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV)).multiply(dM);
         M.subtract(Ed.multiply(learningRate * miniBatchFactor), M);
         mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
 

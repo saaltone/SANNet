@@ -14,7 +14,7 @@ import utils.MatrixException;
 import java.util.TreeMap;
 
 /**
- * Defines interface for regularization functions.
+ * Interface for regularization functions.
  *
  */
 public interface Regularization {
