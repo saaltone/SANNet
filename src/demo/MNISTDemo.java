@@ -98,6 +98,7 @@ public class MNISTDemo {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
         neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = false");
+        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = true");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), "width = 40");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();

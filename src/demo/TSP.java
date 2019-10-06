@@ -13,7 +13,6 @@ import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
 import utils.*;
@@ -539,11 +538,10 @@ public class TSP implements Environment {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
         DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
         agent.start();

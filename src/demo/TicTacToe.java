@@ -601,13 +601,12 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     /**
      * Plays given number of games.
      *
-     * @throws AgentException throws exception if agent operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if cloning of neural network fails.
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    private void playGames() throws AgentException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private void playGames() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         initWindow();
         jFrame.revalidate();
         int drawCountTemp = 0;
@@ -840,12 +839,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(Player player) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(Player player) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, boardSize * boardSize);
         DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * 9) + ", updateTNNCycle = " + (30 * 9) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonInitial = 0.1, epsilonMin = 0.1, learningRate = 0.5, gamma = 0.85, alpha = 1");
         agent.start();
