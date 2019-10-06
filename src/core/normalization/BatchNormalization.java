@@ -216,11 +216,12 @@ public class BatchNormalization implements Normalization, Serializable {
             }
         }
         else {
-            Matrix iAvgSqrVar = avgVar.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
-            for (Integer inIndex : ins.keySet()) {
-                Matrix unMeanIn = ins.get(inIndex).subtract(avgMean);
-                if (!meanOnly) ins.put(inIndex, unMeanIn.multiply(iAvgSqrVar));
-                else ins.put(inIndex, unMeanIn);
+            if (!meanOnly) {
+                Matrix iAvgSqrVar = avgVar.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
+                for (Integer inIndex : ins.keySet()) ins.put(inIndex, ins.get(inIndex).subtract(avgMean).multiply(iAvgSqrVar));
+            }
+            else {
+                for (Integer inIndex : ins.keySet()) ins.put(inIndex, ins.get(inIndex).subtract(avgMean));
             }
         }
     }
