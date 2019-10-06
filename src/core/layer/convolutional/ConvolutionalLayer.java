@@ -71,7 +71,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * Defines stride i.e. size of step when moving filter over image.
      *
      */
-    private int stride;
+    private int stride = 1;
 
     /**
      * True is filter weights are regulated otherwise weights are not regulated.
@@ -151,7 +151,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * Supported parameters are:<br>
      *     - filters: number of filters.<br>
      *     - filterSize size of filter.<br>
-     *     - stride: size of stride.<br>
+     *     - stride: size of stride. Default size 1.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *     - asConvolution: true if convolutional layer applies convolution operation otherwise applies crosscorrelation (default true).<br>
      *

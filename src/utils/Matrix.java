@@ -1171,7 +1171,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     private double[] count(MatrixUniOperation operation) throws MatrixException {
         double[] result = new double[2];
-        result[0] = result[1] = 0;
+        result[1] = 0;
         if (!masked) {
             for (int row = 0; row < getRows(); row++) {
                 for (int col = 0; col < getCols(); col++) {
@@ -1450,12 +1450,11 @@ public abstract class Matrix implements Cloneable, Serializable {
      *
      * @param sliceRowSize slice size in rows.
      * @param sliceColSize slice size in columns.
+     * @return returns this matrix.
      * @throws MatrixException throws exception if requested slice does not fit inside matrix.
      */
-    public void setSliceSize(int sliceRowSize, int sliceColSize) throws MatrixException {
-        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
-        this.sliceRowSize = sliceRowSize;
-        this.sliceColSize = sliceColSize;
+    public Matrix setSliceSize(int sliceRowSize, int sliceColSize) throws MatrixException {
+        return sliceAt(getSliceAtRow(), getSliceAtCol(), sliceRowSize, sliceColSize);
     }
 
     /**
@@ -1467,10 +1466,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if requested slice does not fit inside matrix.
      */
     public Matrix sliceAt(int sliceAtRow, int sliceAtCol) throws MatrixException {
-        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
-        this.sliceAtRow = sliceAtRow;
-        this.sliceAtCol = sliceAtCol;
-        return this;
+        return sliceAt(sliceAtRow, sliceAtCol, getSliceRowSize(), getSliceColSize());
     }
 
     /**
@@ -1484,7 +1480,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if requested slice does not fit inside matrix.
      */
     public Matrix sliceAt(int sliceAtRow, int sliceAtCol, int sliceRowSize, int sliceColSize) throws MatrixException {
-        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + sliceRowSize > getRows() || sliceAtCol + sliceColSize > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
+        if (sliceAtRow < 0 || sliceAtCol < 0 || sliceAtRow + getSliceRowSize() > getRows() || sliceAtCol + getSliceColSize() > getCols()) throw new MatrixException("Slice starting at " + sliceAtRow + "x" + sliceAtCol + " of size " + sliceRowSize + "x" + sliceColSize + " does not fit within matrix.");
         this.sliceAtRow = sliceAtRow;
         this.sliceAtCol = sliceAtCol;
         this.sliceRowSize = sliceRowSize;
@@ -1645,163 +1641,125 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Executes max pooling operation for the matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates max pooling operation for this matrix and returns max arguments.
      *
-     * @param result result matrix of max pooling operation.
-     * @param stride stride of convolution operation.
-     * @param poolSize size of pool for max pooling operation.
-     * @param maxargs calculated max pooling positions. Two first dimensions represent row and col of gradient for previous layer. Third argument stores row and col information of gradient for next layer.
-     * @return result matrix of max pooling operation.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param result result matrix.
+     * @param argsAt arguments on maximum row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix maxPool(Matrix result, int stride, int poolSize, int[][][] maxargs) throws MatrixException {
-        int sourceRows = getRows();
-        int sourceCols = getCols();
-        int resultRows = result.getRows();
-        int resultCols = result.getCols();
-        if (result.getRows() + poolSize - 1 != sourceRows || result.getCols() + poolSize - 1 != sourceCols) {
-            throw new MatrixException("Dimensions of source (this) matrix: " + sourceRows + "x" + sourceCols + " poolSize: " + (poolSize - 1) + "x" + (poolSize - 1) + " and result matrix: " + result.getRows() + "x" + result.getCols() + " are not matching.");
-        }
+    public void maxPool(Matrix result, int [][][] argsAt) throws MatrixException {
+        double maxValue = Double.MIN_VALUE;
+        int sliceAtRow = getSliceAtRow();
+        int sliceAtCol = getSliceAtCol();
         if (!masked) {
-            for (int resultRow = 0; resultRow < resultRows; resultRow++) {
-                for (int resultCol = 0; resultCol < resultCols; resultCol++) {
-                    double maxValue = Double.MIN_VALUE;
-                    for (int targetRow = 0; targetRow < poolSize - 1; targetRow++) {
-                        for (int targetCol = 0; targetCol < poolSize - 1; targetCol++) {
-                            int sourceRow = stride * resultRow + targetRow;
-                            int sourceCol = stride * resultCol + targetCol;
-                            double curValue = getValue(sourceRow, sourceCol);
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    int currentRow = sliceAtRow + row;
+                    int currentCol = sliceAtCol + col;
+                    double curValue = getValue(currentRow, currentCol);
+                    if (maxValue < curValue) {
+                        maxValue = curValue;
+                        argsAt[sliceAtRow][sliceAtCol][0] = currentRow;
+                        argsAt[sliceAtRow][sliceAtCol][1] = currentCol;
+                    }
+                }
+            }
+            result.setValue(sliceAtRow, sliceAtCol, maxValue);
+        }
+        else {
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col)) {
+                            int currentRow = sliceAtRow + row;
+                            int currentCol = sliceAtCol + col;
+                            double curValue = getValue(currentRow, currentCol);
                             if (maxValue < curValue) {
                                 maxValue = curValue;
-                                maxargs[resultRow][resultCol][0] = sourceRow;
-                                maxargs[resultRow][resultCol][1] = sourceCol;
+                                argsAt[sliceAtRow][sliceAtCol][0] = currentRow;
+                                argsAt[sliceAtRow][sliceAtCol][1] = currentCol;
                             }
                         }
                     }
-                    result.setValue(resultRow, resultCol, maxValue);
                 }
             }
+            result.setValue(sliceAtRow, sliceAtCol, maxValue);
         }
+    }
+
+    public void maxPoolGrad(Matrix result, int[] maxarg) throws MatrixException {
+        if (!masked) result.setValue(maxarg[0], maxarg[1], getValue(getSliceAtRow(), getSliceAtCol()));
         else {
-            for (int resultRow = 0; resultRow < result.getRows(); resultRow++) {
-                for (int resultCol = 0; resultCol < result.getCols(); resultCol++) {
-                    double maxValue = Double.MIN_VALUE;
-                    maxargs[resultRow][resultCol][0] = -1;
-                    maxargs[resultRow][resultCol][1] = -1;
-                    for (int targetRow = 0; targetRow < poolSize - 1; targetRow++) {
-                        for (int targetCol = 0; targetCol < poolSize - 1; targetCol++) {
-                            int sourceRow = stride * resultRow + targetRow;
-                            int sourceCol = stride * resultCol + targetCol;
-                            double curValue = getValue(sourceRow, sourceCol);
-                            boolean maskedEntry = isMasked(sourceRow, sourceCol);
-                            if (!maskedEntry && maxValue < curValue) {
-                                maxValue = curValue;
-                                maxargs[resultRow][resultCol][0] = sourceRow;
-                                maxargs[resultRow][resultCol][1] = sourceCol;
-                            }
-                        }
-                    }
-                    if (maxValue != Double.MIN_VALUE) result.setValue(resultRow, resultCol, maxValue);
-                }
+            if (!getRowMask(getSliceAtRow()) && !getMask(getSliceAtRow(), getSliceAtCol()) && !getColMask(getSliceAtCol())) {
+                result.setValue(maxarg[0], maxarg[1], getValue(getSliceAtRow(), getSliceAtCol()));
             }
         }
-        return result;
     }
 
     /**
-     * Calculates gradients for max pool operation. Assigns backward gradient value from position (int[0] as row, int[1] as col) calculated by max pool operation.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates average pooling operation for this matrix.
      *
-     * @param dEoP result matrix of max pooling operation. This represent gradient towards previous layer.
-     * @param maxargs calculated max pooling positions. Two first dimensions represent row and col of gradient for previous layer. Third argument stores row and col information of gradient for next layer.
-     * @return result matrix of max pooling operation.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix maxPoolGrad(Matrix dEoP, int[][][] maxargs) {
+    public void avgPool(Matrix result) throws MatrixException {
+        double sumValue = 0;
+        int sliceAtRow = getSliceAtRow();
+        int sliceAtCol = getSliceAtCol();
         if (!masked) {
-            for (int row = 0; row < maxargs.length; row++) {
-                for (int col = 0; col < maxargs.length; col++) {
-                    dEoP.setValue(maxargs[row][col][0], maxargs[row][col][1], getValue(row, col));
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    int currentRow = sliceAtRow + row;
+                    int currentCol = sliceAtCol + col;
+                    sumValue += getValue(currentRow, currentCol);
                 }
             }
+            result.setValue(sliceAtRow, sliceAtCol, sumValue / (getSliceRowSize() * getSliceColSize()));
         }
         else {
-            for (int row = 0; row < maxargs.length; row++) {
-                for (int col = 0; col < maxargs.length; col++) {
-                    if (maxargs[row][col][0] != -1) dEoP.setValue(maxargs[row][col][0], maxargs[row][col][1], getValue(row, col));
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col)) {
+                            int currentRow = sliceAtRow + row;
+                            int currentCol = sliceAtCol + col;
+                            sumValue += getValue(currentRow, currentCol);
+                        }
+                    }
                 }
             }
+            result.setValue(sliceAtRow, sliceAtCol, sumValue / (getSliceRowSize() * getSliceColSize()));
         }
-        return dEoP;
     }
 
     /**
-     * Executes average pooling operation for the matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates max pooling operation for this matrix and returns max arguments.
      *
-     * @param result result matrix of average pooling operation.
-     * @param stride stride of convolution operation.
-     * @param poolSize size of pool for average pooling operation.
-     * @return result matrix of average pooling operation.
-     * @throws MatrixException thrown if dimensions of matrices are not matching for calculation.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix avgPool(Matrix result, int stride, int poolSize) throws MatrixException {
-        int sourceRows = getRows();
-        int sourceCols = getCols();
-        if (result.getRows() + poolSize - 1 != sourceRows || result.getCols() + poolSize - 1 != sourceCols) {
-            throw new MatrixException("Dimensions of source (this) matrix: " + sourceRows + "x" + sourceCols + " poolSize: " + (poolSize - 1) + "x" + (poolSize - 1) + " and result matrix: " + result.getRows() + "x" + result.getCols() + " are not matching.");
-        }
-        double invAmount = 1 / (double)(poolSize * poolSize);
+    public void avgPoolGrad(Matrix result) throws MatrixException {
+        int sliceAtRow = getSliceAtRow();
+        int sliceAtCol = getSliceAtCol();
+        double value = 1 / (double)(getSliceRowSize() * getSliceColSize());
         if (!masked) {
-            for (int resultRow = 0; resultRow < result.getRows(); resultRow++) {
-                for (int resultCol = 0; resultCol < result.getCols(); resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < poolSize - 1; targetRow++) {
-                        for (int targetCol = 0; targetCol < poolSize - 1; targetCol++) {
-                            int sourceRow = stride * resultRow + targetRow;
-                            int sourceCol = stride * resultCol + targetCol;
-                            value += getValue(sourceRow, sourceCol);
-                        }
-                    }
-                    result.setValue(resultRow, resultCol, value * invAmount);
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                for (int col = 0; col < getSliceColSize(); col++) {
+                    result.setValue(sliceAtRow + row, sliceAtCol + col, value);
                 }
             }
         }
         else {
-            for (int resultRow = 0; resultRow < result.getRows(); resultRow++) {
-                for (int resultCol = 0; resultCol < result.getCols(); resultCol++) {
-                    double value = 0;
-                    for (int targetRow = 0; targetRow < poolSize - 1; targetRow++) {
-                        for (int targetCol = 0; targetCol < poolSize - 1; targetCol++) {
-                            int sourceRow = stride * resultRow + targetRow;
-                            int sourceCol = stride * resultCol + targetCol;
-                            boolean maskedEntry = isMasked(sourceRow, sourceCol);
-                            if (!maskedEntry) value += getValue(sourceRow, sourceCol);
+            for (int row = 0; row < getSliceRowSize(); row++) {
+                if (!getRowMask(row)) {
+                    for (int col = 0; col < getSliceColSize(); col++) {
+                        if (!getMask(row, col) && !getColMask(col)) {
+                            result.setValue(sliceAtRow + row, sliceAtCol + col, value);
                         }
                     }
-                    result.setValue(resultRow, resultCol, value * invAmount);
                 }
             }
         }
-        return result;
-    }
-
-    /**
-     * Calculates gradients for average pool operation. Assigns backward gradient value of 1 / pool size^2 for each position of gradient towards previous layer.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param dEoP result matrix of average pooling operation. This represent gradient towards previous layer.
-     * @param poolSize size of pool for average pooling operation.
-     * @return result matrix of average pooling operation.
-     */
-    public Matrix avgPoolGrad(Matrix dEoP, int poolSize) {
-        double value = 1 / (double)(poolSize * poolSize);
-        for (int row = 0; row < dEoP.getRows(); row++) {
-            for (int col = 0; col < dEoP.getRows(); col++) {
-                dEoP.setValue(row, col, value);
-            }
-        }
-        return dEoP;
     }
 
     /**

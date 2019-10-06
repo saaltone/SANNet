@@ -58,7 +58,7 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * Defines stride i.e. size of step when moving over image.
      *
      */
-    private int stride;
+    private int stride = 1;
 
     /**
      * If true executes average pooling otherwise executes max pooling.
@@ -124,7 +124,7 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - poolSize size of pool.<br>
-     *     - stride: size of stride.<br>
+     *     - stride: size of stride. Default size 1.<br>
      *     - avgPool: if true does average pooling otherwise does max pooling.<br>
      *
      * @param params parameters used for pooling layer.
@@ -195,13 +195,17 @@ public class PoolingLayer extends AbstractExecutionLayer {
         for (Integer index : getOutsP().keySet()) {
             Matrix input = getOutsP().get(index);
             parent.getOuts().put(index, output = new DMatrix(widthOut, heightOut));
+            int [][][] argsAt = null;
             if (!avgPool) {
-                int [][][] argsAt = new int[output.getRows()][output.getCols()][2];
+                argsAt = new int[output.getRows()][output.getCols()][2];
                 argsMax.put(index, argsAt);
-                input.maxPool(output, stride, poolSize, argsAt);
             }
-            else {
-                input.avgPool(output, stride, poolSize);
+            input.setSliceSize(poolSize, poolSize);
+            for (int row = 0; row < output.getRows(); row = row + stride) {
+                for (int col = 0; col < output.getCols(); col = col + stride) {
+                    if (!avgPool) input.sliceAt(row, col).maxPool(output, argsAt);
+                    else input.sliceAt(row, col).avgPool(output);
+                }
             }
         }
 
@@ -250,8 +254,13 @@ public class PoolingLayer extends AbstractExecutionLayer {
             Matrix dEi = dEosN.get(index);
 
             parent.getdEos().put(index, dEo = new DMatrix(widthIn, heightIn));
-            if (!avgPool) dEi.maxPoolGrad(dEo, argsMax.get(index));
-            else dEi.avgPoolGrad(dEo, poolSize);
+            dEi.setSliceSize(1, 1);
+            for (int row = 0; row < dEi.getRows(); row = row + stride) {
+                for (int col = 0; col < dEi.getCols(); col = col + stride) {
+                    if (!avgPool) dEi.sliceAt(row, col).maxPoolGrad(dEo, argsMax.get(index)[row][col]);
+                    else dEi.sliceAt(row, col).avgPoolGrad(dEo);
+                }
+            }
         }
 
         backward.sumGrad();
