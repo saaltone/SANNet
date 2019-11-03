@@ -7,8 +7,9 @@
 package core.metrics;
 
 import core.NeuralNetworkException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.Sequence;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
@@ -35,6 +36,7 @@ public class Metrics {
      *
      */
     public static class Regression {
+
         /**
          * Number of error samples cumulated.
          *
@@ -58,7 +60,7 @@ public class Metrics {
         }
 
         /**
-         * Gets cumulative error.
+         * Returns cumulative error.
          *
          * @return cumulative error.
          */
@@ -67,7 +69,7 @@ public class Metrics {
         }
 
         /**
-         * Gets number of error samples cumulated.
+         * Returns number of error samples cumulated.
          *
          * @return number of error samples cumulated.
          */
@@ -76,7 +78,7 @@ public class Metrics {
         }
 
         /**
-         * Gets average error.
+         * Returns average error.
          *
          * @return average error.
          */
@@ -100,6 +102,7 @@ public class Metrics {
      *
      */
     public static class Classification {
+
         /**
          * True positive counts for each feature.
          *
@@ -161,7 +164,7 @@ public class Metrics {
         Classification() {}
 
         /**
-         * Updates classfication statistics and confusion matrix for a sample.
+         * Updates classification statistics and confusion matrix for a sample.
          *
          * @param predicted predicted sample.
          * @param actual actual (true) sample.
@@ -184,7 +187,7 @@ public class Metrics {
         }
 
         /**
-         * Updates classfication statistics and confusion matrix for multiple samples.<br>
+         * Updates classification statistics and confusion matrix for multiple samples.<br>
          * Assumes tree map structure for samples.<br>
          *
          * @param predicted predicted samples.
@@ -192,15 +195,33 @@ public class Metrics {
          * @throws MatrixException throws exception if matrix operation fails.
          */
         public void update(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException {
-            if (confusion == null) reset (actual.get(0).getRows());
-            else if (confusion.length != actual.get(0).getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+            if (confusion == null) reset (actual.values().toArray(new Matrix[0])[0].getRows());
+            else if (confusion.length != actual.values().toArray(new Matrix[0])[0].getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
             for (int sample = 0; sample < actual.size(); sample++) {
                 update(predicted.get(sample), actual.get(sample));
             }
         }
 
         /**
-         * Updates classfication statistics and confusion matrix for multiple samples.<br>
+         * Updates classification statistics and confusion matrix for multiple samples.<br>
+         * Assumes sequence for samples.<br>
+         *
+         * @param predicted predicted samples.
+         * @param actual actual (true) samples.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public void update(Sequence predicted, Sequence actual) throws MatrixException {
+            if (confusion == null) reset (actual.firstValue().get(0).getRows());
+            else if (confusion.length != actual.firstValue().get(0).getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+            for (Integer sampleIndex : predicted.keySet()) {
+                for (Integer matrixIndex : predicted.sampleKeySet()) {
+                    update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
+                }
+            }
+        }
+
+        /**
+         * Updates classification statistics and confusion matrix for multiple samples.<br>
          * Assumes hash map structure for samples.<br>
          *
          * @param predicted predicted samples.
@@ -208,8 +229,8 @@ public class Metrics {
          * @throws MatrixException throws exception if matrix operation fails.
          */
         public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException {
-            if (confusion == null) reset (actual.get(0).getRows());
-            else if (confusion.length != actual.get(0).getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+            if (confusion == null) reset (actual.values().toArray(new Matrix[0])[0].getRows());
+            else if (confusion.length != actual.values().toArray(new Matrix[0])[0].getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
             for (int sample = 0; sample < actual.size(); sample++) {
                 update(predicted.get(sample), actual.get(sample));
             }
@@ -233,7 +254,7 @@ public class Metrics {
         }
 
         /**
-         * Gets true positive statistics.
+         * Returns true positive statistics.
          *
          * @return true positive statistics.
          */
@@ -242,7 +263,7 @@ public class Metrics {
         }
 
         /**
-         * Gets false positive statistics.
+         * Returns false positive statistics.
          *
          * @return false positive statistics.
          */
@@ -251,7 +272,7 @@ public class Metrics {
         }
 
         /**
-         * Gets true negative statistics.
+         * Returns true negative statistics.
          *
          * @return true negative statistics.
          */
@@ -260,7 +281,7 @@ public class Metrics {
         }
 
         /**
-         * Gets false negative statistics.
+         * Returns false negative statistics.
          *
          * @return false negative statistics.
          */
@@ -269,7 +290,7 @@ public class Metrics {
         }
 
         /**
-         * Gets total true positive count over all features.
+         * Returns total true positive count over all features.
          *
          * @return total true positive count.
          */
@@ -278,7 +299,7 @@ public class Metrics {
         }
 
         /**
-         * Gets total false positive count over all features.
+         * Returns total false positive count over all features.
          *
          * @return total false positive count.
          */
@@ -287,7 +308,7 @@ public class Metrics {
         }
 
         /**
-         * Gets total true negative count over all features.
+         * Returns total true negative count over all features.
          *
          * @return total true negative count.
          */
@@ -296,7 +317,7 @@ public class Metrics {
         }
 
         /**
-         * Gets total false negative count over all features.
+         * Returns total false negative count over all features.
          *
          * @return total false negative count.
          */
@@ -305,7 +326,7 @@ public class Metrics {
         }
 
         /**
-         * Gets confusion matrix.
+         * Returns confusion matrix.
          *
          * @return confusion matrix.
          */
@@ -459,6 +480,20 @@ public class Metrics {
     }
 
     /**
+     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.<br>
+     * Assumes sequence for samples.<br>
+     *
+     * @param predicted predicted errors.
+     * @param actual actual (true) error.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if reporting of errors fails.
+     */
+    public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
+        if (metricsType == MetricsType.REGRESSION) regression.update(1 - regressionAccuracy(predicted, actual));
+        else updateConfusion(predicted, actual);
+    }
+
+    /**
      * Reports single error value.
      *
      * @param error single error value to be reported.
@@ -481,14 +516,12 @@ public class Metrics {
      * Does not reset current error.<br>
      *
      * @param iteration iteration index for error history.
+     * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
      */
-    public void store(int iteration) {
-        try {
-            errors.remove(iteration - errorHistorySize);
-            if (metricsType == MetricsType.REGRESSION) errors.put(iteration, regression.getAverageError());
-            else errors.put(iteration, 1 - classificationAccuracy());
-        }
-        catch (NeuralNetworkException exception) {}
+    public void store(int iteration) throws NeuralNetworkException {
+        errors.remove(iteration - errorHistorySize);
+        if (metricsType == MetricsType.REGRESSION) errors.put(iteration, regression.getAverageError());
+        else errors.put(iteration, 1 - classificationAccuracy());
     }
 
     /**
@@ -496,15 +529,15 @@ public class Metrics {
      *
      * @param iteration iteration index for error history.
      * @param reset if true resets current error otherwise not.
+     * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
      */
-    public void store(int iteration, boolean reset) {
+    public void store(int iteration, boolean reset) throws NeuralNetworkException {
         store(iteration);
         if (reset) resetError();
     }
 
-
     /**
-     * Gets error history.
+     * Returns error history.
      *
      * @return error history.
      */
@@ -513,7 +546,7 @@ public class Metrics {
     }
 
     /**
-     * Gets and calculates moving average of last N iterations in error history.
+     * Returns and calculates moving average of last N iterations in error history.
      *
      * @param lastNIterations number of last iterations.
      * @return moving average of N last iterations.
@@ -543,7 +576,7 @@ public class Metrics {
     }
 
     /**
-     * Gets last absolute error value in error history.
+     * Returns last absolute error value in error history.
      *
      * @return last absolute error value in error history.
      */
@@ -552,7 +585,7 @@ public class Metrics {
     }
 
     /**
-     * Gets absolute error value of specific iteration in error history.<br>
+     * Returns absolute error value of specific iteration in error history.<br>
      * Returns 0 if iteration index does not exist in error history.<br>
      *
      * @param iteration iteration index.
@@ -583,7 +616,7 @@ public class Metrics {
     }
 
     /**
-     * Gets minimum error in error history.
+     * Returns minimum error in error history.
      *
      * @return minimum error in error history.
      */
@@ -592,7 +625,7 @@ public class Metrics {
     }
 
     /**
-     * Gets minimum error over last N iterations in error history.
+     * Returns minimum error over last N iterations in error history.
      *
      * @param lastNIterations number of last N iterations to be included into minimum counting.
      * @return minimum error over last N iterations in error history.
@@ -610,7 +643,7 @@ public class Metrics {
     }
 
     /**
-     * Gets maximum error in error history.
+     * Returns maximum error in error history.
      *
      * @return maximum error in error history.
      */
@@ -619,7 +652,7 @@ public class Metrics {
     }
 
     /**
-     * Gets maximum error over last N iterations in error history.
+     * Returns maximum error over last N iterations in error history.
      *
      * @param lastNIterations number of last N iterations to be included into maximum counting.
      * @return maximum error over last N iterations in error history.
@@ -637,7 +670,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification for (predicted) sample.<br>
+     * Returns classification for (predicted) sample.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
      *
      * @param predicted predicted sample.
@@ -647,17 +680,17 @@ public class Metrics {
     private Matrix getClassification(Matrix predicted) throws MatrixException {
         if (!multiClass) {
             double maxValue = predicted.max();
-            Matrix.MatrixUniOperation classification = (value) -> value != maxValue ? 0 : 1;
+            Matrix.MatrixUnaryOperation classification = (value) -> value != maxValue ? 0 : 1;
             return predicted.apply(classification);
         }
         else {
-            Matrix.MatrixUniOperation classification = (value) -> value < 0.5 ? 0 : 1;
+            Matrix.MatrixUnaryOperation classification = (value) -> value < 0.5 ? 0 : 1;
             return predicted.apply(classification);
         }
     }
 
     /**
-     * Gets classification for (predicted) multiple samples.<br>
+     * Returns classification for (predicted) multiple samples.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
      * Assumes tree map structure for samples.<br>
      *
@@ -673,7 +706,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification for (predicted) multiple samples.<br>
+     * Returns classification for (predicted) multiple samples.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
      * Assumes hash map structure for samples.<br>
      *
@@ -685,6 +718,26 @@ public class Metrics {
         LinkedHashMap<Integer, Matrix> classified = new LinkedHashMap<>();
         int index = 0;
         for (Matrix sample: predicted.values()) classified.put(index++, getClassification(sample));
+        return classified;
+    }
+
+    /**
+     * Returns classification for (predicted) multiple samples.<br>
+     * Takes into consideration if single class or multi class classification for metrics is defined.<br>
+     * Assumes sequence for samples.<br>
+     *
+     * @param predicted predicted samples.
+     * @return classification for predicted samples.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private Sequence getClassification(Sequence predicted) throws MatrixException {
+        Sequence classified = new Sequence(predicted.getDepth());
+        int index = 0;
+        for (Integer sampleIndex : predicted.keySet()) {
+            for (Integer matrixIndex : predicted.sampleKeySet()) {
+                classified.put(sampleIndex, matrixIndex, getClassification(predicted.get(sampleIndex, matrixIndex)));
+            }
+        }
         return classified;
     }
 
@@ -717,6 +770,21 @@ public class Metrics {
 
     /**
      * Updates confusion and classification statistics by including multiple new predicted / actual sample pairs.<br>
+     * Assumes sequence for samples.<br>
+     *
+     * @param predicted predicted samples.
+     * @param actual actual (true) samples.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if classification statistics update fails.
+     */
+    private void updateConfusion(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
+        if (actual.sampleSize() == 0) throw new NeuralNetworkException("Nothing to classify");
+        predicted = getClassification(predicted);
+        classification.update(predicted, actual);
+    }
+
+    /**
+     * Updates confusion and classification statistics by including multiple new predicted / actual sample pairs.<br>
      * Assumes hash map structure for samples.<br>
      *
      * @param predicted predicted samples.
@@ -731,7 +799,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification metrics.
+     * Returns classification metrics.
      *
      * @return classification metrics.
      * @throws NeuralNetworkException throws exception is metrics is not defined as classification type.
@@ -742,7 +810,7 @@ public class Metrics {
     }
 
     /**
-     * Gets regression accuracy for predicted / actual sample pair.
+     * Returns regression accuracy for predicted / actual sample pair.
      *
      * @param predicted predicted sample.
      * @param actual actual (true) sample.
@@ -756,7 +824,7 @@ public class Metrics {
     }
 
     /**
-     * Gets regression accuracy for multiple predicted / actual sample pairs.<br>
+     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
      * Assumes hash map structure for samples.<br>
      *
      * @param predicted predicted samples.
@@ -775,7 +843,7 @@ public class Metrics {
     }
 
     /**
-     * Gets regression accuracy for multiple predicted / actual sample pairs.<br>
+     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
      * Assumes tree map structure for samples.<br>
      *
      * @param predicted predicted samples.
@@ -794,7 +862,28 @@ public class Metrics {
     }
 
     /**
-     * Gets classification accuracy.<br>
+     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
+     * Assumes sequence for samples.<br>
+     *
+     * @param predicted predicted samples.
+     * @param actual actual (true) samples.
+     * @return regression accuracy.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception is metrics is not defined as regression type.
+     */
+    public double regressionAccuracy(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
+        if (metricsType != MetricsType.REGRESSION) throw new NeuralNetworkException("Not regression metric.");
+        double error = 0;
+        for (Integer sampleIndex : predicted.keySet()) {
+            for (Integer matrixIndex : predicted.sampleKeySet()) {
+                error += regressionAccuracy(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
+            }
+        }
+        return error / actual.totalSize();
+    }
+
+    /**
+     * Returns classification accuracy.<br>
      * Accuracy is calculated as (TP + TN) / (TP + FP + TN + FN).<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
      *
@@ -818,7 +907,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification error rate.<br>
+     * Returns classification error rate.<br>
      * Accuracy is calculated as (FP + FN) / (TP + FP + TN + FN).<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
      *
@@ -842,7 +931,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification precision (positive predictive value).<br>
+     * Returns classification precision (positive predictive value).<br>
      * Precision is calculated as TP / (TP + FP).<br>
      * Measures share of correctly classified positive samples out of all samples predicted as positive.<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
@@ -867,7 +956,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification recall (sensitivity, hit rate, true positive rate).<br>
+     * Returns classification recall (sensitivity, hit rate, true positive rate).<br>
      * Recall is calculated as TP / (TP + FN).<br>
      * Measures share of correctly classified positive samples out of all samples actually positive.<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
@@ -892,7 +981,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification specificity (selectivity, true negative rate).<br>
+     * Returns classification specificity (selectivity, true negative rate).<br>
      * Specificity is calculated as TN / (TN + FP).<br>
      * Measures share of correctly classified negative samples out of all samples actually negative.<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
@@ -917,7 +1006,7 @@ public class Metrics {
     }
 
     /**
-     * Gets classification F1 score.<br>
+     * Returns classification F1 score.<br>
      * F1 is calculated as 2 * precision * recall / (precision + recall).<br>
      * Takes into consideration if statistics is defined as macro or micro average.<br>
      *
@@ -932,7 +1021,7 @@ public class Metrics {
     }
 
     /**
-     * Gets confusion matrix.
+     * Returns confusion matrix.
      *
      * @return confusion matrix.
      * @throws NeuralNetworkException throws exception if metrics is not defined as classification type.
