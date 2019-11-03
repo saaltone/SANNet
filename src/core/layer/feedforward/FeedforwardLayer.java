@@ -10,9 +10,15 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
+import core.normalization.Normalization;
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Init;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements non-recurrent feed forward layer.
@@ -39,6 +45,12 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     private boolean regulateDirectWeights = true;
 
     /**
+     * Input matrix for procedure construction.
+     *
+     */
+    private Matrix input;
+
+    /**
      * Constructor for feed forward layer.
      *
      * @param parent reference to parent layer.
@@ -53,7 +65,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Gets parameters used for feed forward layer.
+     * Returns parameters used for feed forward layer.
      *
      * @return parameters used for feed forward layer.
      */
@@ -75,7 +87,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) setWidth(params.getValueAsInteger("width"));
+        if (params.hasParam("width")) parent.setWidth(params.getValueAsInteger("width"));
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
     }
 
@@ -98,33 +110,58 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * Initializes weight and bias and their gradients.<br>
      *
      */
-    public void initialize() {
-        int pLayerWidth = parent.getBackward().getPLayer().getWidth();
-        int nLayerWidth = parent.getBackward().getNLayer().getWidth();
+    public void initialize() throws MatrixException {
+        int pLayerWidth = parent.getBackward().getPLayerWidth();
+        int nLayerWidth = parent.getBackward().getNLayerWidth();
 
         W = new DMatrix(nLayerWidth, pLayerWidth, this.initialization);
 
         B = new DMatrix(nLayerWidth, 1);
-        B.initialize(W.getInit());
+        B.initialize(W.getInitializer());
 
-        backward.registerWeight(W, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(W, true, regulateDirectWeights, true);
 
-        backward.registerWeight(B, true, false, false);
+        parent.getBackward().registerWeight(B, true, false, false);
+
+    }
+
+    /**
+     * Resets input.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     */
+    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
+        input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
+    }
+
+    /**
+     * Returns input matrices for procedure construction.
+     *
+     * @return input matrices for procedure construction.
+     */
+    protected Sample getInputMatrices() throws MatrixException {
+        Sample inputs = new Sample(1);
+        inputs.put(0, input);
+        return inputs;
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input of forward procedure.
-     * @param reset reset recurring inputs of procedure.
+     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
+    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
+        if (normalizers.size() > 0) input.setNormalization(normalizers);
+
         Matrix output = W.dot(input).add(B);
+
         output = output.apply(activation);
 
-        return output;
+        Sample outputs = new Sample(1);
+        outputs.put(0, output);
+        return outputs;
 
     }
 

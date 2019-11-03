@@ -10,9 +10,12 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
+import core.normalization.Normalization;
 import utils.*;
+import utils.matrix.*;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Class for Peephole Long Short Term Memory (LSTM)<br>
@@ -133,6 +136,12 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
     private boolean regulateRecurrentWeights = false;
 
     /**
+     * Input matrix for procedure construction.
+     *
+     */
+    private Matrix input;
+
+    /**
      * Constructor for Peephole LSTM layer.
      *
      * @param parent reference to parent layer.
@@ -144,12 +153,12 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      */
     public PeepholeLSTMLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (parent, activation, initialization, params);
-        tanh = new ActivationFunction(UniFunctionType.TANH);
-        sigmoid = new ActivationFunction(UniFunctionType.SIGMOID);
+        tanh = new ActivationFunction(UnaryFunctionType.TANH);
+        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
     }
 
     /**
-     * Gets parameters used for Peephole LSTM layer.
+     * Returns parameters used for Peephole LSTM layer.
      *
      * @return parameters used for Peephole LSTM layer.
      */
@@ -179,7 +188,7 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) setWidth(params.getValueAsInteger("width"));
+        if (params.hasParam("width")) parent.setWidth(params.getValueAsInteger("width"));
         if (params.hasParam("doubleTanh")) doubleTanh = params.getValueAsBoolean("doubleTanh");
         if (params.hasParam("resetStateTraining")) resetStateTraining = params.getValueAsBoolean("resetStateTraining");
         if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
@@ -206,9 +215,9 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      * Initializes weights and bias and their gradients.<br>
      *
      */
-    public void initialize() {
-        int pLayerWidth = parent.getBackward().getPLayer().getWidth();
-        int nLayerWidth = parent.getBackward().getNLayer().getWidth();
+    public void initialize() throws MatrixException {
+        int pLayerWidth = parent.getBackward().getPLayerWidth();
+        int nLayerWidth = parent.getBackward().getNLayerWidth();
 
         Wi = new DMatrix(nLayerWidth, pLayerWidth);
         Wi.init(this.initialization);
@@ -243,33 +252,52 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
         bs = new DMatrix(nLayerWidth, 1);
         bs.init(this.initialization);
 
-        backward.registerWeight(Wi, true, regulateDirectWeights, true);
-        backward.registerWeight(Wf, true, regulateDirectWeights, true);
-        backward.registerWeight(Wo, true, regulateDirectWeights, true);
-        backward.registerWeight(Ws, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wi, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wf, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wo, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Ws, true, regulateDirectWeights, true);
 
-        backward.registerWeight(Ui, true, regulateRecurrentWeights, true);
-        backward.registerWeight(Uf, true, regulateRecurrentWeights, true);
-        backward.registerWeight(Uo, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Ui, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Uf, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Uo, true, regulateRecurrentWeights, true);
 
-        backward.registerWeight(bi, true, false, false);
-        backward.registerWeight(bf, true, false, false);
-        backward.registerWeight(bo, true, false, false);
-        backward.registerWeight(bs, true, false, false);
+        parent.getBackward().registerWeight(bi, true, false, false);
+        parent.getBackward().registerWeight(bf, true, false, false);
+        parent.getBackward().registerWeight(bo, true, false, false);
+        parent.getBackward().registerWeight(bs, true, false, false);
+
+    }
+
+    /**
+     * Resets input.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     */
+    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
+        input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
+        if (resetPreviousInput) cPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
+    }
+
+    /**
+     * Returns input matrices for procedure construction.
+     *
+     * @return input matrices for procedure construction.
+     */
+    protected Sample getInputMatrices() throws MatrixException {
+        Sample inputs = new Sample(1);
+        inputs.put(0, input);
+        return inputs;
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input of forward procedure.
-     * @param reset reset recurring inputs of procedure.
+     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
-        if (reset) {
-            cPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
-        }
+    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
+        if (normalizers.size() > 0) input.setNormalization(normalizers);
 
         // i = sigmoid(Wi * x + Ui * c(t-1) + bi) → Input gate
         Matrix i = Wi.dot(input).add(Ui.dot(cPrev)).add(bi);
@@ -295,7 +323,9 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
         Matrix c_ = doubleTanh ? c.apply(tanh) : c;
         Matrix h = c_.multiply(o);
 
-        return h;
+        Sample outputs = new Sample(1);
+        outputs.put(0, h);
+        return outputs;
 
     }
 

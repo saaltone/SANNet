@@ -10,9 +10,12 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
+import core.normalization.Normalization;
 import utils.*;
+import utils.matrix.*;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements gated recurrent unit (GRU) layer.<br>
@@ -119,6 +122,12 @@ public class GRULayer extends AbstractExecutionLayer {
     private boolean regulateRecurrentWeights = false;
 
     /**
+     * Input matrix for procedure construction.
+     *
+     */
+    private Matrix input;
+
+    /**
      * Constructor for GRU layer.
      *
      * @param parent reference to parent layer.
@@ -130,12 +139,12 @@ public class GRULayer extends AbstractExecutionLayer {
      */
     public GRULayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (parent, activation, initialization, params);
-        tanh = new ActivationFunction(UniFunctionType.TANH);
-        sigmoid = new ActivationFunction(UniFunctionType.SIGMOID);
+        tanh = new ActivationFunction(UnaryFunctionType.TANH);
+        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
     }
 
     /**
-     * Gets parameters used for GRU layer.
+     * Returns parameters used for GRU layer.
      *
      * @return parameters used for GRU layer.
      */
@@ -163,7 +172,7 @@ public class GRULayer extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) setWidth(params.getValueAsInteger("width"));
+        if (params.hasParam("width")) parent.setWidth(params.getValueAsInteger("width"));
         if (params.hasParam("resetStateTraining")) resetStateTraining = params.getValueAsBoolean("resetStateTraining");
         if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
@@ -189,9 +198,9 @@ public class GRULayer extends AbstractExecutionLayer {
      * Initializes weights and bias and their gradients.<br>
      *
      */
-    public void initialize() {
-        int pLayerWidth = parent.getBackward().getPLayer().getWidth();
-        int nLayerWidth = parent.getBackward().getNLayer().getWidth();
+    public void initialize() throws MatrixException {
+        int pLayerWidth = parent.getBackward().getPLayerWidth();
+        int nLayerWidth = parent.getBackward().getNLayerWidth();
 
         Wz = new DMatrix(nLayerWidth, pLayerWidth);
         Wz.init(this.initialization);
@@ -220,28 +229,50 @@ public class GRULayer extends AbstractExecutionLayer {
         bh = new DMatrix(nLayerWidth, 1);
         bh.init(this.initialization);
 
-        backward.registerWeight(Wz, true, regulateDirectWeights, true);
-        backward.registerWeight(Wr, true, regulateDirectWeights, true);
-        backward.registerWeight(Wh, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wz, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wr, true, regulateDirectWeights, true);
+        parent.getBackward().registerWeight(Wh, true, regulateDirectWeights, true);
 
-        backward.registerWeight(Uz, true, regulateRecurrentWeights, true);
-        backward.registerWeight(Ur, true, regulateRecurrentWeights, true);
-        backward.registerWeight(Uh, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Uz, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Ur, true, regulateRecurrentWeights, true);
+        parent.getBackward().registerWeight(Uh, true, regulateRecurrentWeights, true);
 
-        backward.registerWeight(bz, true, false, false);
-        backward.registerWeight(br, true, false, false);
-        backward.registerWeight(bh, true, false, false);
+        parent.getBackward().registerWeight(bz, true, false, false);
+        parent.getBackward().registerWeight(br, true, false, false);
+        parent.getBackward().registerWeight(bh, true, false, false);
+
+    }
+
+    /**
+     * Resets input.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     */
+    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
+        input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
+        if (resetPreviousInput) outPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
+    }
+
+    /**
+     * Returns input matrices for procedure construction.
+     *
+     * @return input matrices for procedure construction.
+     */
+    protected Sample getInputMatrices() throws MatrixException {
+        Sample inputs = new Sample(1);
+        inputs.put(0, input);
+        return inputs;
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input of forward procedure.
+     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getForwardProcedure(Matrix input, boolean reset) throws MatrixException {
-        if (reset) outPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
+    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
+        if (normalizers.size() > 0) input.setNormalization(normalizers);
 
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
         Matrix z = Wz.dot(input).add(Uz.dot(outPrev)).add(bz);
@@ -261,7 +292,9 @@ public class GRULayer extends AbstractExecutionLayer {
 
         outPrev = s;
 
-        return s;
+        Sample outputs = new Sample(1);
+        outputs.put(0, s);
+        return outputs;
 
     }
 
