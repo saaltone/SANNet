@@ -120,7 +120,7 @@ public class EarlyStopping implements Serializable {
     }
 
     /**
-     * Gets parameters used for early stopping.
+     * Returns parameters used for early stopping.
      *
      * @return parameters used for early stopping.
      */

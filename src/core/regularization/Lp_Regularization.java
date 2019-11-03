@@ -6,15 +6,14 @@
 
 package core.regularization;
 
-import core.layer.Connector;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.Sequence;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Implements Lp regularization (experimental). P here is any norm higher or equal to 1.<br>
@@ -26,12 +25,6 @@ import java.util.TreeMap;
 public class Lp_Regularization implements Regularization, Serializable {
 
     private static final long serialVersionUID = -7833984930510523396L;
-
-    /**
-     * Reference to connector between previous and next layer.
-     *
-     */
-    private final Connector connector;
 
     /**
      * Regularization rate.
@@ -48,28 +41,22 @@ public class Lp_Regularization implements Regularization, Serializable {
     /**
      * Constructor for Lp regularization class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      */
-    public Lp_Regularization(Connector connector, boolean toHiddenLayer) {
-        this.connector = connector;
+    public Lp_Regularization() {
     }
 
     /**
      * Constructor for Lp regularization class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      * @param params parameters for Lp regularization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Lp_Regularization(Connector connector, boolean toHiddenLayer, String params) throws DynamicParamException {
-        this(connector, toHiddenLayer);
+    public Lp_Regularization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for Lp regularization.
+     * Returns parameters used for Lp regularization.
      *
      * @return parameters used for Lp regularization.
      */
@@ -99,64 +86,49 @@ public class Lp_Regularization implements Regularization, Serializable {
      * Not used.
      *
      */
-    public void reset() {}
-
-    /**
-     * Not used.
-     *
-     */
     public void setTraining(boolean isTraining) {
     }
 
     /**
      * Not used.
      *
-     * @param ins input samples for forward step.
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int index) {}
+    public void reset() {}
 
     /**
      * Not used.
      *
-     * @param outs output samples for forward step.
+     * @param sequence input sequence.
      */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) {}
+    public void forward(Sequence sequence) {}
+
+    /**
+     * Not used.
+     *
+     * @param W weight matrix.
+     */
+    public void forward(Matrix W) {}
 
     /**
      * Calculates and returns cumulated error from Lp regularization.<br>
      * This is added to the total output error of neural network.<br>
      *
-     * @return cumulated error from Lp regularization.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param W weight matrix.
+     * @return cumulated error from L2 regularization.
      */
-    public double error() throws MatrixException {
-        double error = 0;
-        for (Matrix W : connector.getReg()) {
-            error += lambda * W.norm(p);
-        }
-        return error;
-    }
-
-    /**
-     * Not used.
-     *
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
-     */
-    public void backward(int index) {
+    public double error(Matrix W) {
+        return lambda * W.norm(p);
     }
 
     /**
      * Regulates weights by calculating p- norm of weights and adding it to weight gradient sum.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param W weight matrix.
+     * @param dWSum gradient sum of weight.
      */
-    public void update() throws MatrixException {
-        Matrix.MatrixUniOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
-        for (Matrix W : connector.getReg()) {
-            Matrix dWSum = connector.getdWsSums(W);
-            dWSum.add(W.apply(function), dWSum);
-        }
+    public void backward(Matrix W, Matrix dWSum) throws MatrixException {
+        Matrix.MatrixUnaryOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
+        dWSum.add(W.apply(function), dWSum);
     }
 
 }

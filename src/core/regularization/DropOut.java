@@ -6,15 +6,14 @@
 
 package core.regularization;
 
-import core.layer.Connector;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.Sequence;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Implements drop out regularization method for layer weights (parameters).<br>
@@ -24,21 +23,10 @@ import java.util.TreeMap;
  * Reference: https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf<br>
  *
  */
+
 public class DropOut implements Regularization, Serializable {
 
     private static final long serialVersionUID = 1335548498128292515L;
-
-    /**
-     * Reference to connector between previous and next layer.
-     *
-     */
-    private final Connector connector;
-
-    /**
-     * True if next layer if hidden layer otherwise false.
-     *
-     */
-    private final boolean toHiddenLayer;
 
     /**
      * If true neural network is in state otherwise false.
@@ -53,45 +41,30 @@ public class DropOut implements Regularization, Serializable {
     private double probability = 0.5;
 
     /**
-     * If true drop out masking is done on sample by sample.<br>
-     * Otherwise same mask is used throughout single training batch.<br>
-     *
-     */
-    private boolean maskBySample = false;
-
-    /**
      * Constructor for drop out class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      */
-    public DropOut(Connector connector, boolean toHiddenLayer) {
-        this.connector = connector;
-        this.toHiddenLayer = toHiddenLayer;
+    public DropOut() {
     }
 
     /**
      * Constructor for drop out class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      * @param params parameters for drop out.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DropOut(Connector connector, boolean toHiddenLayer, String params) throws DynamicParamException {
-        this(connector, toHiddenLayer);
+    public DropOut(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for drop out.
+     * Returns parameters used for drop out.
      *
      * @return parameters used for drop out.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("probability", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("maskBySample", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -106,7 +79,6 @@ public class DropOut implements Regularization, Serializable {
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("probability")) probability = 1 - params.getValueAsDouble("probability");
-        if (params.hasParam("maskBySample")) maskBySample = params.getValueAsBoolean("maskBySample");
     }
 
     /**
@@ -126,42 +98,26 @@ public class DropOut implements Regularization, Serializable {
 
     /**
      * Implements forward step for drop out.<br>
-     * Function selectively masks out certain percentage of node governed by parameter probability.<br>
-     * It then compensates lost connections in other nodes by scaling up respectively.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During inference phase it removes masking and compensates all weight by multipliying by probability.<br>
      *
-     * @param ins input samples for forward step.
-     * @param index executed only when index is -1 meaning for whole input sample batch at once.
+     * @param sequence input sequence.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int index) throws MatrixException {
-        if (index != -1) return;
-        if (!toHiddenLayer) return;
-        for (Matrix W : connector.getReg()) {
-            if (isTraining) {
-                if (maskBySample || W.colMaskStackSize() == 0) {
-                    W.setMaskProba(probability);
-                    W.setMask();
-                    W.maskColByProba();
-                    W.setScalingConstant(1 / probability);
-                    W.stackColMask(false);
+    public void forward(Sequence sequence) throws MatrixException {
+        for (Integer sampleIndex : sequence.keySet()) {
+            for (Integer entryIndex : sequence.sampleKeySet()) {
+                Matrix matrix = sequence.get(sampleIndex).get(entryIndex);
+                if (isTraining) {
+                    matrix.unsetScalingConstant();
+                    matrix.setMask();
+                    matrix.getMask().setMaskProba(probability);
+                    matrix.getMask().maskRowByProba();
                 }
-            }
-            else {
-                W.setScalingConstant(probability);
-            }
-        }
-    }
-
-    /**
-     * Unscales weight matrix for inference phase.
-     *
-     * @param outs output samples for forward step.
-     */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) {
-        if (!toHiddenLayer) return;
-        if (!isTraining) {
-            for (Matrix W : connector.getReg()) {
-                W.unsetScalingConstant();
+                else {
+                    matrix.setScalingConstant(probability);
+                    matrix.unsetMask();
+                }
             }
         }
     }
@@ -169,41 +125,28 @@ public class DropOut implements Regularization, Serializable {
     /**
      * Not used.
      *
+     * @param W weight matrix.
+     */
+    public void forward(Matrix W) {
+    }
+
+    /**
+     * Not used.
+     *
+     * @param W weight matrix.
      * @return not used.
      */
-    public double error() {
+    public double error(Matrix W) {
         return 0;
     }
 
     /**
-     * In case of mask sample by sample basis pops mask from stack per backpropagation step.
+     * Not used.
      *
-     * @param index executed only when index is -1 meaning for whole input sample batch at once.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param W weight matrix.
+     * @param dWSum gradient sum of weight.
      */
-    public void backward(int index) throws MatrixException {
-        if (index != -1) return;
-        if (!toHiddenLayer) return;
-        if (isTraining) {
-            for (Matrix W : connector.getReg()) {
-                if (W.colMaskStackSize() > 0) W.unstackColMask();
-            }
-        }
-    }
-
-    /**
-     * Prior weight update removes any drop out masking with this function.
-     *
-     */
-    public void update() {
-        if (!toHiddenLayer) return;
-        if (isTraining) {
-            for (Matrix W : connector.getReg()) {
-                W.unsetMask();
-                W.clearColMaskStack();
-                W.unsetScalingConstant();
-            }
-        }
+    public void backward(Matrix W, Matrix dWSum) {
     }
 
 }

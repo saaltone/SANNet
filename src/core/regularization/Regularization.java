@@ -8,10 +8,9 @@ package core.regularization;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
-
-import java.util.TreeMap;
+import utils.Sequence;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Interface for regularization functions.
@@ -42,44 +41,35 @@ public interface Regularization {
 
     /**
      * Executes regularization method for forward step.<br>
-     * This operation assumes execution at step start.<br>
      *
-     * @param ins input samples for forward step.
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
+     * @param sequence input sequence.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void forwardPre(TreeMap<Integer, Matrix> ins, int index) throws MatrixException;
+    void forward(Sequence sequence) throws MatrixException;
 
     /**
      * Executes regularization method for forward step.<br>
-     * This operation assumes execution post activation.<br>
      *
-     * @param outs input samples for forward step.
+     * @param W weight matrix.
      */
-    void forwardPost(TreeMap<Integer, Matrix> outs);
+    void forward(Matrix W);
 
     /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
+     * @param W weight matrix.
      * @return cumulated error from regularization.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double error() throws MatrixException;
+    double error(Matrix W);
 
     /**
      * Executes regularization method for backward phase at pre in.
      *
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
+     * @param W weight matrix.
+     * @param dWSum gradient sum of weight.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void backward(int index) throws MatrixException;
-
-    /**
-     * Executes regularization method prior neural network update step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void update() throws MatrixException;
+    void backward(Matrix W, Matrix dWSum) throws MatrixException;
 
 }
 

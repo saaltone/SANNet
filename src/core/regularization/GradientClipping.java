@@ -6,15 +6,14 @@
 
 package core.regularization;
 
-import core.layer.Connector;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.Sequence;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Implements gradient clipping class.<br>
@@ -28,12 +27,6 @@ public class GradientClipping implements Regularization, Serializable {
     private static final long serialVersionUID = -2462517110247269075L;
 
     /**
-     * Reference to connector between previous and next layer.
-     *
-     */
-    private final Connector connector;
-
-    /**
      * Threshold for gradient clipping.
      *
      */
@@ -42,28 +35,22 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Constructor for gradient clipping class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      */
-    public GradientClipping(Connector connector, boolean toHiddenLayer) {
-        this.connector = connector;
+    public GradientClipping() {
     }
 
     /**
      * Constructor for gradient clipping class.
      *
-     * @param connector reference to connector between previous and next layer.
-     * @param toHiddenLayer true if next layer if hidden layer otherwise false.
      * @param params parameters for gradient clipping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientClipping(Connector connector, boolean toHiddenLayer, String params) throws DynamicParamException {
-        this(connector, toHiddenLayer);
+    public GradientClipping(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for gradient clipping.
+     * Returns parameters used for gradient clipping.
      *
      * @return parameters used for gradient clipping.
      */
@@ -103,33 +90,28 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Not used.
      *
-     * @param ins input samples for forward step.
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
+     * @param sequence input sequence.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int index) {}
+    public void forward(Sequence sequence) {
 
-    /**
-     * Not used.
-     *
-     * @param outs output samples for forward step.
-     */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) {}
-
-    /**
-     * Not used.
-     *
-     * @return not used.
-     */
-    public double error() {
-        return 0;
     }
 
     /**
      * Not used.
      *
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
+     * @param W weight matrix.
      */
-    public void backward(int index) {}
+    public void forward(Matrix W) {}
+
+    /**
+     * Not used.
+     *
+     * @param W weight matrix.
+     * @return not used.
+     */
+    public double error(Matrix W) {
+        return 0;
+    }
 
     /**
      * Executes gradient clipping prior weight update step for neural network.<br>
@@ -137,12 +119,9 @@ public class GradientClipping implements Regularization, Serializable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void update() throws MatrixException {
-        for (Matrix W : connector.getReg()) {
-            Matrix dWSum = connector.getdWsSums(W);
-            double dWSum_l2norm = Math.sqrt(dWSum.norm(2));
-            if (dWSum_l2norm > threshold) dWSum.multiply(threshold / dWSum_l2norm, dWSum);
-        }
+    public void backward(Matrix W, Matrix dWSum) throws MatrixException {
+        double dWSum_l2norm = Math.sqrt(dWSum.norm(2));
+        if (dWSum_l2norm > threshold) dWSum.multiply(threshold / dWSum_l2norm, dWSum);
     }
 
 }
