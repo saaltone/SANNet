@@ -12,7 +12,7 @@ import core.layer.convolutional.*;
 import core.layer.feedforward.*;
 import core.layer.recurrent.*;
 import utils.DynamicParamException;
-import utils.Init;
+import utils.matrix.Init;
 
 /**
  * Factory class to construct neural network layers.
@@ -77,7 +77,7 @@ public class LayerFactory {
     }
 
     /**
-     * Return type of layer as string.
+     * Returns type of layer as string.
      *
      * @param layer given layer.
      * @return type of a layer as string.
