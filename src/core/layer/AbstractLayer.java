@@ -8,12 +8,11 @@ package core.layer;
 
 import core.NeuralNetworkException;
 import utils.DynamicParamException;
-import utils.Init;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.Sequence;
+import utils.matrix.Init;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
-import java.util.TreeMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -106,31 +105,31 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Width of neural network layer. Also known as number of neural network layer nodes.
      *
      */
-    protected int width;
+    private int width;
 
     /**
      * Height of neural network layer. Relevant for convolutional layers.
      *
      */
-    protected int height = 1;
+    private int height = 1;
 
     /**
      * Depth of neural network layer. Relevant for convolutional layers.
      *
      */
-    protected int depth = 1;
+    private int depth = 1;
 
     /**
      * Tree map for storing outputs of neural network layer.
      *
      */
-    private transient TreeMap<Integer, Matrix> outs;
+    private transient Sequence outs;
 
     /**
      * Gradients for neural network layer.
      *
      */
-    private transient TreeMap<Integer, Matrix> dEos;
+    private transient Sequence dEos;
 
     /**
      * Static function to create connector between two layers.
@@ -155,9 +154,8 @@ public abstract class AbstractLayer implements Runnable, Serializable {
         this.layerIndex = layerIndex;
     }
 
-
     /**
-     * Return name of layer
+     * Returns name of layer
      *
      * @return name of layer
      */
@@ -183,7 +181,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param executionLayer execution layer reference to be set.
      */
-    public void setExecutionLayer(Layer executionLayer) {
+    void setExecutionLayer(Layer executionLayer) {
         this.executionLayer = executionLayer;
     }
 
@@ -192,13 +190,12 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param forward reference to forward connector.
      */
-    public void setForward(Connector forward) {
+    private void setForward(Connector forward) {
         this.forward = forward;
-        if (executionLayer != null) executionLayer.setForward(forward);
     }
 
     /**
-     * Gets forward connector to next layer.
+     * Returns forward connector to next layer.
      *
      * @return forward connector.
      */
@@ -211,13 +208,12 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param backward reference to backward connector.
      */
-    public void setBackward(Connector backward) {
+    private void setBackward(Connector backward) {
         this.backward = backward;
-        if (executionLayer != null) executionLayer.setBackward(backward);
     }
 
     /**
-     * Gets backward connector to previous layer.
+     * Returns backward connector to previous layer.
      *
      * @return backward connector.
      */
@@ -226,30 +222,51 @@ public abstract class AbstractLayer implements Runnable, Serializable {
     }
 
     /**
-     * Gets width of neural network layer.
+     * Sets width of the neural network layer.
+     *
+     * @param width width of neural network layer.
+     */
+    public void setWidth(int width) { this.width = width; }
+
+    /**
+     * Returns width of neural network layer.
      *
      * @return width of neural network layer.
      */
     public int getWidth() {
-        return executionLayer != null ? executionLayer.getWidth() : width;
+        return width;
     }
 
     /**
-     * Gets height of neural network layer.
+     * Sets height of the neural network layer. Relevant for convolutional layers.
+     *
+     * @param height height of neural network layer.
+     */
+    public void setHeight(int height) { this.height = height; }
+
+    /**
+     * Returns height of neural network layer.
      *
      * @return height of neural network layer.
      */
     public int getHeight() {
-        return executionLayer != null ? executionLayer.getHeight() : height;
+        return height;
     }
 
     /**
-     * Gets depth of neural network layer. Relevant for convolutional layers.
+     * Sets depth of the neural network layer. Relevant for convolutional layers.
+     *
+     * @param depth depth of neural network layer.
+     */
+    public void setDepth(int depth) { this.depth = depth; }
+
+    /**
+     * Returns depth of neural network layer. Relevant for convolutional layers.
      *
      * @return depth of neural network layer.
      */
     public int getDepth() {
-        return executionLayer != null ? executionLayer.getDepth() : depth;
+        return depth;
     }
 
     /**
@@ -276,16 +293,16 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * @return true if execution layer is convolutional layer type otherwise false.
      */
     public boolean isConvolutionalLayer() {
-        return executionLayer == null || !executionLayer.isConvolutionalLayer();
+        return executionLayer != null && executionLayer.isConvolutionalLayer();
     }
 
     /**
-     * Gets outputs of neural network layer.
+     * Returns outputs of neural network layer.
      *
      * @return outputs of neural network layer.
      */
-    public TreeMap<Integer, Matrix> getOuts() {
-        return executionLayer != null ? executionLayer.getOuts(outs) : outs;
+    public Sequence getOuts() {
+        return outs;
     }
 
     /**
@@ -303,15 +320,15 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      */
     public void resetOuts() {
-        outs = new TreeMap<>();
+        outs = new Sequence(depth);
     }
 
     /**
-     * Gets neural network layer gradients.
+     * Returns neural network layer gradients.
      *
      * @return neural network layer gradients.
      */
-    public TreeMap<Integer, Matrix> getdEos() {
+    public Sequence getdEos() {
         return dEos;
     }
 
@@ -320,15 +337,16 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      */
     public void resetOutGrads() {
-        dEos = new TreeMap<>();
+        dEos = new Sequence(depth);
     }
 
     /**
      * Initializes execution layer.
      *
+     * @throws MatrixException throws exception is matrix operation fails.
      * @throws NeuralNetworkException throws exception if intialization fails.
      */
-    public void initialize() throws NeuralNetworkException {
+    public void initialize() throws MatrixException, NeuralNetworkException {
         if (executionLayer != null) executionLayer.initialize();
     }
 
@@ -357,7 +375,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
         layerThread.setName(getLayerName());
         layerThread.start();
 
-        outs = new TreeMap<>();
+        outs = new Sequence(depth);
         resetOutGrads();
 
         if (forward != null) forward.start();
@@ -368,11 +386,10 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @param inputs training inputs for the layer.
      */
-    public void train(TreeMap<Integer, Matrix> inputs) {
+    public void train(Sequence inputs) {
         if (inputs.isEmpty()) return;
         nextState(ExecutionState.TRAIN, false);
-        outs = new TreeMap<>();
-        outs.putAll(inputs);
+        outs = new Sequence(inputs);
         lock.unlock();
         waitToComplete();
     }
@@ -392,11 +409,10 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * @param inputs predict inputs for the layer.
      * @return output of next layer or this layer if next layer does not exist.
      */
-    public TreeMap<Integer, Matrix> predict(TreeMap<Integer, Matrix> inputs) {
+    public Sequence predict(Sequence inputs) {
         if (inputs.isEmpty()) return null;
         nextState(ExecutionState.PREDICT, false);
-        outs = new TreeMap<>();
-        outs.putAll(inputs);
+        outs = new Sequence(inputs);
         lock.unlock();
         waitToComplete();
         return getOutput();
@@ -486,7 +502,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Waits that layer execution step is completed.
      *
      */
-    protected void waitToComplete() {
+    void waitToComplete() {
         lock.lock();
         try {
             while (executionState != ExecutionState.IDLE) complete.await();
@@ -496,12 +512,12 @@ public abstract class AbstractLayer implements Runnable, Serializable {
     }
 
     /**
-     * Gets output of next layer or this layer if next layer does not exist.<br>
+     * Returns output of next layer or this layer if next layer does not exist.<br>
      * Effectively output of neural network.<br>
      *
      * @return output of neural network.
      */
-    public TreeMap<Integer, Matrix> getOutput() {
+    public Sequence getOutput() {
         if (forward != null) return forward.getOutput();
         else return outs;
     }
@@ -564,7 +580,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected void forwardProcess() throws MatrixException, NeuralNetworkException {
+    private void forwardProcess() throws MatrixException, NeuralNetworkException {
         executionLayer.forwardProcess();
     }
 
@@ -573,7 +589,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void backwardProcess() throws MatrixException {
+    void backwardProcess() throws MatrixException {
         executionLayer.backwardProcess();
     }
 
@@ -592,6 +608,6 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      *
      * @return gradients of next neural network layer
      */
-    public abstract TreeMap<Integer, Matrix> getdEosN();
+    public abstract Sequence getdEosN();
 
 }
