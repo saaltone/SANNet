@@ -10,10 +10,15 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
+import core.normalization.Normalization;
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Init;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.HashSet;
 
 /**
  * Defines class for pooling layer that executes either average or max pooling.<br>
@@ -24,6 +29,7 @@ import java.util.TreeMap;
 public class PoolingLayer extends AbstractExecutionLayer {
 
     private static final long serialVersionUID = 4806254935177730053L;
+
     /**
      * Defines width of incoming image.
      *
@@ -35,6 +41,12 @@ public class PoolingLayer extends AbstractExecutionLayer {
      *
      */
     private int heightIn;
+
+    /**
+     * Defines height of incoming image.
+     *
+     */
+    private int depthIn;
 
     /**
      * Defines width of outgoing image.
@@ -67,30 +79,10 @@ public class PoolingLayer extends AbstractExecutionLayer {
     private boolean avgPool = false;
 
     /**
-     * Value is true is next layer is convolutional layer.
+     * Input matrices for procedure construction.
      *
      */
-    private boolean toNonConvolutionalLayer;
-
-    /**
-     * Intermediate tree map structure to store pooling values and their locations in forward step.<br>
-     * This cache saves execution time and simplifies backward processing step for max pooling.<br>
-     *
-     */
-    private transient TreeMap<Integer, int[][][]> argsMax;
-
-    /**
-     * Tree map for flattened outputs after forward processing.<br>
-     * This is relevant if next layer is non-convolutional layer.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> fouts;
-
-    /**
-     * True if layer allows to return flattened outputs. In practise this happens when layer is not processing internally.
-     *
-     */
-    private transient boolean allowFlattening = false;
+    private Sample inputs;
 
     /**
      * Constructor for pooling layer.
@@ -107,7 +99,7 @@ public class PoolingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Gets parameters used for pooling layer.
+     * Returns parameters used for pooling layer.
      *
      * @return parameters used for pooling layer.
      */
@@ -151,17 +143,15 @@ public class PoolingLayer extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return true; }
 
     /**
-     * Initializes max pooling layer.<br>
+     * Initializes pooling layer.<br>
      * Sets input and output dimensions.<br>
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws NeuralNetworkException {
-        toNonConvolutionalLayer = forward.hasNLayer() && forward.getNLayer().isConvolutionalLayer();
-
-        widthIn = backward.getPLayer().getWidth();
-        heightIn = backward.getPLayer().getHeight();
-        int depthIn = backward.getPLayer().getDepth();
+        widthIn = parent.getBackward().getPLayerWidth();
+        heightIn = parent.getBackward().getPLayerHeight();
+        depthIn = parent.getBackward().getPLayerDepth();
 
         if ((widthIn - poolSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + widthIn + " - poolSize: " + poolSize + " must be divisible by stride: " + stride);
         if ((heightIn - poolSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heigthIn: " + heightIn + " - poolSize: " + poolSize + " must be divisible by stride: " + stride);
@@ -173,99 +163,54 @@ public class PoolingLayer extends AbstractExecutionLayer {
         if (heightOut < 1) throw new NeuralNetworkException("Pooling layer heigth cannot be less than 1: " + heightOut);
         if (depthIn < 1) throw new NeuralNetworkException("Pooling layer depth cannot be less than 1: " + depthIn);
 
-        setWidth(widthOut);
-        setHeight(heightOut);
-        setDepth(depthIn);
-
+        parent.setWidth(widthOut);
+        parent.setHeight(heightOut);
+        parent.setDepth(depthIn);
     }
 
     /**
-     * Takes single forward processing step for pooling layer to process input(s).<br>
-     * Applies max or average pooling and produces outputs.<br>
+     * Resets input.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @param resetPreviousInput if true resets also previous input.
      */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        allowFlattening = false;
-        parent.resetOuts();
-        argsMax = new TreeMap<>();
-
-        Matrix output;
-        for (Integer index : getOutsP().keySet()) {
-            Matrix input = getOutsP().get(index);
-            parent.getOuts().put(index, output = new DMatrix(widthOut, heightOut));
-            int [][][] argsAt = null;
-            if (!avgPool) {
-                argsAt = new int[output.getRows()][output.getCols()][2];
-                argsMax.put(index, argsAt);
-            }
-            input.setSliceSize(poolSize, poolSize);
-            for (int row = 0; row < output.getRows(); row = row + stride) {
-                for (int col = 0; col < output.getCols(); col = col + stride) {
-                    if (!avgPool) input.sliceAt(row, col).maxPool(output, argsAt);
-                    else input.sliceAt(row, col).avgPool(output);
-                }
-            }
-        }
-
-        fouts = null;
-        if (forward == null) parent.updateOutputError();
-        else if (toNonConvolutionalLayer) fouts = flattenOutput(parent.getOuts());
-        allowFlattening = true;
-
+    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
+        inputs = new Sample(depthIn);
+        for (int index = 0; index < depthIn; index++) inputs.put(index, new DMatrix(widthIn, heightIn));
     }
 
     /**
-     * Returns outputs of pooling layer.
+     * Returns input matrix for procedure construction.
      *
-     * @return flattened outputs if next layer is non-convolutional layer otherwise normal outputs.
+     * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, Matrix> getOuts(TreeMap<Integer, Matrix> outs) {
-        return toNonConvolutionalLayer && allowFlattening ? fouts : outs;
+    protected Sample getInputMatrices() {
+        return inputs;
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input of forward procedure.
-     * @param reset reset recurring inputs of procedure.
+     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
-     */
-    protected Matrix getForwardProcedure(Matrix input, boolean reset) {
-        return null;
-    }
-
-    /**
-     * Takes single backward processing step for pooling layer to process input(s).<br>
-     * Calculates gradient (error signal) towards previous layer.<br>
-     *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
-        allowFlattening = false;
-        parent.resetOutGrads();
+    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
+        Sample outputs = new Sample(depthIn);
+        Matrix output;
 
-        backward.resetGrad();
+        for (int channelIndex = 0; channelIndex < inputs.size(); channelIndex++) {
+            Matrix input = inputs.get(channelIndex);
 
-        TreeMap<Integer, Matrix> dEosN = toNonConvolutionalLayer ? unflattenOutput(parent.getdEosN()) : parent.getdEosN();
-        Matrix dEo;
-        for (Integer index : parent.getOuts().keySet()) {
-            Matrix dEi = dEosN.get(index);
+            input.setStride(stride);
+            input.setPoolSize(poolSize);
 
-            parent.getdEos().put(index, dEo = new DMatrix(widthIn, heightIn));
-            dEi.setSliceSize(1, 1);
-            for (int row = 0; row < dEi.getRows(); row = row + stride) {
-                for (int col = 0; col < dEi.getCols(); col = col + stride) {
-                    if (!avgPool) dEi.sliceAt(row, col).maxPoolGrad(dEo, argsMax.get(index)[row][col]);
-                    else dEi.sliceAt(row, col).avgPoolGrad(dEo);
-                }
-            }
+            outputs.put(channelIndex, output = new DMatrix(widthOut, heightOut));
+
+            if (!avgPool) input.maxPool(output, new int[output.getRows()][output.getCols()][2]);
+            else input.avgPool(output);
         }
 
-        backward.sumGrad();
-        allowFlattening = true;
-
+        return outputs;
     }
 
 }

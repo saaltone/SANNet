@@ -10,10 +10,15 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.AbstractLayer;
+import core.normalization.Normalization;
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Init;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.HashSet;
 
 /**
  * Defines class for convolutional layer.<br>
@@ -44,18 +49,6 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     private int channels;
 
     /**
-     * Defines width of outgoing image.
-     *
-     */
-    private int widthOut;
-
-    /**
-     * Defines height of outgoing image.
-     *
-     */
-    private int heightOut;
-
-    /**
      * Defines number of filters.
      *
      */
@@ -80,25 +73,6 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     private boolean regulateWeights;
 
     /**
-     * Value is true is next layer is convolutional layer.
-     *
-     */
-    private boolean toNonConvolutionalLayer;
-
-    /**
-     * Tree map for flattened outputs after forward processing.<br>
-     * This is relevant if next layer is non-convolutional layer.<br>
-     *
-     */
-    private transient TreeMap<Integer, Matrix> fouts;
-
-    /**
-     * True if layer allows to return flattened outputs. In practise this happens when layer is not processing internally.
-     *
-     */
-    private transient boolean allowFlattening = false;
-
-    /**
      * Tree map for filter maps (weights).
      *
      */
@@ -117,6 +91,12 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     private boolean asConvolution = true;
 
     /**
+     * Input matrices for procedure construction.
+     *
+     */
+    private Sample inputs;
+
+    /**
      * Constructor for convolutional layer.
      *
      * @param parent reference to parent layer.
@@ -131,7 +111,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Gets parameters used for convolutional layer.
+     * Returns parameters used for convolutional layer.
      *
      * @return parameters used for convolutional layer.
      */
@@ -187,214 +167,123 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    public void initialize() throws NeuralNetworkException {
-        toNonConvolutionalLayer = forward.hasNLayer() && forward.getNLayer().isConvolutionalLayer();
-
-        widthIn = backward.getPLayer().getWidth();
-        heightIn = backward.getPLayer().getHeight();
-        channels = backward.getPLayer().getDepth();
+    public void initialize() throws MatrixException, NeuralNetworkException {
+        widthIn = parent.getBackward().getPLayerWidth();
+        heightIn = parent.getBackward().getPLayerHeight();
+        channels = parent.getBackward().getPLayerDepth();
 
         if ((widthIn - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + widthIn + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
         if ((heightIn - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heigthIn: " + heightIn + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
 
-        widthOut = ((widthIn - filterSize) / stride) + 1;
-        heightOut = ((heightIn - filterSize) / stride) + 1;
+        int widthOut = ((widthIn - filterSize) / stride) + 1;
+        int heightOut = ((heightIn - filterSize) / stride) + 1;
 
         if (widthOut < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + widthOut);
         if (heightOut < 1) throw new NeuralNetworkException("Convolutional layer heigth cannot be less than 1: " + heightOut);
         if (filters < 1) throw new NeuralNetworkException("At least one filter must be defined");
 
-        setWidth(widthOut);
-        setHeight(heightOut);
-        setDepth(filters);
+        parent.setWidth(widthOut);
+        parent.setHeight(heightOut);
+        parent.setDepth(filters);
 
         int inputAmount = channels * filterSize * filterSize;
         int outputAmount = filters * filterSize * filterSize;
         for (int filterIndex = 0; filterIndex < filters; filterIndex++) {
+
             for (int channelIndex = 0; channelIndex < channels; channelIndex++) {
                 int filter = getFilterIndex(filterIndex, channelIndex, channels);
                 Matrix Wf = new DMatrix(filterSize, filterSize, this.initialization, inputAmount, outputAmount);
                 Wfs.put(filter, Wf);
-
-                backward.registerWeight(Wf, true, regulateWeights, true);
+                parent.getBackward().registerWeight(Wf, true, regulateWeights, true);
             }
 
-            Matrix Bf = new DMatrix(1, 1, Init.ZERO);
+            Matrix Bf = new DMatrix(1, 1, Init.CONSTANT);
             Bfs.put(filterIndex, Bf);
 
-            backward.registerWeight(Bf, true, false, false);
+            parent.getBackward().registerWeight(Bf, true, false, false);
         }
     }
 
     /**
-     * Takes single forward processing step for convolutional layer to process input(s).<br>
-     * Applies filters and produces outputs.<br>
-     * Additionally applies any regularization defined for the layer.<br>
+     * Resets input.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @param resetPreviousInput if true resets also previous input.
      */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        allowFlattening = false;
-
-        backward.regulateForwardPre(getOutsP(), -1);
-        backward.normalizeForwardPre(getOutsP(), channels);
-
-        parent.resetOuts();
-
-        int sampleIndex = 0;
-        int channelIndex = 0;
-
-        for (Integer inIndex : getOutsP().keySet()) {
-            backward.regulateForwardPre(getOutsP(), inIndex);
-
-            Matrix input = getOutsP().get(inIndex);
-
-            for (int filterIndex = 0; filterIndex < filters; filterIndex++) {
-                int outIndex = getOutIndex(filterIndex, sampleIndex, filters);
-
-                Matrix output = getElement(outIndex, parent.getOuts(), widthOut, heightOut);
-                Matrix Wf = Wfs.get(getFilterIndex(filterIndex, channelIndex, channels));
-                Matrix Bf = Bfs.get(filterIndex);
-
-                input.setSliceSize(Wf.getRows(), Wf.getCols());
-                for (int row = 0; row < output.getRows(); row = row + stride) {
-                    for (int col = 0; col < output.getCols(); col = col + stride) {
-                        if (asConvolution) output.setValue(row, col, input.sliceAt(row, col).convolve(Wf));
-                        else output.setValue(row, col, input.sliceAt(row, col).crosscorrelate(Wf));
-                    }
-                }
-
-                if (channelIndex == 0) output.add(Bf.getValue(0, 0), output);
-            }
-
-            if (++channelIndex == channels) {
-                channelIndex = 0;
-                sampleIndex++;
-            }
-
-        }
-
-
-        for (Matrix out : parent.getOuts().values()) activation.applyFunction(out, true);
-
-        backward.regulateForwardPost(parent.getOuts());
-        backward.normalizeForwardPost(parent.getOuts());
-
-        fouts = null;
-        if (forward == null) parent.updateOutputError();
-        else if (toNonConvolutionalLayer) fouts = flattenOutput(parent.getOuts());
-        allowFlattening = true;
-
+    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
+        inputs = new Sample(channels);
+        for (int index = 0; index < channels; index++) inputs.put(index, new DMatrix(widthIn, heightIn));
     }
 
     /**
-     * Returns outputs of convolutional layer.
+     * Returns input matrix for procedure construction.
      *
-     * @return flattened outputs if next layer is non-convolutional layer otherwise normal outputs.
+     * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, Matrix> getOuts(TreeMap<Integer, Matrix> outs) {
-        return toNonConvolutionalLayer && allowFlattening ? fouts : outs;
+    protected Sample getInputMatrices() {
+        return inputs;
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param input input of forward procedure.
-     * @param reset reset recurring inputs of procedure.
+     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
-     */
-    protected Matrix getForwardProcedure(Matrix input, boolean reset) {
-        return null;
-    }
-
-    /**
-     * Takes single backward processing step for convolutional layer to process input(s).<br>
-     * Calculates gradients for weights and biases and gradient (error signal) towards previous layer.<br>
-     * Additionally applies any regularization defined for the layer.<br>
-     *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
-        allowFlattening = false;
-        parent.resetOutGrads();
-
-        backward.resetGrad();
-
-        backward.regulateBackward(-1);
-
-        TreeMap<Integer, Matrix> dEosN = toNonConvolutionalLayer ? unflattenOutput(parent.getdEosN()) : parent.getdEosN();
-
-        int sampleIndex = 0;
-        int filterIndex = 0;
-
-        for (Integer outIndex : parent.getOuts().keySet()) {
-            backward.regulateBackward(outIndex);
-
-            Matrix dEo = dEosN.get(outIndex);
-            Matrix dEi = activation.applyGradient(parent.getOuts().get(outIndex), dEo);
-
-            for (int channelIndex = 0; channelIndex < channels; channelIndex++) {
-                int inIndex = getInIndex(channelIndex, sampleIndex, channels);
-
-                Matrix dEoP = getElement(inIndex, parent.getdEos(), widthIn, heightIn);
-                Matrix outP = getOutsP().get(inIndex);
-
-                int flatFilterIndex = getFilterIndex(filterIndex, channelIndex, channels);
-                Matrix Wf = Wfs.get(flatFilterIndex);
-
-                Matrix dW = getElement(sampleIndex, backward.getdWs(Wf), filterSize, filterSize);
-
-                dEoP.setSliceSize(Wf.getRows(), Wf.getCols());
-                outP.setSliceSize(Wf.getRows(), Wf.getCols());
-                for (int row = 0; row < dEi.getRows(); row = row + stride) {
-                    for (int col = 0; col < dEi.getCols(); col = col + stride) {
-                        double dEiValue = dEi.getValue(row, col);
-                        if (asConvolution) {
-                            Wf.convolveGrad(dEiValue, dEoP.sliceAt(row, col));
-                            outP.sliceAt(row, col).convolveGrad(dEiValue, dW);
-                        }
-                        else {
-                            Wf.crosscorrelateGrad(dEiValue, dEoP.sliceAt(row, col));
-                            outP.sliceAt(row, col).crosscorrelateGrad(dEiValue, dW);
-                        }
-                    }
+    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
+        Sample outputs = new Sample(filters);
+        for (int sampleIndex = 0; sampleIndex < inputs.size() / channels; sampleIndex++) {
+            for (int filterIndex = 0; filterIndex < filters; filterIndex++) {
+                Matrix output = Bfs.get(filterIndex);
+                for (int channelIndex = 0; channelIndex < channels; channelIndex++) {
+                    Matrix Wf = Wfs.get(getFilterIndex(filterIndex, channelIndex, channels));
+                    Matrix input = inputs.get(getInIndex(channelIndex, sampleIndex, channels));
+                    input.setStride(stride);
+                    if (asConvolution) output = output.add(input.convolve(Wf));
+                    else output = output.add(input.crosscorrelate(Wf));
                 }
+                if (normalizers.size() > 0) output.setNormalization(normalizers);
+                output = activation.applyFunction(output);
+                outputs.put(getOutIndex(filterIndex, sampleIndex, filters), output);
             }
-
-            Matrix dB = getElement(sampleIndex, backward.getdWs(Bfs.get(filterIndex)), 1, 1);
-            dB.add(dEi.sum(), dB);
-
-            if (++filterIndex == filters) {
-                filterIndex = 0;
-                sampleIndex++;
-            }
-
         }
-
-        backward.normalizeBackward();
-
-        backward.sumGrad();
-
-        allowFlattening = true;
-
+        return outputs;
     }
 
     /**
-     * Returns element with certain index.<br>
-     * If element does not exists it creates of with given width and height and stores it into outs tree map.<br>
+     * Returns flat filter index by filterIndex, depthIndex and number of channels for a convolutional layer.
      *
-     * @param index index of element to be returned.
-     * @param elements tree map of existing elements.
-     * @param width widght of element.
-     * @param height height of element.
-     * @return requested element.
+     * @param filterIndex index for filter.
+     * @param channelIndex index for input channel.
+     * @param channels number of input channels.
+     * @return flat filter index.
      */
-    private Matrix getElement(int index, TreeMap<Integer, Matrix> elements, int width, int height) {
-        Matrix element;
-        if (elements.containsKey(index)) element = elements.get(index);
-        else elements.put(index, element = new DMatrix(width, height));
-        return element;
+    private int getFilterIndex(int filterIndex, int channelIndex, int channels) {
+        return channelIndex + filterIndex * channels;
+    }
+
+    /**
+     * Returns output index by filterIndex, sampleIndex and number of filters for a convolutional layer.
+     *
+     * @param filterIndex index for filter.
+     * @param sampleIndex index for current sample.
+     * @param filters number of filters.
+     * @return output index.
+     */
+    private int getOutIndex(int filterIndex, int sampleIndex, int filters) {
+        return filterIndex + sampleIndex * filters;
+    }
+
+    /**
+     * Returns input index by filterIndex, sampleIndex and number of channels for a convolutional layer.
+     *
+     * @param channelIndex index for channel.
+     * @param sampleIndex index for current sample.
+     * @param channels number of channels.
+     * @return input index.
+     */
+    private int getInIndex(int channelIndex, int sampleIndex, int channels) {
+        return channelIndex + sampleIndex * channels;
     }
 
 }
