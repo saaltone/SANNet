@@ -17,6 +17,9 @@ import core.regularization.Regularization;
 import core.regularization.RegularizationFactory;
 import core.regularization.RegularizationType;
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -27,7 +30,7 @@ import java.util.TreeMap;
  * Connector class that connects two succeeding layers to each other.<br>
  * Connector always assumes that it is responsible for handling weights and bias of next layer.<br>
  * Handles weight and bias registration, gradient summing for next layer.<br>
- * Coordinates normalization, weight and bias regularization and optimization for next layer.<br>
+ * Coordinates normalization, regularization and optimization for next layer.<br>
  *
  */
 public class Connector implements Serializable {
@@ -225,6 +228,60 @@ public class Connector implements Serializable {
     }
 
     /**
+     * Returns width of previous layer.
+     *
+     * @return width of previous layer.
+     */
+    public int getPLayerWidth() {
+        return pLayer.isConvolutionalLayer() && !nLayer.isConvolutionalLayer() ? pLayer.getWidth() * pLayer.getHeight() * pLayer.getDepth() : pLayer.getWidth();
+    }
+
+    /**
+     * Returns height of previous layer.
+     *
+     * @return height of previous layer.
+     */
+    public int getPLayerHeight() {
+        return pLayer.isConvolutionalLayer() && !nLayer.isConvolutionalLayer() ? 1 : pLayer.getHeight();
+    }
+
+    /**
+     * Returns depth of previous layer.
+     *
+     * @return depth of previous layer.
+     */
+    public int getPLayerDepth() {
+        return pLayer.isConvolutionalLayer() && !nLayer.isConvolutionalLayer() ? 1 : pLayer.getDepth();
+    }
+
+    /**
+     * Returns width of next layer.
+     *
+     * @return width of next layer.
+     */
+    public int getNLayerWidth() {
+        return nLayer.getWidth();
+    }
+
+    /**
+     * Returns height of next layer.
+     *
+     * @return height of next layer.
+     */
+    public int getNLayerHeight() {
+        return nLayer.getHeight();
+    }
+
+    /**
+     * Returns depth of next layer.
+     *
+     * @return depth of next layer.
+     */
+    public int getNLayerDepth() {
+        return nLayer.getDepth();
+    }
+
+    /**
      * Adds regularization method for connector (next layer).
      *
      * @param regularizationType regularization method.
@@ -247,7 +304,7 @@ public class Connector implements Serializable {
         for (Regularization regularization : regularizers) {
             if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) throw new NeuralNetworkException("Regularizer: " + regularizationType + " already exists");
         }
-        Regularization regularizer = RegularizationFactory.create(regularizationType, this, nLayer != null, params);
+        Regularization regularizer = RegularizationFactory.create(regularizationType, params);
         regularizers.add(regularizer);
     }
 
@@ -331,7 +388,7 @@ public class Connector implements Serializable {
         for (Normalization normalization : normalizers) {
             if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) throw new NeuralNetworkException("Normalizer: " + normalizationType + " already exists");
         }
-        Normalization normalizer = NormalizationFactory.create(normalizationType, this, params);
+        Normalization normalizer = NormalizationFactory.create(normalizationType, params);
         normalizers.add(normalizer);
     }
 
@@ -403,7 +460,7 @@ public class Connector implements Serializable {
     }
 
     /**
-     * Gets optimizer for connector (next layer).
+     * Returns optimizer for connector (next layer).
      *
      * @return optimizer for connector (next layer).
      */
@@ -449,7 +506,7 @@ public class Connector implements Serializable {
     }
 
     /**
-     * Gets reference to previous layer.
+     * Returns reference to previous layer.
      *
      * @return reference to previous layer.
      */
@@ -467,7 +524,7 @@ public class Connector implements Serializable {
     }
 
     /**
-     * Gets reference to next layer.
+     * Returns reference to next layer.
      *
      * @return reference to next layer.
      */
@@ -543,59 +600,42 @@ public class Connector implements Serializable {
     }
 
     /**
-     * Gets output of next layer.
+     * Returns output of next layer.
      *
      * @return output of next layer.
      */
-    public TreeMap<Integer, Matrix> getOutput() {
+    public Sequence getOutput() {
         return getNLayer().getOutput();
     }
 
     /**
-     * Executes regularization methods with forward step at the step start.<br>
-     * This operation assumes regularization prior forward step.<br>
+     * Executes regularization methods with forward step.<br>
      *
-     * @param ins input samples for forward step.
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
+     * @param inputs input sequence
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void regulateForwardPre(TreeMap<Integer, Matrix> ins, int index) throws MatrixException {
-        for (Regularization regularizer : regularizers) regularizer.forwardPre(ins, index);
+    public void regulateForward(Sequence inputs) throws MatrixException {
+        for (Regularization regularizer : regularizers) {
+            regularizer.forward(inputs);
+        }
     }
 
     /**
-     * Executes normalization methods with forward step at the step start.<br>
-     * This operation assumes normalization prior forward step.<br>
+     * Executes regularization methods with forward step.<br>
      *
-     * @param ins input samples for forward step.
-     * @param depthIn number of channels of a convolutional layer.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void normalizeForwardPre(TreeMap<Integer, Matrix> ins, int depthIn) throws MatrixException {
-        for (Normalization normalizer : normalizers) normalizer.forwardPre(ins, depthIn);
+    public void regulateForward() {
+        for (Regularization regularizer : regularizers) {
+            for (Matrix W : reg) regularizer.forward(W);
+        }
     }
 
     /**
-     * Executes regularization methods with forward step at the step end.<br>
-     * This operation assumes regularization post forward step.<br>
+     * Resets normalizer state.
      *
-     * @param outs output samples for forward step.
      */
-    public void regulateForwardPost(TreeMap<Integer, Matrix> outs) {
-        if (getNLayer() instanceof OutputLayer) return;
-        for (Regularization regularizer : regularizers) regularizer.forwardPost(outs);
-    }
-
-    /**
-     * Executes normalization methods with forward step at the step end.<br>
-     * This operation assumes normalization post forward step.<br>
-     *
-     * @param outs output samples for forward step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void normalizeForwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException {
-        if (getNLayer() instanceof OutputLayer) return;
-        for (Normalization normalizer : normalizers) normalizer.forwardPost(outs);
+    public void normalizerReset() {
+        for (Normalization normalizer : normalizers) normalizer.reset();
     }
 
     /**
@@ -608,38 +648,24 @@ public class Connector implements Serializable {
     }
 
     /**
-     * Executes regularization methods with backward phase of training step at pre in.
-     *
-     * @param index if index is zero or positive value operation is executed for this sample. if index is -1 operation is executed for all samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void regulateBackward(int index) throws MatrixException {
-        for (Regularization regularizer : regularizers) regularizer.backward(index);
-    }
-
-    /**
-     * Executes regularization and normalization methods with backward phase of training step at post in.
+     * Executes regularization methods for backward phase of training step.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void normalizeBackward() throws MatrixException {
-        for (Normalization normalizer : normalizers) normalizer.backward();
+    public void regulateBackward() throws MatrixException {
+        for (Regularization regularizer : regularizers) {
+            for (Matrix W : reg) regularizer.backward(W, dWSums.get(W));
+        }
     }
 
     /**
      * Executes weight updates with regularizers and optimizer.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void update() {
-        try {
-            for (Regularization regularizer : regularizers) regularizer.update();
-            for (Matrix W : opt) {
-                if (dWSums.containsKey(W)) optimizer.optimize(W, dWSums.get(W));
-            }
-        }
-        catch (MatrixException exception) {
-            System.out.println(exception.toString());
-            System.exit(-1);
+    public void update() throws MatrixException {
+        for (Matrix W : opt) {
+            if (dWSums.containsKey(W)) optimizer.optimize(W, dWSums.get(W));
         }
         getNLayer().update();
     }
@@ -648,11 +674,12 @@ public class Connector implements Serializable {
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
      * @return cumulated error from regularization.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double error() throws MatrixException {
+    public double error() {
         double error = 0;
-        for (Regularization regularizer : regularizers) error += regularizer.error();
+        for (Regularization regularizer : regularizers) {
+            for (Matrix W : reg) error += regularizer.error(W);
+        }
         if (pLayer != null) {
             if (pLayer.getBackward() != null) error += pLayer.getBackward().error();
         }
