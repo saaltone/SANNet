@@ -7,9 +7,9 @@
 package core.layer;
 
 import utils.*;
+import utils.matrix.Init;
 
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Defines class for input layer of neural network.
@@ -39,11 +39,11 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Gets parameters used for input layer.
+     * Returns parameters used for input layer.
      *
      * @return parameters used for input layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("width", DynamicParam.ParamType.INT);
         paramDefs.put("height", DynamicParam.ParamType.INT);
@@ -62,14 +62,14 @@ public class InputLayer extends AbstractLayer {
      * @param params parameters used for input layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) width = params.getValueAsInteger("width");
-        if (params.hasParam("height")) height = params.getValueAsInteger("height");
-        if (params.hasParam("depth")) depth = params.getValueAsInteger("depth");
+    private void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("width")) setWidth(params.getValueAsInteger("width"));
+        if (params.hasParam("height")) setHeight(params.getValueAsInteger("height"));
+        if (params.hasParam("depth")) setDepth(params.getValueAsInteger("depth"));
     }
 
     /**
-     * Gets used initialization function.
+     * Returns used initialization function.
      *
      * @return used initialization function.
      */
@@ -101,7 +101,7 @@ public class InputLayer extends AbstractLayer {
      *
      * @return gradients of next neural network layer
      */
-    public TreeMap<Integer, Matrix> getdEosN() {
+    public Sequence getdEosN() {
         return getForward().getNLayer().getdEos();
     }
 

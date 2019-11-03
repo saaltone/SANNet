@@ -9,10 +9,8 @@ package core.layer;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.Init;
-
-import java.util.TreeMap;
+import utils.Sequence;
+import utils.matrix.Init;
 
 /**
  * Defines class for hidden layer of neural network.
@@ -37,7 +35,7 @@ public class HiddenLayer extends AbstractLayer {
     }
 
     /**
-     * Updates output error, relevant only for output layer.
+     * Updates output error. Relevant only for output layer.
      *
      */
     public void updateOutputError() {}
@@ -47,7 +45,7 @@ public class HiddenLayer extends AbstractLayer {
      *
      * @return gradients of next neural network layer
      */
-    public TreeMap<Integer, Matrix> getdEosN() {
+    public Sequence getdEosN() {
         return getForward().getNLayer().getdEos();
     }
 

@@ -10,8 +10,7 @@ import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.loss.LossFunction;
 import utils.*;
-
-import java.util.TreeMap;
+import utils.matrix.*;
 
 /**
  * Defines class for output layer of neural network.
@@ -23,7 +22,7 @@ public class OutputLayer extends AbstractLayer {
      * Neural network loss function for output layer.
      *
      */
-    private LossFunction lossFunction = new LossFunction(BiFunctionType.MEAN_SQUARED_ERROR);
+    private LossFunction lossFunction = new LossFunction(BinaryFunctionType.MEAN_SQUARED_ERROR);
 
     /**
      * Neural network output error.
@@ -35,13 +34,13 @@ public class OutputLayer extends AbstractLayer {
      * Target (actual true) output values for error calculation in training phase.
      *
      */
-    private transient TreeMap<Integer, Matrix> targets;
+    private transient Sequence targets;
 
     /**
      * Output error gradient.
      *
      */
-    private transient TreeMap<Integer, Matrix> douts;
+    private transient Sequence douts;
 
     /**
      * Constructor for output layer.
@@ -74,7 +73,7 @@ public class OutputLayer extends AbstractLayer {
      *
      */
     public void clearTargets() {
-        targets = new TreeMap<>();
+        targets = null;
     }
 
     /**
@@ -83,8 +82,9 @@ public class OutputLayer extends AbstractLayer {
      *
      * @param target targets of output layer.
      */
-    public void setTargets(TreeMap<Integer, Matrix> target) {
+    public void setTargets(Sequence target) {
         clearTargets();
+        targets = new Sequence(target.getDepth());
         targets.putAll(target);
     }
 
@@ -97,13 +97,12 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Gets total error of neural network including impact of regularization.
+     * Returns total error of neural network including impact of regularization.
      *
      * @return total error of neural network.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getTotalError() throws MatrixException {
-        return error.mean() + getBackward().error() / (double)targets.size();
+    public double getTotalError() {
+        return error.mean() + getBackward().error() / (double)targets.totalSize();
     }
 
     /**
@@ -113,7 +112,7 @@ public class OutputLayer extends AbstractLayer {
      */
     public void backward() throws NeuralNetworkException  {
         if (targets.isEmpty()) throw new NeuralNetworkException("No targets defined");
-        if (targets.size() != getOuts().size()) throw new NeuralNetworkException("Target size: "+ targets.size() + " is not matching with output size: " + getOuts().size());
+        if (targets.totalSize() != getOuts().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getOuts().totalSize());
         super.backward();
     }
 
@@ -134,13 +133,15 @@ public class OutputLayer extends AbstractLayer {
      * @throws NeuralNetworkException throws exception if output and target dimensions are not matching.
      */
     public void updateOutputError() throws MatrixException, NeuralNetworkException {
-        if (targets.isEmpty()) return;
-        if (targets.size() != getOuts().size()) throw new NeuralNetworkException("Target size: "+ targets.size() + " is not matching with output size: " + getOuts().size());
-        for (Integer index : targets.keySet()) {
-            Matrix loss = getOuts().get(index).applyBi(targets.get(index), lossFunction.getFunction());
-            error.add(loss, error);
+        if (targets == null) return;
+        if (targets.totalSize() != getOuts().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getOuts().totalSize());
+        for (Integer sampleIndex : targets.keySet()) {
+            for (Integer matrixIndex : targets.sampleKeySet()) {
+                Matrix loss = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction());
+                error.add(loss, error);
+            }
         }
-        error.divide(targets.size(), error);
+        error.divide(targets.totalSize(), error);
     }
 
     /**
@@ -149,9 +150,11 @@ public class OutputLayer extends AbstractLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private void calculateOutputDeltas() throws MatrixException {
-        douts = new TreeMap<>();
-        for (Integer index : targets.keySet()) {
-            douts.put(index, getOuts().get(index).applyBi(targets.get(index), lossFunction.getDerivative()));
+        douts = new Sequence(targets.getDepth());
+        for (Integer sampleIndex : targets.keySet()) {
+            for (Integer matrixIndex : targets.sampleKeySet()) {
+                douts.put(sampleIndex, matrixIndex, getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative()));
+            }
         }
     }
 
@@ -160,7 +163,7 @@ public class OutputLayer extends AbstractLayer {
      *
      * @return gradients of output error.
      */
-    public TreeMap<Integer, Matrix> getdEosN() {
+    public Sequence getdEosN() {
         return douts;
     }
 
