@@ -8,9 +8,9 @@ package core.optimization;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.DMatrix;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -73,7 +73,7 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Nesterov Accelerated Descent.
+     * Returns parameters used for Nesterov Accelerated Descent.
      *
      * @return parameters used for Nesterov Accelerated Descent.
      */

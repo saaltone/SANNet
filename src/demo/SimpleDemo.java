@@ -14,6 +14,7 @@ import core.preprocess.*;
 import core.regularization.*;
 import utils.*;
 import core.*;
+import utils.matrix.*;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -82,14 +83,14 @@ public class SimpleDemo {
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = 20");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 20");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         return neuralNetwork;
     }
 

@@ -6,15 +6,18 @@
 
 package demo;
 
+import core.NeuralNetwork;
+import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.Metrics;
 import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
-import core.optimization.*;
-import core.preprocess.*;
-import utils.*;
-import core.*;
+import core.optimization.OptimizationType;
+import core.preprocess.ReadCSVFile;
+import utils.DynamicParamException;
+import utils.Persistence;
+import utils.matrix.*;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -94,17 +97,17 @@ public class MNISTDemo {
      * @throws DynamicParamException throws exception is setting of parameters fails.
      * @throws NeuralNetworkException throws exception if creation of CNN fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = false");
-        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU, "alpha = 0.01"), "width = 40");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU, "alpha = 0.01"), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = false");
+//        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU, "alpha = 0.01"), "width = 40");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-//        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION, "meanOnly = true");
-        neuralNetwork.setLossFunction(BiFunctionType.CROSS_ENTROPY);
+        neuralNetwork.addNormalizer(0, NormalizationType.BATCH_NORMALIZATION);
+        neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 

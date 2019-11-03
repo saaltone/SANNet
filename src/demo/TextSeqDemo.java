@@ -14,6 +14,7 @@ import core.preprocess.*;
 import core.regularization.RegularizationType;
 import utils.*;
 import core.*;
+import utils.matrix.*;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -96,16 +97,15 @@ public class TextSeqDemo {
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 200");
         neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.1");
-        neuralNetwork.setLossFunction(BiFunctionType.CROSS_ENTROPY);
+        neuralNetwork.addRegularizer(RegularizationType.DROPOUT);
+        neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 
@@ -117,8 +117,7 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     private static HashMap<Integer, LinkedHashMap<Integer, Matrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = ReadTextFile.readFile("<path>/<file>.txt", numOfInputs, 1, numOfInputs, 0);
-        return data;
+        return ReadTextFile.readFile("<path>/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
     }
 
 }

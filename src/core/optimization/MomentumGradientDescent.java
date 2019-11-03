@@ -7,6 +7,9 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -63,7 +66,7 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Momentum Gradient Descent.
+     * Returns parameters used for Momentum Gradient Descent.
      *
      * @return parameters used for Momentum Gradient Descent.
      */

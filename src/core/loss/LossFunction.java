@@ -8,6 +8,8 @@ package core.loss;
 
 import core.NeuralNetworkException;
 import utils.*;
+import utils.matrix.BinaryFunction;
+import utils.matrix.BinaryFunctionType;
 
 /**
  * Defines loss function class for neural network.<br>
@@ -26,7 +28,7 @@ import utils.*;
  *     SQUARED_HINGE,
  *     HUBER
  */
-public class LossFunction extends BiFunction {
+public class LossFunction extends BinaryFunction {
 
     private static final long serialVersionUID = 6218297482907539129L;
 
@@ -34,31 +36,31 @@ public class LossFunction extends BiFunction {
      * List of supported loss functions.
      *
      */
-    private final BiFunctionType[] lossFunctions = new BiFunctionType[] {
-            BiFunctionType.MEAN_SQUARED_ERROR,
-            BiFunctionType.MEAN_SQUARED_LOGARITHMIC_ERROR,
-            BiFunctionType.MEAN_ABSOLUTE_ERROR,
-            BiFunctionType.MEAN_ABSOLUTE_PERCENTAGE_ERROR,
-            BiFunctionType.CROSS_ENTROPY,
-            BiFunctionType.KULLBACK_LEIBLER,
-            BiFunctionType.NEGATIVE_LOG_LIKELIHOOD,
-            BiFunctionType.POISSON,
-            BiFunctionType.HINGE,
-            BiFunctionType.SQUARED_HINGE,
-            BiFunctionType.HUBER
+    private final BinaryFunctionType[] lossFunctions = new BinaryFunctionType[] {
+            BinaryFunctionType.MEAN_SQUARED_ERROR,
+            BinaryFunctionType.MEAN_SQUARED_LOGARITHMIC_ERROR,
+            BinaryFunctionType.MEAN_ABSOLUTE_ERROR,
+            BinaryFunctionType.MEAN_ABSOLUTE_PERCENTAGE_ERROR,
+            BinaryFunctionType.CROSS_ENTROPY,
+            BinaryFunctionType.KULLBACK_LEIBLER,
+            BinaryFunctionType.NEGATIVE_LOG_LIKELIHOOD,
+            BinaryFunctionType.POISSON,
+            BinaryFunctionType.HINGE,
+            BinaryFunctionType.SQUARED_HINGE,
+            BinaryFunctionType.HUBER
     };
 
     /**
      * Constructor for loss function.
      *
-     * @param biFunctionType type of loss function to be used.
+     * @param binaryFunctionType type of loss function to be used.
      * @throws NeuralNetworkException throws exception if function is not available as loss function.
      */
-    public LossFunction(BiFunctionType biFunctionType) throws NeuralNetworkException {
-        super(biFunctionType);
+    public LossFunction(BinaryFunctionType binaryFunctionType) throws NeuralNetworkException {
+        super(binaryFunctionType);
         boolean found = false;
-        for (BiFunctionType lossFunction : lossFunctions) {
-            if (lossFunction == biFunctionType) {
+        for (BinaryFunctionType lossFunction : lossFunctions) {
+            if (lossFunction == binaryFunctionType) {
                 found = true;
                 break;
             }
@@ -72,16 +74,16 @@ public class LossFunction extends BiFunction {
      *     - alpha: default value for Huber loss 1.<br>
      *     - hinge: default value for hinge margin 1.<br>
      *
-     * @param biFunctionType type of loss function to be used.
+     * @param binaryFunctionType type of loss function to be used.
      * @param params parameters used for loss function.
      * @throws NeuralNetworkException throws exception if function is not available as loss function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LossFunction(BiFunctionType biFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
-        super(biFunctionType, params);
+    public LossFunction(BinaryFunctionType binaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
+        super(binaryFunctionType, params);
         boolean found = false;
-        for (BiFunctionType lossFunction : lossFunctions) {
-            if (lossFunction == biFunctionType) {
+        for (BinaryFunctionType lossFunction : lossFunctions) {
+            if (lossFunction == binaryFunctionType) {
                 found = true;
                 break;
             }

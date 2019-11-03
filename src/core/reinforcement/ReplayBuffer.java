@@ -6,7 +6,7 @@
 
 package core.reinforcement;
 
-import utils.Matrix;
+import utils.matrix.Matrix;
 
 import java.util.*;
 
@@ -70,7 +70,7 @@ class ReplayBuffer {
     }
 
     /**
-     * Gets size of replay buffer.
+     * Returns size of replay buffer.
      *
      * @return size of replay buffer.
      */
@@ -88,7 +88,7 @@ class ReplayBuffer {
     }
 
     /**
-     * Gets alpha for proportional prioritization of replay buffer.
+     * Returns alpha for proportional prioritization of replay buffer.
      *
      * @return alpha for proportional prioritization of replay buffer.
      */
@@ -112,10 +112,6 @@ class ReplayBuffer {
      * @param sample sample for which priority is to be calculated and set.
      */
     private void setPriority(Sample sample) {
-        /**
-         * Epsilon term avoids zero priority values.<br>
-         *
-         */
         double epsilon = 10E-8;
         sample.priority = Math.pow(Math.abs(sample.delta) + epsilon, alpha);
     }

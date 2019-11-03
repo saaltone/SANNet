@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -69,7 +73,7 @@ public class Adadelta implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Adadelta.
+     * Returns parameters used for Adadelta.
      *
      * @return parameters used for Adadelta.
      */
@@ -147,13 +151,9 @@ public class Adadelta implements Optimizer, Serializable {
         else ed2.put(M, mEd2 = new DMatrix(M.getRows(), M.getCols()));
 
         mEg2 = mEg2.multiply(gamma).add(dM.power(2).multiply(1 - gamma));
-        /**
-         * Epsilon term for Adadelta. Default value 10E-8.<br>
-         * Term provides mathematical stability for optimizer.<br>
-         *
-         */
+
         double epsilon = 10E-8;
-        Matrix Ed = mEd2.add(epsilon).apply(UniFunctionType.SQRT).multiply(mEg2.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV)).multiply(dM);
+        Matrix Ed = mEd2.add(epsilon).apply(UnaryFunctionType.SQRT).multiply(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV)).multiply(dM);
         M.subtract(Ed.multiply(learningRate * miniBatchFactor), M);
         mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
 

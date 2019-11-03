@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -57,7 +61,7 @@ public class Adagrad implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Adagrad.
+     * Returns parameters used for Adagrad.
      *
      * @return parameters used for Adagrad.
      */
@@ -127,13 +131,8 @@ public class Adagrad implements Optimizer, Serializable {
 
         dM2Sum.add(dM.multiply(dM), dM2Sum);
 
-        /**
-         * Epsilon term for Adagrad. Default value 10E-8.<br>
-         * Term provides mathematical stability for optimizer.<br>
-         *
-         */
         double epsilon = 10E-8;
-        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor)), M);
+        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate * miniBatchFactor)), M);
     }
 
 }

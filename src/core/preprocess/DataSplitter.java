@@ -7,7 +7,7 @@
 package core.preprocess;
 
 import core.NeuralNetworkException;
-import utils.Matrix;
+import utils.matrix.Matrix;
 
 import java.util.ArrayList;
 import java.util.Collections;

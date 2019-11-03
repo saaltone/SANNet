@@ -6,8 +6,8 @@
 
 package core.reinforcement;
 
-import utils.Matrix;
-import utils.MatrixException;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Implements sample that contains information of current state, action taken, reward received, next state and value / error of target state.
@@ -87,8 +87,9 @@ public class Sample {
      * @param values predicted values of state.
      * @param terminalState true if sample state is terminal (final).
      * @param delta delta value for sample.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta) {
+    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta) throws MatrixException {
         this(state, action, validAction, reward, targetState, values, terminalState, delta, false);
     }
 
@@ -104,8 +105,9 @@ public class Sample {
      * @param terminalState true if sample state is terminal (final).
      * @param delta delta value for sample.
      * @param asCopy if true values are added as deep copy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta, boolean asCopy) {
+    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta, boolean asCopy) throws MatrixException {
         this.state = !asCopy || state == null ? state : state.copy();
         this.action = action;
         this.validAction = validAction;
@@ -120,8 +122,9 @@ public class Sample {
      * Returns copy of sample.
      *
      * @return copy of sample.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sample copy() {
+    public Sample copy() throws MatrixException {
         return new Sample(state, action, validAction, reward, targetState, values, terminalState, delta,true);
     }
 

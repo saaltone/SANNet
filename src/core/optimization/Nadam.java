@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -81,7 +85,7 @@ public class Nadam implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Nadam.
+     * Returns parameters used for Nadam.
      *
      * @return parameters used for Nadam.
      */
@@ -185,13 +189,8 @@ public class Nadam implements Optimizer, Serializable {
         Matrix vM_hat = vM.divide(1 - Math.pow(beta2, iter));
 
         // θt+1 = θt − η / (√^vt+ϵ) * (β1 * mt + (1 − β1) * gt / (1 − βt1))
-        /**
-         * Epsilon term for Nadam. Default value 10E-8.<br>
-         * Term provides mathematical stability for optimizer.<br>
-         *
-         */
         double epsilon = 10E-8;
-        M.subtract(vM_hat.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(mM_hat.multiply(beta1).add(dM.multiply((1 - beta1) / (1 - Math.pow(beta1, iter))))), M);
+        M.subtract(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(mM_hat.multiply(beta1).add(dM.multiply((1 - beta1) / (1 - Math.pow(beta1, iter))))), M);
 
         iter++;
     }

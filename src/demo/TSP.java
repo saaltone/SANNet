@@ -16,6 +16,7 @@ import core.reinforcement.Agent;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
 import utils.*;
+import utils.matrix.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,6 +61,12 @@ public class TSP implements Environment {
         }
 
     }
+
+    /**
+     * Number of cities for travelling salesman.
+     *
+     */
+    private static final int numberOfCities = 50;
 
     /**
      * Random number generator.
@@ -176,7 +183,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Return total distance travelling salesman has travelled.
+     * Returns total distance travelling salesman has travelled.
      *
      * @return total distance travelling salesman has travelled.
      */
@@ -212,7 +219,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Gets list of cities added into hashmap by indices starting from zero.
+     * Returns list of cities added into hashmap by indices starting from zero.
      *
      * @return list of cities.
      */
@@ -228,7 +235,7 @@ public class TSP implements Environment {
     public static void main(String[] args) {
         TSP tsp;
         try {
-            tsp = new TSP(50);
+            tsp = new TSP(numberOfCities);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
                 int illegalMoves = tsp.route(tour % 10 == 0);
@@ -246,8 +253,9 @@ public class TSP implements Environment {
      * Returns current state of environment for the agent.
      *
      * @return state of environment
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getState() {
+    public Matrix getState() throws MatrixException {
         return state.copy();
     }
 
@@ -312,7 +320,7 @@ public class TSP implements Environment {
     /**
      * Requests immediate reward from environment after taking action.
      *
-     * @param agent       agent that is asking for reward.
+     * @param agent agent that is asking for reward.
      * @param validAction true if taken action was available one.
      * @return immediate reward.
      */
@@ -349,7 +357,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Gets minimum journey travelling salesman has taken.
+     * Returns minimum journey travelling salesman has taken.
      *
      * @return minimum journey travelling salesman has taken.
      */
@@ -358,7 +366,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Gets maximum journey travelling salesman has taken.
+     * Returns maximum journey travelling salesman has taken.
      *
      * @return maximum journey travelling salesman has taken.
      */
@@ -462,7 +470,7 @@ public class TSP implements Environment {
      */
     private void initWindow() {
         JFrame.setDefaultLookAndFeelDecorated(true);
-        jFrame = new JFrame("Travelling Salesman Problem");
+        jFrame = new JFrame("Travelling Salesman Problem (" + numberOfCities + " cities)");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setBackground(Color.white);
         jFrame.setSize(500, 500);
@@ -480,7 +488,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Return current value of epsilon.
+     * Returns current value of epsilon.
      *
      * @return current value of epsilon.
      */
@@ -541,7 +549,7 @@ public class TSP implements Environment {
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
         DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
         agent.start();
@@ -557,16 +565,16 @@ public class TSP implements Environment {
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + outputSize);
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(50);
         neuralNetwork.verboseTraining(100);

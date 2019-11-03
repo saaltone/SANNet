@@ -6,9 +6,9 @@
 
 package core.preprocess;
 
-import utils.DMatrix;
-import utils.Matrix;
-import utils.SMatrix;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.SMatrix;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -150,6 +150,12 @@ public class ReadCSVFile {
         return readFile(fileName, ";", inputCols, outputCols, 0, asSparseMatrix, false, 0, 0, false, 0, 0);
     }
 
+    /**
+     * Converts string to double value.
+     *
+     * @param item string to be converted.
+     * @return converted double value.
+     */
     private static Double convertToDouble(String item) {
         double value = 0;
         try {

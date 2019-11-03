@@ -8,8 +8,8 @@ package core.optimization;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -54,7 +54,7 @@ public class GradientDescent implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Gradient Descent.
+     * Returns parameters used for Gradient Descent.
      *
      * @return parameters used for Gradient Descent.
      */

@@ -6,8 +6,8 @@
 
 package core.preprocess;
 
-import utils.Matrix;
-import utils.SMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.SMatrix;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -79,4 +79,5 @@ public class OneHotEncoder {
         }
         return output;
     }
+
 }

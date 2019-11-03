@@ -76,7 +76,7 @@ class SumTree {
     }
 
     /**
-     * Gets sample by given priority sum.
+     * Returns sample by given priority sum.
      *
      * @param prioritySum given priority sum.
      * @return fetched samples.
@@ -86,7 +86,7 @@ class SumTree {
     }
 
     /**
-     * Gets sample by priority sum. If priority sum is less or equal than current node priority sum search takes left branch otherwise follows right branch.
+     * Returns sample by priority sum. If priority sum is less or equal than current node priority sum search takes left branch otherwise follows right branch.
      *
      * @param nodeIndex current node index.
      * @param prioritySum given priority sum.

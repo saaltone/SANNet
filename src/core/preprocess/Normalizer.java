@@ -7,7 +7,7 @@
 package core.preprocess;
 
 import core.NeuralNetworkException;
-import utils.Matrix;
+import utils.matrix.Matrix;
 
 import java.util.LinkedHashMap;
 
@@ -79,7 +79,7 @@ public class Normalizer {
      */
     public void minMax(LinkedHashMap<Integer, Matrix> data, double newMin, double newMax, boolean adjust) throws NeuralNetworkException {
         if (!adjusted && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
-        for (int itemRow = 0; itemRow < data.get(0).getRows(); itemRow++) {
+        for (int itemRow = 0; itemRow < data.values().toArray(new Matrix[0])[0].getRows(); itemRow++) {
             if (adjust) {
                 min = Double.MAX_VALUE;
                 max = Double.MIN_VALUE;

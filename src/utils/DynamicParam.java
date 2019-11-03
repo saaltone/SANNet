@@ -139,7 +139,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets parameter type
+         * Returns parameter type
          *
          * @return type of parameter.
          */
@@ -148,7 +148,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter.
+         * Returns value of parameter.
          *
          * @return value of parameter as object.
          */
@@ -157,7 +157,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as integer.
+         * Returns value of parameter as integer.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -169,7 +169,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as long.
+         * Returns value of parameter as long.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -181,7 +181,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as float.
+         * Returns value of parameter as float.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -193,7 +193,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as double.
+         * Returns value of parameter as double.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -205,7 +205,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as character.
+         * Returns value of parameter as character.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -217,7 +217,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as string.
+         * Returns value of parameter as string.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -229,7 +229,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Gets value of parameter as boolean.
+         * Returns value of parameter as boolean.
          *
          * @param param name of parameter.
          * @return value of parameter.
@@ -278,7 +278,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as object.
@@ -290,7 +290,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as integer.
@@ -302,7 +302,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as long.
@@ -314,7 +314,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as float.
@@ -326,7 +326,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as double.
@@ -338,7 +338,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as character.
@@ -350,7 +350,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as string.
@@ -362,7 +362,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Gets value of parameter.
+     * Returns value of parameter.
      *
      * @param param name of parameter.
      * @return value of parameter as boolean.

@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -81,7 +85,7 @@ public class AMSGrad implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for AMSGrad.
+     * Returns parameters used for AMSGrad.
      *
      * @return parameters used for AMSGrad.
      */
@@ -182,13 +186,8 @@ public class AMSGrad implements Optimizer, Serializable {
         vM_temp.max(v.get(M), vM);
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
-        /**
-         * Epsilon term for AMSGrad. Default value 10E-8.<br>
-         * Term provides mathematical stability for optimizer.<br>
-         *
-         */
         double epsilon = 10E-8;
-        M.subtract(vM.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(mM).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(vM.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM).multiply(learningRate * miniBatchFactor), M);
 
         iter++;
 

@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -111,10 +115,10 @@ public class ResilientPropagation implements Optimizer, Serializable {
 
         Matrix dWDir = dMPrev.sgnmul(dM);
 
-        Matrix.MatrixBiOperation rpropRule = (value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2;
+        Matrix.MatrixBinaryOperation rpropRule = (value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2;
         wPrev.put(M, WPrev = dWDir.applyBi(WPrev, rpropRule));
 
-        M.subtract(dM.apply(UniFunctionType.SGN).multiply(WPrev), M);
+        M.subtract(dM.apply(UnaryFunctionType.SGN).multiply(WPrev), M);
 
         dPrev.put(M, dWDir.applyBi(dM, (value1, value2) -> value1 == -1 ? 0 : value2));
     }

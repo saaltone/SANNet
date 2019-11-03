@@ -6,8 +6,8 @@
 
 package core.preprocess;
 
-import utils.Matrix;
-import utils.SMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.SMatrix;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -139,6 +139,11 @@ public class ReadTextFile {
         return mappedChar;
     }
 
+    /**
+     * Size of characters as one hot encoded items.
+     *
+     * @return size of character.
+     */
     public static int charSize() {
         return 44;
     }

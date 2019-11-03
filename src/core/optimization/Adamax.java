@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -88,7 +92,7 @@ public class Adamax implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for Adamax.
+     * Returns parameters used for Adamax.
      *
      * @return parameters used for Adamax.
      */
@@ -179,7 +183,7 @@ public class Adamax implements Optimizer, Serializable {
         if (v.containsKey(M)) vM = v.get(M);
         else v.put(M, vM = new DMatrix(M.getRows(), M.getCols()));
 
-        Matrix dM_abs = dM.apply(UniFunctionType.ABS);
+        Matrix dM_abs = dM.apply(UnaryFunctionType.ABS);
 
         // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(dM.multiply(1 - beta1), mM);
@@ -194,7 +198,7 @@ public class Adamax implements Optimizer, Serializable {
         Matrix uM = vM.multiply(beta2).max(dM_abs);
 
         // θt+1 = θt − η / ut * mt
-        M.subtract(uM.apply(UniFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(uM.apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
 
         iter++;
     }

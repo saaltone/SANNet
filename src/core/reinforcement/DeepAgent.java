@@ -10,8 +10,8 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -175,7 +175,7 @@ public class DeepAgent implements Agent, Serializable {
     }
 
     /**
-     * Gets parameters used for DeepAgent.
+     * Returns parameters used for DeepAgent.
      *
      * @return parameters used for DeepAgent.
      */

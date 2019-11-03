@@ -7,7 +7,7 @@
 package core.reinforcement;
 
 import core.NeuralNetworkException;
-import utils.MatrixException;
+import utils.matrix.MatrixException;
 
 import java.io.IOException;
 

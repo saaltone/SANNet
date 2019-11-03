@@ -7,6 +7,10 @@
 package core.optimization;
 
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -63,7 +67,7 @@ public class RMSProp implements Optimizer, Serializable {
     }
 
     /**
-     * Gets parameters used for RMSProp.
+     * Returns parameters used for RMSProp.
      *
      * @return parameters used for RMSProp.
      */
@@ -136,13 +140,8 @@ public class RMSProp implements Optimizer, Serializable {
 
         eg2.put(M, mEg2 = mEg2.multiply(gamma).add(dM.power(2).multiply(1 - gamma)));
 
-        /**
-         * Epsilon term for RMSProp. Default value 10E-8.<br>
-         * Term provides mathematical stability for optimizer.<br>
-         *
-         */
         double epsilon = 10E-8;
-        M.subtract(mEg2.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(dM), M);
+        M.subtract(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(dM), M);
     }
 
 }

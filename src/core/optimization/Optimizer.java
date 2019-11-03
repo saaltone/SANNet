@@ -8,8 +8,8 @@ package core.optimization;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Interface for optimizers.

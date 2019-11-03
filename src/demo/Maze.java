@@ -12,10 +12,12 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
+import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
 import utils.*;
+import utils.matrix.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -226,7 +228,7 @@ public class Maze implements Environment, ActionListener {
         }
 
         /**
-         * Return opposite direction i.e if direction is left then right is returned.
+         * Returns opposite direction i.e if direction is left then right is returned.
          *
          * @param direction direction to be taken as opposite.
          * @return opposite direction.
@@ -287,7 +289,7 @@ public class Maze implements Environment, ActionListener {
         }
 
         /**
-         * Gets cell visit count.
+         * Returns cell visit count.
          *
          * @return cell visit count.
          */
@@ -375,7 +377,7 @@ public class Maze implements Environment, ActionListener {
         /**
          * Updates agent's history to be drawn into maze.
          *
-         * @param mazeAgentHistory
+         * @param mazeAgentHistory maze agent history.
          */
         public void updateAgentHistory(LinkedList<MazeAgent> mazeAgentHistory) {
             if (mazeAgentHistory == null) return;
@@ -391,7 +393,7 @@ public class Maze implements Environment, ActionListener {
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (maze == null) return;
-            g.setColor(Color.BLACK);
+            g.setColor(Color.LIGHT_GRAY);
             for (int x = 0; x < maze.length; x++) {
                 for (int y = 0; y < maze[x].length; y++) {
                     if (maze[x][y].neighbors[0] != null) if (!maze[x][y].neighbors[0].connected) g.drawLine((x + 0) * 10, (y + 0) * 10, (x + 0) * 10, (y + 1) * 10);
@@ -400,16 +402,14 @@ public class Maze implements Environment, ActionListener {
                     if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x + 0) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
                 }
             }
-            if (mazeAgentHistory != null) {
-                Iterator iterator = mazeAgentHistory.iterator();
-                Graphics2D g2d = (Graphics2D)g;
-                while (iterator.hasNext()) {
-                    MazeAgent mazeAgent = (MazeAgent)iterator.next();
-                    if (!iterator.hasNext()) g.setColor(Color.RED);
-                    else g.setColor(Color.BLUE);
-                    Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
-                    g2d.fill(circle);
-                }
+            Iterator iterator = mazeAgentHistory.iterator();
+            Graphics2D g2d = (Graphics2D)g;
+            while (iterator.hasNext()) {
+                MazeAgent mazeAgent = (MazeAgent)iterator.next();
+                if (!iterator.hasNext()) g.setColor(Color.RED);
+                else g.setColor(Color.BLUE);
+                Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
+                g2d.fill(circle);
             }
         }
 
@@ -547,6 +547,7 @@ public class Maze implements Environment, ActionListener {
         jFrame.setLayout(null);
         mazePanel.setSize(size * 10, size * 10);
         mazePanel.setLocation(0, 40);
+        mazePanel.setBackground(Color.black);
         jFrame.setVisible(true);
     }
 
@@ -673,8 +674,9 @@ public class Maze implements Environment, ActionListener {
      * Returns current state of environment for the agent.
      *
      * @return state of environment
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getState() {
+    public Matrix getState() throws MatrixException {
         return state.copy();
     }
 
@@ -772,7 +774,7 @@ public class Maze implements Environment, ActionListener {
     /**
      * Requests immediate reward from environment after taking action.
      *
-     * @param agent       agent that is asking for reward.
+     * @param agent agent that is asking for reward.
      * @param validAction true if taken action was available one.
      * @return immediate reward.
      */
@@ -813,7 +815,7 @@ public class Maze implements Environment, ActionListener {
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
         DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, updateTNNCycle = 10, alpha = 0.9, gamma = 0.85, replayBufferSize = 20000, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonMin = 0.0");
         agent.start();
@@ -829,20 +831,21 @@ public class Maze implements Environment, ActionListener {
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.2");
         neuralNetwork.addNormalizer(6, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(10);
         neuralNetwork.verboseTraining(100);

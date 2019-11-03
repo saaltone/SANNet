@@ -6,7 +6,8 @@
 
 package core.reinforcement;
 
-import utils.Matrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.ArrayList;
 
@@ -20,8 +21,9 @@ public interface Environment {
      * Returns current state of environment for the agent.
      *
      * @return state of environment
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix getState();
+    Matrix getState() throws MatrixException;
 
     /**
      * True if state is terminal. This is usually true if episode is completed.

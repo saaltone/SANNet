@@ -13,10 +13,10 @@ import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
 import utils.*;
+import utils.matrix.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,12 +104,17 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             }
         }
 
+        /**
+         * Returns game board
+         *
+         * @return game board.
+         */
         public GameSlot[][] getGameBoard() {
             return gameBoard;
         }
 
         /**
-         * Return current state of game. (game board)
+         * Returns current state of game. (game board)
          *
          * @return state of game.
          */
@@ -129,7 +134,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
 
         /**
-         * Return row and col in size 2 array based on given action.
+         * Returns row and col in size 2 array based on given action.
          *
          * @param action action as input.
          * @return row and col in size 2 array
@@ -179,6 +184,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             return availableMoves;
         }
 
+        /**
+         * Check if there are available moves.
+         *
+         * @return returns true if there are no available moves. Otherwise returns true.
+         */
         private boolean noAvailableMoves() {
             return getAvailableMoves().isEmpty();
         }
@@ -609,14 +619,12 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private void playGames() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
         initWindow();
         jFrame.revalidate();
+
         int drawCountTemp = 0;
         int playerNoughtWonCountTemp = 0;
         int playerCrossWonCountTemp = 0;
-        /**
-         * Number of games to be played.
-         *
-         */
         int numberOfGames = 500000000;
+
         for (int game = 0; game < numberOfGames; game++) {
             playGame();
             if (gameStatus == GameStatus.NOUGHT_WON) {
@@ -678,7 +686,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 gameStatus = gameBoard.updateGameStatus(currentPlayer);
             }
             else {
-//                getAgent().newStep(true);
                 getAgent().newStep();
                 if (!getAgent().act(currentHumanPlayer != null, false)) {
                     illegalMoves++;
@@ -710,8 +717,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Returns current state of environment for the agent.
      *
      * @return state of environment
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getState() {
+    public Matrix getState() throws MatrixException {
         return gameBoard.getState().copy();
     }
 
@@ -843,9 +851,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(Player player) throws NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private DeepAgent createAgent(Player player) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, boardSize * boardSize);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * 9) + ", updateTNNCycle = " + (30 * 9) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonInitial = 0.1, epsilonMin = 0.1, learningRate = 0.5, gamma = 0.85, alpha = 1");
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * 9) + ", updateTNNCycle = " + (30 * 9) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonInitial = 0.1, epsilonMin = 0.0, learningRate = 0.5, gamma = 0.85, alpha = 1");
         agent.start();
         return agent;
     }
@@ -859,16 +867,16 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = 27");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = 27");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UniFunctionType.RELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 27");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 27");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(BiFunctionType.HUBER);
+        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setNeuralNetworkName(neuralNetworkName);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(50);
