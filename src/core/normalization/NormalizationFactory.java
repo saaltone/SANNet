@@ -7,7 +7,6 @@
 package core.normalization;
 
 import core.NeuralNetworkException;
-import core.layer.Connector;
 import utils.DynamicParamException;
 
 import java.io.Serializable;
@@ -23,20 +22,19 @@ public class NormalizationFactory implements Serializable {
      * Creates normalizer instance with given type with defined parameters.
      *
      * @param normalizationType type of normalizer.
-     * @param connector connector between previous and next layer.
      * @param params parameters for normalizer.
      * @return constructed normalizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if creation of normalizer fails.
      */
-    public static Normalization create(NormalizationType normalizationType, Connector connector, String params) throws DynamicParamException, NeuralNetworkException {
+    public static Normalization create(NormalizationType normalizationType, String params) throws DynamicParamException, NeuralNetworkException {
         switch (normalizationType) {
             case BATCH_NORMALIZATION:
-                return (params == null) ? new BatchNormalization(connector) : new BatchNormalization(connector, params);
+                return (params == null) ? new BatchNormalization() : new BatchNormalization(params);
             case LAYER_NORMALIZATION:
-                return (params == null) ? new LayerNormalization(connector) : new LayerNormalization(connector, params);
+                return (params == null) ? new LayerNormalization() : new LayerNormalization(params);
             case WEIGHT_NORMALIZATION:
-                return (params == null) ? new WeightNormalization(connector) : new WeightNormalization(connector, params);
+                return (params == null) ? new WeightNormalization() : new WeightNormalization(params);
         }
         throw new NeuralNetworkException("Creation of normalizer failed.");
     }
@@ -45,13 +43,12 @@ public class NormalizationFactory implements Serializable {
      * Creates normalizer instance with given type with defined parameters.
      *
      * @param normalizationType type of normalizer.
-     * @param connector connector between previous and next layer.
      * @return constructed normalizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if creation of normalizer fails.
      */
-    public static Normalization create(NormalizationType normalizationType, Connector connector) throws DynamicParamException, NeuralNetworkException {
-        return create(normalizationType, connector, null);
+    public static Normalization create(NormalizationType normalizationType) throws DynamicParamException, NeuralNetworkException {
+        return create(normalizationType, null);
     }
 
     /**

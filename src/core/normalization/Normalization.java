@@ -8,10 +8,9 @@ package core.normalization;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Matrix;
-import utils.MatrixException;
-
-import java.util.TreeMap;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.procedure.Node;
 
 /**
  * Interface for normalization functions.
@@ -41,29 +40,62 @@ public interface Normalization {
     void setTraining(boolean isTraining);
 
     /**
-     * Executes normalization method for forward step.<br>
-     * This operation assumes execution at step start.<br>
+     * Executes forward step for normalization.<br>
+     * Used typically for batch normalization.<br>
      *
-     * @param ins input samples for forward step.
-     * @param channels number of channels of a convolutional layer. Only relevant for convolutional layer.
+     * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException;
+    void forward(Node node) throws MatrixException;
 
     /**
-     * Executes normalization method for forward step.<br>
-     * This operation assumes execution post activation.<br>
+     * Executes backward step for normalization.<br>
+     * Used typically for batch normalization.<br>
      *
-     * @param outs input samples for forward step.
+     * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void forwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException;
+    void backward(Node node) throws MatrixException;
 
     /**
-     * Executes normalization method for backward phase.
+     * Executes forward step for normalization.<br>
+     * Used typically for layer normalization.<br>
      *
+     * @param node node for normalization.
+     * @param inputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void backward() throws MatrixException;
+    void forward(Node node, int inputIndex) throws MatrixException;
+
+    /**
+     * Executes backward step for normalization.<br>
+     * Used typically for layer normalization.<br>
+     *
+     * @param node node for normalization.
+     * @param outputIndex input index for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void backward(Node node, int outputIndex) throws MatrixException;
+
+    /**
+     * Executes forward step for normalization.<br>
+     * Used typically for weight normalization.<br>
+     *
+     * @param W weight for normalization.
+     * @return normalized weight.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix forward(Matrix W) throws MatrixException;
+
+    /**
+     * Executes backward step for normalization.<br>
+     * Used typically for weight normalization.<br>
+     *
+     * @param W weight for backward's normalization.
+     * @param dW gradient of weight for backward normalization.
+     * @return input weight gradients for backward normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix backward(Matrix W, Matrix dW) throws MatrixException;
 
 }

@@ -6,8 +6,10 @@
 
 package core.normalization;
 
-import core.layer.Connector;
 import utils.*;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -25,10 +27,11 @@ public class LayerNormalization implements Normalization, Serializable {
     private static final long serialVersionUID = 3466341546851269706L;
 
     /**
-     * Reference to connector between previous and next layer.
+     * Epsilon term for layer normalization. Default value 10E-8.<br>
+     * Term provides mathematical stability for normalizer.<br>
      *
      */
-    private final Connector connector;
+    private final double epsilon = 10E-8;
 
     /**
      * If true neural network is in state otherwise false.
@@ -41,21 +44,21 @@ public class LayerNormalization implements Normalization, Serializable {
      * Used in backward propagation step for gradient calculation.<br>
      *
      */
-    private transient TreeMap<Integer, Matrix> unMeanIns;
+    private final HashMap<Node, TreeMap<Integer, Matrix>> unMeanIns = new HashMap<>();
 
     /**
-     * Tree to store variances of each sample.<br>
-     * Variance is calculated over single sample over all features.<br>
+     * Matrix to store variance of current batch.<br>
+     * Variance is calculated over batch samples per single feature.<br>
      *
      */
-    private transient TreeMap<Integer, Double> vars;
+    private final HashMap<Node, TreeMap<Integer, Double>> vars = new HashMap<>();
 
     /**
-     * Tree to store inverse squared variances (1 / squared variance) of each sample.<br>
+     * Matrix to store inverse squared variance (1 / squared variance) of current batch.<br>
      * This intermediate value is used for backpropagation gradient calculation.<br>
      *
      */
-    private transient TreeMap<Integer, Double> iSqrVars;
+    private final HashMap<Node, TreeMap<Integer, Double>> iSqrVars = new HashMap<>();
 
     /**
      * True if layer normalization is used calculation only with mean and variance excluded.
@@ -66,26 +69,22 @@ public class LayerNormalization implements Normalization, Serializable {
     /**
      * Constructor for layer normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      */
-    public LayerNormalization(Connector connector) {
-        this.connector = connector;
+    public LayerNormalization() {
     }
 
     /**
      * Constructor for layer normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      * @param params parameters for layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LayerNormalization(Connector connector, String params) throws DynamicParamException {
-        this(connector);
+    public LayerNormalization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for layer normalization.
+     * Returns parameters used for layer normalization.
      *
      * @return parameters used for layer normalization.
      */
@@ -113,9 +112,9 @@ public class LayerNormalization implements Normalization, Serializable {
      *
      */
     public void reset() {
-        unMeanIns = new TreeMap<>();
-        vars = new TreeMap<>();
-        iSqrVars = new TreeMap<>();
+        unMeanIns.clear();
+        vars.clear();
+        iSqrVars.clear();
     }
 
     /**
@@ -132,88 +131,106 @@ public class LayerNormalization implements Normalization, Serializable {
      * Calculates feature wise mean and variance for each sample independently.<br>
      * Removes mean and variance from input samples.<br>
      *
-     * @param ins input samples for forward step.
-     * @param channels not used. Only relevant for convolutional layer.
+     * @param node node for normalization.
+     * @param inputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException {
-        if (ins.get(ins.firstKey()).getSize() < 2) return;
-        /**
-         * Epsilon term for layer normalization. Default value 10E-8.<br>
-         * Term provides mathematical stability for normalizer.<br>
-         *
-         */
-        double epsilon = 10E-8;
+    public void forward(Node node, int inputIndex) throws MatrixException {
+        if (node.getMatrix(inputIndex).getSize() < 2) return;
+
+        Matrix inputMatrix = node.getMatrix(inputIndex);
         if (isTraining) {
-            reset();
-            for (Integer index : ins.keySet()) {
-                Matrix input = ins.get(index);
-
-                // Calculate mean
-                double mean = input.mean();
-
-                Matrix unMeanIn = input.subtract(mean);
-                unMeanIns.put(index, unMeanIn);
-
-                double iSqrVar;
-                if (!meanOnly) {
-                    // Calculate variance
-                    double var = input.var() + epsilon;
-                    vars.put(index, var);
-                    iSqrVar = 1 / Math.sqrt(var);
-                    iSqrVars.put(index, iSqrVar);
-
-                    ins.put(index, unMeanIn.multiply(iSqrVar));
-                }
-                else ins.put(index, unMeanIn);
+            TreeMap<Integer, Matrix> unMeanInEntry;
+            TreeMap<Integer, Double> varEntry;
+            TreeMap<Integer, Double> iSqrVarEntry;
+            if (unMeanIns.containsKey(node)) {
+                unMeanInEntry = unMeanIns.get(node);
+                varEntry = vars.get(node);
+                iSqrVarEntry = iSqrVars.get(node);
             }
+            else {
+                unMeanIns.put(node, unMeanInEntry = new TreeMap<>());
+                vars.put(node, varEntry = new TreeMap<>());
+                iSqrVars.put(node, iSqrVarEntry = new TreeMap<>());
+            }
+
+            // Calculate mean
+            double mean = inputMatrix.mean();
+            Matrix unMeanIn = inputMatrix.subtract(mean);
+            unMeanInEntry.put(inputIndex, unMeanIn);
+
+            if (!meanOnly) {
+                // Calculate variance
+                double var = inputMatrix.var();
+                varEntry.put(inputIndex, var);
+                double iSqrVar = 1 / Math.sqrt(var + epsilon);
+                iSqrVarEntry.put(inputIndex, iSqrVar);
+                node.setMatrix(inputIndex, unMeanIn.multiply(iSqrVar));
+            }
+            else node.setMatrix(inputIndex, unMeanIn);
         }
         else {
-            for (Integer index : ins.keySet()) {
-                Matrix input = ins.get(index);
-                Matrix unMeanIn = input.subtract(input.mean());
-                if (!meanOnly) ins.put(index, unMeanIn.multiply(1 / Math.sqrt(input.var() + epsilon)));
-                else ins.put(index, unMeanIn);
-            }
+            Matrix unMeanIn = inputMatrix.subtract(inputMatrix.mean());
+            if (!meanOnly) node.setMatrix(inputIndex, unMeanIn.multiply(1 / Math.sqrt(inputMatrix.var() + epsilon)));
+            else node.setMatrix(inputIndex, unMeanIn);
+        }
+    }
+
+    /**
+     * Executes backward propagation step for layer normalization.<br>
+     * Calculates gradients backwards at step end for previous layer.<br>
+     *
+     * @param node node for normalization.
+     * @param outputIndex input index for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backward(Node node, int outputIndex) throws MatrixException {
+        if (!unMeanIns.containsKey(node)) return;
+
+        int size = node.getGradient(outputIndex).getSize();
+        Matrix outputGradMatrix = node.getGradient(outputIndex);
+        Matrix unMeanIn = unMeanIns.get(node).get(outputIndex);
+        double dsigma = -0.5 * outputGradMatrix.multiply(unMeanIn).sum() / size;
+        double dmu = -1 * outputGradMatrix.sum() / size;
+        if (!meanOnly) {
+            dsigma *= Math.pow(vars.get(node).get(outputIndex) + epsilon, -1.5);
+            dmu *= iSqrVars.get(node).get(outputIndex);
+            node.setGradient(outputIndex, outputGradMatrix.multiply(iSqrVars.get(node).get(outputIndex)).add(unMeanIn.multiply(2 * dsigma)).add(dmu));
+        }
+        else {
+            node.setGradient(outputIndex, outputGradMatrix.add(unMeanIn.multiply(2 * dsigma)).add(dmu));
         }
     }
 
     /**
      * Not used.
      *
-     * @param outs output samples for forward step.
+     * @param node node for normalization.
      */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) {}
+    public void forward(Node node) {}
 
     /**
-     * Executes backward propagation step for layer normalization.<br>
-     * Calculates gradients backwards at step end for previous layer.<br>
+     * Not used.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param node node for normalization.
      */
-    public void backward() throws MatrixException {
-        TreeMap<Integer, Matrix> dEos = connector.getNLayer().getdEos();
-        double size = dEos.get(dEos.firstKey()).getSize();
-        if (size < 2) return;
+    public void backward(Node node) {}
 
-        for (Integer index : dEos.keySet()) {
-            Matrix dEo = dEos.get(index);
-            double var = vars.get(index);
-            double iSqrVar = iSqrVars.get(index);
-            Matrix unMeanIn = unMeanIns.get(index);
-            Matrix dEoP;
-            double dsigma = -0.5 * dEo.multiply(unMeanIn).sum() / size;
-            double dmu = -1 * dEo.sum() / size;
-            if (!meanOnly) {
-                dsigma *= Math.pow(var, -1.5);
-                dmu *= iSqrVar;
-                dEoP = dEo.multiply(iSqrVar).add(unMeanIn.multiply(2 * dsigma)).add(dmu);
-            }
-            else {
-                dEoP = dEo.add(unMeanIn.multiply(2 * dsigma)).add(dmu);
-            }
-            dEos.put(index, dEoP);
-        }
-    }
+    /**
+     * Not used.
+     *
+     * @param W weight for normalization.
+     * @return normalized weight.
+     */
+    public Matrix forward(Matrix W) { return W; }
+
+    /**
+     * Not used.
+     *
+     * @param W weight for backward's normalization.
+     * @param dW gradient of weight for backward normalization.
+     * @return input weight gradients for backward normalization.
+     */
+    public Matrix backward(Matrix W, Matrix dW) { return dW; }
 
 }

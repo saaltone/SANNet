@@ -6,12 +6,13 @@
 
 package core.normalization;
 
-import core.layer.Connector;
 import utils.*;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 /**
  * Class that implements Weight Normalization for neural network layer.<br>
@@ -24,22 +25,16 @@ public class WeightNormalization implements Normalization, Serializable {
     private static final long serialVersionUID = 1741544680542755148L;
 
     /**
-     * Reference to connector between previous and next layer.
-     *
-     */
-    private final Connector connector;
-
-    /**
      * Tree map for un-normalized weights.
      *
      */
-    private transient HashMap<Matrix, Matrix> Ws;
+    private final HashMap<Matrix, Matrix> Ws = new HashMap<>();
 
     /**
      * Tree map for storing weight normalizing factors (1 / sqrt(2-norm W))
      *
      */
-    private transient HashMap<Matrix, Double> iNorms;
+    private final HashMap<Matrix, Double> iNorms = new HashMap<>();
 
     /**
      * Weight normalization scalar.
@@ -50,26 +45,22 @@ public class WeightNormalization implements Normalization, Serializable {
     /**
      * Constructor for weight normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      */
-    public WeightNormalization(Connector connector) {
-        this.connector = connector;
+    public WeightNormalization() {
     }
 
     /**
      * Constructor for weight normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      * @param params parameters for weight normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WeightNormalization(Connector connector, String params) throws DynamicParamException {
-        this(connector);
+    public WeightNormalization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for weight normalization.
+     * Returns parameters used for weight normalization.
      *
      * @return parameters used for weight normalization.
      */
@@ -97,8 +88,8 @@ public class WeightNormalization implements Normalization, Serializable {
      *
      */
     public void reset() {
-        Ws = new HashMap<>();
-        iNorms = new HashMap<>();
+        Ws.clear();
+        iNorms.clear();
     }
 
     /**
@@ -107,37 +98,24 @@ public class WeightNormalization implements Normalization, Serializable {
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
-        /**
-         * Indicates to regularizer or normalizer if neural network is in training mode.
-         *
-         */
     }
 
     /**
-     * Normalizes each weight for forward ste i.e. multiplies each weight matrix by g / sqrt(2-norm of weights).
+     * Normalizes each weight for forward step i.e. multiplies each weight matrix by g / sqrt(2-norm of weights).
      *
-     * @param ins input samples for forward step.
-     * @param channels not used. Only relevant for convolutional layer.
+     * @param W weight for normalization.
+     * @return normalized weight.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException {
-        reset();
-        for (Matrix W : connector.getReg()) {
-            Ws.put(W, W.copy());
-            double iNorm = 1 / Math.sqrt(W.norm(2));
-            iNorms.put(W, iNorm);
-            W.multiply(g * iNorm, W);
-        }
-    }
-
-    /**
-     * Restores original weight matrices after forward step.
-     *
-     * @param outs output samples for forward step.
-     */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) throws MatrixException {
-        for (Matrix W : connector.getReg()) {
-            W.setEqualTo(Ws.get(W));
+    public Matrix forward(Matrix W) throws MatrixException {
+        if (Ws.containsKey(W)) return Ws.get(W);
+        else {
+            Matrix Wnorm = W.copy();
+            double iNorm = 1 / Math.sqrt(Wnorm.norm(2));
+            iNorms.put(Wnorm, iNorm);
+            Wnorm.multiply(g * iNorm, Wnorm);
+            Ws.put(Wnorm, W);
+            return Wnorm;
         }
     }
 
@@ -145,19 +123,46 @@ public class WeightNormalization implements Normalization, Serializable {
      * Executes backward propagation step for weight normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
+     * @param Wnorm weight for backward normalization.
+     * @param dW gradient of weight for backward normalization.
+     * @return input weight gradients for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backward() throws MatrixException {
-        for (Matrix W : connector.getReg()) {
-            double iNorm = iNorms.get(W);
-            TreeMap<Integer, Matrix> dWs = connector.getdWs().get(W);
-            for (Integer index1 : dWs.keySet()) {
-                Matrix dW = dWs.get(index1);
-                Matrix dg = dW.multiply(W).multiply(iNorm);
-                Matrix dWsP = dW.multiply(g * iNorm).subtract(dg.multiply(g * Math.pow(iNorm, 2)).multiply(W));
-                dWs.put(index1, dWsP);
-            }
-        }
+    public Matrix backward(Matrix Wnorm, Matrix dW) throws MatrixException {
+        double iNorm = iNorms.get(Wnorm);
+        Wnorm.setEqualTo(Ws.get(Wnorm));
+        Matrix dg = dW.multiply(Wnorm).multiply(iNorm);
+        return dW.multiply(g * iNorm).subtract(dg.multiply(g * Math.pow(iNorm, 2)).multiply(Wnorm));
     }
+
+    /**
+     * Not used.
+     *
+     * @param node node for normalization.
+     */
+    public void forward(Node node) {}
+
+    /**
+     * Not used.
+     *
+     * @param node node for normalization.
+     */
+    public void backward(Node node) {}
+
+    /**
+     * Not used.
+     *
+     * @param node node for normalization.
+     * @param inputIndex input index for normalization.
+     */
+    public void forward(Node node, int inputIndex) {}
+
+    /**
+     * Not used.
+     *
+     * @param node node for normalization.
+     * @param outputIndex input index for normalization.
+     */
+    public void backward(Node node, int outputIndex) {}
 
 }

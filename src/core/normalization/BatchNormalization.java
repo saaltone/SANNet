@@ -6,11 +6,16 @@
 
 package core.normalization;
 
-import core.layer.Connector;
 import utils.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
+import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -24,10 +29,11 @@ public class BatchNormalization implements Normalization, Serializable {
     private static final long serialVersionUID = 3466341546851269706L;
 
     /**
-     * Reference to connector between previous and next layer.
+     * Epsilon term for batch normalization. Default value 10E-8.<br>
+     * Term provides mathematical stability for normalizer.<br>
      *
      */
-    private final Connector connector;
+    private final double epsilon = 10E-8;
 
     /**
      * If true neural network is in state otherwise false.
@@ -40,14 +46,14 @@ public class BatchNormalization implements Normalization, Serializable {
      * Stored rolling average mean is used for normalization when neural network is in inference mode.<br>
      *
      */
-    private Matrix avgMean;
+    private final HashMap<Node, Matrix> avgMeans = new HashMap<>();
 
     /**
      * Stores rolling average variance of samples when neural network is in training mode.<br>
      * Stored rolling average variance is used for normalization when neural network is in inference mode.<br>
      *
      */
-    private Matrix avgVar;
+    private final HashMap<Node, Matrix> avgVars = new HashMap<>();
 
     /**
      * Sample size for a batch. Double is used for calculation purposes.
@@ -60,21 +66,27 @@ public class BatchNormalization implements Normalization, Serializable {
      * Used in backward propagation step for gradient calculation.<br>
      *
      */
-    private transient TreeMap<Integer, Matrix> unMeanIns;
+    private final HashMap<Node, TreeMap<Integer, Matrix>> unMeanIns = new HashMap<>();
 
     /**
      * Matrix to store variance of current batch.<br>
      * Variance is calculated over batch samples per single feature.<br>
      *
      */
-    private transient Matrix var;
+    private final HashMap<Node, Matrix> vars = new HashMap<>();
 
     /**
      * Matrix to store inverse squared variance (1 / squared variance) of current batch.<br>
      * This intermediate value is used for backpropagation gradient calculation.<br>
      *
      */
-    private transient Matrix iSqrVar;
+    private final HashMap<Node, Matrix> iSqrVars = new HashMap<>();
+
+    /**
+     * Number of mean and average samples collected.
+     *
+     */
+    private int sampleCount = 0;
 
     /**
      * True if batch normalization is used calculation only with mean and variance excluded.
@@ -85,26 +97,22 @@ public class BatchNormalization implements Normalization, Serializable {
     /**
      * Constructor for batch normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      */
-    public BatchNormalization(Connector connector) {
-        this.connector = connector;
+    public BatchNormalization() {
     }
 
     /**
      * Constructor for batch normalization class.
      *
-     * @param connector reference to connector between previous and next layer.
      * @param params parameters for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BatchNormalization(Connector connector, String params) throws DynamicParamException {
-        this(connector);
+    public BatchNormalization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Gets parameters used for batch normalization.
+     * Returns parameters used for batch normalization.
      *
      * @return parameters used for batch normalization.
      */
@@ -132,19 +140,9 @@ public class BatchNormalization implements Normalization, Serializable {
      *
      */
     public void reset() {
-        avgMean = null;
-        avgVar = null;
-        clear();
-    }
-
-    /**
-     * Clears cached values
-     *
-     */
-    private void clear() {
-        unMeanIns = new TreeMap<>();
-        var = null;
-        iSqrVar = null;
+        unMeanIns.clear();
+        vars.clear();
+        iSqrVars.clear();
     }
 
     /**
@@ -162,110 +160,150 @@ public class BatchNormalization implements Normalization, Serializable {
      * Stores mean and variance into rolling averages respectively.<br>
      * Removes mean and variance from input samples.<br>
      *
-     * @param ins input samples for forward step.
-     * @param channels not used by batch normalization. Only relevant for convolutional layer.
+     * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardPre(TreeMap<Integer, Matrix> ins, int channels) throws MatrixException {
-        if (ins.size() < 2) return;
-        /**
-         * Epsilon term for batch normalization. Default value 10E-8.<br>
-         * Term provides mathematical stability for normalizer.<br>
-         *
-         */
-        double epsilon = 10E-8;
+    public void forward(Node node) throws MatrixException {
+        if (unMeanIns.containsKey(node)) return;
+        batchSize = node.size();
+        if (batchSize < 2) return;
+
+        Set<Integer> keySet = node.keySet();
+
         if (isTraining) {
-            clear();
-            batchSize = ins.size();
-            int rows = ins.get(ins.firstKey()).getRows();
-            int cols = ins.get(ins.firstKey()).getCols();
+            sampleCount++;
+
+            int rows = node.getMatrix(node.firstKey()).getRows();
+            int cols = node.getMatrix(node.firstKey()).getCols();
 
             // Calculate mean and cumulate average rolling mean
             Matrix mean = new DMatrix(rows, cols);
-            for (Matrix input : ins.values()) mean.add(input, mean);
+            for (Integer sampleIndex : keySet) mean.add(node.getMatrix(sampleIndex), mean);
             mean.divide(batchSize, mean);
 
-            /**
-             * Smoothing factor for rolling mean and average calculation.<br>
-             * Calculates avgSmoothFactor * current value + (1 - avgSmoothFactor) * new value.<br>
-             *
-             */
-            double avgSmoothFactor = 0.9;
-            if (avgMean == null) avgMean = mean;
-            else avgMean = mean.multiply(1 - avgSmoothFactor).add(avgMean.multiply(avgSmoothFactor));
+            if (!avgMeans.containsKey(node)) avgMeans.put(node, mean);
+            else avgMeans.put(node, movingAverage(avgMeans.get(node), mean, sampleCount));
 
             if (!meanOnly) {
                 // Calculate variance and cumulate average rolling variance
-                var = new DMatrix(rows, cols);
-                for (Matrix input : ins.values()) var.add(input.subtract(mean).power(2), var);
+                Matrix var = new DMatrix(rows, cols);
+                for (Integer sampleIndex : keySet) var.add(node.getMatrix(sampleIndex).subtract(mean).power(2), var);
                 var.divide(batchSize, var);
-                //  Add epsilon for numerical stability, then sqrt
-                var = var.add(epsilon);
-                iSqrVar = var.apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
+                vars.put(node, var);
 
-                if (avgVar == null) avgVar = var;
-                else avgVar = var.multiply(1 - avgSmoothFactor).add(avgVar.multiply(avgSmoothFactor));
+                iSqrVars.put(node, var.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV));
+
+                if (!avgVars.containsKey(node)) avgVars.put(node, var);
+                else avgVars.put(node, movingAverage(avgVars.get(node), var, sampleCount * sampleCount));
             }
 
             // Normalize mini batch by (output - mean) / sqrt(variance)
-            for (Integer inIndex : ins.keySet()) {
-                Matrix unMeanIn = ins.get(inIndex).subtract(mean);
-                unMeanIns.put(inIndex, unMeanIn);
-                if (!meanOnly) ins.put(inIndex, unMeanIn.multiply(iSqrVar));
-                else ins.put(inIndex, unMeanIn);
+            TreeMap<Integer, Matrix> unMeanInsNode = new TreeMap<>();
+            unMeanIns.put(node, unMeanInsNode);
+            for (Integer sampleIndex : keySet) {
+                Matrix unMeanIn = node.getMatrix(sampleIndex).subtract(mean);
+                unMeanInsNode.put(sampleIndex, unMeanIn);
+                if (!meanOnly) node.setMatrix(sampleIndex, unMeanIn.multiply(iSqrVars.get(node)));
+                else node.setMatrix(sampleIndex, unMeanIn);
             }
         }
         else {
             if (!meanOnly) {
-                Matrix iAvgSqrVar = avgVar.add(epsilon).apply(UniFunctionType.SQRT).apply(UniFunctionType.MULINV);
-                for (Integer inIndex : ins.keySet()) ins.put(inIndex, ins.get(inIndex).subtract(avgMean).multiply(iAvgSqrVar));
+                Matrix iAvgSqrVar = avgVars.get(node).multiply(batchSize / (batchSize - 1)).add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV);
+                Matrix avgMean = avgMeans.get(node);
+                for (Integer sampleIndex : keySet) {
+                    node.setMatrix(sampleIndex, node.getMatrix(sampleIndex).subtract(avgMean).multiply(iAvgSqrVar));
+                }
             }
             else {
-                for (Integer inIndex : ins.keySet()) ins.put(inIndex, ins.get(inIndex).subtract(avgMean));
+                Matrix avgMean = avgMeans.get(node);
+                for (Integer sampleIndex : keySet) {
+                    node.setMatrix(sampleIndex, node.getMatrix(sampleIndex).subtract(avgMean));
+                }
             }
+        }
+    }
+
+    /**
+     * Returns and updates moving average with sample.
+     *
+     * @param previousMovingAverage previous total moving average.
+     * @param sample new sample.
+     * @param sampleCount total number of samples.
+     * @return updates moving average.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private Matrix movingAverage(Matrix previousMovingAverage, Matrix sample, int sampleCount) throws MatrixException {
+        return previousMovingAverage.add(sample.subtract(previousMovingAverage).divide(sampleCount));
+    }
+
+    /**
+     * Executes backward propagation step for batch normalization.<br>
+     * Calculates gradients backwards at step end for previous layer.<br>
+     *
+     * @param node node for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backward(Node node) throws MatrixException {
+        if (!unMeanIns.containsKey(node)) return;
+
+        int rows = node.getGradient(node.firstKey()).getRows();
+        int cols = node.getGradient(node.firstKey()).getCols();
+
+        Set<Integer> keySet = node.keySet();
+
+        Matrix dsigma = new DMatrix(rows, cols);
+        Matrix dmu = new DMatrix(rows, cols);
+        TreeMap<Integer, Matrix> unMeanInsNode = unMeanIns.get(node);
+        for (Integer sampleIndex : keySet) {
+            dsigma.add(node.getGradient(sampleIndex).multiply(unMeanInsNode.get(sampleIndex)), dsigma);
+            dmu.add(node.getGradient(sampleIndex), dmu);
+        }
+        dsigma.multiply(-0.5 / batchSize, dsigma);
+        dmu.multiply(-1 / batchSize, dmu);
+        if (!meanOnly) {
+            dsigma.multiply(vars.get(node).add(epsilon).power(-1.5), dsigma);
+            dmu.multiply(iSqrVars.get(node), dmu);
+        }
+        for (Integer sampleIndex : keySet) {
+            Matrix dEoP;
+            if (!meanOnly) dEoP = node.getGradient(sampleIndex).multiply(iSqrVars.get(node)).add(unMeanInsNode.get(sampleIndex).multiply(2).multiply(dsigma)).add(dmu);
+            else dEoP = node.getGradient(sampleIndex).add(unMeanInsNode.get(sampleIndex).multiply(2).multiply(dsigma)).add(dmu);
+            node.setGradient(sampleIndex, dEoP);
         }
     }
 
     /**
      * Not used.
      *
-     * @param outs output samples for forward step.
+     * @param node node for normalization.
+     * @param inputIndex input index for normalization.
      */
-    public void forwardPost(TreeMap<Integer, Matrix> outs) {}
+    public void forward(Node node, int inputIndex) {}
 
     /**
-     * Executes backward propagation step for batch normalization.<br>
-     * Calculates gradients backwards at step end for previous layer.<br>
+     * Not used.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param node node for normalization.
+     * @param outputIndex input index for normalization.
      */
-    public void backward() throws MatrixException {
-        TreeMap<Integer, Matrix> dEos = connector.getNLayer().getdEos();
-        if (dEos.size() < 2) return;
+    public void backward(Node node, int outputIndex) {}
 
-        int rows = dEos.get(dEos.firstKey()).getRows();
-        int cols = dEos.get(dEos.firstKey()).getCols();
-        Matrix dsigma = new DMatrix(rows, cols);
-        Matrix dmu = new DMatrix(rows, cols);
-        for (Integer index : dEos.keySet()) {
-            Matrix dEo = dEos.get(index);
-            dsigma.add(dEo.multiply(unMeanIns.get(index)), dsigma);
-            dmu.add(dEo, dmu);
-        }
-        dsigma.multiply(-0.5 / batchSize, dsigma);
-        dmu.multiply(-1 / batchSize, dmu);
-        if (!meanOnly) {
-            dsigma.multiply(var.power(-1.5), dsigma);
-            dmu.multiply(iSqrVar, dmu);
-        }
-        for (Integer index : dEos.keySet()) {
-            Matrix dEo = dEos.get(index);
-            Matrix unMeanIn = unMeanIns.get(index);
-            Matrix dEoP;
-            if (!meanOnly) dEoP = dEo.multiply(iSqrVar).add(unMeanIn.multiply(2).multiply(dsigma)).add(dmu);
-            else dEoP = dEo.add(unMeanIn.multiply(2).multiply(dsigma)).add(dmu);
-            dEos.put(index, dEoP);
-        }
-    }
+    /**
+     * Not used.
+     *
+     * @param W weight for normalization.
+     * @return normalized weight.
+     */
+    public Matrix forward(Matrix W) { return W; }
+
+    /**
+     * Not used.
+     *
+     * @param W weight for backward's normalization.
+     * @param dW gradient of weight for backward normalization.
+     * @return input weight gradients for backward normalization.
+     */
+    public Matrix backward(Matrix W, Matrix dW) { return dW; }
 
 }
