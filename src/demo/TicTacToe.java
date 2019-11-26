@@ -10,7 +10,6 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.DeepAgent;
@@ -72,13 +71,17 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      */
     private class GameBoard {
 
+        /**
+         * Game board.
+         *
+         */
         final GameSlot[][] gameBoard;
 
         /**
-         * Current state of game (game board).
+         * Current state of game (game board reflected as row vector).
          *
          */
-        private final Matrix state;
+        private Matrix state;
 
         /**
          * Size of game board (size x size)
@@ -94,7 +97,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         GameBoard (int size) {
             this.size = size;
 
-            state = new DMatrix(2 * size * size, 1);
+            state = new DMatrix(size * size, 1);
 
             gameBoard = new GameSlot[size][size];
             for (int row = 0; row < size; row++) {
@@ -105,7 +108,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
 
         /**
-         * Returns game board
+         * Returns game board.
          *
          * @return game board.
          */
@@ -114,7 +117,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
 
         /**
-         * Returns current state of game. (game board)
+         * Returns current state of game (game board).
          *
          * @return state of game.
          */
@@ -187,38 +190,47 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         /**
          * Check if there are available moves.
          *
-         * @return returns true if there are no available moves. Otherwise returns true.
+         * @return returns true if there are no available moves otherwise returns true.
          */
         private boolean noAvailableMoves() {
             return getAvailableMoves().isEmpty();
         }
 
         /**
-         * Makes move per action taken.
+         * Executes move per action defined.
          *
+         * @param player current player.
          * @param row row of game board.
          * @param col column of game board.
+         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void makeMove(Player player, int row, int col) {
+        public void makeMove(Player player, int row, int col) throws MatrixException {
             gameBoard[row][col] = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
-            state.setValue((player == Player.NOUGHT ? 0 : size * size) + getPos(row, col), 0, 1);
+            state = state.copy();
+//            state.setValue((player == Player.NOUGHT ? 0 : size * size) + getPos(row, col), 0, 1);
+            state.setValue(getPos(row, col), 0, player == Player.NOUGHT ? -1 : 1);
         }
 
         /**
-         * Makes move per action taken.
+         * Executes move per action defined.
          *
-         * @param action action taken.
+         * @param player current player.
+         * @param action action defined.
+         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void makeMove(Player player, int action) {
+        public void makeMove(Player player, int action) throws MatrixException {
             int[] pos = getPos(action);
             gameBoard[pos[0]][pos[1]] = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
-            state.setValue((player == Player.NOUGHT ? 0 : size * size) + action, 0, 1);
+            state = state.copy();
+//            state.setValue((player == Player.NOUGHT ? 0 : size * size) + action, 0, 1);
+            state.setValue(action, 0, player == Player.NOUGHT ? -1 : 1);
         }
 
         /**
-         * Checks if one of players has won the game.
+         * Checks if player has won the game.
          *
-         * @return return player id if player has won otherwise returns ongoing game state.
+         * @param player current player.
+         * @return return player if player has won otherwise returns null.
          */
         private Player checkWinner(Player player) {
             int diagStat = 0;
@@ -264,24 +276,32 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private class TicTacToePanel extends JPanel {
 
         /**
-         * Array structure to draw maze.
+         * Game board for drawing maze.
          *
          */
         private GameSlot[][] gameBoard;
 
         /**
+         * Status of game.
+         *
+         */
+        private GameStatus gameStatus;
+
+        private Player currentHumanPlayer;
+
+        public void setHumanPlayer(Player currentHumanPlayer) {
+            this.currentHumanPlayer = currentHumanPlayer;
+        }
+
+        /**
          * Sets gameBoard to be drawn.
          *
-         * @param gameBoard gameBoard to be drawn.
+         * @param gameBoard game board to be drawn.
+         * @param gameStatus status of game.
          */
         public void setGameBoard(GameSlot[][] gameBoard, GameStatus gameStatus) {
-            synchronized (gameBoard) {
-                this.gameBoard = gameBoard;
-            }
-            if (gameStatus != null) {
-                synchronized (gameStatus) {
-                }
-            }
+            this.gameBoard = gameBoard;
+            this.gameStatus = gameStatus;
         }
 
         /**
@@ -289,8 +309,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          *
          * @param g graphics.
          */
-        @SuppressWarnings("SynchronizeOnNonFinalField")
         public void paintComponent(Graphics g) {
+            panelLock.lock();
+            if (gameBoard == null) return;
             super.paintComponent(g);
             boolean darkColor = true;
             for (int row = 0; row < boardSize; row++) {
@@ -302,38 +323,26 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                     g.setColor(Color.BLACK);
                 }
             }
-            synchronized (gameBoard) {
-                for (int row = 0; row < boardSize; row++) {
-                    for (int col = 0; col < boardSize; col++) {
-                        g.setFont(new Font("ARIAL", Font.PLAIN, 32));
-                        if (gameBoard != null) {
-                            if (gameBoard[row][col] == GameSlot.NOUGHT) g.drawString("O", col * tileSize + 40, row * tileSize + 60);
-                            if (gameBoard[row][col] == GameSlot.CROSS) g.drawString("X", col * tileSize + 40, row * tileSize + 60);
-                        }
+            for (int row = 0; row < boardSize; row++) {
+                for (int col = 0; col < boardSize; col++) {
+                    g.setFont(new Font("ARIAL", Font.PLAIN, 32));
+                    if (gameBoard != null) {
+                        if (gameBoard[row][col] == GameSlot.NOUGHT) g.drawString("O", col * tileSize + 40, row * tileSize + 60);
+                        if (gameBoard[row][col] == GameSlot.CROSS) g.drawString("X", col * tileSize + 40, row * tileSize + 60);
                     }
                 }
             }
+            if (currentHumanPlayer != null && gameStatus != GameStatus.ONGOING) {
+                g.setFont(new Font("ARIAL", Font.PLAIN, 32));
+                g.setColor(Color.RED);
+                if (gameStatus == GameStatus.DRAW) g.drawString("DRAW", 100, 165);
+                if (gameStatus == GameStatus.NOUGHT_WON) g.drawString("NOUGHT WON", 50, 165);
+                if (gameStatus == GameStatus.CROSS_WON) g.drawString("CROSS WON", 50, 165);
+            }
+            panelLock.unlock();
         }
 
     }
-
-    /**
-     * Reward structure i.e. rewards returned to agent during game per action taken.
-     *
-     */
-    public static class RewardStructure {
-        final double WIN = 10; // 5
-        final double DRAW = 4; // 3
-        final double LOST = 0; // 0
-        final double MOVE = 0; // 0
-        final double ILLEGAL_MOVE = 0;
-    }
-
-    /**
-     * Reward structure.
-     *
-     */
-    private final RewardStructure rewardStructure = new RewardStructure();
 
     /**
      * Deep agent for player nought.
@@ -372,13 +381,13 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private Player humanPlayer = null;
 
     /**
-     * Row into where human player want to make a move into.
+     * Row into where human player wants to make a move into.
      *
      */
     private int humanRow = -1;
 
     /**
-     * Column into where human player want to make a move into.
+     * Column into where human player wants to make a move into.
      *
      */
     private int humanCol = -1;
@@ -406,18 +415,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      */
     private int playerCrossWonCount = 0;
-
-    /**
-     * Sum of all game moves taken.
-     *
-     */
-    private int allMoves = 0;
-
-    /**
-     * Sum of illegal moves taken.
-     *
-     */
-    private int illegalMoves = 0;
 
     /**
      * Random number generator.
@@ -486,7 +483,13 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private final Lock lock = new ReentrantLock();
 
     /**
-     * Condition for lock.
+     * Lock that is used to synchronize GUI panel and tic tac toe threads with each other.
+     *
+     */
+    private final Lock panelLock = new ReentrantLock();
+
+    /**
+     * Condition for human action lock.
      *
      */
     private final Condition humanAction = lock.newCondition();
@@ -613,10 +616,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of neural network fails.
-     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    private void playGames() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private void playGames() throws MatrixException, NeuralNetworkException {
         initWindow();
         jFrame.revalidate();
 
@@ -640,12 +641,10 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 drawCount++;
             }
             if (game % 50 == 0 && game > 0) {
-                System.out.println("Game #" + game + " Epsilon: " + nought.getEpsilon() + " Nought won: " + playerNoughtWonCountTemp + " Cross won: " + playerCrossWonCountTemp + " Draw: " + drawCountTemp + " Illegal moves: " + illegalMoves + " (Total moves: " + allMoves + ")");
+                System.out.println("Game #" + game + " Epsilon: " + nought.getEpsilon() + " Nought won: " + playerNoughtWonCountTemp + " Cross won: " + playerCrossWonCountTemp + " Draw: " + drawCountTemp);
                 drawCountTemp = 0;
                 playerNoughtWonCountTemp = 0;
                 playerCrossWonCountTemp = 0;
-                allMoves = 0;
-                illegalMoves = 0;
             }
         }
         System.out.println("Nought won games: " + playerNoughtWonCount);
@@ -660,18 +659,27 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of neural network fails.
-     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    private void playGame() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    private void playGame() throws MatrixException, NeuralNetworkException {
         currentPlayer = random.nextInt(2) == 0 ? Player.NOUGHT : Player.CROSS;
         Player currentHumanPlayer = humanPlayer;
         gameBoard = new GameBoard(boardSize);
         gameStatus = GameStatus.ONGOING;
         ArrayList<Matrix> gameStates = new ArrayList<>();
-        gameStates.add(gameBoard.getState().copy());
-        do {
-            ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), null);
+        gameStates.add(gameBoard.getState());
+
+        panelLock.lock();
+        ticTacToePanel.setHumanPlayer(currentHumanPlayer);
+        ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
+        panelLock.unlock();
+
+        nought.newEpisode();
+        cross.newEpisode();
+        while (gameStatus == GameStatus.ONGOING) {
+            getAgent().newStep(true);
+            panelLock.lock();
+            ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
+            panelLock.unlock();
             jFrame.revalidate();
             ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
             if (currentHumanPlayer == currentPlayer) {
@@ -684,43 +692,38 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 catch (InterruptedException exception) {}
                 gameBoard.makeMove(currentPlayer, humanRow, humanCol);
                 gameStatus = gameBoard.updateGameStatus(currentPlayer);
+                lock.unlock();
             }
             else {
-                getAgent().newStep();
-                if (!getAgent().act(currentHumanPlayer != null, false)) {
-                    illegalMoves++;
-                    getAgent().act(false, true);
-                }
-
-                allMoves++;
-                gameStates.add(gameBoard.getState().copy());
-
-                if (gameStatus == GameStatus.ONGOING) getAgent().updateValue();
+                getAgent().executePolicy(currentHumanPlayer != null, false);
+                gameStates.add(gameBoard.getState());
             }
-
             currentPlayer = currentPlayer == Player.CROSS ? Player.NOUGHT : Player.CROSS;
+        }
 
-        } while (gameStatus == GameStatus.ONGOING);
+        nought.commitStep();
+        cross.commitStep();
 
-        nought.commitStep(true);
-        cross.commitStep(true);
-
+        panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
+        panelLock.unlock();
+
         jFrame.revalidate();
         ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
 
-        if (allMoves == 450 && illegalMoves == 0 && gameStatus == GameStatus.DRAW) printGame(gameStates, gameStatus);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {}
 
     }
 
     /**
-     * Returns current state of environment for the agent.
+     * Returns current state of environment.
      *
-     * @return state of environment
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return state of environment.
      */
-    public Matrix getState() throws MatrixException {
-        return gameBoard.getState().copy();
+    public Matrix getState() {
+        return gameBoard.getState();
     }
 
     /**
@@ -753,7 +756,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     }
 
     /**
-     * Takes random action.
+     * Requests (random) action defined by environment.
      *
      * @param agent agent that is taking action.
      * @return action taken
@@ -764,35 +767,28 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     }
 
     /**
-     * Takes specific action and updates game status after successful action.
+     * Takes specific action.
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void commitAction(Agent agent, int action) {
+    public void commitAction(Agent agent, int action) throws MatrixException {
         gameBoard.makeMove(currentPlayer, action);
         gameStatus = gameBoard.updateGameStatus(currentPlayer);
+        setReward(agent);
     }
 
     /**
-     * Requests immediate reward from environment after taking action.
+     * Sets immediate reward for agent.
      *
-     * @param agent agent that is asking for reward.
-     * @param validAction true if taken action was available one.
-     * @return immediate reward.
+     * @param agent current agent.
      */
-    public double requestReward(Agent agent, boolean validAction) {
-        if (!validAction) return rewardStructure.ILLEGAL_MOVE;
+    private void setReward(Agent agent) {
+        if (gameStatus == GameStatus.ONGOING) agent.setReward(rewardStructure.MOVE);
         else {
-            if (gameStatus == GameStatus.ONGOING) return rewardStructure.MOVE;
-            else {
-                if (gameStatus == GameStatus.DRAW) return rewardStructure.DRAW;
-                else {
-                    GameStatus targetPlayer = currentPlayer == Player.NOUGHT ? GameStatus.NOUGHT_WON : GameStatus.CROSS_WON;
-                    if (gameStatus == targetPlayer) return rewardStructure.WIN;
-                    return rewardStructure.LOST;
-                }
-            }
+            nought.setReward(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.NOUGHT_WON ? rewardStructure.WIN : rewardStructure.LOST);
+            cross.setReward(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.CROSS_WON ? rewardStructure.WIN : rewardStructure.LOST);
         }
     }
 
@@ -852,8 +848,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
     private DeepAgent createAgent(Player player) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        NeuralNetwork QNN = buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, boardSize * boardSize);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * 9) + ", updateTNNCycle = " + (30 * 9) + ", epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonInitial = 0.1, epsilonMin = 0.0, learningRate = 0.5, gamma = 0.85, alpha = 1");
+        NeuralNetwork QNN = buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", boardSize * boardSize, boardSize * boardSize);
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 5, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonInitial = 0.3, epsilonMin = 0.0, gamma = 0.9, doubleQ = true");
         agent.start();
         return agent;
     }
@@ -870,18 +866,35 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 27");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 27");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 27");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 27");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 27");
+        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setNeuralNetworkName(neuralNetworkName);
-        neuralNetwork.setTrainingSampling(100, false, true);
+        neuralNetwork.setTrainingSampling(32, false, true);
         neuralNetwork.setTrainingIterations(50);
         neuralNetwork.verboseTraining(100);
         return neuralNetwork;
     }
+
+    /**
+     * Reward structure i.e. rewards returned to agent during game per action taken.
+     *
+     */
+    public static class RewardStructure {
+        final double WIN = 1;
+        final double DRAW = 0.5;
+        final double LOST = 0;
+        final double MOVE = 0;
+    }
+
+    /**
+     * Reward structure.
+     *
+     */
+    private final RewardStructure rewardStructure = new RewardStructure();
 
 }

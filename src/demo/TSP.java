@@ -66,7 +66,7 @@ public class TSP implements Environment {
      * Number of cities for travelling salesman.
      *
      */
-    private static final int numberOfCities = 50;
+    private static final int numberOfCities = 10;
 
     /**
      * Random number generator.
@@ -238,9 +238,8 @@ public class TSP implements Environment {
             tsp = new TSP(numberOfCities);
             tsp.initWindow();
             for (int tour = 0; tour < 100000; tour++) {
-                int illegalMoves = tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " Min: " + tsp.getMinDistance() + " Max: " + tsp.getMaxDistance() + " Illegal moves: " + illegalMoves + " (Epsilon: " + tsp.getEpsilon() + ")");
-
+                tsp.route(tour % 10 == 0);
+                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " Min: " + tsp.getMinDistance() + " Max: " + tsp.getMaxDistance() + " (Epsilon: " + tsp.getEpsilon() + ")");
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -250,13 +249,12 @@ public class TSP implements Environment {
     }
 
     /**
-     * Returns current state of environment for the agent.
+     * Returns current state of environment.
      *
-     * @return state of environment
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return state of environment.
      */
-    public Matrix getState() throws MatrixException {
-        return state.copy();
+    public Matrix getState() {
+        return state;
     }
 
     /**
@@ -296,7 +294,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Takes random action.
+     * Requests (random) action defined by environment.
      *
      * @param agent agent that is taking action.
      * @return action taken
@@ -307,7 +305,7 @@ public class TSP implements Environment {
     }
 
     /**
-     * Takes specific action and updates game status after successful action.
+     * Takes specific action.
      *
      * @param agent  agent that is taking action.
      * @param action action to be taken.
@@ -315,34 +313,31 @@ public class TSP implements Environment {
     public void commitAction(Agent agent, int action) {
         visitedCities.add(action);
         updateState();
+        setReward(agent);
     }
 
     /**
      * Requests immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
-     * @param validAction true if taken action was available one.
-     * @return immediate reward.
      */
-    public double requestReward(Agent agent, boolean validAction) {
-        if (!validAction) return 0;
-        else {
-            int fromCity = visitedCities.get(visitedCities.size() - 2);
-            int toCity = visitedCities.get(visitedCities.size() - 1);
-            double distance = getDistance(cities.get(fromCity), cities.get(toCity));
-            totalDistance += distance;
-            if (isTerminalState()) {
-                if (totalDistance < minDistance) {
-                    minDistance = totalDistance;
-                    visitedCitiesMin = visitedCities;
-                }
-                if (totalDistance > maxDistance) {
-                    maxDistance = totalDistance;
-                    visitedCitiesMax = visitedCities;
-                }
+    public void setReward(Agent agent) {
+        int fromCity = visitedCities.get(visitedCities.size() - 2);
+        int toCity = visitedCities.get(visitedCities.size() - 1);
+        double distance = getDistance(cities.get(fromCity), cities.get(toCity));
+        totalDistance += distance;
+        if (isTerminalState()) {
+            if (totalDistance < minDistance) {
+                minDistance = totalDistance;
+                visitedCitiesMin = visitedCities;
             }
-            return 0.5 * (maxDistance / cities.size() - distance);
+            if (totalDistance > maxDistance) {
+                maxDistance = totalDistance;
+                visitedCitiesMax = visitedCities;
+            }
+            agent.setReward(10 * (maxDistance - distance) / maxDistance);
         }
+        else agent.setReward(0);
     }
 
     /**
@@ -500,24 +495,17 @@ public class TSP implements Environment {
      * Single journey of travelling salesman taken by deep agent.
      *
      * @param redraw if true current journey is drawn to window.
-     * @return number of illegal moves taken by deep agent.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private int route(boolean redraw) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        int illegalMoves = 0;
+    private void route(boolean redraw) throws MatrixException, NeuralNetworkException {
         resetRoute();
-        while (!(visitedCities.size() == cities.size() + 1)) {
-            getAgent().newStep();
-            if (!getAgent().act(false, false)) {
-                illegalMoves++;
-                getAgent().act(false, true);
-            }
-            getAgent().updateValue();
-        }
 
+        getAgent().newEpisode();
+        while (!isTerminalState()) {
+            getAgent().newStep(true);
+            getAgent().executePolicy(false, false);
+        }
         getAgent().commitStep();
 
         if (redraw) {
@@ -528,8 +516,6 @@ public class TSP implements Environment {
             jFrame.revalidate();
             tspPanel.paintImmediately(0, 0, 400, 400);
         }
-
-        return illegalMoves;
     }
 
     /**
@@ -551,7 +537,7 @@ public class TSP implements Environment {
      */
     private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = " + (10 * outputAmount) + ", updateTNNCycle = " + (30 * outputAmount));
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, replayBufferSize = 20000, epsilonDecayRate = 0.999, epsilonDecayByEpisode = false, gamma = 0.99");
         agent.start();
         return agent;
     }
@@ -568,14 +554,13 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = 100");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(2, NormalizationType.WEIGHT_NORMALIZATION);
+        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
-        neuralNetwork.setTrainingSampling(100, false, true);
+        neuralNetwork.setTrainingSampling(32, false, true);
         neuralNetwork.setTrainingIterations(50);
         neuralNetwork.verboseTraining(100);
         return neuralNetwork;

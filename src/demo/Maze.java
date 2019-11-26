@@ -583,7 +583,7 @@ public class Maze implements Environment, ActionListener {
     }
 
     /**
-     * Initialized agent for the maze and maze itself.
+     * Initializes agent for the maze and maze itself.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -636,19 +636,16 @@ public class Maze implements Environment, ActionListener {
     }
 
     /**
-     * Plays game until user quits game (closes window).
+     * Plays maze game until user quits game (closes window).
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    public void playAgent() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void playAgent() throws MatrixException, NeuralNetworkException {
         while (true) {
-            agent.newStep();
-            if (!agent.act(false, false)) agent.act(false, true);
-            agent.updateValue();
-            agent.commitStep();
+            agent.newEpisode(false);
+            agent.newStep(true);
+            agent.executePolicy(false, false);
 
             mazePanel.updateAgentHistory(mazeAgentHistory);
             jFrame.revalidate();
@@ -674,10 +671,9 @@ public class Maze implements Environment, ActionListener {
      * Returns current state of environment for the agent.
      *
      * @return state of environment
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getState() throws MatrixException {
-        return state.copy();
+    public Matrix getState() {
+        return state;
     }
 
     /**
@@ -729,7 +725,7 @@ public class Maze implements Environment, ActionListener {
     /**
      * Checks if action is valid.
      *
-     * @param agent  agent that is taking action.
+     * @param agent agent that is taking action.
      * @param action action to be taken.
      * @return true if action can be taken successfully.
      */
@@ -738,7 +734,7 @@ public class Maze implements Environment, ActionListener {
     }
 
     /**
-     * Takes random action.
+     * Requests (random) action defined by environment.
      *
      * @param agent agent that is taking action.
      * @return action taken
@@ -749,7 +745,7 @@ public class Maze implements Environment, ActionListener {
     }
 
     /**
-     * Takes specific action and updates game status after successful action.
+     * Takes specific action.
      *
      * @param agent  agent that is taking action.
      * @param action action to be taken.
@@ -769,20 +765,18 @@ public class Maze implements Environment, ActionListener {
         maze[x][y].updateCellTimeStep(++timeStep);
         maze[x][y].incrementCount();
         updateState();
+        setReward(agent);
     }
 
     /**
-     * Requests immediate reward from environment after taking action.
+     * Sets immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
-     * @param validAction true if taken action was available one.
-     * @return immediate reward.
      */
-    public double requestReward(Agent agent, boolean validAction) {
-        if (!validAction) return 0;
+    private void setReward(Agent agent) {
+        if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.setReward(0);
         else {
-            if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) return 0;
-            else return 0.1 + 3 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3);
+            agent.setReward(0.1 + 0.9 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3));
         }
     }
 
@@ -817,7 +811,7 @@ public class Maze implements Environment, ActionListener {
      */
     private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, updateTNNCycle = 10, alpha = 0.9, gamma = 0.85, replayBufferSize = 20000, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonMin = 0.0");
+        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, gamma = 0.85, replayBufferSize = 20000, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonMin = 0.0");
         agent.start();
         return agent;
     }
