@@ -1434,12 +1434,13 @@ public abstract class Matrix implements Cloneable, Serializable {
      */
     public double argMinMax(boolean min, int[] index) throws MatrixException {
         if (index.length != 2) throw new MatrixException("Dimension of index must be 2.");
-        double value = min ? Double.MAX_VALUE : Double.MIN_VALUE;
+        double value = min ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
         if (getMask() == null) {
             for (int row = 0; row < getRows(); row++) {
                 for (int col = 0; col < getCols(); col++) {
                     if (min) {
-                        double curValue = Math.min(value, getValue(row, col));
+//                        double curValue = Math.min(value, getValue(row, col));
+                        double curValue = getValue(row, col);
                         if (curValue < value) {
                             value = curValue;
                             index[0] = row;
@@ -1447,7 +1448,8 @@ public abstract class Matrix implements Cloneable, Serializable {
                         }
                     }
                     else {
-                        double curValue = Math.max(value, getValue(row, col));
+//                        double curValue = Math.max(value, getValue(row, col));
+                        double curValue = getValue(row, col);
                         if (curValue > value) {
                             value = curValue;
                             index[0] = row;
@@ -1919,7 +1921,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param maxArgsAt arguments on maximum row and col value.
      */
     private void maxPool(Matrix result, int rowAt, int colAt, int [][][] maxArgsAt) {
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = Double.NEGATIVE_INFINITY;
         if (getMask() == null) {
             for (int row = 0; row < poolSize; row++) {
                 for (int col = 0; col < poolSize; col++) {
