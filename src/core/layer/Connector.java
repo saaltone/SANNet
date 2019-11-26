@@ -56,6 +56,12 @@ public class Connector implements Serializable {
     private final HashSet<Matrix> Ws = new HashSet<>();
 
     /**
+     * Ordered map of weights.
+     *
+     */
+    private final HashMap<Integer, Matrix> WsMap = new HashMap<>();
+
+    /**
      * Map of gradients of weights to be managed.
      *
      */
@@ -131,6 +137,7 @@ public class Connector implements Serializable {
      */
     public void registerWeight(Matrix W, boolean forOptimization, boolean forRegularization, boolean forNormalization) {
         Ws.add(W);
+        WsMap.put(WsMap.size(), W);
         dWs.put(W, new TreeMap<>());
         if (forOptimization) opt.add(W);
         if (forRegularization) reg.add(W);
@@ -169,6 +176,15 @@ public class Connector implements Serializable {
      */
     public HashSet<Matrix> getWs() {
         return Ws;
+    }
+
+    /**
+     * Returns ordered map of weights.
+     *
+     * @return ordered map of weights.
+     */
+    public HashMap<Integer, Matrix> getWsMap() {
+        return WsMap;
     }
 
     /**
@@ -279,6 +295,22 @@ public class Connector implements Serializable {
      */
     public int getNLayerDepth() {
         return nLayer.getDepth();
+    }
+
+    /**
+     * Appends other connector with equal weights to this connector by weighted factor tau.
+     *
+     * @param otherConnector other connector
+     * @param tau tau which controls contribution of other connector.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void append(Connector otherConnector, double tau) throws MatrixException {
+        HashMap<Integer, Matrix> otherWsMap = otherConnector.getWsMap();
+        for (Integer index : WsMap.keySet()) {
+            Matrix W = WsMap.get(index);
+            Matrix otherW = otherWsMap.get(index);
+            W.multiply(1 - tau).add(otherW.multiply(tau), W);
+        }
     }
 
     /**

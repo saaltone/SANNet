@@ -1881,9 +1881,8 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Returns neural network output error.
      *
      * @return neural network output error.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getOutputError() throws MatrixException {
+    public double getOutputError() {
         waitToComplete();
         return getOutputLayer().getTotalError();
     }
@@ -1961,6 +1960,19 @@ public class NeuralNetwork implements Runnable, Serializable {
         objectInputStream.close();
         objectOutputStream.close();
         return neuralNetwork;
+    }
+
+    /**
+     * Appends other neural network to this neural network by weight tau. Effectively appends each weight matrix of each connector by this weight factor.
+     *
+     * @param otherNeuralNetwork other neural network that contributes to this neural network.
+     * @param tau tau which controls contribution of other connector.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void append(NeuralNetwork otherNeuralNetwork, double tau) throws MatrixException {
+        for (int index = 0; index < connectors.size(); index++) {
+            connectors.get(index).append(otherNeuralNetwork.getConnectors().get(index), tau);
+        }
     }
 
 }
