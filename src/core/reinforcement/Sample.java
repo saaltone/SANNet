@@ -10,7 +10,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Implements sample that contains information of current state, action taken, reward received, next state and value / error of target state.
+ * Implements sample that contains information of current state, action taken, reward received, next state and error of target value.
  *
  */
 public class Sample {
@@ -28,46 +28,22 @@ public class Sample {
     public int action;
 
     /**
-     * True if taken action is valid per assessment of environment.
-     *
-     */
-    public boolean validAction;
-
-    /**
      * Immediate reward after taking specific action in state.
      *
      */
     public double reward;
 
     /**
-     * Target state after action taken.
+     * Next state after action taken.
      *
      */
-    public Matrix targetState;
-
-    /**
-     * Predicted values of current environment state.
-     *
-     */
-    public Matrix values;
-
-    /**
-     * If state is terminal
-     *
-     */
-    public boolean terminalState;
-
-    /**
-     * Delta value for sample (target value minus current value for specific action).
-     *
-     */
-    public double delta;
+    public Matrix nextState;
 
     /**
      * Priority value for sample.
      *
      */
-    public double priority = 0;
+    public double priority;
 
     /**
      * Default constructor for sample.
@@ -80,17 +56,22 @@ public class Sample {
      * Constructor for sample.
      *
      * @param state environment state.
+     */
+    public Sample(Matrix state) {
+        this.state = state;
+    }
+
+    /**
+     * Constructor for sample.
+     *
+     * @param state environment state.
      * @param action action taken to move from state to target state.
-     * @param validAction true if taken action is valid per assessment of environment.
      * @param reward immediate reward after taking specific action in state.
-     * @param targetState target state after action taken.
-     * @param values predicted values of state.
-     * @param terminalState true if sample state is terminal (final).
-     * @param delta delta value for sample.
+     * @param nextState next state after action taken.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta) throws MatrixException {
-        this(state, action, validAction, reward, targetState, values, terminalState, delta, false);
+    public Sample(Matrix state, int action, double reward, Matrix nextState) throws MatrixException {
+        this(state, action, reward, nextState, false);
     }
 
     /**
@@ -98,24 +79,16 @@ public class Sample {
      *
      * @param state environment state.
      * @param action action taken to move from state to target state.
-     * @param validAction true if taken action is valid per assessment of environment.
      * @param reward immediate reward after taking specific action in state.
-     * @param targetState target state after action taken.
-     * @param values predicted values of state.
-     * @param terminalState true if sample state is terminal (final).
-     * @param delta delta value for sample.
+     * @param nextState next state after action taken.
      * @param asCopy if true values are added as deep copy.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sample(Matrix state, int action, boolean validAction, double reward, Matrix targetState, Matrix values, boolean terminalState, double delta, boolean asCopy) throws MatrixException {
+    private Sample(Matrix state, int action, double reward, Matrix nextState, boolean asCopy) throws MatrixException {
         this.state = !asCopy || state == null ? state : state.copy();
         this.action = action;
-        this.validAction = validAction;
         this.reward = reward;
-        this.targetState = !asCopy || targetState == null ? targetState : targetState.copy();
-        this.values = !asCopy || values == null ? values : values.copy();
-        this.terminalState = terminalState;
-        this.delta = delta;
+        this.nextState = !asCopy || nextState == null ? nextState : nextState.copy();
     }
 
     /**
@@ -125,18 +98,31 @@ public class Sample {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Sample copy() throws MatrixException {
-        return new Sample(state, action, validAction, reward, targetState, values, terminalState, delta,true);
+        return new Sample(state, action, reward, nextState, true);
     }
 
     /**
-     * Compares samples by state.
+     * Compares samples by state, action, reward and next state.
      *
      * @param otherSample other sample to be compared.
      * @return true if samples are equal otherwise false.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public boolean equals(Sample otherSample) throws MatrixException {
-        return state.equals(otherSample.state);
+        return compare(state, otherSample.state) && action == otherSample.action && reward == otherSample.reward && compare(nextState, otherSample.nextState);
+    }
+
+    /**
+     * Compares two matrices with each other.
+     *
+     * @param matrix1 first matrix to be compared.
+     * @param matrix2 second matrix to be compared.
+     * @return returns true if matrices are equal otherwise returns false.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private boolean compare(Matrix matrix1, Matrix matrix2) throws MatrixException {
+        if ((matrix1 == null && matrix2 == null)) return true;
+        else return (matrix1 != null && matrix2 != null) && matrix1.equals(matrix2);
     }
 
     /**
@@ -148,12 +134,8 @@ public class Sample {
     public void setEqualTo(Sample otherSample) throws MatrixException {
         state.setEqualTo(otherSample.state);
         action = otherSample.action;
-        validAction = otherSample.validAction;
         reward = otherSample.reward;
-        targetState.setEqualTo(otherSample.targetState);
-        values.setEqualTo(otherSample.values);
-        terminalState = otherSample.terminalState;
-        delta = otherSample.delta;
+        nextState.setEqualTo(otherSample.nextState);
         priority = otherSample.priority;
     }
 

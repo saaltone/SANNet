@@ -18,12 +18,11 @@ import java.util.ArrayList;
 public interface Environment {
 
     /**
-     * Returns current state of environment for the agent.
+     * Returns current state of environment.
      *
-     * @return state of environment
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return state of environment.
      */
-    Matrix getState() throws MatrixException;
+    Matrix getState();
 
     /**
      * True if state is terminal. This is usually true if episode is completed.
@@ -61,16 +60,8 @@ public interface Environment {
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void commitAction(Agent agent, int action);
-
-    /**
-     * Requests immediate reward from environment after taking action.
-     *
-     * @param agent agent that is asking for reward.
-     * @param validAction true if taken action was available one.
-     * @return immediate reward.
-     */
-    double requestReward(Agent agent, boolean validAction);
+    void commitAction(Agent agent, int action) throws MatrixException ;
 
 }

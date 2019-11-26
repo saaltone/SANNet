@@ -6,7 +6,7 @@
 
 package core.reinforcement;
 
-import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.*;
 
@@ -60,6 +60,12 @@ class ReplayBuffer {
     }
 
     /**
+     * Current maximum priority. Used for newly added sample as default priority.
+     *
+     */
+    private double maxPriority = 1;
+
+    /**
      * Sets size of replay buffer.
      *
      * @param size size of replay buffer.
@@ -100,39 +106,65 @@ class ReplayBuffer {
      * Adds sample into replay buffer. Removes old ones exceeding buffer capacity by FIFO principle.
      *
      * @param sample sample to be stored.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void add(Sample sample) {
-        setPriority(sample);
+    public void add(Sample sample) throws MatrixException {
+        if (sumTree.containsSample(sample)) return;
+        sample.priority = maxPriority;
         sumTree.add(sample);
     }
 
     /**
-     * Sets priority for sample based on absolute delta with epsilon and alpha adjustment.
+     * Updates sample in sum tree
+     *
+     * @param sample sample to be updated.
+     */
+    public void update(Sample sample) {
+        sumTree.update(sample);
+    }
+
+    /**
+     * Updates priority for sample based on absolute delta with epsilon and alpha adjustment.
      *
      * @param sample sample for which priority is to be calculated and set.
      */
-    private void setPriority(Sample sample) {
+    public void updatePriority(Sample sample, double error) {
         double epsilon = 10E-8;
-        sample.priority = Math.pow(Math.abs(sample.delta) + epsilon, alpha);
+        sample.priority = Math.pow(Math.abs(error) + epsilon, alpha);
+        maxPriority = Math.max(maxPriority, sample.priority);
     }
 
     /**
      * Retrieves given number of samples from replay buffer. Applies priority sampling.
      *
      * @param sampleAmount amount of samples to be sampled from replay buffer.
-     * @param states structure that stores states of samples.
-     * @param values structure that stores values of samples.
+     * @return retrieved samples.
      */
-    public void getSamples(int sampleAmount, LinkedHashMap<Integer, Matrix> states, LinkedHashMap<Integer, Matrix> values) {
-        double segment = sumTree.totalPriority() / (double)sampleAmount;
+    public HashMap<Integer, Sample> getSamples(int sampleAmount) {
+        double totalPriority = sumTree.totalPriority();
+        double entryAmount = sumTree.getEntries();
+        int segment = (int)(totalPriority / (double)sampleAmount);
+        HashMap<Integer, Sample> samples = new HashMap<>();
         for (int sampleIndex = 0; sampleIndex < sampleAmount; sampleIndex++) {
-            double proba = segment * (random.nextDouble() + sampleIndex);
-            Sample sample = sumTree.get(proba);
-            if (sample != null) {
-                states.put(sampleIndex, sample.state);
-                values.put(sampleIndex, sample.values);
-            }
+            int lowerBound = segment * sampleIndex;
+            int upperBound = segment * (sampleIndex + 1);
+            double priority = random.nextDouble() * (upperBound - lowerBound + 1) + lowerBound;
+            Sample sample = sumTree.get(priority);
+            if (sample != null) samples.put(sampleIndex, sample);
         }
+        return samples;
+    }
+
+    /**
+     * Returns number of random samples.
+     *
+     * @param sampleAmount amount of samples to be sampled from replay buffer.
+     * @return retrieved samples.
+     */
+    public HashMap<Integer, Sample> getRandomSamples(int sampleAmount) {
+        HashMap<Integer, Sample> samples = new HashMap<>();
+        for (int sampleIndex = 0; sampleIndex < sampleAmount; sampleIndex++) samples.put(sampleIndex, sumTree.getRandomSample());
+        return samples;
     }
 
 }

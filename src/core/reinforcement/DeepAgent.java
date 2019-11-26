@@ -68,31 +68,25 @@ public class DeepAgent implements Agent, Serializable {
     private boolean doubleQ = true;
 
     /**
-     * Cycle in steps for Target Neural Network update.
+     * Update rate of Target Neural Network.
      *
      */
-    private int updateTNNCycle = 300;
-
-    /**
-     * Learning rate for target value update.
-     *
-     */
-    private double learningRate = 1;
+    private double tau = 0.001;
 
     /**
      * Gamma (discount) factor for target (TD) value calculation.
      *
      */
-    private double gamma = 0.85;
+    private double gamma = 0.95;
 
     /**
-     * Current epsilon value.
+     * Current epsilon value for epsilon greedy policy defining balance between exploration and exploitation.
      *
      */
     private double epsilon;
 
     /**
-     * Epsilon value for probability of exploration (random action) instead of exploitation.
+     * Initial epsilon value.
      *
      */
     private double epsilonInitial = 1;
@@ -104,7 +98,7 @@ public class DeepAgent implements Agent, Serializable {
     private double epsilonMin = 0;
 
     /**
-     * Decay rate for epsilon.
+     * Decay rate for epsilon if number of episodes is not used for epsilon decay.
      *
      */
     private double epsilonDecayRate = 0.99;
@@ -116,13 +110,7 @@ public class DeepAgent implements Agent, Serializable {
     private boolean epsilonDecayByEpisode = true;
 
     /**
-     * If true invalid actions are stored into agent's replay buffer.
-     *
-     */
-    private boolean storeInvalidActions = false;
-
-    /**
-     * Tuple of episode step.
+     * Sample as tuple (s, a, r, s') for current episode step.
      *
      */
     private transient Sample sample;
@@ -131,19 +119,7 @@ public class DeepAgent implements Agent, Serializable {
      * Total numbers of episodes.
      *
      */
-    private int totalSteps = 0;
-
-    /**
-     * If true step is committed to replay memory and new step can be initiated.
-     *
-     */
-    private boolean stepCommitted = false;
-
-    /**
-     * If true agent has already taken action and has existing state. Used as flag for next step operation.
-     *
-     */
-    private boolean hasPreviousState = false;
+    private int totalEpisodes = 0;
 
     /**
      * Constructor for agent.
@@ -162,14 +138,12 @@ public class DeepAgent implements Agent, Serializable {
      * Constructor for agent.
      *
      * @param environment reference to environment where agent resides, takes actions and receives rewards.
-     * @param QNN Q Neural Network to estimate agent's moves.
+     * @param QNN Q Neural Network (QNN) to define agent's policy and possibly value unless separate target network is not used.
      * @param params parameters used for DeepAgent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public DeepAgent(Environment environment, NeuralNetwork QNN, String params) throws DynamicParamException {
-        this.environment = environment;
-        this.QNN = QNN;
-        resetReplayBuffer();
+        this(environment, QNN);
         setParams(new DynamicParam(params, getParamDefs()));
         epsilon = epsilonInitial;
     }
@@ -183,14 +157,12 @@ public class DeepAgent implements Agent, Serializable {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("trainCycle", DynamicParam.ParamType.INT);
         paramDefs.put("doubleQ", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("updateTNNCycle", DynamicParam.ParamType.INT);
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonDecayRate", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonDecayByEpisode", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("storeInvalidActions", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("replayBufferSize", DynamicParam.ParamType.INT);
         paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
@@ -201,15 +173,13 @@ public class DeepAgent implements Agent, Serializable {
      * <br>
      * Supported parameters are:<br>
      *     - trainCycle: number of steps after which QNN gets trained. Default value 100.<br>
-     *     - doubleQ: If true Double Deep Q Learning (QNN and TNN) is applied otherwise just single QNN is used. Default value 0.95.<br>
-     *     - updateTNNCycle: number of step after which TNN gets updated. Default value 300.<br>
-     *     - learningRate: Learnng rate for target value update. Default value 1.<br>
-     *     - gamma: Discount value for Q learning. Default value 0.85.<br>
+     *     - doubleQ: If true Double Deep Q Learning i.e. separate QNN and Target Neural Network (TNN) is applied otherwise just single QNN is used. Default value true.<br>
+     *     - tau: Update rate of Target Neural Network. Default value 0.001.<br>
+     *     - gamma: Discount value for Q learning. Default value 0.95.<br>
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.<br>
      *     - epsilonDecay: Decay rate of epsilon. Default value 0.99.<br>
      *     - epsilonDecayByEpisode: If true epsilon decays along episode count otherwise decays by epsilon decay rate. Default value true.<br>
-     *     - storeInvalidActions: If true If true agent records invalid actions into replay buffer. Default value true.<br>
      *     - replayBufferSize: Size of replay buffer. Default value 2000.<br>
      *     - alpha: proportional prioritization factor for samples in replay buffer. Default value 0.6.<br>
      *
@@ -219,14 +189,12 @@ public class DeepAgent implements Agent, Serializable {
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("trainCycle")) trainCycle = params.getValueAsInteger("trainCycle");
         if (params.hasParam("doubleQ")) doubleQ = params.getValueAsBoolean("doubleQ");
-        if (params.hasParam("updateTNNCycle")) updateTNNCycle = params.getValueAsInteger("updateTNNCycle");
-        if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
+        if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
         if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
         if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
         if (params.hasParam("epsilonDecayRate")) epsilonDecayRate = params.getValueAsDouble("epsilonDecayRate");
         if (params.hasParam("epsilonDecayByEpisode")) epsilonDecayByEpisode = params.getValueAsBoolean("epsilonDecayByEpisode");
-        if (params.hasParam("storeInvalidActions")) storeInvalidActions = params.getValueAsBoolean("storeInvalidActions");
         if (params.hasParam("replayBufferSize")) replayBuffer.setSize(params.getValueAsInteger("replayBufferSize"));
         if (params.hasParam("alpha")) replayBuffer.setAlpha(params.getValueAsDouble("alpha"));
     }
@@ -282,174 +250,148 @@ public class DeepAgent implements Agent, Serializable {
     }
 
     /**
-     * Starts new agent step and commits previous step if not yet committed.
+     * Returns action taken based on policy.
      *
-     * @param updateValue if true state action value is update prior committing step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    public void newStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        if (hasPreviousState && updateValue) updateValue();
-        hasPreviousState = true;
-        commitStep(false);
-        sample = new Sample();
-        stepCommitted = false;
-        totalSteps++;
-    }
-
-    /**
-     * Starts new agent step and commits previous step if not yet committed.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    public void newStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        newStep(false);
-    }
-
-    /**
-     * Commits agent step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    public void commitStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        commitStep(false);
-    }
-
-    /**
-     * Commits agent step.
-     *
-     * @param updateValue if true updates current state action value otherwise not.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
-     */
-    public void commitStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException {
-        if (!stepCommitted && sample != null) {
-            if (updateValue) updateValue();
-
-            replayBuffer.add(sample.copy());
-
-            totalSteps++;
-
-            cycle();
-
-            if (epsilon > epsilonMin) {
-                if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalSteps;
-                else epsilon *= epsilonDecayRate;
-            }
-
-            stepCommitted = true;
-        }
-    }
-
-    /**
-     * Returns action taken to move from current state to target state.
-     *
-     * @return action taken.
+     * @return action taken based on policy.
      */
     public int getAction() {
         return sample.action;
     }
 
     /**
-     * Predict next action by using QNN and taking argmax of predicted values as target action.<br>
-     * Predicts random action by epsilon probability (epsilon greedy policy) or if forced.<br>
-     * Stores predicted state into target state variable.<br>
+     * Starts new episode. Resets sequence by default.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void newEpisode() throws NeuralNetworkException, MatrixException {
+        newEpisode(true);
+    }
+
+    /**
+     * Starts new episode.
+     *
+     * @param resetSequence if true resets sequence by setting current sample to null.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void newEpisode(boolean resetSequence) throws NeuralNetworkException, MatrixException {
+        totalEpisodes++;
+        if (resetSequence) sample = null;
+        cycle();
+        if (epsilon > epsilonMin) {
+            if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalEpisodes;
+            else epsilon *= epsilonDecayRate;
+        }
+    }
+
+    /**
+     * Begins new episode step for agent.
+     *
+     * @param commitPreviousStep if true commits previous step prior starting new step.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void newStep(boolean commitPreviousStep) throws MatrixException {
+        Matrix state = environment.getState();
+        if (sample != null) sample.nextState = state;
+        if (commitPreviousStep) commitStep();
+        sample = new Sample(state);
+    }
+
+    /**
+     * Commits episode step and adds it into replay buffer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void commitStep() throws MatrixException {
+        if (sample != null) replayBuffer.add(sample);
+    }
+
+    /**
+     * Executes policy taking available action with highest value (exploitation) unless random action is selected (exploration).<br>
+     * Chooses random policy by probability epsilon or if forced.<br>
+     * Requests environment to execute chosen action.<br>
      *
      * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
      * @param forceRandomAction if true forces to take valid random action.
-     * @return returns true if action was successfully committed and executed otherwise returns false.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    public boolean act(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException, IOException, ClassNotFoundException {
-        sample.state = environment.getState();
-        sample.values = QNN.predict(sample.state);
-
+    public void executePolicy(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException {
+        sample.action = -1;
         if ((Math.random() < epsilon || forceRandomAction) && !alwaysGreedy) {
             sample.action = environment.requestAction(this);
-            sample.validAction = true;
         }
         else {
-            sample.action = sample.values.argmax()[0];
-            sample.validAction = environment.isValidAction(this, sample.action);
-            if (!sample.validAction) {
-                if (storeInvalidActions) {
-                    updateValue();
-                    newStep();
+            ArrayList<Integer> availableActions = environment.getAvailableActions();
+            Matrix values = QNN.predict(sample.state);
+            double maxValidValue = Double.NEGATIVE_INFINITY;
+            for (int row = 0; row < values.getRows(); row++) {
+                double value = values.getValue(row, 0);
+                if (availableActions.contains(row)) {
+                    if (maxValidValue  < value || maxValidValue == Double.NEGATIVE_INFINITY) {
+                        maxValidValue = value;
+                        sample.action = row;
+                    }
                 }
-                return false;
             }
         }
-
         environment.commitAction(this, sample.action);
+    }
 
-        return true;
+    /**
+     * Sets immediate reward for episode step after agent has executed policy.
+     *
+     * @param reward reward
+     */
+    public void setReward(double reward) {
+        sample.reward = reward;
     }
 
     /**
      * Updates value of state action pair.<br>
      * Depending on choice uses Q Neural Network (QNN) or Target Neural Network (TNN) for target value calculation.<br>
-     * Depending on choice either takes max of target state values (QNN only) or chooses action of target state with maximal value (QNN) and estimates value of this state (TNN).<br>
-     * Calculates TD target using reward and target value and updates value and stores delta.<br>
+     * Depending on choice either takes max of target state values (QNN only) or in Double Q mode chooses action of target state with maximal value (QNN) and estimates value of this state (TNN).<br>
+     * Calculates TD target using immediate reward and target value and updates delta value (priority) in replay buffer.<br>
      *
+     * @param targetSample target sample whose value is to be updated.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void updateValue() throws NeuralNetworkException, MatrixException {
-        double value = sample.values.getValue(sample.action, 0);
-
-        sample.targetState = environment.getState();
-        double targetValue;
-        if (!environment.isTerminalState() && sample.validAction) {
-            if (doubleQ) {
-                int action = QNN.predict(sample.targetState).argmax()[0];
-                targetValue = TNN.predict(sample.targetState).getValue(action, 0);
-            }
-            else targetValue = QNN.predict(sample.targetState).max();
-            sample.terminalState = false;
+    private Matrix updateValue(Sample targetSample) throws NeuralNetworkException, MatrixException {
+        Matrix values = QNN.predict(targetSample.state);
+        double targetValue = 0;
+        if (targetSample.nextState != null) {
+            if (doubleQ) targetValue = TNN.predict(targetSample.nextState).getValue(QNN.predict(targetSample.nextState).argmax()[0], 0);
+            else targetValue = QNN.predict(targetSample.nextState).max();
         }
-        else {
-            targetValue = 0;
-            sample.terminalState = true;
-        }
-
-        sample.reward = environment.requestReward(this, sample.validAction);
-
-        sample.delta = learningRate * (sample.reward + gamma * targetValue - value);
-        sample.values.setValue(sample.action, 0, value + sample.delta);
+        targetValue = targetSample.reward + gamma * targetValue;
+        replayBuffer.updatePriority(targetSample, targetValue - values.getValue(targetSample.action, 0));
+        values.setValue(targetSample.action, 0, targetValue);
+        return values;
     }
 
     /**
      * Cycles agent.<br>
-     * Trains QNN with QNN training cycle using replay buffer samples for experience replay.<br>
-     * Copies QNN to TNN if doubleQ learning is applied.<br>
+     * Trains QNN with QNN training cycle using samples from replay buffer with updated value for experience replay.<br>
+     * Updates TNN if Double Q learning is applied.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if copying of QNN as TNN fails.
-     * @throws ClassNotFoundException throws exception if copying of QNN as TNN fails.
      */
-    private void cycle() throws NeuralNetworkException, IOException, ClassNotFoundException {
-        if (doubleQ && totalSteps % updateTNNCycle == 0) {
-            TNN.stop();
-            TNN = QNN.copy();
-            TNN.start();
-        }
-        if (totalSteps % trainCycle == 0) {
+    private void cycle() throws MatrixException, NeuralNetworkException {
+        if (doubleQ) TNN.append(QNN, tau);
+        if (totalEpisodes % trainCycle == 0) {
             LinkedHashMap<Integer, Matrix> states = new LinkedHashMap<>();
             LinkedHashMap<Integer, Matrix> values = new LinkedHashMap<>();
-            replayBuffer.getSamples(QNN.getTrainingSamplesPerStep(), states, values);
+            HashMap<Integer, Sample> samples = replayBuffer.getSamples(QNN.getTrainingSamplesPerStep());
+            for (Integer sampleIndex : samples.keySet()) {
+                Sample targetSample = samples.get(sampleIndex);
+                Matrix targetValues = updateValue(targetSample);
+                replayBuffer.update(targetSample);
+                states.put(sampleIndex, targetSample.state);
+                values.put(sampleIndex, targetValues);
+            }
             QNN.train(states, values);
         }
     }

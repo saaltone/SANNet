@@ -9,8 +9,6 @@ package core.reinforcement;
 import core.NeuralNetworkException;
 import utils.matrix.MatrixException;
 
-import java.io.IOException;
-
 /**
  * Interface for agent.
  *
@@ -18,71 +16,54 @@ import java.io.IOException;
 public interface Agent {
 
     /**
-     * Starts new agent step and commits previous step if not yet committed.
+     * Starts new episode. Resets sequence by default.
      *
-     * @param updateValue if true state action value is update prior committing step.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void newStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void newEpisode() throws NeuralNetworkException, MatrixException;
 
     /**
-     * Starts new agent step and commits previous step if not yet committed.
+     * Starts new episode.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param resetSequence if true resets sequence by putting previous sample to null.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void newStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void newEpisode(boolean resetSequence) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Commits agent step.
+     * Begins new episode step for agent.
      *
+     * @param commitPreviousStep if true commits previous step prior starting new step.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    void commitStep() throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void newStep(boolean commitPreviousStep) throws MatrixException;
 
     /**
-     * Commits agent step.
+     * Commits episode step and adds it into replay buffer.
      *
-     * @param updateValue if true updates current state action value otherwise not.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    void commitStep(boolean updateValue) throws MatrixException, NeuralNetworkException, IOException, ClassNotFoundException;
+    void commitStep() throws MatrixException;
 
     /**
-     * Predict next action by using QNN and taking argmax of predicted values as target action.<br>
-     * Predicts random action by epsilon probability (epsilon greedy policy) or if forced.<br>
-     * Stores predicted state into target state variable.<br>
+     * Executes policy taking action with highest value (exploitation) unless random action is selected (exploration).<br>
+     * Chooses random policy by probability epsilon or if forced.<br>
+     * Requests environment to execute chosen action.<br>
      *
      * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
      * @param forceRandomAction if true forces to take valid random action.
-     * @return returns true if action was successfully committed and executed otherwise returns false.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws IOException throws exception if cloning of Q Neural Network fails.
-     * @throws ClassNotFoundException throws exception if cloning of Q Neural Network fails.
      */
-    boolean act(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException, IOException, ClassNotFoundException;
+    void executePolicy(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Updates value of state action pair.<br>
-     * Depending on choice uses Q Neural Network (QNN) or Target Neural Network (TNN) for target value calculation.<br>
-     * Depending on choice either takes max of target state values (QNN only) or chooses action of target state with maximal value (QNN) and estimates value of this state (TNN).<br>
-     * Calculates TD target using reward and target value and updates value and stores delta.<br>
+     * Sets immediate reward for episode step after agent has executed policy.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param reward reward
      */
-    void updateValue() throws NeuralNetworkException, MatrixException;
+    void setReward(double reward);
 
 }

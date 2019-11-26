@@ -6,6 +6,11 @@
 
 package core.reinforcement;
 
+import utils.matrix.MatrixException;
+
+import java.util.HashMap;
+import java.util.Random;
+
 /**
  * Class that implements efficient structure to maintain sample along their priorities and fetch by priority.<br>
  * <br>
@@ -27,10 +32,22 @@ class SumTree {
     private final int maxIndex;
 
     /**
+     * Total number of entries in tree.
+     *
+     */
+    private int entries = 0;
+
+    /**
      * Samples stored into sum tree.
      *
      */
     private final Sample[] samples;
+
+    /**
+     * Map that maintain relationship of sample and its index.
+     *
+     */
+    private final HashMap<Sample, Integer> sampleMap = new HashMap<>();
 
     /**
      * Array containing structure of sum tree.
@@ -57,10 +74,31 @@ class SumTree {
     public void add(Sample sample) {
         samples[currentIndex] = sample;
         int nodeIndex = currentIndex + maxIndex;
+        sampleMap.put(sample, nodeIndex);
+        update(sample, nodeIndex);
+        currentIndex = currentIndex == maxIndex ? 0 : currentIndex + 1;
+        if (entries < maxIndex + 1) entries++;
+    }
+
+    /**
+     * Updates existing sample in sum tree.
+     *
+     * @param sample sample to be updated in sum tree.
+     */
+    public void update(Sample sample) {
+        update (sample, sampleMap.get(sample));
+    }
+
+    /**
+     * Updates priority of sample in tree.
+     *
+     * @param sample sample to be updated.
+     * @param nodeIndex node index of sample.
+     */
+    private void update(Sample sample, int nodeIndex) {
         double priorityDelta = sample.priority - sumTree[nodeIndex];
         sumTree[nodeIndex] = sample.priority;
         propagate (nodeIndex, priorityDelta);
-        currentIndex = currentIndex == maxIndex ? 0 : currentIndex + 1;
     }
 
     /**
@@ -70,13 +108,13 @@ class SumTree {
      * @param priorityDelta priority delta of previously stored sample and current sample.
      */
     private void propagate(int nodeIndex, double priorityDelta) {
-        int parentIndex = (nodeIndex - 1) / 2;
+        int parentIndex = Math.floorDiv(nodeIndex - 1,  2);
         sumTree[parentIndex] += priorityDelta;
         if (parentIndex != 0) propagate(parentIndex, priorityDelta);
     }
 
     /**
-     * Returns sample by given priority sum.
+     * Gets sample by given priority sum.
      *
      * @param prioritySum given priority sum.
      * @return fetched samples.
@@ -86,7 +124,7 @@ class SumTree {
     }
 
     /**
-     * Returns sample by priority sum. If priority sum is less or equal than current node priority sum search takes left branch otherwise follows right branch.
+     * Gets sample by priority sum. If priority sum is less or equal than current node priority sum search takes left branch otherwise follows right branch.
      *
      * @param nodeIndex current node index.
      * @param prioritySum given priority sum.
@@ -94,9 +132,9 @@ class SumTree {
      */
     private int get(int nodeIndex, double prioritySum) {
         int leftNodeIndex = 2 * nodeIndex + 1;
-        int rightNodeIndex = 2 * nodeIndex + 2;
+        int rightNodeIndex = leftNodeIndex + 1;
         if (leftNodeIndex >= sumTree.length) return nodeIndex;
-        if (prioritySum <= sumTree[leftNodeIndex]) return get(leftNodeIndex, prioritySum);
+        if (prioritySum <= sumTree[leftNodeIndex] && sumTree[leftNodeIndex] != 0) return get(leftNodeIndex, prioritySum);
         else return get(rightNodeIndex, prioritySum - sumTree[leftNodeIndex]);
     }
 
@@ -107,6 +145,36 @@ class SumTree {
      */
     public double totalPriority() {
         return sumTree[0];
+    }
+
+    /**
+     * Returns number of entries added to the tree.
+     *
+     * @return number of entries added to the tree.
+     */
+    public int getEntries() {
+        return entries;
+    }
+
+    /**
+     * Checks if sum tree already contains sample.
+     *
+     * @param sample sample to be checked if already in sum tree.
+     * @return returns true if sample is already in sum tree otherwise returns false
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public boolean containsSample(Sample sample) throws MatrixException {
+        for (Sample currentSample : sampleMap.keySet()) if(currentSample.equals(sample)) return true;
+        return false;
+    }
+
+    /**
+     * Returns random sample.
+     *
+     * @return random sample.
+     */
+    public Sample getRandomSample() {
+        return samples[new Random().nextInt(getEntries())];
     }
 
 }
