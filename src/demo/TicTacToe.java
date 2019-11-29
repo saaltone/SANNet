@@ -711,9 +711,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         jFrame.revalidate();
         ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {}
+        if (humanPlayer != null) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {}
+        }
 
     }
 
