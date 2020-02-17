@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -41,12 +41,6 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      *
      */
     private transient HashMap<Matrix, Matrix> dPrev;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for Momentum Gradient Descent.
@@ -101,15 +95,6 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -138,7 +123,7 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
         else dPrev.put(M, dMPrev = new DMatrix(M.getRows(), M.getCols()));
 
         // θt+1=θt+μtvt−εt∇f(θt)
-        Matrix dMDelta = dMPrev.multiply(mu).subtract(dM.multiply(learningRate * miniBatchFactor));
+        Matrix dMDelta = dMPrev.multiply(mu).subtract(dM.multiply(learningRate));
 
         M.add(dMDelta, M);
 

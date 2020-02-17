@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -29,12 +29,6 @@ public class GradientDescent implements Optimizer, Serializable {
      *
      */
     private double learningRate = 0.001;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for Gradient Descent.
@@ -84,15 +78,6 @@ public class GradientDescent implements Optimizer, Serializable {
     public void reset() {}
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -115,7 +100,7 @@ public class GradientDescent implements Optimizer, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
-        M.subtract(dM.multiply(learningRate * miniBatchFactor), M);
+        M.subtract(dM.multiply(learningRate), M);
     }
 
 }

@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -48,12 +48,6 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      *
      */
     private transient HashMap<Matrix, Matrix> vPrev;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for Nesterov Accelerated Gradient.
@@ -109,15 +103,6 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -151,7 +136,7 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
         else vPrev.put(M, vMPrev = new DMatrix(M.getRows(), M.getCols()));
 
         // vt=μvt−1−ϵ∇f(θt−1+μvt−1)
-        Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate * miniBatchFactor));
+        Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));
 
         M.add(vM, M);
 

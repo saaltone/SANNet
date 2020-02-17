@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -42,12 +42,6 @@ public class RMSProp implements Optimizer, Serializable {
      *
      */
     private transient HashMap<Matrix, Matrix> eg2;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for RMSProp.
@@ -102,15 +96,6 @@ public class RMSProp implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -141,7 +126,7 @@ public class RMSProp implements Optimizer, Serializable {
         eg2.put(M, mEg2 = mEg2.multiply(gamma).add(dM.power(2).multiply(1 - gamma)));
 
         double epsilon = 10E-8;
-        M.subtract(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate * miniBatchFactor).multiply(dM), M);
+        M.subtract(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate).multiply(dM), M);
     }
 
 }

@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -69,15 +69,6 @@ public class ResilientPropagation implements Optimizer, Serializable {
     public void reset() {
         dPrev = new HashMap<>();
         wPrev = new HashMap<>();
-    }
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-
     }
 
     /**
