@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -156,6 +156,7 @@ public class Connector implements Serializable {
             if (dW.size() > 0) {
                 Matrix dWSum = new DMatrix(dW.get(dW.firstKey()).getRows(), dW.get(dW.firstKey()).getCols());
                 for (Matrix dWItem : dW.values()) dWSum.add(dWItem, dWSum);
+                dWSum.divide(dW.size(), dWSum);
                 dWSums.put(W, dWSum);
             }
         }
@@ -422,6 +423,7 @@ public class Connector implements Serializable {
         }
         Normalization normalizer = NormalizationFactory.create(normalizationType, params);
         normalizers.add(normalizer);
+        if (optimizer != null) normalizer.setOptimizer(optimizer);
     }
 
     /**
@@ -489,6 +491,7 @@ public class Connector implements Serializable {
      */
     public void setOptimizer(Optimizer optimizer) {
         this.optimizer = optimizer;
+        for (Normalization normalizer: normalizers) normalizer.setOptimizer(optimizer);
     }
 
     /**
@@ -506,16 +509,6 @@ public class Connector implements Serializable {
      */
     public void resetOptimizer() {
         if (optimizer!= null) optimizer.reset();
-    }
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        if (optimizer!= null) optimizer.setMiniBatchFactor(miniBatchFactor);
-        getNLayer().setMiniBatchFactor(miniBatchFactor);
     }
 
     /**
@@ -648,6 +641,7 @@ public class Connector implements Serializable {
      */
     public void regulateForward(Sequence inputs) throws MatrixException {
         for (Regularization regularizer : regularizers) {
+            regularizer.setMiniBatchSize(inputs.sampleSize());
             regularizer.forward(inputs);
         }
     }
