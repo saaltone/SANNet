@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -97,9 +97,17 @@ public class DropOut implements Regularization, Serializable {
     }
 
     /**
-     * Implements forward step for drop out.<br>
+     * Not used.
+     *
+     * @param miniBatchSize current mini batch size.
+     */
+    public void setMiniBatchSize(int miniBatchSize) {
+    }
+
+    /**
+     * Implements forward step for inverted drop out.<br>
      * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
-     * During inference phase it removes masking and compensates all weight by multipliying by probability.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
      *
      * @param sequence input sequence.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -109,13 +117,15 @@ public class DropOut implements Regularization, Serializable {
             for (Integer entryIndex : sequence.sampleKeySet()) {
                 Matrix matrix = sequence.get(sampleIndex).get(entryIndex);
                 if (isTraining) {
-                    matrix.unsetScalingConstant();
+//                    matrix.unsetScalingConstant();
+                    matrix.setScalingConstant(1 / probability);
                     matrix.setMask();
                     matrix.getMask().setMaskProba(probability);
                     matrix.getMask().maskRowByProba();
                 }
                 else {
-                    matrix.setScalingConstant(probability);
+                    matrix.unsetScalingConstant();
+//                    matrix.setScalingConstant(probability);
                     matrix.unsetMask();
                 }
             }
