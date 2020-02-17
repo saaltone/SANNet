@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -106,13 +106,13 @@ public class MNISTDemo {
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(0, NormalizationType.BATCH_NORMALIZATION);
+        neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 
     /**
-     * Reads MNIST samples from CVS files.<br>
+     * Reads MNIST samples from CSV files.<br>
      * MNIST training set consist of 60000 samples and test set of 10000 samples.<br>
      * First column is assumed to be outputted digits (value 0 - 9).<br>
      * Next 784 (28x28) columns are assumed to be input digit (gray scale values 0 - 255).<br>
