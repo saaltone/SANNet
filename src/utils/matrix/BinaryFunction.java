@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -148,6 +148,9 @@ public class BinaryFunction implements Serializable {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huber_delta ? 0.5 * Math.pow(value - constant, 2) : huber_delta * Math.abs(value - constant) - 0.5 * Math.pow(huber_delta, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huber_delta ? value - constant : huber_delta * Math.signum(value - constant);
                 break;
+            case DIRECT_GRADIENT:
+                function = null;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant;
             default:
                 break;
         }

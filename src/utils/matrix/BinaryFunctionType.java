@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -19,7 +19,8 @@ package utils.matrix;
  *     POISSON,
  *     HINGE,
  *     SQUARED_HINGE,
- *     HUBER
+ *     HUBER,
+ *     DIRECT_GRADIENT
  *
  */
 public enum BinaryFunctionType {
@@ -35,6 +36,7 @@ public enum BinaryFunctionType {
     POISSON,
     HINGE,
     SQUARED_HINGE,
-    HUBER
+    HUBER,
+    DIRECT_GRADIENT
 
 }
