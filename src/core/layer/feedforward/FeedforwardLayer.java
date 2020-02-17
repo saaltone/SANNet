@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -117,7 +117,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         W = new DMatrix(nLayerWidth, pLayerWidth, this.initialization);
 
         B = new DMatrix(nLayerWidth, 1);
-        B.initialize(W.getInitializer());
 
         parent.getBackward().registerWeight(W, true, regulateDirectWeights, true);
 
@@ -153,9 +152,11 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
-        if (normalizers.size() > 0) input.setNormalization(normalizers);
+        Matrix output = W.dot(input);
 
-        Matrix output = W.dot(input).add(B);
+        if (normalizers.size() > 0) output.setNormalization(normalizers);
+
+        output = output.add(B);
 
         output = output.apply(activation);
 
