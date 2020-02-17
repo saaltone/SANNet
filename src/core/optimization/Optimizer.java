@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -30,13 +30,6 @@ public interface Optimizer {
      *
      */
     void reset();
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    void setMiniBatchFactor(double miniBatchFactor);
 
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.

@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -42,7 +42,7 @@ public class OptimizerFactory {
             case ADAMAX:
                 return (params == null) ? new Adamax() : new Adamax(params);
             case NADAM:
-                return (params == null) ? new Nadam() : new Nadam(params);
+                return (params == null) ? new NAdam() : new NAdam(params);
             case AMSGRAD:
                 return (params == null) ? new AMSGrad() : new AMSGrad(params);
             case RESILIENT_PROPAGATION:
@@ -78,7 +78,7 @@ public class OptimizerFactory {
         if (optimizer instanceof RMSProp) return OptimizationType.RMSPROP;
         if (optimizer instanceof Adam) return OptimizationType.ADAM;
         if (optimizer instanceof Adamax) return OptimizationType.ADAMAX;
-        if (optimizer instanceof Nadam) return OptimizationType.NADAM;
+        if (optimizer instanceof NAdam) return OptimizationType.NADAM;
         if (optimizer instanceof AMSGrad) return OptimizationType.AMSGRAD;
         if (optimizer instanceof ResilientPropagation) return OptimizationType.RESILIENT_PROPAGATION;
         throw new NeuralNetworkException("Unknown optimizer type");
