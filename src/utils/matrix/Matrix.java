@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -1378,6 +1378,19 @@ public abstract class Matrix implements Cloneable, Serializable {
         MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> Math.pow(Math.abs(value), p);
         double[] result = count(operation);
         return result[0];
+    }
+
+    /**
+     * Calculated expotential moving average.
+     *
+     * @param currentAverage current average value
+     * @param newAverage new average value
+     * @param beta degree of weighting decrease for exponential moving average.
+     * @return updated average with new average value included.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Matrix exponentialMovingAverage(Matrix currentAverage, Matrix newAverage, double beta) throws MatrixException {
+        return currentAverage == null ? newAverage : currentAverage.multiply(beta).add(newAverage.multiply(1 - beta));
     }
 
     /**
