@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -103,7 +103,7 @@ public class TextSeqDemo {
         neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.addRegularizer(RegularizationType.DROPOUT);
         neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
