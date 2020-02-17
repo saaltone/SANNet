@@ -1,18 +1,21 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
 package core.normalization;
 
+import core.optimization.Optimizer;
 import utils.*;
+import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.TreeMap;
 
 /**
@@ -27,17 +30,36 @@ public class LayerNormalization implements Normalization, Serializable {
     private static final long serialVersionUID = 3466341546851269706L;
 
     /**
-     * Epsilon term for layer normalization. Default value 10E-8.<br>
+     * Epsilon term for Layer normalization. Default value 10E-8.<br>
      * Term provides mathematical stability for normalizer.<br>
      *
      */
     private final double epsilon = 10E-8;
 
     /**
+     * Learnable parameter gammas of Layer normalization layer.<br>
+     *
+     */
+    private final HashMap<Node, Matrix> gammas = new HashMap<>();
+
+    /**
+     * Learnable parameter betas of Layer normalization layer.<br>
+     *
+     */
+    private final HashMap<Node, Matrix> betas = new HashMap<>();
+
+    /**
      * If true neural network is in state otherwise false.
      *
      */
     private transient boolean isTraining;
+
+    /**
+     * Tree map to store normalized outputs.<br>
+     * Used in backward propagation step for gradient calculation.<br>
+     *
+     */
+    private final HashMap<Node, TreeMap<Integer, Matrix>> normOuts = new HashMap<>();
 
     /**
      * Tree map to store inputs normalized by mean.<br>
@@ -67,16 +89,22 @@ public class LayerNormalization implements Normalization, Serializable {
     private boolean meanOnly = false;
 
     /**
-     * Constructor for layer normalization class.
+     * Optimizer for Layer normalization;
+     *
+     */
+    private Optimizer optimizer;
+
+    /**
+     * Constructor for Layer normalization class.
      *
      */
     public LayerNormalization() {
     }
 
     /**
-     * Constructor for layer normalization class.
+     * Constructor for Layer normalization class.
      *
-     * @param params parameters for layer normalization.
+     * @param params parameters for Layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public LayerNormalization(String params) throws DynamicParamException {
@@ -84,9 +112,9 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Returns parameters used for layer normalization.
+     * Returns parameters used for Layer normalization.
      *
-     * @return parameters used for layer normalization.
+     * @return parameters used for Layer normalization.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -95,12 +123,12 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Sets parameters used for Layer Normalization.<br>
+     * Sets parameters used for Layer normalization.<br>
      * <br>
      * Supported parameters are:<br>
      *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
      *
-     * @param params parameters used for layer normalization.
+     * @param params parameters used for Layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -108,7 +136,7 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Resets layer normalizer.
+     * Resets Layer normalizer.
      *
      */
     public void reset() {
@@ -118,7 +146,7 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Sets flag for layer normalization if neural network is in training state.
+     * Sets flag for Layer normalization if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
@@ -127,7 +155,16 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Executes forward propagation step for layer normalization at step start.<br>
+     * Sets optimizer for normalizer.
+     *
+     * @param optimizer optimizer
+     */
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+    }
+
+    /**
+     * Executes forward propagation step for Layer normalization at step start.<br>
      * Calculates feature wise mean and variance for each sample independently.<br>
      * Removes mean and variance from input samples.<br>
      *
@@ -138,20 +175,36 @@ public class LayerNormalization implements Normalization, Serializable {
     public void forward(Node node, int inputIndex) throws MatrixException {
         if (node.getMatrix(inputIndex).getSize() < 2) return;
 
+        int rows = node.getMatrix(node.firstKey()).getRows();
+        int cols = node.getMatrix(node.firstKey()).getCols();
+
+        Matrix gamma;
+        if (gammas.containsKey(node)) gamma = gammas.get(node);
+        else {
+            gammas.put(node, gamma = new DMatrix(rows, cols));
+            gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
+        }
+        Matrix beta;
+        if (betas.containsKey(node)) beta = betas.get(node);
+        else betas.put(node, beta = new DMatrix(rows, cols));
+
         Matrix inputMatrix = node.getMatrix(inputIndex);
         if (isTraining) {
             TreeMap<Integer, Matrix> unMeanInEntry;
             TreeMap<Integer, Double> varEntry;
             TreeMap<Integer, Double> iSqrVarEntry;
+            TreeMap<Integer, Matrix> normOutsEntry;
             if (unMeanIns.containsKey(node)) {
                 unMeanInEntry = unMeanIns.get(node);
                 varEntry = vars.get(node);
                 iSqrVarEntry = iSqrVars.get(node);
+                normOutsEntry = normOuts.get(node);
             }
             else {
                 unMeanIns.put(node, unMeanInEntry = new TreeMap<>());
                 vars.put(node, varEntry = new TreeMap<>());
                 iSqrVars.put(node, iSqrVarEntry = new TreeMap<>());
+                normOuts.put(node, normOutsEntry = new TreeMap<>());
             }
 
             // Calculate mean
@@ -165,19 +218,24 @@ public class LayerNormalization implements Normalization, Serializable {
                 varEntry.put(inputIndex, var);
                 double iSqrVar = 1 / Math.sqrt(var + epsilon);
                 iSqrVarEntry.put(inputIndex, iSqrVar);
-                node.setMatrix(inputIndex, unMeanIn.multiply(iSqrVar));
+                Matrix normOut = unMeanIn.multiply(iSqrVar);
+                normOutsEntry.put(inputIndex, normOut);
+                node.setMatrix(inputIndex, normOut.multiply(gamma).add(beta));
             }
-            else node.setMatrix(inputIndex, unMeanIn);
+            else {
+                normOutsEntry.put(inputIndex, unMeanIn);
+                node.setMatrix(inputIndex, unMeanIn.multiply(gamma).add(beta));
+            }
         }
         else {
             Matrix unMeanIn = inputMatrix.subtract(inputMatrix.mean());
-            if (!meanOnly) node.setMatrix(inputIndex, unMeanIn.multiply(1 / Math.sqrt(inputMatrix.var() + epsilon)));
-            else node.setMatrix(inputIndex, unMeanIn);
+            if (!meanOnly) node.setMatrix(inputIndex, unMeanIn.multiply(1 / Math.sqrt(inputMatrix.var() + epsilon)).multiply(gamma).add(beta));
+            else node.setMatrix(inputIndex, unMeanIn.multiply(gamma).add(beta));
         }
     }
 
     /**
-     * Executes backward propagation step for layer normalization.<br>
+     * Executes backward propagation step for Layer normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
      * @param node node for normalization.
@@ -187,19 +245,29 @@ public class LayerNormalization implements Normalization, Serializable {
     public void backward(Node node, int outputIndex) throws MatrixException {
         if (!unMeanIns.containsKey(node)) return;
 
-        int size = node.getGradient(outputIndex).getSize();
-        Matrix outputGradMatrix = node.getGradient(outputIndex);
+        Matrix gamma = gammas.get(node);
+        Matrix beta = betas.get(node);
+
+        Matrix gradient = node.getGradient(outputIndex);
+        Matrix inGrad =  gradient.multiply(gamma);
+        Matrix dgamma = gradient.multiply(normOuts.get(node).get(outputIndex));
+        Matrix dbeta = gradient;
+
+        int size = inGrad.getSize();
         Matrix unMeanIn = unMeanIns.get(node).get(outputIndex);
-        double dsigma = -0.5 * outputGradMatrix.multiply(unMeanIn).sum() / size;
-        double dmu = -1 * outputGradMatrix.sum() / size;
         if (!meanOnly) {
-            dsigma *= Math.pow(vars.get(node).get(outputIndex) + epsilon, -1.5);
-            dmu *= iSqrVars.get(node).get(outputIndex);
-            node.setGradient(outputIndex, outputGradMatrix.multiply(iSqrVars.get(node).get(outputIndex)).add(unMeanIn.multiply(2 * dsigma)).add(dmu));
+            double dsigma = inGrad.multiply(unMeanIn).multiply(-1 / (double)size * Math.pow(vars.get(node).get(outputIndex) + epsilon, -1.5)).sum();
+            double dmu = inGrad.multiply(-1 / (double)size * iSqrVars.get(node).get(outputIndex)).sum();
+            node.setGradient(outputIndex, inGrad.multiply(iSqrVars.get(node).get(outputIndex)).add(unMeanIn.multiply(dsigma)).add(dmu));
         }
         else {
-            node.setGradient(outputIndex, outputGradMatrix.add(unMeanIn.multiply(2 * dsigma)).add(dmu));
+            double dsigma = inGrad.multiply(unMeanIn).multiply(-1 / (double)size).sum();
+            double dmu = inGrad.multiply(-1 / (double)size).sum();
+            node.setGradient(outputIndex, inGrad.add(unMeanIn.multiply(dsigma)).add(dmu));
         }
+
+        optimizer.optimize(gamma, dgamma);
+        optimizer.optimize(beta, dbeta);
     }
 
     /**
