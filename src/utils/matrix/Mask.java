@@ -365,4 +365,27 @@ public abstract class Mask implements Cloneable, Serializable {
      */
     public abstract void clearColMaskStack();
 
+    /**
+     * Prints mask in row and column format.
+     *
+     */
+    public void print() {
+        for (int row = 0; row < getRows(); row++) {
+            System.out.print("[");
+            for (int col = 0; col < getCols(); col++) {
+                System.out.print((isMasked(row, col) ? 1 : 0));
+                if (col < getCols() - 1) System.out.print(" ");
+            }
+            System.out.println("]");
+        }
+    }
+
+    /**
+     * Prints size (rows x columns) of mask.
+     *
+     */
+    public void printSize() {
+        System.out.println("Mask size: " + getRows() + "x" + getCols());
+    }
+
 }
