@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -348,15 +348,6 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      */
     public void initialize() throws MatrixException, NeuralNetworkException {
         if (executionLayer != null) executionLayer.initialize();
-    }
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        if (forward != null) forward.setMiniBatchFactor(miniBatchFactor);
     }
 
     /**
