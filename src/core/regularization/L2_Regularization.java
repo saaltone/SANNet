@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -30,6 +30,12 @@ public class L2_Regularization implements Regularization, Serializable {
      *
      */
     private double lambda = 0.01;
+
+    /**
+     * Current mini batch size.
+     *
+     */
+    private int miniBatchSize = 1;
 
     /**
      * Constructor for L2 regularization class.
@@ -95,6 +101,15 @@ public class L2_Regularization implements Regularization, Serializable {
     }
 
     /**
+     * Sets current mini batch size.
+     *
+     * @param miniBatchSize current mini batch size.
+     */
+    public void setMiniBatchSize(int miniBatchSize) {
+        this.miniBatchSize = miniBatchSize;
+    }
+
+    /**
      * Not used.
      *
      * @param W weight matrix.
@@ -119,7 +134,7 @@ public class L2_Regularization implements Regularization, Serializable {
      * @param dWSum gradient sum of weight.
      */
     public void backward(Matrix W, Matrix dWSum) throws MatrixException {
-        dWSum.add(W.multiply(2 * lambda), dWSum);
+        dWSum.add(W.multiply(2 * lambda).divide(miniBatchSize), dWSum);
     }
 
 }

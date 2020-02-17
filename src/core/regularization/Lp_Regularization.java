@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -37,6 +37,12 @@ public class Lp_Regularization implements Regularization, Serializable {
      *
      */
     private int p = 3;
+
+    /**
+     * Current mini batch size.
+     *
+     */
+    private int miniBatchSize = 1;
 
     /**
      * Constructor for Lp regularization class.
@@ -90,6 +96,15 @@ public class Lp_Regularization implements Regularization, Serializable {
     }
 
     /**
+     * Sets current mini batch size.
+     *
+     * @param miniBatchSize current mini batch size.
+     */
+    public void setMiniBatchSize(int miniBatchSize) {
+        this.miniBatchSize = miniBatchSize;
+    }
+
+    /**
      * Not used.
      *
      */
@@ -128,7 +143,7 @@ public class Lp_Regularization implements Regularization, Serializable {
      */
     public void backward(Matrix W, Matrix dWSum) throws MatrixException {
         Matrix.MatrixUnaryOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
-        dWSum.add(W.apply(function), dWSum);
+        dWSum.add(W.apply(function).divide(miniBatchSize), dWSum);
     }
 
 }
