@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -85,6 +85,14 @@ public class GradientClipping implements Regularization, Serializable {
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
+    }
+
+    /**
+     * Not used.
+     *
+     * @param miniBatchSize current mini batch size.
+     */
+    public void setMiniBatchSize(int miniBatchSize) {
     }
 
     /**
