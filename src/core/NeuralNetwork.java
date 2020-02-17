@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -245,12 +245,6 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     private boolean trainingShuffleSamples = false;
-
-    /**
-     * If true scales learning rate by factor mini batch size divided by 100.
-     *
-     */
-    private boolean scaleMiniBatch = true;
 
     /**
      * Current validation sample index in validation sample set.
@@ -747,7 +741,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return input layer.
      */
-    private InputLayer getInputLayer() {
+    public InputLayer getInputLayer() {
         return inputLayer;
     }
 
@@ -910,7 +904,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return output layer of neural network.
      */
-    private OutputLayer getOutputLayer() {
+    public OutputLayer getOutputLayer() {
         return outputLayer;
     }
 
@@ -1587,7 +1581,6 @@ public class NeuralNetwork implements Runnable, Serializable {
         Sequence inputSequence = new Sequence(sampleDepth);
         Sequence outputSequence = new Sequence(sampleDepth);
         trainingSampleAt = getSamples(trainIns, trainOuts, inputSequence, outputSequence, trainingSampleAt, trainingSamplesPerStep, trainingSampleInOrder, trainingShuffleSamples);
-        getInputLayer().setMiniBatchFactor(scaleMiniBatch ? (double)trainingSamplesPerStep / 100 : 1);
         getOutputLayer().resetError();
         getOutputLayer().setTargets(outputSequence);
         getInputLayer().train(inputSequence);
@@ -1804,16 +1797,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets scaling of learning rate according to mini batch size.<br>
-     * If true scales learning rate by factor mini batch size divided by 100.<br>
-     *
-     * @param scaleMiniBatch scaling of learning according to mini batch size.
-     */
-    public void setMiniBatchScaling(boolean scaleMiniBatch) {
-        this.scaleMiniBatch = scaleMiniBatch;
-    }
-
-    /**
      * Sets neural network validation batch sampling parameters.
      *
      * @param samplesPerStep amount of samples to be included to validation batch.
@@ -1973,6 +1956,20 @@ public class NeuralNetwork implements Runnable, Serializable {
         for (int index = 0; index < connectors.size(); index++) {
             connectors.get(index).append(otherNeuralNetwork.getConnectors().get(index), tau);
         }
+    }
+
+    /**
+     * Sets importance sampling weights to output layer.
+     *
+     * @param importanceSamplingWeights importance sampling weights
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     */
+    public void setImportanceSamplingWeights(TreeMap<Integer, Double> importanceSamplingWeights) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        lock.lock();
+        getOutputLayer().setImportanceSamplingWeights(importanceSamplingWeights);
+        lock.unlock();
     }
 
 }
