@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -26,7 +26,8 @@ import utils.matrix.BinaryFunctionType;
  *     POISSON,
  *     HINGE,
  *     SQUARED_HINGE,
- *     HUBER
+ *     HUBER,
+ *     DIRECT_GRADIENT
  */
 public class LossFunction extends BinaryFunction {
 
@@ -47,7 +48,8 @@ public class LossFunction extends BinaryFunction {
             BinaryFunctionType.POISSON,
             BinaryFunctionType.HINGE,
             BinaryFunctionType.SQUARED_HINGE,
-            BinaryFunctionType.HUBER
+            BinaryFunctionType.HUBER,
+            BinaryFunctionType.DIRECT_GRADIENT
     };
 
     /**
