@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -38,6 +38,13 @@ public interface Regularization {
      * @param isTraining if true neural network is in state otherwise false.
      */
     void setTraining(boolean isTraining);
+
+    /**
+     * Sets current mini batch size.
+     *
+     * @param miniBatchSize current mini batch size.
+     */
+    void setMiniBatchSize(int miniBatchSize);
 
     /**
      * Executes regularization method for forward step.<br>
