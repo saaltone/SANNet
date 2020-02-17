@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -62,12 +62,6 @@ public class Adam implements Optimizer, Serializable {
     private transient HashMap<Matrix, Matrix> v;
 
     /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
-
-    /**
      * Default constructor for Adam.
      *
      */
@@ -122,15 +116,6 @@ public class Adam implements Optimizer, Serializable {
         m = new HashMap<>();
         v = new HashMap<>();
         iter = 1;
-    }
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
     }
 
     /**
@@ -190,7 +175,7 @@ public class Adam implements Optimizer, Serializable {
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
-        M.subtract(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate), M);
 
         iter++;
     }

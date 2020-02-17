@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -62,12 +62,6 @@ public class AMSGrad implements Optimizer, Serializable {
     private transient HashMap<Matrix, Matrix> v;
 
     /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
-
-    /**
      * Default constructor for AMSGrad.
      *
      */
@@ -125,15 +119,6 @@ public class AMSGrad implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Set iteration count.
      *
      * @param iter iteration count.
@@ -187,7 +172,7 @@ public class AMSGrad implements Optimizer, Serializable {
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
-        M.subtract(vM.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(vM.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM).multiply(learningRate), M);
 
         iter++;
 

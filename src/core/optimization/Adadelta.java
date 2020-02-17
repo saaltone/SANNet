@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -48,12 +48,6 @@ public class Adadelta implements Optimizer, Serializable {
      *
      */
     private transient HashMap<Matrix, Matrix> ed2;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for Adadelta.
@@ -109,15 +103,6 @@ public class Adadelta implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -154,7 +139,7 @@ public class Adadelta implements Optimizer, Serializable {
 
         double epsilon = 10E-8;
         Matrix Ed = mEd2.add(epsilon).apply(UnaryFunctionType.SQRT).multiply(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV)).multiply(dM);
-        M.subtract(Ed.multiply(learningRate * miniBatchFactor), M);
+        M.subtract(Ed.multiply(learningRate), M);
         mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
 
         eg2.put(M, mEg2);

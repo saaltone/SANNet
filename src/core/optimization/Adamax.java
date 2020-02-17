@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -69,12 +69,6 @@ public class Adamax implements Optimizer, Serializable {
     private transient HashMap<Matrix, Matrix> v;
 
     /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
-
-    /**
      * Default constructor for Adamax.
      *
      */
@@ -129,15 +123,6 @@ public class Adamax implements Optimizer, Serializable {
         m = new HashMap<>();
         v = new HashMap<>();
         iter = 1;
-    }
-
-    /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
     }
 
     /**
@@ -198,7 +183,7 @@ public class Adamax implements Optimizer, Serializable {
         Matrix uM = vM.multiply(beta2).max(dM_abs);
 
         // θt+1 = θt − η / ut * mt
-        M.subtract(uM.apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate * miniBatchFactor), M);
+        M.subtract(uM.apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate), M);
 
         iter++;
     }

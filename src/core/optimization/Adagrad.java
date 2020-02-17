@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -36,12 +36,6 @@ public class Adagrad implements Optimizer, Serializable {
      *
      */
     private transient HashMap<Matrix, Matrix> m2Sum;
-
-    /**
-     * Relative size of mini batch.
-     *
-     */
-    private double miniBatchFactor = 1;
 
     /**
      * Default constructor for Adagrad.
@@ -93,15 +87,6 @@ public class Adagrad implements Optimizer, Serializable {
     }
 
     /**
-     * Sets relative size of mini batch.
-     *
-     * @param miniBatchFactor relative size of mini batch.
-     */
-    public void setMiniBatchFactor(double miniBatchFactor) {
-        this.miniBatchFactor = miniBatchFactor;
-    }
-
-    /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
      * @param W weight matrix to be optimized.
@@ -132,7 +117,7 @@ public class Adagrad implements Optimizer, Serializable {
         dM2Sum.add(dM.multiply(dM), dM2Sum);
 
         double epsilon = 10E-8;
-        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate * miniBatchFactor)), M);
+        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate)), M);
     }
 
 }
