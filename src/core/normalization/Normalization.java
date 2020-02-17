@@ -1,11 +1,12 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
 package core.normalization;
 
+import core.optimization.Optimizer;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
@@ -38,6 +39,13 @@ public interface Normalization {
      * @param isTraining if true neural network is in state otherwise false.
      */
     void setTraining(boolean isTraining);
+
+    /**
+     * Sets optimizer for normalizer.
+     *
+     * @param optimizer optimizer
+     */
+    void setOptimizer(Optimizer optimizer);
 
     /**
      * Executes forward step for normalization.<br>
