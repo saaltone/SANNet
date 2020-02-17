@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -221,13 +221,10 @@ public class GRULayer extends AbstractExecutionLayer {
         Uh.init(this.initialization);
 
         bz = new DMatrix(nLayerWidth, 1);
-        bz.init(this.initialization);
 
         br = new DMatrix(nLayerWidth, 1);
-        br.init(this.initialization);
 
         bh = new DMatrix(nLayerWidth, 1);
-        bh.init(this.initialization);
 
         parent.getBackward().registerWeight(Wz, true, regulateDirectWeights, true);
         parent.getBackward().registerWeight(Wr, true, regulateDirectWeights, true);

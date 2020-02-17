@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -293,16 +293,12 @@ public class GravesLSTMLayer extends AbstractExecutionLayer {
         Co.init(this.initialization);
 
         bi = new DMatrix(nLayerWidth, 1);
-        bi.init(this.initialization);
 
         bf = new DMatrix(nLayerWidth, 1);
-        bf.init(this.initialization);
 
         bo = new DMatrix(nLayerWidth, 1);
-        bo.init(this.initialization);
 
         bs = new DMatrix(nLayerWidth, 1);
-        bs.init(this.initialization);
 
         parent.getBackward().registerWeight(Wi, true, regulateDirectWeights, true);
         parent.getBackward().registerWeight(Wf, true, regulateDirectWeights, true);

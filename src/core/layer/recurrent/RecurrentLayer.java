@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -147,11 +147,10 @@ public class RecurrentLayer extends AbstractExecutionLayer {
 
         W = new DMatrix(nLayerWidth, pLayerWidth, this.initialization);
 
-        B = new DMatrix(nLayerWidth, 1);
-        B.initialize(W.getInitializer());
-
         Wl = new DMatrix(nLayerWidth, nLayerWidth);
         Wl.init(this.initialization);
+
+        B = new DMatrix(nLayerWidth, 1);
 
         parent.getBackward().registerWeight(W, true, regulateDirectWeights, true);
 
