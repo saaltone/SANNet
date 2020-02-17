@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -66,7 +66,7 @@ public class TSP implements Environment {
      * Number of cities for travelling salesman.
      *
      */
-    private static final int numberOfCities = 10;
+    private static final int numberOfCities = 4;
 
     /**
      * Random number generator.
