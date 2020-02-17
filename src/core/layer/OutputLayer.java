@@ -1,6 +1,6 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
@@ -11,6 +11,8 @@ import core.activation.ActivationFunction;
 import core.loss.LossFunction;
 import utils.*;
 import utils.matrix.*;
+
+import java.util.TreeMap;
 
 /**
  * Defines class for output layer of neural network.
@@ -41,6 +43,12 @@ public class OutputLayer extends AbstractLayer {
      *
      */
     private transient Sequence douts;
+
+    /**
+     * Important sampling weights for gradient calculation.
+     *
+     */
+    private TreeMap<Integer, Double> importanceSamplingWeights;
 
     /**
      * Constructor for output layer.
@@ -89,6 +97,15 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
+     * Sets importance sampling weights.
+     *
+     * @param importanceSamplingWeights importance sampling weights.
+     */
+    public void setImportanceSamplingWeights(TreeMap<Integer, Double> importanceSamplingWeights) {
+        this.importanceSamplingWeights = importanceSamplingWeights;
+    }
+
+    /**
      * Resets error of neural network (output layer).
      *
      */
@@ -133,11 +150,12 @@ public class OutputLayer extends AbstractLayer {
      * @throws NeuralNetworkException throws exception if output and target dimensions are not matching.
      */
     public void updateOutputError() throws MatrixException, NeuralNetworkException {
-        if (targets == null) return;
+        if (targets == null || lossFunction.getFunction() == null) return;
         if (targets.totalSize() != getOuts().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getOuts().totalSize());
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
                 Matrix loss = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction());
+                if (importanceSamplingWeights != null) loss.multiply(importanceSamplingWeights.get(matrixIndex), loss);
                 error.add(loss, error);
             }
         }
@@ -153,7 +171,9 @@ public class OutputLayer extends AbstractLayer {
         douts = new Sequence(targets.getDepth());
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
-                douts.put(sampleIndex, matrixIndex, getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative()));
+                Matrix dout = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative());
+                if (importanceSamplingWeights != null) dout.multiply(importanceSamplingWeights.get(matrixIndex), dout);
+                douts.put(sampleIndex, matrixIndex, dout);
             }
         }
     }
