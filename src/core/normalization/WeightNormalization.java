@@ -1,11 +1,12 @@
 /********************************************************
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2019 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  *
  ********************************************************/
 
 package core.normalization;
 
+import core.optimization.Optimizer;
 import utils.*;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -31,7 +32,7 @@ public class WeightNormalization implements Normalization, Serializable {
     private final HashMap<Matrix, Matrix> Ws = new HashMap<>();
 
     /**
-     * Tree map for storing weight normalizing factors (1 / sqrt(2-norm W))
+     * Tree map for storing Weight normalizing factors (1 / sqrt(2-norm W))
      *
      */
     private final HashMap<Matrix, Double> iNorms = new HashMap<>();
@@ -43,16 +44,16 @@ public class WeightNormalization implements Normalization, Serializable {
     private double g = 1;
 
     /**
-     * Constructor for weight normalization class.
+     * Constructor for Weight normalization class.
      *
      */
     public WeightNormalization() {
     }
 
     /**
-     * Constructor for weight normalization class.
+     * Constructor for Weight normalization class.
      *
-     * @param params parameters for weight normalization.
+     * @param params parameters for Weight normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public WeightNormalization(String params) throws DynamicParamException {
@@ -60,9 +61,9 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Returns parameters used for weight normalization.
+     * Returns parameters used for Weight normalization.
      *
-     * @return parameters used for weight normalization.
+     * @return parameters used for Weight normalization.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -84,7 +85,7 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Resets weight normalizer.
+     * Resets Weight normalizer.
      *
      */
     public void reset() {
@@ -93,11 +94,19 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Sets flag for weight normalization if neural network is in training state.
+     * Sets flag for Weight normalization if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
+    }
+
+    /**
+     * Sets optimizer for normalizer.
+     *
+     * @param optimizer optimizer
+     */
+    public void setOptimizer(Optimizer optimizer) {
     }
 
     /**
@@ -120,7 +129,7 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Executes backward propagation step for weight normalization.<br>
+     * Executes backward propagation step for Weight normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
      * @param Wnorm weight for backward normalization.
