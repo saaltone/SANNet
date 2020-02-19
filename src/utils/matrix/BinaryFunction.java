@@ -151,6 +151,9 @@ public class BinaryFunction implements Serializable {
             case DIRECT_GRADIENT:
                 function = null;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant;
+            case POLICY_GRADIENT: // -Math.log(policy_value at i, t) * Q_value (or A_value) at i, t
+                function = null;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log(value) * constant;
             default:
                 break;
         }

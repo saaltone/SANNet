@@ -37,6 +37,7 @@ public enum BinaryFunctionType {
     HINGE,
     SQUARED_HINGE,
     HUBER,
-    DIRECT_GRADIENT
+    DIRECT_GRADIENT,
+    POLICY_GRADIENT
 
 }
