@@ -28,6 +28,7 @@ import utils.matrix.BinaryFunctionType;
  *     SQUARED_HINGE,
  *     HUBER,
  *     DIRECT_GRADIENT
+ *     POLICY_GRADIENT
  */
 public class LossFunction extends BinaryFunction {
 
@@ -49,7 +50,8 @@ public class LossFunction extends BinaryFunction {
             BinaryFunctionType.HINGE,
             BinaryFunctionType.SQUARED_HINGE,
             BinaryFunctionType.HUBER,
-            BinaryFunctionType.DIRECT_GRADIENT
+            BinaryFunctionType.DIRECT_GRADIENT,
+            BinaryFunctionType.POLICY_GRADIENT
     };
 
     /**
