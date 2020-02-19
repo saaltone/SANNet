@@ -44,12 +44,6 @@ public class AMSGrad implements Optimizer, Serializable {
     private double beta2 = 0.999;
 
     /**
-     * Optimizer iteration count for AMSGrad.
-     *
-     */
-    private transient int iter = 1;
-
-    /**
      * Hash map to store first moments (means).
      *
      */
@@ -115,16 +109,6 @@ public class AMSGrad implements Optimizer, Serializable {
     public void reset() {
         m = new HashMap<>();
         v = new HashMap<>();
-        iter = 1;
-    }
-
-    /**
-     * Set iteration count.
-     *
-     * @param iter iteration count.
-     */
-    public void setIteration(int iter) {
-        this.iter = iter;
     }
 
     /**
@@ -152,7 +136,7 @@ public class AMSGrad implements Optimizer, Serializable {
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
         if (m == null) m = new HashMap<>();
         if (v == null) v = new HashMap<>();
-        if (iter == 0) iter = 1;
+
         Matrix mM;
         if (m.containsKey(M)) mM = m.get(M);
         else m.put(M, mM = new DMatrix(M.getRows(), M.getCols()));
@@ -173,9 +157,6 @@ public class AMSGrad implements Optimizer, Serializable {
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
         M.subtract(vM.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM).multiply(learningRate), M);
-
-        iter++;
-
     }
 
 }

@@ -44,10 +44,10 @@ public class Adam implements Optimizer, Serializable {
     private double beta2 = 0.999;
 
     /**
-     * Optimizer iteration count for Adam.
+     * Hash map to store iteration counts.
      *
      */
-    private transient int iter = 1;
+    private transient HashMap<Matrix, Integer> iters;
 
     /**
      * Hash map to store first moments (means).
@@ -113,18 +113,9 @@ public class Adam implements Optimizer, Serializable {
      *
      */
     public void reset() {
+        iters = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
-        iter = 1;
-    }
-
-    /**
-     * Set iteration count.
-     *
-     * @param iter iteration count.
-     */
-    public void setIteration(int iter) {
-        this.iter = iter;
     }
 
     /**
@@ -150,9 +141,14 @@ public class Adam implements Optimizer, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
+        if (iters == null) iters = new HashMap<>();
         if (m == null) m = new HashMap<>();
         if (v == null) v = new HashMap<>();
-        if (iter == 0) iter = 1;
+
+        int iter;
+        if (iters.containsKey(M)) iters.put(M, iter = iters.get(M) + 1);
+        else iters.put(M, iter = 1);
+
         Matrix mM;
         if (m.containsKey(M)) mM = m.get(M);
         else m.put(M, mM = new DMatrix(M.getRows(), M.getCols()));
@@ -176,8 +172,6 @@ public class Adam implements Optimizer, Serializable {
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
         M.subtract(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate), M);
-
-        iter++;
     }
 
 }

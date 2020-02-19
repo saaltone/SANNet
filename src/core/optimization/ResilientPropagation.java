@@ -96,6 +96,7 @@ public class ResilientPropagation implements Optimizer, Serializable {
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
         if (dPrev == null) dPrev = new HashMap<>();
         if (wPrev == null) wPrev = new HashMap<>();
+
         Matrix dMPrev;
         if (dPrev.containsKey(M)) dMPrev = dPrev.get(M);
         else dPrev.put(M, dMPrev = dM);

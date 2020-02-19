@@ -119,6 +119,7 @@ public class RMSProp implements Optimizer, Serializable {
      */
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
         if (eg2 == null) eg2 = new HashMap<>();
+
         Matrix mEg2;
         if (eg2.containsKey(M)) mEg2 = eg2.get(M);
         else eg2.put(M, mEg2 = new DMatrix(M.getRows(), M.getCols()));

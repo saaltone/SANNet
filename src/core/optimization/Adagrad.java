@@ -110,6 +110,7 @@ public class Adagrad implements Optimizer, Serializable {
      */
     public void optimize(Matrix M, Matrix dM) throws MatrixException {
         if (m2Sum == null) m2Sum = new HashMap<>();
+
         Matrix dM2Sum;
         if (m2Sum.containsKey(M)) dM2Sum = m2Sum.get(M);
         else m2Sum.put(M, dM2Sum = new DMatrix(M.getRows(), M.getCols()));
