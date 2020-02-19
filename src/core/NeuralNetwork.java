@@ -1015,6 +1015,15 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Checks if neural network is already started.
+     *
+     * @return returns true if neural network is started otherwise false.
+     */
+    public boolean isStarted() {
+        return neuralNetworkThread != null;
+    }
+
+    /**
      * Checks if neural network is started (running).
      *
      * @throws NeuralNetworkException throws exception is neural network is started.
@@ -1497,6 +1506,7 @@ public class NeuralNetwork implements Runnable, Serializable {
         executionState = ExecutionState.TERMINATED;
         execute.signal();
         lock.unlock();
+        neuralNetworkThread = null;
     }
 
     /**
