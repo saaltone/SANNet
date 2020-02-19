@@ -838,7 +838,6 @@ public class Maze implements Environment, ActionListener {
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.2");
-        neuralNetwork.addNormalizer(6, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(10);
