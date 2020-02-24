@@ -9,6 +9,7 @@ package demo;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.MetricsType;
+import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
 import core.regularization.*;
@@ -89,7 +90,8 @@ public class SimpleDemo {
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 20");
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         return neuralNetwork;
     }
