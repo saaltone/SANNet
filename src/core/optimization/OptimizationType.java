@@ -18,6 +18,7 @@ package core.optimization;
  *    ADAM,
  *    ADAMAX,
  *    NADAM,
+ *    RADAM,
  *    AMSGRAD,
  *    RESILIENT_PROPAGATION
  *
@@ -33,6 +34,7 @@ public enum OptimizationType {
     ADAM,
     ADAMAX,
     NADAM,
+    RADAM,
     AMSGRAD,
     RESILIENT_PROPAGATION
 

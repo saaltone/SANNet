@@ -43,6 +43,8 @@ public class OptimizerFactory {
                 return (params == null) ? new Adamax() : new Adamax(params);
             case NADAM:
                 return (params == null) ? new NAdam() : new NAdam(params);
+            case RADAM:
+                return (params == null) ? new RAdam() : new RAdam(params);
             case AMSGRAD:
                 return (params == null) ? new AMSGrad() : new AMSGrad(params);
             case RESILIENT_PROPAGATION:
@@ -79,6 +81,7 @@ public class OptimizerFactory {
         if (optimizer instanceof Adam) return OptimizationType.ADAM;
         if (optimizer instanceof Adamax) return OptimizationType.ADAMAX;
         if (optimizer instanceof NAdam) return OptimizationType.NADAM;
+        if (optimizer instanceof RAdam) return OptimizationType.RADAM;
         if (optimizer instanceof AMSGrad) return OptimizationType.AMSGRAD;
         if (optimizer instanceof ResilientPropagation) return OptimizationType.RESILIENT_PROPAGATION;
         throw new NeuralNetworkException("Unknown optimizer type");
