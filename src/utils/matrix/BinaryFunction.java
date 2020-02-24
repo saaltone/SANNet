@@ -122,7 +122,7 @@ public class BinaryFunction implements Serializable {
                 break;
             case POISSON:
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> value - constant * Math.log((value > 0 ? value : 10E-8));
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant / (value > 0 ? value : 10E-8);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant / (value != 0 ? value : Double.MAX_VALUE);
                 break;
             case HINGE:
                 if (params != null) {
