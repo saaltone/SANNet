@@ -108,15 +108,6 @@ public abstract class AbstractExpression implements Serializable {
     }
 
     /**
-     * Make forward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void forwardCallbackConstant() throws MatrixException {
-        arg1.forwardCallbackConstant();
-    }
-
-    /**
      * Make forward callback to all entries of node.
      *
      * @throws MatrixException throws exception is matrix operation fails.
@@ -133,15 +124,6 @@ public abstract class AbstractExpression implements Serializable {
      */
     public void forwardCallback(int sampleIndex) throws MatrixException {
         arg1.forwardCallback(sampleIndex);
-    }
-
-    /**
-     * Make backward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void backwardCallbackConstant() throws MatrixException {
-        arg1.backwardCallbackConstant();
     }
 
     /**

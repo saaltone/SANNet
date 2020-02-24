@@ -164,7 +164,6 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence, boolean reset) throws MatrixException {
-        boolean constantCallbackExecuted = false;
         for (Integer sampleIndex : inputSequence.keySet()) {
             if (hasDependencies()) updateDependencies(sampleIndex);
 
@@ -173,11 +172,9 @@ public class Procedure implements Serializable {
             for (Integer entryIndex : inputSample.keySet()) getInputNodes().get(entryIndex).setMatrix(sampleIndex, inputSample.get(entryIndex));
 
             for (AbstractExpression expression : expressions) {
-                if (!constantCallbackExecuted) expression.forwardCallbackConstant();
                 expression.forwardCallback(sampleIndex);
                 expression.calculateExpression(sampleIndex);
             }
-            constantCallbackExecuted = true;
 
             Sample outputSample = new Sample(getOutputNodes().size());
             for (Integer entryIndex : outputNodes.keySet()) outputSample.put(entryIndex, outputNodes.get(entryIndex).getMatrix(sampleIndex));
@@ -185,6 +182,7 @@ public class Procedure implements Serializable {
 
             if (reset) reset(sampleIndex);
         }
+
     }
 
     /**
@@ -202,7 +200,6 @@ public class Procedure implements Serializable {
         }
 
         for (AbstractExpression expression : expressions) {
-            expression.forwardCallbackConstant();
             expression.forwardCallback();
             for (Integer sampleIndex : inputSequence.keySet()) {
                 expression.forwardCallback(sampleIndex);
@@ -287,7 +284,6 @@ public class Procedure implements Serializable {
     public void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException {
         int step = 0;
 
-        boolean constantCallbackExecuted = false;
         for (Integer sampleIndex : outputGradientSequence.descendingKeySet()) {
             Sample outputGradientSample = outputGradientSequence.get(sampleIndex);
 
@@ -297,9 +293,7 @@ public class Procedure implements Serializable {
             for (AbstractExpression expression : gradientExpressions) {
                 expression.calculateGradient(sampleIndex);
                 expression.backwardCallback(sampleIndex);
-                if (!constantCallbackExecuted) expression.backwardCallbackConstant();
             }
-            constantCallbackExecuted = true;
 
             Sample inputGradientSample = new Sample(inputNodes.size());
             for (Integer entryIndex : inputNodes.keySet()) inputGradientSample.put(entryIndex, inputNodes.get(entryIndex).getGradient(sampleIndex));
@@ -333,7 +327,6 @@ public class Procedure implements Serializable {
                 if (steps > 0 && ++step >= steps) break;
             }
             expression.backwardCallback();
-            expression.backwardCallbackConstant();
         }
 
         step = 0;

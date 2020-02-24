@@ -94,17 +94,6 @@ public class Node implements Serializable {
     }
 
     /**
-     * Make forward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void forwardCallbackConstant() throws MatrixException {
-        if (normalizers != null && constantNode) {
-            for (Normalization normalizer : normalizers) setMatrix(0, normalizer.forward(getMatrix(0)));
-        }
-    }
-
-    /**
      * Make forward callback to all entries of node.
      *
      * @throws MatrixException throws exception is matrix operation fails.
@@ -124,17 +113,6 @@ public class Node implements Serializable {
     public void forwardCallback(int sampleIndex) throws MatrixException {
         if (normalizers != null) {
             for (Normalization normalizer : normalizers) normalizer.forward(this, sampleIndex);
-        }
-    }
-
-    /**
-     * Make backward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void backwardCallbackConstant() throws MatrixException {
-        if (normalizers != null && constantNode) {
-            for (Normalization normalizer : normalizers) setGradient(0, normalizer.backward(getMatrix(0), getGradient(0)));
         }
     }
 

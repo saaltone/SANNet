@@ -58,16 +58,6 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     }
 
     /**
-     * Make forward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void forwardCallbackConstant() throws MatrixException {
-        super.forwardCallbackConstant();
-        arg2.forwardCallbackConstant();
-    }
-
-    /**
      * Make forward callback to all entries of node.
      *
      * @throws MatrixException throws exception is matrix operation fails.
@@ -86,16 +76,6 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     public void forwardCallback(int sampleIndex) throws MatrixException {
         super.forwardCallback(sampleIndex);
         arg2.forwardCallback(sampleIndex);
-    }
-
-    /**
-     * Make backward callback to constant (node) entry.
-     *
-     * @throws MatrixException throws exception is matrix operation fails.
-     */
-    public void backwardCallbackConstant() throws MatrixException {
-        super.backwardCallbackConstant();
-        arg2.backwardCallbackConstant();
     }
 
     /**
