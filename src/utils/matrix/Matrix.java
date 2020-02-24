@@ -1613,7 +1613,6 @@ public abstract class Matrix implements Cloneable, Serializable {
                     resultValue += getValue(rowAt + row, colAt + col) * filter.getValue(sliceRows - 1 - row, sliceCols - 1 - col);
                 }
             }
-            result.setValue(rowAt, colAt, resultValue);
         }
         else {
             for (int row = 0; row < sliceRows; row++) {
@@ -1625,8 +1624,8 @@ public abstract class Matrix implements Cloneable, Serializable {
                     }
                 }
             }
-            result.setValue(rowAt, colAt, resultValue);
         }
+        result.setValue(rowAt, colAt, resultValue);
     }
 
     /**
@@ -1768,7 +1767,6 @@ public abstract class Matrix implements Cloneable, Serializable {
                     resultValue += getValue(rowAt + row, colAt + col) * filter.getValue(row,  col);
                 }
             }
-            result.setValue(rowAt, colAt, resultValue);
         }
         else {
             for (int row = 0; row < sliceRows; row++) {
@@ -1780,8 +1778,8 @@ public abstract class Matrix implements Cloneable, Serializable {
                     }
                 }
             }
-            result.setValue(rowAt, colAt, resultValue);
         }
+        result.setValue(rowAt, colAt, resultValue);
 
     }
 
@@ -1948,7 +1946,6 @@ public abstract class Matrix implements Cloneable, Serializable {
                     }
                 }
             }
-            result.setValue(rowAt, colAt, maxValue);
         }
         else {
             for (int row = 0; row < poolSize; row++) {
@@ -1967,8 +1964,8 @@ public abstract class Matrix implements Cloneable, Serializable {
                     }
                 }
             }
-            result.setValue(rowAt, colAt, maxValue);
         }
+        result.setValue(rowAt, colAt, maxValue);
     }
 
     /**
@@ -2055,7 +2052,6 @@ public abstract class Matrix implements Cloneable, Serializable {
                     sumValue += getValue(rowAt + row, colAt + col);
                 }
             }
-            result.setValue(rowAt, colAt, sumValue / (poolSize * poolSize));
         }
         else {
             for (int row = 0; row < poolSize; row++) {
@@ -2067,8 +2063,8 @@ public abstract class Matrix implements Cloneable, Serializable {
                     }
                 }
             }
-            result.setValue(rowAt, colAt, sumValue / (poolSize * poolSize));
         }
+        result.setValue(rowAt, colAt, sumValue / (poolSize * poolSize));
     }
 
     /**
