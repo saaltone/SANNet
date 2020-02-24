@@ -166,10 +166,14 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
     public void forwardProcess() throws MatrixException, NeuralNetworkException {
         if (procedureList == null) defineProcedure();
 
+        parent.getBackward().normalizerReset();
+
         Sequence outP = parent.getBackward().getPLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? parent.getBackward().getPLayer().getOuts().flatten() : parent.getBackward().getPLayer().getOuts();
 
         parent.getBackward().regulateForward(outP);
         parent.getBackward().regulateForward();
+
+        parent.getBackward().normalizeForward();
 
         parent.resetOuts();
 
@@ -181,13 +185,14 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
         }
         previousStateTraining = parent.getBackward().isTraining();
 
-        parent.getBackward().normalizerReset();
-
         procedureList.get(currentProcedureID).calculateExpression(outP, parent.getOuts(),!parent.getBackward().isTraining() && !hasDependencies);
 
         if(!parent.getBackward().isTraining() && hasDependencies) procedureList.get(currentProcedureID).reset();
 
         if (parent.getForward() == null) parent.updateOutputError();
+
+        if (!parent.getBackward().isTraining()) parent.getBackward().normalizeFinalizeForward();
+
 
     }
 
@@ -267,6 +272,8 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
         parent.getBackward().sumGrad();
 
         parent.getBackward().regulateBackward();
+
+        parent.getBackward().normalizeBackward();
 
     }
 
