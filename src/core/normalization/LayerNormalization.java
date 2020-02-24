@@ -15,6 +15,7 @@ import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -164,6 +165,13 @@ public class LayerNormalization implements Normalization, Serializable {
     }
 
     /**
+     * Defined which parameters are to be normalized.
+     *
+     * @param norm normalizable parameters.
+     */
+    public void setNormalizableParameters(HashSet<Matrix> norm) {}
+
+    /**
      * Executes forward propagation step for Layer normalization at step start.<br>
      * Calculates feature wise mean and variance for each sample independently.<br>
      * Removes mean and variance from input samples.<br>
@@ -288,17 +296,25 @@ public class LayerNormalization implements Normalization, Serializable {
      * Not used.
      *
      * @param W weight for normalization.
-     * @return normalized weight.
      */
-    public Matrix forward(Matrix W) { return W; }
+    public void forward(Matrix W) {
+    }
+
+    /**
+     * Not used.
+     *
+     * @param W weight for normalization.
+     */
+    public void forwardFinalize(Matrix W) {
+    }
 
     /**
      * Not used.
      *
      * @param W weight for backward's normalization.
      * @param dW gradient of weight for backward normalization.
-     * @return input weight gradients for backward normalization.
      */
-    public Matrix backward(Matrix W, Matrix dW) { return dW; }
+    public void backward(Matrix W, Matrix dW) {
+    }
 
 }
