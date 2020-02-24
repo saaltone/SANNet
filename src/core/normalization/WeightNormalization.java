@@ -14,6 +14,7 @@ import utils.procedure.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Class that implements Weight Normalization for neural network layer.<br>
@@ -26,6 +27,18 @@ public class WeightNormalization implements Normalization, Serializable {
     private static final long serialVersionUID = 1741544680542755148L;
 
     /**
+     * If true neural network is in state otherwise false.
+     *
+     */
+    private transient boolean isTraining;
+
+    /**
+     * Normalizable parameters.
+     *
+     */
+    private HashSet<Matrix> norm;
+
+    /**
      * Tree map for un-normalized weights.
      *
      */
@@ -36,6 +49,12 @@ public class WeightNormalization implements Normalization, Serializable {
      *
      */
     private final HashMap<Matrix, Double> iNorms = new HashMap<>();
+
+    /**
+     * Tree map for storing Identity matrices for backward calculation.
+     *
+     */
+    private final HashMap<Matrix, Matrix> Is = new HashMap<>();
 
     /**
      * Weight normalization scalar.
@@ -99,6 +118,7 @@ public class WeightNormalization implements Normalization, Serializable {
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
+        this.isTraining = isTraining;
     }
 
     /**
@@ -110,38 +130,54 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
+     * Defined which parameters are to be normalized.
+     *
+     * @param norm normalizable parameters.
+     */
+    public void setNormalizableParameters(HashSet<Matrix> norm) {
+        this.norm = norm;
+    }
+
+    /**
      * Normalizes each weight for forward step i.e. multiplies each weight matrix by g / sqrt(2-norm of weights).
      *
      * @param W weight for normalization.
-     * @return normalized weight.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix forward(Matrix W) throws MatrixException {
-        if (Ws.containsKey(W)) return Ws.get(W);
-        else {
-            Matrix Wnorm = W.copy();
-            double iNorm = 1 / Math.sqrt(Wnorm.norm(2));
-            iNorms.put(Wnorm, iNorm);
-            Wnorm.multiply(g * iNorm, Wnorm);
-            Ws.put(Wnorm, W);
-            return Wnorm;
-        }
+    public void forward(Matrix W) throws MatrixException {
+        if (!norm.contains(W)) return;
+        Ws.put(W, W.copy());
+        double iNorm = 1 / Math.sqrt(W.norm(2));
+        iNorms.put(W, iNorm);
+        W.multiply(g * iNorm, W);
+    }
+
+    /**
+     * Finalizes forward step for normalization.<br>
+     * Used typically for weight normalization.<br>
+     *
+     * @param W weight for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardFinalize(Matrix W) throws MatrixException {
+        if (!norm.contains(W)) return;
+        if (!isTraining) W.setEqualTo(Ws.get(W));
     }
 
     /**
      * Executes backward propagation step for Weight normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
-     * @param Wnorm weight for backward normalization.
+     * @param W weight for backward normalization.
      * @param dW gradient of weight for backward normalization.
-     * @return input weight gradients for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix backward(Matrix Wnorm, Matrix dW) throws MatrixException {
-        double iNorm = iNorms.get(Wnorm);
-        Wnorm.setEqualTo(Ws.get(Wnorm));
-        Matrix dg = dW.multiply(Wnorm).multiply(iNorm);
-        return dW.multiply(g * iNorm).subtract(dg.multiply(g * Math.pow(iNorm, 2)).multiply(Wnorm));
+    public void backward(Matrix W, Matrix dW) throws MatrixException {
+        if (!norm.contains(W)) return;
+        double iNorm = iNorms.get(W);
+        double dg = dW.dot(W.T()).multiply(iNorm).sum();
+        dW.multiply(g * iNorm).subtract(Ws.get(W).multiply(dg * g * Math.pow(iNorm, 2)), dW);
+        W.setEqualTo(Ws.get(W));
     }
 
     /**
