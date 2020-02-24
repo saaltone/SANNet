@@ -12,7 +12,6 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
-import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
@@ -837,7 +836,8 @@ public class Maze implements Environment, ActionListener {
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.2");
+//        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.2");
+        neuralNetwork.addNormalizer(6, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(100, false, true);
         neuralNetwork.setTrainingIterations(10);
