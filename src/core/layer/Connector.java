@@ -423,6 +423,7 @@ public class Connector implements Serializable {
         }
         Normalization normalizer = NormalizationFactory.create(normalizationType, params);
         normalizers.add(normalizer);
+        normalizer.setNormalizableParameters(norm);
         if (optimizer != null) normalizer.setOptimizer(optimizer);
     }
 
@@ -652,7 +653,48 @@ public class Connector implements Serializable {
      */
     public void regulateForward() {
         for (Regularization regularizer : regularizers) {
-            for (Matrix W : reg) regularizer.forward(W);
+            for (Matrix W : reg) {
+                regularizer.forward(W);
+            }
+        }
+    }
+
+    /**
+     * Executes regularization methods with forward step.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void normalizeForward() throws MatrixException {
+        for (Normalization normalizer : normalizers) {
+            for (Matrix W : norm) {
+                normalizer.forward(W);
+            }
+        }
+    }
+
+    /**
+     * Executes regularization methods with forward step to finalize.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void normalizeFinalizeForward() throws MatrixException {
+        for (Normalization normalizer : normalizers) {
+            for (Matrix W : norm) {
+                normalizer.forwardFinalize(W);
+            }
+        }
+    }
+
+    /**
+     * Executes regularization methods with forward step to finalize.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void normalizeBackward() throws MatrixException {
+        for (Normalization normalizer : normalizers) {
+            for (Matrix W : norm) {
+                normalizer.backward(W, getdWsSums(W));
+            }
         }
     }
 
