@@ -10,7 +10,6 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.DeepAgent;
@@ -558,7 +557,6 @@ public class TSP implements Environment {
         neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         neuralNetwork.setTrainingSampling(32, false, true);
         neuralNetwork.setTrainingIterations(50);
