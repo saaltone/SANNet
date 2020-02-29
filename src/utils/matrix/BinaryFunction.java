@@ -97,32 +97,32 @@ public class BinaryFunction implements Serializable {
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (value - constant);
                 break;
             case MEAN_SQUARED_LOGARITHMIC_ERROR:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.pow(Math.log(constant + 1 > 0 ? constant + 1 : 10E-8) - Math.log(value + 1 > 0 ? value + 1 : 10E-8), 2);
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -2 * (Math.log(constant + 1 > 0 ? constant + 1 : 10E-8) - Math.log(value + 1 > 0 ? value + 1 : 10E-8)) / (constant + 1 != 0 ? constant + 1 : Double.MAX_VALUE);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.pow(Math.log(constant + 1) - Math.log(value + 1), 2);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -2 * (Math.log(constant + 1) - Math.log(value + 1)) / (constant + 1);
                 break;
             case MEAN_ABSOLUTE_ERROR:
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.signum(value - constant);
                 break;
             case MEAN_ABSOLUTE_PERCENTAGE_ERROR:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant != 0 ? 100 * Math.abs((value - constant) / constant) : Double.MAX_VALUE;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * (value - constant) / ((constant != 0 && (value - constant) != 0) ? Math.abs(constant) * Math.abs(value - constant) : Double.MAX_VALUE);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * Math.abs((value - constant) / constant);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * (value - constant) / (Math.abs(constant) * Math.abs(value - constant));
                 break;
             case CROSS_ENTROPY:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value > 0 ? value : 10E-8));
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / (value > 0 ? value : 10E-8));
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value));
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value);
                 break;
             case KULLBACK_LEIBLER:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (constant * Math.log(constant > 0 ? constant : 10E-8) - constant * Math.log((value > 0 ? value : 10E-8)));
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / (value > 0 ? value : 10E-8));
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (constant * Math.log(constant) - constant * Math.log((value)));
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value);
                 break;
             case NEGATIVE_LOG_LIKELIHOOD:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log((value > 0 ? value : 10E-8));
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -1 / (value > 0 ? value : 10E-8);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log((value));
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -1 / value;
                 break;
             case POISSON:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> value - constant * Math.log((value > 0 ? value : 10E-8));
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant / (value != 0 ? value : Double.MAX_VALUE);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> value - constant * Math.log(value);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant / value;
                 break;
             case HINGE:
                 if (params != null) {
