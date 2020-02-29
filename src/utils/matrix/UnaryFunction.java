@@ -138,7 +138,7 @@ public class UnaryFunction implements Serializable {
         switch(unaryFunctionType) {
             case ABS:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::abs;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? value / Math.abs(value) : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value / Math.abs(value);
                 return;
             case COS:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cos;
@@ -154,15 +154,15 @@ public class UnaryFunction implements Serializable {
                 return;
             case LOG:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::log;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 1 / value : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / value;
                 return;
             case LOG10:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::log10;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 1 / (Math.log(10) * value) : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (Math.log(10) * value);
                 return;
             case SGN:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::signum;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 0 : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0;
                 return;
             case SIN:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::sin;
@@ -174,15 +174,15 @@ public class UnaryFunction implements Serializable {
                 return;
             case SQRT:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::sqrt;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 1 / (2 * Math.sqrt(value)) : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (2 * Math.sqrt(value));
                 return;
             case CBRT:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cbrt;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 1 / (3 * Math.cbrt(value * value)) : Double.MAX_VALUE;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (3 * Math.cbrt(value * value));
                 return;
             case MULINV:
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? 1 / value : Double.MAX_VALUE;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value != 0 ? -1 / Math.pow(value, 2) : Double.MAX_VALUE;
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / value;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / Math.pow(value, 2);
                 return;
             case TAN:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::tan;
