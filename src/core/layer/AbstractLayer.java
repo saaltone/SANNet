@@ -158,6 +158,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
      * Returns name of layer
      *
      * @return name of layer
+     * @throws NeuralNetworkException throws exception if operation fails.
      */
     private String getLayerName() throws NeuralNetworkException {
         String layerName;
@@ -343,7 +344,7 @@ public abstract class AbstractLayer implements Runnable, Serializable {
     /**
      * Initializes execution layer.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if intialization fails.
      */
     public void initialize() throws MatrixException, NeuralNetworkException {
