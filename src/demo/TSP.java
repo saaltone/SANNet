@@ -10,10 +10,15 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
-import core.reinforcement.Agent;
-import core.reinforcement.DeepAgent;
-import core.reinforcement.Environment;
+import core.reinforcement.*;
+import core.reinforcement.algorithm.*;
+import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.function.NNFunctionEstimator;
+import core.reinforcement.function.TabularFunctionEstimator;
+import core.reinforcement.policy.*;
+import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
 
@@ -22,6 +27,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 
 /**
@@ -65,13 +71,7 @@ public class TSP implements Environment {
      * Number of cities for travelling salesman.
      *
      */
-    private static final int numberOfCities = 4;
-
-    /**
-     * Random number generator.
-     *
-     */
-    private final Random random = new Random();
+    private static final int numberOfCities = 5;
 
     /**
      * Hashmap for storing cities.
@@ -138,21 +138,22 @@ public class TSP implements Environment {
      * Agent that solves travelling salesman problem. Agent acts as travelling salesman.
      *
      */
-    private DeepAgent agent;
+    private final Agent agent;
 
     /**
      * Constructor for travelling salesman problem.
      *
      * @param cityAmount number of cities to be visited.
-     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
+     * @throws IOException throws exception if copying of neural network instance fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
      */
     public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+        Random random = new Random();
         for (int city = 0; city < cityAmount; city++) cities.put(city, new City(10 * random.nextDouble(), 10 * random.nextDouble()));
-        agent = createAgent(2 * cityAmount, cityAmount);
+        agent = createAgent(4 * cityAmount, cityAmount);
     }
 
     /**
@@ -160,12 +161,12 @@ public class TSP implements Environment {
      *
      */
     private void updateState() {
-        state = new DMatrix(2 * cities.size(), 1);
+        state = new DMatrix(4 * cities.size(), 1);
         for (Integer index : cities.keySet()) {
             City city = cities.get(index);
-            double visited = visitedCities.contains(index) ? -1 : 1;
-            state.setValue(2 * index, 0, city.x / 10 * visited);
-            state.setValue(2 * index + 1, 0, city.y / 10 * visited);
+            int visited = visitedCities.contains(index) ? 0 : cities.size();
+            state.setValue(visited + 2 * index, 0, city.x / 10);
+            state.setValue(visited + 2 * index + 1, 0, city.y / 10);
         }
     }
 
@@ -236,9 +237,9 @@ public class TSP implements Environment {
         try {
             tsp = new TSP(numberOfCities);
             tsp.initWindow();
-            for (int tour = 0; tour < 100000; tour++) {
+            for (int tour = 0; tour < 1000000; tour++) {
                 tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " Min: " + tsp.getMinDistance() + " Max: " + tsp.getMaxDistance() + " (Epsilon: " + tsp.getEpsilon() + ")");
+                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " Min: " + tsp.getMinDistance() + " Max: " + tsp.getMaxDistance());
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -270,8 +271,8 @@ public class TSP implements Environment {
      *
      * @return available actions in current state of environment.
      */
-    public ArrayList<Integer> getAvailableActions() {
-        ArrayList<Integer> availableActions = new ArrayList<>();
+    public HashSet<Integer> getAvailableActions() {
+        HashSet<Integer> availableActions = new HashSet<>();
         if (visitedCities.size() == cities.size()) availableActions.add(startCity);
         else {
             for (Integer city : cities.keySet()) {
@@ -282,34 +283,13 @@ public class TSP implements Environment {
     }
 
     /**
-     * Checks if action is valid.
-     *
-     * @param agent  agent that is taking action.
-     * @param action action to be taken.
-     * @return true if action can be taken successfully.
-     */
-    public boolean isValidAction(Agent agent, int action) {
-        return getAvailableActions().contains(action);
-    }
-
-    /**
-     * Requests (random) action defined by environment.
-     *
-     * @param agent agent that is taking action.
-     * @return action taken
-     */
-    public int requestAction(Agent agent) {
-        ArrayList<Integer> availableActions = getAvailableActions();
-        return availableActions.get(random.nextInt(availableActions.size()));
-    }
-
-    /**
      * Takes specific action.
      *
      * @param agent  agent that is taking action.
      * @param action action to be taken.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void commitAction(Agent agent, int action) {
+    public void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException {
         visitedCities.add(action);
         updateState();
         setReward(agent);
@@ -319,8 +299,11 @@ public class TSP implements Environment {
      * Requests immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setReward(Agent agent) {
+    public void setReward(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException {
         int fromCity = visitedCities.get(visitedCities.size() - 2);
         int toCity = visitedCities.get(visitedCities.size() - 1);
         double distance = getDistance(cities.get(fromCity), cities.get(toCity));
@@ -334,9 +317,10 @@ public class TSP implements Environment {
                 maxDistance = totalDistance;
                 visitedCitiesMax = visitedCities;
             }
-            agent.setReward(10 * (maxDistance - distance) / maxDistance);
+//            agent.respond(-distance / (numberOfCities * numberOfCities), true);
+            agent.respond(Math.exp(-distance), true);
         }
-        else agent.setReward(0);
+        else agent.respond(0, false);
     }
 
     /**
@@ -482,30 +466,21 @@ public class TSP implements Environment {
     }
 
     /**
-     * Returns current value of epsilon.
-     *
-     * @return current value of epsilon.
-     */
-    private double getEpsilon() {
-        return agent.getEpsilon();
-    }
-
-    /**
      * Single journey of travelling salesman taken by deep agent.
      *
      * @param redraw if true current journey is drawn to window.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void route(boolean redraw) throws MatrixException, NeuralNetworkException {
+    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException {
         resetRoute();
 
         getAgent().newEpisode();
         while (!isTerminalState()) {
-            getAgent().newStep(true);
-            getAgent().executePolicy(false, false);
+            getAgent().newStep();
+            getAgent().act();
         }
-        getAgent().commitStep();
 
         if (redraw) {
             jFrame.remove(tspPanel);
@@ -531,12 +506,39 @@ public class TSP implements Environment {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, replayBufferSize = 20000, epsilonDecayRate = 0.999, epsilonDecayByEpisode = false, gamma = 0.99");
+    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+        boolean policyGradient = true;
+        boolean stateValue = true;
+        int policyType = 1;
+        boolean nnPolicyEstimator = true;
+        boolean nnValueEstimator = true;
+        boolean basicPolicy = false;
+        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false)) : new TabularFunctionEstimator(outputAmount);
+        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, (stateValue ? 1 : outputAmount), false, stateValue)) : new TabularFunctionEstimator(outputAmount);
+        Policy policy = null;
+        switch (policyType) {
+            case 1:
+                policy = new EpsilonGreedyPolicy("epsilonMin = 0");
+                break;
+            case 2:
+                policy = new NoisyPolicy();
+                break;
+            case 3:
+                policy = new WeightedRandomPolicy();
+                break;
+        }
+        Agent agent;
+        if (!policyGradient) {
+            agent = new DDQNLearningAbstract(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
+//            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
+        }
+        else {
+            UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator, "epsilon = 0.1");
+//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(outputAmount));
+            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = True"));
+        }
         agent.start();
         return agent;
     }
@@ -550,17 +552,27 @@ public class TSP implements Environment {
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = 100");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
-        neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
-        neuralNetwork.setTrainingSampling(32, false, true);
-        neuralNetwork.setTrainingIterations(50);
-        neuralNetwork.verboseTraining(100);
+        if (!policyFunction) {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
+            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.TANH), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.setLossFunction(BinaryFunctionType.MEAN_ABSOLUTE_ERROR);
+            neuralNetwork.build();
+            neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
+            neuralNetwork.setOptimizer(OptimizationType.ADAM);
+            neuralNetwork.verboseTraining(10);
+        }
+        else {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
+            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
+            neuralNetwork.build();
+            neuralNetwork.setOptimizer(OptimizationType.NADAM);
+        }
         return neuralNetwork;
     }
 

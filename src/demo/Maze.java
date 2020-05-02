@@ -10,11 +10,17 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
-import core.reinforcement.DeepAgent;
 import core.reinforcement.Environment;
+import core.reinforcement.OnlineBuffer;
+import core.reinforcement.algorithm.*;
+import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.function.NNFunctionEstimator;
+import core.reinforcement.function.TabularFunctionEstimator;
+import core.reinforcement.policy.*;
+import core.reinforcement.value.PlainValueFunction;
+import core.reinforcement.value.ValueFunctionEstimator;
 import utils.*;
 import utils.matrix.*;
 
@@ -472,7 +478,7 @@ public class Maze implements Environment, ActionListener {
      * Reference to deep agent.
      *
      */
-    private DeepAgent agent;
+    private Agent agent;
 
     /**
      * State of environment (agent).
@@ -637,14 +643,15 @@ public class Maze implements Environment, ActionListener {
     /**
      * Plays maze game until user quits game (closes window).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void playAgent() throws MatrixException, NeuralNetworkException {
+    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException {
         while (true) {
-            agent.newEpisode(false);
-            agent.newStep(true);
-            agent.executePolicy(false, false);
+//            agent.newEpisode(false);
+            agent.newStep();
+            agent.act();
 
             mazePanel.updateAgentHistory(mazeAgentHistory);
             jFrame.revalidate();
@@ -711,8 +718,8 @@ public class Maze implements Environment, ActionListener {
      *
      * @return available actions in current state of environment.
      */
-    public ArrayList<Integer> getAvailableActions() {
-        ArrayList<Integer> availableActions = new ArrayList<>();
+    public HashSet<Integer> getAvailableActions() {
+        HashSet<Integer> availableActions = new HashSet<>();
         Cell cell = maze[mazeAgentCurrent.x][mazeAgentCurrent.y];
         for (int index = 0; index < cell.neighbors.length; index++) {
             Neighbor neighbor = cell.neighbors[index];
@@ -721,27 +728,6 @@ public class Maze implements Environment, ActionListener {
         return availableActions;
     }
 
-    /**
-     * Checks if action is valid.
-     *
-     * @param agent agent that is taking action.
-     * @param action action to be taken.
-     * @return true if action can be taken successfully.
-     */
-    public boolean isValidAction(Agent agent, int action) {
-        return getAvailableActions().contains(action);
-    }
-
-    /**
-     * Requests (random) action defined by environment.
-     *
-     * @param agent agent that is taking action.
-     * @return action taken
-     */
-    public int requestAction(Agent agent) {
-        ArrayList<Integer> availableActions = getAvailableActions();
-        return availableActions.get(random.nextInt(availableActions.size()));
-    }
 
     /**
      * Takes specific action.
@@ -749,7 +735,7 @@ public class Maze implements Environment, ActionListener {
      * @param agent  agent that is taking action.
      * @param action action to be taken.
      */
-    public void commitAction(Agent agent, int action) {
+    public void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException {
         int x = mazeAgentCurrent.x;
         int y = mazeAgentCurrent.y;
         switch (action) {
@@ -772,10 +758,12 @@ public class Maze implements Environment, ActionListener {
      *
      * @param agent agent that is asking for reward.
      */
-    private void setReward(Agent agent) {
-        if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.setReward(0);
+    private void setReward(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.respond(0, true);
         else {
-            agent.setReward(0.1 + 0.9 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3));
+            double distanceToStart = 1 - 1 / Math.max(1, Math.sqrt(Math.pow((double)size / 2 - mazeAgentCurrent.x, 2) + Math.pow((double)size / 2 - mazeAgentCurrent.y, 2)));
+            agent.respond(distanceToStart / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3), true);
+//            agent.respond(1 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3), true);
         }
     }
 
@@ -808,9 +796,39 @@ public class Maze implements Environment, ActionListener {
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private DeepAgent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        NeuralNetwork QNN = buildNeuralNetwork(inputAmount, outputAmount);
-        DeepAgent agent = new DeepAgent(this, QNN, "trainCycle = 10, gamma = 0.85, replayBufferSize = 20000, epsilonDecayByEpisode = false, epsilonDecayRate = 0.999, epsilonMin = 0.0");
+    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+        boolean policyGradient = false;
+        boolean stateValue = false;
+        int policyType = 2;
+        boolean nnPolicyEstimator = true;
+        boolean nnValueEstimator = true;
+        boolean basicPolicy = false;
+        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false)) : new TabularFunctionEstimator(outputAmount);
+        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, (stateValue ? 1 : outputAmount), false, stateValue)) : new TabularFunctionEstimator(outputAmount);
+        Policy policy = null;
+        switch (policyType) {
+            case 1:
+                policy = new EpsilonGreedyPolicy();
+                break;
+            case 2:
+                policy = new NoisyPolicy("minExplorationNoise = 0.05");
+                break;
+            case 3:
+                policy = new WeightedRandomPolicy();
+                break;
+        }
+        Agent agent;
+        if (!policyGradient) {
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
+//            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
+            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
+        }
+        else {
+            UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator);
+//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(outputAmount, "useBaseline = True"), "episodic = False, updateCycle = 10");
+//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = False"), "episodic = False, updateCycle = 10");
+            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = True"), "episodic = False, updateCycle = 10");
+        }
         agent.start();
         return agent;
     }
@@ -824,24 +842,32 @@ public class Maze implements Environment, ActionListener {
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws MatrixException, DynamicParamException, NeuralNetworkException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        if (!policyFunction) {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+            neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
+            neuralNetwork.verboseTraining(10);
+        }
+        else {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
+        }
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.ADAM);
-//        neuralNetwork.addRegularizer(RegularizationType.DROPOUT, "probability = 0.2");
-        neuralNetwork.addNormalizer(6, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
-        neuralNetwork.setTrainingSampling(100, false, true);
-        neuralNetwork.setTrainingIterations(10);
-        neuralNetwork.verboseTraining(100);
+        neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
         return neuralNetwork;
     }
 
