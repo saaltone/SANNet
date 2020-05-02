@@ -23,7 +23,7 @@ public class DynamicParamException extends Exception {
      *
      * @param cause verbal text of exception cause.
      */
-    DynamicParamException(String cause) {
+    public DynamicParamException(String cause) {
         this.cause = cause;
     }
 
