@@ -155,8 +155,8 @@ public class ProcedureFactory implements Serializable {
      * Ends building of current procedure.
      *
      * @param outputMatrices output matrices.
-     * @throws MatrixException throws exception if setting of output matrix and node fails.
      * @return constructed current procedure.
+     * @throws MatrixException throws exception if setting of output matrix and node fails.
      */
     public LinkedList<Procedure> endProcedure(Sample outputMatrices) throws MatrixException {
         for (Integer index : outputMatrices.keySet()) {
@@ -435,6 +435,7 @@ public class ProcedureFactory implements Serializable {
      * @param matrix matrix for node.
      * @param resultNode if true node is result node.
      * @return defined node.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     private Node defineNode(Matrix matrix, boolean resultNode, HashSet<Normalization> normalizers) throws MatrixException {
         boolean isConstantNode = !(currentProcedureData.inputSample.contains(matrix) || resultNode);
