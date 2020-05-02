@@ -44,7 +44,7 @@ public abstract class AbstractExpression implements Serializable {
      * @param result result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractExpression(int expressionID, Node arg1, Node result) throws MatrixException{
+    public AbstractExpression(int expressionID, Node arg1, Node result) throws MatrixException {
         this.expressionID = expressionID;
         if (arg1 == null) throw new MatrixException("First argument not defined.");
         this.arg1 = arg1;
@@ -100,7 +100,7 @@ public abstract class AbstractExpression implements Serializable {
      * Resets nodes of expression for specific data index.
      *
      * @param index data index.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void resetExpression(int index) throws MatrixException {
         arg1.resetNode(index);
@@ -110,7 +110,7 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Make forward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback() throws MatrixException {
         arg1.forwardCallback();
@@ -120,7 +120,7 @@ public abstract class AbstractExpression implements Serializable {
      * Make forward callback to specific entry (sample)
      *
      * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback(int sampleIndex) throws MatrixException {
         arg1.forwardCallback(sampleIndex);
@@ -129,7 +129,7 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Make backward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback() throws MatrixException {
         arg1.backwardCallback();
@@ -139,7 +139,7 @@ public abstract class AbstractExpression implements Serializable {
      * Make backward callback to specific entry (sample)
      *
      * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback(int sampleIndex) throws MatrixException {
         arg1.backwardCallback(sampleIndex);
