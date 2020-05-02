@@ -50,13 +50,114 @@ public class Metrics {
         private double cumulativeError;
 
         /**
+         * Predictions for R2 calculation.
+         *
+         */
+        private final LinkedHashMap<Integer, Matrix> predictions = new LinkedHashMap<>();
+
+        /**
+         * Actuals for R2 calculation.
+         *
+         */
+        private final LinkedHashMap<Integer, Matrix> actuals = new LinkedHashMap<>();
+
+        /**
+         * Returns regression accuracy for predicted / actual sample pair.
+         *
+         * @param predicted predicted sample.
+         * @param actual actual (true) sample.
+         * @return regression accuracy.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        private double getRegressionAccuracy(Matrix predicted, Matrix actual) throws MatrixException {
+            return 1 - Math.sqrt(actual.subtract(predicted).power(2).sum());
+        }
+
+        /**
+         * Updates regression accuracy for single predicted / actual sample pair.<br>
+         *
+         * @param predicted predicted sample.
+         * @param actual actual (true) sample.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public void update(Matrix predicted, Matrix actual) throws MatrixException {
+            update(1- getRegressionAccuracy(predicted, actual));
+        }
+
+        /**
+         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
+         * Assumes hash map structure for samples.<br>
+         *
+         * @param predicted predicted samples.
+         * @param actual actual (true) samples.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException {
+            double error = 0;
+            for (int sample = 0; sample < actual.size(); sample++) {
+                error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
+            }
+            update(1- error / actual.size());
+        }
+
+        /**
+         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
+         * Assumes tree map structure for samples.<br>
+         *
+         * @param predicted predicted samples.
+         * @param actual actual (true) samples.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public void update(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException {
+            double error = 0;
+            for (int sample = 0; sample < actual.size(); sample++) {
+                error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
+            }
+            update(1- error / actual.size());
+        }
+
+        /**
+         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
+         * Assumes sequence for samples.<br>
+         *
+         * @param predicted predicted samples.
+         * @param actual actual (true) samples.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public void update(Sequence predicted, Sequence actual) throws MatrixException {
+            double error = 0;
+            for (Integer sampleIndex : predicted.keySet()) {
+                for (Integer matrixIndex : predicted.sampleKeySet()) {
+                    error += getRegressionAccuracy(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
+                }
+            }
+            update(1- error / actual.totalSize());
+            cumulateR2Values(predicted, actual);
+        }
+
+        /**
          * Updates cumulative error and increments sample count.
          *
          * @param error error to be cumulated.
          */
-        public void update(double error) {
+        private void update(double error) {
             cumulativeError += error;
             count++;
+        }
+
+        /**
+         * Cumulates predictions and actuals R2 values calculation.
+         *
+         * @param predicted predicted samples.
+         * @param actual actual (true) samples.
+         */
+        private void cumulateR2Values(Sequence predicted, Sequence actual) {
+            for (Integer sampleIndex : actual.keySet()) {
+                for (Integer matrixIndex : actual.sampleKeySet()) {
+                    predictions.put(predictions.size(), predicted.get(sampleIndex, matrixIndex));
+                    actuals.put(actuals.size(), actual.get(sampleIndex, matrixIndex));
+                }
+            }
         }
 
         /**
@@ -84,6 +185,45 @@ public class Metrics {
          */
         public double getAverageError() {
             return count == 0 ? 0 : cumulativeError / (double)count;
+        }
+
+        /**
+         * Returns nd calculates average R2 values.
+         *
+         * @return average R2 values.
+         * @throws MatrixException throws exception if matrix operation fails.
+         */
+        public Matrix getAverageR2Values() throws MatrixException {
+            if (predictions.isEmpty() || actuals.isEmpty()) return null;
+            // Calculate mean of actual values.
+            Matrix actualMean = null;
+            for (Integer index : actuals.keySet()) {
+                Matrix actual = actuals.get(index);
+                actualMean = actualMean == null ? actual : actualMean.add(actual);
+            }
+            if (actualMean == null) return null;
+            actualMean.divide(actuals.size(), actualMean);
+
+            // Calculate total sum of squares and sum of squares of residuals.
+            Matrix totalSumOfSquares = null;
+            Matrix totalSumOfResiduals = null;
+            for (Integer index : actuals.keySet()) {
+                Matrix actual = actuals.get(index);
+                Matrix prediction = predictions.get(index);
+                Matrix totalSumOfSquare = actual.subtract(actualMean).power(2);
+                totalSumOfSquares = totalSumOfSquares == null ? totalSumOfSquare : totalSumOfSquares.add(totalSumOfSquare);
+                Matrix totalSumOfResidual = actual.subtract(prediction).power(2);
+                totalSumOfResiduals = totalSumOfResiduals == null ? totalSumOfResidual : totalSumOfResiduals.add(totalSumOfResidual);
+            }
+            if (totalSumOfSquares == null || totalSumOfResiduals == null) return null;
+            for (int row = 0; row < totalSumOfSquares.getRows(); row++) {
+                for (int col = 0; col < totalSumOfSquares.getCols(); col++) {
+                    if (totalSumOfSquares.getValue(row, col) == 0) return null;
+                }
+            }
+            predictions.clear();
+            actuals.clear();
+            return totalSumOfResiduals.divide(totalSumOfSquares).multiply(-1).add(1);
         }
 
         /**
@@ -340,7 +480,7 @@ public class Metrics {
      * Metrics type: classification or regression.
      *
      */
-    private MetricsType metricsType;
+    private final MetricsType metricsType;
 
     /**
      * Reference to classification statistics.
@@ -373,6 +513,12 @@ public class Metrics {
      *
      */
     private TreeMap<Integer, Double> errors = new TreeMap<>();
+
+    /**
+     * Average R2 values.
+     *
+     */
+    private Matrix averageR2Values;
 
     /**
      * Number of errors recorded into error history.
@@ -444,10 +590,9 @@ public class Metrics {
      * @param predicted predicted sample.
      * @param actual actual (true) sample.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if reporting of error fails.
      */
-    public void report(Matrix predicted, Matrix actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType == MetricsType.REGRESSION) regression.update(1 - regressionAccuracy(predicted, actual));
+    public void report(Matrix predicted, Matrix actual) throws MatrixException {
+        if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
 
@@ -461,7 +606,7 @@ public class Metrics {
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
     public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType == MetricsType.REGRESSION) regression.update(1 - regressionAccuracy(predicted, actual));
+        if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
 
@@ -475,7 +620,7 @@ public class Metrics {
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
     public void report(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType == MetricsType.REGRESSION) regression.update(1 - regressionAccuracy(predicted, actual));
+        if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
 
@@ -489,7 +634,7 @@ public class Metrics {
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType == MetricsType.REGRESSION) regression.update(1 - regressionAccuracy(predicted, actual));
+        if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
 
@@ -516,11 +661,16 @@ public class Metrics {
      * Does not reset current error.<br>
      *
      * @param iteration iteration index for error history.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
      */
-    public void store(int iteration) throws NeuralNetworkException {
+    public void store(int iteration) throws MatrixException, NeuralNetworkException {
         errors.remove(iteration - errorHistorySize);
-        if (metricsType == MetricsType.REGRESSION) errors.put(iteration, regression.getAverageError());
+        if (metricsType == MetricsType.REGRESSION) {
+            errors.put(iteration, regression.getAverageError());
+            Matrix currentAverageR2Values = regression.getAverageR2Values();
+            if (currentAverageR2Values != null) averageR2Values = averageR2Values == null ? currentAverageR2Values : averageR2Values.multiply(0.9).add(currentAverageR2Values.multiply(0.1));
+        }
         else errors.put(iteration, 1 - classificationAccuracy());
     }
 
@@ -529,9 +679,10 @@ public class Metrics {
      *
      * @param iteration iteration index for error history.
      * @param reset if true resets current error otherwise not.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
      */
-    public void store(int iteration, boolean reset) throws NeuralNetworkException {
+    public void store(int iteration, boolean reset) throws MatrixException, NeuralNetworkException {
         store(iteration);
         if (reset) resetError();
     }
@@ -667,6 +818,14 @@ public class Metrics {
             if (index <= start - lastNIterations) break;
         }
         return max;
+    }
+    /**
+     * Returns average R2 values.
+     *
+     * @return average R2 values.
+     */
+    public Matrix getAverageR2Values() {
+        return averageR2Values;
     }
 
     /**
@@ -807,79 +966,6 @@ public class Metrics {
     public Classification getClassificationMetrics() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         return classification;
-    }
-
-    /**
-     * Returns regression accuracy for predicted / actual sample pair.
-     *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
-     * @return regression accuracy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception is metrics is not defined as regression type.
-     */
-    public double regressionAccuracy(Matrix predicted, Matrix actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType != MetricsType.REGRESSION) throw new NeuralNetworkException("Not regression metric.");
-        return 1 - Math.sqrt(actual.subtract(predicted).power(2).sum());
-    }
-
-    /**
-     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
-     * Assumes hash map structure for samples.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @return regression accuracy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception is metrics is not defined as regression type.
-     */
-    public double regressionAccuracy(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType != MetricsType.REGRESSION) throw new NeuralNetworkException("Not regression metric.");
-        double error = 0;
-        for (int sample = 0; sample < actual.size(); sample++) {
-            error += regressionAccuracy(predicted.get(sample), actual.get(sample));
-        }
-        return error / actual.size();
-    }
-
-    /**
-     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
-     * Assumes tree map structure for samples.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @return regression accuracy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception is metrics is not defined as regression type.
-     */
-    public double regressionAccuracy(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType != MetricsType.REGRESSION) throw new NeuralNetworkException("Not regression metric.");
-        double error = 0;
-        for (int sample = 0; sample < actual.size(); sample++) {
-            error += regressionAccuracy(predicted.get(sample), actual.get(sample));
-        }
-        return error / actual.size();
-    }
-
-    /**
-     * Returns regression accuracy for multiple predicted / actual sample pairs.<br>
-     * Assumes sequence for samples.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @return regression accuracy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception is metrics is not defined as regression type.
-     */
-    public double regressionAccuracy(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
-        if (metricsType != MetricsType.REGRESSION) throw new NeuralNetworkException("Not regression metric.");
-        double error = 0;
-        for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.sampleKeySet()) {
-                error += regressionAccuracy(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
-            }
-        }
-        return error / actual.totalSize();
     }
 
     /**
