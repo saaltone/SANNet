@@ -7,7 +7,7 @@
 package core.preprocess;
 
 import core.NeuralNetworkException;
-import utils.matrix.Matrix;
+import utils.Sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,14 +30,14 @@ public class DataSplitter {
      * @return split training and test sample tests.
      * @throws NeuralNetworkException throws exception if invalid inputs are given.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Matrix>> split(HashMap<Integer, LinkedHashMap<Integer, Matrix>> data, double testDataShare, boolean randomize) throws NeuralNetworkException {
+    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> split(HashMap<Integer, LinkedHashMap<Integer, Sample>> data, double testDataShare, boolean randomize) throws NeuralNetworkException {
         if (testDataShare < 0 || testDataShare > 1) throw new NeuralNetworkException("Invalid test data share: " + testDataShare + ". demo.Test data share must be between 0 and 1");
         if (data.size() != 2) throw new NeuralNetworkException("Split must have input and output data.");
         if (data.get(0).size() != data.get(1).size()) {
             throw new NeuralNetworkException("Input data size: " + data.get(0).size() + " and output data size: " + data.get(1).size() + " are not matching: ");
         }
         int trainDataAmount = (int)((double)data.get(0).size() * (1 - testDataShare));
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> result = new HashMap<>();
+        HashMap<Integer, LinkedHashMap<Integer, Sample>> result = new HashMap<>();
         result.put(0, new LinkedHashMap<>());
         result.put(1, new LinkedHashMap<>());
         result.put(2, new LinkedHashMap<>());

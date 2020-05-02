@@ -6,6 +6,7 @@
 
 package core.preprocess;
 
+import utils.Sample;
 import utils.matrix.Matrix;
 import utils.matrix.SMatrix;
 
@@ -35,7 +36,7 @@ public class ReadTextFile {
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Matrix>> readFile(String fileName, int numOfCharsIn, int numOfCharsOut, int deltaInOut, int skipRowsFromStart) throws FileNotFoundException {
+    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> readFile(String fileName, int numOfCharsIn, int numOfCharsOut, int deltaInOut, int skipRowsFromStart) throws FileNotFoundException {
         File file = new File(fileName);
 
         Scanner scanner = new Scanner(file);
@@ -70,9 +71,9 @@ public class ReadTextFile {
             }
             outputData.put(pos, outVals);
         }
-        LinkedHashMap<Integer, Matrix> inputs = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Matrix> outputs = new LinkedHashMap<>();
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> result = new HashMap<>();
+        LinkedHashMap<Integer, Sample> inputs = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Sample> outputs = new LinkedHashMap<>();
+        HashMap<Integer, LinkedHashMap<Integer, Sample>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
@@ -83,7 +84,7 @@ public class ReadTextFile {
                 int charAt = inputData.get(pos).get(index);
                 input.setValue(charAt + index * charSize, 0, 1);
             }
-            inputs.put(pos, input);
+            inputs.put(pos, new Sample(input));
         }
 
         for (Integer pos : inputData.keySet()) {
@@ -93,7 +94,7 @@ public class ReadTextFile {
                 int col = charAt + index * charSize;
                 output.setValue(col, 0,1);
             }
-            outputs.put(pos, output);
+            outputs.put(pos, new Sample(output));
         }
 
         return result;

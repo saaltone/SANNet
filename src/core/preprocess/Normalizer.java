@@ -7,7 +7,7 @@
 package core.preprocess;
 
 import core.NeuralNetworkException;
-import utils.matrix.Matrix;
+import utils.Sample;
 
 import java.util.LinkedHashMap;
 
@@ -63,7 +63,7 @@ public class Normalizer {
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMax(LinkedHashMap<Integer, Matrix> data, boolean adjust) throws NeuralNetworkException {
+    public void minMax(LinkedHashMap<Integer, Sample> data, boolean adjust) throws NeuralNetworkException {
         minMax (data, 0, 1, adjust);
     }
 
@@ -77,22 +77,26 @@ public class Normalizer {
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMax(LinkedHashMap<Integer, Matrix> data, double newMin, double newMax, boolean adjust) throws NeuralNetworkException {
+    public void minMax(LinkedHashMap<Integer, Sample> data, double newMin, double newMax, boolean adjust) throws NeuralNetworkException {
         if (!adjusted && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
-        for (int itemRow = 0; itemRow < data.values().toArray(new Matrix[0])[0].getRows(); itemRow++) {
+        for (int itemRow = 0; itemRow < data.values().toArray(new Sample[0])[0].get(0).getRows(); itemRow++) {
             if (adjust) {
                 min = Double.MAX_VALUE;
                 max = Double.MIN_VALUE;
-                for (int row = 0; row < data.size(); row++) {
-                    min = Math.min(min, data.get(row).getValue(itemRow, 0));
-                    max = Math.max(max, data.get(row).getValue(itemRow, 0));
+                for (Integer entry : data.keySet()) {
+                    for (Integer depth : data.get(entry).keySet()) {
+                        min = Math.min(min, data.get(entry).get(depth).getValue(itemRow, 0));
+                        max = Math.max(max, data.get(entry).get(depth).getValue(itemRow, 0));
+                    }
                 }
                 adjusted = true;
             }
             double delta = max - min != 0 ? max - min : 1;
-            for (int row = 0; row < data.size(); row++) {
-                double newValue = (data.get(row).getValue(itemRow, 0) - min) / delta * (newMax - newMin) + newMin;
-                data.get(row).setValue(itemRow, 0, newValue);
+            for (Integer entry : data.keySet()) {
+                for (Integer depth : data.get(entry).keySet()) {
+                    double newValue = (data.get(entry).get(depth).getValue(itemRow, 0) - min) / delta * (newMax - newMin) + newMin;
+                    data.get(entry).get(depth).setValue(itemRow, 0, newValue);
+                }
             }
         }
     }
@@ -105,25 +109,31 @@ public class Normalizer {
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void zScore(LinkedHashMap<Integer, Matrix> data, boolean adjust) throws NeuralNetworkException {
+    public void zScore(LinkedHashMap<Integer, Sample> data, boolean adjust) throws NeuralNetworkException {
         if (!adjusted && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
-        for (int itemRow = 0; itemRow < data.get(0).getRows(); itemRow++) {
+        for (int itemRow = 0; itemRow < data.get(0).get(0).getRows(); itemRow++) {
             if (adjust) {
                 mean = 0;
-                for (int row = 0; row < data.size(); row++) {
-                    mean += data.get(row).getValue(itemRow, 0);
+                for (Integer entry : data.keySet()) {
+                    for (Integer depth : data.get(entry).keySet()) {
+                        mean += data.get(entry).get(depth).getValue(itemRow, 0);
+                    }
                 }
                 mean = mean / data.size();
                 std = 0;
-                for (int row = 0; row < data.size(); row++) {
-                    std += Math.pow(data.get(row).getValue(itemRow, 0) - mean, 2);
+                for (Integer entry : data.keySet()) {
+                    for (Integer depth : data.get(entry).keySet()) {
+                        std += Math.pow(data.get(entry).get(depth).getValue(itemRow, 0) - mean, 2);
+                    }
                 }
                 std = std > 0 ? Math.sqrt(std / (data.size() - 1)) : 0;
                 adjusted = true;
             }
-            for (int row = 0; row < data.size(); row++) {
-                double newValue = (data.get(row).getValue(itemRow, 0) - mean) / std;
-                data.get(row).setValue(itemRow, 0, newValue);
+            for (Integer entry : data.keySet()) {
+                for (Integer depth : data.get(entry).keySet()) {
+                    double newValue = (data.get(entry).get(depth).getValue(itemRow, 0) - mean) / std;
+                    data.get(entry).get(depth).setValue(itemRow, 0, newValue);
+                }
             }
         }
     }

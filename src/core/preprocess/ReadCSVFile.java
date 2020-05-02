@@ -6,6 +6,7 @@
 
 package core.preprocess;
 
+import utils.Sample;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.SMatrix;
@@ -43,7 +44,7 @@ public class ReadCSVFile {
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Matrix>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix, boolean inAs2D, int inRows, int inCols, boolean outAs2D, int outRows, int outCols) throws FileNotFoundException {
+    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix, boolean inAs2D, int inRows, int inCols, boolean outAs2D, int outRows, int outCols) throws FileNotFoundException {
         LinkedHashMap<Integer, Integer> inMap = new LinkedHashMap<>();
         LinkedHashMap<Integer, Integer> outMap = new LinkedHashMap<>();
         int index;
@@ -59,8 +60,8 @@ public class ReadCSVFile {
         File file = new File(fileName);
         Scanner scanner = new Scanner(file);
 
-        LinkedHashMap<Integer, Matrix> inputData = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Matrix> outputData = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Sample> inputData = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Sample> outputData = new LinkedHashMap<>();
         int countSkipRows = 0;
         int row = 0;
         while (scanner.hasNextLine()) {
@@ -76,17 +77,17 @@ public class ReadCSVFile {
                     inItem.setValue(getRow(inAs2D, inMap.get(pos), inCols), getCol(inAs2D, inMap.get(pos), inCols), convertToDouble(items[pos]));
                 }
             }
-            inputData.put(row, inItem);
+            inputData.put(row, new Sample(inItem));
             Matrix outItem = !asSparseMatrix ? new DMatrix(outRows, outCols) : new SMatrix(outRows, outCols);
             for (Integer pos : outMap.keySet()) {
                 if (items[pos].compareTo("0") != 0) {
                     outItem.setValue(getRow(outAs2D, outMap.get(pos), outCols), getCol(outAs2D, outMap.get(pos), outCols), convertToDouble(items[pos]));
                 }
             }
-            outputData.put(row, outItem);
+            outputData.put(row, new Sample(outItem));
             row++;
         }
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> result = new HashMap<>();
+        HashMap<Integer, LinkedHashMap<Integer, Sample>> result = new HashMap<>();
         result.put(0, inputData);
         result.put(1, outputData);
         return result;
@@ -130,7 +131,7 @@ public class ReadCSVFile {
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Matrix>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix) throws FileNotFoundException {
+    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix) throws FileNotFoundException {
         return readFile(fileName, separator, inputCols, outputCols, skipRowsFromStart, asSparseMatrix, false, 0, 0, false, 0, 0);
     }
 
@@ -146,7 +147,7 @@ public class ReadCSVFile {
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Matrix>> readFile(String fileName, HashSet<Integer> inputCols, HashSet<Integer> outputCols, boolean asSparseMatrix) throws FileNotFoundException {
+    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> readFile(String fileName, HashSet<Integer> inputCols, HashSet<Integer> outputCols, boolean asSparseMatrix) throws FileNotFoundException {
         return readFile(fileName, ";", inputCols, outputCols, 0, asSparseMatrix, false, 0, 0, false, 0, 0);
     }
 
