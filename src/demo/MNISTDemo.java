@@ -17,7 +17,10 @@ import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
 import utils.DynamicParamException;
 import utils.Persistence;
+import utils.Sample;
+import utils.Sequence;
 import utils.matrix.*;
+import utils.sampling.BasicSampler;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -41,12 +44,12 @@ public class MNISTDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            HashMap<Integer, LinkedHashMap<Integer, Matrix>> trainMNIST = getMNISTData(true);
-            HashMap<Integer, LinkedHashMap<Integer, Matrix>> testMNIST = getMNISTData(false);
+            HashMap<Integer, LinkedHashMap<Integer, Sample>> trainMNIST = getMNISTData(true);
+            HashMap<Integer, LinkedHashMap<Integer, Sample>> testMNIST = getMNISTData(false);
 
-            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).getRows(), trainMNIST.get(1).get(0).getRows());
+            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).get(0).getRows(), trainMNIST.get(1).get(0).get(0).getRows());
 
-            String persistenceName = "<PATH>/MNIST_NN";
+            String persistenceName = "/home/jack/Downloads/MNIST_NN";
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
 
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
@@ -59,10 +62,8 @@ public class MNISTDemo {
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(trainMNIST.get(0), trainMNIST.get(1));
-            neuralNetwork.setTrainingSampling(50, false, true);
-            neuralNetwork.setValidationData(testMNIST.get(0), testMNIST.get(1));
-            neuralNetwork.setValidationSampling(50, false, true);
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 50"));
+            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 50"));
             neuralNetwork.setTrainingIterations(10000);
 
             System.out.println("Training...");
@@ -70,8 +71,8 @@ public class MNISTDemo {
 
             System.out.println("Predicting...");
             Metrics predictionMetrics = new Metrics(MetricsType.CLASSIFICATION);
-            LinkedHashMap<Integer, Matrix> predict = neuralNetwork.predict(testMNIST.get(0));
-            predictionMetrics.report(predict, testMNIST.get(1));
+            Sequence predict = neuralNetwork.predict(new Sequence(testMNIST.get(0)));
+            predictionMetrics.report(predict, new Sequence(testMNIST.get(1)));
             predictionMetrics.store(1, false);
             predictionMetrics.printReport();
             predictionMetrics.printConfusionMatrix();
@@ -122,20 +123,26 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws FileNotFoundException throws exception if matrix cannot be read.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, Matrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
+    private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
         System.out.print("Loading " + (trainSet ? "training" : "test") + " data... ");
         HashSet<Integer> inputCols = new HashSet<>();
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
-        String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test_mini.csv";
-        HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
-        for (Matrix item : data.get(0).values()) item.divide(255, item);
-        for (Integer index : data.get(1).keySet()) {
-            int value = (int)data.get(1).get(index).getValue(0,0);
-            Matrix output = new SMatrix(10, 1);
-            output.setValue(value, 0, 1);
-            data.get(1).put(index, output);
+        String fileName = trainSet ? "/home/jack/Downloads/mnist_train.csv" : "/home/jack/Downloads/mnist_test_mini.csv";
+        HashMap<Integer, LinkedHashMap<Integer, Sample>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
+        for (Sample sample : data.get(0).values()) {
+            for (Matrix entry : sample.values()) {
+                entry.divide(255, entry);
+            }
+        }
+        for (Sample sample : data.get(1).values()) {
+            for (Integer entryIndex : sample.keySet()) {
+                int value = (int)sample.get(entryIndex).getValue(0,0);
+                Matrix output = new SMatrix(10, 1);
+                output.setValue(value, 0, 1);
+                sample.put(entryIndex, output);
+            }
         }
         System.out.println(" Done.");
         return data;
