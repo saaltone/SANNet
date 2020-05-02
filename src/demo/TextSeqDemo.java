@@ -15,6 +15,7 @@ import core.regularization.RegularizationType;
 import utils.*;
 import core.*;
 import utils.matrix.*;
+import utils.sampling.BasicSampler;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -37,35 +38,33 @@ public class TextSeqDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            String persistenceName = "<PATH>/TextSeqNN";
+            String persistenceName = "/home/jack/Downloads/TextSeqNN";
             int numOfInputs = 5;
-            HashMap<Integer, LinkedHashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs);
-            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
+            HashMap<Integer, LinkedHashMap<Integer, Sample>> data = getTextSeqData(numOfInputs);
+            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             neuralNetwork.setTaskType(MetricsType.CLASSIFICATION);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
             neuralNetwork.start();
-            neuralNetwork.setTrainingData(data.get(0), data.get(1));
-            neuralNetwork.setTrainingSampling(20, false, false);
+            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = true, shuffleSamples = false, sampleSize = 20"));
             neuralNetwork.setTrainingIterations(100);
             int totalIterations = neuralNetwork.getTotalIterations();
             while (neuralNetwork.getTotalIterations() - totalIterations < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
-                int inputRows = data.get(0).get(0).getRows();
+                int inputRows = data.get(0).get(0).get(0).getRows();
                 int charSize = ReadTextFile.charSize();
                 int numOfChars = inputRows / charSize;
-                Matrix input = data.get(0).get(1);
+                Matrix input = data.get(0).get(1).get(0);
                 int[] letters = new int[numOfChars];
                 int index = 0;
                 for (int row = 0; row < inputRows; row++) {
                     if (input.getValue(row, 0) == 1) letters[index++] = row;
                 }
                 for (int pos = 0; pos < 1000; pos++) {
-                    if (pos == 0) neuralNetwork.setAllowLayerReset(true);
-                    else neuralNetwork.setAllowLayerReset(false);
+                    neuralNetwork.setAllowLayerReset(pos == 0);
                     int nextLetter = neuralNetwork.predict(input).argmax()[0];
                     System.out.print((char)ReadTextFile.intTochar(nextLetter));
                     for (int charIndex = 0; charIndex < numOfChars - 1; charIndex++) {
@@ -116,8 +115,8 @@ public class TextSeqDemo {
      * @return encoded inputs and outputs.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, Matrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        return ReadTextFile.readFile("<PATH>/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
+    private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
+        return ReadTextFile.readFile("/home/jack/Downloads/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
     }
 
 }
