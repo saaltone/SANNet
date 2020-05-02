@@ -172,6 +172,7 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * Resets input.
      *
      * @param resetPreviousInput if true resets also previous input.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetInput(boolean resetPreviousInput) throws MatrixException {
         inputs = new Sample(depthIn);

@@ -165,6 +165,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * Sets input and output dimensions.<br>
      * Initializes weight and biases and their gradients.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws MatrixException, NeuralNetworkException {
@@ -208,6 +209,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * Resets input.
      *
      * @param resetPreviousInput if true resets also previous input.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetInput(boolean resetPreviousInput) throws MatrixException {
         inputs = new Sample(channels);
