@@ -512,6 +512,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other other matrix
      * @param result result matrix
      * @return returns current procedure factory
+     * @throws MatrixException throws exception if his and other matrices have conflicting procedure factories.
      */
     private ProcedureFactory getProcedureFactory(Matrix other, Matrix result) throws MatrixException {
         ProcedureFactory otherProcedureFactory = other.getProcedureFactory();
