@@ -1,3 +1,9 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ *
+ ********************************************************/
+
 package utils.procedure;
 
 import utils.matrix.MatrixException;
@@ -60,7 +66,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     /**
      * Make forward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback() throws MatrixException {
         super.forwardCallback();
@@ -71,7 +77,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      * Make forward callback to specific entry (sample)
      *
      * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback(int sampleIndex) throws MatrixException {
         super.forwardCallback(sampleIndex);
@@ -81,7 +87,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     /**
      * Make backward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback() throws MatrixException {
         super.backwardCallback();
@@ -92,7 +98,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      * Make backward callback to specific entry (sample)
      *
      * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback(int sampleIndex) throws MatrixException {
         super.backwardCallback(sampleIndex);
