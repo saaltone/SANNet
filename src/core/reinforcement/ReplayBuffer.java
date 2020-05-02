@@ -6,8 +6,10 @@
 
 package core.reinforcement;
 
-import utils.matrix.MatrixException;
+import utils.DynamicParam;
+import utils.DynamicParamException;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -16,7 +18,9 @@ import java.util.*;
  * Reference: https://arxiv.org/pdf/1511.05952.pdf<br>
  *
  */
-class ReplayBuffer {
+public class ReplayBuffer implements Buffer, Serializable {
+
+    private static final long serialVersionUID = 4946615850779048129L;
 
     /**
      * Random number generator.
@@ -28,7 +32,13 @@ class ReplayBuffer {
      * Size of replay buffer.
      *
      */
-    private int size = 2000;
+    private int size = 20000;
+
+    /**
+     * Batch size sampled from buffer.
+     *
+     */
+    private int batchSize = 32;
 
     /**
      * Term which controls shape of sample priority distribution.
@@ -37,10 +47,28 @@ class ReplayBuffer {
     private double alpha = 0.6;
 
     /**
+     * Term that controls how much prioritization is applied.
+     *
+     */
+    private double beta = 0.4;
+
+    /**
+     * Step-size (schedule) which is used to anneal beta value towards 1 (final value).
+     *
+     */
+    private double betaStepSize = 0.001;
+
+    /**
      * Reference to sum tree maintaining priorities of samples.
      *
      */
-    private SumTree sumTree;
+    private final SumTree sumTree;
+
+    /**
+     * Current maximum priority. Used for newly added sample as default priority.
+     *
+     */
+    private double maxPriority = 1;
 
     /**
      * Default constructor for replay buffer.
@@ -51,120 +79,145 @@ class ReplayBuffer {
     }
 
     /**
-     * Constructor for replay buffer with defined size.
+     * Constructor for ReplayBuffer with dynamic parameters.
      *
-     * @param size size of replay buffer.
+     * @param params parameters used for ReplayBuffer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ReplayBuffer(int size) {
+    public ReplayBuffer(String params) throws DynamicParamException {
+        setParams(new DynamicParam(params, getParamDefs()));
         sumTree = new SumTree(size);
     }
 
     /**
-     * Current maximum priority. Used for newly added sample as default priority.
+     * Returns parameters used for ReplayBuffer.
      *
+     * @return parameters used for ReplayBuffer.
      */
-    private double maxPriority = 1;
-
-    /**
-     * Sets size of replay buffer.
-     *
-     * @param size size of replay buffer.
-     */
-    public void setSize(int size) {
-        this.size = size;
-        sumTree = new SumTree(size);
+    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
+        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+        paramDefs.put("size", DynamicParam.ParamType.INT);
+        paramDefs.put("batchSize", DynamicParam.ParamType.INT);
+        paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("beta", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("betaStepSize", DynamicParam.ParamType.INT);
+        return paramDefs;
     }
 
     /**
-     * Returns size of replay buffer.
+     * Sets parameters used for ReplayBuffer.<br>
+     * <br>
+     * Supported parameters are:<br>
+     *     - size: Size of replay buffer. Default value 20000.<br>
+     *     - batchSize: Batch size sampled from buffer. Default value 100.<br>
+     *     - alpha: proportional prioritization factor for samples in replay buffer. Default value 0.6.<br>
+     *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
+     *     - betaStepSize: step-size (schedule) which is used to anneal beta value towards 1 (final value). Default value 0.001.<br>
      *
-     * @return size of replay buffer.
+     * @param params parameters used for ReplayBuffer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public int getSize() {
-        return size;
+    public void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("size")) size = params.getValueAsInteger("size");
+        if (params.hasParam("batchSize")) batchSize = params.getValueAsInteger("batchSize");
+        if (params.hasParam("alpha")) alpha = params.getValueAsDouble("alpha");
+        if (params.hasParam("beta")) beta = params.getValueAsDouble("beta");
+        if (params.hasParam("betaStepSize")) betaStepSize = params.getValueAsInteger("betaStepSize");
     }
 
     /**
-     * Sets alpha for proportional prioritization of replay buffer.
+     * Returns size of buffer.
      *
-     * @param alpha alpha value for proportional prioritization of replay buffer.
      */
-    public void setAlpha(double alpha) {
-        this.alpha = alpha;
-    }
-
-    /**
-     * Returns alpha for proportional prioritization of replay buffer.
-     *
-     * @return alpha for proportional prioritization of replay buffer.
-     */
-    public double getAlpha() {
-        return alpha;
+    public int size() {
+        return sumTree.getEntries();
     }
 
     /**
      * Adds sample into replay buffer. Removes old ones exceeding buffer capacity by FIFO principle.
      *
      * @param sample sample to be stored.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void add(Sample sample) throws MatrixException {
-        if (sumTree.containsSample(sample)) return;
+    public void add(RLSample sample) {
+//        if (sumTree.containsSample(sample)) return;
         sample.priority = maxPriority;
         sumTree.add(sample);
     }
 
     /**
-     * Updates sample in sum tree
+     * Updates sample in sum tree with new error value.
      *
      * @param sample sample to be updated.
      */
-    public void update(Sample sample) {
+    public void update(RLSample sample) {
+        double epsilon = 10E-8;
+        sample.priority = Math.pow(Math.abs(sample.tdError) + epsilon, alpha);
+        maxPriority = Math.max(maxPriority, sample.priority);
         sumTree.update(sample);
     }
 
     /**
-     * Updates priority for sample based on absolute delta with epsilon and alpha adjustment.
+     * Updates samples in buffer with new error values.
      *
-     * @param sample sample for which priority is to be calculated and set.
+     * @param samples samples to be updated.
      */
-    public void updatePriority(Sample sample, double error) {
-        double epsilon = 10E-8;
-        sample.priority = Math.pow(Math.abs(error) + epsilon, alpha);
-        maxPriority = Math.max(maxPriority, sample.priority);
+    public void update(TreeMap<Integer, RLSample> samples) {
+        for (RLSample sample : samples.values()) update(sample);
     }
 
     /**
-     * Retrieves given number of samples from replay buffer. Applies priority sampling.
+     * Clears buffer.
      *
-     * @param sampleAmount amount of samples to be sampled from replay buffer.
+     */
+    public void clear() {
+    }
+
+    /**
+     * Retrieves given number of samples from ReplayBuffer. Applies priority sampling.
+     *
      * @return retrieved samples.
      */
-    public HashMap<Integer, Sample> getSamples(int sampleAmount) {
+    public TreeMap<Integer, RLSample> getSamples() {
         double totalPriority = sumTree.totalPriority();
         double entryAmount = sumTree.getEntries();
-        int segment = (int)(totalPriority / (double)sampleAmount);
-        HashMap<Integer, Sample> samples = new HashMap<>();
-        for (int sampleIndex = 0; sampleIndex < sampleAmount; sampleIndex++) {
-            int lowerBound = segment * sampleIndex;
-            int upperBound = segment * (sampleIndex + 1);
+        double segment = totalPriority / (double)batchSize;
+        beta = Math.min(beta + betaStepSize, 1);
+        double maxWeight = Double.NEGATIVE_INFINITY;
+        TreeMap<Integer, RLSample> samples = new TreeMap<>();
+        int currentIndex = 0;
+        for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
+            double lowerBound = segment * sampleIndex;
+            double upperBound = segment * (sampleIndex + 1);
             double priority = random.nextDouble() * (upperBound - lowerBound + 1) + lowerBound;
-            Sample sample = sumTree.get(priority);
-            if (sample != null) samples.put(sampleIndex, sample);
+            RLSample sample = sumTree.get(priority);
+            if (sample != null) {
+                samples.put(currentIndex++, sample);
+                sample.importanceSamplingWeight = Math.pow(entryAmount * priority, -beta);
+                maxWeight = Math.max(sample.importanceSamplingWeight, maxWeight);
+            }
         }
+        for (RLSample sample : samples.values()) sample.importanceSamplingWeight /= maxWeight;
         return samples;
     }
 
     /**
      * Returns number of random samples.
      *
-     * @param sampleAmount amount of samples to be sampled from replay buffer.
      * @return retrieved samples.
      */
-    public HashMap<Integer, Sample> getRandomSamples(int sampleAmount) {
-        HashMap<Integer, Sample> samples = new HashMap<>();
-        for (int sampleIndex = 0; sampleIndex < sampleAmount; sampleIndex++) samples.put(sampleIndex, sumTree.getRandomSample());
+    public TreeMap<Integer, RLSample> getRandomSamples() {
+        TreeMap<Integer, RLSample> samples = new TreeMap<>();
+        for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) samples.put(sampleIndex, sumTree.getRandomSample());
         return samples;
+    }
+
+    /**
+     * Returns true if buffer contains importance sampling weights otherwise returns false.
+     *
+     * @return true if buffer contains importance sampling weights otherwise returns false.
+     */
+    public boolean hasImportanceSamplingWeights() {
+        return true;
     }
 
 }

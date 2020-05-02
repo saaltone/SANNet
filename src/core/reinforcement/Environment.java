@@ -6,10 +6,12 @@
 
 package core.reinforcement;
 
+import core.NeuralNetworkException;
+import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Interface for environment.
@@ -36,32 +38,17 @@ public interface Environment {
      *
      * @return available actions in current state of environment.
      */
-    ArrayList<Integer> getAvailableActions();
-
-    /**
-     * Checks if action is valid.
-     *
-     * @param agent agent that is taking action.
-     * @param action action to be taken.
-     * @return true if action can be taken successfully.
-     */
-    boolean isValidAction(Agent agent, int action);
-
-    /**
-     * Requests (random) action defined by environment.
-     *
-     * @param agent agent that is taking action.
-     * @return action taken
-     */
-    int requestAction(Agent agent);
+    HashSet<Integer> getAvailableActions();
 
     /**
      * Takes specific action.
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void commitAction(Agent agent, int action) throws MatrixException ;
+    void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }

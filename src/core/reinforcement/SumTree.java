@@ -8,16 +8,19 @@ package core.reinforcement;
 
 import utils.matrix.MatrixException;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Class that implements efficient structure to maintain sample along their priorities and fetch by priority.<br>
+ * Class that defines SumTree as efficient structure to maintain sample along their priorities and fetch by priority.<br>
  * <br>
  * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay and https://github.com/jaromiru/AI-blog/blob/master/SumTree.py<br>
  *
  */
-class SumTree {
+class SumTree implements Serializable {
+
+    private static final long serialVersionUID = 2643802180771085181L;
 
     /**
      * Current index of sample.
@@ -41,13 +44,13 @@ class SumTree {
      * Samples stored into sum tree.
      *
      */
-    private final Sample[] samples;
+    private final RLSample[] samples;
 
     /**
      * Map that maintain relationship of sample and its index.
      *
      */
-    private final HashMap<Sample, Integer> sampleMap = new HashMap<>();
+    private final HashMap<RLSample, Integer> sampleMap = new HashMap<>();
 
     /**
      * Array containing structure of sum tree.
@@ -63,7 +66,7 @@ class SumTree {
     public SumTree(int capacity) {
         maxIndex = capacity - 1;
         sumTree = new double[2 * capacity - 1];
-        samples = new Sample[capacity];
+        samples = new RLSample[capacity];
     }
 
     /**
@@ -71,7 +74,7 @@ class SumTree {
      *
      * @param sample sample to be added into sum tree.
      */
-    public void add(Sample sample) {
+    public void add(RLSample sample) {
         samples[currentIndex] = sample;
         int nodeIndex = currentIndex + maxIndex;
         sampleMap.put(sample, nodeIndex);
@@ -85,7 +88,7 @@ class SumTree {
      *
      * @param sample sample to be updated in sum tree.
      */
-    public void update(Sample sample) {
+    public void update(RLSample sample) {
         update (sample, sampleMap.get(sample));
     }
 
@@ -95,7 +98,7 @@ class SumTree {
      * @param sample sample to be updated.
      * @param nodeIndex node index of sample.
      */
-    private void update(Sample sample, int nodeIndex) {
+    private void update(RLSample sample, int nodeIndex) {
         double priorityDelta = sample.priority - sumTree[nodeIndex];
         sumTree[nodeIndex] = sample.priority;
         propagate (nodeIndex, priorityDelta);
@@ -119,7 +122,7 @@ class SumTree {
      * @param prioritySum given priority sum.
      * @return fetched samples.
      */
-    public Sample get(double prioritySum) {
+    public RLSample get(double prioritySum) {
         return samples[get(0, prioritySum) - maxIndex];
     }
 
@@ -163,8 +166,8 @@ class SumTree {
      * @return returns true if sample is already in sum tree otherwise returns false
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public boolean containsSample(Sample sample) throws MatrixException {
-        for (Sample currentSample : sampleMap.keySet()) if(currentSample.equals(sample)) return true;
+    public boolean containsSample(RLSample sample) throws MatrixException {
+        for (RLSample currentSample : sampleMap.keySet()) if(currentSample.state.equals(sample.state)) return true;
         return false;
     }
 
@@ -173,7 +176,7 @@ class SumTree {
      *
      * @return random sample.
      */
-    public Sample getRandomSample() {
+    public RLSample getRandomSample() {
         return samples[new Random().nextInt(getEntries())];
     }
 

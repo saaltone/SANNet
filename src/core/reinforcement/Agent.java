@@ -7,6 +7,7 @@
 package core.reinforcement;
 
 import core.NeuralNetworkException;
+import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
@@ -16,54 +17,77 @@ import utils.matrix.MatrixException;
 public interface Agent {
 
     /**
+     * Starts agent.
+     *
+     * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     */
+    void start() throws NeuralNetworkException;
+
+    /**
+     * Stops agent.
+     *
+     */
+    void stop();
+
+    /**
      * Starts new episode. Resets sequence by default.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void newEpisode() throws NeuralNetworkException, MatrixException;
+    void newEpisode();
 
     /**
      * Starts new episode.
      *
      * @param resetSequence if true resets sequence by putting previous sample to null.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void newEpisode(boolean resetSequence) throws NeuralNetworkException, MatrixException;
+    void newEpisode(boolean resetSequence);
 
     /**
      * Begins new episode step for agent.
      *
-     * @param commitPreviousStep if true commits previous step prior starting new step.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void newStep(boolean commitPreviousStep) throws MatrixException;
+    void newStep();
 
     /**
-     * Commits episode step and adds it into replay buffer.
+     * Disables learning.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void commitStep() throws MatrixException;
+    void disableLearning();
 
     /**
-     * Executes policy taking action with highest value (exploitation) unless random action is selected (exploration).<br>
-     * Chooses random policy by probability epsilon or if forced.<br>
-     * Requests environment to execute chosen action.<br>
+     * Enables learning.
      *
-     * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
-     * @param forceRandomAction if true forces to take valid random action.
+     */
+    void enableLearning();
+
+    /**
+     * Takes action as defined by agent's policy.
+     *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void executePolicy(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException;
+    void act() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Sets immediate reward for episode step after agent has executed policy.
+     * Takes action per given policy.
      *
-     * @param reward reward
+     * @param alwaysGreedy if true greedy action is always taken.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void setReward(double reward);
+    void act(boolean alwaysGreedy) throws NeuralNetworkException, MatrixException, DynamicParamException;
+
+    /**
+     * Response from environment after agent commits action.
+     *
+     * @param reward immediate reward.
+     * @param finalState if true state is final otherwise false.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    void respond(double reward, boolean finalState) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }

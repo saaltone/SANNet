@@ -6,146 +6,138 @@
 
 package core.reinforcement;
 
-import core.NeuralNetwork;
 import core.NeuralNetworkException;
+import core.reinforcement.policy.ActionableBasicPolicy;
+import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.policy.GreedyPolicy;
+import core.reinforcement.value.ValueFunction;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
- * Class that implements agent for reinforcement learning.<br>
- * Agent acts in collaboration receiving information of environment, making decisions on actions taken and receiving rewards for quality of actions taken.<br>
- * Class uses single Q Neural Network or Double Deep Q (doubleQ) Learning method where two neural networks participate in estimating action and it's value.<br>
- * Q neural network (QNN) decides next action given specific state based on highest value unless with probability epsilon random action is taken.<br>
- * if doubleQ learning is applied Target neural network (QNN) estimates maximum value achievable given specific state and action.<br>
- * <br>
- * Reference: https://arxiv.org/pdf/1811.12560.pdf<br>
+ * Class that defines DeepAgent.
  *
  */
-public class DeepAgent implements Agent, Serializable {
+public abstract class DeepAgent implements Agent, Serializable {
 
-    private static final long serialVersionUID = -2320016939247105291L;
+    private static final long serialVersionUID = -1720953512017473344L;
 
     /**
-     * Reference to environment where agent resides in.
+     * Reference to environment.
      *
      */
     private final Environment environment;
 
     /**
-     * Reference to Q Neural Network.
+     * True if environment is episodic.
      *
      */
-    private final NeuralNetwork QNN;
+    private boolean episodic = true;
 
     /**
-     * Reference to Target Neural Network.
+     * Number of episodes.
      *
      */
-    private NeuralNetwork TNN;
+    private int episodeCount = 0;
 
     /**
-     * Reference to replay buffer.
+     * Time step of episode.
      *
      */
-    private ReplayBuffer replayBuffer;
+    private int timeStep = 0;
 
     /**
-     * Cycle in episode steps for Neural Network training.
+     * Reference to current sample.
      *
      */
-    private int trainCycle = 100;
+    private RLSample sample;
 
     /**
-     * If true uses separate target network for value estimation.
+     * Reference to current policy.
      *
      */
-    private boolean doubleQ = true;
+    protected final ActionablePolicy policy;
 
     /**
-     * Update rate of Target Neural Network.
+     * Reference to greedy policy.
      *
      */
-    private double tau = 0.001;
+    private final ActionablePolicy greedyPolicy;
 
     /**
-     * Gamma (discount) factor for target (TD) value calculation.
+     * Reference to buffer.
      *
      */
-    private double gamma = 0.95;
+    private final Buffer buffer;
 
     /**
-     * Current epsilon value for epsilon greedy policy defining balance between exploration and exploitation.
+     * If true agent is learning.
      *
      */
-    private double epsilon;
+    private boolean isLearning = true;
 
     /**
-     * Initial epsilon value.
+     * Reference to value function.
      *
      */
-    private double epsilonInitial = 1;
+    protected final ValueFunction valueFunction;
 
     /**
-     * Minimum value for epsilon.
+     * Current estimator version.
      *
      */
-    private double epsilonMin = 0;
+    private int estimatorVersion = 0;
 
     /**
-     * Decay rate for epsilon if number of episodes is not used for epsilon decay.
+     * Update cycle in episode steps for function estimator.
      *
      */
-    private double epsilonDecayRate = 0.99;
+    private int updateCycle = 1;
 
     /**
-     * If true epsilon decays along episode count otherwise decays by epsilon decay rate.
+     * Current update count.
      *
      */
-    private boolean epsilonDecayByEpisode = true;
+    private int updateCount = 0;
 
     /**
-     * Sample as tuple (s, a, r, s') for current episode step.
+     * Constructor for deep agent.
      *
+     * @param environment reference to environment.
+     * @param policy reference to policy.
+     * @param buffer reference to buffer.
+     * @param valueFunction reference to value function.
      */
-    private transient Sample sample;
-
-    /**
-     * Total numbers of episodes.
-     *
-     */
-    private int totalEpisodes = 0;
-
-    /**
-     * Constructor for agent.
-     *
-     * @param environment reference to environment where agent resides, takes actions and receives rewards.
-     * @param QNN Q Neural Network to estimate agent's moves.
-     */
-    public DeepAgent(Environment environment, NeuralNetwork QNN) {
+    public DeepAgent(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunction valueFunction) {
         this.environment = environment;
-        this.QNN = QNN;
-        resetReplayBuffer();
-        epsilon = epsilonInitial;
+        this.policy = policy;
+        policy.setEnvironment(environment);
+        this.buffer = buffer;
+        this.valueFunction = valueFunction;
+        greedyPolicy = new ActionableBasicPolicy(new GreedyPolicy(), policy.getFunctionEstimator());
+        greedyPolicy.setEnvironment(environment);
+        policy.getFunctionEstimator().setTrainingIterations(1);
+        if (valueFunction.getFunctionEstimator() != null) valueFunction.getFunctionEstimator().setTrainingIterations(1);
     }
 
     /**
-     * Constructor for agent.
+     * Constructor for deep agent.
      *
-     * @param environment reference to environment where agent resides, takes actions and receives rewards.
-     * @param QNN Q Neural Network (QNN) to define agent's policy and possibly value unless separate target network is not used.
-     * @param params parameters used for DeepAgent.
+     * @param environment reference to environment.
+     * @param policy reference to policy.
+     * @param buffer reference to buffer.
+     * @param valueFunction reference to value function.
+     * @param params parameters for deep agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DeepAgent(Environment environment, NeuralNetwork QNN, String params) throws DynamicParamException {
-        this(environment, QNN);
+    public DeepAgent(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunction valueFunction, String params) throws DynamicParamException {
+        this(environment, policy, buffer, valueFunction);
         setParams(new DynamicParam(params, getParamDefs()));
-        epsilon = epsilonInitial;
     }
 
     /**
@@ -153,18 +145,10 @@ public class DeepAgent implements Agent, Serializable {
      *
      * @return parameters used for DeepAgent.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("trainCycle", DynamicParam.ParamType.INT);
-        paramDefs.put("doubleQ", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecayRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecayByEpisode", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("replayBufferSize", DynamicParam.ParamType.INT);
-        paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("updateCycle", DynamicParam.ParamType.INT);
+        paramDefs.put("episodic", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -172,99 +156,41 @@ public class DeepAgent implements Agent, Serializable {
      * Sets parameters used for DeepAgent.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - trainCycle: number of steps after which QNN gets trained. Default value 100.<br>
-     *     - doubleQ: If true Double Deep Q Learning i.e. separate QNN and Target Neural Network (TNN) is applied otherwise just single QNN is used. Default value true.<br>
-     *     - tau: Update rate of Target Neural Network. Default value 0.001.<br>
-     *     - gamma: Discount value for Q learning. Default value 0.95.<br>
-     *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
-     *     - epsilonMin: Lowest value for epsilon. Default value 0.<br>
-     *     - epsilonDecay: Decay rate of epsilon. Default value 0.99.<br>
-     *     - epsilonDecayByEpisode: If true epsilon decays along episode count otherwise decays by epsilon decay rate. Default value true.<br>
-     *     - replayBufferSize: Size of replay buffer. Default value 2000.<br>
-     *     - alpha: proportional prioritization factor for samples in replay buffer. Default value 0.6.<br>
+     *     - updateCycle: estimator update cycle. Default value 5.<br>
+     *     - episodic: If true agent assumes episodic environment. Default value true.<br>
      *
      * @param params parameters used for DeepAgent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("trainCycle")) trainCycle = params.getValueAsInteger("trainCycle");
-        if (params.hasParam("doubleQ")) doubleQ = params.getValueAsBoolean("doubleQ");
-        if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
-        if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
-        if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
-        if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
-        if (params.hasParam("epsilonDecayRate")) epsilonDecayRate = params.getValueAsDouble("epsilonDecayRate");
-        if (params.hasParam("epsilonDecayByEpisode")) epsilonDecayByEpisode = params.getValueAsBoolean("epsilonDecayByEpisode");
-        if (params.hasParam("replayBufferSize")) replayBuffer.setSize(params.getValueAsInteger("replayBufferSize"));
-        if (params.hasParam("alpha")) replayBuffer.setAlpha(params.getValueAsDouble("alpha"));
-    }
-
-    /**
-     * Returns current epsilon value.
-     *
-     * @return current epsilon value.
-     */
-    public double getEpsilon() {
-        return epsilon;
-    }
-
-    /**
-     * Resets replay buffer with default size.
-     *
-     */
-    public void resetReplayBuffer() {
-        replayBuffer = new ReplayBuffer();
-    }
-
-    /**
-     * Resets replay buffer with given size.
-     *
-     * @param size new size of replay buffer after reset.
-     */
-    public void resetReplayBuffer(int size) {
-        replayBuffer = new ReplayBuffer(size);
+        if (params.hasParam("updateCycle")) updateCycle = params.getValueAsInteger("updateCycle");
+        if (params.hasParam("episodic")) episodic = params.getValueAsBoolean("episodic");
     }
 
     /**
      * Starts agent.
      *
-     * @throws NeuralNetworkException throws exception if start of QNN and / or TNN fails.
-     * @throws IOException throws exception if copying of QNN as TNN fails.
-     * @throws ClassNotFoundException throws exception if copying of QNN as TNN fails.
+     * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      */
-    public void start() throws NeuralNetworkException, IOException, ClassNotFoundException {
-        QNN.start();
-        if (doubleQ) {
-            TNN = QNN.copy();
-            TNN.start();
-        }
+    public void start() throws NeuralNetworkException {
+        policy.start();
+        valueFunction.start();
     }
 
     /**
-     * Stops agent and QNN and TNN.
+     * Stops agent.
      *
      */
     public void stop() {
-        QNN.stop();
-        if (doubleQ) TNN.stop();
-    }
-
-    /**
-     * Returns action taken based on policy.
-     *
-     * @return action taken based on policy.
-     */
-    public int getAction() {
-        return sample.action;
+        policy.stop();
+        valueFunction.stop();
     }
 
     /**
      * Starts new episode. Resets sequence by default.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void newEpisode() throws NeuralNetworkException, MatrixException {
+    public void newEpisode() {
         newEpisode(true);
     }
 
@@ -272,128 +198,131 @@ public class DeepAgent implements Agent, Serializable {
      * Starts new episode.
      *
      * @param resetSequence if true resets sequence by setting current sample to null.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void newEpisode(boolean resetSequence) throws NeuralNetworkException, MatrixException {
-        totalEpisodes++;
-        if (resetSequence) sample = null;
-        cycle();
-        if (epsilon > epsilonMin) {
-            if (epsilonDecayByEpisode) epsilon = epsilonInitial / (double)totalEpisodes;
-            else epsilon *= epsilonDecayRate;
+    public void newEpisode(boolean resetSequence) {
+        if (episodic) {
+            if (resetSequence) sample = null;
+            episodeCount++;
+            updateCount++;
+            policy.setEpisode(episodeCount);
+            valueFunction.setEpisode(episodeCount);
+            timeStep = 0;
         }
     }
 
     /**
      * Begins new episode step for agent.
      *
-     * @param commitPreviousStep if true commits previous step prior starting new step.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void newStep(boolean commitPreviousStep) throws MatrixException {
-        Matrix state = environment.getState();
-        if (sample != null) sample.nextState = state;
-        if (commitPreviousStep) commitStep();
-        sample = new Sample(state);
-    }
-
-    /**
-     * Commits episode step and adds it into replay buffer.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void commitStep() throws MatrixException {
-        if (sample != null) replayBuffer.add(sample);
-    }
-
-    /**
-     * Executes policy taking available action with highest value (exploitation) unless random action is selected (exploration).<br>
-     * Chooses random policy by probability epsilon or if forced.<br>
-     * Requests environment to execute chosen action.<br>
-     *
-     * @param alwaysGreedy if true greedy action is always taken. ForceRandomAction flag is omitted.
-     * @param forceRandomAction if true forces to take valid random action.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void executePolicy(boolean alwaysGreedy, boolean forceRandomAction) throws NeuralNetworkException, MatrixException {
-        sample.action = -1;
-        if ((Math.random() < epsilon || forceRandomAction) && !alwaysGreedy) {
-            sample.action = environment.requestAction(this);
-        }
+    public void newStep() {
+        if (episodic) timeStep++;
         else {
-            ArrayList<Integer> availableActions = environment.getAvailableActions();
-            Matrix values = QNN.predict(sample.state);
-            double maxValidValue = Double.NEGATIVE_INFINITY;
-            for (int row = 0; row < values.getRows(); row++) {
-                double value = values.getValue(row, 0);
-                if (availableActions.contains(row)) {
-                    if (maxValidValue  < value || maxValidValue == Double.NEGATIVE_INFINITY) {
-                        maxValidValue = value;
-                        sample.action = row;
-                    }
-                }
-            }
+            episodeCount++;
+            updateCount++;
+            policy.setEpisode(episodeCount);
+            valueFunction.setEpisode(episodeCount);
+            timeStep = 1;
+            sample = null;
         }
-        environment.commitAction(this, sample.action);
+        sample = sample == null ? new RLSample(new State(environment.getState())) : new RLSample(sample.state.getNextState(environment.getState()));
+        sample.timeStep = timeStep;
+        sample.estimatorVersion = estimatorVersion;
+        if (isLearning) bufferSample(sample);
     }
 
     /**
-     * Sets immediate reward for episode step after agent has executed policy.
+     * Disables learning.
      *
-     * @param reward reward
      */
-    public void setReward(double reward) {
-        sample.reward = reward;
+    public void disableLearning() {
+        isLearning = false;
     }
 
     /**
-     * Updates value of state action pair.<br>
-     * Depending on choice uses Q Neural Network (QNN) or Target Neural Network (TNN) for target value calculation.<br>
-     * Depending on choice either takes max of target state values (QNN only) or in Double Q mode chooses action of target state with maximal value (QNN) and estimates value of this state (TNN).<br>
-     * Calculates TD target using immediate reward and target value and updates delta value (priority) in replay buffer.<br>
+     * Enables learning.
      *
-     * @param targetSample target sample whose value is to be updated.
+     */
+    public void enableLearning() {
+        isLearning = true;
+    }
+
+    /**
+     * Takes action as defined by agent's policy.
+     *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private Matrix updateValue(Sample targetSample) throws NeuralNetworkException, MatrixException {
-        Matrix values = QNN.predict(targetSample.state);
-        double targetValue = 0;
-        if (targetSample.nextState != null) {
-            if (doubleQ) targetValue = TNN.predict(targetSample.nextState).getValue(QNN.predict(targetSample.nextState).argmax()[0], 0);
-            else targetValue = QNN.predict(targetSample.nextState).max();
-        }
-        targetValue = targetSample.reward + gamma * targetValue;
-        replayBuffer.updatePriority(targetSample, targetValue - values.getValue(targetSample.action, 0));
-        values.setValue(targetSample.action, 0, targetValue);
-        return values;
+    public void act() throws NeuralNetworkException, MatrixException, DynamicParamException {
+        act(false);
     }
 
     /**
-     * Cycles agent.<br>
-     * Trains QNN with QNN training cycle using samples from replay buffer with updated value for experience replay.<br>
-     * Updates TNN if Double Q learning is applied.<br>
+     * Takes action as defined by agent's policy.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param alwaysGreedy if true greedy action is always taken.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void cycle() throws MatrixException, NeuralNetworkException {
-        if (doubleQ) TNN.append(QNN, tau);
-        if (totalEpisodes % trainCycle == 0) {
-            LinkedHashMap<Integer, Matrix> states = new LinkedHashMap<>();
-            LinkedHashMap<Integer, Matrix> values = new LinkedHashMap<>();
-            HashMap<Integer, Sample> samples = replayBuffer.getSamples(QNN.getTrainingSamplesPerStep());
-            for (Integer sampleIndex : samples.keySet()) {
-                Sample targetSample = samples.get(sampleIndex);
-                Matrix targetValues = updateValue(targetSample);
-                replayBuffer.update(targetSample);
-                states.put(sampleIndex, targetSample.state);
-                values.put(sampleIndex, targetValues);
+    public void act(boolean alwaysGreedy) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        if (!alwaysGreedy) policy.act(sample);
+        else greedyPolicy.act(sample);
+        environment.commitAction(this, sample.state.action);
+    }
+
+    /**
+     * Response from environment to the action taken.<br>
+     * If state is final then buffer is used to update policy and value functions of agent.
+     *
+     * @param reward immediate reward.
+     * @param finalState if true state is final otherwise false.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void respond(double reward, boolean finalState) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        sample.state.reward = reward;
+        sample.state.finalState = !episodic || finalState;
+
+        if (sample.state.isFinalState() && isLearning) {
+            if (updateCount >= updateCycle) {
+                TreeMap<Integer, RLSample> samples = buffer.getSamples();
+                updateAgent(samples, buffer.hasImportanceSamplingWeights());
+                buffer.update(samples);
+                updateCount = 0;
+                buffer.clear();
+                estimatorVersion++;
+                updateEstimatorVersion(estimatorVersion);
             }
-            QNN.train(states, values);
         }
     }
+
+    /**
+     * Buffers current sample.
+     *
+     * @param currentSample current sample.
+     */
+    private void bufferSample(RLSample currentSample) {
+        if (buffer != null && currentSample != null) buffer.add(currentSample);
+    }
+
+    /**
+     * Updates policy and value functions of agent.
+     *
+     * @param samples samples used to update function estimator.
+     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected abstract void updateAgent(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws MatrixException, NeuralNetworkException, DynamicParamException;
+
+    /**
+     * Updates estimator version.
+     *
+     * @param estimatorVersion estimator version.
+     */
+    protected abstract void updateEstimatorVersion(int estimatorVersion);
 
 }
