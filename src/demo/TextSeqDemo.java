@@ -38,7 +38,7 @@ public class TextSeqDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            String persistenceName = "/home/jack/Downloads/TextSeqNN";
+            String persistenceName = "<PATH>/TextSeqNN";
             int numOfInputs = 5;
             HashMap<Integer, LinkedHashMap<Integer, Sample>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
@@ -116,7 +116,7 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        return ReadTextFile.readFile("/home/jack/Downloads/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
+        return ReadTextFile.readFile("<PATH>/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
     }
 
 }

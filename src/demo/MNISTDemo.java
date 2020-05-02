@@ -49,7 +49,7 @@ public class MNISTDemo {
 
             neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).get(0).getRows(), trainMNIST.get(1).get(0).get(0).getRows());
 
-            String persistenceName = "/home/jack/Downloads/MNIST_NN";
+            String persistenceName = "<PATH>/MNIST_NN";
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
 
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
@@ -129,7 +129,7 @@ public class MNISTDemo {
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
-        String fileName = trainSet ? "/home/jack/Downloads/mnist_train.csv" : "/home/jack/Downloads/mnist_test_mini.csv";
+        String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test_mini.csv";
         HashMap<Integer, LinkedHashMap<Integer, Sample>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
         for (Sample sample : data.get(0).values()) {
             for (Matrix entry : sample.values()) {
