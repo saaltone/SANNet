@@ -121,13 +121,13 @@ public class LSTMLayer extends AbstractExecutionLayer {
      * Tanh activation function needed for LSTM
      *
      */
-    private ActivationFunction tanh;
+    private final ActivationFunction tanh;
 
     /**
      * Sigmoid activation function needed for LSTM
      *
      */
-    private ActivationFunction sigmoid;
+    private final ActivationFunction sigmoid;
 
     /**
      * Flag if tanh operation is performed also for last output function.
@@ -226,6 +226,7 @@ public class LSTMLayer extends AbstractExecutionLayer {
      * Initializes LSTM layer.<br>
      * Initializes weights and bias and their gradients.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void initialize() throws MatrixException {
         int pLayerWidth = parent.getBackward().getPLayerWidth();
@@ -284,6 +285,7 @@ public class LSTMLayer extends AbstractExecutionLayer {
      * Resets input.
      *
      * @param resetPreviousInput if true resets also previous input.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetInput(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
@@ -297,6 +299,7 @@ public class LSTMLayer extends AbstractExecutionLayer {
      * Returns input matrices for procedure construction.
      *
      * @return input matrices for procedure construction.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Sample getInputMatrices() throws MatrixException {
         Sample inputs = new Sample(1);

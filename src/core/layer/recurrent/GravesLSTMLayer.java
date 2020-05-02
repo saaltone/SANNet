@@ -139,13 +139,13 @@ public class GravesLSTMLayer extends AbstractExecutionLayer {
      * Tanh activation function needed for Graves LSTM
      *
      */
-    private ActivationFunction tanh;
+    private final ActivationFunction tanh;
 
     /**
      * Sigmoid activation function needed for Graves LSTM
      *
      */
-    private ActivationFunction sigmoid;
+    private final ActivationFunction sigmoid;
 
     /**
      * Flag if tanh operation is performed also for last output function.
@@ -254,6 +254,7 @@ public class GravesLSTMLayer extends AbstractExecutionLayer {
      * Initializes Graves LSTM layer.<br>
      * Initializes weights and bias and their gradients.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void initialize() throws MatrixException {
         int pLayerWidth = parent.getBackward().getPLayerWidth();
@@ -325,6 +326,7 @@ public class GravesLSTMLayer extends AbstractExecutionLayer {
      * Resets input.
      *
      * @param resetPreviousInput if true resets also previous input.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetInput(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
