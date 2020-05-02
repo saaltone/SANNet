@@ -13,7 +13,9 @@ Framework provides vanilla feedforward layer, recurrent layers (simple recurrent
 Framework supports multiple layer activation functions and loss functions for output layer. Additionally there are multiple initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations.
 
 ## Reinforcement learning
-Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards. It supports both basic reinforcement learning with single Q Neural Network but also double Q learning with Q Neural Network that takes actions and separate Target Neural Network that estimates long term value of action.
+Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards.
+
+Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA) and policy based (Actor Critic, REINFORCE) reinforcement learning algorithms. It supports online and replay buffering. It has support for multiple policies (greedy policy, epsilon greedy policy, noisy policy, weighted random policy).
 
 ## Optimization
 Framework implements most typically used optimization methods starting from basic vanilla gradient descent up to more sofisticated parameter optimization methods such as Adam and AMSGrad.
