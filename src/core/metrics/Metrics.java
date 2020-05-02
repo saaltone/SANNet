@@ -188,7 +188,7 @@ public class Metrics {
         }
 
         /**
-         * Returns nd calculates average R2 values.
+         * Returns and calculates average R2 values.
          *
          * @return average R2 values.
          * @throws MatrixException throws exception if matrix operation fails.
