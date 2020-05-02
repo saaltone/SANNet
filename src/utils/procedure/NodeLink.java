@@ -67,6 +67,7 @@ class NodeLink implements Serializable {
      * Updates expression from result (output) to arg (input) node.
      *
      * @param index data index.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     void updateExpression(int index) throws MatrixException {
         Matrix fromMatrix = fromNode.getMatrix(index - 1);
