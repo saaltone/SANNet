@@ -259,7 +259,6 @@ public class LayerNormalization implements Normalization, Serializable {
         Matrix gradient = node.getGradient(outputIndex);
         Matrix inGrad =  gradient.multiply(gamma);
         Matrix dgamma = gradient.multiply(normOuts.get(node).get(outputIndex));
-        Matrix dbeta = gradient;
 
         int size = inGrad.getSize();
         Matrix unMeanIn = unMeanIns.get(node).get(outputIndex);
@@ -275,7 +274,7 @@ public class LayerNormalization implements Normalization, Serializable {
         }
 
         optimizer.optimize(gamma, dgamma);
-        optimizer.optimize(beta, dbeta);
+        optimizer.optimize(beta, gradient);
     }
 
     /**
