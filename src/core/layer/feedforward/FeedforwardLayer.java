@@ -109,6 +109,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * Initializes feed forward layer.<br>
      * Initializes weight and bias and their gradients.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void initialize() throws MatrixException {
         int pLayerWidth = parent.getBackward().getPLayerWidth();
@@ -128,6 +129,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * Resets input.
      *
      * @param resetPreviousInput if true resets also previous input.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetInput(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
