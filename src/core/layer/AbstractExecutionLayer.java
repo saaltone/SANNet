@@ -224,7 +224,7 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      * Resets input.
      *
      * @param resetPreviousInput if true resets previous input.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     protected abstract void resetInput(boolean resetPreviousInput) throws MatrixException;
 
