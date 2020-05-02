@@ -1,3 +1,9 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ *
+ ********************************************************/
+
 package utils;
 
 import utils.matrix.Matrix;
@@ -20,13 +26,23 @@ public class Sample implements Serializable {
      * Depth of sample.
      *
      */
-    private int depth;
+    private final int depth;
 
     /**
      * Entries for sample in depth direction.
      *
      */
     private final HashMap<Integer, Matrix> entries = new HashMap<>();
+
+    /**
+     * Constructor for sample
+     *
+     * @param entry single entry for sample with assumption of depth 1.
+     */
+    public Sample(Matrix entry) {
+        depth = 1;
+        entries.put(0, entry);
+    }
 
     /**
      * Constructor for sample.
@@ -58,6 +74,15 @@ public class Sample implements Serializable {
      */
     public int size() {
         return entries.size();
+    }
+
+    /**
+     * Returns depth of sample.
+     *
+     * @return depth of sample.
+     */
+    public int getDepth() {
+        return depth;
     }
 
     /**
