@@ -132,6 +132,7 @@ public class L2_Regularization implements Regularization, Serializable {
      *
      * @param W weight matrix.
      * @param dWSum gradient sum of weight.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backward(Matrix W, Matrix dWSum) throws MatrixException {
         dWSum.add(W.multiply(2 * lambda).divide(miniBatchSize), dWSum);

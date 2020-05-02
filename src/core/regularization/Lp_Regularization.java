@@ -140,6 +140,7 @@ public class Lp_Regularization implements Regularization, Serializable {
      *
      * @param W weight matrix.
      * @param dWSum gradient sum of weight.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backward(Matrix W, Matrix dWSum) throws MatrixException {
         Matrix.MatrixUnaryOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
