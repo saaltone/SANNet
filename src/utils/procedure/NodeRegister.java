@@ -108,6 +108,7 @@ class NodeRegister implements Serializable {
      * @param procedureID procedure ID where node was created in
      * @param expressionID expression ID where node was created in
      * @return node created or retrieved.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     Node defineNode(Matrix matrix, boolean constantNode, boolean createMatrixIfNone, HashSet<Normalization> normalizers, int procedureID, int expressionID) throws MatrixException {
         if (entriesByMatrix.containsKey(matrix)) return nodeMap.get(matrix);
