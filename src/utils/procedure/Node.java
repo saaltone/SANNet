@@ -43,37 +43,37 @@ public class Node implements Serializable {
      * If true node is treated as constant matrix.
      *
      */
-    private boolean constantNode;
+    private final boolean constantNode;
 
     /**
      * If true creates matrix is not existing when get.
      *
      */
-    private boolean createMatrixIfNone;
+    private final boolean createMatrixIfNone;
 
     /**
      * If true matrix is of constant type.
      *
      */
-    private boolean constantMatrix;
+    private final boolean constantMatrix;
 
     /**
      * Procedure callback for node.
      *
      */
-    private HashSet<Normalization> normalizers;
+    private final HashSet<Normalization> normalizers;
 
     /**
      * Number of rows in matrix.
      *
      */
-    private int rows;
+    private final int rows;
 
     /**
      * Number of columns in matrix.
      *
      */
-    private int cols;
+    private final int cols;
 
     /**
      * Constructor for node. Records dimensions of references matrix as node data dimensions.
@@ -96,7 +96,7 @@ public class Node implements Serializable {
     /**
      * Make forward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback() throws MatrixException {
         if (normalizers != null) {
@@ -107,8 +107,8 @@ public class Node implements Serializable {
     /**
      * Make forward callback to specific entry (sample)
      *
-     * @throws MatrixException throws exception is matrix operation fails.
      * @param sampleIndex sample index of specific entry.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardCallback(int sampleIndex) throws MatrixException {
         if (normalizers != null) {
@@ -119,7 +119,7 @@ public class Node implements Serializable {
     /**
      * Make backward callback to all entries of node.
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback() throws MatrixException {
         if (normalizers != null) {
@@ -130,8 +130,8 @@ public class Node implements Serializable {
     /**
      * Make backward callback to specific entry (sample)
      *
-     * @throws MatrixException throws exception is matrix operation fails.
      * @param sampleIndex sample index of specific entry.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardCallback(int sampleIndex) throws MatrixException {
         if (normalizers != null) {
@@ -179,7 +179,7 @@ public class Node implements Serializable {
      * Returns empty matrix with size of reference matrix.
      *
      * @return empty matrix with size of reference matrix.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getEmptyMatrix() throws MatrixException {
         return !constantMatrix ? new DMatrix(rows, cols) : new DMatrix(rows, cols, Init.CONSTANT);
@@ -237,7 +237,7 @@ public class Node implements Serializable {
      *
      * @param index data index for matrix.
      * @return matrix of node.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getMatrix(int index) throws MatrixException {
         if (!constantNode) {
@@ -280,7 +280,7 @@ public class Node implements Serializable {
      * Removes procedure factory from node and it's matrices.
      *
      * @param index data index.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void removeProcedureFactory(int index) throws MatrixException {
         if (getMatrix(index) != null) getMatrix(index).removeProcedureFactory();
@@ -293,7 +293,7 @@ public class Node implements Serializable {
      * @param index data index.
      * @param outputGrad output gradient.
      * @param add if true output gradient contribution is added to node gradient otherwise subtracted.
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void updateGradient(int index, Matrix outputGrad, boolean add) throws MatrixException {
         if (getGradient(index) == null) setGradient(index, getEmptyMatrix());
