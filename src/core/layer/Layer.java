@@ -49,7 +49,7 @@ public interface Layer {
      * Initializes weight and bias and their gradients.<br>
      * Initializes needed execution parameters for neural network layer.<br>
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     void initialize() throws MatrixException, NeuralNetworkException;
