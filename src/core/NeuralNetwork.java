@@ -25,6 +25,7 @@ import utils.matrix.BinaryFunctionType;
 import utils.matrix.Init;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.sampling.Sampler;
 
 /**
  * Defines main class for neural network.<br>
@@ -141,13 +142,13 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Reference to training error metric.
      *
      */
-    private transient Metrics trainingError;
+    private transient Metrics trainingMetrics;
 
     /**
      * Reference to validation error metric.
      *
      */
-    private transient Metrics validationError;
+    private transient Metrics validationMetrics;
 
     /**
      * Validation error metric type. Default REGRESSION.
@@ -162,28 +163,10 @@ public class NeuralNetwork implements Runnable, Serializable {
     private int sampleDepth = 1;
 
     /**
-     * Structure containing training input samples with indices.
+     * Structure containing prediction input Sequence.
      *
      */
-    private transient LinkedHashMap<Integer, Matrix> trainIns;
-
-    /**
-     * Structure containing training output samples with indices.
-     *
-     */
-    private transient LinkedHashMap<Integer, Matrix> trainOuts;
-
-    /**
-     * Structure containing test input samples with indices. Used for neural network validation.
-     *
-     */
-    private transient LinkedHashMap<Integer, Matrix> testIns;
-
-    /**
-     * Structure containing test output samples with indices. Used for neural network validation.
-     *
-     */
-    private transient LinkedHashMap<Integer, Matrix> testOuts;
+    private transient Sequence predictIns;
 
     /**
      * Flag is neural network and it's layers are to be reset prior training phase.
@@ -222,60 +205,16 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient int autoValidationCount = 0;
 
     /**
-     * Current training sample index in training sample set.
+     * Sampler for training phase.
      *
      */
-    private transient int trainingSampleAt;
+    private transient Sampler trainingSampler;
 
     /**
-     * Number of training samples per training step i.e. mini batch size.<br>
-     * This is also used to define sequence length in sequence training for recurrent layers.<br>
+     * Sampler for validation phase.
      *
      */
-    private int trainingSamplesPerStep = 1;
-
-    /**
-     * Flag if training samples are to be taken in order of training sample set or taken randomly from training sample set.
-     *
-     */
-    private boolean trainingSampleInOrder = true;
-
-    /**
-     * Flag if samples inside training sample batch are to be kept in order or shuffled.
-     *
-     */
-    private boolean trainingShuffleSamples = false;
-
-    /**
-     * Current validation sample index in validation sample set.
-     *
-     */
-    private transient int validationSampleAt;
-
-    /**
-     * Number of validation samples per validation step.<br>
-     * This is also used to define sequence length in sequence validation for recurrent layers.<br>
-     *
-     */
-    private int validationSamplesPerStep = 1;
-
-    /**
-     * Flag if validation samples are to be taken in order of validation sample set or taken randomly from validation sample set.
-     *
-     */
-    private boolean validationSampleInOrder = true;
-
-    /**
-     * Flag if samples inside validation sample batch are to be kept in order or shuffled.
-     *
-     */
-    private boolean validationShuffleSamples = false;
-
-    /**
-     * Random number generator for neural network class.
-     *
-     */
-    private Random random;
+    private transient Sampler validationSampler;
 
     /**
      * Reference to neural network persistence instance.
@@ -922,7 +861,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Connects layers to each other with connectors.<br>
      * Initializes layers.<br>
      *
-     * @throws MatrixException throws exception is matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws neural network exception if building of neural network fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -978,25 +917,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void start() throws NeuralNetworkException {
         if (neuralNetworkThread != null) return;
 
-        trainingError = new Metrics(MetricsType.REGRESSION);
-        if (validationError == null) validationError = new Metrics(validationMetricsType);
-
-        trainIns = new LinkedHashMap<>();
-        trainOuts = new LinkedHashMap<>();
-
-        trainingSampleAt = 0;
-
-        testIns = new LinkedHashMap<>();
-        testOuts = new LinkedHashMap<>();
-
-        validationSampleAt = 0;
+        trainingMetrics = new Metrics(MetricsType.REGRESSION);
+        if (validationMetrics == null) validationMetrics = new Metrics(validationMetricsType);
 
         if (earlyStopping != null) {
-            earlyStopping.setTrainingError(trainingError);
-            earlyStopping.setValidationError(validationError);
+            earlyStopping.setTrainingError(trainingMetrics);
+            earlyStopping.setValidationError(validationMetrics);
         }
-
-        random = new Random();
 
         lock = new ReentrantLock();
         execute = lock.newCondition();
@@ -1091,25 +1018,18 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Sets training sample sets of neural network.<br>
      * Equal indices of input and output reflect input output pair of neural network.<br>
      *
-     * @param inputs training input sample set.
-     * @param outputs training output sample set.
+     * @param trainingSampler training sampler containing training data set.
      * @throws NeuralNetworkException throws exception if setting of training sample sets fail.
      */
-    public void setTrainingData(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> outputs) throws NeuralNetworkException {
+    public void setTrainingData(Sampler trainingSampler) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         lock.lock();
-        if (!inputs.isEmpty() && !outputs.isEmpty()) {
-            if (inputs.size() != outputs.size()) {
-                lock.unlock();
-                throw new NeuralNetworkException("Training input and output sample amount must be equal length");
-            }
-            trainIns = new LinkedHashMap<>();
-            trainIns.putAll(inputs);
-            trainOuts = new LinkedHashMap<>();
-            trainOuts.putAll(outputs);
-            trainingSampleAt = 0;
+        if (trainingSampler == null) {
+            lock.unlock();
+            throw new NeuralNetworkException("Training sampler is not set.");
         }
+        this.trainingSampler = trainingSampler;
         lock.unlock();
     }
 
@@ -1132,8 +1052,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         waitToComplete();
         this.earlyStopping = earlyStopping;
         if (earlyStopping != null) {
-            earlyStopping.setTrainingError(trainingError);
-            earlyStopping.setValidationError(validationError);
+            earlyStopping.setTrainingError(trainingMetrics);
+            earlyStopping.setValidationError(validationMetrics);
         }
     }
 
@@ -1141,9 +1061,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Sets auto validation on.
      *
      * @param autoValidationCycle validation cycle in iterations.
+     * @throws NeuralNetworkException throws exception if number of auto validation cycles are below 1.
      */
-    public void setAutoValidate(int autoValidationCycle) {
+    public void setAutoValidate(int autoValidationCycle) throws NeuralNetworkException {
         waitToComplete();
+        if (autoValidationCycle < 1) throw new NeuralNetworkException("Auto validation cycle size must be at least 1.");
         this.autoValidationCycle = autoValidationCycle;
     }
 
@@ -1162,18 +1084,17 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
     public void train() throws NeuralNetworkException {
-        train(null, null, false, true);
+        train(null, false, true);
     }
 
     /**
      * Trains neural network and sets specific training input and output samples.
      *
-     * @param inputs training input sample set.
-     * @param outputs training output sample set.
+     * @param trainingSampler training sampler containing training data.
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
-    public void train(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> outputs) throws NeuralNetworkException {
-        train(inputs, outputs, false, true);
+    public void train(Sampler trainingSampler) throws NeuralNetworkException {
+        train(trainingSampler, false, true);
     }
 
     /**
@@ -1183,20 +1104,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
     public void train(boolean reset) throws NeuralNetworkException {
-        train(null, null, reset, true);
+        train(null, reset, true);
     }
 
     /**
      * Trains neural network with option to reset neural network and it's layers.<br>
      * Sets specific training input and output samples.<br>
      *
-     * @param inputs training input sample set.
-     * @param outputs training output sample set.
+     * @param trainingSampler training sampler containing training data.
      * @param reset if true resets neural network and it's layers.
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
-    public void train(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> outputs, boolean reset) throws NeuralNetworkException {
-        train(inputs, outputs, reset, true);
+    public void train(Sampler trainingSampler, boolean reset) throws NeuralNetworkException {
+        train(trainingSampler, reset, true);
     }
 
     /**
@@ -1208,7 +1128,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
     public void train(boolean reset, boolean waitToComplete) throws NeuralNetworkException {
-        train(null, null, reset, waitToComplete);
+        train(null, reset, waitToComplete);
     }
 
     /**
@@ -1216,33 +1136,17 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Sets specific training input and output samples.<br>
      * Optionally waits neural network training procedure to complete.<br>
      *
-     * @param inputs training input sample set.
-     * @param outputs training output sample set.
+     * @param trainingSampler training sampler containing training data.
      * @param reset if true resets neural network and it's layers.
      * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior training completion.
      * @throws NeuralNetworkException throws exception if training procedure fails.
      */
-    public void train(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> outputs, boolean reset, boolean waitToComplete) throws NeuralNetworkException {
+    public void train(Sampler trainingSampler, boolean reset, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         lock.lock();
-        if (inputs != null && outputs != null) {
-            if (!inputs.isEmpty() && !outputs.isEmpty()) {
-                if (inputs.size() != outputs.size()) {
-                    lock.unlock();
-                    throw new NeuralNetworkException("Training input and output sample amount must be equal length");
-                }
-                trainIns = new LinkedHashMap<>();
-                trainIns.putAll(inputs);
-                trainOuts = new LinkedHashMap<>();
-                trainOuts.putAll(outputs);
-                trainingSampleAt = 0;
-            }
-        }
-        if (trainIns.isEmpty() || trainOuts.isEmpty()) {
-            lock.unlock();
-            throw new NeuralNetworkException("No training inputs and outputs set");
-        }
+        if (trainingSampler != null) this.trainingSampler = trainingSampler;
+        if (this.trainingSampler == null) throw new NeuralNetworkException("Training sampler is not set.");
         this.reset = reset;
         nextState(ExecutionState.TRAIN);
         if (waitToComplete) waitToComplete();
@@ -1295,7 +1199,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return predicted values (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
      */
-    public LinkedHashMap<Integer, Matrix> predict() throws NeuralNetworkException {
+    public Sequence predict() throws NeuralNetworkException {
         return predict(null, true);
     }
 
@@ -1307,7 +1211,22 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if prediction fails.
      */
     public Matrix predict(Matrix input) throws NeuralNetworkException {
-        LinkedHashMap<Integer, Matrix> inputs = new LinkedHashMap<>();
+        return predict(new Sample(input)).get(0);
+    }
+
+    /**
+     * Predicts values based on given input.
+     *
+     * @param input input for prediction.
+     * @return predicted value (neural network output).
+     * @throws NeuralNetworkException throws exception if prediction fails.
+     */
+    public Sample predict(Sample input) throws NeuralNetworkException {
+        if (input == null) {
+            lock.unlock();
+            throw new NeuralNetworkException("No prediction inputs set");
+        }
+        Sequence inputs = new Sequence(input.getDepth());
         inputs.put(0, input);
         return predict(inputs, true).get(0);
     }
@@ -1320,7 +1239,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return predicted values (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
      */
-    public LinkedHashMap<Integer, Matrix> predict(LinkedHashMap<Integer, Matrix> inputs) throws NeuralNetworkException {
+    public Sequence predict(Sequence inputs) throws NeuralNetworkException {
         return predict(inputs, true);
     }
 
@@ -1332,7 +1251,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return predicted values (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
      */
-    public LinkedHashMap<Integer, Matrix> predict(boolean waitToComplete) throws NeuralNetworkException {
+    public Sequence predict(boolean waitToComplete) throws NeuralNetworkException {
         return predict(null, waitToComplete);
     }
 
@@ -1346,25 +1265,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return predicted values (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
      */
-    public LinkedHashMap<Integer, Matrix> predict(LinkedHashMap<Integer, Matrix> inputs, boolean waitToComplete) throws NeuralNetworkException {
+    public Sequence predict(Sequence inputs, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         lock.lock();
-        if (inputs != null) {
-            if (!inputs.isEmpty()) {
-                testIns = new LinkedHashMap<>();
-                testIns.putAll(inputs);
-                testOuts = new LinkedHashMap<>();
-            }
-        }
-        if (testIns.isEmpty()) {
+        if (inputs != null) predictIns = inputs;
+        if (predictIns == null) {
             lock.unlock();
             throw new NeuralNetworkException("No prediction inputs set");
         }
         nextState(ExecutionState.PREDICT);
         if (waitToComplete) {
             waitToComplete();
-            return new LinkedHashMap<>(getOutput());
+            return getOutput();
         }
         else return null;
     }
@@ -1394,7 +1307,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if validation fails.
      */
     public void validate() throws NeuralNetworkException {
-        validate(null, null, true);
+        validate(null, true);
     }
 
     /**
@@ -1405,43 +1318,35 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if validation fails.
      */
     public void validate(boolean waitToComplete) throws NeuralNetworkException {
-        validate(null, null, waitToComplete);
+        validate(null, waitToComplete);
     }
 
     /**
      * Validates neural network.<br>
      * Sets specific input and output (actual true values) test samples.<br>
      *
-     * @param inputs test input set for validation.
-     * @param actual test output (actual true values) set for validation.
+     * @param validationSampler validation sampler containing validation data set.
      * @throws NeuralNetworkException throws exception if validation fails.
      */
-    public void validate(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> actual) throws NeuralNetworkException {
-        validate(inputs, actual, true);
+    public void validate(Sampler validationSampler) throws NeuralNetworkException {
+        validate(validationSampler, true);
     }
 
     /**
      * Sets validation data.
      *
-     * @param inputs test input set for validation.
-     * @param actual test output (actual true values) set for validation.
+     * @param validationSampler validation sampler containing validation data set.
      * @throws NeuralNetworkException throws exception if setting of validation data fails.
      */
-    public void setValidationData(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> actual) throws NeuralNetworkException {
+    public void setValidationData(Sampler validationSampler) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         lock.lock();
-        if (!inputs.isEmpty() && !actual.isEmpty()) {
-            if (inputs.size() != actual.size()) {
-                lock.unlock();
-                throw new NeuralNetworkException("Validation input and actual sample amount must be equal length");
-            }
-            testIns = new LinkedHashMap<>();
-            testIns.putAll(inputs);
-            testOuts = new LinkedHashMap<>();
-            testOuts.putAll(actual);
-            validationSampleAt = 0;
+        if (validationSampler == null) {
+            lock.unlock();
+            throw new NeuralNetworkException("Validation sampler is not set.");
         }
+        this.validationSampler = validationSampler;
         lock.unlock();
     }
 
@@ -1450,32 +1355,16 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Sets specific input and output (actual true values) test samples.<br>
      * Optionally waits neural network validation procedure to complete.<br>
      *
-     * @param inputs test input set for validation.
-     * @param actual test output (actual true values) set for validation.
+     * @param validationSampler validation sampler containing validation data set.
      * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior validation completion.
      * @throws NeuralNetworkException throws exception if validation fails.
      */
-    public void validate(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> actual, boolean waitToComplete) throws NeuralNetworkException {
+    public void validate(Sampler validationSampler, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         lock.lock();
-        if (inputs != null && actual != null) {
-            if (!inputs.isEmpty() && !actual.isEmpty()) {
-                if (inputs.size() != actual.size()) {
-                    lock.unlock();
-                    throw new NeuralNetworkException("Validation input and actual sample amount must be equal length");
-                }
-                testIns = new LinkedHashMap<>();
-                testIns.putAll(inputs);
-                testOuts = new LinkedHashMap<>();
-                testOuts.putAll(actual);
-                validationSampleAt = 0;
-            }
-        }
-        if (testIns.isEmpty() || testOuts.isEmpty()) {
-            lock.unlock();
-            throw new NeuralNetworkException("No validation inputs and actual set");
-        }
+        if (validationSampler != null) this.validationSampler = validationSampler;
+        if (this.validationSampler == null) throw new NeuralNetworkException("Validation sampler is not set.");
         nextState(ExecutionState.VALIDATE);
         if (waitToComplete) waitToComplete();
     }
@@ -1498,10 +1387,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void stop() {
         waitToComplete();
         getInputLayer().stop();
-        trainIns = null;
-        trainOuts = null;
-        testIns = null;
-        testOuts = null;
         lock.lock();
         executionState = ExecutionState.TERMINATED;
         execute.signal();
@@ -1514,9 +1399,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return output of neural network.
      */
-    public LinkedHashMap<Integer, Matrix> getOutput() {
+    public Sequence getOutput() {
         waitToComplete();
-        return getOutputLayer().getOutput().getFlatSequence();
+        return getOutputLayer().getOutput();
     }
 
     /**
@@ -1566,7 +1451,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if neural network training fails.
      */
     private void trainIterations() throws MatrixException, IOException, NeuralNetworkException {
-        trainingError.resetError();
+        trainingMetrics.resetError();
         for (int iteration = 0; iteration < iterations; iteration++) {
             trainIteration();
             if (stoppedExecution()) break;
@@ -1574,7 +1459,7 @@ public class NeuralNetwork implements Runnable, Serializable {
                 if (earlyStopping.stopTraining()) break;
             }
         }
-        trainingError.store(totalIterations);
+        trainingMetrics.store(totalIterations);
         stateCompleted();
     }
 
@@ -1590,7 +1475,7 @@ public class NeuralNetwork implements Runnable, Serializable {
         for (Connector connector : connectors) if (reset) connector.reset();
         Sequence inputSequence = new Sequence(sampleDepth);
         Sequence outputSequence = new Sequence(sampleDepth);
-        trainingSampleAt = getSamples(trainIns, trainOuts, inputSequence, outputSequence, trainingSampleAt, trainingSamplesPerStep, trainingSampleInOrder, trainingShuffleSamples);
+        trainingSampler.getSamples(inputSequence, outputSequence);
         getOutputLayer().resetError();
         getOutputLayer().setTargets(outputSequence);
         getInputLayer().train(inputSequence);
@@ -1598,8 +1483,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         getInputLayer().update();
         long endTime = System.nanoTime();
         trainingTime += endTime - startTime;
-        trainingError.report(getOutputLayer().getTotalError());
-        trainingError.store(totalIterations, true);
+        trainingMetrics.report(getOutputLayer().getTotalError());
+        trainingMetrics.store(totalIterations, true);
         totalIterations++;
         if (autoValidationCycle > 0) {
             autoValidationCount++;
@@ -1620,71 +1505,16 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     private void verboneTrainingStatus() {
-        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + String.format("%.4f", trainingError.getAbsolute()) + ", Training time in seconds: " + (trainingTime / 1000000000));
-    }
-
-    /**
-     * Returns sample batch for neural network training and validation purposes.
-     *
-     * @param inputs training or test sample input set.
-     * @param outputs training or test sample output set.
-     * @param inputSequence input sequence for training or validation.
-     * @param outputSequence output sample batch for training or validation.
-     * @param sampleAt starts batch sampling at this index.
-     * @param samplesPerStep number of samples per batch.
-     * @param sampleInOrder true if sampling is done sequentially from training or test sample set otherwise false.
-     * @param shuffleSamples true if sample batch is shuffled otherwise original order is maintained.
-     * @return sampleAt after sampling operation.
-     */
-    private int getSamples(LinkedHashMap<Integer, Matrix> inputs, LinkedHashMap<Integer, Matrix> outputs, Sequence inputSequence, Sequence outputSequence, int sampleAt, int samplesPerStep, boolean sampleInOrder, boolean shuffleSamples) throws MatrixException {
-        int sampleEnd = sampleAt + samplesPerStep * sampleDepth;
-        ArrayList<Integer> samples = new ArrayList<>();
-        if (sampleInOrder) {
-            if (samplesPerStep == 0) {
-                sampleAt = 0;
-                sampleEnd = inputs.size();
-            }
-            else {
-                if (sampleEnd > inputs.size() - 1) {
-                    sampleAt = 0;
-                    sampleEnd = sampleAt + samplesPerStep * sampleDepth < inputs.size() ? sampleAt + samplesPerStep * sampleDepth : inputs.size() - 1;
-                }
-            }
-            for (int sample = sampleAt; sample < sampleEnd; sample++) samples.add(sample);
-            if (shuffleSamples) Collections.shuffle(samples);
-        }
-        else {
-            for (int index = 0; index < samplesPerStep; index++) samples.add(random.nextInt(inputs.size()));
-        }
-        for (Integer sampleIndex : samples) {
-            for (int matrixIndex = 0; matrixIndex < sampleDepth; matrixIndex++) {
-                inputSequence.put(sampleIndex, matrixIndex, inputs.get(sampleIndex + matrixIndex));
-                outputSequence.put(sampleIndex, matrixIndex, outputs.get(sampleIndex + matrixIndex));
-            }
-        }
-        if (sampleInOrder && samplesPerStep > 0) {
-            if (++sampleAt >= inputs.size() - 1 - samplesPerStep * sampleDepth) sampleAt = 0;
-        }
-        return sampleAt;
+        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + String.format("%.4f", trainingMetrics.getAbsolute()) + ", Training time in seconds: " + (trainingTime / 1000000000));
     }
 
     /**
      * Predicts using given test set inputs.
      *
      */
-    private void predictInput() throws MatrixException {
-        Sequence inputSequence = new Sequence(sampleDepth);
-        int sampleIndex = 0;
-        int matrixIndex = 0;
-        for (Matrix input : testIns.values()) {
-            inputSequence.put(sampleIndex, matrixIndex, input);
-            if (++matrixIndex == sampleDepth) {
-                sampleIndex++;
-                matrixIndex = 0;
-            }
-        }
+    private void predictInput() {
         getOutputLayer().clearTargets();
-        getInputLayer().predict(inputSequence);
+        getInputLayer().predict(predictIns);
         stateCompleted();
     }
 
@@ -1696,14 +1526,18 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if validation fails.
      */
     private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException {
-        validationError.resetError();
-        Sequence inputSequence = new Sequence(sampleDepth);
-        Sequence outputSequence = new Sequence(sampleDepth);
-        validationSampleAt = getSamples(testIns, testOuts, inputSequence, outputSequence, validationSampleAt, validationSamplesPerStep, validationSampleInOrder, validationShuffleSamples);
-        getOutputLayer().clearTargets();
-        validationError.report(getInputLayer().predict(inputSequence), outputSequence);
+        validationMetrics.resetError();
+        for (int sampleIndex = 0; sampleIndex < validationSampler.getNumberOfValidationCycles(); sampleIndex++) {
+            Sequence inputSequence = new Sequence(sampleDepth);
+            Sequence outputSequence = new Sequence(sampleDepth);
+            validationSampler.getSamples(inputSequence, outputSequence);
+            getOutputLayer().clearTargets();
+            Sequence prediction = getInputLayer().predict(inputSequence);
+            if (prediction == null) System.out.println("Tööt " + inputSequence.sampleSize() + " " + inputSequence.totalSize());
+            validationMetrics.report(getInputLayer().predict(inputSequence), outputSequence);
+        }
         if (verboseValidation && (totalIterations % verboseCycle == 0)) verboseValidationStatus();
-        validationError.store(totalIterations, true);
+        validationMetrics.store(totalIterations, true);
         if (stateCompleted) stateCompleted();
     }
 
@@ -1763,101 +1597,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets neural network training batch sampling parameters.
-     *
-     * @param samplesPerStep amount of samples to be included to training batch.
-     * @param sampleInOrder true if sampling is done sequentially from training sample set otherwise false.
-     * @param shuffleSamples true if sample batch is shuffled otherwise original order is maintained.
-     * @throws NeuralNetworkException throws exception if sampling parameter setting fails.
-     */
-    public void setTrainingSampling(int samplesPerStep, boolean sampleInOrder, boolean shuffleSamples) throws NeuralNetworkException {
-        waitToComplete();
-        if (samplesPerStep < 0) throw new NeuralNetworkException("Sample size must be zero (all samples in step) or positive number.");
-        trainingSamplesPerStep = samplesPerStep;
-        trainingSampleInOrder = sampleInOrder;
-        trainingShuffleSamples = shuffleSamples;
-        trainingSampleAt = 0;
-    }
-
-    /**
-     * Returns amount of samples to be included to training batch.
-     *
-     * @return amount of samples to be included to training batch.
-     */
-    public int getTrainingSamplesPerStep() {
-        return trainingSamplesPerStep;
-    }
-
-    /**
-     * Returns true if sampling is done sequentially from training sample set otherwise false.
-     *
-     * @return true if sampling is done sequentially from training sample set otherwise false.
-     */
-    public boolean getTrainingSampleInOrder() {
-        return trainingSampleInOrder;
-    }
-
-    /**
-     * Returns true if sample batch is shuffled otherwise original order is maintained.
-     *
-     * @return true if sample batch is shuffled otherwise original order is maintained.
-     */
-    public boolean getTrainingShuffleSamples() {
-        return trainingShuffleSamples;
-    }
-
-    /**
-     * Sets neural network validation batch sampling parameters.
-     *
-     * @param samplesPerStep amount of samples to be included to validation batch.
-     * @param sampleInOrder true if sampling is done sequentially from validation sample set otherwise false.
-     * @param shuffleSamples true if sample batch is shuffled otherwise original order is maintained.
-     * @throws NeuralNetworkException throws exception if sampling parameter setting fails.
-     */
-    public void setValidationSampling(int samplesPerStep, boolean sampleInOrder, boolean shuffleSamples) throws NeuralNetworkException {
-        waitToComplete();
-        if (samplesPerStep < 0) throw new NeuralNetworkException("Sample size must be zero (all samples in step) or positive number.");
-        validationSamplesPerStep = samplesPerStep;
-        validationSampleInOrder = sampleInOrder;
-        validationShuffleSamples = shuffleSamples;
-        validationSampleAt = 0;
-    }
-
-    /**
-     * Returns amount of samples to be included to validation batch.
-     *
-     * @return amount of samples to be included to validation batch.
-     */
-    public int getValidationSamplesPerStep() {
-        return validationSamplesPerStep;
-    }
-
-    /**
-     * Returns true if sampling is done sequentially from validation sample set otherwise false.
-     *
-     * @return true if sampling is done sequentially from validation sample set otherwise false.
-     */
-    public boolean getValidationSampleInOrder() {
-        return validationSampleInOrder;
-    }
-
-    /**
-     * Returns true if sample batch is shuffled otherwise original order is maintained.
-     *
-     * @return true if sample batch is shuffled otherwise original order is maintained.
-     */
-    public boolean getValidationShuffleSamples() {
-        return validationShuffleSamples;
-    }
-
-    /**
      * Returns training error instance.
      *
      * @return training error instance.
      */
-    public Metrics getTrainingError() {
+    public Metrics getTrainingMetrics() {
         waitToComplete();
-        return trainingError;
+        return trainingMetrics;
     }
 
     /**
@@ -1890,7 +1636,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setTaskType(MetricsType metricsType, boolean multiClass) throws NeuralNetworkException {
         waitToComplete();
         validationMetricsType = metricsType;
-        validationError = new Metrics(metricsType, multiClass);
+        validationMetrics = new Metrics(metricsType, multiClass);
     }
 
     /**
@@ -1902,7 +1648,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setTaskType(MetricsType metricsType) throws NeuralNetworkException {
         waitToComplete();
         validationMetricsType = metricsType;
-        validationError = new Metrics(metricsType);
+        validationMetrics = new Metrics(metricsType);
     }
 
     /**
@@ -1910,9 +1656,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return validation error instance.
      */
-    public Metrics getValidationError() {
+    public Metrics getValidationMetrics() {
         waitToComplete();
-        return validationError;
+        return validationMetrics;
     }
 
     /**
@@ -1922,7 +1668,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     private void verboseValidationStatus() throws NeuralNetworkException {
         System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Validating...");
-        validationError.printReport();
+        validationMetrics.printReport();
     }
 
     /**
