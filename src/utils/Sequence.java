@@ -1,3 +1,9 @@
+/********************************************************
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ *
+ ********************************************************/
+
 package utils;
 
 import utils.matrix.DMatrix;
@@ -44,6 +50,20 @@ public class Sequence implements Serializable {
     public Sequence(Sequence sequence) {
         this.depth = sequence.getDepth();
         putAll(sequence);
+    }
+
+    /**
+     * Constructor for sequence.
+     *
+     * @param samples samples to be added into this sequence.
+     * @throws MatrixException throws exception if depth of samples are not equal.
+     */
+    public Sequence(LinkedHashMap<Integer, Sample> samples) throws MatrixException {
+        this.depth = samples.get(0).getDepth();
+        for (Integer entry : samples.keySet()) {
+            if (samples.get(entry).getDepth() != depth) throw new MatrixException("Depths of all samples are not equal.");
+            entries.put(entry, samples.get(entry));
+        }
     }
 
     /**
