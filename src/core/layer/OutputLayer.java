@@ -119,7 +119,8 @@ public class OutputLayer extends AbstractLayer {
      * @return total error of neural network.
      */
     public double getTotalError() {
-        return error.mean() + getBackward().error() / (double)targets.totalSize();
+        if (error == null || targets == null) return 0;
+        else return error.mean() + getBackward().error() / (double)targets.totalSize();
     }
 
     /**
@@ -155,7 +156,6 @@ public class OutputLayer extends AbstractLayer {
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
                 Matrix loss = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction());
-                if (importanceSamplingWeights != null) loss.multiply(importanceSamplingWeights.get(matrixIndex), loss);
                 error.add(loss, error);
             }
         }
