@@ -255,6 +255,7 @@ public class Procedure implements Serializable {
      * Updates data of node dependencies for expression calculation phase.
      *
      * @param index index to data for which dependencies are updates.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     private void updateDependencies(int index) throws MatrixException {
         for (NodeLink nodeLink : dependentNodes) nodeLink.updateExpression(index);
