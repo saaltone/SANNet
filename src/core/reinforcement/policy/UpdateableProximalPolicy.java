@@ -122,13 +122,11 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyGradientValue(RLSample sample, boolean hasImportanceSamplingWeight) throws NeuralNetworkException, MatrixException {
-        double oldActionValue = sample.policyValue;
-        if (previousFunctionEstimator != null) {
-            oldActionValue = previousFunctionEstimator.predict(sample.state.stateMatrix).getValue(sample.state.action, 0);
-        }
-        double rValue = sample.policyValue / oldActionValue;
+        double previousActionValue = previousFunctionEstimator.predict(sample.state.stateMatrix).getValue(sample.state.action, 0);
+        double rValue = sample.policyValue / previousActionValue;
+        double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
         double advantage = sample.tdTarget - sample.baseline;
-        return Math.min(rValue * advantage, Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon) * advantage);
+        return Math.min(rValue * advantage, clippedRValue * advantage);
     }
 
     /**
