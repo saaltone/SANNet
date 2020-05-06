@@ -66,8 +66,8 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
             policyGradient.setValue(sample.state.action, 0, -getPolicyGradientValue(sample, hasImportanceSamplingWeights));
             policyGradients.put(sampleIndex, new Sample(policyGradient));
         }
-        getFunctionEstimator().train(states, policyGradients);
         postProcess();
+        getFunctionEstimator().train(states, policyGradients);
     }
 
     /**
