@@ -317,8 +317,7 @@ public class TSP implements Environment {
                 maxDistance = totalDistance;
                 visitedCitiesMax = visitedCities;
             }
-//            agent.respond(-distance / (numberOfCities * numberOfCities), true);
-            agent.respond(Math.exp(-distance), true);
+            agent.respond(minDistance / totalDistance, true);
         }
         else agent.respond(0, false);
     }
@@ -522,7 +521,7 @@ public class TSP implements Environment {
                 policy = new EpsilonGreedyPolicy("epsilonMin = 0");
                 break;
             case 2:
-                policy = new NoisyPolicy();
+                policy = new NoisyPolicy("minExplorationNoise = 0");
                 break;
             case 3:
                 policy = new WeightedRandomPolicy();
@@ -556,22 +555,23 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.TANH), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
+            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.setLossFunction(BinaryFunctionType.MEAN_ABSOLUTE_ERROR);
             neuralNetwork.build();
-            neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
+            neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
             neuralNetwork.setOptimizer(OptimizationType.ADAM);
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
             neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
             neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
             neuralNetwork.build();
-            neuralNetwork.setOptimizer(OptimizationType.NADAM);
+ //           neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
+            neuralNetwork.setOptimizer(OptimizationType.ADAM);
         }
         return neuralNetwork;
     }
