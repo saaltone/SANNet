@@ -1533,7 +1533,6 @@ public class NeuralNetwork implements Runnable, Serializable {
             validationSampler.getSamples(inputSequence, outputSequence);
             getOutputLayer().clearTargets();
             Sequence prediction = getInputLayer().predict(inputSequence);
-            if (prediction == null) System.out.println("Tööt " + inputSequence.sampleSize() + " " + inputSequence.totalSize());
             validationMetrics.report(getInputLayer().predict(inputSequence), outputSequence);
         }
         if (verboseValidation && (totalIterations % verboseCycle == 0)) verboseValidationStatus();
