@@ -37,7 +37,8 @@ package utils.matrix;
  *     GELU,
  *     SOFTMAX,
  *     GAUSSIAN,
- *     SINACT
+ *     SINACT,
+ *     CUSTOM
  *
  */
 public enum UnaryFunctionType {
@@ -71,6 +72,7 @@ public enum UnaryFunctionType {
     GELU,
     SOFTMAX,
     GAUSSIAN,
-    SINACT
+    SINACT,
+    CUSTOM
 
 }
