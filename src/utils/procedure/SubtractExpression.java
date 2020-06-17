@@ -20,13 +20,20 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      * Constructor for subtraction operation.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param arg2 second argument.
+     * @param argument1 first argument.
+     * @param argument2 second argument.
      * @param result result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public SubtractExpression(int expressionID, Node arg1, Node arg2, Node result) throws MatrixException {
-        super(expressionID, arg1, arg2, result);
+    public SubtractExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
+        super(expressionID, argument1, argument2, result);
+    }
+
+    /**
+     * Calculates expression.
+     *
+     */
+    public void calculateExpression() {
     }
 
     /**
@@ -36,8 +43,15 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null || arg2.getMatrix(index) == null) throw new MatrixException("Arguments for SUB operation not defined");
-        result.setMatrix(index, arg1.getMatrix(index).subtract(arg2.getMatrix(index)));
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for SUB operation not defined");
+        result.setMatrix(index, argument1.getMatrix(index).subtract(argument2.getMatrix(index)));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -48,8 +62,8 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
-        arg1.updateGradient(index, result.getGradient(index), true);
-        arg2.updateGradient(index, result.getGradient(index), false);
+        argument1.updateGradient(index, result.getGradient(index), true);
+        argument2.updateGradient(index, result.getGradient(index), false);
     }
 
     /**
@@ -57,7 +71,19 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      *
      */
     public void printExpression() {
-        System.out.print("SUBTRACT: " + arg1 + " " + arg2 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("SUBTRACT: " + argument1.getName() + " - " + argument2.getName() + " = " + result.getName());
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("SUBTRACT: d" + argument1.getName() + " = d" + result.getName());
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("SUBTRACT: d" + argument2.getName() + " = -d" + result.getName());
     }
 
 }
