@@ -401,10 +401,10 @@ public class Maze implements Environment, ActionListener {
             g.setColor(Color.LIGHT_GRAY);
             for (int x = 0; x < maze.length; x++) {
                 for (int y = 0; y < maze[x].length; y++) {
-                    if (maze[x][y].neighbors[0] != null) if (!maze[x][y].neighbors[0].connected) g.drawLine((x + 0) * 10, (y + 0) * 10, (x + 0) * 10, (y + 1) * 10);
-                    if (maze[x][y].neighbors[1] != null) if (!maze[x][y].neighbors[1].connected) g.drawLine((x + 1) * 10, (y + 0) * 10, (x + 1) * 10, (y + 1) * 10);
-                    if (maze[x][y].neighbors[2] != null) if (!maze[x][y].neighbors[2].connected) g.drawLine((x + 0) * 10, (y + 0) * 10, (x + 1) * 10, (y + 0) * 10);
-                    if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x + 0) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[0] != null) if (!maze[x][y].neighbors[0].connected) g.drawLine((x) * 10, (y) * 10, (x) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[1] != null) if (!maze[x][y].neighbors[1].connected) g.drawLine((x + 1) * 10, (y) * 10, (x + 1) * 10, (y + 1) * 10);
+                    if (maze[x][y].neighbors[2] != null) if (!maze[x][y].neighbors[2].connected) g.drawLine((x) * 10, (y) * 10, (x + 1) * 10, (y) * 10);
+                    if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
                 }
             }
             Iterator iterator = mazeAgentHistory.iterator();
@@ -797,8 +797,8 @@ public class Maze implements Environment, ActionListener {
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
     private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        boolean policyGradient = false;
-        boolean stateValue = false;
+        boolean policyGradient = true;
+        boolean stateValue = true;
         int policyType = 2;
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
@@ -811,7 +811,7 @@ public class Maze implements Environment, ActionListener {
                 policy = new EpsilonGreedyPolicy();
                 break;
             case 2:
-                policy = new NoisyPolicy("minExplorationNoise = 0.05");
+                policy = new NoisyPolicy();
                 break;
             case 3:
                 policy = new WeightedRandomPolicy();
@@ -841,8 +841,9 @@ public class Maze implements Environment, ActionListener {
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         if (!policyFunction) {
@@ -852,8 +853,8 @@ public class Maze implements Environment, ActionListener {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-            neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.verboseTraining(10);
         }
         else {
@@ -863,8 +864,8 @@ public class Maze implements Environment, ActionListener {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-            neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         }
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
