@@ -276,7 +276,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      */
     public void printExpressions() {
         if (procedures.size() == 0) return;
-        System.out.print("Normalization: " + getName() + " : ");
+        System.out.println("Normalization: " + getName() + " : ");
         for (Procedure procedure : procedures.values()) procedure.printExpressionChain();
         System.out.println();
     }
@@ -287,7 +287,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      */
     public void printGradients() {
         if (procedures.size() == 0) return;
-        System.out.print("Normalization: " + getName() + " : ");
+        System.out.println("Normalization: " + getName() + " : ");
         for (Procedure procedure : procedures.values()) procedure.printGradientChain();
         System.out.println();
     }
