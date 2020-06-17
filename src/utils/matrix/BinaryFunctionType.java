@@ -8,7 +8,6 @@ package utils.matrix;
 
 /**
  * Following functions are supported:
- *     POW,
  *     MEAN_SQUARED_ERROR,
  *     MEAN_SQUARED_LOGARITHMIC_ERROR,
  *     MEAN_ABSOLUTE_ERROR,
@@ -20,12 +19,17 @@ package utils.matrix;
  *     HINGE,
  *     SQUARED_HINGE,
  *     HUBER,
- *     DIRECT_GRADIENT
+ *     DIRECT_GRADIENT,
+ *     POLICY_GRADIENT,
+ *     POW,
+ *     NORM,
+ *     MAX,
+ *     MIN,
+ *     CUSTOM
  *
  */
 public enum BinaryFunctionType {
 
-    POW,
     MEAN_SQUARED_ERROR,
     MEAN_SQUARED_LOGARITHMIC_ERROR,
     MEAN_ABSOLUTE_ERROR,
@@ -38,6 +42,11 @@ public enum BinaryFunctionType {
     SQUARED_HINGE,
     HUBER,
     DIRECT_GRADIENT,
-    POLICY_GRADIENT
+    POLICY_GRADIENT,
+    POW,
+    NORM,
+    MAX,
+    MIN,
+    CUSTOM
 
 }
