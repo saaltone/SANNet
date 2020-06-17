@@ -6,9 +6,7 @@
 
 package utils.procedure;
 
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunction;
+import utils.matrix.*;
 
 import java.io.Serializable;
 
@@ -19,54 +17,39 @@ import java.io.Serializable;
 public class UnaryFunctionExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
+     * Unary function type.
+     *
+     */
+    private final UnaryFunctionType unaryFunctionType;
+
+    /**
      * UnaryFunction used.
      *
      */
     private final UnaryFunction unaryFunction;
 
     /**
-     * Lambda operation to calculate unaryFunction.
-     *
-     */
-    private final Matrix.MatrixUnaryOperation unaryFunctionPrime;
-
-    /**
-     * Lambda operation to calculate derivative of unaryFunction.
-     *
-     */
-    private final Matrix.MatrixUnaryOperation uniDerivativePrime;
-
-    /**
      * Constructor for unary function.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
+     * @param argument1 first argument.
      * @param result result.
      * @param unaryFunction UnaryFunction.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    UnaryFunctionExpression(int expressionID, Node arg1, Node result, UnaryFunction unaryFunction) throws MatrixException {
-        super(expressionID, arg1, result);
+    UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
+        super(expressionID, argument1, result);
+        this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
-        this.unaryFunctionPrime = null;
-        this.uniDerivativePrime = null;
     }
 
     /**
-     * Constructor for expression.
+     * Returns unary function type.
      *
-     * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param result result for expression.
-     * @param unaryFunctionPrime prime matrix UnaryFunction.
-     * @param uniDerivativePrime prime matrix UnaryFunction derivative.
-     * @throws MatrixException throws exception if expression arguments are not defined.
+     * @return unary function type.
      */
-    public UnaryFunctionExpression(int expressionID, Node arg1, Node result, Matrix.MatrixUnaryOperation unaryFunctionPrime, Matrix.MatrixUnaryOperation uniDerivativePrime) throws MatrixException {
-        super(expressionID, arg1, result);
-        this.unaryFunction = null;
-        this.unaryFunctionPrime = unaryFunctionPrime;
-        this.uniDerivativePrime = uniDerivativePrime;
+    public UnaryFunctionType getUnaryFunctionType() {
+        return unaryFunctionType;
     }
 
     /**
@@ -79,21 +62,10 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     }
 
     /**
-     * Returns UnaryFunction prime.
+     * Calculates expression.
      *
-     * @return UnaryFunction prime.
      */
-    public Matrix.MatrixUnaryOperation getUnaryFunctionPrime() {
-        return unaryFunctionPrime;
-    }
-
-    /**
-     * Returns UnaryFunction derivative prime.
-     *
-     * @return UnaryFunction derivative prime.
-     */
-    public Matrix.MatrixUnaryOperation getUnaryDerivativePrime() {
-        return uniDerivativePrime;
+    public void calculateExpression() {
     }
 
     /**
@@ -103,9 +75,15 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null) throw new MatrixException("Argument for unary operation not defined");
-        if (unaryFunction != null) result.setMatrix(index, unaryFunction.applyFunction(arg1.getMatrix(index)));
-        else result.setMatrix(index, arg1.getMatrix(index).apply(unaryFunctionPrime));
+        if (argument1.getMatrix(index) == null) throw new MatrixException("Argument for unary operation not defined");
+        result.setMatrix(index, unaryFunction.applyFunction(argument1.getMatrix(index)));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -116,10 +94,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
-        Matrix inUniGradient;
-        if (unaryFunction != null) inUniGradient = unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index));
-        else inUniGradient = result.getGradient(index).multiply(result.getMatrix(index).apply(uniDerivativePrime));
-        arg1.updateGradient(index, inUniGradient, true);
+        argument1.updateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), true);
     }
 
     /**
@@ -127,7 +102,17 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      *
      */
     public void printExpression() {
-        System.out.print("UNARYFUN: " + " " + arg1 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("UNARYFUN: " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("UNARYFUN: d" + argument1.getName() + " = d" + result.getName() + " * " + unaryFunctionType + "_GRADIENT(" + result.getName() + ")");
     }
 
 }
