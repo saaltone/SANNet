@@ -139,7 +139,6 @@ public class ReplayBuffer implements Buffer, Serializable {
      * @param sample sample to be stored.
      */
     public void add(RLSample sample) {
-//        if (sumTree.containsSample(sample)) return;
         sample.priority = maxPriority;
         sumTree.add(sample);
     }
