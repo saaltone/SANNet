@@ -6,8 +6,6 @@
 
 package utils.matrix;
 
-import utils.matrix.*;
-
 import java.util.HashMap;
 
 /**
@@ -34,59 +32,75 @@ public class SMatrix extends Matrix {
      * Defines number of columns in matrix.
      *
      */
-    private int cols;
+    private int columns;
 
     /**
      * Constructor for sparse matrix.
      *
      * @param rows defines number of rows in matrix.
-     * @param cols defines number of columns in matrix.
+     * @param columns defines number of columns in matrix.
      */
-    public SMatrix(int rows, int cols) {
+    public SMatrix(int rows, int columns) {
+        super(false);
         this.rows = rows;
-        this.cols = cols;
+        this.columns = columns;
     }
 
     /**
      * Constructor for sparse matrix.
      *
      * @param rows defines number of rows in matrix.
-     * @param cols defines number of columns in matrix.
+     * @param columns defines number of columns in matrix.
      * @param initialization type of initialization defined in class Init.
      * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public SMatrix(int rows, int cols, Init initialization, int inputs, int outputs) throws MatrixException {
+    public SMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs) {
+        super(false);
         this.rows = rows;
-        this.cols = cols;
-        init(initialization, inputs, outputs);
+        this.columns = columns;
+        initialize(initialization, inputs, outputs);
     }
 
     /**
      * Constructor for sparse matrix.
      *
      * @param rows defines number of rows in matrix.
-     * @param cols defines number of columns in matrix.
+     * @param columns defines number of columns in matrix.
      * @param initialization type of initialization defined in class Init.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public SMatrix(int rows, int cols, Init initialization) throws MatrixException {
+    public SMatrix(int rows, int columns, Initialization initialization) {
+        super(false);
         this.rows = rows;
-        this.cols = cols;
-        init(initialization);
+        this.columns = columns;
+        initialize(initialization);
     }
 
     /**
      * Constructor for sparse matrix.
      *
      * @param rows defines number of rows in matrix.
-     * @param cols defines number of columns in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param initializer initializer.
+     */
+    public SMatrix(int rows, int columns, Initializer initializer) {
+        super(false);
+        this.rows = rows;
+        this.columns = columns;
+        initialize(initializer);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param data clones matrix data from given matrix data.
      */
-    public SMatrix(int rows, int cols, HashMap<Integer, Double> data) {
+    public SMatrix(int rows, int columns, HashMap<Integer, Double> data) {
+        super(false);
         this.rows = rows;
-        this.cols = cols;
+        this.columns = columns;
         for (Integer index : data.keySet()) matrix.put(index, data.get(index));
     }
 
@@ -94,13 +108,14 @@ public class SMatrix extends Matrix {
      * Constructor for sparse matrix.
      *
      * @param rows defines number of rows in matrix.
-     * @param cols defines number of columns in matrix.
+     * @param columns defines number of columns in matrix.
      * @param data matrix data.
      * @param referTo if true creates matrix with reference to given matrix data otherwise clones the data.
      */
-    public SMatrix(int rows, int cols, HashMap<Integer, Double> data, boolean referTo) {
+    public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean referTo) {
+        super(false);
         this.rows = rows;
-        this.cols = cols;
+        this.columns = columns;
         if (referTo) matrix.putAll(data);
         else for (Integer index : data.keySet()) matrix.put(index, data.get(index));
     }
@@ -119,34 +134,29 @@ public class SMatrix extends Matrix {
      * @return mask of this matrix.
      */
     protected Mask getNewMask() {
-        return new SMask(rows, cols);
+        return new SMask(rows, columns);
     }
 
     /**
      * Matrix function used to set value of specific row and column.
      *
      * @param row row of value to be set.
-     * @param col column of value to be set.
+     * @param column column of value to be set.
      * @param value new value to be set.
      */
-    public void setValue(int row, int col, double value) {
-        if (value == 0) return;
-        int curRow = !t ? row : col;
-        int curCol = !t ? col : row;
-        matrix.put(curRow * cols + curCol, value);
+    public void setValue(int row, int column, double value) {
+        if (value != 0) matrix.put((!isTransposed ? row : column) * columns + (!isTransposed ? column : row), value);
     }
 
     /**
      * Matrix function used to get value of specific row and column.
      *
      * @param row row of value to be returned.
-     * @param col column of value to be returned.
+     * @param column column of value to be returned.
      * @return value of row and column.
      */
-    public double getValue(int row, int col) {
-        int curRow = !t ? row : col;
-        int curCol = !t ? col : row;
-        return matrix.getOrDefault(curRow * cols + curCol, (double)0);
+    public double getValue(int row, int column) {
+        return matrix.getOrDefault((!isTransposed ? row : column) * columns + (!isTransposed ? column : row), (double)0);
     }
 
     /**
@@ -154,8 +164,8 @@ public class SMatrix extends Matrix {
      *
      * @return size of matrix.
      */
-    public int getSize() {
-        return rows * cols;
+    public int size() {
+        return rows * columns;
     }
 
     /**
@@ -164,7 +174,7 @@ public class SMatrix extends Matrix {
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return !t ? rows : cols;
+        return !isTransposed ? rows : columns;
     }
 
     /**
@@ -172,19 +182,17 @@ public class SMatrix extends Matrix {
      *
      * @return number of columns in matrix.
      */
-    public int getCols() {
-        return !t ? cols : rows;
+    public int getColumns() {
+        return !isTransposed ? columns : rows;
     }
 
     /**
      * Returns new matrix of dimensions rows x columns
      *
-     * @param rows amount of rows for new matrix.
-     * @param cols amount of columns for new matrix.
      * @return new matrix of dimensions rows x columns.
      */
-    protected Matrix getNewMatrix(int rows, int cols) {
-        return new DMatrix(rows, cols);
+    public Matrix getNewMatrix() {
+        return new SMatrix(getRows(), getColumns());
     }
 
     /**
@@ -192,13 +200,13 @@ public class SMatrix extends Matrix {
      *
      * @param newMatrix new matrix to be copied inside this matrix.
      */
-    protected void setAsMatrix(Matrix newMatrix) {
+    protected void copyMatrixData(Matrix newMatrix) {
         rows = newMatrix.getRows();
-        cols = newMatrix.getCols();
+        columns = newMatrix.getColumns();
         matrix = new HashMap<>();
         for (int row = 0; row < newMatrix.getRows(); row++) {
-            for (int col = 0; col < newMatrix.getCols(); col++) {
-                setValue(row, col, newMatrix.getValue(row, col));
+            for (int column = 0; column < newMatrix.getColumns(); column++) {
+                setValue(row, column, newMatrix.getValue(row, column));
             }
         }
     }
