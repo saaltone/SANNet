@@ -32,7 +32,7 @@ public class SimpleDemo {
     public static void main(String [] args) {
 
         try {
-            HashMap<Integer, LinkedHashMap<Integer, Sample>> data = getTestData();
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTestData();
             NeuralNetwork neuralNetwork1 = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
             neuralNetwork1.setNeuralNetworkName("Neural Network 1");
             neuralNetwork1.setTaskType(MetricsType.REGRESSION);
@@ -41,9 +41,10 @@ public class SimpleDemo {
             neuralNetwork1.verboseValidation();
             neuralNetwork1.setTrainingEarlyStopping(new EarlyStopping());
             neuralNetwork1.start();
-            neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100"));
+            neuralNetwork1.printExpressions();
+            neuralNetwork1.printGradients();
+            neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000"));
             neuralNetwork1.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
-            neuralNetwork1.setTrainingIterations(10000);
 
             NeuralNetwork neuralNetwork2 = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
             neuralNetwork2.setNeuralNetworkName("Neural Network 2");
@@ -53,9 +54,8 @@ public class SimpleDemo {
             neuralNetwork2.verboseValidation();
             neuralNetwork2.setTrainingEarlyStopping(new EarlyStopping());
             neuralNetwork2.start();
-            neuralNetwork2.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100"));
+            neuralNetwork2.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000"));
             neuralNetwork2.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
-            neuralNetwork2.setTrainingIterations(10000);
 
             neuralNetwork1.train(false, false);
             neuralNetwork2.train(false, false);
@@ -80,16 +80,17 @@ public class SimpleDemo {
      * @return neural network instance.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 20");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
-        neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
         return neuralNetwork;
     }
 
@@ -101,10 +102,10 @@ public class SimpleDemo {
      * @return created training and testing samples.
      * @throws NeuralNetworkException throws exception if creation of samples fail.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getTestData() throws NeuralNetworkException {
-        HashMap<Integer, LinkedHashMap<Integer, Sample>> data = new HashMap<>();
-        LinkedHashMap<Integer, Sample> input = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Sample> output = new LinkedHashMap<>();
+    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException {
+        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = new HashMap<>();
+        LinkedHashMap<Integer, MMatrix> input = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> output = new LinkedHashMap<>();
         data.put(0, input);
         data.put(1, output);
 
@@ -119,9 +120,9 @@ public class SimpleDemo {
             Matrix outputData = new DMatrix(1, 1);
             inputData.setValue(0, 0, (double)input1 / 100);
             inputData.setValue(1, 0, (double)input2 / 100);
-            input.put(i, new Sample(inputData));
+            input.put(i, new MMatrix(inputData));
             outputData.setValue(0, 0, (double)result / 100);
-            output.put(i, new Sample(outputData));
+            output.put(i, new MMatrix(outputData));
         }
         data = DataSplitter.split(data, 0.3, false);
         return data;
