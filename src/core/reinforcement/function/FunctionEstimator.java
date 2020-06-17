@@ -8,7 +8,7 @@ package core.reinforcement.function;
 
 import core.NeuralNetworkException;
 import utils.DynamicParamException;
-import utils.Sample;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -33,8 +33,9 @@ public interface FunctionEstimator {
      * Starts function estimator
      *
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    void start() throws NeuralNetworkException;
+    void start() throws NeuralNetworkException, MatrixException;
 
     /**
      * Stops function estimator.
@@ -62,13 +63,6 @@ public interface FunctionEstimator {
     Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Sets number of training cycles per iteration.
-     *
-     * @param trainingIterations number of training cycles per iteration.
-     */
-    void setTrainingIterations(int trainingIterations);
-
-    /**
      * Sets importance sampling weights.
      *
      * @param ISWeights importance sampling weights.
@@ -85,7 +79,7 @@ public interface FunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void train(LinkedHashMap<Integer, Sample> states, LinkedHashMap<Integer, Sample> stateValues) throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void train(LinkedHashMap<Integer, MMatrix> states, LinkedHashMap<Integer, MMatrix> stateValues) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Appends parameters of this FunctionEstimator from another FunctionEstimator.
@@ -99,8 +93,9 @@ public interface FunctionEstimator {
     /**
      * Returns error of FunctionEstimator.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return error of FunctionEstimator.
      */
-    double getError();
+    double getError() throws MatrixException;
 
 }

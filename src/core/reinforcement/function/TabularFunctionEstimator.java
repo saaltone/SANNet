@@ -8,8 +8,8 @@ package core.reinforcement.function;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Sample;
 import utils.matrix.DMatrix;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -45,7 +45,7 @@ public class TabularFunctionEstimator implements FunctionEstimator, Serializable
     private double learningRate = 0.1;
 
     /**
-     * Constuctor for TabularFunctionEstimator.
+     * Constructor for TabularFunctionEstimator.
      *
      * @param numberOfActions number of actions for TabularFunctionEstimator
      */
@@ -54,7 +54,7 @@ public class TabularFunctionEstimator implements FunctionEstimator, Serializable
     }
 
     /**
-     * Constuctor for TabularFunctionEstimator.
+     * Constructor for TabularFunctionEstimator.
      *
      * @param numberOfActions number of actions for TabularFunctionEstimator
      * @param params parameters for function
@@ -66,7 +66,7 @@ public class TabularFunctionEstimator implements FunctionEstimator, Serializable
     }
 
     /**
-     * Constuctor for TabularFunctionEstimator.
+     * Constructor for TabularFunctionEstimator.
      *
      * @param numberOfActions number of actions for TabularFunctionEstimator
      * @param stateValues state values inherited for TabularFunctionEstimator.
@@ -167,14 +167,6 @@ public class TabularFunctionEstimator implements FunctionEstimator, Serializable
     }
 
     /**
-     * Sets number of training cycles per iteration.
-     *
-     * @param trainingIterations number of training cycles per iteration.
-     */
-    public void setTrainingIterations(int trainingIterations) {
-    }
-
-    /**
      * Returns (predicts) state value corresponding to a state as stored by TabularFunctionEstimator.
      *
      * @param state state
@@ -199,7 +191,7 @@ public class TabularFunctionEstimator implements FunctionEstimator, Serializable
      * @param stateValues state values to be updated.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void train(LinkedHashMap<Integer, Sample> states, LinkedHashMap<Integer, Sample> stateValues) throws MatrixException {
+    public void train(LinkedHashMap<Integer, MMatrix> states, LinkedHashMap<Integer, MMatrix> stateValues) throws MatrixException {
         for (Integer index : states.keySet()) {
             // currentStateValue: Q(s,a) stored by TabularFunctionEstimator
             // targetStateValue: reward + gamma * targetValue per updated TD target

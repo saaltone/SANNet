@@ -10,7 +10,7 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Sample;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.BasicSampler;
@@ -60,7 +60,7 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      */
     public NNFunctionEstimator(NeuralNetwork neuralNetwork) {
         this.neuralNetwork = neuralNetwork;
-        numberOfActions = neuralNetwork.getOutputLayer().getWidth();
+        numberOfActions = neuralNetwork.getOutputLayer().getLayerWidth();
     }
 
     /**
@@ -115,8 +115,9 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      * Starts function estimator.
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
+    public void start() throws NeuralNetworkException, MatrixException {
         if (!neuralNetwork.isStarted()) neuralNetwork.start();
     }
 
@@ -149,23 +150,15 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     }
 
     /**
-     * Sets number of training cycles per iteration.
-     *
-     * @param trainingIterations number of training cycles per iteration.
-     */
-    public void setTrainingIterations(int trainingIterations) {
-        neuralNetwork.setTrainingIterations(trainingIterations);
-    }
-
-    /**
      * Predicts state values corresponding to a state.
      *
      * @param state state.
      * @return state values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Matrix predict(Matrix state) throws NeuralNetworkException {
-        return neuralNetwork.predict(new Sample(state)).get(0);
+    public Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException {
+        return neuralNetwork.predict(new MMatrix(state)).get(0);
     }
 
     /**
@@ -186,7 +179,7 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void train(LinkedHashMap<Integer, Sample> states, LinkedHashMap<Integer, Sample> stateValues) throws NeuralNetworkException, DynamicParamException {
+    public void train(LinkedHashMap<Integer, MMatrix> states, LinkedHashMap<Integer, MMatrix> stateValues) throws NeuralNetworkException, DynamicParamException {
         neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true"));
     }
 
@@ -205,9 +198,10 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     /**
      * Returns error of FunctionEstimator.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return error of FunctionEstimator.
      */
-    public double getError() {
+    public double getError() throws MatrixException {
         return neuralNetwork.getOutputError();
     }
 
