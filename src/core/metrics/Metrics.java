@@ -8,6 +8,7 @@ package core.metrics;
 
 import core.NeuralNetworkException;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -23,7 +24,7 @@ import java.util.TreeMap;
 public class Metrics {
 
     /**
-     * Averaring type for classification as micro or macro.
+     * Averaging type for classification as micro or macro.
      *
      */
     public enum AverageType {
@@ -108,7 +109,7 @@ public class Metrics {
          * @param actual actual (true) samples.
          * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void update(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException {
+        public void update(MMatrix predicted, MMatrix actual) throws MatrixException {
             double error = 0;
             for (int sample = 0; sample < actual.size(); sample++) {
                 error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
@@ -217,7 +218,7 @@ public class Metrics {
             }
             if (totalSumOfSquares == null || totalSumOfResiduals == null) return null;
             for (int row = 0; row < totalSumOfSquares.getRows(); row++) {
-                for (int col = 0; col < totalSumOfSquares.getCols(); col++) {
+                for (int col = 0; col < totalSumOfSquares.getColumns(); col++) {
                     if (totalSumOfSquares.getValue(row, col) == 0) return null;
                 }
             }
@@ -311,16 +312,16 @@ public class Metrics {
          */
         public void update(Matrix predicted, Matrix actual) {
             if (confusion == null) reset (actual.getRows());
-            for (int act = 0; act < predicted.getRows(); act++) {
-                for (int pred = 0; pred < actual.getRows(); pred++) {
-                    double actVal = actual.getValue(act, 0);
-                    double predVal = predicted.getValue(pred, 0);
-                    if (actVal == 1 && predVal == 1) confusion[act][pred]++;
-                    if (act == pred) {
-                        if (actVal == 1 && predVal == 1) { TP[act]++; TPTot++; }
-                        if (actVal == 0 && predVal == 0) { TN[act]++; TNTot++; }
-                        if (actVal == 1 && predVal == 0) { FN[act]++; FNTot++; }
-                        if (actVal == 0 && predVal == 1) { FP[act]++; FPTot++; }
+            for (int predictedRow = 0; predictedRow < predicted.getRows(); predictedRow++) {
+                for (int actualRow = 0; actualRow < actual.getRows(); actualRow++) {
+                    double actualValue = actual.getValue(predictedRow, 0);
+                    double predictedValue = predicted.getValue(actualRow, 0);
+                    if (actualValue == 1 && predictedValue == 1) confusion[predictedRow][actualRow]++;
+                    if (predictedRow == actualRow) {
+                        if (actualValue == 1 && predictedValue == 1) { TP[predictedRow]++; TPTot++; }
+                        if (actualValue == 0 && predictedValue == 0) { TN[predictedRow]++; TNTot++; }
+                        if (actualValue == 1 && predictedValue == 0) { FN[predictedRow]++; FNTot++; }
+                        if (actualValue == 0 && predictedValue == 1) { FP[predictedRow]++; FPTot++; }
                     }
                 }
             }
@@ -334,7 +335,7 @@ public class Metrics {
          * @param actual actual (true) samples.
          * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void update(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException {
+        public void update(MMatrix predicted, MMatrix actual) throws MatrixException {
             if (confusion == null) reset (actual.values().toArray(new Matrix[0])[0].getRows());
             else if (confusion.length != actual.values().toArray(new Matrix[0])[0].getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
             for (int sample = 0; sample < actual.size(); sample++) {
@@ -619,7 +620,7 @@ public class Metrics {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
-    public void report(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
+    public void report(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException {
         if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
@@ -857,8 +858,8 @@ public class Metrics {
      * @return classification for predicted samples.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private TreeMap<Integer, Matrix> getClassification(TreeMap<Integer, Matrix> predicted) throws MatrixException {
-        TreeMap<Integer, Matrix> classified = new TreeMap<>();
+    private MMatrix getClassification(MMatrix predicted) throws MatrixException {
+        MMatrix classified = new MMatrix();
         int index = 0;
         for (Matrix sample: predicted.values()) classified.put(index++, getClassification(sample));
         return classified;
@@ -921,7 +922,7 @@ public class Metrics {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if classification statistics update fails.
      */
-    private void updateConfusion(TreeMap<Integer, Matrix> predicted, TreeMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
+    private void updateConfusion(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException {
         if (actual.size() == 0) throw new NeuralNetworkException("Nothing to classify");
         predicted = getClassification(predicted);
         classification.update(predicted, actual);
