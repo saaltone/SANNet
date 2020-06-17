@@ -6,7 +6,7 @@
 
 package core.preprocess;
 
-import utils.Sample;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.SMatrix;
@@ -41,15 +41,15 @@ public class OneHotEncoder {
      * @return one hot encoded sample set.
      * @throws MatrixException throws matrix exception is creation of sample fails.
      */
-    public LinkedHashMap<Integer, Sample> encode(LinkedHashMap<Integer, Sample> input, boolean keepMapping) throws MatrixException {
+    public LinkedHashMap<Integer, MMatrix> encode(LinkedHashMap<Integer, MMatrix> input, boolean keepMapping) throws MatrixException {
         if (input.size() == 0) return new LinkedHashMap<>();
         LinkedHashMap<Integer, LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>>> itemsMap = new LinkedHashMap<>();
         if (!keepMapping) mapping = new LinkedHashMap<>();
         int rows = -1;
-        for (Sample sample : input.values()) {
+        for (MMatrix sample : input.values()) {
             for (Matrix entry : sample.values()) {
-                if (rows == -1) rows = entry.getCols();
-                else if(rows != entry.getCols()) throw new MatrixException("Inconsistent number of columns in input.");
+                if (rows == -1) rows = entry.getColumns();
+                else if(rows != entry.getColumns()) throw new MatrixException("Inconsistent number of columns in input.");
             }
         }
         int prevMaxKey = 0;
@@ -60,7 +60,7 @@ public class OneHotEncoder {
             if (mapping.containsKey(row)) rowMapping = mapping.get(row);
             else mapping.put(row, rowMapping = new LinkedHashMap<>());
             for (Integer entry : input.keySet()) {
-                Sample sample = input.get(entry);
+                MMatrix sample = input.get(entry);
                 LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> sampleMapping;
                 if (itemsMap.containsKey(entry)) sampleMapping = itemsMap.get(entry);
                 else itemsMap.put(entry, sampleMapping = new LinkedHashMap<>());
@@ -75,16 +75,16 @@ public class OneHotEncoder {
                 }
             }
         }
-        LinkedHashMap<Integer, Sample> output = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> output = new LinkedHashMap<>();
         for (Integer entry : itemsMap.keySet()) {
-            Sample sample = new Sample(itemsMap.get(entry).size());
+            MMatrix sample = new MMatrix(itemsMap.get(entry).size());
             for (Integer depth : itemsMap.get(entry).keySet()) {
                 Matrix item = new SMatrix(prevMaxKey, 1);
                 sample.put(depth, item);
                 for (Integer row : itemsMap.get(entry).get(depth).values()) {
                     item.setValue(row, 0, 1);
                 }
-                output.put(entry, new Sample(item));
+                output.put(entry, new MMatrix(item));
             }
         }
         return output;
