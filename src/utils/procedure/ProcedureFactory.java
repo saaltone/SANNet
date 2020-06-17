@@ -271,7 +271,6 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Node defineNode(Matrix matrix, boolean resultNode) throws MatrixException {
-//        boolean isConstantNode = !(currentProcedureData.inputSample.contains(matrix) || resultNode) || constantMatrixSet.contains(matrix);
         boolean isConstantNode = !(currentProcedureData.inputSample.contains(matrix) || resultNode);
         Node node = nodeRegister.defineNode(matrix, isConstantNode, currentExpressionID);
         for (Integer index : currentProcedureData.inputSample.keySet()) {

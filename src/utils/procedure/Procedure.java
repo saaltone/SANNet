@@ -77,7 +77,6 @@ public class Procedure implements Serializable {
         this.expressionChain = expressionChain;
         this.gradientExpressionChain = gradientExpressionChain;
         this.dependentNodes = dependentNodes;
-//        initialize();
     }
 
     /**
