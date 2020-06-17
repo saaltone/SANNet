@@ -21,10 +21,7 @@ import core.optimization.OptimizerFactory;
 import core.regularization.*;
 import core.metrics.*;
 import utils.*;
-import utils.matrix.BinaryFunctionType;
-import utils.matrix.Init;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
+import utils.matrix.*;
 import utils.sampling.Sampler;
 
 /**
@@ -64,19 +61,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Lock for synchronizing neural network thread operations.
      *
      */
-    private transient Lock lock;
+    private transient Lock executeLock;
 
     /**
      * Lock condition for synchronizing execution procedures (train, predict, validate).
      *
      */
-    private transient Condition execute;
+    private transient Condition executeLockCondition;
 
     /**
      * Lock condition for synchronizing completion of procedure execution and shift to idle state.
      *
      */
-    private transient Condition complete;
+    private transient Condition completeLockCondition;
 
     /**
      * Execution state of neural network.
@@ -112,19 +109,13 @@ public class NeuralNetwork implements Runnable, Serializable {
      * List containing neural network layer in order starting from input layer ending to output layer.
      *
      */
-    private final ArrayList<AbstractLayer> layers = new ArrayList<>();
+    private final ArrayList<AbstractLayer> hiddenLayers = new ArrayList<>();
 
     /**
-     * Number of hidden layers.
+     * List of neural network layers.
      *
      */
-    private int numberOfHiddenLayers = 0;
-
-    /**
-     * List of connectors between neural network layers.
-     *
-     */
-    private final ArrayList<Connector> connectors = new ArrayList<>();
+    private final ArrayList<NeuralNetworkLayer> neuralNetworkLayers = new ArrayList<>();
 
     /**
      * Reference to output layer of neural network.
@@ -157,28 +148,16 @@ public class NeuralNetwork implements Runnable, Serializable {
     private MetricsType validationMetricsType = MetricsType.REGRESSION;
 
     /**
-     * Defines how many entries (matrices) one sample has. Used especially for convolutional layer.
-     *
-     */
-    private int sampleDepth = 1;
-
-    /**
      * Structure containing prediction input Sequence.
      *
      */
-    private transient Sequence predictIns;
+    private transient Sequence predictInputs;
 
     /**
      * Flag is neural network and it's layers are to be reset prior training phase.
      *
      */
     private transient boolean reset;
-
-    /**
-     * Count of neural network training iterations per training phase.
-     *
-     */
-    private transient int iterations;
 
     /**
      * Count of total neural network training iterations.
@@ -235,7 +214,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     private boolean verboseValidation;
 
     /**
-     * Cycle lenght as iterators for neural network verbosing.
+     * Cycle length as iterators for neural network verbosing.
      *
      */
     private int verboseCycle;
@@ -251,10 +230,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Sets name for neural network instance.
      *
      * @param neuralNetworkName name for neural network instance.
-     * @throws NeuralNetworkException throws exception is neural network instance is already started.
      */
-    public void setNeuralNetworkName(String neuralNetworkName) throws NeuralNetworkException {
-        checkStarted();
+    public void setNeuralNetworkName(String neuralNetworkName) {
+        waitToComplete();
         this.neuralNetworkName = neuralNetworkName;
     }
 
@@ -264,24 +242,24 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return name of neural network instance.
      */
     public String getNeuralNetworkName() {
+        waitToComplete();
         return neuralNetworkName;
     }
 
     /**
-     * Adds regularizer for specific neural network connector (layer).
-     * Applies to next layer of connector.
+     * Adds regularizer for specific neural network layer.
      *
-     * @param connectorIndex connector to which regularizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
      * @throws NeuralNetworkException throws neural network exception if adding of regularizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void addRegularizer(int connectorIndex, RegularizationType regularizationType) throws NeuralNetworkException, DynamicParamException {
-        addRegularizer(connectorIndex, regularizationType, null);
+    public void addRegularizer(int neuralNetworkLayerIndex, RegularizationType regularizationType) throws NeuralNetworkException, DynamicParamException {
+        addRegularizer(neuralNetworkLayerIndex, regularizationType, null);
     }
 
     /**
-     * Adds regularizer for all neural network connectors (layers).
+     * Adds regularizer for all neural network layers.
      *
      * @param regularizationType type of regularizer.
      * @throws NeuralNetworkException throws neural network exception if adding of regularizer fails.
@@ -292,23 +270,25 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds regularizer for specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Adds regularizer for specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which regularizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
      * @param params parameters for regularizer.
      * @throws NeuralNetworkException throws neural network exception if adding of regularizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void addRegularizer(int connectorIndex, RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addRegularizer(int neuralNetworkLayerIndex, RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).addRegularization(regularizationType, params);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be regularized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be regularized.");
+        neuralNetworkLayer.addRegularization(regularizationType, params);
     }
 
     /**
-     * Adds regularizer for all neural network connectors (layers).
+     * Adds regularizer for all neural network layers.
      *
      * @param regularizationType type of regularizer.
      * @param params parameters for regularizer.
@@ -317,44 +297,53 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void addRegularizer(RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        for (Connector connector : connectors) connector.addRegularization(regularizationType, params);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.addRegularization(regularizationType, params);
+        }
     }
 
     /**
-     * Removes regularizer from specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Removes regularizer from specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which regularizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
      * @throws NeuralNetworkException throws neural network exception if adding of regularizer fails.
      */
-    public void removeRegularizer(int connectorIndex, RegularizationType regularizationType) throws NeuralNetworkException {
+    public void removeRegularizer(int neuralNetworkLayerIndex, RegularizationType regularizationType) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).removeRegularization(regularizationType);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be regularized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be regularized.");
+        neuralNetworkLayer.removeRegularization(regularizationType);
     }
 
     /**
-     * Removes regularizer from all neural network connectors (layer).
+     * Removes regularizer from all neural network layers.
      *
      * @param regularizationType type of regularizer.
      * @throws NeuralNetworkException throws neural network exception if removal of regularizer fails.
      */
     public void removeRegularizer(RegularizationType regularizationType) throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.removeRegularization(regularizationType);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.removeRegularization(regularizationType);
+        }
     }
 
     /**
-     * Removes regularizer from specific neural network connector (layer).
+     * Removes regularizer from specific neural network layer.
      *
-     * @param connectorIndex connector to which regularizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if removal of regularizer fails.
      */
-    public void removeRegularization(int connectorIndex) throws NeuralNetworkException {
+    public void removeRegularization(int neuralNetworkLayerIndex) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).removeRegularization();
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be regularized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be regularized.");
+        neuralNetworkLayer.removeRegularization();
     }
 
     /**
@@ -364,70 +353,25 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void removeRegularization() throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.removeRegularization();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.removeRegularization();
+        }
     }
 
     /**
-     * Resets regularization for all neural network connectors (layers).
+     * Adds normalizer for specific neural network layer.<br>
      *
-     * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
-     */
-    public void resetRegularization() throws NeuralNetworkException {
-        checkStarted();
-        for (Connector connector : connectors) connector.resetRegularization();
-    }
-
-    /**
-     * Resets regularization of specific type for all neural network connectors (layers).
-     *
-     * @param regularizationType regularization method to be reset.
-     * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
-     */
-    public void resetRegularization(RegularizationType regularizationType) throws NeuralNetworkException {
-        checkStarted();
-        for (Connector connector : connectors) connector.resetRegularization(regularizationType);
-    }
-
-    /**
-     * Resets regularization for specific neural network connector (layer).
-     *
-     * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
-     * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
-     */
-    public void resetRegularization(int connectorIndex) throws NeuralNetworkException {
-        checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).resetRegularization();
-    }
-
-    /**
-     * Resets regularization of specific type for specific neural network connector (layer).
-     *
-     * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
-     * @param regularizationType regularization method to be reset.
-     * @throws NeuralNetworkException throws neural network exception if resetting of regularization fails.
-     */
-    public void resetRegularization(int connectorIndex, RegularizationType regularizationType) throws NeuralNetworkException {
-        checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).resetRegularization(regularizationType);
-    }
-
-    /**
-     * Adds normalizer for specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
-     *
-     * @param connectorIndex connector to which normalizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
      * @throws NeuralNetworkException throws neural network exception if adding of normalizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void addNormalizer(int connectorIndex, NormalizationType normalizationType) throws NeuralNetworkException, DynamicParamException {
-        addNormalizer(connectorIndex, normalizationType, null);
+    public void addNormalizer(int neuralNetworkLayerIndex, NormalizationType normalizationType) throws NeuralNetworkException, DynamicParamException {
+        addNormalizer(neuralNetworkLayerIndex, normalizationType, null);
     }
 
     /**
-     * Adds normalizer for all neural network connectors (layers).
+     * Adds normalizer for all neural network layers.
      *
      * @param normalizationType type of normalizer.
      * @throws NeuralNetworkException throws neural network exception if adding of normalizer fails.
@@ -438,23 +382,25 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds normalizer for specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Adds normalizer for specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which normalizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
      * @param params parameters for normalizer.
      * @throws NeuralNetworkException throws neural network exception if adding of normalizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void addNormalizer(int connectorIndex, NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addNormalizer(int neuralNetworkLayerIndex, NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).addNormalization(normalizationType, params);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be normalized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be normalized.");
+        neuralNetworkLayer.addNormalization(normalizationType, params);
     }
 
     /**
-     * Adds normalizer for all neural network connectors (layers).
+     * Adds normalizer for all neural network layers.
      *
      * @param normalizationType type of normalizer.
      * @param params parameters for normalizer.
@@ -463,44 +409,53 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void addNormalizer(NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        for (Connector connector : connectors) connector.addNormalization(normalizationType, params);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.addNormalization(normalizationType, params);
+        }
     }
 
     /**
-     * Removes normalizer from specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Removes normalizer from specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which normalizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
      * @throws NeuralNetworkException throws neural network exception if adding of normalizer fails.
      */
-    public void removeNormalizer(int connectorIndex, NormalizationType normalizationType) throws NeuralNetworkException {
+    public void removeNormalizer(int neuralNetworkLayerIndex, NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).removeNormalization(normalizationType);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be normalized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be normalized.");
+        neuralNetworkLayer.removeNormalization(normalizationType);
     }
 
     /**
-     * Removes normalizer from all neural network connectors (layer).
+     * Removes normalizer from all neural network layers.
      *
      * @param normalizationType type of normalizer.
      * @throws NeuralNetworkException throws neural network exception if removal of normalizer fails.
      */
     public void removeNormalizer(NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.removeNormalization(normalizationType);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.removeNormalization(normalizationType);
+        }
     }
 
     /**
-     * Removes normalizer from specific neural network connector (layer).
+     * Removes normalizer from specific neural network layer.
      *
-     * @param connectorIndex connector to which normalizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if removal of normalizer fails.
      */
-    public void removeNormalization(int connectorIndex) throws NeuralNetworkException {
+    public void removeNormalization(int neuralNetworkLayerIndex) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).removeNormalization();
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be normalized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be normalized.");
+        neuralNetworkLayer.removeNormalization();
     }
 
     /**
@@ -510,99 +465,114 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void removeNormalization() throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.removeNormalization();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.removeNormalization();
+        }
     }
 
     /**
-     * Resets normalization for all neural network connectors (layers).
+     * Resets normalization for all neural network layers.
      *
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
     public void resetNormalization() throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.resetNormalization();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.resetNormalization();
+        }
     }
 
     /**
-     * Resets normalization of specific type for all neural network connectors (layers).
+     * Resets normalization of specific type for all neural network layers.
      *
      * @param normalizationType normalization method to be reset.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
     public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.resetNormalization(normalizationType);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.resetNormalization(normalizationType);
+        }
     }
 
     /**
-     * Resets normalization for specific neural network connector (layer).
+     * Resets normalization for specific neural network layer.
      *
-     * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization(int connectorIndex) throws NeuralNetworkException {
+    public void resetNormalization(int neuralNetworkLayerIndex) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).resetNormalization();
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be normalized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be normalized.");
+        neuralNetworkLayer.resetNormalization();
     }
 
     /**
-     * Resets normalization of specific type for specific neural network connector (layer).
+     * Resets normalization of specific type for specific neural network layer.
      *
-     * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType normalization method to be reset.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
-    public void resetNormalization(int connectorIndex, NormalizationType normalizationType) throws NeuralNetworkException {
+    public void resetNormalization(int neuralNetworkLayerIndex, NormalizationType normalizationType) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).resetNormalization(normalizationType);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be normalized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be normalized.");
+        neuralNetworkLayer.resetNormalization(normalizationType);
     }
 
     /**
-     * Sets optimizer for specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Sets optimizer for specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which optimizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param optimization type of optimizer.
      * @param params parameters for optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setOptimizer(int connectorIndex, OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException {
+    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).setOptimizer(OptimizerFactory.create(optimization, params));
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be optimized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be optimized.");
+        neuralNetworkLayer.setOptimizer(OptimizerFactory.create(optimization, params));
     }
 
     /**
-     * Sets optimizer for all neural network connectors (layers).
+     * Sets optimizer for all neural network layers.
      *
-     * @param  optimization type of optimizer.
+     * @param optimization type of optimizer.
      * @param params parameters for optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setOptimizer(OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
-        for (Connector connector : connectors) connector.setOptimizer(OptimizerFactory.create(optimization, params));
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.setOptimizer(OptimizerFactory.create(optimization, params));
+        }
     }
 
     /**
-     * Sets optimizer for specific neural network connector (layer).<br>
-     * Applies to next layer of connector.<br>
+     * Sets optimizer for specific neural network layer.<br>
      *
-     * @param connectorIndex connector to which optimizer is added to. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setOptimizer(int connectorIndex, OptimizationType optimization) throws NeuralNetworkException, DynamicParamException {
-        setOptimizer(connectorIndex, optimization, null);
+    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization) throws NeuralNetworkException, DynamicParamException {
+        setOptimizer(neuralNetworkLayerIndex, optimization, null);
     }
 
     /**
-     * Sets optimizer for all neural network connectors (layers).
+     * Sets optimizer for all neural network layers.
      *
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
@@ -613,53 +583,30 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets optimizer for all neural network connectors (layers).
+     * Resets optimizer for all neural network layers.
      *
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
      */
     public void resetOptimizer() throws NeuralNetworkException {
         checkStarted();
-        for (Connector connector : connectors) connector.resetOptimizer();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.resetOptimizer();
+        }
     }
 
     /**
-     * Resets optimizer for specific neural network connector (layer).
+     * Resets optimizer for specific neural network layer.
      *
-     * @param connectorIndex connector of which optimizer is reset. Index starts from 0 (connector between input layer and next layer).
+     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
      */
-    public void resetOptimizer(int connectorIndex) throws NeuralNetworkException {
+    public void resetOptimizer(int neuralNetworkLayerIndex) throws NeuralNetworkException {
         checkStarted();
-        if (connectorIndex < 0 || connectorIndex > connectors.size() - 1) throw new NeuralNetworkException("No connector index: " + connectorIndex + " exists.");
-        connectors.get(connectorIndex).resetOptimizer();
-    }
-
-    /**
-     * Sets loss function for neural network (output layer)
-     *
-     * @param lossFunctionType type of loss function.
-     * @throws NeuralNetworkException throws exception if setting of loss function fails.
-     */
-    public void setLossFunction(BinaryFunctionType lossFunctionType) throws NeuralNetworkException {
-        checkStarted();
-        if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
-        LossFunction lossFunction = new LossFunction(lossFunctionType);
-        getOutputLayer().setLossFunction(lossFunction);
-    }
-
-    /**
-     * Sets loss function for neural network (output layer)
-     *
-     * @param lossFunctionType type of loss function.
-     * @param params parameters for loss function.
-     * @throws NeuralNetworkException throws exception if setting of loss function fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void setLossFunction(BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
-        checkStarted();
-        if (getOutputLayer() == null) throw new NeuralNetworkException("Output layer is not defined for a neural network.");
-        LossFunction lossFunction = new LossFunction(lossFunctionType, params);
-        getOutputLayer().setLossFunction(lossFunction);
+        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
+        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
+        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be optimized.");
+        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be optimized.");
+        neuralNetworkLayer.resetOptimizer();
     }
 
     /**
@@ -672,7 +619,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void addInputLayer(String params) throws NeuralNetworkException, DynamicParamException {
         checkStarted();
         inputLayer = new InputLayer(0, params);
-        layers.add(inputLayer);
     }
 
     /**
@@ -685,157 +631,111 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType) throws NeuralNetworkException, DynamicParamException, MatrixException {
         addHiddenLayer(layerType, null, null, null);
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @param params parameters for hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @param params parameters for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         addHiddenLayer(layerType, null, null, params);
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @param activationFunction activation function for hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @param activationFunction activation function for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction) throws NeuralNetworkException, DynamicParamException, MatrixException {
         addHiddenLayer(layerType, activationFunction, null, null);
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @param activationFunction activation function for hidden layer.
-     * @param params parameters for hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @param activationFunction activation function for layer.
+     * @param params parameters for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         addHiddenLayer(layerType, activationFunction, null, params);
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @param activationFunction activation function for hidden layer.
-     * @param initialization layer parameter initialization function for hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @param activationFunction activation function for layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Init initialization) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
         addHiddenLayer(layerType, activationFunction, initialization, null);
     }
 
     /**
-     * Adds hidden layer for neural network. Hidden layers are executed in order which they are added.
+     * Adds layer for neural network. Layers are executed in order which they are added.
      *
-     * @param layerType type of hidden layer.
-     * @param activationFunction activation function for hidden layer.
-     * @param initialization layer parameter initialization function for hidden layer.
-     * @param params parameters for hidden layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of hidden layer fails.
+     * @param layerType type of layer.
+     * @param activationFunction activation function for layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @param params parameters for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
-        numberOfHiddenLayers++;
-        layers.add(new HiddenLayer(numberOfHiddenLayers, layerType, activationFunction, initialization, params));
+        hiddenLayers.add(LayerFactory.create(hiddenLayers.size() + 1, layerType, activationFunction, initialization, params));
     }
 
     /**
      * Adds output layer for neural network.
      *
-     * @param layerType type of output layer.
+     * @param lossFunctionType loss function type for output layer.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addOutputLayer(LayerType layerType) throws NeuralNetworkException, DynamicParamException {
-        addOutputLayer(layerType, null, null, null);
+    public void addOutputLayer(BinaryFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        addOutputLayer(lossFunctionType, null);
     }
 
     /**
      * Adds output layer for neural network.
      *
-     * @param layerType type of output layer.
-     * @param params parameters for output layer.
+     * @param lossFunctionType loss function type for output layer.
+     * @param params parameters for loss function.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addOutputLayer(LayerType layerType, String params) throws NeuralNetworkException, DynamicParamException {
-        addOutputLayer(layerType, null, null, params);
-    }
-
-    /**
-     * Adds output layer for neural network.
-     *
-     * @param layerType type of output layer.
-     * @param activationFunction activation function for output layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addOutputLayer(LayerType layerType, ActivationFunction activationFunction) throws NeuralNetworkException, DynamicParamException {
-        addOutputLayer(layerType, activationFunction, null, null);
-    }
-
-    /**
-     * Adds output layer for neural network.
-     *
-     * @param layerType type of output layer.
-     * @param activationFunction activation function for output layer.
-     * @param params parameters for output layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addOutputLayer(LayerType layerType, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException {
-        addOutputLayer(layerType, activationFunction, null, params);
-    }
-
-    /**
-     * Adds output layer for neural network.
-     *
-     * @param layerType type of output layer.
-     * @param activationFunction activation function for output layer.
-     * @param initialization layer parameter initialization function for output layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addOutputLayer(LayerType layerType, ActivationFunction activationFunction, Init initialization) throws NeuralNetworkException, DynamicParamException {
-        addOutputLayer(layerType, activationFunction, initialization, null);
-    }
-
-    /**
-     * Adds output layer for neural network.
-     *
-     * @param layerType type of output layer.
-     * @param activationFunction activation function for output layer.
-     * @param initialization layer parameter initialization function for output layer.
-     * @param params parameters for output layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addOutputLayer(LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
+    public void addOutputLayer(BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
-        outputLayer = new OutputLayer(-1, layerType, activationFunction, initialization, params);
-        layers.add(outputLayer);
+        outputLayer = params != null ? new OutputLayer(-1, new LossFunction(lossFunctionType, params)) : new OutputLayer(-1, new LossFunction(lossFunctionType));
     }
 
     /**
@@ -848,34 +748,34 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns connectors of neural network.
+     * Returns list of neural network layers.
      *
-     * @return connectors of neural network.
+     * @return list of neural network layers..
      */
-    public ArrayList<Connector> getConnectors() {
-        return connectors;
+    public ArrayList<NeuralNetworkLayer> getNeuralNetworkLayers() {
+        return neuralNetworkLayers;
     }
 
     /**
      * Builds neural network.<br>
-     * Connects layers to each other with connectors.<br>
+     * Connects layers to each other.<br>
      * Initializes layers.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws neural network exception if building of neural network fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws neural network exception if neural network is already built.
      */
-    public void build() throws MatrixException, NeuralNetworkException, DynamicParamException {
-        checkStarted();
+    public void build() throws NeuralNetworkException {
+        if (!neuralNetworkLayers.isEmpty()) throw new NeuralNetworkException("Neural network is already built.");
 
-        connectors.clear();
-        for (int layerID = 0; layerID < layers.size() - 1; layerID++) {
-            Connector connector = HiddenLayer.Connect(layers.get(layerID), layers.get(layerID + 1));
-            connectors.add(connector);
+        neuralNetworkLayers.add(inputLayer);
+        neuralNetworkLayers.addAll(hiddenLayers);
+        neuralNetworkLayers.add(outputLayer);
+
+        for (int layerIndex = 0; layerIndex < neuralNetworkLayers.size() - 1; layerIndex++) {
+            neuralNetworkLayers.get(layerIndex).setNextLayer(neuralNetworkLayers.get(layerIndex + 1));
+            neuralNetworkLayers.get(layerIndex + 1).setPreviousLayer(neuralNetworkLayers.get(layerIndex));
         }
-        for (AbstractLayer layer : layers) {
-            layer.initialize();
-        }
+
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.initialize();
     }
 
     /**
@@ -913,9 +813,10 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Starts neural network thread and neural network layer threads.<br>
      *
      * @throws NeuralNetworkException throws exception if starting of neural network fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
-        if (neuralNetworkThread != null) return;
+    public void start() throws NeuralNetworkException, MatrixException {
+        checkStarted();
 
         trainingMetrics = new Metrics(MetricsType.REGRESSION);
         if (validationMetrics == null) validationMetrics = new Metrics(validationMetricsType);
@@ -925,9 +826,9 @@ public class NeuralNetwork implements Runnable, Serializable {
             earlyStopping.setValidationError(validationMetrics);
         }
 
-        lock = new ReentrantLock();
-        execute = lock.newCondition();
-        complete = lock.newCondition();
+        executeLock = new ReentrantLock();
+        executeLockCondition = executeLock.newCondition();
+        completeLockCondition = executeLock.newCondition();
         executionState = ExecutionState.IDLE;
 
         stopLock = new ReentrantLock();
@@ -942,12 +843,27 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Stops neural network.
+     *
+     */
+    public void stop() {
+        if (!isStarted()) return;
+        waitToComplete();
+        executeLock.lock();
+        getInputLayer().stop();
+        executionState = ExecutionState.TERMINATED;
+        executeLockCondition.signal();
+        neuralNetworkThread = null;
+        executeLock.unlock();
+    }
+
+    /**
      * Checks if neural network is already started.
      *
      * @return returns true if neural network is started otherwise false.
      */
     public boolean isStarted() {
-        return neuralNetworkThread != null;
+        return neuralNetworkThread != null && (neuralNetworkThread.getState() != Thread.State.NEW);
     }
 
     /**
@@ -956,9 +872,16 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception is neural network is started.
      */
     private void checkStarted() throws NeuralNetworkException {
-        if (neuralNetworkThread != null) {
-            if (neuralNetworkThread.getState() != Thread.State.NEW) throw new NeuralNetworkException("Neural network is started");
-        }
+        if (isStarted()) throw new NeuralNetworkException("Neural network is started");
+    }
+
+    /**
+     * Checks if neural network is not started (running).
+     *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
+     */
+    private void checkNotStarted() throws NeuralNetworkException {
+        if (!isStarted()) throw new NeuralNetworkException("Neural network is not started");
     }
 
     /**
@@ -968,50 +891,101 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     public void abortExecution() {
-        if (neuralNetworkThread == null) return;
+        if (!isStarted()) return;
         stopLock.lock();
         stopExecution = true;
         stopLock.unlock();
     }
 
     /**
-     * Checks if neural network is not started (running).
+     * Sets neural network into completed state and makes state transition to idle state.
      *
-     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    private void checkNotStarted() throws NeuralNetworkException {
-        if (neuralNetworkThread == null) throw new NeuralNetworkException("Neural network is not started");
+    private void stateCompleted() {
+        executeLock.lock();
+        executionState = ExecutionState.IDLE;
+        completeLockCondition.signal();
+        executeLock.unlock();
     }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset.<br>
-     * Useful when long input sequence is applied over multiple inferences (prediction) requests.<br>
+     * Checks if neural network is executing (processing).
      *
-     * @param allowLayerReset if true recurrent inputs are allowed to be reset.
+     * @return true if neural network is executing otherwise false.
+     */
+    public boolean isProcessing() {
+        if (!isStarted()) return false;
+        executeLock.lock();
+        boolean isProcessing;
+        isProcessing = !(executionState == ExecutionState.IDLE || executionState == ExecutionState.TERMINATED);
+        executeLock.unlock();
+        return isProcessing;
+    }
+
+    /**
+     * Waits for neural network to finalize it execution (processing).
+     *
+     */
+    public void waitToComplete() {
+        if (!isStarted()) return;
+        executeLock.lock();
+        try {
+            while (isProcessing()) completeLockCondition.await();
+        }
+        catch (InterruptedException exception) {}
+        executeLock.unlock();
+    }
+
+    /**
+     * Checks if neural network execution (processing) is stopped.
+     *
+     * @return true if execution is stopped otherwise false.
+     */
+    private boolean stoppedExecution() {
+        stopLock.lock();
+        boolean stopped = false;
+        if (stopExecution) {
+            stopped = true;
+            stopExecution = false;
+        }
+        stopLock.unlock();
+        return stopped;
+    }
+
+    /**
+     * Sets next state for neural network.
+     *
+     * @param executionState next state for neural network.
+     */
+    private void nextState(ExecutionState executionState) {
+        this.executionState = executionState;
+        executeLockCondition.signal();
+        executeLock.unlock();
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be reset during training.<br>
+     *
+     * @param resetStateTraining if true recurrent inputs are allowed to be reset.
      * @throws NeuralNetworkException throws exception if neural network is not started.
      */
-    public void setAllowLayerReset(boolean allowLayerReset) throws NeuralNetworkException {
+    public void setResetStateTraining(boolean resetStateTraining) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        getInputLayer().setAllowLayerReset(allowLayerReset);
+        getInputLayer().setResetStateTraining(resetStateTraining);
     }
 
     /**
-     * Sets sample depth i.e. how many entries (matrices) single sample has. Used especially for convolutional layer. Default value 1.
+     * Sets if recurrent inputs of layer are allowed to be reset during testing.<br>
+     * Useful when long input sequence is applied over multiple inferences (prediction) requests.<br>
      *
-     * @param sampleDepth sample depth.
+     * @param resetStateTesting if true recurrent inputs are allowed to be reset.
+     * @throws NeuralNetworkException throws exception if neural network is not started.
      */
-    public void setSampleDepth(int sampleDepth) {
-        this.sampleDepth = sampleDepth;
-    }
-
-    /**
-     * Returns sample depth.
-     *
-     * @return sample depth.
-     */
-    public int getSampleDepth() {
-        return sampleDepth;
+    public void setResetStateTesting(boolean resetStateTesting) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        getInputLayer().setResetStateTesting(resetStateTesting);
     }
 
     /**
@@ -1024,37 +998,27 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setTrainingData(Sampler trainingSampler) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
+        executeLock.lock();
         if (trainingSampler == null) {
-            lock.unlock();
+            executeLock.unlock();
             throw new NeuralNetworkException("Training sampler is not set.");
         }
         this.trainingSampler = trainingSampler;
-        lock.unlock();
-    }
-
-    /**
-     * Sets number of training iterations for execution.
-     *
-     * @param iterations number of training iterations.
-     */
-    public void setTrainingIterations(int iterations) {
-        waitToComplete();
-        this.iterations = iterations;
+        executeLock.unlock();
     }
 
     /**
      * Sets early stopping condition.
      *
      * @param earlyStopping early stopping instance.
+     * @throws NeuralNetworkException throws exception if early stopping is not defined.
      */
-    public void setTrainingEarlyStopping(EarlyStopping earlyStopping) {
+    public void setTrainingEarlyStopping(EarlyStopping earlyStopping) throws NeuralNetworkException {
         waitToComplete();
+        if (earlyStopping == null) throw new NeuralNetworkException("Early stopping is not defined.");
         this.earlyStopping = earlyStopping;
-        if (earlyStopping != null) {
-            earlyStopping.setTrainingError(trainingMetrics);
-            earlyStopping.setValidationError(validationMetrics);
-        }
+        earlyStopping.setTrainingError(trainingMetrics);
+        earlyStopping.setValidationError(validationMetrics);
     }
 
     /**
@@ -1144,7 +1108,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void train(Sampler trainingSampler, boolean reset, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
+        executeLock.lock();
         if (trainingSampler != null) this.trainingSampler = trainingSampler;
         if (this.trainingSampler == null) throw new NeuralNetworkException("Training sampler is not set.");
         this.reset = reset;
@@ -1209,9 +1173,10 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param input input for prediction.
      * @return predicted value (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Matrix predict(Matrix input) throws NeuralNetworkException {
-        return predict(new Sample(input)).get(0);
+    public Matrix predict(Matrix input) throws NeuralNetworkException, MatrixException {
+        return predict(new MMatrix(input)).get(0);
     }
 
     /**
@@ -1220,13 +1185,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param input input for prediction.
      * @return predicted value (neural network output).
      * @throws NeuralNetworkException throws exception if prediction fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Sample predict(Sample input) throws NeuralNetworkException {
-        if (input == null) {
-            lock.unlock();
-            throw new NeuralNetworkException("No prediction inputs set");
-        }
-        Sequence inputs = new Sequence(input.getDepth());
+    public MMatrix predict(MMatrix input) throws NeuralNetworkException, MatrixException {
+        if (input == null) throw new NeuralNetworkException("No prediction inputs set");
+        Sequence inputs = new Sequence(input.getCapacity());
         inputs.put(0, input);
         return predict(inputs, true).get(0);
     }
@@ -1268,18 +1231,14 @@ public class NeuralNetwork implements Runnable, Serializable {
     public Sequence predict(Sequence inputs, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
-        if (inputs != null) predictIns = inputs;
-        if (predictIns == null) {
-            lock.unlock();
+        executeLock.lock();
+        if (inputs == null) {
+            executeLock.unlock();
             throw new NeuralNetworkException("No prediction inputs set");
         }
+        predictInputs = inputs;
         nextState(ExecutionState.PREDICT);
-        if (waitToComplete) {
-            waitToComplete();
-            return getOutput();
-        }
-        else return null;
+        return waitToComplete ? getOutput() : null;
     }
 
     /**
@@ -1341,13 +1300,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setValidationData(Sampler validationSampler) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
+        executeLock.lock();
         if (validationSampler == null) {
-            lock.unlock();
+            executeLock.unlock();
             throw new NeuralNetworkException("Validation sampler is not set.");
         }
         this.validationSampler = validationSampler;
-        lock.unlock();
+        executeLock.unlock();
     }
 
     /**
@@ -1362,36 +1321,11 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void validate(Sampler validationSampler, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
+        executeLock.lock();
         if (validationSampler != null) this.validationSampler = validationSampler;
         if (this.validationSampler == null) throw new NeuralNetworkException("Validation sampler is not set.");
         nextState(ExecutionState.VALIDATE);
         if (waitToComplete) waitToComplete();
-    }
-
-    /**
-     * Sets next state for neural network.
-     *
-     * @param executionState next state for neural network.
-     */
-    private void nextState(ExecutionState executionState) {
-        this.executionState = executionState;
-        execute.signal();
-        lock.unlock();
-    }
-
-    /**
-     * Stops neural network.
-     *
-     */
-    public void stop() {
-        waitToComplete();
-        getInputLayer().stop();
-        lock.lock();
-        executionState = ExecutionState.TERMINATED;
-        execute.signal();
-        lock.unlock();
-        neuralNetworkThread = null;
     }
 
     /**
@@ -1401,7 +1335,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public Sequence getOutput() {
         waitToComplete();
-        return getOutputLayer().getOutput();
+        return getInputLayer().getOutput();
     }
 
     /**
@@ -1411,9 +1345,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void run() {
         while (true) {
-            lock.lock();
+            executeLock.lock();
             try {
-                while (executionState == ExecutionState.IDLE) execute.await();
+                while (executionState == ExecutionState.IDLE) executeLockCondition.await();
             }
             catch (InterruptedException exception) {}
             try {
@@ -1430,8 +1364,8 @@ public class NeuralNetwork implements Runnable, Serializable {
                     case TERMINATED:
                         getInputLayer().stop();
                         neuralNetworkThread = null;
-                        complete.signal();
-                        lock.unlock();
+                        completeLockCondition.signal();
+                        executeLock.unlock();
                         return;
                 }
             }
@@ -1439,7 +1373,7 @@ public class NeuralNetwork implements Runnable, Serializable {
                 exception.printStackTrace();
                 System.exit(-1);
             }
-            lock.unlock();
+            executeLock.unlock();
         }
     }
 
@@ -1452,12 +1386,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     private void trainIterations() throws MatrixException, IOException, NeuralNetworkException {
         trainingMetrics.resetError();
-        for (int iteration = 0; iteration < iterations; iteration++) {
+        trainingSampler.reset();
+        for (int iteration = 0; iteration < trainingSampler.getNumberOfIterations(); iteration++) {
             trainIteration();
             if (stoppedExecution()) break;
-            if (earlyStopping != null) {
-                if (earlyStopping.stopTraining()) break;
-            }
+            if (earlyStopping != null) if (earlyStopping.stopTraining()) break;
         }
         trainingMetrics.store(totalIterations);
         stateCompleted();
@@ -1472,11 +1405,10 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     private void trainIteration() throws MatrixException, IOException, NeuralNetworkException {
         long startTime = System.nanoTime();
-        for (Connector connector : connectors) if (reset) connector.reset();
-        Sequence inputSequence = new Sequence(sampleDepth);
-        Sequence outputSequence = new Sequence(sampleDepth);
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.reset();
+        Sequence inputSequence = new Sequence(trainingSampler.getDepth());
+        Sequence outputSequence = new Sequence(trainingSampler.getDepth());
         trainingSampler.getSamples(inputSequence, outputSequence);
-        getOutputLayer().resetError();
         getOutputLayer().setTargets(outputSequence);
         getInputLayer().train(inputSequence);
         getOutputLayer().backward();
@@ -1495,16 +1427,16 @@ public class NeuralNetwork implements Runnable, Serializable {
             }
         }
         if (earlyStopping != null) earlyStopping.evaluateTrainingCondition(totalIterations);
-        if (verboseTraining) verboneTrainingStatus();
+        if (verboseTraining) verboseTrainingStatus();
         if (persistence != null) persistence.cycle();
     }
 
     /**
-     * Verboses (prints to consolte) neural network training status.<br>
+     * Verboses (prints to console) neural network training status.<br>
      * Prints number of iteration, neural network training time and training error.<br>
      *
      */
-    private void verboneTrainingStatus() {
+    private void verboseTrainingStatus() {
         if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + String.format("%.4f", trainingMetrics.getAbsolute()) + ", Training time in seconds: " + (trainingTime / 1000000000));
     }
 
@@ -1513,8 +1445,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     private void predictInput() {
-        getOutputLayer().clearTargets();
-        getInputLayer().predict(predictIns);
+        getInputLayer().predict(predictInputs);
         stateCompleted();
     }
 
@@ -1527,72 +1458,16 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException {
         validationMetrics.resetError();
-        for (int sampleIndex = 0; sampleIndex < validationSampler.getNumberOfValidationCycles(); sampleIndex++) {
-            Sequence inputSequence = new Sequence(sampleDepth);
-            Sequence outputSequence = new Sequence(sampleDepth);
+        validationSampler.reset();
+        for (int sampleIndex = 0; sampleIndex < validationSampler.getNumberOfIterations(); sampleIndex++) {
+            Sequence inputSequence = new Sequence(validationSampler.getDepth());
+            Sequence outputSequence = new Sequence(validationSampler.getDepth());
             validationSampler.getSamples(inputSequence, outputSequence);
-            getOutputLayer().clearTargets();
-            Sequence prediction = getInputLayer().predict(inputSequence);
             validationMetrics.report(getInputLayer().predict(inputSequence), outputSequence);
         }
         if (verboseValidation && (totalIterations % verboseCycle == 0)) verboseValidationStatus();
         validationMetrics.store(totalIterations, true);
         if (stateCompleted) stateCompleted();
-    }
-
-    /**
-     * Sets neural network into completed state and makes state transition to idle state.
-     *
-     */
-    private void stateCompleted() {
-        lock.lock();
-        executionState = ExecutionState.IDLE;
-        complete.signal();
-        lock.unlock();
-    }
-
-    /**
-     * Checks if neural network is executing (processing).
-     *
-     * @return true if neural network is executing otherwise false.
-     */
-    public boolean isProcessing() {
-        if (neuralNetworkThread == null) return false;
-        boolean isProcessing;
-        lock.lock();
-        isProcessing = !(executionState == ExecutionState.IDLE || executionState == ExecutionState.TERMINATED);
-        lock.unlock();
-        return isProcessing;
-    }
-
-    /**
-     * Waits for neural network to finalize it execution (processing).
-     *
-     */
-    public void waitToComplete() {
-        if (neuralNetworkThread == null) return;
-        lock.lock();
-        try {
-            while (isProcessing()) complete.await();
-        }
-        catch (InterruptedException exception) {}
-        lock.unlock();
-    }
-
-    /**
-     * Checks if neural network execution (processing) is stopped.
-     *
-     * @return true if execution is stopped otherwise false.
-     */
-    private boolean stoppedExecution() {
-        boolean stopped = false;
-        stopLock.lock();
-        if (stopExecution) {
-            stopped = true;
-            stopExecution = false;
-        }
-        stopLock.unlock();
-        return stopped;
     }
 
     /**
@@ -1618,9 +1493,10 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Returns neural network output error.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return neural network output error.
      */
-    public double getOutputError() {
+    public double getOutputError() throws MatrixException {
         waitToComplete();
         return getOutputLayer().getTotalError();
     }
@@ -1688,6 +1564,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
      */
     public NeuralNetwork copy() throws IOException, ClassNotFoundException {
+        waitToComplete();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(this);
@@ -1701,15 +1578,16 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Appends other neural network to this neural network by weight tau. Effectively appends each weight matrix of each connector by this weight factor.
+     * Appends other neural network to this neural network by weight tau. Effectively appends each weight matrix of each layer by this weight factor.
      *
      * @param otherNeuralNetwork other neural network that contributes to this neural network.
-     * @param tau tau which controls contribution of other connector.
+     * @param tau tau which controls contribution of other layer.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void append(NeuralNetwork otherNeuralNetwork, double tau) throws MatrixException {
-        for (int index = 0; index < connectors.size(); index++) {
-            connectors.get(index).append(otherNeuralNetwork.getConnectors().get(index), tau);
+        waitToComplete();
+        for (int index = 0; index < neuralNetworkLayers.size(); index++) {
+            neuralNetworkLayers.get(index).append(otherNeuralNetwork.getNeuralNetworkLayers().get(index), tau);
         }
     }
 
@@ -1722,9 +1600,45 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setImportanceSamplingWeights(TreeMap<Integer, Double> importanceSamplingWeights) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        lock.lock();
+        executeLock.lock();
         getOutputLayer().setImportanceSamplingWeights(importanceSamplingWeights);
-        lock.unlock();
+        executeLock.unlock();
+    }
+
+
+    /**
+     * Prints structure and metadata of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void print() throws NeuralNetworkException {
+        checkNotStarted();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
+            neuralNetworkLayer.print();
+            System.out.println();
+        }
+        System.out.println("Apply early stopping: " + (earlyStopping != null ? "Yes" : "No"));
+        System.out.println();
+    }
+
+    /**
+     * Prints expression chains of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void printExpressions() throws NeuralNetworkException {
+        checkNotStarted();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.printExpressions();
+    }
+
+    /**
+     * Prints gradient chains of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void printGradients() throws NeuralNetworkException {
+        checkNotStarted();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.printGradients();
     }
 
 }
