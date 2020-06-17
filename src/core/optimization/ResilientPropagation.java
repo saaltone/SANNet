@@ -27,6 +27,12 @@ public class ResilientPropagation implements Optimizer, Serializable {
     private static final long serialVersionUID = -5041801098584596493L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Hash map to store previous gradients.
      *
      */
@@ -41,17 +47,10 @@ public class ResilientPropagation implements Optimizer, Serializable {
     /**
      * Default constructor for Resilient Propagation.
      *
+     * @param optimizationType optimizationType.
      */
-    public ResilientPropagation() {
-    }
-
-    /**
-     * Constructor for Resilient Propagation.
-     *
-     * @param params parameters for Resilient Propagation (not relevant).
-     */
-    public ResilientPropagation(String params) {
-        setParams(null);
+    public ResilientPropagation(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
@@ -74,45 +73,54 @@ public class ResilientPropagation implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         if (dPrev == null) dPrev = new HashMap<>();
         if (wPrev == null) wPrev = new HashMap<>();
 
         Matrix dMPrev;
-        if (dPrev.containsKey(M)) dMPrev = dPrev.get(M);
-        else dPrev.put(M, dMPrev = dM);
+        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
+        else dPrev.put(matrix, dMPrev = matrixGradient);
 
         Matrix WPrev;
-        if (wPrev.containsKey(M)) WPrev = wPrev.get(M);
-        else wPrev.put(M, WPrev = new DMatrix(M.getRows(), M.getCols()));
+        if (wPrev.containsKey(matrix)) WPrev = wPrev.get(matrix);
+        else wPrev.put(matrix, WPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        Matrix dWDir = dMPrev.sgnmul(dM);
+        Matrix dWDir = dMPrev.sgnmul(matrixGradient);
 
         Matrix.MatrixBinaryOperation rpropRule = (value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2;
-        wPrev.put(M, WPrev = dWDir.applyBi(WPrev, rpropRule));
+        wPrev.put(matrix, WPrev = dWDir.applyBi(WPrev, rpropRule));
 
-        M.subtract(dM.apply(UnaryFunctionType.SGN).multiply(WPrev), M);
+        matrix.subtract(matrixGradient.apply(UnaryFunctionType.SGN).multiply(WPrev), matrix);
 
-        dPrev.put(M, dWDir.applyBi(dM, (value1, value2) -> value1 == -1 ? 0 : value2));
+        dPrev.put(matrix, dWDir.applyBi(matrixGradient, (value1, value2) -> value1 == -1 ? 0 : value2));
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
