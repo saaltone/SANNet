@@ -24,7 +24,7 @@ public class DMask extends Mask {
      * Defines number of columns in mask.
      *
      */
-    private final int cols;
+    private final int columns;
 
     /**
      * Mask data structure as two dimensional row column array-
@@ -42,7 +42,7 @@ public class DMask extends Mask {
      * Column mask data structure.
      *
      */
-    private boolean[] colMask;
+    private boolean[] columnMask;
 
     /**
      * Stack to store masks.
@@ -59,33 +59,20 @@ public class DMask extends Mask {
      * Stack to store column masks.
      *
      */
-    private Stack<boolean[]> colMaskStack = new Stack<>();
+    private Stack<boolean[]> columnMaskStack = new Stack<>();
 
     /**
      * Constructor for dense mask.
      *
      * @param rows defines number of rows in mask.
-     * @param cols defines number of columns in mask.
+     * @param columns defines number of columns in mask.
      */
-    public DMask(int rows, int cols) {
+    public DMask(int rows, int columns) {
         this.rows = rows;
-        this.cols = cols;
-        mask = new boolean[rows][cols];
+        this.columns = columns;
+        mask = new boolean[rows][columns];
         rowMask = new boolean[rows];
-        colMask = new boolean[cols];
-    }
-
-    /**
-     * Constructor for dense mask.
-     *
-     * @param data clones mask data from given mask data.
-     */
-    public DMask(boolean[][] data) {
-        rows = data.length;
-        cols = data[0].length;
-        mask = data.clone();
-        rowMask = new boolean[rows];
-        colMask = new boolean[cols];
+        columnMask = new boolean[columns];
     }
 
     /**
@@ -93,48 +80,18 @@ public class DMask extends Mask {
      *
      * @param data clones mask data from given mask data.
      * @param rowData clones row mask data from given row mask data.
-     * @param colData clones column mask data from given column mask data.
+     * @param columnData clones column mask data from given column mask data.
+     * @param isTransposed if true mask if transposed otherwise false.
+     * @param probability probability of masking.
      */
-    public DMask(boolean[][] data, boolean[] rowData, boolean[] colData) {
+    protected DMask(boolean[][] data, boolean[] rowData, boolean[] columnData, boolean isTransposed, double probability) {
         rows = data.length;
-        cols = data[0].length;
+        columns = data[0].length;
         mask = data.clone();
         rowMask = rowData.clone();
-        colMask = colData.clone();
-    }
-
-    /**
-     * Constructor for dense mask.
-     *
-     * @param data clones mask data from given mask data.
-     * @param rowData clones row mask data from given row mask data.
-     * @param colData clones column mask data from given column mask data.
-     * @param t if true mask if transposed otherwise false.
-     * @param proba probability of masking.
-     */
-    public DMask(boolean[][] data, boolean[] rowData, boolean[] colData, boolean t, double proba) {
-        rows = data.length;
-        cols = data[0].length;
-        mask = data.clone();
-        rowMask = rowData.clone();
-        colMask = colData.clone();
-        this.t = t;
-        this.proba = proba;
-    }
-
-    /**
-     * Constructor for dense mask.
-     *
-     * @param data mask data.
-     * @param referTo if true creates mask with reference to given mask data otherwise clones the data.
-     */
-    public DMask(boolean[][] data, boolean referTo) {
-        this.rows = data.length;
-        this.cols = data[0].length;
-        if (referTo) mask = data;
-        else mask = data.clone();
-        rowMask = new boolean[rows];
-        colMask = new boolean[cols];
+        columnMask = columnData.clone();
+        this.isTransposed = isTransposed;
+        this.probability = probability;
     }
 
     /**
@@ -143,7 +100,7 @@ public class DMask extends Mask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new DMask(mask, rowMask, colMask, t, proba);
+        return new DMask(mask, rowMask, columnMask, isTransposed, probability);
     }
 
     /**
@@ -151,8 +108,8 @@ public class DMask extends Mask {
      *
      * @return size of mask.
      */
-    public int getSize() {
-        return rows * cols;
+    public int size() {
+        return rows * columns;
     }
 
     /**
@@ -161,7 +118,7 @@ public class DMask extends Mask {
      * @return number of rows in mask.
      */
     public int getRows() {
-        return !t ? rows : cols;
+        return !isTransposed ? rows : columns;
     }
 
     /**
@@ -169,30 +126,30 @@ public class DMask extends Mask {
      *
      * @return number of columns in mask.
      */
-    public int getCols() {
-        return !t ? cols : rows;
+    public int getColumns() {
+        return !isTransposed ? columns : rows;
     }
 
     /**
      * Sets masking of specific row and column.
      *
      * @param row row of value to be get.
-     * @param col column of value to be get.
+     * @param column column of value to be get.
      * @param value defines if specific row and column is masked (true) or not (false).
      */
-    public void setMask(int row, int col, boolean value) {
-        mask[!t ? row : col][!t ? col : row] = value;
+    public void setMask(int row, int column, boolean value) {
+        mask[!isTransposed ? row : column][!isTransposed ? column : row] = value;
     }
 
     /**
      * Returns masking of specific row and column.
      *
      * @param row row of value to be returned.
-     * @param col column of value to be returned.
+     * @param column column of value to be returned.
      * @return if specific row and column is masked (true) or not (false).
      */
-    public boolean getMask(int row, int col) {
-        return mask[!t ? row : col][!t ? col : row];
+    public boolean getMask(int row, int column) {
+        return mask[!isTransposed ? row : column][!isTransposed ? column : row];
     }
 
     /**
@@ -200,12 +157,12 @@ public class DMask extends Mask {
      *
      */
     public void clear() {
-        mask = new boolean[rows][cols];
+        mask = new boolean[rows][columns];
         rowMask = new boolean[rows];
-        colMask = new boolean[cols];
+        columnMask = new boolean[columns];
         maskStack = new Stack<>();
         rowMaskStack = new Stack<>();
-        colMaskStack = new Stack<>();
+        columnMaskStack = new Stack<>();
     }
 
     /**
@@ -291,8 +248,8 @@ public class DMask extends Mask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setRowMask(int row, boolean value) {
-        if (!t) rowMask[row] = value;
-        else colMask[row] = value;
+        if (!isTransposed) rowMask[row] = value;
+        else columnMask[row] = value;
     }
 
     /**
@@ -302,28 +259,28 @@ public class DMask extends Mask {
      * @return true if row mask is set otherwise false.
      */
     public boolean getRowMask(int row) {
-        return !t ? rowMask[row] : colMask[row];
+        return !isTransposed ? rowMask[row] : columnMask[row];
     }
 
     /**
      * Sets mask value for column mask.
      *
-     * @param col column of mask to be set.
+     * @param column column of mask to be set.
      * @param value if true sets row mask otherwise unsets mask.
      */
-    public void setColMask(int col, boolean value) {
-        if (!t) colMask[col] = value;
-        else rowMask[col] = value;
+    public void setColumnMask(int column, boolean value) {
+        if (!isTransposed) columnMask[column] = value;
+        else rowMask[column] = value;
     }
 
     /**
      * Returns mask value for column mask.
      *
-     * @param col column of mask to be returned.
+     * @param column column of mask to be returned.
      * @return true if row mask is set otherwise false.
      */
-    public boolean getColMask(int col) {
-        return !t ? colMask[col] : rowMask[col];
+    public boolean getColumnMask(int column) {
+        return !isTransposed ? columnMask[column] : rowMask[column];
     }
 
     /**
@@ -332,9 +289,9 @@ public class DMask extends Mask {
      *
      * @param reset if true new mask is generated after current mask is stacked.
      */
-    public void stackColMask(boolean reset) {
-        colMaskStack.push(colMask);
-        if (reset) colMask = new boolean[mask[0].length];
+    public void stackColumnMask(boolean reset) {
+        columnMaskStack.push(columnMask);
+        if (reset) columnMask = new boolean[mask[0].length];
     }
 
     /**
@@ -342,9 +299,9 @@ public class DMask extends Mask {
      *
      * @throws MatrixException throws exception if mask is not set or column mask stack is empty.
      */
-    public void unstackColMask() throws MatrixException {
-        if (colMaskStack.isEmpty()) throw new MatrixException("Column mask stack is empty.");
-        colMask = colMaskStack.pop();
+    public void unstackColumnMask() throws MatrixException {
+        if (columnMaskStack.isEmpty()) throw new MatrixException("Column mask stack is empty.");
+        columnMask = columnMaskStack.pop();
     }
 
     /**
@@ -352,16 +309,16 @@ public class DMask extends Mask {
      *
      * @return size of column mask stack.
      */
-    public int colMaskStackSize() {
-        return colMaskStack.size();
+    public int columnMaskStackSize() {
+        return columnMaskStack.size();
     }
 
     /**
      * Clears column mask stack.
      *
      */
-    public void clearColMaskStack() {
-        colMaskStack = new Stack<>();
+    public void clearColumnMaskStack() {
+        columnMaskStack = new Stack<>();
     }
 
 }
