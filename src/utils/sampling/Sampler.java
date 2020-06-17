@@ -17,11 +17,24 @@ import utils.matrix.MatrixException;
 public interface Sampler {
 
     /**
-     * Returns number of validation cycles.
+     * Returns depth of sample.
      *
-     * @return number of validation cycles.
+     * @return depth of sample.
      */
-    int getNumberOfValidationCycles();
+    int getDepth();
+
+    /**
+     * Resets sampler.
+     *
+     */
+    void reset();
+
+    /**
+     * Returns number of training or validation iterations.
+     *
+     * @return number of training or validation iterations.
+     */
+    int getNumberOfIterations();
 
     /**
      * Samples number of samples from input output pairs.
