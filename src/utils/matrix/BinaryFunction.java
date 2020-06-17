@@ -41,20 +41,33 @@ public class BinaryFunction implements Serializable {
      * Alpha value for Huber loss.
      *
      */
-    private double huber_delta = 1;
+    private double huberDelta = 1;
 
     /**
      * Margin value for Hinge loss.
      *
      */
-    private double hinge_margin = 1;
+    private double hingeMargin = 1;
+
+    /**
+     * Constructor for custom BinaryFunction.
+     *
+     * @param function function.
+     * @param derivative derivative of function.
+     */
+    public BinaryFunction(Matrix.MatrixBinaryOperation function, Matrix.MatrixBinaryOperation derivative) {
+        this.binaryFunctionType = BinaryFunctionType.CUSTOM;
+        this.function = function;
+        this.derivative = derivative;
+    }
 
     /**
      * Constructor for BinaryFunction.
      *
      * @param binaryFunctionType type of function to be used.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public BinaryFunction(BinaryFunctionType binaryFunctionType) {
+    public BinaryFunction(BinaryFunctionType binaryFunctionType) throws MatrixException {
         try {
             setFunction(binaryFunctionType, null);
         } catch (DynamicParamException exception) {}
@@ -69,8 +82,9 @@ public class BinaryFunction implements Serializable {
      * @param binaryFunctionType type of function to be used.
      * @param params parameters used for function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public BinaryFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException {
+    public BinaryFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         setFunction(binaryFunctionType, params);
     }
 
@@ -84,14 +98,11 @@ public class BinaryFunction implements Serializable {
      * @param binaryFunctionType type of function to be used.
      * @param params parameters as DynamicParam type for function.
      * @throws DynamicParamException throws exception if parameters are not properly given.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException {
+    private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         this.binaryFunctionType = binaryFunctionType;
         switch(binaryFunctionType) {
-            case POW:
-                function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
-                break;
             case MEAN_SQUARED_ERROR:
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.5 * Math.pow(value - constant, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (value - constant);
@@ -129,10 +140,10 @@ public class BinaryFunction implements Serializable {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("margin", DynamicParam.ParamType.DOUBLE);
                     DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("margin")) hinge_margin = dParams.getValueAsDouble("margin");
+                    if (dParams.hasParam("margin")) hingeMargin = dParams.getValueAsDouble("margin");
                 }
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hinge_margin - constant * value <= 0 ? 0 : hinge_margin - constant * value;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hinge_margin - constant * value <= 0 ? 0 : - constant;
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : hingeMargin - constant * value;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : - constant;
                 break;
             case SQUARED_HINGE:
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant * value <= 0 ? 0 : Math.pow(1 - constant * value, 2);
@@ -143,17 +154,35 @@ public class BinaryFunction implements Serializable {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("delta", DynamicParam.ParamType.DOUBLE);
                     DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("delta")) huber_delta = dParams.getValueAsDouble("delta");
+                    if (dParams.hasParam("delta")) huberDelta = dParams.getValueAsDouble("delta");
                 }
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huber_delta ? 0.5 * Math.pow(value - constant, 2) : huber_delta * Math.abs(value - constant) - 0.5 * Math.pow(huber_delta, 2);
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huber_delta ? value - constant : huber_delta * Math.signum(value - constant);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * Math.abs(value - constant) - 0.5 * Math.pow(huberDelta, 2);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? value - constant : huberDelta * Math.signum(value - constant);
                 break;
             case DIRECT_GRADIENT:
-                function = null;
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant;
             case POLICY_GRADIENT: // -Math.log(policy_value at i, t) * Q_value (or A_value) at i, t
-                function = null;
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log(value) * constant;
+            case POW:
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
+                break;
+            case NORM:
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.pow(Math.abs(value), constant);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(Math.abs(value), constant) / value;
+                break;
+            case MAX:
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::max;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
+                break;
+            case MIN:
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::min;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
+                break;
+            case CUSTOM:
+                throw new MatrixException("Custom function cannot defined with this constructor.");
             default:
                 break;
         }
@@ -208,7 +237,7 @@ public class BinaryFunction implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyFunction(Matrix value, Matrix constant, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? value : new DMatrix(value.getRows(), value.getCols());
+        Matrix result = inplace ? value : value.getNewMatrix();
         value.applyBi(constant, result, this);
         return result;
     }
@@ -224,6 +253,15 @@ public class BinaryFunction implements Serializable {
      */
     public Matrix applyGradient(Matrix value, Matrix constant, Matrix gradient) throws MatrixException {
         return gradient.multiply(value.applyBi(constant, this));
+    }
+
+    /**
+     * Returns name of binary function.
+     *
+     * @return name of binary function.
+     */
+    public String getName() {
+        return binaryFunctionType.toString();
     }
 
 }
