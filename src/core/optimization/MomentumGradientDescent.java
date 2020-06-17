@@ -25,6 +25,12 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
     private static final long serialVersionUID = -983868918422365256L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for Momentum Gradient Descent. Default value 0.001.
      *
      */
@@ -45,17 +51,21 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
     /**
      * Default constructor for Momentum Gradient Descent.
      *
+     * @param optimizationType optimizationType.
      */
-    public MomentumGradientDescent() {
+    public MomentumGradientDescent(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for Momentum Gradient Descent.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for Momentum Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MomentumGradientDescent(String params) throws DynamicParamException {
+    public MomentumGradientDescent(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -97,39 +107,48 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         if (dPrev == null) dPrev = new HashMap<>();
         Matrix dMPrev;
-        if (dPrev.containsKey(M)) dMPrev = dPrev.get(M);
-        else dPrev.put(M, dMPrev = new DMatrix(M.getRows(), M.getCols()));
+        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
+        else dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // θt+1=θt+μtvt−εt∇f(θt)
-        Matrix dMDelta = dMPrev.multiply(mu).subtract(dM.multiply(learningRate));
+        Matrix dMDelta = dMPrev.multiply(mu).subtract(matrixGradient.multiply(learningRate));
 
-        M.add(dMDelta, M);
+        matrix.add(dMDelta, matrix);
 
         // vt+1=μtvt−εt∇f(θt)
-        dPrev.put(M, dMDelta);
+        dPrev.put(matrix, dMDelta);
 
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
