@@ -238,8 +238,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * @return return player if player has won otherwise returns null.
          */
         private Player checkWinner(Player player) {
-            int diagStat = 0;
-            int adiagStat = 0;
+            int diagonalStatistics = 0;
+            int adiagonalStatistics = 0;
             GameSlot targetSlot = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
             for (int row = 0; row < size; row++) {
                 int rowStat = 0;
@@ -250,11 +250,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 }
                 if (rowStat == size || colStat == size) return player;
 
-                if (gameBoard[row][row] == targetSlot) diagStat++; else diagStat = 0;
-                if (gameBoard[row][size - 1 - row] == targetSlot) adiagStat++; else adiagStat = 0;
+                if (gameBoard[row][row] == targetSlot) diagonalStatistics++; else diagonalStatistics = 0;
+                if (gameBoard[row][size - 1 - row] == targetSlot) adiagonalStatistics++; else adiagonalStatistics = 0;
             }
 
-            if (diagStat == size || adiagStat == size) return player;
+            if (diagonalStatistics == size || adiagonalStatistics == size) return player;
 
             return null;
         }
@@ -858,9 +858,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private Agent createAgent(Player player) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean policyGradient = false;
         boolean stateValue = false;
-        int policyType = 2;
-        boolean nnPolicyEstimator = true;
-        boolean nnValueEstimator = true;
+        int policyType = 1;
+        boolean nnPolicyEstimator = false;
+        boolean nnValueEstimator = false;
         boolean basicPolicy = false;
         FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, boardSize * boardSize, policyGradient)) : new TabularFunctionEstimator(boardSize * boardSize);
         FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, (stateValue ? 1 : boardSize * boardSize), false)) : new TabularFunctionEstimator(boardSize * boardSize);
@@ -870,7 +870,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 policy = new EpsilonGreedyPolicy();
                 break;
             case 2:
-                policy = new NoisyPolicy("minExplorationNoise = 0");
+                policy = new NoisyPolicy();
                 break;
             case 3:
                 policy = new WeightedRandomPolicy();
@@ -878,14 +878,14 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
         Agent agent;
         if (!policyGradient) {
-            agent = new DDQNLearningAbstract(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
+            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
 //            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
         }
         else {
             UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator);
 //            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(boardSize * boardSize));
-            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = True"));
+            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
@@ -899,27 +899,29 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize, boolean policyGradient) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize, boolean policyGradient) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         if (!policyGradient) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = 40");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = 40");
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SELU), "width = " + outputSize);
-            neuralNetwork.setLossFunction(BinaryFunctionType.HUBER);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");
+//            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 40");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.verboseTraining(100);
         }
         else {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-            neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
+//            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 40");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         }
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.setNeuralNetworkName(neuralNetworkName);
-        neuralNetwork.setTrainingIterations(1);
         return neuralNetwork;
     }
 
