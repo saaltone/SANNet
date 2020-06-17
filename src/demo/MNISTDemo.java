@@ -17,7 +17,6 @@ import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
 import utils.DynamicParamException;
 import utils.Persistence;
-import utils.Sample;
 import utils.Sequence;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
@@ -44,8 +43,8 @@ public class MNISTDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            HashMap<Integer, LinkedHashMap<Integer, Sample>> trainMNIST = getMNISTData(true);
-            HashMap<Integer, LinkedHashMap<Integer, Sample>> testMNIST = getMNISTData(false);
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> trainMNIST = getMNISTData(true);
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> testMNIST = getMNISTData(false);
 
             neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).get(0).getRows(), trainMNIST.get(1).get(0).get(0).getRows());
 
@@ -62,9 +61,12 @@ public class MNISTDemo {
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 50"));
-            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 50"));
-            neuralNetwork.setTrainingIterations(10000);
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32, numberOfIterations = 10000"));
+            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32"));
+
+            neuralNetwork.print();
+            neuralNetwork.printExpressions();
+            neuralNetwork.printGradients();
 
             System.out.println("Training...");
             neuralNetwork.train();
@@ -97,18 +99,18 @@ public class MNISTDemo {
      * @return CNN instance.
      * @throws DynamicParamException throws exception is setting of parameters fails.
      * @throws NeuralNetworkException throws exception if creation of CNN fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU, "alpha = 0.01"), Init.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = false");
-//        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = false");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU, "alpha = 0.01"), "width = 40");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 8, filterSize = 3, stride = 1, asConvolution = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addNormalizer(2, NormalizationType.BATCH_NORMALIZATION);
-        neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
         return neuralNetwork;
     }
 
@@ -123,20 +125,20 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws FileNotFoundException throws exception if matrix cannot be read.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
+    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
         System.out.print("Loading " + (trainSet ? "training" : "test") + " data... ");
         HashSet<Integer> inputCols = new HashSet<>();
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
         String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test_mini.csv";
-        HashMap<Integer, LinkedHashMap<Integer, Sample>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
-        for (Sample sample : data.get(0).values()) {
+        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
+        for (MMatrix sample : data.get(0).values()) {
             for (Matrix entry : sample.values()) {
                 entry.divide(255, entry);
             }
         }
-        for (Sample sample : data.get(1).values()) {
+        for (MMatrix sample : data.get(1).values()) {
             for (Integer entryIndex : sample.keySet()) {
                 int value = (int)sample.get(entryIndex).getValue(0,0);
                 Matrix output = new SMatrix(10, 1);
