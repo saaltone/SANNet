@@ -40,7 +40,7 @@ public class TextSeqDemo {
         try {
             String persistenceName = "<PATH>/TextSeqNN";
             int numOfInputs = 5;
-            HashMap<Integer, LinkedHashMap<Integer, Sample>> data = getTextSeqData(numOfInputs);
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             neuralNetwork.setTaskType(MetricsType.CLASSIFICATION);
@@ -48,10 +48,10 @@ public class TextSeqDemo {
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
             neuralNetwork.start();
-            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = true, shuffleSamples = false, sampleSize = 20"));
-            neuralNetwork.setTrainingIterations(100);
-            int totalIterations = neuralNetwork.getTotalIterations();
-            while (neuralNetwork.getTotalIterations() - totalIterations < 100000) {
+            neuralNetwork.printExpressions();
+            neuralNetwork.printGradients();
+            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = false, stepSize = 100, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
+            while (neuralNetwork.getTotalIterations() < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
                 int inputRows = data.get(0).get(0).get(0).getRows();
@@ -64,9 +64,9 @@ public class TextSeqDemo {
                     if (input.getValue(row, 0) == 1) letters[index++] = row;
                 }
                 for (int pos = 0; pos < 1000; pos++) {
-                    neuralNetwork.setAllowLayerReset(pos == 0);
+                    neuralNetwork.setResetStateTesting(pos == 0);
                     int nextLetter = neuralNetwork.predict(input).argmax()[0];
-                    System.out.print((char)ReadTextFile.intTochar(nextLetter));
+                    System.out.print((char)ReadTextFile.intToChar(nextLetter));
                     for (int charIndex = 0; charIndex < numOfChars - 1; charIndex++) {
                         letters[charIndex] = letters[charIndex + 1] - charSize;
                     }
@@ -76,7 +76,6 @@ public class TextSeqDemo {
                         input.setValue(letters[charIndex], 0, 1);
                     }
                 }
-                neuralNetwork.setAllowLayerReset(true);
                 System.out.println();
             }
             neuralNetwork.stop();
@@ -95,16 +94,17 @@ public class TextSeqDemo {
      * @return neural network instance.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 200");
-        neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.GRAVESLSTM, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addRegularizer(RegularizationType.DROPOUT);
-        neuralNetwork.setLossFunction(BinaryFunctionType.CROSS_ENTROPY);
+        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
         return neuralNetwork;
     }
 
@@ -115,7 +115,7 @@ public class TextSeqDemo {
      * @return encoded inputs and outputs.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, Sample>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
+    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
         return ReadTextFile.readFile("<PATH>/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
     }
 
