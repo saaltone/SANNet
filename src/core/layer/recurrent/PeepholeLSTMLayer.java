@@ -8,14 +8,10 @@ package core.layer.recurrent;
 
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import core.layer.AbstractExecutionLayer;
-import core.layer.AbstractLayer;
-import core.normalization.Normalization;
 import utils.*;
 import utils.matrix.*;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Class for Peephole Long Short Term Memory (LSTM)<br>
@@ -31,7 +27,7 @@ import java.util.HashSet;
  *   h = tanh(c) x o or h = c x o → Output<br>
  *
  */
-public class PeepholeLSTMLayer extends AbstractExecutionLayer {
+public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
 
     /**
      * Weights for input gate
@@ -103,16 +99,16 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      * Matrix to store previous state.
      *
      */
-    private Matrix cPrev;
+    private Matrix previousCellState;
 
     /**
-     * Tanh activation function needed for LSTM
+     * Tanh activation function needed for Graves LSTM
      *
      */
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for LSTM
+     * Sigmoid activation function needed for Graves LSTM
      *
      */
     private final ActivationFunction sigmoid;
@@ -144,15 +140,16 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
     /**
      * Constructor for Peephole LSTM layer.
      *
-     * @param parent reference to parent layer.
-     * @param activation activation function used. Not relevant for this layer.
-     * @param initialization intialization function for weight.
+     * @param layerIndex layer Index.
+     * @param initialization initialization function for weight.
      * @param params parameters for Peephole LSTM layer.
-     * @throws NeuralNetworkException throws exception if setting of activation function fails.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public PeepholeLSTMLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
-        super (parent, activation, initialization, params);
+    public PeepholeLSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, params);
+        setParams(new DynamicParam(params, getParamDefs()));
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
     }
@@ -163,11 +160,8 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      * @return parameters used for Peephole LSTM layer.
      */
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("width", DynamicParam.ParamType.INT);
+        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("doubleTanh", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("resetStateTraining", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("resetStateTesting", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("regulateRecurrentWeights", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
@@ -177,137 +171,92 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
      * Sets parameters used for Peephole LSTM layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - width: width (number of nodes) of Peephole LSTM layer.<br>
      *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
-     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value).<br>
-     *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value).<br>
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
      *
      * @param params parameters used for Peephole LSTM layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
-    public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) parent.setWidth(params.getValueAsInteger("width"));
+    public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
+        super.setParams(params);
         if (params.hasParam("doubleTanh")) doubleTanh = params.getValueAsBoolean("doubleTanh");
-        if (params.hasParam("resetStateTraining")) resetStateTraining = params.getValueAsBoolean("resetStateTraining");
-        if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
         if (params.hasParam("regulateRecurrentWeights")) regulateRecurrentWeights = params.getValueAsBoolean("regulateRecurrentWeights");
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always true.
-     */
-    public boolean isRecurrentLayer() { return true; }
-
-    /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always false.
-     */
-    public boolean isConvolutionalLayer() { return false; }
-
-    /**
      * Initializes Peephole LSTM layer.<br>
      * Initializes weights and bias and their gradients.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initialize() throws MatrixException {
-        int pLayerWidth = parent.getBackward().getPLayerWidth();
-        int nLayerWidth = parent.getBackward().getNLayerWidth();
+    public void initialize() {
+        int previousLayerWidth = getPreviousLayerWidth();
+        int layerWidth = getLayerWidth();
 
-        Wi = new DMatrix(nLayerWidth, pLayerWidth);
-        Wi.init(this.initialization);
+        Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
+        Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
+        Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
+        Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
 
-        Wf = new DMatrix(nLayerWidth, pLayerWidth);
-        Wf.init(this.initialization);
+        Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
+        Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
+        Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
 
-        Wo = new DMatrix(nLayerWidth, pLayerWidth);
-        Wo.init(this.initialization);
+        bi = new DMatrix(layerWidth, 1, "bi");
+        bf = new DMatrix(layerWidth, 1, "bf");
+        bo = new DMatrix(layerWidth, 1, "bo");
+        bs = new DMatrix(layerWidth, 1, "bs");
 
-        Ws = new DMatrix(nLayerWidth, pLayerWidth);
-        Ws.init(this.initialization);
+        registerWeight(Wi, regulateDirectWeights, true);
+        registerWeight(Wf, regulateDirectWeights, true);
+        registerWeight(Wo, regulateDirectWeights, true);
+        registerWeight(Ws, regulateDirectWeights, true);
 
-        Ui = new DMatrix(nLayerWidth, nLayerWidth);
-        Ui.init(this.initialization);
+        registerWeight(Ui, regulateRecurrentWeights, true);
+        registerWeight(Uf, regulateRecurrentWeights, true);
+        registerWeight(Uo, regulateRecurrentWeights, true);
 
-        Uf = new DMatrix(nLayerWidth, nLayerWidth);
-        Uf.init(this.initialization);
+        registerWeight(bi, false, false);
+        registerWeight(bf, false, false);
+        registerWeight(bo, false, false);
+        registerWeight(bs, false, false);
 
-        Uo = new DMatrix(nLayerWidth, nLayerWidth);
-        Uo.init(this.initialization);
-
-        bi = new DMatrix(nLayerWidth, 1);
-
-        bf = new DMatrix(nLayerWidth, 1);
-
-        bo = new DMatrix(nLayerWidth, 1);
-
-        bs = new DMatrix(nLayerWidth, 1);
-
-        parent.getBackward().registerWeight(Wi, true, regulateDirectWeights, true);
-        parent.getBackward().registerWeight(Wf, true, regulateDirectWeights, true);
-        parent.getBackward().registerWeight(Wo, true, regulateDirectWeights, true);
-        parent.getBackward().registerWeight(Ws, true, regulateDirectWeights, true);
-
-        parent.getBackward().registerWeight(Ui, true, regulateRecurrentWeights, true);
-        parent.getBackward().registerWeight(Uf, true, regulateRecurrentWeights, true);
-        parent.getBackward().registerWeight(Uo, true, regulateRecurrentWeights, true);
-
-        parent.getBackward().registerWeight(bi, true, false, false);
-        parent.getBackward().registerWeight(bf, true, false, false);
-        parent.getBackward().registerWeight(bo, true, false, false);
-        parent.getBackward().registerWeight(bs, true, false, false);
-
-    }
-
-    /**
-     * Resets input.
-     *
-     * @param resetPreviousInput if true resets also previous input.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void resetInput(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(parent.getBackward().getPLayerWidth(), 1, Init.ONE);
-        if (resetPreviousInput) cPrev = new DMatrix(parent.getBackward().getNLayer().getWidth(), 1);
     }
 
     /**
      * Returns input matrices for procedure construction.
      *
-     * @return input matrices for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param resetPreviousInput if true resets also previous input.
+     * @return input matrix for procedure construction.
      */
-    protected Sample getInputMatrices() throws MatrixException {
-        Sample inputs = new Sample(1);
-        inputs.put(0, input);
-        return inputs;
+    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        if (resetPreviousInput) previousCellState = new DMatrix(getLayerWidth(), 1);
+        return new MMatrix(input);
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
-     * @param normalizers normalizers for layer normalization.
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException {
-        if (normalizers.size() > 0) input.setNormalization(normalizers);
+    public MMatrix getForwardProcedure() throws MatrixException {
+        input.setNormalize(true);
+        input.setRegularize(true);
 
         // i = sigmoid(Wi * x + Ui * c(t-1) + bi) → Input gate
-        Matrix i = Wi.dot(input).add(Ui.dot(cPrev)).add(bi);
+        Matrix i = Wi.dot(input).add(Ui.dot(previousCellState)).add(bi);
         i = i.apply(sigmoid);
 
         // f = sigmoid(Wf * x + Uf * c(t-1) + bf) → Forget gate
-        Matrix f = Wf.dot(input).add(Uf.dot(cPrev)).add(bf);
+        Matrix f = Wf.dot(input).add(Uf.dot(previousCellState)).add(bf);
         f = f.apply(sigmoid);
 
         // o = sigmoid(Wo * x + Uo * c(t-1) + bo) → Output gate
-        Matrix o = Wo.dot(input).add(Uo.dot(cPrev)).add(bo);
+        Matrix o = Wo.dot(input).add(Uo.dot(previousCellState)).add(bo);
         o = o.apply(sigmoid);
 
         // s = tanh(Ws * x + bs) → State update
@@ -315,17 +264,27 @@ public class PeepholeLSTMLayer extends AbstractExecutionLayer {
         s = s.apply(tanh);
 
         // c = i x s + f x c-1 → Internal cell state
-        Matrix c = i.multiply(s).add(cPrev.multiply(f));
-        cPrev = c;
+        Matrix c = i.multiply(s).add(previousCellState.multiply(f));
+        previousCellState = c;
 
         // h = tanh(c) x o or h = c x o → Output
         Matrix c_ = doubleTanh ? c.apply(tanh) : c;
         Matrix h = c_.multiply(o);
 
-        Sample outputs = new Sample(1);
+        h.setName("Output");
+        MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, h);
         return outputs;
 
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerDetailsByName() {
+        return null;
     }
 
 }
