@@ -15,7 +15,7 @@ import java.io.Serializable;
  * Class that defines expression and gradient linkage between output (result) and input (arg) node.
  *
  */
-class NodeLink implements Serializable {
+public class NodeLink implements Serializable {
 
     private static final long serialVersionUID = -472658584018963912L;
 
@@ -35,13 +35,13 @@ class NodeLink implements Serializable {
      * Previous matrix.
      *
      */
-    private Matrix previousMatrix = null;
+    private transient Matrix previousMatrix = null;
 
     /**
      * Previous gradient.
      *
      */
-    private Matrix previousGradient = null;
+    private transient Matrix previousGradient = null;
 
     /**
      * Constructor for node link.
@@ -61,6 +61,24 @@ class NodeLink implements Serializable {
     public void reset() {
         previousMatrix = null;
         previousGradient = null;
+    }
+
+    /**
+     * Returns from node.
+     *
+     * @return from node.
+     */
+    public Node getFromNode() {
+        return fromNode;
+    }
+
+    /**
+     * Returns to node.
+     *
+     * @return to node.
+     */
+    public Node getToNode() {
+        return toNode;
     }
 
     /**
@@ -85,6 +103,29 @@ class NodeLink implements Serializable {
         Matrix fromGradient = toNode.getGradient(index + 1);
         fromNode.updateGradient(index, fromGradient != null ? fromGradient : previousGradient != null ? previousGradient : toNode.getEmptyMatrix(), true);
         previousGradient = fromGradient;
+    }
+
+    /**
+     * Provides copy of linking node.
+     *
+     * @param copyGradients if true copy of node contains also gradients.
+     * @throws MatrixException throws exception is matrix is not defined.
+     * @return copy of node.
+     */
+    public Node copy(boolean copyGradients) throws MatrixException {
+        return fromNode.copy(copyGradients);
+    }
+
+    /**
+     * Copies data from given node.
+     *
+     * @param node source node.
+     * @param copyGradients if true copies also gradient information.
+     * @throws MatrixException throws exception is matrix is not defined.
+     */
+    public void setData(Node node, boolean copyGradients) throws MatrixException {
+        fromNode.setData(node, copyGradients);
+        toNode.setData(node, copyGradients);
     }
 
 }
