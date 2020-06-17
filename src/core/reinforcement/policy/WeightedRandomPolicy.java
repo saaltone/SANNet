@@ -8,6 +8,7 @@ package core.reinforcement.policy;
 
 import utils.matrix.Matrix;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -15,7 +16,9 @@ import java.util.Random;
  * Class that defines WeightedRandomPolicy.
  *
  */
-public class WeightedRandomPolicy implements Policy {
+public class WeightedRandomPolicy implements Policy, Serializable {
+
+    private static final long serialVersionUID = -5927264161768816361L;
 
     /**
      * Random function.

@@ -10,8 +10,8 @@ import core.NeuralNetworkException;
 import core.reinforcement.RLSample;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
-import utils.Sample;
 import utils.matrix.DMatrix;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -25,16 +25,10 @@ import java.util.TreeMap;
 public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy implements UpdateablePolicy {
 
     /**
-     * Current estimator version.
-     *
-     */
-    protected int estimatorVersion;
-
-    /**
      * Current value error;
      *
      */
-    private double valueError;
+    private transient double valueError;
 
     /**
      * Constructor for AbstractUpdateablePolicy.
@@ -57,14 +51,14 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
      */
     public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
         preProcess();
-        LinkedHashMap<Integer, Sample> states = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Sample> policyGradients = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> policyGradients = new LinkedHashMap<>();
         for (Integer sampleIndex : samples.descendingKeySet()) {
             RLSample sample = samples.get(sampleIndex);
-            states.put(sampleIndex, new Sample(sample.state.stateMatrix));
+            states.put(sampleIndex, new MMatrix(sample.state.stateMatrix));
             Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1);
             policyGradient.setValue(sample.state.action, 0, -getPolicyGradientValue(sample, hasImportanceSamplingWeights));
-            policyGradients.put(sampleIndex, new Sample(policyGradient));
+            policyGradients.put(sampleIndex, new MMatrix(policyGradient));
         }
         postProcess();
         getFunctionEstimator().train(states, policyGradients);
@@ -93,15 +87,6 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected abstract void postProcess() throws MatrixException;
-
-    /**
-     * Sets current estimator version.
-     *
-     * @param estimatorVersion current estimator version.
-     */
-    public void setEstimatorVersion(int estimatorVersion) {
-        this.estimatorVersion = estimatorVersion;
-    }
 
     /**
      * Sets current value error.

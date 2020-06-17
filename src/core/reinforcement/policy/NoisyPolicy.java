@@ -10,6 +10,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -18,7 +19,9 @@ import java.util.Random;
  * Class that defines NoisyPolicy.
  *
  */
-public class NoisyPolicy implements Policy {
+public class NoisyPolicy implements Policy, Serializable {
+
+    private static final long serialVersionUID = -707388742951717671L;
 
     /**
      * Random function for NoisyPolicy.

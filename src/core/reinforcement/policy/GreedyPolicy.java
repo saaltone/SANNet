@@ -8,13 +8,16 @@ package core.reinforcement.policy;
 
 import utils.matrix.Matrix;
 
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
  * Class that defines GreedyPolicy.
  *
  */
-public class GreedyPolicy implements Policy {
+public class GreedyPolicy implements Policy, Serializable {
+
+    private static final long serialVersionUID = -3525756196547691753L;
 
     /**
      * Constructor for GreedyPolicy.
@@ -28,7 +31,8 @@ public class GreedyPolicy implements Policy {
      *
      * @param episodeCount current episode count.
      */
-    public void setEpisode(int episodeCount) {}
+    public void setEpisode(int episodeCount) {
+    }
 
     /**
      * Takes greedy action.

@@ -22,8 +22,9 @@ public interface ActionablePolicy {
      * Starts policy FunctionEstimator.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    void start() throws NeuralNetworkException;
+    void start() throws NeuralNetworkException, MatrixException;
 
     /**
      * Stops policy FunctionEstimator.

@@ -31,13 +31,6 @@ public interface UpdateablePolicy extends ActionablePolicy {
     void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Sets current estimator version.
-     *
-     * @param estimatorVersion current estimator version.
-     */
-    void setEstimatorVersion(int estimatorVersion);
-
-    /**
      * Sets current value error.
      *
      * @param valueError current value error.

@@ -33,7 +33,7 @@ public class ActionableBasicPolicy implements ActionablePolicy, Serializable {
      * Current policy values estimated by function estimator.
      *
      */
-    protected Matrix currentPolicyValues;
+    protected transient Matrix currentPolicyValues;
 
     /**
      * Reference to FunctionEstimator.
@@ -62,8 +62,9 @@ public class ActionableBasicPolicy implements ActionablePolicy, Serializable {
      * Starts policy FunctionEstimator.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
+    public void start() throws NeuralNetworkException, MatrixException {
         functionEstimator.start();
     }
 
