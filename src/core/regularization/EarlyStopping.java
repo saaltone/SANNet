@@ -73,12 +73,6 @@ public class EarlyStopping implements Serializable {
     private transient Metrics validationError;
 
     /**
-     * Stores current neural network training iteration.
-     *
-     */
-    private transient int iteration = 0;
-
-    /**
      * Flag if training stop condition has been achieved.
      *
      */
@@ -179,8 +173,6 @@ public class EarlyStopping implements Serializable {
      * @param iteration current neural network training iteration.
      */
     public void evaluateTrainingCondition(int iteration) {
-        this.iteration = iteration;
-
         if (!trainingStopCondition && iteration >= trainingAverageSize) {
             double lastAverage = trainingError.getAverage(trainingAverageSize);
             if (previousTrainingAverage <= lastAverage && previousTrainingAverage != Double.MIN_VALUE) trainingStopCount++;
@@ -190,7 +182,6 @@ public class EarlyStopping implements Serializable {
             }
             if (trainingStopCount >= trainingStopThreshold) trainingStopCondition = true;
         }
-
     }
 
     /**
@@ -202,8 +193,6 @@ public class EarlyStopping implements Serializable {
      * @param iteration current neural network training iteration.
      */
     public void evaluateValidationCondition(int iteration) {
-        this.iteration = iteration;
-
         if (!validationStopCondition && iteration >= validationAverageSize) {
             double lastAverage = validationError.getAverage(validationAverageSize);
             if (previousValidationAverage <= lastAverage && previousValidationAverage != Double.MIN_VALUE) validationStopCount++;
@@ -213,7 +202,6 @@ public class EarlyStopping implements Serializable {
             }
             if (validationStopCount >= validationStopThreshold) validationStopCondition = true;
         }
-
     }
 
     /**
@@ -224,6 +212,15 @@ public class EarlyStopping implements Serializable {
      */
     public boolean stopTraining() {
         return trainingStopCondition && validationStopCondition;
+    }
+
+    /**
+     * Returns name of regularization.
+     *
+     * @return name of regularization.
+     */
+    public String getName() {
+        return "Early Stopping";
     }
 
 }
