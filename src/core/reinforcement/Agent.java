@@ -20,8 +20,9 @@ public interface Agent {
      * Starts agent.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    void start() throws NeuralNetworkException;
+    void start() throws NeuralNetworkException, MatrixException;
 
     /**
      * Stops agent.
@@ -34,13 +35,6 @@ public interface Agent {
      *
      */
     void newEpisode();
-
-    /**
-     * Starts new episode.
-     *
-     * @param resetSequence if true resets sequence by putting previous sample to null.
-     */
-    void newEpisode(boolean resetSequence);
 
     /**
      * Begins new episode step for agent.
