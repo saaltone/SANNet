@@ -45,7 +45,7 @@ public class OnlineBuffer implements Buffer, Serializable {
      * Queue for samples.
      *
      */
-    private final ArrayDeque<RLSample> samples = new ArrayDeque<>();
+    private ArrayDeque<RLSample> samples = new ArrayDeque<>();
 
     /**
      * Default constructor for OnlineBuffer.
@@ -130,7 +130,7 @@ public class OnlineBuffer implements Buffer, Serializable {
      *
      */
     public void clear() {
-        samples.clear();
+        samples = new ArrayDeque<>();
     }
 
     /**
