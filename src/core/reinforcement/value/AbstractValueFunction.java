@@ -29,7 +29,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * Current episode count.
      *
      */
-    protected int episodeCount;
+    protected transient int episodeCount;
 
     /**
      * Number of actions for value function.
@@ -48,12 +48,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      *
      */
     private boolean useBaseline = false;
-
-    /**
-     * Current estimator version.
-     *
-     */
-    protected int estimatorVersion;
 
     /**
      * Constructor for AbstractValueFunction.
@@ -196,15 +190,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      */
     public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
         for (Integer sampleIndex : samples.descendingKeySet()) updateTDTarget(samples.get(sampleIndex));
-    }
-
-    /**
-     * Sets current estimator version.
-     *
-     * @param estimatorVersion current estimator version.
-     */
-    public void setEstimatorVersion(int estimatorVersion) {
-        this.estimatorVersion = estimatorVersion;
     }
 
 }

@@ -11,7 +11,7 @@ import core.reinforcement.RLSample;
 import core.reinforcement.State;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
-import utils.Sample;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -56,8 +56,9 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * Starts FunctionEstimator
      *
      * @throws NeuralNetworkException throws exception if starting of value FunctionEstimator fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
+    public void start() throws NeuralNetworkException, MatrixException {
         functionEstimator.start();
     }
 
@@ -101,14 +102,14 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      */
     public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
         super.updateFunctionEstimator(samples, hasImportanceSamplingWeights);
-        LinkedHashMap<Integer, Sample> states = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Sample> stateValues = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> stateValues = new LinkedHashMap<>();
         TreeMap<Integer, Double> importanceSamplingWeights = hasImportanceSamplingWeights ? new TreeMap<>() : null;
         int sampleIndex = 0;
         for (RLSample sample : samples.values()) {
-            states.put(sampleIndex, new Sample(sample.state.stateMatrix));
+            states.put(sampleIndex, new MMatrix(sample.state.stateMatrix));
             sample.setValue(getAction(sample.state), sample.tdTarget - sample.baseline);
-            stateValues.put(sampleIndex, new Sample(sample.stateValues));
+            stateValues.put(sampleIndex, new MMatrix(sample.stateValues));
             if (importanceSamplingWeights != null) importanceSamplingWeights.put(sampleIndex, sample.importanceSamplingWeight);
             sampleIndex++;
         }
@@ -158,9 +159,10 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     /**
      * Returns current value error.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return current value error.
      */
-    public double getValueError() {
+    public double getValueError() throws MatrixException {
         return functionEstimator.getError();
     }
 

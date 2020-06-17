@@ -25,8 +25,9 @@ public interface ValueFunction {
      * Starts FunctionEstimator
      *
      * @throws NeuralNetworkException throws exception if starting of value function fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    void start() throws NeuralNetworkException;
+    void start() throws NeuralNetworkException, MatrixException;
 
     /**
      * Stops FunctionEstimator
@@ -97,17 +98,11 @@ public interface ValueFunction {
     void updateTargetFunctionEstimator() throws MatrixException;
 
     /**
-     * Sets current estimator version.
-     *
-     * @param estimatorVersion current estimator version.
-     */
-    void setEstimatorVersion(int estimatorVersion);
-
-    /**
      * Returns current value error.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return current value error.
      */
-    double getValueError();
+    double getValueError() throws MatrixException;
 
 }

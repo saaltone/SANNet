@@ -69,6 +69,7 @@ public class ValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("bootstrap")) bootstrap = params.getValueAsBoolean("bootstrap");
     }
 

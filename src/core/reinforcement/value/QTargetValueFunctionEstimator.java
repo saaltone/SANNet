@@ -82,6 +82,7 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("updateCycle")) updateCycle = params.getValueAsInteger("updateCycle");
     }
 
@@ -89,8 +90,9 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * Starts FunctionEstimator
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
+    public void start() throws NeuralNetworkException, MatrixException {
         super.start();
         targetValueFunctionEstimator.start();
     }
