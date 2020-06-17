@@ -26,6 +26,12 @@ public class AMSGrad implements Optimizer, Serializable {
     private static final long serialVersionUID = 2147864386790210492L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for AMSGrad. Default value 0.001.
      *
      */
@@ -58,17 +64,21 @@ public class AMSGrad implements Optimizer, Serializable {
     /**
      * Default constructor for AMSGrad.
      *
+     * @param optimizationType optimizationType.
      */
-    public AMSGrad() {
+    public AMSGrad(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for AMSGrad.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for AMSGrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AMSGrad(String params) throws DynamicParamException {
+    public AMSGrad(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -114,49 +124,58 @@ public class AMSGrad implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         if (m == null) m = new HashMap<>();
         if (v == null) v = new HashMap<>();
 
         Matrix mM;
-        if (m.containsKey(M)) mM = m.get(M);
-        else m.put(M, mM = new DMatrix(M.getRows(), M.getCols()));
+        if (m.containsKey(matrix)) mM = m.get(matrix);
+        else m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         Matrix vM;
-        if (v.containsKey(M)) vM = v.get(M);
-        else v.put(M, vM = new DMatrix(M.getRows(), M.getCols()));
+        if (v.containsKey(matrix)) vM = v.get(matrix);
+        else v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // mt = β1*mt − 1 + (1 − β1)*gt
-        mM.multiply(beta1).add(dM.multiply(1 - beta1), mM);
+        mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);
 
         // vt = β2*vt − 1 + (1 − β2)*g2t
-        Matrix vM_temp = vM.multiply(beta2).add(dM.power(2).multiply(1 - beta2));
+        Matrix vM_temp = vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
 
         // vt = max(vt, vt-1)
-        vM_temp.max(v.get(M), vM);
+        vM_temp.max(v.get(matrix), vM);
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
-        M.subtract(vM.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(mM).multiply(learningRate), M);
+        matrix.subtract(mM.divide(vM.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
