@@ -26,6 +26,12 @@ public class Adagrad implements Optimizer, Serializable {
     private static final long serialVersionUID = -8831643329108200212L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for Adagrad. Default value 0.01.
      *
      */
@@ -40,17 +46,21 @@ public class Adagrad implements Optimizer, Serializable {
     /**
      * Default constructor for Adagrad.
      *
+     * @param optimizationType optimizationType.
      */
-    public Adagrad() {
+    public Adagrad(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for Adagrad.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for Adagrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adagrad(String params) throws DynamicParamException {
+    public Adagrad(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -89,36 +99,45 @@ public class Adagrad implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         if (m2Sum == null) m2Sum = new HashMap<>();
 
         Matrix dM2Sum;
-        if (m2Sum.containsKey(M)) dM2Sum = m2Sum.get(M);
-        else m2Sum.put(M, dM2Sum = new DMatrix(M.getRows(), M.getCols()));
+        if (m2Sum.containsKey(matrix)) dM2Sum = m2Sum.get(matrix);
+        else m2Sum.put(matrix, dM2Sum = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        dM2Sum.add(dM.multiply(dM), dM2Sum);
+        dM2Sum.add(matrixGradient.multiply(matrixGradient), dM2Sum);
 
         double epsilon = 10E-8;
-        M.subtract(dM.multiply(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT).apply(UnaryFunctionType.MULINV).multiply(learningRate)), M);
+        matrix.subtract(matrixGradient.divide(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
