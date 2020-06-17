@@ -25,7 +25,7 @@ public class SMask extends Mask {
      * Defines number of columns in mask.
      *
      */
-    private final int cols;
+    private final int columns;
 
     /**
      * Hash map to store mask information.
@@ -43,7 +43,7 @@ public class SMask extends Mask {
      * Hash map to store column mask information.
      *
      */
-    private HashMap<Integer, Boolean> colMask = new HashMap<>();
+    private HashMap<Integer, Boolean> columnMask = new HashMap<>();
 
     /**
      * Stack to store masks.
@@ -60,68 +60,38 @@ public class SMask extends Mask {
      * Stack to store column masks.
      *
      */
-    private Stack<HashMap<Integer, Boolean>> colMaskStack = new Stack<>();
+    private Stack<HashMap<Integer, Boolean>> columnMaskStack = new Stack<>();
 
     /**
      * Constructor for sparse mask.
      *
      * @param rows defines number of rows in mask.
-     * @param cols defines number of columns in mask.
+     * @param columns defines number of columns in mask.
      */
-    public SMask(int rows, int cols) {
+    public SMask(int rows, int columns) {
         this.rows = rows;
-        this.cols = cols;
+        this.columns = columns;
     }
 
     /**
      * Constructor for sparse mask.
      *
      * @param rows defines number of rows in mask.
-     * @param cols defines number of columns in mask.
-     * @param data mask data.
-     */
-    public SMask(int rows, int cols, HashMap<Integer, Boolean> data) {
-        this.rows = rows;
-        this.cols = cols;
-        mask.putAll(data);
-    }
-
-    /**
-     * Constructor for sparse mask.
-     *
-     * @param rows defines number of rows in mask.
-     * @param cols defines number of columns in mask.
+     * @param columns defines number of columns in mask.
      * @param data mask data.
      * @param rowData row mask data.
-     * @param colData column mask data.
+     * @param columnData column mask data.
+     * @param transposed if true mask if transposed otherwise false.
+     * @param probability probability of masking.
      */
-    public SMask(int rows, int cols, HashMap<Integer, Boolean> data, HashMap<Integer, Boolean> rowData, HashMap<Integer, Boolean> colData) {
+    protected SMask(int rows, int columns, HashMap<Integer, Boolean> data, HashMap<Integer, Boolean> rowData, HashMap<Integer, Boolean> columnData, boolean transposed, double probability) {
         this.rows = rows;
-        this.cols = cols;
+        this.columns = columns;
         mask.putAll(data);
         rowMask.putAll(rowData);
-        colMask.putAll(colData);
-    }
-
-    /**
-     * Constructor for sparse mask.
-     *
-     * @param rows defines number of rows in mask.
-     * @param cols defines number of columns in mask.
-     * @param data mask data.
-     * @param rowData row mask data.
-     * @param colData column mask data.
-     * @param t if true mask if transposed otherwise false.
-     * @param proba probability of masking.
-     */
-    public SMask(int rows, int cols, HashMap<Integer, Boolean> data, HashMap<Integer, Boolean> rowData, HashMap<Integer, Boolean> colData, boolean t, double proba) {
-        this.rows = rows;
-        this.cols = cols;
-        mask.putAll(data);
-        rowMask.putAll(rowData);
-        colMask.putAll(colData);
-        this.t = t;
-        this.proba = proba;
+        columnMask.putAll(columnData);
+        this.isTransposed = transposed;
+        this.probability = probability;
     }
 
     /**
@@ -130,7 +100,7 @@ public class SMask extends Mask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new SMask(rows, cols, mask, rowMask, colMask, t, proba);
+        return new SMask(rows, columns, mask, rowMask, columnMask, isTransposed, probability);
     }
 
     /**
@@ -138,8 +108,8 @@ public class SMask extends Mask {
      *
      * @return size of mask.
      */
-    public int getSize() {
-        return rows * cols;
+    public int size() {
+        return rows * columns;
     }
 
     /**
@@ -148,7 +118,7 @@ public class SMask extends Mask {
      * @return number of rows in mask.
      */
     public int getRows() {
-        return !t ? rows : cols;
+        return !isTransposed ? rows : columns;
     }
 
     /**
@@ -156,35 +126,35 @@ public class SMask extends Mask {
      *
      * @return number of columns in mask.
      */
-    public int getCols() {
-        return !t ? cols : rows;
+    public int getColumns() {
+        return !isTransposed ? columns : rows;
     }
 
     /**
      * Internal function used to set masking of specific row and column.
      *
      * @param row row of value to be set.
-     * @param col column of value to be set.
+     * @param column column of value to be set.
      * @param value defines if specific row and column is masked (true) or not (false).
      */
-    public void setMask(int row, int col, boolean value) {
-        int curRow = !t ? row : col;
-        int curCol = !t ? col : row;
-        mask.put(curRow * cols + curCol, value);
+    public void setMask(int row, int column, boolean value) {
+        int currentRow = !isTransposed ? row : column;
+        int currentColumn = !isTransposed ? column : row;
+        mask.put(currentRow * columns + currentColumn, value);
     }
 
     /**
      * Internal function used to get masking of specific row and column.
      *
      * @param row row of value to be returned.
-     * @param col column of value to be returned.
+     * @param column column of value to be returned.
      * @return if specific row and column if masked (true) or not (false).
      */
-    public boolean getMask(int row, int col) {
+    public boolean getMask(int row, int column) {
         if (mask == null) return false;
-        int curRow = !t ? row : col;
-        int curCol = !t ? col : row;
-        return mask.getOrDefault(curRow * cols + curCol, false);
+        int currentRow = !isTransposed ? row : column;
+        int currentColumn = !isTransposed ? column : row;
+        return mask.getOrDefault(currentRow * columns + currentColumn, false);
     }
 
     /**
@@ -194,10 +164,10 @@ public class SMask extends Mask {
     public void clear() {
         mask = new HashMap<>();
         rowMask = new HashMap<>();
-        colMask = new HashMap<>();
+        columnMask = new HashMap<>();
         maskStack = new Stack<>();
         rowMaskStack = new Stack<>();
-        colMaskStack = new Stack<>();
+        columnMaskStack = new Stack<>();
     }
 
     /**
@@ -283,8 +253,8 @@ public class SMask extends Mask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setRowMask(int row, boolean value) {
-        if (!t) rowMask.put(row, value);
-        else colMask.put(row, value);
+        if (!isTransposed) rowMask.put(row, value);
+        else columnMask.put(row, value);
     }
 
     /**
@@ -295,29 +265,29 @@ public class SMask extends Mask {
      */
     public boolean getRowMask(int row) {
         if (mask == null) return false;
-        return !t ? rowMask.getOrDefault(row, false) : colMask.getOrDefault(row, false);
+        return !isTransposed ? rowMask.getOrDefault(row, false) : columnMask.getOrDefault(row, false);
     }
 
     /**
      * Sets mask value for column mask.
      *
-     * @param col column of mask to be set.
+     * @param column column of mask to be set.
      * @param value if true sets row mask otherwise unsets mask.
      */
-    public void setColMask(int col, boolean value) {
-        if (!t) colMask.put(col, value);
-        else rowMask.put(col, value);
+    public void setColumnMask(int column, boolean value) {
+        if (!isTransposed) columnMask.put(column, value);
+        else rowMask.put(column, value);
     }
 
     /**
      * Returns mask value for column mask.
      *
-     * @param col column of mask to be returned.
+     * @param column column of mask to be returned.
      * @return true if row mask is set otherwise false.
      */
-    public boolean getColMask(int col) {
+    public boolean getColumnMask(int column) {
         if (mask == null) return false;
-        return !t ? colMask.getOrDefault(col, false) : rowMask.getOrDefault(col, false);
+        return !isTransposed ? columnMask.getOrDefault(column, false) : rowMask.getOrDefault(column, false);
     }
 
     /**
@@ -326,9 +296,9 @@ public class SMask extends Mask {
      *
      * @param reset if true new mask is generated after current mask is stacked.
      */
-    public void stackColMask(boolean reset) {
-        colMaskStack.push(colMask);
-        if (reset) colMask = new HashMap<>();
+    public void stackColumnMask(boolean reset) {
+        columnMaskStack.push(columnMask);
+        if (reset) columnMask = new HashMap<>();
     }
 
     /**
@@ -336,9 +306,9 @@ public class SMask extends Mask {
      *
      * @throws MatrixException throws exception if column mask stack is empty.
      */
-    public void unstackColMask() throws MatrixException {
-        if (colMaskStack.isEmpty()) throw new MatrixException("Column mask stack is empty.");
-        colMask = colMaskStack.pop();
+    public void unstackColumnMask() throws MatrixException {
+        if (columnMaskStack.isEmpty()) throw new MatrixException("Column mask stack is empty.");
+        columnMask = columnMaskStack.pop();
     }
 
     /**
@@ -346,16 +316,16 @@ public class SMask extends Mask {
      *
      * @return size of column mask stack.
      */
-    public int colMaskStackSize() {
-        return colMaskStack.size();
+    public int columnMaskStackSize() {
+        return columnMaskStack.size();
     }
 
     /**
      * Clears column mask stack.
      *
      */
-    public void clearColMaskStack() {
-        colMaskStack = new Stack<>();
+    public void clearColumnMaskStack() {
+        columnMaskStack = new Stack<>();
     }
 
 }
