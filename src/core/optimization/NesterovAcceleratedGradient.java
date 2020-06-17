@@ -26,6 +26,12 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
     private static final long serialVersionUID = -783588127072068825L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for Nesterov Accelerated Gradient. Default value 0.001.
      *
      */
@@ -52,17 +58,21 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
     /**
      * Default constructor for Nesterov Accelerated Gradient.
      *
+     * @param optimizationType optimizationType.
      */
-    public NesterovAcceleratedGradient() {
+    public NesterovAcceleratedGradient(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for Nesterov Accelerated Gradient.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for Nesterov Accelerated Gradient.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NesterovAcceleratedGradient(String params) throws DynamicParamException {
+    public NesterovAcceleratedGradient(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -105,44 +115,53 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         if (dPrev == null) dPrev = new HashMap<>();
         if (vPrev == null) vPrev = new HashMap<>();
         Matrix dMPrev;
-        if (dPrev.containsKey(M)) dMPrev = dPrev.get(M);
-        else dPrev.put(M, dMPrev = new DMatrix(M.getRows(), M.getCols()));
+        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
+        else dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         Matrix vMPrev;
-        if (vPrev.containsKey(M)) vMPrev = dPrev.get(M);
-        else vPrev.put(M, vMPrev = new DMatrix(M.getRows(), M.getCols()));
+        if (vPrev.containsKey(matrix)) vMPrev = dPrev.get(matrix);
+        else vPrev.put(matrix, vMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // vt=μvt−1−ϵ∇f(θt−1+μvt−1)
         Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));
 
-        M.add(vM, M);
+        matrix.add(vM, matrix);
 
-        vPrev.put(M, vM);
-        dPrev.put(M, dM);
+        vPrev.put(matrix, vM);
+        dPrev.put(matrix, matrixGradient);
 
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
