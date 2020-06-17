@@ -247,6 +247,8 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousCellState.setName("PrevCellState");
+
         // i = sigmoid(Wi * x + Ui * c(t-1) + bi) → Input gate
         Matrix i = Wi.dot(input).add(Ui.dot(previousCellState)).add(bi);
         i = i.apply(sigmoid);

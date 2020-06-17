@@ -201,6 +201,8 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousOutput.setName("PrevOutput");
+
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
         Matrix f = Wf.dot(input).add(Uf.dot(previousOutput)).add(bf);
         f = f.apply(sigmoid);

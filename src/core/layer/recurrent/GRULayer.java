@@ -226,6 +226,8 @@ public class GRULayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousOutput.setName("PrevOutput");
+
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
         Matrix z = Wz.dot(input).add(Uz.dot(previousOutput)).add(bz);
         z = z.apply(sigmoid);

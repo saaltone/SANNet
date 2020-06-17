@@ -300,6 +300,9 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousOutput.setName("PrevOutput");
+        previousCellState.setName("PrevCellState");
+
         // i = sigmoid(Wi * x + Ui * out(t-1) + Ci * c(t-1) + bi) → Input gate
         Matrix i = Wi.dot(input).add(Ui.dot(previousOutput)).add(Ci.multiply(previousCellState)).add(bi);
         i = i.apply(sigmoid);

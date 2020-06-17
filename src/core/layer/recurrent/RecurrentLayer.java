@@ -163,6 +163,8 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousOutput.setName("PrevOutput");
+
         Matrix output = weight.dot(input).add(bias).add(recurrentWeight.dot(previousOutput));
 
         output = output.apply(activationFunction);

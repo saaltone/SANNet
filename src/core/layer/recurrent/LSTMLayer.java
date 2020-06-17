@@ -264,6 +264,9 @@ public class LSTMLayer extends AbstractRecurrentLayer {
         input.setNormalize(true);
         input.setRegularize(true);
 
+        previousOutput.setName("PrevOutput");
+        previousCellState.setName("PrevCellState");
+
         // i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate
         Matrix i = Wi.dot(input).add(Ui.dot(previousOutput)).add(bi);
         i = i.apply(sigmoid);
