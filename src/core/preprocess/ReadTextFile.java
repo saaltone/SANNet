@@ -6,7 +6,7 @@
 
 package core.preprocess;
 
-import utils.Sample;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.SMatrix;
 
@@ -29,14 +29,14 @@ public class ReadTextFile {
      * Returns input matrix with hash map index 0 and output matrix with hash map index 1.<br>
      *
      * @param fileName name of file to be read.
-     * @param numOfCharsIn number of characters per input column.
-     * @param numOfCharsOut number of characters per output column.
-     * @param deltaInOut delta in number of characters between start of input and output.
+     * @param numberOfInputCharacters number of characters per input column.
+     * @param numberOfOutputCharacters number of characters per output column.
+     * @param inputOutputDelta delta in number of characters between start of input and output.
      * @param skipRowsFromStart skips specified number of rows from start.
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, Sample>> readFile(String fileName, int numOfCharsIn, int numOfCharsOut, int deltaInOut, int skipRowsFromStart) throws FileNotFoundException {
+    public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
         File file = new File(fileName);
 
         Scanner scanner = new Scanner(file);
@@ -55,46 +55,46 @@ public class ReadTextFile {
         }
         text = new StringBuilder(text.toString().toLowerCase());
 
-        int length = Math.min(text.length() - numOfCharsIn, text.length() - numOfCharsOut - deltaInOut) + 1;
+        int length = Math.min(text.length() - numberOfInputCharacters, text.length() - numberOfOutputCharacters - inputOutputDelta) + 1;
         for (int pos = 0; pos < length; pos++) {
-            LinkedHashMap<Integer, Integer> inVals = new LinkedHashMap<>();
-            for (int inCount = 0; inCount < numOfCharsIn; inCount++) {
+            LinkedHashMap<Integer, Integer> inValues = new LinkedHashMap<>();
+            for (int inCount = 0; inCount < numberOfInputCharacters; inCount++) {
                 int charAt = charToInt(text.charAt(pos + inCount));
-                inVals.put(inCount, charAt);
+                inValues.put(inCount, charAt);
             }
-            inputData.put(pos, inVals);
+            inputData.put(pos, inValues);
 
-            LinkedHashMap<Integer, Integer> outVals = new LinkedHashMap<>();
-            for (int outCount = 0; outCount < numOfCharsOut; outCount++) {
-                int charAt = charToInt(text.charAt(pos + outCount + deltaInOut));
-                outVals.put(outCount, charAt);
+            LinkedHashMap<Integer, Integer> outValues = new LinkedHashMap<>();
+            for (int outCount = 0; outCount < numberOfOutputCharacters; outCount++) {
+                int charAt = charToInt(text.charAt(pos + outCount + inputOutputDelta));
+                outValues.put(outCount, charAt);
             }
-            outputData.put(pos, outVals);
+            outputData.put(pos, outValues);
         }
-        LinkedHashMap<Integer, Sample> inputs = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Sample> outputs = new LinkedHashMap<>();
-        HashMap<Integer, LinkedHashMap<Integer, Sample>> result = new HashMap<>();
+        LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
+        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
         int charSize = charSize();
         for (Integer pos : inputData.keySet()) {
-            Matrix input = new SMatrix(numOfCharsIn * charSize, 1);
+            Matrix input = new SMatrix(numberOfInputCharacters * charSize, 1);
             for (Integer index : inputData.get(pos).keySet()) {
                 int charAt = inputData.get(pos).get(index);
                 input.setValue(charAt + index * charSize, 0, 1);
             }
-            inputs.put(pos, new Sample(input));
+            inputs.put(pos, new MMatrix(input));
         }
 
         for (Integer pos : inputData.keySet()) {
-            Matrix output = new SMatrix(numOfCharsOut * charSize, 1);
+            Matrix output = new SMatrix(numberOfOutputCharacters * charSize, 1);
             for (Integer index : outputData.get(pos).keySet()) {
                 int charAt = outputData.get(pos).get(index);
                 int col = charAt + index * charSize;
                 output.setValue(col, 0,1);
             }
-            outputs.put(pos, new Sample(output));
+            outputs.put(pos, new MMatrix(output));
         }
 
         return result;
@@ -126,7 +126,7 @@ public class ReadTextFile {
      * @param intAt integer to be mapped.
      * @return mapped character value.
      */
-    public static int intTochar(int intAt) {
+    public static int intToChar(int intAt) {
         int mappedChar = 32;
         if (intAt >= 1 && intAt <= 10) mappedChar = intAt + 47;
         if (intAt >= 11 && intAt <= 36) mappedChar = intAt + 86;
