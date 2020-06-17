@@ -9,6 +9,7 @@ package core.regularization;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -27,6 +28,12 @@ public class GradientClipping implements Regularization, Serializable {
     private static final long serialVersionUID = -2462517110247269075L;
 
     /**
+     * Type of regularization.
+     *
+     */
+    private final RegularizationType regularizationType;
+
+    /**
      * Threshold for gradient clipping.
      *
      */
@@ -35,17 +42,21 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Constructor for gradient clipping class.
      *
+     * @param regularizationType regularizationType.
      */
-    public GradientClipping() {
+    public GradientClipping(RegularizationType regularizationType) {
+        this.regularizationType = regularizationType;
     }
 
     /**
      * Constructor for gradient clipping class.
      *
+     * @param regularizationType regularizationType.
      * @param params parameters for gradient clipping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientClipping(String params) throws DynamicParamException {
+    public GradientClipping(RegularizationType regularizationType, String params) throws DynamicParamException {
+        this(regularizationType);
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -76,12 +87,6 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Not used.
      *
-     */
-    public void reset() {}
-
-    /**
-     * Not used.
-     *
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
@@ -90,34 +95,24 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Not used.
      *
-     * @param miniBatchSize current mini batch size.
-     */
-    public void setMiniBatchSize(int miniBatchSize) {
-    }
-
-    /**
-     * Not used.
-     *
      * @param sequence input sequence.
      */
-    public void forward(Sequence sequence) {
-
-    }
+    public void forward(Sequence sequence) {}
 
     /**
      * Not used.
      *
-     * @param W weight matrix.
+     * @param inputs inputs.
      */
-    public void forward(Matrix W) {}
+    public void forward(MMatrix inputs) {}
 
     /**
      * Not used.
      *
-     * @param W weight matrix.
+     * @param weight weight matrix.
      * @return not used.
      */
-    public double error(Matrix W) {
+    public double error(Matrix weight) {
         return 0;
     }
 
@@ -127,9 +122,18 @@ public class GradientClipping implements Regularization, Serializable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backward(Matrix W, Matrix dWSum) throws MatrixException {
-        double dWSum_l2norm = Math.sqrt(dWSum.norm(2));
-        if (dWSum_l2norm > threshold) dWSum.multiply(threshold / dWSum_l2norm, dWSum);
+    public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
+        double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
+        if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
+    }
+
+    /**
+     * Returns name of regularization.
+     *
+     * @return name of regularization.
+     */
+    public String getName() {
+        return regularizationType.toString();
     }
 
 }
