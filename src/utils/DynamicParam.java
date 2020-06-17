@@ -251,7 +251,7 @@ public class DynamicParam implements Serializable {
     /**
      * Constructor to build dynamic parameter list.
      *
-     * @param params parameter name value pairs separater by comma.
+     * @param params parameter name value pairs separated by comma.
      * @param nameTypes name type pairs of parameters as hashmap.
      * @throws DynamicParamException throws exception if parameters are not provided or parameter is properly defined.
      */
