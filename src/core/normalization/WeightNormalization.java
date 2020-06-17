@@ -8,13 +8,14 @@ package core.normalization;
 
 import core.optimization.Optimizer;
 import utils.*;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
+import utils.matrix.*;
+import utils.procedure.ForwardProcedure;
 import utils.procedure.Node;
+import utils.procedure.Procedure;
+import utils.procedure.ProcedureFactory;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Class that implements Weight Normalization for neural network layer.<br>
@@ -22,39 +23,21 @@ import java.util.HashSet;
  * Reference: https://arxiv.org/pdf/1602.07868.pdf<br>
  *
  */
-public class WeightNormalization implements Normalization, Serializable {
+public class WeightNormalization implements Normalization, ForwardProcedure, Serializable {
 
     private static final long serialVersionUID = 1741544680542755148L;
 
     /**
-     * If true neural network is in state otherwise false.
+     * Type of normalization.
      *
      */
-    private transient boolean isTraining;
-
-    /**
-     * Normalizable parameters.
-     *
-     */
-    private HashSet<Matrix> norm;
+    private final NormalizationType normalizationType;
 
     /**
      * Tree map for un-normalized weights.
      *
      */
-    private final HashMap<Matrix, Matrix> Ws = new HashMap<>();
-
-    /**
-     * Tree map for storing Weight normalizing factors (1 / sqrt(2-norm W))
-     *
-     */
-    private final HashMap<Matrix, Double> iNorms = new HashMap<>();
-
-    /**
-     * Tree map for storing Identity matrices for backward calculation.
-     *
-     */
-    private final HashMap<Matrix, Matrix> Is = new HashMap<>();
+    private transient HashMap<Matrix, Matrix> weights = new HashMap<>();
 
     /**
      * Weight normalization scalar.
@@ -63,20 +46,44 @@ public class WeightNormalization implements Normalization, Serializable {
     private double g = 1;
 
     /**
-     * Constructor for Weight normalization class.
+     * Matrix for g value.
      *
      */
-    public WeightNormalization() {
+    private Matrix gMatrix;
+
+    /**
+     * Input matrix for procedure construction.
+     *
+     */
+    private Matrix input;
+
+    /**
+     * Procedures for weight normalization.
+     *
+     */
+    private transient HashMap<Matrix, Procedure> procedures = new HashMap<>();
+
+    /**
+     * Constructor for Weight normalization class.
+     *
+     * @param normalizationType normalizationType.
+     */
+    public WeightNormalization(NormalizationType normalizationType) {
+        this.normalizationType = normalizationType;
+        gMatrix = new DMatrix(g, "g");
     }
 
     /**
      * Constructor for Weight normalization class.
      *
+     * @param normalizationType normalizationType.
      * @param params parameters for Weight normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WeightNormalization(String params) throws DynamicParamException {
+    public WeightNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
+        this(normalizationType);
         this.setParams(new DynamicParam(params, getParamDefs()));
+        gMatrix = new DMatrix(g);
     }
 
     /**
@@ -104,12 +111,35 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
+     * Returns input matrices for procedure construction.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     * @return input matrix for procedure construction.
+     */
+    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+        return new MMatrix(input);
+    }
+
+    /**
+     * Builds forward procedure and implicitly builds backward procedure.
+     *
+     * @return output of forward procedure.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public MMatrix getForwardProcedure() throws MatrixException {
+        MMatrix outputs = new MMatrix(1, "Output");
+        Matrix output = input.multiply(gMatrix).divide(input.normAsMatrix(2));
+        output.setName("Output");
+        outputs.put(0, output);
+        return outputs;
+    }
+
+    /**
      * Resets Weight normalizer.
      *
      */
     public void reset() {
-        Ws.clear();
-        iNorms.clear();
+        weights = new HashMap<>();
     }
 
     /**
@@ -118,7 +148,6 @@ public class WeightNormalization implements Normalization, Serializable {
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
     }
 
     /**
@@ -130,54 +159,70 @@ public class WeightNormalization implements Normalization, Serializable {
     }
 
     /**
-     * Defined which parameters are to be normalized.
+     * Initializes normalization.
      *
-     * @param norm normalizable parameters.
+     * @param node node for normalization.
      */
-    public void setNormalizableParameters(HashSet<Matrix> norm) {
-        this.norm = norm;
+    public void initialize(Node node) {
+    }
+
+    /**
+     * Initializes normalization.
+     *
+     * @param weight weight for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void initialize(Matrix weight) throws MatrixException {
+        initializeProcedure(weight);
+    }
+
+    /**
+     * Initializes weight normalization procedure.
+     *
+     * @param weight weight matrix for initialization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private void initializeProcedure(Matrix weight) throws MatrixException {
+        if (procedures == null) procedures = new HashMap<>();
+        if (!procedures.containsKey(weight)) {
+            input = weight;
+            procedures.put(weight, new ProcedureFactory().getProcedure(this, null));
+        }
     }
 
     /**
      * Normalizes each weight for forward step i.e. multiplies each weight matrix by g / sqrt(2-norm of weights).
      *
-     * @param W weight for normalization.
+     * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forward(Matrix W) throws MatrixException {
-        if (!norm.contains(W)) return;
-        Ws.put(W, W.copy());
-        double iNorm = 1 / Math.sqrt(W.norm(2));
-        iNorms.put(W, iNorm);
-        W.multiply(g * iNorm, W);
+    public void forward(Matrix weight) throws MatrixException {
+        weights.put(weight, weight.copy());
+        procedures.get(weight).reset();
+        weight.setEqualTo(procedures.get(weight).calculateExpression(weight));
     }
 
     /**
      * Finalizes forward step for normalization.<br>
      * Used typically for weight normalization.<br>
      *
-     * @param W weight for normalization.
+     * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardFinalize(Matrix W) throws MatrixException {
-        if (!norm.contains(W)) return;
-        if (!isTraining) W.setEqualTo(Ws.get(W));
+    public void forwardFinalize(Matrix weight) throws MatrixException {
+        weight.setEqualTo(weights.get(weight));
     }
 
     /**
      * Executes backward propagation step for Weight normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
-     * @param W weight for backward normalization.
-     * @param dW gradient of weight for backward normalization.
+     * @param weight weight for backward normalization.
+     * @param weightGradient gradient of weight for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backward(Matrix W, Matrix dW) throws MatrixException {
-        if (!norm.contains(W)) return;
-        double iNorm = iNorms.get(W);
-        double dg = dW.dot(W.T()).multiply(iNorm).sum();
-        dW.multiply(g * iNorm).subtract(Ws.get(W).multiply(dg * g * Math.pow(iNorm, 2)), dW);
-        W.setEqualTo(Ws.get(W));
+    public void backward(Matrix weight, Matrix weightGradient) throws MatrixException {
+        weightGradient.setEqualTo(procedures.get(weight).calculateGradient(weightGradient));
     }
 
     /**
@@ -209,5 +254,42 @@ public class WeightNormalization implements Normalization, Serializable {
      * @param outputIndex input index for normalization.
      */
     public void backward(Node node, int outputIndex) {}
+
+    /**
+     * Executes optimizer step for normalizer.
+     *
+     */
+    public void optimize() {}
+
+    /**
+     * Returns name of normalization.
+     *
+     * @return name of normalization.
+     */
+    public String getName() {
+        return normalizationType.toString();
+    }
+
+    /**
+     * Prints expression chains of normalization.
+     *
+     */
+    public void printExpressions() {
+        if (procedures.size() == 0) return;
+        System.out.print("Normalization: " + getName() + " : ");
+        for (Procedure procedure : procedures.values()) procedure.printExpressionChain();
+        System.out.println();
+    }
+
+    /**
+     * Prints gradient chains of normalization.
+     *
+     */
+    public void printGradients() {
+        if (procedures.size() == 0) return;
+        System.out.print("Normalization: " + getName() + " : ");
+        for (Procedure procedure : procedures.values()) procedure.printGradientChain();
+        System.out.println();
+    }
 
 }
