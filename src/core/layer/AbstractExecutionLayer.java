@@ -7,17 +7,22 @@
 package core.layer;
 
 import core.NeuralNetworkException;
-import core.activation.ActivationFunction;
 import core.normalization.Normalization;
+import core.normalization.NormalizationFactory;
+import core.normalization.NormalizationType;
+import core.optimization.OptimizationType;
+import core.optimization.Optimizer;
+import core.optimization.OptimizerFactory;
+import core.regularization.Regularization;
+import core.regularization.RegularizationFactory;
+import core.regularization.RegularizationType;
 import utils.*;
 import utils.matrix.*;
+import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * Abstract class that implements execution layer for actual neural network layers (feed forward layer, recurrent layer etc.)<br>
@@ -25,107 +30,75 @@ import java.util.LinkedList;
  * Support automatic gradient i.e. backward gradient calculation for layers supporting it.<br>
  *
  */
-public abstract class AbstractExecutionLayer implements Layer, Serializable {
-
-    private static final long serialVersionUID = -2696526850302490503L;
-
-    /**
-     * Reference to parent layer that handles neural network layer state handling and initiates primary functions (train, predict, validate etc.)
-     *
-     */
-    protected final AbstractLayer parent;
-
-    /**
-     * Activation function for neural network layer.
-     *
-     */
-    protected ActivationFunction activation;
+public abstract class AbstractExecutionLayer extends AbstractLayer implements ForwardProcedure {
 
     /**
      * Initialization function for neural network layer.
      *
      */
-    protected Init initialization = Init.UNIFORM_XAVIER;
+    protected Initialization initialization = Initialization.UNIFORM_XAVIER;
 
     /**
-     * Procedure for the layer. Procedure contains chain of forward and backward expressions.
+     * Procedure for layer. Procedure contains chain of forward and backward expressions.
      *
      */
-    private LinkedList<Procedure> procedureList = null;
+    protected Procedure procedure = null;
 
     /**
-     * Current procedure ID.
+     * Set of weights to be managed.
      *
      */
-    private final int currentProcedureID = 0;
+    private final HashSet<Matrix> weights = new HashSet<>();
 
     /**
-     * Flag if state is reset prior start of next training sequence.
+     * Ordered map of weights.
      *
      */
-    protected boolean resetStateTraining = true;
+    private final HashMap<Integer, Matrix> weightsMap = new HashMap<>();
 
     /**
-     * Flag if state is reset prior start of next test (validate, predict) sequence.
+     * Gradient sum of weights.
      *
      */
-    protected boolean resetStateTesting = true;
+    private transient HashMap<Matrix, Matrix> weightGradientSums;
 
     /**
-     * Previous state;
+     * List of regularizers.
      *
      */
-    private transient boolean previousStateTraining;
+    private final HashSet<Regularization> regularizers = new HashSet<>();
 
     /**
-     * If true allows layer recurrent input to be reset between test (validate, predict) sequence.
+     * List of normalizers.
      *
      */
-    private boolean allowLayerReset = true;
+    private final HashSet<Normalization> normalizers = new HashSet<>();
 
     /**
-     * Limits number of backward propagation sequence steps.
+     * Optimizer for layer.
      *
      */
-    protected int truncateSteps = -1;
+    private Optimizer optimizer = OptimizerFactory.create(OptimizationType.ADAM);
+
+    /**
+     * If true neural network is in training mode otherwise false.
+     *
+     */
+    private transient boolean isTraining;
 
     /**
      * Constructor for abstract execution layer.
      *
-     * @param parent reference to parent abstract layer.
-     * @param activation activation function.
+     * @param layerIndex layer Index.
      * @param initialization initialization function.
      * @param params parameters for neural network layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    protected AbstractExecutionLayer(AbstractLayer parent, ActivationFunction activation, Init initialization, String params) throws DynamicParamException, NeuralNetworkException {
-        this.parent = parent;
-
-        if (activation != null) this.activation = activation;
-        else this.activation = new ActivationFunction(UnaryFunctionType.ELU);
-
+    protected AbstractExecutionLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+        super (layerIndex, params);
         if (initialization != null) this.initialization = initialization;
-
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
-
-    /**
-     * Returns parameters used for layer.<br>
-     * Implemented by actual neural network layer with parameters specific to that layer.<br>
-     *
-     * @return parameters used for recurrent layer.
-     */
-    protected abstract HashMap<String, DynamicParam.ParamType> getParamDefs();
-
-    /**
-     * Sets parameters used for layer.<br>
-     * Implemented by actual neural network layer with parameters specific to that layer.<br>
-     *
-     * @param params parameters used for recurrent layer.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected abstract void setParams(DynamicParam params) throws DynamicParamException;
 
     /**
      * Returns layer type by name.
@@ -138,62 +111,19 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
     }
 
     /**
-     * Returns used initialization function.
+     * Sets if recurrent inputs of layer are allowed to be reset during training.
      *
-     * @return used initialization function.
+     * @param resetStateTraining if true allows reset.
      */
-    public Init getInitialization() {
-        return initialization;
+    public void resetStateTraining(boolean resetStateTraining) {
     }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset.
+     * Sets if recurrent inputs of layer are allowed to be reset during testing.
      *
-     * @param allowLayerReset if true allows reset.
+     * @param resetStateTesting if true allows reset.
      */
-    public void setAllowLayerReset(boolean allowLayerReset) {
-        this.allowLayerReset = allowLayerReset;
-    }
-
-    /**
-     * Takes single forward processing step process layer input(s).<br>
-     * Applies automated forward procedure when relevant to layer.<br>
-     * Additionally applies any normalization or regularization defined for the layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void forwardProcess() throws MatrixException, NeuralNetworkException {
-        if (procedureList == null) defineProcedure();
-
-        parent.getBackward().normalizerReset();
-
-        Sequence outP = parent.getBackward().getPLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? parent.getBackward().getPLayer().getOuts().flatten() : parent.getBackward().getPLayer().getOuts();
-
-        parent.getBackward().regulateForward(outP);
-        parent.getBackward().regulateForward();
-
-        parent.getBackward().normalizeForward();
-
-        parent.resetOuts();
-
-        boolean hasDependencies = procedureList.get(currentProcedureID).hasDependencies();
-
-        if (allowLayerReset && hasDependencies && currentProcedureID == 0) {
-            if (previousStateTraining != parent.getBackward().isTraining()) procedureList.get(currentProcedureID).resetDependencies();
-            else if(resetStateTraining || resetStateTesting) procedureList.get(currentProcedureID).resetDependencies();
-        }
-        previousStateTraining = parent.getBackward().isTraining();
-
-        procedureList.get(currentProcedureID).calculateExpression(outP, parent.getOuts(),!parent.getBackward().isTraining() && !hasDependencies);
-
-        if(!parent.getBackward().isTraining() && hasDependencies) procedureList.get(currentProcedureID).reset();
-
-        if (parent.getForward() == null) parent.updateOutputError();
-
-        if (!parent.getBackward().isTraining()) parent.getBackward().normalizeFinalizeForward();
-
-
+    public void resetStateTesting(boolean resetStateTesting) {
     }
 
     /**
@@ -201,80 +131,490 @@ public abstract class AbstractExecutionLayer implements Layer, Serializable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private void defineProcedure() throws MatrixException {
-        ProcedureFactory procedureFactory = new ProcedureFactory();
-
-        procedureFactory.registerMatrix(parent.getBackward().getWs(), true);
-        if (parent.getBackward().getNormalization().size() > 0) {
-            for (Matrix W : parent.getBackward().getWs()) {
-                if (parent.getBackward().getNorm().contains(W)) W.setNormalization(parent.getBackward().getNormalization());
-            }
-        }
-
-        boolean reset = true;
-        while (procedureList == null) {
-            resetInput(reset);
-            procedureFactory.newProcedure(getInputMatrices());
-            procedureList = procedureFactory.endProcedure(getForwardProcedure(parent.getBackward().getNormalization()));
-            reset = false;
-        }
+    protected void defineProcedure() throws MatrixException {
+        procedure = new ProcedureFactory().getProcedure(this, getWeights());
+        procedure.setNormalizers(getNormalization());
+        procedure.setRegularizers(getRegularization());
+        procedure.initialize();
     }
 
     /**
-     * Resets input.
+     * Prepares forward process step.
      *
-     * @param resetPreviousInput if true resets previous input.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @return previous outputs.
      */
-    protected abstract void resetInput(boolean resetPreviousInput) throws MatrixException;
+    protected Sequence prepareForwardProcess() throws MatrixException {
+        procedure.reset();
+        resetLayerOutputs();
+        resetNormalization();
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
+    }
 
     /**
-     * Returns input matrix for procedure construction.
+     * Takes single forward processing step process layer input(s).<br>
+     * Additionally applies any normalization or regularization defined for layer.<br>
      *
-     * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract Sample getInputMatrices() throws MatrixException;
+    public void forwardProcess() throws MatrixException {
+        executeForwardProcess(prepareForwardProcess());
+    }
 
     /**
-     * Builds forward procedure and implicitly builds backward procedure.
+     * Executes forward process step.
      *
-     * @param normalizers normalizers for layer normalization.
-     * @return output of forward procedure.
+     * @param previousOutputs outputs of previous layer.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract Sample getForwardProcedure(HashSet<Normalization> normalizers) throws MatrixException;
+    protected void executeForwardProcess(Sequence previousOutputs) throws MatrixException {
+        procedure.calculateExpression(previousOutputs, getLayerOutputs());
+    }
 
     /**
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Additionally applies any regularization defined for the layer.<br>
+     * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        parent.resetOutGrads();
+        resetLayerGradients();
+        executeBackwardProcess(isConvolutionalLayer() && hasNextLayer() && !getNextLayer().isConvolutionalLayer() ? getNextLayerGradients().unflatten(getLayerWidth(), getLayerHeight(), getLayerDepth()) : getNextLayerGradients());
+        updateWeightGradients();
+    }
 
-        parent.getBackward().resetGrad();
+    /**
+     * Executes backward process step.
+     *
+     * @param nextLayerGradients next layer gradients.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException {
+        procedure.calculateGradient(nextLayerGradients, getLayerGradients(), -1);
+    }
 
-        Sequence dEosN = isConvolutionalLayer() && parent.getForward().hasNLayer() && !parent.getForward().getNLayer().isConvolutionalLayer() ? parent.getdEosN().unflatten(parent.getWidth(), parent.getHeight(), parent.getDepth()) : parent.getdEosN();
+    /**
+     * Registers weights of next layer.
+     *
+     * @param weight weight matrix to be registered.
+     * @param forRegularization true if weight is registered for regularization otherwise false.
+     * @param forNormalization true if weight is registered for normalization otherwise false.
+     */
+    public void registerWeight(Matrix weight, boolean forRegularization, boolean forNormalization) {
+        weights.add(weight);
+        weightsMap.put(weightsMap.size(), weight);
+        weight.setRegularize(forRegularization);
+        weight.setNormalize(forNormalization);
+    }
 
-        procedureList.get(currentProcedureID).calculateGradient(dEosN, parent.getdEos(), truncateSteps);
+    /**
+     * Calculates gradient sum for wights after backward propagation step.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void updateWeightGradients() throws MatrixException {
+        weightGradientSums = new HashMap<>();
+        for (Matrix weight : weights) weightGradientSums.put(weight, procedure.getGradient(weight));
+    }
 
-        for (Integer sampleIndex : parent.getOuts().keySet()) {
-            for (Matrix W : parent.getBackward().getdWs().keySet()) {
-                parent.getBackward().getdWs(W).put(sampleIndex, procedureList.get(currentProcedureID).getNode(W).getGradient(sampleIndex));
+    /**
+     * Returns set of weights.
+     *
+     * @return set of weights.
+     */
+    public HashSet<Matrix> getWeights() {
+        return weights;
+    }
+
+    /**
+     * Returns ordered map of weights.
+     *
+     * @return ordered map of weights.
+     */
+    public HashMap<Integer, Matrix> getWeightsMap() {
+        return weightsMap;
+    }
+
+    /**
+     * Returns width of previous layer.
+     *
+     * @return width of previous layer.
+     */
+    public int getPreviousLayerWidth() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerWidth() * getPreviousLayer().getLayerHeight() * getPreviousLayer().getLayerDepth() : getPreviousLayer().getLayerWidth();
+    }
+
+    /**
+     * Returns height of previous layer.
+     *
+     * @return height of previous layer.
+     */
+    public int getPreviousLayerHeight() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerHeight();
+    }
+
+    /**
+     * Returns depth of previous layer.
+     *
+     * @return depth of previous layer.
+     */
+    public int getPreviousLayerDepth() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerDepth();
+    }
+
+    /**
+     * Returns width of next layer.
+     *
+     * @return width of next layer.
+     */
+    public int getNextLayerWidth() {
+        return getNextLayer().getLayerWidth();
+    }
+
+    /**
+     * Returns height of next layer.
+     *
+     * @return height of next layer.
+     */
+    public int getNextLayerHeight() {
+        return getNextLayer().getLayerHeight();
+    }
+
+    /**
+     * Returns depth of next layer.
+     *
+     * @return depth of next layer.
+     */
+    public int getNextLayerDepth() {
+        return getNextLayer().getLayerDepth();
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void addRegularization(RegularizationType regularizationType) throws NeuralNetworkException, DynamicParamException {
+        addRegularization(regularizationType, null);
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     * @param params parameters for regularizer.
+     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void addRegularization(RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException {
+        for (Regularization regularization : regularizers) {
+            if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) throw new NeuralNetworkException("Regularizer: " + regularizationType + " already exists");
+        }
+        Regularization regularizer = RegularizationFactory.create(regularizationType, params);
+        regularizers.add(regularizer);
+    }
+
+    /**
+     * Removes any regularization from layer.
+     *
+     */
+    public void removeRegularization() {
+        regularizers.clear();
+    }
+
+    /**
+     * Removes specific regularization from layer.
+     *
+     * @param regularizationType regularization method to be removed.
+     * @throws NeuralNetworkException throws exception if removal of regularizer fails.
+     */
+    public void removeRegularization(RegularizationType regularizationType) throws NeuralNetworkException {
+        Regularization removeRegularization = null;
+        for (Regularization regularization : regularizers) {
+            if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) {
+                removeRegularization = regularization;
             }
         }
+        if (removeRegularization != null) regularizers.remove(removeRegularization);
+    }
 
-        procedureList.get(currentProcedureID).reset();
+    /**
+     * Returns set of regularization methods.
+     *
+     * @return set of regularization methods.
+     */
+    public HashSet<Regularization> getRegularization() {
+        return regularizers;
+    }
 
-        parent.getBackward().sumGrad();
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void addNormalization(NormalizationType normalizationType) throws NeuralNetworkException, DynamicParamException {
+        addNormalization(normalizationType, null);
+    }
 
-        parent.getBackward().regulateBackward();
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     * @param params parameters for normalizer.
+     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void addNormalization(NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException {
+        for (Normalization normalization : normalizers) {
+            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) throw new NeuralNetworkException("Normalizer: " + normalizationType + " already exists");
+        }
+        Normalization normalizer = NormalizationFactory.create(normalizationType, params);
+        normalizers.add(normalizer);
+        if (optimizer != null) normalizer.setOptimizer(optimizer);
+    }
 
-        parent.getBackward().normalizeBackward();
+    /**
+     * Removes any normalization from layer.
+     *
+     */
+    public void removeNormalization() {
+        normalizers.clear();
+    }
 
+    /**
+     * Removes specific normalization from layer.
+     *
+     * @param normalizationType normalization method to be removed.
+     * @throws NeuralNetworkException throws exception if removal of normalizer fails.
+     */
+    public void removeNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
+        Normalization removeNormalization = null;
+        for (Normalization normalization : normalizers) {
+            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
+                removeNormalization = normalization;
+            }
+        }
+        if (removeNormalization != null) normalizers.remove(removeNormalization);
+    }
+
+    /**
+     * Returns set of normalization methods.
+     *
+     * @return set of normalization methods.
+     */
+    public HashSet<Normalization> getNormalization() {
+        return normalizers;
+    }
+
+    /**
+     * Resets specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reset.
+     * @throws NeuralNetworkException throws exception if reset of normalizer fails.
+     */
+    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
+        Normalization resetNormalization = null;
+        for (Normalization normalization : normalizers) {
+            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
+                resetNormalization = normalization;
+            }
+        }
+        if (resetNormalization != null) resetNormalization.reset();
+    }
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    public void resetNormalization() {
+        for (Normalization normalizer : normalizers) normalizer.reset();
+    }
+
+    /**
+     * Sets optimizer for layer.<br>
+     * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
+     *
+     * @param optimizer optimizer to be added.
+     */
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+        for (Normalization normalizer: normalizers) normalizer.setOptimizer(optimizer);
+    }
+
+    /**
+     * Resets optimizer for layer.
+     *
+     */
+    public void resetOptimizer() {
+        optimizer.reset();
+    }
+
+    /**
+     * Returns true if neural network is in training mode otherwise false.
+     *
+     * @return true if neural network is in training mode otherwise false.
+     */
+    public boolean isTraining() {
+        return isTraining;
+    }
+
+    /**
+     * Sets training flag.
+     *
+     * @param isTraining if true layer is training otherwise false.
+     */
+    protected void setTraining(boolean isTraining) {
+        this.isTraining = isTraining;
+        for (Regularization regularizer : regularizers) regularizer.setTraining(isTraining);
+        for (Normalization normalizer : normalizers) normalizer.setTraining(isTraining);
+    }
+
+    /**
+     * Resets normalizers and optimizer of layer.
+     *
+     */
+    public void reset() {
+        resetNormalization();
+        resetOptimizer();
+    }
+
+    /**
+     * Executes weight updates with regularizers and optimizer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void optimize() throws MatrixException {
+        for (Matrix weight : weightGradientSums.keySet()) optimizer.optimize(weight, weightGradientSums.get(weight));
+        for (Normalization normalizer : normalizers) normalizer.optimize();
+    }
+
+    /**
+     * Cumulates error from (L1 / L2 / Lp) regularization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return cumulated error from regularization.
+     */
+    public double error() throws MatrixException {
+        double error = procedure.getRegularizationError();
+        if (getPreviousLayer() != null) error += getPreviousLayer().error();
+        return error;
+    }
+
+    /**
+     * Returns number of parameters.
+     *
+     * @return number of parameters.
+     */
+    protected int getNumberOfParameters() {
+        int numberOfParameters = 0;
+        for (Matrix weight : weights) numberOfParameters += weight.size();
+        return numberOfParameters;
+    }
+
+    /**
+     * Appends other neural network layer with equal weights to this layer by weighted factor tau.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @param tau tau which controls contribution of other layer.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException {
+        HashMap<Integer, Matrix> otherWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
+        for (Integer index : weightsMap.keySet()) {
+            Matrix weight = weightsMap.get(index);
+            Matrix otherWeight = otherWeightsMap.get(index);
+            weight.multiply(1 - tau).add(otherWeight.multiply(tau), weight);
+        }
+    }
+
+    /**
+     * Returns regularizers by name.
+     *
+     * @return regularizers by name.
+     */
+    protected String getRegularizersByName() {
+        StringBuilder regularizerNames = new StringBuilder("Regularizers: ");
+        int index = 1;
+        for (Regularization regularization : regularizers) {
+            regularizerNames.append(regularization.getName());
+            if (index < regularizers.size()) regularizerNames.append(", ");
+        }
+        return regularizerNames.toString();
+    }
+
+    /**
+     * Returns normalizers by name.
+     *
+     * @return normalizers by name.
+     */
+    protected String getNormalizersByName() {
+        StringBuilder normalizerNames = new StringBuilder("Normalizers: ");
+        int index = 1;
+        for (Normalization normalization : normalizers) {
+            normalizerNames.append(normalization.getName());
+            if (index < normalizers.size()) normalizerNames.append(", ");
+        }
+        return normalizerNames.toString();
+    }
+
+    /**
+     * Returns optimizer by name.
+     *
+     * @return optimizer by name.
+     */
+    protected String getOptimizerByName() {
+        return "Optimizer: " + optimizer.getName();
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected abstract String getLayerDetailsByName();
+
+    /**
+     * Prints structure and metadata of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void print() throws NeuralNetworkException {
+        System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + " ]");
+        System.out.println("Number of parameters: " + getNumberOfParameters());
+        System.out.println(getOptimizerByName());
+        System.out.println(getNormalizersByName());
+        System.out.println(getRegularizersByName());
+        String layerDetailsByName = getLayerDetailsByName();
+        if (layerDetailsByName != null) System.out.println("Layer Details [ " + layerDetailsByName + " ]");
+    }
+
+    /**
+     * Prints expression chains of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void printExpressions() throws NeuralNetworkException {
+        System.out.println(getLayerName() + ": ");
+        procedure.printExpressionChain();
+        System.out.println();
+        for (Normalization normalization : normalizers) normalization.printExpressions();
+    }
+
+    /**
+     * Prints gradient chains of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void printGradients() throws NeuralNetworkException {
+        System.out.println(getLayerName() + ": ");
+        procedure.printGradientChain();
+        System.out.println();
+        for (Normalization normalization : normalizers) normalization.printGradients();
     }
 
 }
