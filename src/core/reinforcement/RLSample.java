@@ -79,12 +79,6 @@ public class RLSample implements Serializable {
     public double importanceSamplingWeight;
 
     /**
-     * Current estimator version.
-     *
-     */
-    public int estimatorVersion;
-
-    /**
      * Constructor for sample.
      *
      * @param state state.
