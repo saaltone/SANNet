@@ -7,11 +7,14 @@
 package core.layer;
 
 import core.NeuralNetworkException;
-import core.activation.ActivationFunction;
 import core.loss.LossFunction;
+import core.normalization.NormalizationType;
+import core.optimization.Optimizer;
+import core.regularization.RegularizationType;
 import utils.*;
 import utils.matrix.*;
 
+import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
@@ -24,7 +27,7 @@ public class OutputLayer extends AbstractLayer {
      * Neural network loss function for output layer.
      *
      */
-    private LossFunction lossFunction = new LossFunction(BinaryFunctionType.MEAN_SQUARED_ERROR);
+    private final LossFunction lossFunction;
 
     /**
      * Neural network output error.
@@ -39,61 +42,106 @@ public class OutputLayer extends AbstractLayer {
     private transient Sequence targets;
 
     /**
-     * Output error gradient.
-     *
-     */
-    private transient Sequence douts;
-
-    /**
      * Important sampling weights for gradient calculation.
      *
      */
-    private TreeMap<Integer, Double> importanceSamplingWeights;
+    private transient TreeMap<Integer, Double> importanceSamplingWeights;
 
     /**
      * Constructor for output layer.
      *
      * @param layerIndex index of layer.
-     * @param layerType type of output layer.
-     * @param activationFunction activation function for output layer.
-     * @param initialization initialization function for output layer.
-     * @param params parameters for output layer.
+     * @param lossFunction loss function for output layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public OutputLayer(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Init initialization, String params) throws NeuralNetworkException, DynamicParamException {
-        super(layerIndex);
-        super.setExecutionLayer(LayerFactory.create(layerType, this, activationFunction, initialization, params));
-    }
-
-    /**
-     * Sets loss function for neural network (output layer).
-     *
-     * @param lossFunction loss function of neural network.
-     */
-    public void setLossFunction(LossFunction lossFunction) {
+    public OutputLayer(int layerIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
+        super(layerIndex, null);
         this.lossFunction = lossFunction;
     }
 
     /**
-     * Clears targets (actual true output values) of output layer.<br>
-     * In error calculation predicted output is compared to actual true output values.<br>
+     * Returns layer type by name
+     *
+     * @return layer type by name
+     */
+    protected String getTypeByName() {
+        return "";
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be reset during training.
+     *
+     * @param resetStateTraining if true allows reset.
+     */
+    public void resetStateTraining(boolean resetStateTraining) {
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be reset during testing.
+     *
+     * @param resetStateTesting if true allows reset.
+     */
+    public void resetStateTesting(boolean resetStateTesting) {
+    }
+
+    /**
+     * Checks if execution layer is recurrent layer type.
+     *
+     * @return true if execution layer is recurrent layer type otherwise false.
+     */
+    public boolean isRecurrentLayer() {
+        return false;
+    }
+
+    /**
+     * Checks if execution layer is convolutional layer type.
+     *
+     * @return true if execution layer is convolutional layer type otherwise false.
+     */
+    public boolean isConvolutionalLayer() {
+        return false;
+    }
+
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      */
-    public void clearTargets() {
-        targets = null;
+    protected void defineProcedure() {
+    }
+
+    /**
+     * Initializes layer.
+     *
+     */
+    public void initialize() {
+    }
+
+    /**
+     * Sets training flag.
+     *
+     * @param training if true layer is training otherwise false.
+     */
+    protected void setTraining(boolean training) {
     }
 
     /**
      * Sets targets (actual true output values) of neural network (output layer).<br>
      * In error calculation predicted output is compared to actual true output values.<br>
      *
-     * @param target targets of output layer.
+     * @param targets targets of output layer.
      */
-    public void setTargets(Sequence target) {
-        clearTargets();
-        targets = new Sequence(target.getDepth());
-        targets.putAll(target);
+    public void setTargets(Sequence targets) {
+        this.targets = targets;
+    }
+
+    /**
+     * Returns outputs of neural network layer.
+     *
+     * @return outputs of neural network layer.
+     */
+    public Sequence getLayerOutputs() {
+        return getPreviousLayer().getLayerOutputs();
     }
 
     /**
@@ -106,32 +154,21 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Resets error of neural network (output layer).
-     *
-     */
-    public void resetError() {
-        error = new DMatrix(getWidth(), 1);
-    }
-
-    /**
-     * Returns total error of neural network including impact of regularization.
-     *
-     * @return total error of neural network.
-     */
-    public double getTotalError() {
-        if (error == null || targets == null) return 0;
-        else return error.mean() + getBackward().error() / (double)targets.totalSize();
-    }
-
-    /**
      * Executes backward step of neural network.
      *
      * @throws NeuralNetworkException throws exception if targets are not set or output and target dimensions are not matching.
      */
     public void backward() throws NeuralNetworkException  {
         if (targets.isEmpty()) throw new NeuralNetworkException("No targets defined");
-        if (targets.totalSize() != getOuts().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getOuts().totalSize());
+        if (targets.totalSize() != getLayerOutputs().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getLayerOutputs().totalSize());
         super.backward();
+    }
+
+    /**
+     * Executes forward processing step of execution layer.
+     *
+     */
+    public void forwardProcess() {
     }
 
     /**
@@ -139,52 +176,197 @@ public class OutputLayer extends AbstractLayer {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void backwardProcess() throws MatrixException {
-        calculateOutputDeltas();
-        super.backwardProcess();
-    }
-
-    /**
-     * Updates output error of neural network (output layer).
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if output and target dimensions are not matching.
-     */
-    public void updateOutputError() throws MatrixException, NeuralNetworkException {
-        if (targets == null || lossFunction.getFunction() == null) return;
-        if (targets.totalSize() != getOuts().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getOuts().totalSize());
+    public void backwardProcess() throws MatrixException {
+        resetError();
+        resetLayerGradients();
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
-                Matrix loss = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction());
-                error.add(loss, error);
+                error.add(getLayerOutputs().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction()), error);
+                Matrix outputGradient = getLayerOutputs().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative());
+                if (importanceSamplingWeights != null) outputGradient.multiply(importanceSamplingWeights.get(matrixIndex), outputGradient);
+                getLayerGradients().put(sampleIndex, matrixIndex, outputGradient);
             }
         }
         error.divide(targets.totalSize(), error);
     }
 
     /**
-     * Calculates output error gradient.
+     * Resets error of neural network (output layer).
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private void calculateOutputDeltas() throws MatrixException {
-        douts = new Sequence(targets.getDepth());
-        for (Integer sampleIndex : targets.keySet()) {
-            for (Integer matrixIndex : targets.sampleKeySet()) {
-                Matrix dout = getOuts().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative());
-                if (importanceSamplingWeights != null) dout.multiply(importanceSamplingWeights.get(matrixIndex), dout);
-                douts.put(sampleIndex, matrixIndex, dout);
-            }
-        }
+    private void resetError() {
+        error = new DMatrix(getLayerWidth(), 1);
     }
 
     /**
-     * Returns gradients of output error.
+     * Returns total error of neural network including impact of regularization.
      *
-     * @return gradients of output error.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return total error of neural network.
      */
-    public Sequence getdEosN() {
-        return douts;
+    public double getTotalError() throws MatrixException {
+        if (error == null || targets == null) return 0;
+        else return error.mean() + error() / (double)targets.totalSize();
+    }
+
+    /**
+     * Executes weight updates with regularizers and optimizer.
+     *
+     */
+    public void optimize() {
+    }
+
+    /**
+     * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return cumulated error from regularization.
+     */
+    public double error() throws MatrixException {
+        return hasPreviousLayer() ? getPreviousLayer().error() : 0;
+    }
+
+    /**
+     * Resets normalizers and optimizer of layer.
+     *
+     */
+    public void reset() {
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     */
+    public void addRegularization(RegularizationType regularizationType) {
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     * @param params parameters for regularizer.
+     */
+    public void addRegularization(RegularizationType regularizationType, String params) {
+    }
+
+    /**
+     * Removes any regularization from layer.
+     *
+     */
+    public void removeRegularization() {
+    }
+
+    /**
+     * Removes specific regularization from layer.
+     *
+     * @param regularizationType regularization method to be removed.
+     */
+    public void removeRegularization(RegularizationType regularizationType) {
+    }
+
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     */
+    public void addNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     * @param params parameters for normalizer.
+     */
+    public void addNormalization(NormalizationType normalizationType, String params) {
+    }
+
+    /**
+     * Removes any normalization from layer.
+     *
+     */
+    public void removeNormalization() {
+    }
+
+    /**
+     * Removes specific normalization from layer.
+     *
+     * @param normalizationType normalization method to be removed.
+     */
+    public void removeNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reset.
+     */
+    public void resetNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    public void resetNormalization() {
+    }
+
+    /**
+     * Sets optimizer for layer.<br>
+     * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
+     *
+     * @param optimizer optimizer to be added.
+     */
+    public void setOptimizer(Optimizer optimizer) {
+    }
+
+    /**
+     * Resets optimizer for layer.
+     *
+     */
+    public void resetOptimizer() {
+    }
+
+    /**
+     * Returns ordered map of weights.
+     *
+     * @return ordered map of weights.
+     */
+    public HashMap<Integer, Matrix> getWeightsMap() {
+        return null;
+    }
+
+    /**
+     * Appends other neural network layer with equal weights to this layer by weighted factor tau.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @param tau tau which controls contribution of other layer.
+     */
+    public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) {
+    }
+
+    /**
+     * Prints structure and metadata of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void print() throws NeuralNetworkException {
+        System.out.println(getLayerName() + " [ Loss function: " + lossFunction.getName() + " ]");
+    }
+
+    /**
+     * Prints expression chains of neural network.
+     *
+     */
+    public void printExpressions() {
+    }
+
+    /**
+     * Prints gradient chains of neural network.
+     *
+     */
+    public void printGradients() {
     }
 
 }
