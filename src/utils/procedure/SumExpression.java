@@ -48,7 +48,6 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
         Matrix sum = argument1.getMatrices().sum();
         result.setMultiIndex(false);
         result.setMatrix(sum);
-//        result.setMatrix(0, sum);
     }
 
     /**
@@ -71,9 +70,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
     public void calculateGradient() throws MatrixException {
         if (!asMultiMatrix) return;
         if (result.getGradient() == null) throw new MatrixException("Result gradient not defined.");
-//        if (result.getGradient(0) == null) throw new MatrixException("Result gradient not defined.");
         for (Integer index : argument1.keySet()) argument1.updateGradient(index, result.getGradient(), true);
-//        for (Integer index : argument1.keySet()) argument1.updateGradient(index, result.getGradient(0), true);
     }
 
     /**
