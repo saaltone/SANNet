@@ -39,49 +39,49 @@ public class UnaryFunction implements Serializable {
      * Defines type of function such as Sigmoid, ReLU.
      *
      */
-    private UnaryFunctionType unaryFunctionType;
+    private final UnaryFunctionType unaryFunctionType;
 
     /**
      * Stores threshold value for ReLU function.
      *
      */
-    private double RELU_threshold = 0;
+    private double RELUThreshold = 0;
 
     /**
      * Stores alpha value for ReLU function.
      *
      */
-    private double RELU_alpha = 0;
+    private double RELUAlpha = 0;
 
     /**
      * Stores threshold value for ELU function.
      *
      */
-    private double ELU_threshold = 0;
+    private double ELUThreshold = 0;
 
     /**
      * Stores alpha value for ELU function.
      *
      */
-    private double ELU_alpha = 1;
+    private double ELUAlpha = 1;
 
     /**
      * Stores threshold value for SELU function.
      *
      */
-    private double SELU_threshold = 0;
+    private double SELUThreshold = 0;
 
     /**
      * Stores alpha value for SELU function.
      *
      */
-    private double SELU_alpha = 1.6732;
+    private double SELUAlpha = 1.6732;
 
     /**
      * Stores lambda value for SELU function.
      *
      */
-    private double SELU_lambda = 1.0507;
+    private double SELULambda = 1.0507;
 
     /**
      * Matrix populated with ones.
@@ -93,14 +93,29 @@ public class UnaryFunction implements Serializable {
      * Identity matrix.
      *
      */
-    private Matrix I;
+    private Matrix identity;
+
+
+    /**
+     * Constructor for UnaryFunction to create custom function.
+     *
+     * @param function function.
+     * @param derivative derivative of function.
+     */
+    public UnaryFunction(Matrix.MatrixUnaryOperation function, Matrix.MatrixUnaryOperation derivative) {
+        this.unaryFunctionType = UnaryFunctionType.CUSTOM;
+        this.function = function;
+        this.derivative = derivative;
+    }
 
     /**
      * Constructor for UnaryFunction.
      *
      * @param unaryFunctionType type of function to be used.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public UnaryFunction(UnaryFunctionType unaryFunctionType) {
+    public UnaryFunction(UnaryFunctionType unaryFunctionType) throws MatrixException {
+        this.unaryFunctionType = unaryFunctionType;
         try {
             setFunction(unaryFunctionType, null);
         } catch (DynamicParamException exception) {}
@@ -116,8 +131,10 @@ public class UnaryFunction implements Serializable {
      * @param unaryFunctionType type of function to be used.
      * @param params parameters used for function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public UnaryFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException {
+    public UnaryFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
+        this.unaryFunctionType = unaryFunctionType;
         setFunction(unaryFunctionType, params);
     }
 
@@ -132,9 +149,9 @@ public class UnaryFunction implements Serializable {
      * @param unaryFunctionType type of function to be used.
      * @param params parameters as DynamicParam type for function.
      * @throws DynamicParamException throws exception if parameters are not properly given.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private void setFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException {
-        this.unaryFunctionType = unaryFunctionType;
+    private void setFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
         switch(unaryFunctionType) {
             case ABS:
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::abs;
@@ -238,11 +255,11 @@ public class UnaryFunction implements Serializable {
                     paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
                     paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
                     DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) RELU_threshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) RELU_alpha = dParams.getValueAsDouble("alpha");
+                    if (dParams.hasParam("threshold")) RELUThreshold = dParams.getValueAsDouble("threshold");
+                    if (dParams.hasParam("alpha")) RELUAlpha = dParams.getValueAsDouble("alpha");
                 }
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELU_threshold ? RELU_alpha * value : value;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELU_threshold ? RELU_alpha : 1;
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
                 return;
             case ELU:
                 if (params != null) {
@@ -250,11 +267,11 @@ public class UnaryFunction implements Serializable {
                     paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
                     paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
                     DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) ELU_threshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) ELU_alpha = dParams.getValueAsDouble("alpha");
+                    if (dParams.hasParam("threshold")) ELUThreshold = dParams.getValueAsDouble("threshold");
+                    if (dParams.hasParam("alpha")) ELUAlpha = dParams.getValueAsDouble("alpha");
                 }
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELU_threshold ? ELU_alpha * (Math.exp(value) - 1) : value;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELU_threshold ? ELU_alpha * Math.exp(value) : 1;
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * (Math.exp(value) - 1) : value;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * Math.exp(value) : 1;
                 return;
             case SELU:
                 if (params != null) {
@@ -263,12 +280,12 @@ public class UnaryFunction implements Serializable {
                     paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
                     paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
                     DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) SELU_threshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) SELU_alpha = dParams.getValueAsDouble("alpha");
-                    if (dParams.hasParam("lambda")) SELU_lambda = dParams.getValueAsDouble("lambda");
+                    if (dParams.hasParam("threshold")) SELUThreshold = dParams.getValueAsDouble("threshold");
+                    if (dParams.hasParam("alpha")) SELUAlpha = dParams.getValueAsDouble("alpha");
+                    if (dParams.hasParam("lambda")) SELULambda = dParams.getValueAsDouble("lambda");
                 }
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELU_threshold ? SELU_lambda * SELU_alpha * (Math.exp(value) - 1) : SELU_lambda * value;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELU_threshold ? SELU_lambda * SELU_alpha * Math.exp(value) : SELU_lambda;
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * (Math.exp(value) - 1) : SELULambda * value;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * Math.exp(value) : SELULambda;
                 return;
             case GELU:
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * value * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3))));
@@ -286,6 +303,8 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? -1 : value > 0.5 * Math.PI ? 1 : Math.sin(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? 0 : value > 0.5 * Math.PI ? 0 : Math.cos(value);
                 return;
+            case CUSTOM:
+                throw new MatrixException("Custom function cannot defined with this constructor.");
             default:
         }
     }
@@ -337,7 +356,7 @@ public class UnaryFunction implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyFunction(Matrix value, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? value : new DMatrix(value.getRows(), value.getCols());
+        Matrix result = inplace ? value : value.getNewMatrix();
         value.apply(result, this);
         if (unaryFunctionType == UnaryFunctionType.SOFTMAX) {
             ProcedureFactory procedureFactory = result.getProcedureFactory();
@@ -361,13 +380,21 @@ public class UnaryFunction implements Serializable {
     public Matrix applyGradient(Matrix value, Matrix gradient) throws MatrixException {
         if (unaryFunctionType != UnaryFunctionType.SOFTMAX) return gradient.multiply(value.apply(derivative));
         else {
-            ones = (ones != null && ones.getRows() == value.getRows()) ? ones : new DMatrix(value.getRows(), 1, Init.ONE);
-            I = (I != null && I.getRows() == value.getRows()) ? I : new DMatrix(value.getRows(), value.getRows(), Init.IDENTITY);
-            // dFunc has diagonal entries of 1 - arg and other entries -out i.e. I - arg
-            Matrix dFunc = I.subtract(value.dot(ones.T()));
-            // Finally dFunc is dotted by gradient resulting into derivative
-            return dFunc.dot(gradient);
+            ones = (ones != null && ones.getRows() == value.getRows()) ? ones : new DMatrix(value.getRows(), 1, Initialization.ONE);
+            identity = (identity != null && identity.getRows() == value.getRows()) ? identity : new DMatrix(value.getRows(), value.getRows(), Initialization.IDENTITY);
+            // Calculate diagonal entries of 1 - arg and other entries -out i.e. identity - arg
+            // Finally dot result by gradient resulting into derivative
+            return identity.subtract(value.dot(ones.transpose())).dot(gradient);
         }
+    }
+
+    /**
+     * Returns name of unary function.
+     *
+     * @return name of unary function.
+     */
+    public String getName() {
+        return unaryFunctionType.toString();
     }
 
 }
