@@ -38,16 +38,23 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * Constructor for max pooling operation.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
+     * @param argument1 first argument.
      * @param result result of expression.
      * @param stride stride of pooling operation.
      * @param poolSize pool size of pooling operation.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public MaxPoolExpression(int expressionID, Node arg1, Node result, int stride, int poolSize) throws MatrixException {
-        super(expressionID, arg1, result);
+    public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int poolSize) throws MatrixException {
+        super(expressionID, argument1, result);
         this.stride = stride;
         this.poolSize = poolSize;
+    }
+
+    /**
+     * Calculates expression.
+     *
+     */
+    public void calculateExpression() {
     }
 
     /**
@@ -57,11 +64,18 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null) throw new MatrixException("Arguments for MAXPOOL operation not defined");
-        arg1.getMatrix(index).setStride(stride);
-        arg1.getMatrix(index).setPoolSize(poolSize);
-        maxArgsAt = new int[arg1.getMatrix(index).getRows() - poolSize + 1][arg1.getMatrix(index).getCols() - poolSize + 1][2];
-        result.setMatrix(index, arg1.getMatrix(index).maxPool(maxArgsAt));
+        if (argument1.getMatrix(index) == null) throw new MatrixException("Arguments for MAXPOOL operation not defined");
+        argument1.getMatrix(index).setStride(stride);
+        argument1.getMatrix(index).setPoolSize(poolSize);
+        maxArgsAt = new int[argument1.getMatrix(index).getRows() - poolSize + 1][argument1.getMatrix(index).getColumns() - poolSize + 1][2];
+        result.setMatrix(index, argument1.getMatrix(index).maxPool(maxArgsAt));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -75,7 +89,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
         if (maxArgsAt == null) throw new MatrixException("Maximum arguments for gradient calculation are not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);
-        arg1.updateGradient(index, result.getGradient(index).maxPoolGrad(maxArgsAt), true);
+        argument1.updateGradient(index, result.getGradient(index).maxPoolGradient(maxArgsAt), true);
     }
 
     /**
@@ -83,7 +97,17 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      *
      */
     public void printExpression() {
-        System.out.print("MAXPOOL: " + arg1 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("MAXPOOL(" + argument1.getName() + ") = " + result.getName());
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("MAXPOOL: d" + argument1.getName() +" = MAXPOOL_GRADIENT(d" + result.getName() + ", MAX_ARGS(" + argument1.getName() +"))");
     }
 
 }

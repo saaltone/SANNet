@@ -7,7 +7,7 @@
 package utils.procedure;
 
 import utils.matrix.BinaryFunction;
-import utils.matrix.Matrix;
+import utils.matrix.BinaryFunctionType;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
@@ -18,6 +18,8 @@ import java.io.Serializable;
  */
 public class BinaryFunctionExpression extends AbstractBinaryExpression implements Serializable {
 
+    private final BinaryFunctionType binaryFunctionType;
+
     /**
      * BinaryFunction used.
      *
@@ -25,50 +27,28 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
     private final BinaryFunction binaryFunction;
 
     /**
-     * Lambda operation to calculate binaryFunction.
-     *
-     */
-    private final Matrix.MatrixBinaryOperation binaryFunctionPrime;
-
-    /**
-     * Lambda operation to calculate derivative of binaryFunction.
-     *
-     */
-    private final Matrix.MatrixBinaryOperation binaryDerivativePrime;
-
-    /**
      * Constructor for binary function.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param arg2 second argument.
+     * @param argument1 first argument.
+     * @param argument2 second argument.
      * @param result result of expression.
      * @param binaryFunction BinaryFunction.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public BinaryFunctionExpression(int expressionID, Node arg1, Node arg2, Node result, BinaryFunction binaryFunction) throws MatrixException {
-        super(expressionID, arg1, arg2, result);
+    public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
+        super(expressionID, argument1, argument2, result);
+        this.binaryFunctionType = binaryFunction.getType();
         this.binaryFunction = binaryFunction;
-        this.binaryFunctionPrime = null;
-        this.binaryDerivativePrime = null;
     }
 
     /**
-     * Constructor for expression.
+     * Returns binary function type.
      *
-     * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param arg2 second argument.
-     * @param result result of expression.
-     * @param binaryFunctionPrime prime matrix binaryFunction.
-     * @param binaryDerivativePrime prime matrix binaryFunction derivative.
-     * @throws MatrixException throws exception if expression arguments are not defined.
+     * @return binary function type.
      */
-    public BinaryFunctionExpression(int expressionID, Node arg1, Node arg2, Node result, Matrix.MatrixBinaryOperation binaryFunctionPrime, Matrix.MatrixBinaryOperation binaryDerivativePrime) throws MatrixException {
-        super(expressionID, arg1, arg2, result);
-        this.binaryFunction = null;
-        this.binaryFunctionPrime = binaryFunctionPrime;
-        this.binaryDerivativePrime = binaryDerivativePrime;
+    public BinaryFunctionType getBinaryFunctionType() {
+        return binaryFunctionType;
     }
 
     /**
@@ -81,21 +61,10 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
     }
 
     /**
-     * Returns BinaryFunction prime.
+     * Calculates expression.
      *
-     * @return BinaryFunction prime.
      */
-    public Matrix.MatrixBinaryOperation getBinaryFunctionPrime() {
-        return binaryFunctionPrime;
-    }
-
-    /**
-     * Returns BinaryFunction derivative prime.
-     *
-     * @return BinaryFunction derivative prime.
-     */
-    public Matrix.MatrixBinaryOperation getBinaryDerivativePrime() {
-        return binaryDerivativePrime;
+    public void calculateExpression() {
     }
 
     /**
@@ -105,9 +74,15 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null || arg2.getMatrix(index) == null) throw new MatrixException("Arguments for bi operation not defined");
-        if (binaryFunction != null) result.setMatrix(index, binaryFunction.applyFunction(arg1.getMatrix(index), arg2.getMatrix(index)));
-        else result.setMatrix(index, arg1.getMatrix(index).applyBi(arg2.getMatrix(index), binaryFunctionPrime));
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for bi operation not defined");
+        result.setMatrix(index, binaryFunction.applyFunction(argument1.getMatrix(index), argument2.getMatrix(index)));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -118,10 +93,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
-        Matrix inBiGradient;
-        if (binaryFunction != null) inBiGradient = binaryFunction.applyGradient(result.getMatrix(index), arg2.getMatrix(index), result.getGradient(index));
-        else inBiGradient = result.getGradient(index).multiply(result.getMatrix(index).applyBi(arg2.getMatrix(index), binaryDerivativePrime));
-        arg1.updateGradient(index, inBiGradient, true);
+        argument1.updateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), true);
     }
 
     /**
@@ -129,7 +101,17 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      *
      */
     public void printExpression() {
-        System.out.print("BINARYFUN: " + " " + arg1 + " " + arg2 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("BINARYFUN: " + " " + argument1 + " " + argument2 + " " + result);
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("BINARYFUN: d" + argument1.getName() + " = d" + result.getName() + " * " + binaryFunctionType + "_GRADIENT(" + result.getName() + ", " + argument2.getName() + ")");
     }
 
 }

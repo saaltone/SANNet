@@ -20,13 +20,20 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * Constructor for dot operation.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param arg2 second argument.
+     * @param argument1 first argument.
+     * @param argument2 second argument.
      * @param result result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public DotExpression(int expressionID, Node arg1, Node arg2, Node result) throws MatrixException {
-        super(expressionID, arg1, arg2, result);
+    public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
+        super(expressionID, argument1, argument2, result);
+    }
+
+    /**
+     * Calculates expression.
+     *
+     */
+    public void calculateExpression() {
     }
 
     /**
@@ -36,8 +43,15 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null || arg2.getMatrix(index) == null) throw new MatrixException("Arguments for DOT operation not defined");
-        result.setMatrix(index, arg1.getMatrix(index).dot(arg2.getMatrix(index)));
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for DOT operation not defined");
+        result.setMatrix(index, argument1.getMatrix(index).dot(argument2.getMatrix(index)));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -48,8 +62,8 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
-        arg1.updateGradient(index, result.getGradient(index).dot(arg2.getMatrix(index).T()), true);
-        arg2.updateGradient(index, arg1.getMatrix(index).T().dot(result.getGradient(index)), true);
+        argument1.updateGradient(index, result.getGradient(index).dot(argument2.getMatrix(index).transpose()), true);
+        argument2.updateGradient(index, argument1.getMatrix(index).transpose().dot(result.getGradient(index)), true);
     }
 
     /**
@@ -57,7 +71,19 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      *
      */
     public void printExpression() {
-        System.out.print("DOT: " + arg1 + " " + arg2 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("DOT: " + argument1.getName() + " x " + argument2.getName() + " = " + result.getName());
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("DOT: d" + argument1.getName() + " = d" + result.getName() + " x " + argument2.getName() + ".T");
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("DOT: d" + argument2.getName() + " = " + argument1.getName() + ".T x d" + result.getName());
     }
 
 }

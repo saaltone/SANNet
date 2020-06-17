@@ -23,18 +23,41 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
     private final int stride;
 
     /**
+     * Dilation step size for cross-correlation operation.
+     *
+     */
+    private final int dilation;
+
+    /**
+     * Filter size;
+     *
+     */
+    private final int filterSize;
+
+    /**
      * Constructor for cross-correlation operation.
      *
      * @param expressionID unique ID for expression.
-     * @param arg1 first argument.
-     * @param arg2 second argument.
+     * @param argument1 first argument.
+     * @param argument2 second argument.
      * @param result result of expression.
      * @param stride stride of cross-correlation operation.
+     * @param dilation dilation step size for cross-correlation operation.
+     * @param filterSize filter size.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public CrosscorrelateExpression(int expressionID, Node arg1, Node arg2, Node result, int stride) throws MatrixException {
-        super(expressionID, arg1, arg2, result);
+    public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterSize) throws MatrixException {
+        super(expressionID, argument1, argument2, result);
         this.stride = stride;
+        this.dilation = dilation;
+        this.filterSize = filterSize;
+    }
+
+    /**
+     * Calculates expression.
+     *
+     */
+    public void calculateExpression() {
     }
 
     /**
@@ -44,9 +67,18 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (arg1.getMatrix(index) == null || arg2.getMatrix(index) == null) throw new MatrixException("Arguments for CROSSCORRELATE operation not defined");
-        arg1.getMatrix(index).setStride(stride);
-        result.setMatrix(index, arg1.getMatrix(index).crosscorrelate(arg2.getMatrix(index)));
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for CROSSCORRELATE operation not defined");
+        argument1.getMatrix(index).setStride(stride);
+        argument1.getMatrix(index).setDilation(dilation);
+        argument1.getMatrix(index).setFilterSize(filterSize);
+        result.setMatrix(index, argument1.getMatrix(index).crosscorrelate(argument2.getMatrix(index)));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     */
+    public void calculateGradient() {
     }
 
     /**
@@ -58,8 +90,10 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
         result.getGradient(index).setStride(stride);
-        arg1.updateGradient(index, result.getGradient(index).crosscorrelateOutGrad(arg2.getMatrix(index)), true);
-        arg2.updateGradient(index, result.getGradient(index).crosscorrelateFilterGrad(arg1.getMatrix(index)), true);
+        result.getGradient(index).setDilation(dilation);
+        result.getGradient(index).setFilterSize(filterSize);
+        argument1.updateGradient(index, result.getGradient(index).crosscorrelateOutputGradient(argument2.getMatrix(index)), true);
+        argument2.updateGradient(index, result.getGradient(index).crosscorrelateFilterGradient(argument1.getMatrix(index)), true);
     }
 
     /**
@@ -67,7 +101,19 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      *
      */
     public void printExpression() {
-        System.out.print("CROSSCORRELATE: " + arg1 + " " + arg2 + " " + result);
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("CROSSCORRELATE(" + argument1.getName() + ", " + argument2.getName() + ") = " + result.getName());
+    }
+
+    /**
+     * Prints gradient.
+     *
+     */
+    public void printGradient() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("CROSSCORRELATE: d" + argument1.getName() + " = CROSSCORRELATE_GRADIENT(d" + result.getName() + ", " + argument2.getName() + ")");
+        System.out.print("Expression " +getExpressionID() + ": ");
+        System.out.println("CROSSCORRELATE: d" + argument2.getName() + " = CROSSCORRELATE_GRADIENT(d" + result.getName() + ", " + argument1.getName() + ")");
     }
 
 }
