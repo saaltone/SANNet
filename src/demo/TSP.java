@@ -529,7 +529,7 @@ public class TSP implements Environment {
         }
         Agent agent;
         if (!policyGradient) {
-            agent = new DDQNLearningAbstract(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
+            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
 //            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
 //            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
         }
@@ -550,27 +550,28 @@ public class TSP implements Environment {
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         if (!policyFunction) {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
-            neuralNetwork.setLossFunction(BinaryFunctionType.MEAN_ABSOLUTE_ERROR);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.build();
-            neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
+            neuralNetwork.addNormalizer(3, NormalizationType.BATCH_NORMALIZATION, "beta = 0.9");
             neuralNetwork.setOptimizer(OptimizationType.ADAM);
             neuralNetwork.verboseTraining(10);
         }
         else {
+            neuralNetwork.addHiddenLayer(LayerType.GRAVESLSTM, "width = 60");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
-            neuralNetwork.addOutputLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-            neuralNetwork.setLossFunction(BinaryFunctionType.DIRECT_GRADIENT);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
             neuralNetwork.build();
- //           neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
+            neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
             neuralNetwork.setOptimizer(OptimizationType.ADAM);
         }
         return neuralNetwork;
