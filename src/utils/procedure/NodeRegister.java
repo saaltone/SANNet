@@ -6,14 +6,12 @@
 
 package utils.procedure;
 
-import core.normalization.Normalization;
-import utils.matrix.Init;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,19 +28,11 @@ class NodeRegister implements Serializable {
      */
     private static class NodeEntry implements Serializable {
 
-        private static final long serialVersionUID = 5723809008297279706L;
-
         /**
          * Reference to node instance.
          *
          */
         final Node node;
-
-        /**
-         * Procedure ID where node was created in.
-         *
-         */
-        final int procedureID;
 
         /**
          * Expression ID where node was created in.
@@ -54,12 +44,10 @@ class NodeRegister implements Serializable {
          * Constructor for node entry.
          *
          * @param node reference to node instance.
-         * @param procedureID procedure ID where node was created in.
          * @param expressionID expression ID where node was created in.
          */
-        NodeEntry(Node node, int procedureID, int expressionID) {
+        NodeEntry(Node node, int expressionID) {
             this.node = node;
-            this.procedureID = procedureID;
             this.expressionID = expressionID;
         }
     }
@@ -71,6 +59,12 @@ class NodeRegister implements Serializable {
     private final HashMap<Matrix, NodeEntry> entriesByMatrix = new HashMap<>();
 
     /**
+     * Map to maintain dependencies of matrices and node entries.
+     *
+     */
+    private final HashMap<MMatrix, NodeEntry> entriesByMMatrix = new HashMap<>();
+
+    /**
      * Map to maintain dependencies of nodes and node entries.
      *
      */
@@ -80,7 +74,13 @@ class NodeRegister implements Serializable {
      * Map to maintain dependencies of matrices and node.
      *
      */
-    private final HashMap<Matrix, Node> nodeMap = new HashMap<>();
+    private final HashMap<Matrix, Node> nodeMatrixMap = new HashMap<>();
+
+    /**
+     * Map to maintain dependencies of matrices and node.
+     *
+     */
+    private final HashMap<MMatrix, Node> nodeMMatrixMap = new HashMap<>();
 
     /**
      * Default constructor for node register.
@@ -90,13 +90,25 @@ class NodeRegister implements Serializable {
     }
 
     /**
-     * Clears node register.
+     * Defines and returns node by matrix.<br>
+     * If node is not existing creates node and records in which procedure and expression ID it was created in.<br>
      *
+     * @param matrix reference to matrix
+     * @param isConstantNode if true node is marked as constant type
+     * @param expressionID expression ID where node was created in
+     * @return node created or retrieved.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void clear() {
-        entriesByMatrix.clear();
-        entriesByNode.clear();
-        nodeMap.clear();
+    Node defineNode(Matrix matrix, boolean isConstantNode, int expressionID) throws MatrixException {
+        if (entriesByMatrix.containsKey(matrix)) return nodeMatrixMap.get(matrix);
+        else {
+            Node node = new Node(getTotalSize() + 1, matrix, isConstantNode);
+            NodeEntry nodeEntry = new NodeEntry(node, expressionID);
+            entriesByMatrix.put(matrix, nodeEntry);
+            entriesByNode.put(node, nodeEntry);
+            nodeMatrixMap.put(matrix, node);
+            return node;
+        }
     }
 
     /**
@@ -104,23 +116,30 @@ class NodeRegister implements Serializable {
      * If node is not existing creates node and records in which procedure and expression ID it was created in.<br>
      *
      * @param matrix reference to matrix
-     * @param constantNode if true node is marked as constant type
-     * @param procedureID procedure ID where node was created in
+     * @param isConstantNode if true node is marked as constant type
      * @param expressionID expression ID where node was created in
      * @return node created or retrieved.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Node defineNode(Matrix matrix, boolean constantNode, boolean createMatrixIfNone, HashSet<Normalization> normalizers, int procedureID, int expressionID) throws MatrixException {
-        if (entriesByMatrix.containsKey(matrix)) return nodeMap.get(matrix);
+    Node defineNode(MMatrix matrix, boolean isConstantNode, int expressionID) throws MatrixException {
+        if (entriesByMMatrix.containsKey(matrix)) return nodeMMatrixMap.get(matrix);
         else {
-            Node node = new Node(matrix, constantNode, createMatrixIfNone, matrix.getInitType() == Init.CONSTANT, normalizers);
-            if (constantNode) node.setMatrix(0, matrix);
-            NodeEntry nodeEntry = new NodeEntry(node, procedureID, expressionID);
-            entriesByMatrix.put(matrix, nodeEntry);
+            Node node = new Node(getTotalSize() + 1, matrix, isConstantNode);
+            NodeEntry nodeEntry = new NodeEntry(node, expressionID);
+            entriesByMMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
-            nodeMap.put(matrix, node);
+            nodeMMatrixMap.put(matrix, node);
             return node;
         }
+    }
+
+    /**
+     * Returns total size of node register.
+     *
+     * @return total size of node register.
+     */
+    public int getTotalSize() {
+        return entriesByMatrix.size() + entriesByMMatrix.size();
     }
 
     /**
@@ -131,6 +150,16 @@ class NodeRegister implements Serializable {
      */
     Node getNode(Matrix matrix) {
         return entriesByMatrix.get(matrix).node;
+    }
+
+    /**
+     * Returns node by matrix.
+     *
+     * @param matrix matrix corresponding node requested.
+     * @return returned node.
+     */
+    Node getNode(MMatrix matrix) {
+        return entriesByMMatrix.get(matrix).node;
     }
 
     /**
@@ -147,19 +176,17 @@ class NodeRegister implements Serializable {
      *
      * @return node map contained by register.
      */
-    HashMap<Matrix, Node> getNodeMap() {
-        return nodeMap;
+    HashMap<Matrix, Node> getNodeMatrixMap() {
+        return nodeMatrixMap;
     }
 
     /**
-     * Returns procedure ID corresponding the node.
+     * Returns node map contained by register.
      *
-     * @param node node in question.
-     * @return procedure ID corresponding the node.
+     * @return node map contained by register.
      */
-    public int getProcedureID(Node node) {
-        if (entriesByNode.containsKey(node)) return entriesByNode.get(node).procedureID;
-        else return -1;
+    HashMap<MMatrix, Node> getNodeMMatrixMap() {
+        return nodeMMatrixMap;
     }
 
     /**
@@ -194,11 +221,21 @@ class NodeRegister implements Serializable {
     }
 
     /**
+     * Checks if node register contains matrix.
+     *
+     * @param matrix matrix in question.
+     * @return true is matrix is contained by the node register otherwise false.
+     */
+    public boolean contains(MMatrix matrix) {
+        return entriesByMMatrix.containsKey(matrix);
+    }
+
+    /**
      * Removes procedure factory from nodes of node register.
      *
      */
     public void removeProcedureFactory() {
-        for (Matrix matrix : nodeMap.keySet())  matrix.removeProcedureFactory();
+        for (Matrix matrix : nodeMatrixMap.keySet())  matrix.removeProcedureFactory();
     }
 
 }
