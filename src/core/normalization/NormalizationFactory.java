@@ -30,11 +30,11 @@ public class NormalizationFactory implements Serializable {
     public static Normalization create(NormalizationType normalizationType, String params) throws DynamicParamException, NeuralNetworkException {
         switch (normalizationType) {
             case BATCH_NORMALIZATION:
-                return (params == null) ? new BatchNormalization() : new BatchNormalization(params);
+                return (params == null) ? new BatchNormalization(normalizationType) : new BatchNormalization(normalizationType, params);
             case LAYER_NORMALIZATION:
-                return (params == null) ? new LayerNormalization() : new LayerNormalization(params);
+                return (params == null) ? new LayerNormalization(normalizationType) : new LayerNormalization(normalizationType, params);
             case WEIGHT_NORMALIZATION:
-                return (params == null) ? new WeightNormalization() : new WeightNormalization(params);
+                return (params == null) ? new WeightNormalization(normalizationType) : new WeightNormalization(normalizationType, params);
         }
         throw new NeuralNetworkException("Creation of normalizer failed.");
     }
