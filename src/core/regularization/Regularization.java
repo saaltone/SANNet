@@ -9,6 +9,7 @@ package core.regularization;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -27,24 +28,11 @@ public interface Regularization {
     void setParams(DynamicParam params) throws DynamicParamException;
 
     /**
-     * Resets regularizer state.
-     *
-     */
-    void reset();
-
-    /**
      * Indicates to regularizer if neural network is in training mode.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
     void setTraining(boolean isTraining);
-
-    /**
-     * Sets current mini batch size.
-     *
-     * @param miniBatchSize current mini batch size.
-     */
-    void setMiniBatchSize(int miniBatchSize);
 
     /**
      * Executes regularization method for forward step.<br>
@@ -57,26 +45,34 @@ public interface Regularization {
     /**
      * Executes regularization method for forward step.<br>
      *
-     * @param W weight matrix.
+     * @param inputs inputs.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void forward(Matrix W);
+    void forward(MMatrix inputs) throws MatrixException;
 
     /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
-     * @param W weight matrix.
+     * @param weight weight matrix.
      * @return cumulated error from regularization.
      */
-    double error(Matrix W);
+    double error(Matrix weight);
 
     /**
      * Executes regularization method for backward phase at pre in.
      *
-     * @param W weight matrix.
-     * @param dWSum gradient sum of weight.
+     * @param weight weight matrix.
+     * @param weightGradientSum gradient sum of weight.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void backward(Matrix W, Matrix dWSum) throws MatrixException;
+    void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException;
+
+    /**
+     * Returns name of regularization.
+     *
+     * @return name of regularization.
+     */
+    String getName();
 
 }
 
