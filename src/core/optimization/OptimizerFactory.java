@@ -18,37 +18,37 @@ public class OptimizerFactory {
     /**
      * Constructs optimizer.
      *
-     * @param optimization optimizer type.
+     * @param optimizationType optimizer type.
      * @param params parameters for specific optimizer.
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public static Optimizer create(OptimizationType optimization, String params) throws DynamicParamException {
-        switch (optimization) {
+    public static Optimizer create(OptimizationType optimizationType, String params) throws DynamicParamException {
+        switch (optimizationType) {
             case GRADIENT_DESCENT:
-                return (params == null) ? new GradientDescent() : new GradientDescent(params);
+                return (params == null) ? new GradientDescent(optimizationType) : new GradientDescent(optimizationType, params);
             case MOMENTUM_GRADIENT_DESCENT:
-                return (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
+                return (params == null) ? new MomentumGradientDescent(optimizationType) : new MomentumGradientDescent(optimizationType, params);
             case NESTEROV_ACCELERATED_GRADIENT:
-                return (params == null) ? new NesterovAcceleratedGradient() : new NesterovAcceleratedGradient(params);
+                return (params == null) ? new NesterovAcceleratedGradient(optimizationType) : new NesterovAcceleratedGradient(optimizationType, params);
             case ADAGRAD:
-                return (params == null) ? new Adagrad() : new Adagrad(params);
+                return (params == null) ? new Adagrad(optimizationType) : new Adagrad(optimizationType, params);
             case ADADELTA:
-                return (params == null) ? new Adadelta() : new Adadelta(params);
+                return (params == null) ? new Adadelta(optimizationType) : new Adadelta(optimizationType, params);
             case RMSPROP:
-                return (params == null) ? new RMSProp() : new RMSProp(params);
+                return (params == null) ? new RMSProp(optimizationType) : new RMSProp(optimizationType, params);
             case ADAM:
-                return (params == null) ? new Adam() : new Adam(params);
+                return (params == null) ? new Adam(optimizationType) : new Adam(optimizationType, params);
             case ADAMAX:
-                return (params == null) ? new Adamax() : new Adamax(params);
+                return (params == null) ? new Adamax(optimizationType) : new Adamax(optimizationType, params);
             case NADAM:
-                return (params == null) ? new NAdam() : new NAdam(params);
+                return (params == null) ? new NAdam(optimizationType) : new NAdam(optimizationType, params);
             case RADAM:
-                return (params == null) ? new RAdam() : new RAdam(params);
+                return (params == null) ? new RAdam(optimizationType) : new RAdam(optimizationType, params);
             case AMSGRAD:
-                return (params == null) ? new AMSGrad() : new AMSGrad(params);
+                return (params == null) ? new AMSGrad(optimizationType) : new AMSGrad(optimizationType, params);
             case RESILIENT_PROPAGATION:
-                return (params == null) ? new ResilientPropagation() : new ResilientPropagation(params);
+                return new ResilientPropagation(optimizationType);
         }
         return null;
     }
