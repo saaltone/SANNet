@@ -6,8 +6,12 @@
 
 package core.layer;
 
+import core.NeuralNetworkException;
+import core.normalization.NormalizationType;
+import core.optimization.Optimizer;
+import core.regularization.RegularizationType;
 import utils.*;
-import utils.matrix.Init;
+import utils.matrix.Matrix;
 
 import java.util.HashMap;
 
@@ -23,10 +27,10 @@ public class InputLayer extends AbstractLayer {
      * @param layerIndex index of layer.
      * @param params parameters for input layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
-    public InputLayer(int layerIndex, String params) throws DynamicParamException {
-        super(layerIndex);
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    public InputLayer(int layerIndex, String params) throws DynamicParamException, NeuralNetworkException {
+        super(layerIndex, params);
     }
 
     /**
@@ -39,70 +43,241 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Returns parameters used for input layer.
+     * Returns layer type by name
      *
-     * @return parameters used for input layer.
+     * @return layer type by name
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("width", DynamicParam.ParamType.INT);
-        paramDefs.put("height", DynamicParam.ParamType.INT);
-        paramDefs.put("depth", DynamicParam.ParamType.INT);
-        return paramDefs;
+    protected String getTypeByName() {
+        return "";
     }
 
     /**
-     * Sets parameters used for input layer.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - width: width (number of nodes) for input layer.<br>
-     *     - height: height for input layer (relevant only for convolutional layers).<br>
-     *     - depth: depth for input layer (relevant only for convolutional layers).<br>
+     * Sets if recurrent inputs of layer are allowed to be reset during training.
      *
-     * @param params parameters used for input layer.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param resetStateTraining if true allows reset.
      */
-    private void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("width")) setWidth(params.getValueAsInteger("width"));
-        if (params.hasParam("height")) setHeight(params.getValueAsInteger("height"));
-        if (params.hasParam("depth")) setDepth(params.getValueAsInteger("depth"));
+    public void resetStateTraining(boolean resetStateTraining) {
     }
 
     /**
-     * Returns used initialization function.
+     * Sets if recurrent inputs of layer are allowed to be reset during testing.
      *
-     * @return used initialization function.
+     * @param resetStateTesting if true allows reset.
      */
-    public Init getInitialization() {
-        return null;
+    public void resetStateTesting(boolean resetStateTesting) {
     }
 
     /**
-     * Executes forward processing step. Not relevant for input layer.
+     * Checks if execution layer is recurrent layer type.
      *
-     * @param training if true neural network is in training state otherwise neural network is in inference state.
+     * @return true if execution layer is recurrent layer type otherwise false.
      */
-    protected void forwardProcess(boolean training) {}
+    public boolean isRecurrentLayer() {
+        return false;
+    }
+
+    /**
+     * Checks if execution layer is convolutional layer type.
+     *
+     * @return true if execution layer is convolutional layer type otherwise false.
+     */
+    public boolean isConvolutionalLayer() {
+        return false;
+    }
+
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     */
+    protected void defineProcedure() {
+    }
+
+    /**
+     * Initializes layer.
+     *
+     */
+    public void initialize() {
+    }
+
+    /**
+     * Sets training flag.
+     *
+     * @param training if true layer is training otherwise false.
+     */
+    protected void setTraining(boolean training) {
+    }
+
+    /**
+     * Executes forward processing step of execution layer.
+     *
+     */
+    public void forwardProcess() {
+    }
 
     /**
      * Executes backward processing step. Not relevant for input layer.
      *
      */
-    protected void backwardProcess() {}
+    public void backwardProcess() {
+    }
 
     /**
-     * Updates output error, relevant only for output layer.
+     * Executes weight updates with regularizers and optimizer.
      *
      */
-    public void updateOutputError() {}
+    public void optimize() {
+    }
 
     /**
-     * Returns gradients of next neural network layer.
+     * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
-     * @return gradients of next neural network layer
+     * @return cumulated error from regularization.
      */
-    public Sequence getdEosN() {
-        return getForward().getNLayer().getdEos();
+    public double error() {
+        return 0;
+    }
+
+    /**
+     * Resets normalizers and optimizer of layer.
+     *
+     */
+    public void reset() {
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     */
+    public void addRegularization(RegularizationType regularizationType) {
+    }
+
+    /**
+     * Adds regularization method for layer.
+     *
+     * @param regularizationType regularization method.
+     * @param params parameters for regularizer.
+     */
+    public void addRegularization(RegularizationType regularizationType, String params) {
+    }
+
+    /**
+     * Removes any regularization from layer.
+     *
+     */
+    public void removeRegularization() {
+    }
+
+    /**
+     * Removes specific regularization from layer.
+     *
+     * @param regularizationType regularization method to be removed.
+     */
+    public void removeRegularization(RegularizationType regularizationType) {
+    }
+
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     */
+    public void addNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Adds normalization method for layer.
+     *
+     * @param normalizationType normalization method.
+     * @param params parameters for normalizer.
+     */
+    public void addNormalization(NormalizationType normalizationType, String params) {
+    }
+
+    /**
+     * Removes any normalization from layer.
+     *
+     */
+    public void removeNormalization() {
+    }
+
+    /**
+     * Removes specific normalization from layer.
+     *
+     * @param normalizationType normalization method to be removed.
+     */
+    public void removeNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reset.
+     */
+    public void resetNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    public void resetNormalization() {
+    }
+
+    /**
+     * Sets optimizer for layer.<br>
+     * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
+     *
+     * @param optimizer optimizer to be added.
+     */
+    public void setOptimizer(Optimizer optimizer) {
+    }
+
+    /**
+     * Resets optimizer for layer.
+     *
+     */
+    public void resetOptimizer() {
+    }
+
+    /**
+     * Returns ordered map of weights.
+     *
+     * @return ordered map of weights.
+     */
+    public HashMap<Integer, Matrix> getWeightsMap() {
+        return null;
+    }
+
+    /**
+     * Appends other neural network layer with equal weights to this layer by weighted factor tau.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @param tau tau which controls contribution of other layer.
+     */
+    public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) {
+    }
+
+    /**
+     * Prints structure and metadata of neural network.
+     *
+     * @throws NeuralNetworkException throws exception if printing of neural network fails.
+     */
+    public void print() throws NeuralNetworkException {
+        System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + " ]");
+    }
+
+    /**
+     * Prints expression chains of neural network.
+     *
+     */
+    public void printExpressions() {
+    }
+
+    /**
+     * Prints gradient chains of neural network.
+     *
+     */
+    public void printGradients() {
     }
 
 }
