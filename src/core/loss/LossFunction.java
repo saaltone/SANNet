@@ -10,6 +10,7 @@ import core.NeuralNetworkException;
 import utils.*;
 import utils.matrix.BinaryFunction;
 import utils.matrix.BinaryFunctionType;
+import utils.matrix.MatrixException;
 
 /**
  * Defines loss function class for neural network.<br>
@@ -59,17 +60,14 @@ public class LossFunction extends BinaryFunction {
      *
      * @param binaryFunctionType type of loss function to be used.
      * @throws NeuralNetworkException throws exception if function is not available as loss function.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public LossFunction(BinaryFunctionType binaryFunctionType) throws NeuralNetworkException {
+    public LossFunction(BinaryFunctionType binaryFunctionType) throws NeuralNetworkException, MatrixException {
         super(binaryFunctionType);
-        boolean found = false;
-        for (BinaryFunctionType lossFunction : lossFunctions) {
-            if (lossFunction == binaryFunctionType) {
-                found = true;
-                break;
-            }
+        for (BinaryFunctionType lossFunctionType : lossFunctions) {
+            if (lossFunctionType == binaryFunctionType) return;
         }
-        if (!found) throw new NeuralNetworkException("No such loss function available.");
+        throw new NeuralNetworkException("No such loss function available.");
     }
 
     /**
@@ -82,17 +80,14 @@ public class LossFunction extends BinaryFunction {
      * @param params parameters used for loss function.
      * @throws NeuralNetworkException throws exception if function is not available as loss function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public LossFunction(BinaryFunctionType binaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
+    public LossFunction(BinaryFunctionType binaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super(binaryFunctionType, params);
-        boolean found = false;
-        for (BinaryFunctionType lossFunction : lossFunctions) {
-            if (lossFunction == binaryFunctionType) {
-                found = true;
-                break;
-            }
+        for (BinaryFunctionType lossFunctionType : lossFunctions) {
+            if (lossFunctionType == binaryFunctionType) return;
         }
-        if (!found) throw new NeuralNetworkException("No such loss function available.");
+        throw new NeuralNetworkException("No such loss function available.");
     }
 
 }
