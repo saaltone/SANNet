@@ -9,8 +9,8 @@ package utils.sampling;
 import core.NeuralNetworkException;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.Sample;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 
 import java.io.Serializable;
 import java.util.*;
@@ -27,25 +27,31 @@ public class BasicSampler implements Sampler, Serializable {
      * Input sample set for sampling.
      *
      */
-    private transient LinkedHashMap<Integer, Sample> inputs;
+    private final LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
 
     /**
      * Output sample set for sampling.
      *
      */
-    private transient LinkedHashMap<Integer, Sample> outputs;
+    private final LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
 
     /**
      * Number of validation cycles.
      *
      */
-    private int numberOfValidationCycles = 1;
+    private int numberOfIterations = 1;
 
     /**
      * If true samples entire input as single set. Default value false.
      *
      */
     private boolean fullSet = false;
+
+    /**
+     * If true samples at random start. Default value true.
+     *
+     */
+    private boolean randomStart = false;
 
     /**
      * If true samples in random order. Default value true.
@@ -90,10 +96,16 @@ public class BasicSampler implements Sampler, Serializable {
     private boolean cyclical = false;
 
     /**
+     * Depth of sample.
+     *
+     */
+    private int sampleDepth = -1;
+
+    /**
      * Current sampling position assuming no random sampling.
      *
      */
-    private int sampleAt = 0;
+    private transient int sampleAt;
 
     /**
      * Random function.
@@ -108,18 +120,12 @@ public class BasicSampler implements Sampler, Serializable {
      * @param outputs output set for sampling.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
-    public BasicSampler(LinkedHashMap<Integer, Sample> inputs, LinkedHashMap<Integer, Sample> outputs) throws NeuralNetworkException {
-        initialize(inputs, outputs);
-    }
-
-    /**
-     * Constructor for BasicSampler.
-     *
-     * @param params parameters used for BasicSampler.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public BasicSampler(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+    public BasicSampler(LinkedHashMap<Integer, MMatrix> inputs, LinkedHashMap<Integer, MMatrix> outputs) throws NeuralNetworkException {
+        if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
+        if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
+        if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
+        for (Integer index : inputs.keySet()) addSample(inputs.get(index), outputs.get(index));
+        sampleAt = 0;
     }
 
     /**
@@ -131,7 +137,7 @@ public class BasicSampler implements Sampler, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BasicSampler(LinkedHashMap<Integer, Sample> inputs, LinkedHashMap<Integer, Sample> outputs, String params) throws NeuralNetworkException, DynamicParamException {
+    public BasicSampler(LinkedHashMap<Integer, MMatrix> inputs, LinkedHashMap<Integer, MMatrix> outputs, String params) throws NeuralNetworkException, DynamicParamException {
         this(inputs, outputs);
         setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -143,9 +149,11 @@ public class BasicSampler implements Sampler, Serializable {
      */
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("numberOfValidationCycles", DynamicParam.ParamType.INT);
+        paramDefs.put("numberOfTrainingIterations", DynamicParam.ParamType.INT);
+        paramDefs.put("numberOfIterations", DynamicParam.ParamType.INT);
         paramDefs.put("fullSet", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("randomOrder", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("randomStart", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("stepForward", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("stepSize", DynamicParam.ParamType.INT);
         paramDefs.put("shuffleSamples", DynamicParam.ParamType.BOOLEAN);
@@ -159,10 +167,11 @@ public class BasicSampler implements Sampler, Serializable {
      * Sets parameters used for BasicSampler.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - numberOfValidationCycles: number of validation cycles executed during validation step. Default value 1.<br>
+     *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - fullSet: if true samples entire input as single set. Default value false.<br>
      *     - randomOrder: if true samples in random order. Default value true.<br>
-     *     - stepForward: if true samples sampling stept in forward order (not valid for randomOrder sampling). Default value true.<br>
+     *     - randomOrder: if true samples at random start. Default value false.<br>
+     *     - stepForward: if true samples sampling steps in forward order (not valid for randomOrder sampling). Default value true.<br>
      *     - stepSize: number of steps taken forward or backward when sampling (not valid for randomOrder sampling). Default value 1.<br>
      *     - shuffleSamples: if true shuffles sampled samples. Default value false.<br>
      *     - sampleReverse: if true samples in reverse order (assumes no sample shuffling). Default value false.<br>
@@ -173,12 +182,13 @@ public class BasicSampler implements Sampler, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("numberOfValidationCycles")) {
-            numberOfValidationCycles = params.getValueAsInteger("numberOfValidationCycles");
-            if (numberOfValidationCycles < 1) throw new DynamicParamException("Number of validation cycles must be at least 1.");
+        if (params.hasParam("numberOfIterations")) {
+            numberOfIterations = params.getValueAsInteger("numberOfIterations");
+            if (numberOfIterations < 1) throw new DynamicParamException("Number of iterations must be at least 1.");
         }
         if (params.hasParam("fullSet")) fullSet = params.getValueAsBoolean("fullSet");
         if (params.hasParam("randomOrder")) randomOrder = params.getValueAsBoolean("randomOrder");
+        if (params.hasParam("randomStart")) randomStart = params.getValueAsBoolean("randomStart");
         if (params.hasParam("stepForward")) stepForward = params.getValueAsBoolean("stepForward");
         if (params.hasParam("stepSize")) {
             stepSize = params.getValueAsInteger("stepSize");
@@ -194,43 +204,48 @@ public class BasicSampler implements Sampler, Serializable {
     }
 
     /**
-     * Initializes sampler.
-     *
-     * @param inputs input set for sampling.
-     * @param outputs output set for sampling.
-     * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
-     */
-    private void initialize(LinkedHashMap<Integer, Sample> inputs, LinkedHashMap<Integer, Sample> outputs) throws NeuralNetworkException {
-        if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
-        if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
-        if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
-        this.inputs = new LinkedHashMap<>();
-        this.outputs = new LinkedHashMap<>();
-        for (Integer index : inputs.keySet()) addSample(inputs.get(index), outputs.get(index));
-        sampleAt = 0;
-    }
-
-    /**
      * Adds sample into sampler.
      *
      * @param input input sample.
      * @param output output sample.
      * @throws NeuralNetworkException throws exception if input or output is not defined.
      */
-    private void addSample(Sample input, Sample output) throws NeuralNetworkException {
+    private void addSample(MMatrix input, MMatrix output) throws NeuralNetworkException {
         if (input == null) throw new NeuralNetworkException("Input is not defined.");
-        if (output == null) throw new NeuralNetworkException("Input is not defined.");
+        if (output == null) throw new NeuralNetworkException("Output is not defined.");
+        if (input.size() != output.size()) throw new NeuralNetworkException("Input and output must be same size.");
+        if (input.size() == 0) throw new NeuralNetworkException("Input and output cannot be empty.");
+        if (input.getCapacity() != output.getCapacity()) throw new NeuralNetworkException("Sample depth of input and output must match.");
+        if (sampleDepth == -1) sampleDepth = input.getCapacity();
+        else if (sampleDepth != input.getCapacity()) throw new NeuralNetworkException("All input and output samples must have same depth.");
         inputs.put(inputs.size(), input);
         outputs.put(outputs.size(), output);
     }
 
     /**
-     * Returns number of validation cycles.
+     * Returns depth of sample.
      *
-     * @return number of validation cycles.
+     * @return depth of sample.
      */
-    public int getNumberOfValidationCycles() {
-        return numberOfValidationCycles;
+    public int getDepth() {
+        return sampleDepth;
+    }
+
+    /**
+     * Resets sampler.
+     *
+     */
+    public void reset() {
+        if (fullSet) sampleAt = 0;
+    }
+
+    /**
+     * Returns number of training or validation iterations.
+     *
+     * @return number of training or validation iterations.
+     */
+    public int getNumberOfIterations() {
+        return numberOfIterations;
     }
 
     /**
@@ -250,21 +265,26 @@ public class BasicSampler implements Sampler, Serializable {
             sampleAt = 0;
             maxSampleSize = inputs.size();
         }
-        else {
-            maxSampleSize = Math.min(sampleSize, inputs.size());
-            if (randomOrder) sampleAt = random.nextInt(inputs.size() - (cyclical ? 1 : maxSampleSize) + 1);
-        }
+        else maxSampleSize = Math.min(sampleSize, inputs.size());
 
-        int sampleAtIndex = !fullSet ? sampleAt : 0;
-        for (int index = 0; index < maxSampleSize; index++) {
-            sampleIndices.add(sampleAtIndex);
-            if (sampleReverse) {
-                sampleAtIndex--;
-                sampleAtIndex = sampleAtIndex < 0 ? inputs.size() - 1 : sampleAtIndex;
+        if (randomOrder) {
+            for (int index = 0; index < maxSampleSize; index++) {
+                sampleIndices.add(random.nextInt(inputs.size() - (cyclical ? 1 : maxSampleSize) + 1));
             }
-            else {
-                sampleAtIndex++;
-                sampleAtIndex = sampleAtIndex > inputs.size() - 1 ? 0 : sampleAtIndex;
+        }
+        else {
+            if (randomStart) sampleAt = random.nextInt(inputs.size() - (cyclical ? 1 : maxSampleSize) + 1);
+            int sampleAtIndex = !fullSet ? sampleAt : 0;
+            for (int index = 0; index < maxSampleSize; index++) {
+                sampleIndices.add(sampleAtIndex);
+                if (sampleReverse) {
+                    sampleAtIndex--;
+                    sampleAtIndex = sampleAtIndex < 0 ? inputs.size() - 1 : sampleAtIndex;
+                }
+                else {
+                    sampleAtIndex++;
+                    sampleAtIndex = sampleAtIndex > inputs.size() - 1 ? 0 : sampleAtIndex;
+                }
             }
         }
 
@@ -275,7 +295,7 @@ public class BasicSampler implements Sampler, Serializable {
             outputSequence.put(sampleIndex, outputs.get(sampleIndex));
         }
 
-        if (!randomOrder && !fullSet) {
+        if (!randomOrder && !randomStart && !fullSet) {
             if (stepForward) {
                 sampleAt += stepSize;
                 sampleAt = sampleAt > inputs.size() - (cyclical ? 1 : maxSampleSize) ? 0 : sampleAt;
@@ -286,14 +306,6 @@ public class BasicSampler implements Sampler, Serializable {
             }
         }
 
-    }
-
-    /**
-     * Resets sampler.
-     *
-     */
-    public void reset() {
-        sampleAt = 0;
     }
 
 }
