@@ -7,20 +7,19 @@
 package utils.procedure;
 
 import core.normalization.Normalization;
-import utils.matrix.DMatrix;
-import utils.matrix.Init;
+import core.regularization.Regularization;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Class that implements node for expression calculation. Node contains value(s) of arguments for expression.<br>
  * Stores both matrices and gradients for multiple data indices.<br>
- * Supports constant node where data is shared between data indiced.<br>
+ * Supports constant node where data is shared between data indices.<br>
  *
  */
 public class Node implements Serializable {
@@ -28,115 +27,172 @@ public class Node implements Serializable {
     private static final long serialVersionUID = -1121024205323275937L;
 
     /**
+     * ID for node.
+     *
+     */
+    private final int id;
+
+    /**
      * Matrices for node.
      *
      */
-    private final TreeMap<Integer, Matrix> matrices = new TreeMap<>();
+    private transient MMatrix matrices;
+
+    /**
+     * Constant matrix if node is of type contains type
+     *
+     */
+    private Matrix constantMatrix;
+
+    /**
+     * True if matrix is of type multi index.
+     *
+     */
+    private boolean isMultiIndex;
 
     /**
      * Gradients for node.
      *
      */
-    private final TreeMap<Integer, Matrix> gradients = new TreeMap<>();
+    private transient MMatrix gradients;
 
     /**
-     * If true node is treated as constant matrix.
+     * Constant gradient if node is of type contains type
      *
      */
-    private final boolean constantNode;
+    private transient Matrix constantGradient;
 
     /**
-     * If true creates matrix is not existing when get.
+     * If true node is treated as constant node.
      *
      */
-    private final boolean createMatrixIfNone;
+    private final boolean isConstantNode;
 
     /**
-     * If true matrix is of constant type.
+     * Reference matrix for node.
      *
      */
-    private final boolean constantMatrix;
+    private final Matrix referenceMatrix;
 
     /**
-     * Procedure callback for node.
+     * Normalizers for node.
      *
      */
-    private final HashSet<Normalization> normalizers;
+    private HashSet<Normalization> normalizers;
 
     /**
-     * Number of rows in matrix.
+     * Regularizers for node.
      *
      */
-    private final int rows;
+    private HashSet<Regularization> regularizers;
 
     /**
-     * Number of columns in matrix.
+     * Number of matrix / gradient entries.
      *
      */
-    private final int cols;
+    private int entryCount = 0;
 
     /**
      * Constructor for node. Records dimensions of references matrix as node data dimensions.
      *
-     * @param matrix reference matrix.
-     * @param constantNode if true node is treated as constant node.
+     * @param referenceMatrix reference matrix.
+     * @param isConstantNode if true node is treated as constant node.
      * @throws MatrixException throws exception is matrix is not defined.
      */
-    Node(Matrix matrix, boolean constantNode, boolean createMatrixIfNone, boolean constantMatrix, HashSet<Normalization> normalizers) throws MatrixException {
-        if (matrix != null) {
-            rows = matrix.getRows();
-            cols = matrix.getCols();
-        } else throw new MatrixException("Matrix is not defined for the node.");
-        this.constantNode = constantNode;
-        this.createMatrixIfNone = createMatrixIfNone;
-        this.constantMatrix = constantMatrix;
+    Node(int id, Matrix referenceMatrix, boolean isConstantNode) throws MatrixException {
+        if (referenceMatrix == null) throw new MatrixException("Reference matrix is not defined for the node.");
+        this.id = id;
+        this.referenceMatrix = referenceMatrix;
+        this.isConstantNode = isConstantNode;
+        if (isConstantNode) {
+            constantMatrix = referenceMatrix;
+            isMultiIndex = false;
+        }
+        else {
+            matrices = new MMatrix();
+            matrices.put(0, referenceMatrix);
+            gradients = new MMatrix();
+            isMultiIndex = true;
+        }
+    }
+
+    /**
+     * Constructor for node. Records dimensions of references matrix as node data dimensions.
+     *
+     * @param referenceMatrix reference matrix.
+     * @param isConstantNode if true node is treated as constant node.
+     * @throws MatrixException throws exception is matrix is not defined.
+     */
+    Node(int id, MMatrix referenceMatrix, boolean isConstantNode) throws MatrixException {
+        this(id, referenceMatrix.get(referenceMatrix.firstKey()), isConstantNode);
+        matrices = new MMatrix();
+        for (Integer index : referenceMatrix.keySet()) matrices.put(index, referenceMatrix.get(index));
+    }
+
+    /**
+     * Sets normalizers for node.
+     *
+     * @param normalizers normalizers for node.
+     */
+    public void setNormalizers(HashSet<Normalization> normalizers) {
         this.normalizers = normalizers;
     }
 
     /**
-     * Make forward callback to all entries of node.
+     * Sets regularizers for node.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param regularizers regularizers for node.
      */
-    public void forwardCallback() throws MatrixException {
-        if (normalizers != null) {
-            for (Normalization normalizer : normalizers) normalizer.forward(this);
+    public void setRegularizers(HashSet<Regularization> regularizers) {
+        this.regularizers = regularizers;
+    }
+
+    /**
+     * Creates copy of node.
+     *
+     * @param copyGradients if true copies also gradient information.
+     * @throws MatrixException throws exception is matrix is not defined.
+     * @return copy of node.
+     */
+    public Node copy(boolean copyGradients) throws MatrixException {
+        Node node = new Node(id, referenceMatrix, isConstantNode);
+        for (Integer index : keySet()) {
+            node.setMatrix(index, getMatrix(index));
+            if (copyGradients) node.setGradient(index, getGradient(index));
+        }
+        return node;
+    }
+
+    /**
+     * Copies data from given node.
+     *
+     * @param node source node.
+     * @param copyGradients if true copies also gradient information.
+     * @throws MatrixException throws exception is matrix is not defined.
+     */
+    public void setData(Node node, boolean copyGradients) throws MatrixException {
+        for (Integer index : keySet()) {
+            setMatrix(index, node.getMatrix(index));
+            if (copyGradients) setGradient(index, node.getGradient(index));
         }
     }
 
     /**
-     * Make forward callback to specific entry (sample)
+     * Returns id of node.
      *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return id of node.
      */
-    public void forwardCallback(int sampleIndex) throws MatrixException {
-        if (normalizers != null) {
-            for (Normalization normalizer : normalizers) normalizer.forward(this, sampleIndex);
-        }
+    public int getId() {
+        return id;
     }
 
     /**
-     * Make backward callback to all entries of node.
+     * Return name of node
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return name of node
      */
-    public void backwardCallback() throws MatrixException {
-        if (normalizers != null) {
-            for (Normalization normalizer : normalizers) normalizer.backward(this);
-        }
-    }
-
-    /**
-     * Make backward callback to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardCallback(int sampleIndex) throws MatrixException {
-        if (normalizers != null) {
-            for (Normalization normalizer : normalizers) normalizer.backward(this, sampleIndex);
-        }
+    public String getName() {
+        return referenceMatrix.getName() != null ? referenceMatrix.getName() : "Node" + getId();
     }
 
     /**
@@ -145,7 +201,36 @@ public class Node implements Serializable {
      * @return true if node is constant node type otherwise false.
      */
     public boolean isConstantNode() {
-        return !constantNode;
+        return isConstantNode;
+    }
+
+    /**
+     * Sets multi index flag.
+     *
+     * @param isMultiIndex multi index flag.
+     * @throws MatrixException throws exception if constant node is attempted to be set as of type multi-index.
+     */
+    public void setMultiIndex(boolean isMultiIndex) throws MatrixException {
+        if (isConstantNode()) throw new MatrixException("Constant node cannot be of type multi-index.");
+        this.isMultiIndex = isMultiIndex;
+    }
+
+    /**
+     * Returns true if node is of type multi index.
+     *
+     * @return true if node is of type multi index.
+     */
+    public boolean isMultiIndex() {
+        return isMultiIndex;
+    }
+
+    /**
+     * Returns entry count.
+     *
+     * @return entry count.
+     */
+    public int getEntryCount() {
+        return entryCount;
     }
 
     /**
@@ -154,7 +239,7 @@ public class Node implements Serializable {
      * @return size of node.
      */
     public int size() {
-        return matrices.size();
+        return isMultiIndex() ? matrices.size() : 1;
     }
 
     /**
@@ -176,13 +261,31 @@ public class Node implements Serializable {
     }
 
     /**
+     * Returns last key of node.
+     *
+     * @return last key of node.
+     */
+    public int lastKey() {
+        return matrices.lastKey();
+    }
+
+    /**
+     * Checks if node contains specific matrix.
+     *
+     * @param matrix specific matrix.
+     * @return returns true if node contains specific matrix.
+     */
+    public boolean contains(Matrix matrix) {
+        return isMultiIndex() ? matrices.contains(matrix) : matrix == constantMatrix;
+    }
+
+    /**
      * Returns empty matrix with size of reference matrix.
      *
      * @return empty matrix with size of reference matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getEmptyMatrix() throws MatrixException {
-        return !constantMatrix ? new DMatrix(rows, cols) : new DMatrix(rows, cols, Init.CONSTANT);
+    public Matrix getEmptyMatrix() {
+        return referenceMatrix.getNewMatrix();
     }
 
     /**
@@ -190,35 +293,32 @@ public class Node implements Serializable {
      *
      */
     public void resetNode() {
-        if (!constantNode) matrices.clear();
-        resetGradient();
+        if (isMultiIndex()) matrices = new MMatrix();
+        else if (!isConstantNode()) constantMatrix = getEmptyMatrix();
+        gradients = new MMatrix();
+        constantGradient = null;
+        entryCount = 0;
     }
 
     /**
-     * Resets node for specific data index. Leaves data of constant node intact.
+     * Sets matrices for node.
      *
-     * @param index specific data index.
+     * @param matrices matrices of node.
      */
-    public void resetNode(int index) {
-        if (!constantNode) matrices.remove(index);
-        resetGradient(index);
+    public void setMatrices(MMatrix matrices) {
+        this.matrices = matrices;
     }
 
     /**
-     * Resets gradient matrix and removes all gradient data.
+     * Sets matrix of this node.
      *
+     * @param matrix new matrix.
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    private void resetGradient() {
-        gradients.clear();
-    }
-
-    /**
-     * Resets and removes gradient for specific data index.
-     *
-     * @param index specific data index.
-     */
-    private void resetGradient(int index) {
-        gradients.remove(index);
+    public void setMatrix(Matrix matrix) throws MatrixException {
+        if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
+        if (isMultiIndex()) throw new MatrixException("Node is of type multi-index");
+        constantMatrix = matrix;
     }
 
     /**
@@ -226,10 +326,25 @@ public class Node implements Serializable {
      *
      * @param index data index for matrix.
      * @param matrix new matrix.
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
      */
-    public void setMatrix(int index, Matrix matrix) {
-        if (!constantNode) matrices.put(index, matrix);
-        else matrices.put(0, matrix);
+    public void setMatrix(int index, Matrix matrix) throws MatrixException {
+        if (!isConstantNode()) {
+            if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
+            if (isMultiIndex()) matrices.put(index, matrix);
+            else constantMatrix = matrix;
+        }
+    }
+
+    /**
+     * Returns matrix of node.
+     *
+     * @return matrix of node.
+     * @throws MatrixException throws exception if node is of type multi-index.
+     */
+    public Matrix getMatrix() throws MatrixException {
+        if (isMultiIndex()) throw new MatrixException("Node is of type multi-index");
+        return constantMatrix;
     }
 
     /**
@@ -237,21 +352,29 @@ public class Node implements Serializable {
      *
      * @param index data index for matrix.
      * @return matrix of node.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix getMatrix(int index) throws MatrixException {
-        if (!constantNode) {
-            if (!createMatrixIfNone) return matrices.get(index);
-            else {
-                if (matrices.containsKey(index)) return matrices.get(index);
-                else {
-                    Matrix matrix = getEmptyMatrix();
-                    matrices.put(index, matrix);
-                    return matrix;
-                }
-            }
-        }
-        else return matrices.get(0);
+    public Matrix getMatrix(int index) {
+        return isMultiIndex() ? matrices.get(index) : constantMatrix;
+    }
+
+    /**
+     * Returns matrices of node.
+     *
+     * @return matrices of node.
+     */
+    public MMatrix getMatrices() {
+        return matrices;
+    }
+
+    /**
+     * Sets gradient matrix of node.
+     *
+     * @param gradient gradient matrix of node.
+     * @throws MatrixException throws exception if node is of type multi-index.
+     */
+    public void setGradient(Matrix gradient) throws MatrixException {
+        if (isMultiIndex()) throw new MatrixException("Node is of type multi-index");
+        constantGradient = gradient;
     }
 
     /**
@@ -259,10 +382,31 @@ public class Node implements Serializable {
      *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
+     * @throws MatrixException throws exception if putting of matrix fails.
      */
-    public void setGradient(int index, Matrix gradient) {
-        if (!constantNode) gradients.put(index, gradient);
-        else gradients.put(0, gradient);
+    public void setGradient(int index, Matrix gradient) throws MatrixException {
+        if (isMultiIndex()) gradients.put(index, gradient);
+        else constantGradient = gradient;
+    }
+
+    /**
+     * Sets gradients for node.
+     *
+     * @param gradients gradients of node.
+     */
+    public void setGradients(MMatrix gradients) {
+        this.gradients = gradients;
+    }
+
+    /**
+     * Returns gradient matrix of node.
+     *
+     * @return gradient matrix of node.
+     * @throws MatrixException throws exception if node is of type multi-index.
+     */
+    public Matrix getGradient() throws MatrixException {
+        if (isMultiIndex()) throw new MatrixException("Node is of type multi-index");
+        return constantGradient;
     }
 
     /**
@@ -272,38 +416,166 @@ public class Node implements Serializable {
      * @return gradient matrix of node.
      */
     public Matrix getGradient(int index) {
-        if (!constantNode) return gradients.get(index);
-        else return gradients.get(0);
+        return isMultiIndex() ? gradients.get(index) : constantGradient;
     }
 
     /**
-     * Removes procedure factory from node and it's matrices.
+     * Returns gradients of node.
      *
-     * @param index data index.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return gradients of node.
      */
-    public void removeProcedureFactory(int index) throws MatrixException {
-        if (getMatrix(index) != null) getMatrix(index).removeProcedureFactory();
-        if (getGradient(index) != null) getGradient(index).removeProcedureFactory();
+    public MMatrix getGradients() {
+        return gradients;
     }
 
     /**
      * Updates gradient.
      *
      * @param index data index.
-     * @param outputGrad output gradient.
+     * @param outputGradient output gradient.
      * @param add if true output gradient contribution is added to node gradient otherwise subtracted.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void updateGradient(int index, Matrix outputGrad, boolean add) throws MatrixException {
+    public void updateGradient(int index, Matrix outputGradient, boolean add) throws MatrixException {
+        entryCount++;
         if (getGradient(index) == null) setGradient(index, getEmptyMatrix());
-        if (!getGradient(index).isConstant()) {
-            if (add) getGradient(index).add(outputGrad, getGradient(index));
-            else getGradient(index).subtract(outputGrad, getGradient(index));
+        if (!referenceMatrix.isScalar()) {
+            if (add) getGradient(index).add(outputGradient, getGradient(index));
+            else getGradient(index).subtract(outputGradient, getGradient(index));
         }
         else {
-            if (add) getGradient(index).add(outputGrad.sum(), getGradient(index));
-            else getGradient(index).subtract(outputGrad.sum(), getGradient(index));
+            if (add) getGradient(index).add(outputGradient.sum(), getGradient(index));
+            else getGradient(index).subtract(outputGradient.sum(), getGradient(index));
+        }
+    }
+
+    /**
+     * Initializes normalization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void initializeNormalization() throws MatrixException {
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                if (isConstantNode()) normalizer.initialize(constantMatrix);
+                else normalizer.initialize(this);
+            }
+        }
+    }
+
+    /**
+     * Executes forward normalization to constant node.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardNormalize() throws MatrixException {
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                if (isConstantNode()) normalizer.forward(constantMatrix);
+                else normalizer.forward(this);
+            }
+        }
+    }
+
+    /**
+     * Executes forward normalization to specific entry (sample)
+     *
+     * @param sampleIndex sample index of specific entry.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardNormalize(int sampleIndex) throws MatrixException {
+        if (isConstantNode()) return;
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                normalizer.forward(this, sampleIndex);
+            }
+        }
+    }
+
+    /**
+     * Executes forward normalization finalization to constant node.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardNormalizeFinalize() throws MatrixException {
+        if (!isConstantNode()) return;
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                normalizer.forwardFinalize(constantMatrix);
+            }
+        }
+    }
+
+    /**
+     * Executes backward normalization to constant entry of node.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backwardNormalize() throws MatrixException {
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                if (isConstantNode()) normalizer.backward(constantMatrix, constantGradient);
+                else normalizer.backward(this);
+            }
+        }
+    }
+
+    /**
+     * Executes backward normalization to specific entry (sample)
+     *
+     * @param sampleIndex sample index of specific entry.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backwardNormalize(int sampleIndex) throws MatrixException {
+        if (isConstantNode()) return;
+        if (referenceMatrix.isNormalized() && normalizers != null) {
+            for (Normalization normalizer : normalizers) {
+                normalizer.backward(this, sampleIndex);
+            }
+        }
+    }
+
+    /**
+     * Executes forward regularization step.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardRegularize() throws MatrixException {
+        if (isConstantNode()) return;
+        if (referenceMatrix.isRegularized() && regularizers != null) {
+            for (Regularization regularizer : regularizers) {
+                regularizer.forward(matrices);
+            }
+        }
+    }
+
+    /**
+     * Cumulates error from regularization.
+     *
+     * @return updated error value.
+     */
+    public double cumulateRegularizationError() {
+        if (!isConstantNode()) return 0;
+        double error = 0;
+        if (referenceMatrix.isRegularized() && regularizers != null) {
+            for (Regularization regularizer : regularizers) {
+                error += regularizer.error(constantMatrix);
+            }
+        }
+        return error;
+    }
+
+    /**
+     * Executes backward regularization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backwardRegularize() throws MatrixException {
+        if (!isConstantNode()) return;
+        if (referenceMatrix.isRegularized() && regularizers != null) {
+            for (Regularization regularizer : regularizers) {
+                regularizer.backward(constantMatrix, constantGradient.divide(entryCount));
+            }
         }
     }
 
