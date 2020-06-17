@@ -8,7 +8,7 @@ package core.layer;
 
 /**
  * Enum for supported neural network layer types.<br>
- * Currently supportes types are:
+ * Currently supports types are:
  *     FEEDFORWARD,
  *     RECURRENT,
  *     LSTM,
