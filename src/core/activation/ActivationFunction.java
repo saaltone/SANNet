@@ -8,6 +8,7 @@ package core.activation;
 
 import core.NeuralNetworkException;
 import utils.*;
+import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
 import utils.matrix.UnaryFunctionType;
 
@@ -71,17 +72,14 @@ public class ActivationFunction extends UnaryFunction {
      *
      * @param unaryFunctionType type of activation function to be used.
      * @throws NeuralNetworkException throws exception if function is not available as activation function.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public ActivationFunction(UnaryFunctionType unaryFunctionType) throws NeuralNetworkException {
+    public ActivationFunction(UnaryFunctionType unaryFunctionType) throws NeuralNetworkException, MatrixException {
         super(unaryFunctionType);
-        boolean found = false;
-        for (UnaryFunctionType fType : activationFunctions) {
-            if (fType == unaryFunctionType) {
-                found = true;
-                break;
-            }
+        for (UnaryFunctionType activationFunctionType : activationFunctions) {
+            if (activationFunctionType == unaryFunctionType) return;
         }
-        if (!found) throw new NeuralNetworkException("No such activation function available.");
+        throw new NeuralNetworkException("No such activation function available.");
     }
 
     /**
@@ -91,17 +89,14 @@ public class ActivationFunction extends UnaryFunction {
      * @param params parameters used for activation function.
      * @throws NeuralNetworkException throws exception if function is not available as activation function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public ActivationFunction(UnaryFunctionType unaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException {
+    public ActivationFunction(UnaryFunctionType unaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super(unaryFunctionType, params);
-        boolean found = false;
-        for (UnaryFunctionType fType : activationFunctions) {
-            if (fType == unaryFunctionType) {
-                found = true;
-                break;
-            }
+        for (UnaryFunctionType activationFunctionType : activationFunctions) {
+            if (activationFunctionType == unaryFunctionType) return;
         }
-        if (!found) throw new NeuralNetworkException("No such activation function available.");
+        throw new NeuralNetworkException("No such activation function available.");
     }
 
 }
