@@ -9,6 +9,7 @@ package core.regularization;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -29,6 +30,12 @@ public class DropOut implements Regularization, Serializable {
     private static final long serialVersionUID = 1335548498128292515L;
 
     /**
+     * Type of regularization.
+     *
+     */
+    private final RegularizationType regularizationType;
+
+    /**
      * If true neural network is in state otherwise false.
      *
      */
@@ -43,17 +50,21 @@ public class DropOut implements Regularization, Serializable {
     /**
      * Constructor for drop out class.
      *
+     * @param regularizationType regularizationType.
      */
-    public DropOut() {
+    public DropOut(RegularizationType regularizationType) {
+        this.regularizationType = regularizationType;
     }
 
     /**
      * Constructor for drop out class.
      *
+     * @param regularizationType regularizationType.
      * @param params parameters for drop out.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DropOut(String params) throws DynamicParamException {
+    public DropOut(RegularizationType regularizationType, String params) throws DynamicParamException {
+        this(regularizationType);
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -82,26 +93,12 @@ public class DropOut implements Regularization, Serializable {
     }
 
     /**
-     * Not used.
-     *
-     */
-    public void reset() {}
-
-    /**
      * Sets flag for drop out if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
     public void setTraining(boolean isTraining) {
         this.isTraining = isTraining;
-    }
-
-    /**
-     * Not used.
-     *
-     * @param miniBatchSize current mini batch size.
-     */
-    public void setMiniBatchSize(int miniBatchSize) {
     }
 
     /**
@@ -115,48 +112,70 @@ public class DropOut implements Regularization, Serializable {
     public void forward(Sequence sequence) throws MatrixException {
         for (Integer sampleIndex : sequence.keySet()) {
             for (Integer entryIndex : sequence.sampleKeySet()) {
-                Matrix matrix = sequence.get(sampleIndex).get(entryIndex);
-                if (isTraining) {
-//                    matrix.unsetScalingConstant();
-                    matrix.setScalingConstant(1 / probability);
-                    matrix.setMask();
-                    matrix.getMask().setMaskProba(probability);
-                    matrix.getMask().maskRowByProba();
-                }
-                else {
-                    matrix.unsetScalingConstant();
-//                    matrix.setScalingConstant(probability);
-                    matrix.unsetMask();
-                }
+                forward (sequence.get(sampleIndex).get(entryIndex));
             }
+        }
+    }
+
+    /**
+     * Implements forward step for inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
+     *
+     * @param inputs inputs.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forward(MMatrix inputs) throws MatrixException {
+        for (Integer index : inputs.keySet()) forward (inputs.get(index));
+    }
+
+    /**
+     * Implements forward step for inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
+     *
+     * @param matrix matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private void forward(Matrix matrix) throws MatrixException {
+        if (isTraining) {
+            matrix.setScalingConstant(1 / probability);
+            matrix.setMask();
+            matrix.getMask().setMaskProbability(probability);
+            matrix.getMask().maskRowByProbability();
+        }
+        else {
+            matrix.unsetScalingConstant();
+            matrix.unsetMask();
         }
     }
 
     /**
      * Not used.
      *
-     * @param W weight matrix.
-     */
-    public void forward(Matrix W) {
-    }
-
-    /**
-     * Not used.
-     *
-     * @param W weight matrix.
+     * @param weight weight matrix.
      * @return not used.
      */
-    public double error(Matrix W) {
+    public double error(Matrix weight) {
         return 0;
     }
 
     /**
      * Not used.
      *
-     * @param W weight matrix.
-     * @param dWSum gradient sum of weight.
+     * @param weight weight matrix.
+     * @param weightGradientSum gradient sum of weight.
      */
-    public void backward(Matrix W, Matrix dWSum) {
+    public void backward(Matrix weight, Matrix weightGradientSum) {
+    }
+
+    /**
+     * Returns name of regularization.
+     *
+     * @return name of regularization.
+     */
+    public String getName() {
+        return regularizationType.toString();
     }
 
 }
