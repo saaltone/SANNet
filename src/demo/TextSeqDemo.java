@@ -48,6 +48,7 @@ public class TextSeqDemo {
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
             neuralNetwork.start();
+            neuralNetwork.print();
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
             neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = false, stepSize = 100, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
