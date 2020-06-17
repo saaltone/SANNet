@@ -7,6 +7,7 @@
 package utils;
 
 import utils.matrix.DMatrix;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -31,14 +32,16 @@ public class Sequence implements Serializable {
      * Ordered map of samples.
      *
      */
-    private final TreeMap<Integer, Sample> entries = new TreeMap<>();
+    private TreeMap<Integer, MMatrix> entries = new TreeMap<>();
 
     /**
      * Constructor for sequence.
      *
      * @param depth depth of samples.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Sequence(int depth) {
+    public Sequence(int depth) throws MatrixException {
+        if (depth < 1) throw new MatrixException("Depth of sequence must be at least 1.");
         this.depth = depth;
     }
 
@@ -58,10 +61,10 @@ public class Sequence implements Serializable {
      * @param samples samples to be added into this sequence.
      * @throws MatrixException throws exception if depth of samples are not equal.
      */
-    public Sequence(LinkedHashMap<Integer, Sample> samples) throws MatrixException {
-        this.depth = samples.get(0).getDepth();
+    public Sequence(LinkedHashMap<Integer, MMatrix> samples) throws MatrixException {
+        this.depth = samples.get(0).getCapacity();
         for (Integer entry : samples.keySet()) {
-            if (samples.get(entry).getDepth() != depth) throw new MatrixException("Depths of all samples are not equal.");
+            if (samples.get(entry).getCapacity() != depth) throw new MatrixException("Depths of all samples are not equal.");
             entries.put(entry, samples.get(entry));
         }
     }
@@ -107,7 +110,7 @@ public class Sequence implements Serializable {
      *
      */
     public void clear() {
-        entries.clear();
+        entries = new TreeMap<>();
     }
 
     /**
@@ -121,7 +124,7 @@ public class Sequence implements Serializable {
     public void put(int sampleIndex, int entryIndex, Matrix entry) throws MatrixException {
         if (entries.containsKey(sampleIndex)) entries.get(sampleIndex).put(entryIndex, entry);
         else {
-            Sample sample = new Sample(depth);
+            MMatrix sample = new MMatrix(depth);
             sample.put(entryIndex, entry);
             entries.put(sampleIndex, sample);
         }
@@ -133,7 +136,7 @@ public class Sequence implements Serializable {
      * @param sampleIndex sample index.
      * @param sample sample to be inserted.
      */
-    public void put(int sampleIndex, Sample sample) {
+    public void put(int sampleIndex, MMatrix sample) {
         entries.put(sampleIndex, sample);
     }
 
@@ -173,7 +176,7 @@ public class Sequence implements Serializable {
      * @param sampleIndex sample index.
      * @return requested sample.
      */
-    public Sample get(int sampleIndex) {
+    public MMatrix get(int sampleIndex) {
         return entries.get(sampleIndex);
     }
 
@@ -182,7 +185,7 @@ public class Sequence implements Serializable {
      *
      * @return all samples inside sequence as ordered map.
      */
-    public TreeMap<Integer, Sample> get() {
+    public TreeMap<Integer, MMatrix> get() {
         return entries;
     }
 
@@ -209,7 +212,7 @@ public class Sequence implements Serializable {
      *
      * @return samples contained inside sequence as collection.
      */
-    public Collection<Sample> values() {
+    public Collection<MMatrix> values() {
         return entries.values();
     }
 
@@ -236,7 +239,7 @@ public class Sequence implements Serializable {
      *
      * @return first sample of sequence.
      */
-    public Sample firstValue() {
+    public MMatrix firstValue() {
         return entries.get(entries.firstKey());
     }
 
@@ -254,24 +257,8 @@ public class Sequence implements Serializable {
      *
      * @return last sample of sequence.
      */
-    public Sample lastValue() {
+    public MMatrix lastValue() {
         return entries.get(entries.lastKey());
-    }
-
-    /**
-     * Returns linked map on matrices which has been composed of samples and their entries.
-     *
-     * @return flatted sequence as linked map.
-     */
-    public LinkedHashMap<Integer, Matrix> getFlatSequence() {
-        LinkedHashMap<Integer, Matrix> result = new LinkedHashMap<>();
-        int depth = sampleKeySet().size();
-        for (Integer sampleIndex : entries.keySet()) {
-            for (Integer matrixIndex : sampleKeySet()) {
-                result.put(matrixIndex + sampleIndex * depth, get(sampleIndex, matrixIndex));
-            }
-        }
-        return result;
     }
 
     /**
@@ -284,13 +271,13 @@ public class Sequence implements Serializable {
         Sequence flattenedSequence = new Sequence(1);
         for (Integer sampleIndex : keySet()) {
             int rows = firstValue().get(0).getRows();
-            int cols = firstValue().get(0).getCols();
+            int cols = firstValue().get(0).getColumns();
             Matrix outputMatrix = new DMatrix(rows * cols * getDepth(), 1);
             flattenedSequence.put(sampleIndex, 0, outputMatrix);
             for (Integer matrixIndex : sampleKeySet()) {
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
-                        outputMatrix.setValue(getPos(rows, cols, row, col, matrixIndex), 0 , get(sampleIndex, matrixIndex).getValue(row, col));
+                        outputMatrix.setValue(getPosition(rows, cols, row, col, matrixIndex), 0 , get(sampleIndex, matrixIndex).getValue(row, col));
                     }
                 }
             }
@@ -315,7 +302,7 @@ public class Sequence implements Serializable {
                 unflattenedSequence.put(sampleIndex, matrixIndex, outputMatrix);
                 for (int row = 0; row < width; row++) {
                     for (int col = 0; col < height; col++) {
-                        outputMatrix.setValue(row, col, get(sampleIndex, 0).getValue(getPos(width, height, row, col, matrixIndex), 0));
+                        outputMatrix.setValue(row, col, get(sampleIndex, 0).getValue(getPosition(width, height, row, col, matrixIndex), 0));
                     }
                 }
             }
@@ -327,11 +314,11 @@ public class Sequence implements Serializable {
      * Returns one dimensional index calculated based on width, height and depth.
      *
      * @param w weight as input
-     * @param h heigth as input
+     * @param h height as input
      * @param d depth as input
      * @return one dimensional index
      */
-    private int getPos(int maxWidth, int maxHeight, int w, int h, int d) {
+    private int getPosition(int maxWidth, int maxHeight, int w, int h, int d) {
         return w + maxWidth * h + maxWidth * maxHeight * d;
     }
 
