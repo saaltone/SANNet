@@ -41,6 +41,7 @@ public class SimpleDemo {
             neuralNetwork1.verboseValidation();
             neuralNetwork1.setTrainingEarlyStopping(new EarlyStopping());
             neuralNetwork1.start();
+            neuralNetwork1.print();
             neuralNetwork1.printExpressions();
             neuralNetwork1.printGradients();
             neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000"));
