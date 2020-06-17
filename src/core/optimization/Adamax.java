@@ -26,17 +26,16 @@ public class Adamax implements Optimizer, Serializable {
     private static final long serialVersionUID = 9136132997261066936L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for Adamax. Default value 0.001.
      *
      */
     private double learningRate = 0.001;
-
-    /**
-     * Epsilon term for Adamax. Default value 10E-8.<br>
-     * Term provides mathematical stability for optimizer.<br>
-     *
-     */
-    private final double epsilon = 10E-8;
 
     /**
      * Beta1 term for Adamax. Default value 0.9.
@@ -54,7 +53,7 @@ public class Adamax implements Optimizer, Serializable {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iters;
+    private transient HashMap<Matrix, Integer> iterations;
 
     /**
      * Hash map to store first moments (means).
@@ -71,17 +70,21 @@ public class Adamax implements Optimizer, Serializable {
     /**
      * Default constructor for Adamax.
      *
+     * @param optimizationType optimizationType.
      */
-    public Adamax() {
+    public Adamax(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for Adamax.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for Adamax.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adamax(String params) throws DynamicParamException {
+    public Adamax(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -120,7 +123,7 @@ public class Adamax implements Optimizer, Serializable {
      *
      */
     public void reset() {
-        iters = new HashMap<>();
+        iterations = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
     }
@@ -128,58 +131,67 @@ public class Adamax implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
-        if (iters == null) iters = new HashMap<>();
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
+        if (iterations == null) iterations = new HashMap<>();
         if (m == null) m = new HashMap<>();
         if (v == null) v = new HashMap<>();
 
-        int iter;
-        if (iters.containsKey(M)) iters.put(M, iter = iters.get(M) + 1);
-        else iters.put(M, iter = 1);
+        int iteration;
+        if (iterations.containsKey(matrix)) iterations.put(matrix, iteration = iterations.get(matrix) + 1);
+        else iterations.put(matrix, iteration = 1);
 
         Matrix mM;
-        if (m.containsKey(M)) mM = m.get(M);
-        else m.put(M, mM = new DMatrix(M.getRows(), M.getCols()));
+        if (m.containsKey(matrix)) mM = m.get(matrix);
+        else m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         Matrix vM;
-        if (v.containsKey(M)) vM = v.get(M);
-        else v.put(M, vM = new DMatrix(M.getRows(), M.getCols()));
+        if (v.containsKey(matrix)) vM = v.get(matrix);
+        else v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        Matrix dM_abs = dM.apply(UnaryFunctionType.ABS);
+        Matrix matrixGradientAbs = matrixGradient.apply(UnaryFunctionType.ABS);
 
-        // mt = β1*mt − 1 + (1 − β1)*gt
-        mM.multiply(beta1).add(dM.multiply(1 - beta1), mM);
+        // mt = β1*mt−1 + (1 − β1)*gt
+        mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);
 
-        // vt = β2*vt − 1 + (1 − β2)*|gt|
-        vM.multiply(beta2).add(dM_abs.multiply(1 - beta2), vM);
+        // vt = β2*vt−1 + (1 − β2)*|gt|
+        vM.multiply(beta2).add(matrixGradientAbs.multiply(1 - beta2), vM);
 
         // mt = mt / (1 − βt1)
-        Matrix mM_hat = mM.divide(1 - Math.pow(beta1, iter));
+        Matrix mM_hat = mM.divide(1 - Math.pow(beta1, iteration));
 
         // ut= max(β2⋅vt−1,|gt|)
-        Matrix uM = vM.multiply(beta2).max(dM_abs);
+        Matrix uM = (vM.multiply(beta2)).max(matrixGradientAbs);
 
         // θt+1 = θt − η / ut * mt
-        M.subtract(uM.apply(UnaryFunctionType.MULINV).multiply(mM_hat).multiply(learningRate), M);
+        matrix.subtract(mM_hat.divide(uM).multiply(learningRate), matrix);
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
