@@ -20,12 +20,12 @@ public abstract class Mask implements Cloneable, Serializable {
     /**
      * Defines if mask is transposed (true) or not (false).
      */
-    boolean t;
+    boolean isTransposed;
 
     /**
      * Bernoulli probability for selecting if entry (row, column) is masked or not.
      */
-    double proba = 0;
+    double probability = 0;
 
     /**
      * Random function for mask class.
@@ -70,11 +70,11 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return reference to this mask but with transposed that is flipped rows and columns.
      */
-    public Mask T() {
+    public Mask transpose() {
         try {
             // Make shallow copy of mask leaving references internal objects which are shared.
             Mask clone = (Mask)clone();
-            clone.t = !clone.t; // transpose
+            clone.isTransposed = !clone.isTransposed; // transpose
             return clone;
         } catch (CloneNotSupportedException exception) {
             System.out.println("Mask cloning failed");
@@ -87,8 +87,8 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return true is mask is transposed otherwise false.
      */
-    public boolean isT() {
-        return t;
+    public boolean isTransposed() {
+        return isTransposed;
     }
 
     /**
@@ -98,7 +98,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return size of matrix.
      */
-    public abstract int getSize();
+    public abstract int size();
 
     /**
      * Returns number of rows in mask.<br>
@@ -116,7 +116,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return number of columns in mask.
      */
-    public abstract int getCols();
+    public abstract int getColumns();
 
     /**
      * Clears mask.<br>
@@ -127,25 +127,25 @@ public abstract class Mask implements Cloneable, Serializable {
     protected abstract void clear();
 
     /**
-     * Checks if mask is set at specific row and / or col
+     * Checks if mask is set at specific row and / or column
      *
      * @param row row to be checked.
-     * @param col col to be checked.
+     * @param column column to be checked.
      * @return result of mask check.
      */
-    public boolean isMasked(int row, int col) {
-        return getRowMask(row) || getColMask(col) || getMask(row, col);
+    public boolean isMasked(int row, int column) {
+        return getRowMask(row) || getColumnMask(column) || getMask(row, column);
     }
 
     /**
      * Sets bernoulli probability to mask specific element.
      *
-     * @param proba masking probability between 0 (0%) and 1 (100%).
+     * @param probability masking probability between 0 (0%) and 1 (100%).
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public void setMaskProba(double proba) throws MatrixException {
-        if (proba < 0 || proba > 1) throw new MatrixException("Masking probability must be between 0 and 1.");
-        this.proba = proba;
+    public void setMaskProbability(double probability) throws MatrixException {
+        if (probability < 0 || probability > 1) throw new MatrixException("Masking probability must be between 0 and 1.");
+        this.probability = probability;
     }
 
     /**
@@ -153,8 +153,8 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return masking probability.
      */
-    public double getMaskProba() {
-        return proba;
+    public double getMaskProbability() {
+        return probability;
     }
 
     /**
@@ -194,12 +194,12 @@ public abstract class Mask implements Cloneable, Serializable {
     public abstract void clearMaskStack();
 
     /**
-     * Returns true with probability of proba. Proba is masking probability of this matrix.
+     * Returns true with defined probability as masking probability of this matrix.
      *
-     * @return true with probability of proba.
+     * @return true with defined probability.
      */
-    private boolean maskByProbability() {
-        return random.nextDouble() > proba;
+    private boolean isMaskedByProbability() {
+        return random.nextDouble() > probability;
     }
 
     /**
@@ -208,10 +208,10 @@ public abstract class Mask implements Cloneable, Serializable {
      * This is typically dense mask (DMask class) or sparse mask (SMask class).<br>
      *
      * @param row row of mask to be set.
-     * @param col column of mask to be set.
+     * @param column column of mask to be set.
      * @param value sets mask if true otherwise unsets mask.
      */
-    public abstract void setMask(int row, int col, boolean value);
+    public abstract void setMask(int row, int column, boolean value);
 
     /**
      * Returns mask for element at specific row and column.
@@ -219,20 +219,19 @@ public abstract class Mask implements Cloneable, Serializable {
      * This is typically dense mask (DMask class) or sparse mask (SMask class).<br>
      *
      * @param row row of mask to be returned.
-     * @param col column of mask to be returned.
+     * @param column column of mask to be returned.
      * @return true if mask is set otherwise false.
      */
-    public abstract boolean getMask(int row, int col);
+    public abstract boolean getMask(int row, int column);
 
     /**
-     * Sets masking for this matrix with given bernoulli probability proba.
+     * Sets masking for this matrix with given bernoulli probability.
      *
      */
-    public void maskByProba() {
+    public void maskByProbability() {
         for (int row = 0; row < getRows(); row++) {
-            for (int col = 0; col < getCols(); col++) {
-                // Mask out (set value as true) true by probability of proba
-                if (maskByProbability()) setMask(row, col, true);
+            for (int column = 0; column < getColumns(); column++) {
+                setMask(row, column, isMaskedByProbability());
             }
         }
     }
@@ -294,13 +293,12 @@ public abstract class Mask implements Cloneable, Serializable {
     public abstract boolean getRowMask(int row);
 
     /**
-     * Sets row masking for this matrix with given bernoulli probability proba.
+     * Sets row masking for this matrix with given bernoulli probability.
      *
      */
-    public void maskRowByProba() {
+    public void maskRowByProbability() {
         for (int row = 0; row < getRows(); row++) {
-            // Mask out (set value as true) by probability of proba
-            if (maskByProbability()) setRowMask(row, true);
+            setRowMask(row, isMaskedByProbability());
         }
     }
 
@@ -309,19 +307,18 @@ public abstract class Mask implements Cloneable, Serializable {
      * Abstract function to be implemented by underlying mask data structure class implementation.<br>
      * This is typically dense mask (DMask class) or sparse mask (SMask class).<br>
      *
-     * @param col column of mask to be set.
+     * @param column column of mask to be set.
      * @param value if true sets row mask otherwise unsets mask.
      */
-    public abstract void setColMask(int col, boolean value);
+    public abstract void setColumnMask(int column, boolean value);
 
     /**
-     * Sets column masking for this matrix with given bernoulli probability proba.
+     * Sets column masking for this matrix with given bernoulli probability.
      *
      */
-    public void maskColByProba() {
-        for (int col = 0; col < getCols(); col++) {
-            // Mask out (set value as true) true by probability of proba
-            if (maskByProbability()) setColMask(col, true);
+    public void maskColumnByProbability() {
+        for (int column = 0; column < getColumns(); column++) {
+            setColumnMask(column, isMaskedByProbability());
         }
     }
 
@@ -333,7 +330,7 @@ public abstract class Mask implements Cloneable, Serializable {
      * @param col column of mask to be returned.
      * @return true if row mask is set otherwise false.
      */
-    public abstract boolean getColMask(int col);
+    public abstract boolean getColumnMask(int col);
 
     /**
      * Pushes current column mask into stack and optionally creates new mask for this matrix.<br>
@@ -343,7 +340,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @param reset if true new mask is generated after current mask is stacked.
      */
-    public abstract void stackColMask(boolean reset);
+    public abstract void stackColumnMask(boolean reset);
 
     /**
      * Pops column mask from mask stack.<br>
@@ -352,7 +349,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @throws MatrixException throws exception if mask is not set or column mask stack is empty.
      */
-    public abstract void unstackColMask() throws MatrixException;
+    public abstract void unstackColumnMask() throws MatrixException;
 
     /**
      * Returns size of a column mask stack.<br>
@@ -361,7 +358,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      * @return size of column mask stack.
      */
-    public abstract int colMaskStackSize();
+    public abstract int columnMaskStackSize();
 
     /**
      * Clears column mask stack.<br>
@@ -369,7 +366,7 @@ public abstract class Mask implements Cloneable, Serializable {
      * This is typically dense mask (DMask class) or sparse mask (SMask class).<br>
      *
      */
-    public abstract void clearColMaskStack();
+    public abstract void clearColumnMaskStack();
 
     /**
      * Prints mask in row and column format.
@@ -378,9 +375,9 @@ public abstract class Mask implements Cloneable, Serializable {
     public void print() {
         for (int row = 0; row < getRows(); row++) {
             System.out.print("[");
-            for (int col = 0; col < getCols(); col++) {
-                System.out.print((isMasked(row, col) ? 1 : 0));
-                if (col < getCols() - 1) System.out.print(" ");
+            for (int column = 0; column < getColumns(); column++) {
+                System.out.print((isMasked(row, column) ? 1 : 0));
+                if (column < getColumns() - 1) System.out.print(" ");
             }
             System.out.println("]");
         }
@@ -391,7 +388,7 @@ public abstract class Mask implements Cloneable, Serializable {
      *
      */
     public void printSize() {
-        System.out.println("Mask size: " + getRows() + "x" + getCols());
+        System.out.println("Mask size: " + getRows() + "x" + getColumns());
     }
 
 }
