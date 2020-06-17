@@ -25,6 +25,12 @@ public class GradientDescent implements Optimizer, Serializable {
     private static final long serialVersionUID = 954492995414169438L;
 
     /**
+     * Optimization type.
+     *
+     */
+    private final OptimizationType optimizationType;
+
+    /**
      * Learning rate for Gradient Descent. Default value 0.001.
      *
      */
@@ -33,17 +39,21 @@ public class GradientDescent implements Optimizer, Serializable {
     /**
      * Default constructor for Gradient Descent.
      *
+     * @param optimizationType optimizationType.
      */
-    public GradientDescent() {
+    public GradientDescent(OptimizationType optimizationType) {
+        this.optimizationType = optimizationType;
     }
 
     /**
      * Constructor for Gradient Descent.
      *
+     * @param optimizationType optimizationType.
      * @param params parameters for Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientDescent(String params) throws DynamicParamException {
+    public GradientDescent(OptimizationType optimizationType, String params) throws DynamicParamException {
+        this(optimizationType);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -80,27 +90,36 @@ public class GradientDescent implements Optimizer, Serializable {
     /**
      * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
      *
-     * @param W weight matrix to be optimized.
-     * @param dW weight gradients for optimization step.
-     * @param B bias matrix to be optimized.
-     * @param dB bias gradients for optimization step.
+     * @param weight weight matrix to be optimized.
+     * @param weightGradient weight gradients for optimization step.
+     * @param bias bias matrix to be optimized.
+     * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix W, Matrix dW, Matrix B, Matrix dB) throws MatrixException {
-        optimize(W, dW);
-        optimize(B, dB);
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+        optimize(weight, weightGradient);
+        optimize(bias, biasGradient);
     }
 
     /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
-     * @param M matrix to be optimized.
-     * @param dM matrix gradients for optimization step.
+     * @param matrix matrix to be optimized.
+     * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void optimize(Matrix M, Matrix dM) throws MatrixException {
-        M.subtract(dM.multiply(learningRate), M);
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
+        matrix.subtract(matrixGradient.multiply(learningRate), matrix);
+    }
+
+    /**
+     * Returns name of optimizer.
+     *
+     * @return name of optimizer.
+     */
+    public String getName() {
+        return optimizationType.toString();
     }
 
 }
