@@ -13,8 +13,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.Node;
 
-import java.util.HashSet;
-
 /**
  * Interface for normalization functions.
  *
@@ -50,11 +48,20 @@ public interface Normalization {
     void setOptimizer(Optimizer optimizer);
 
     /**
-     * Defined which parameters are to be normalized.
+     * Initializes normalization.
      *
-     * @param norm normalizable parameters.
+     * @param node node for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void setNormalizableParameters(HashSet<Matrix> norm);
+    void initialize(Node node) throws MatrixException;
+
+    /**
+     * Initializes normalization.
+     *
+     * @param weight weight for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void initialize(Matrix weight) throws MatrixException;
 
     /**
      * Executes forward step for normalization.<br>
@@ -85,6 +92,24 @@ public interface Normalization {
     void forward(Node node, int inputIndex) throws MatrixException;
 
     /**
+     * Executes forward step for normalization.<br>
+     * Used typically for weight normalization.<br>
+     *
+     * @param weight weight for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void forward(Matrix weight) throws MatrixException;
+
+    /**
+     * Finalizes forward step for normalization.<br>
+     * Used typically for weight normalization.<br>
+     *
+     * @param weight weight for normalization.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void forwardFinalize(Matrix weight) throws MatrixException;
+
+    /**
      * Executes backward step for normalization.<br>
      * Used typically for layer normalization.<br>
      *
@@ -95,31 +120,39 @@ public interface Normalization {
     void backward(Node node, int outputIndex) throws MatrixException;
 
     /**
-     * Executes forward step for normalization.<br>
-     * Used typically for weight normalization.<br>
-     *
-     * @param W weight for normalization.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void forward(Matrix W) throws MatrixException;
-
-    /**
-     * Finalizes forward step for normalization.<br>
-     * Used typically for weight normalization.<br>
-     *
-     * @param W weight for normalization.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void forwardFinalize(Matrix W) throws MatrixException;
-
-    /**
      * Executes backward step for normalization.<br>
      * Used typically for weight normalization.<br>
      *
-     * @param W weight for backward's normalization.
-     * @param dW gradient of weight for backward normalization.
+     * @param weight weight for backward's normalization.
+     * @param weightGradient gradient of weight for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void backward(Matrix W, Matrix dW) throws MatrixException;
+    void backward(Matrix weight, Matrix weightGradient) throws MatrixException;
+
+    /**
+     * Executes optimizer step for normalizer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void optimize() throws MatrixException;
+
+    /**
+     * Returns name of normalization.
+     *
+     * @return name of normalization.
+     */
+    String getName();
+
+    /**
+     * Prints expression chains of normalization.
+     *
+     */
+    void printExpressions();
+
+    /**
+     * Prints gradient chains of normalization.
+     *
+     */
+    void printGradients();
 
 }
