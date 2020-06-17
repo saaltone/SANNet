@@ -55,7 +55,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      * Reference to current sample.
      *
      */
-    private RLSample sample;
+    private transient RLSample sample;
 
     /**
      * Reference to current policy.
@@ -88,12 +88,6 @@ public abstract class DeepAgent implements Agent, Serializable {
     protected final ValueFunction valueFunction;
 
     /**
-     * Current estimator version.
-     *
-     */
-    private int estimatorVersion = 0;
-
-    /**
      * Update cycle in episode steps for function estimator.
      *
      */
@@ -103,7 +97,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      * Current update count.
      *
      */
-    private int updateCount = 0;
+    private transient int updateCount = 0;
 
     /**
      * Constructor for deep agent.
@@ -121,8 +115,6 @@ public abstract class DeepAgent implements Agent, Serializable {
         this.valueFunction = valueFunction;
         greedyPolicy = new ActionableBasicPolicy(new GreedyPolicy(), policy.getFunctionEstimator());
         greedyPolicy.setEnvironment(environment);
-        policy.getFunctionEstimator().setTrainingIterations(1);
-        if (valueFunction.getFunctionEstimator() != null) valueFunction.getFunctionEstimator().setTrainingIterations(1);
     }
 
     /**
@@ -171,8 +163,9 @@ public abstract class DeepAgent implements Agent, Serializable {
      * Starts agent.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
+     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public void start() throws NeuralNetworkException {
+    public void start() throws NeuralNetworkException, MatrixException {
         policy.start();
         valueFunction.start();
     }
@@ -187,21 +180,12 @@ public abstract class DeepAgent implements Agent, Serializable {
     }
 
     /**
-     * Starts new episode. Resets sequence by default.
+     * Starts new episode.
      *
      */
     public void newEpisode() {
-        newEpisode(true);
-    }
-
-    /**
-     * Starts new episode.
-     *
-     * @param resetSequence if true resets sequence by setting current sample to null.
-     */
-    public void newEpisode(boolean resetSequence) {
         if (episodic) {
-            if (resetSequence) sample = null;
+            sample = null;
             episodeCount++;
             updateCount++;
             policy.setEpisode(episodeCount);
@@ -226,7 +210,6 @@ public abstract class DeepAgent implements Agent, Serializable {
         }
         sample = sample == null ? new RLSample(new State(environment.getState())) : new RLSample(sample.state.getNextState(environment.getState()));
         sample.timeStep = timeStep;
-        sample.estimatorVersion = estimatorVersion;
         if (isLearning) bufferSample(sample);
     }
 
@@ -292,8 +275,6 @@ public abstract class DeepAgent implements Agent, Serializable {
                 buffer.update(samples);
                 updateCount = 0;
                 buffer.clear();
-                estimatorVersion++;
-                updateEstimatorVersion(estimatorVersion);
             }
         }
     }
@@ -317,12 +298,5 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected abstract void updateAgent(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws MatrixException, NeuralNetworkException, DynamicParamException;
-
-    /**
-     * Updates estimator version.
-     *
-     * @param estimatorVersion estimator version.
-     */
-    protected abstract void updateEstimatorVersion(int estimatorVersion);
 
 }
