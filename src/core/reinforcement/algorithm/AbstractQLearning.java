@@ -60,13 +60,4 @@ public abstract class AbstractQLearning extends DeepAgent {
         valueFunction.updateFunctionEstimator(samples, hasImportanceSamplingWeights);
     }
 
-    /**
-     * Updates estimator version.
-     *
-     * @param estimatorVersion estimator version.
-     */
-    protected void updateEstimatorVersion(int estimatorVersion) {
-        valueFunction.setEstimatorVersion(estimatorVersion);
-    }
-
 }

@@ -66,14 +66,4 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
         updateablePolicy.updateFunctionEstimator(samples, hasImportanceSamplingWeights);
     }
 
-    /**
-     * Updates estimator version.
-     *
-     * @param estimatorVersion estimator version.
-     */
-    protected void updateEstimatorVersion(int estimatorVersion) {
-        valueFunction.setEstimatorVersion(estimatorVersion);
-        updateablePolicy.setEstimatorVersion(estimatorVersion);
-    }
-
 }
