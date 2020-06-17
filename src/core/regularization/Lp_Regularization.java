@@ -9,6 +9,7 @@ package core.regularization;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -27,6 +28,12 @@ public class Lp_Regularization implements Regularization, Serializable {
     private static final long serialVersionUID = -7833984930510523396L;
 
     /**
+     * Type of regularization.
+     *
+     */
+    private final RegularizationType regularizationType;
+
+    /**
      * Regularization rate.
      *
      */
@@ -39,25 +46,23 @@ public class Lp_Regularization implements Regularization, Serializable {
     private int p = 3;
 
     /**
-     * Current mini batch size.
-     *
-     */
-    private int miniBatchSize = 1;
-
-    /**
      * Constructor for Lp regularization class.
      *
+     * @param regularizationType regularizationType.
      */
-    public Lp_Regularization() {
+    public Lp_Regularization(RegularizationType regularizationType) {
+        this.regularizationType = regularizationType;
     }
 
     /**
      * Constructor for Lp regularization class.
      *
+     * @param regularizationType regularizationType.
      * @param params parameters for Lp regularization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Lp_Regularization(String params) throws DynamicParamException {
+    public Lp_Regularization(RegularizationType regularizationType, String params) throws DynamicParamException {
+        this(regularizationType);
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -96,21 +101,6 @@ public class Lp_Regularization implements Regularization, Serializable {
     }
 
     /**
-     * Sets current mini batch size.
-     *
-     * @param miniBatchSize current mini batch size.
-     */
-    public void setMiniBatchSize(int miniBatchSize) {
-        this.miniBatchSize = miniBatchSize;
-    }
-
-    /**
-     * Not used.
-     *
-     */
-    public void reset() {}
-
-    /**
      * Not used.
      *
      * @param sequence input sequence.
@@ -120,31 +110,40 @@ public class Lp_Regularization implements Regularization, Serializable {
     /**
      * Not used.
      *
-     * @param W weight matrix.
+     * @param inputs inputs.
      */
-    public void forward(Matrix W) {}
+    public void forward(MMatrix inputs) {}
 
     /**
      * Calculates and returns cumulated error from Lp regularization.<br>
      * This is added to the total output error of neural network.<br>
      *
-     * @param W weight matrix.
+     * @param weight weight matrix.
      * @return cumulated error from L2 regularization.
      */
-    public double error(Matrix W) {
-        return lambda * W.norm(p);
+    public double error(Matrix weight) {
+        return lambda * weight.norm(p);
     }
 
     /**
      * Regulates weights by calculating p- norm of weights and adding it to weight gradient sum.
      *
-     * @param W weight matrix.
-     * @param dWSum gradient sum of weight.
+     * @param weight weight matrix.
+     * @param weightGradientSum gradient sum of weight.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backward(Matrix W, Matrix dWSum) throws MatrixException {
+    public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
         Matrix.MatrixUnaryOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
-        dWSum.add(W.apply(function).divide(miniBatchSize), dWSum);
+        weightGradientSum.add(weight.apply(function), weightGradientSum);
+    }
+
+    /**
+     * Returns name of regularization.
+     *
+     * @return name of regularization.
+     */
+    public String getName() {
+        return regularizationType.toString();
     }
 
 }
