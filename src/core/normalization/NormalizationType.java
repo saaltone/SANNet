@@ -8,7 +8,7 @@ package core.normalization;
 
 /**
  * Enum for normalization type.<br>
- * Currenty supported types are:
+ * Currently supported types are:
  *     BATCH_NORMALIZATION,
  *     LAYER_NORMALIZATION,
  *     WEIGHT_NORMALIZATION,
