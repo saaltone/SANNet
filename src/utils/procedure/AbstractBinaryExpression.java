@@ -18,21 +18,21 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      * Node for second argument.
      *
      */
-    protected Node arg2;
+    protected final Node argument2;
 
     /**
      * Constructor for binary expression.
      *
      * @param expressionID expression ID
-     * @param arg1 first argument.
-     * @param arg2 second argument.
+     * @param argument1 first argument.
+     * @param argument2 second argument.
      * @param result result of node.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    AbstractBinaryExpression(int expressionID, Node arg1, Node arg2, Node result) throws MatrixException {
-        super(expressionID, arg1, result);
-        if (arg2 == null) throw new MatrixException("Second argument not defined.");
-        this.arg2 = arg2;
+    AbstractBinaryExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
+        super(expressionID, argument1, result);
+        if (argument2 == null) throw new MatrixException("Second argument not defined.");
+        this.argument2 = argument2;
     }
 
     /**
@@ -40,27 +40,8 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      *
      * @return second argument of expression.
      */
-    public Node getArg2() {
-        return arg2;
-    }
-
-    /**
-     * Resets nodes of expression.
-     *
-     */
-    public void resetExpression() {
-        super.resetExpression();
-        arg2.resetNode();
-    }
-
-    /**
-     * Resets nodes of expression for specific data index.
-     *
-     * @param index data index.
-     */
-    public void resetExpression(int index) throws MatrixException {
-        super.resetExpression(index);
-        arg2.resetNode(index);
+    public Node getArgument2() {
+        return argument2;
     }
 
     /**
@@ -68,9 +49,9 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardCallback() throws MatrixException {
-        super.forwardCallback();
-        arg2.forwardCallback();
+    public void forwardNormalize() throws MatrixException {
+        super.forwardNormalize();
+        argument2.forwardNormalize();
     }
 
     /**
@@ -79,9 +60,9 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardCallback(int sampleIndex) throws MatrixException {
-        super.forwardCallback(sampleIndex);
-        arg2.forwardCallback(sampleIndex);
+    public void forwardNormalize(int sampleIndex) throws MatrixException {
+        super.forwardNormalize(sampleIndex);
+        argument2.forwardNormalize(sampleIndex);
     }
 
     /**
@@ -89,9 +70,9 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardCallback() throws MatrixException {
-        super.backwardCallback();
-        arg2.backwardCallback();
+    public void backwardNormalize() throws MatrixException {
+        super.backwardNormalize();
+        argument2.backwardNormalize();
     }
 
     /**
@@ -100,9 +81,39 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardCallback(int sampleIndex) throws MatrixException {
-        super.backwardCallback(sampleIndex);
-        arg2.backwardCallback(sampleIndex);
+    public void backwardNormalize(int sampleIndex) throws MatrixException {
+        super.backwardNormalize(sampleIndex);
+        argument2.backwardNormalize(sampleIndex);
+    }
+
+    /**
+     * Executes forward regularization step .
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void forwardRegularize() throws MatrixException {
+        super.forwardRegularize();
+        argument2.forwardRegularize();
+    }
+
+    /**
+     * Cumulates error from regularization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return updated error value.
+     */
+    public double cumulateRegularizationError() throws MatrixException {
+        return super.cumulateRegularizationError() + argument2.cumulateRegularizationError();
+    }
+
+    /**
+     * Executes backward regularization.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void backwardRegularize() throws MatrixException {
+        super.backwardRegularize();
+        argument2.backwardRegularize();
     }
 
 }
