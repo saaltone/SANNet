@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer;
 
@@ -340,6 +339,26 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
+     * Sets if recurrent inputs of layer are allowed to be restored during training.
+     *
+     * @param restoreStateTraining if true allows restore of recurrent inputs.
+     */
+    public void setRestoreStateTraining(boolean restoreStateTraining) {
+        restoreStateTraining(restoreStateTraining);
+        if (hasNextLayer()) getNextLayer().setRestoreStateTraining(restoreStateTraining);
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during testing.
+     *
+     * @param restoreStateTesting if true allows restore of recurrent inputs.
+     */
+    public void setRestoreStateTesting(boolean restoreStateTesting) {
+        restoreStateTesting(restoreStateTesting);
+        if (hasNextLayer()) getNextLayer().setRestoreStateTesting(restoreStateTesting);
+    }
+
+    /**
      * Sets if recurrent inputs of layer are allowed to be reset for this layer during training.
      *
      * @param resetStateTraining if true allows reset of recurrent inputs.
@@ -352,6 +371,20 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @param resetStateTesting if true allows reset of recurrent inputs.
      */
     protected abstract void resetStateTesting(boolean resetStateTesting);
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored for this layer during training.
+     *
+     * @param restoreStateTraining if true allows restore of recurrent inputs.
+     */
+    protected abstract void restoreStateTraining(boolean restoreStateTraining);
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored for this layer during testing.
+     *
+     * @param restoreStateTesting if true allows restore of recurrent inputs.
+     */
+    protected abstract void restoreStateTesting(boolean restoreStateTesting);
 
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
