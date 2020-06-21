@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -13,16 +12,16 @@ import java.io.Serializable;
 public class NormExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "NORM";
+
+    /**
      * Power of norm.
      *
      */
     private final int p;
-
-    /**
-     * Scalar matrix corresponding p value.
-     *
-     */
-    private final Matrix pMinusMatrix;
 
     /**
      * Constructor for variance operation.
@@ -31,12 +30,12 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      * @param argument1 first argument.
      * @param result result of expression.
      * @param p power of norm.
-     * @throws MatrixException throws exception if expression arguments are not defined.
+     * @throws MatrixException throws exception if expression arguments are not defined or norm p value is not at least 2.
      */
     public NormExpression(int expressionID, Node argument1, Node result, int p) throws MatrixException {
-        super(expressionID, argument1, result);
+        super(operationName, operationName, expressionID, argument1, result);
+        if (p < 2) throw new MatrixException("Norm p value must be at least 2.");
         this.p = p;
-        this.pMinusMatrix = new DMatrix(p - 1);
     }
 
     /**
@@ -73,7 +72,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
-        argument1.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index).apply(UnaryFunctionType.ABS).divide(result.getMatrix(index)).applyBi(pMinusMatrix, BinaryFunctionType.POW).multiply(argument1.getMatrix(index).apply(UnaryFunctionType.SGN))), true);
+        argument1.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index).applyBi(result.getMatrix(index), (value, constant) -> Math.pow(Math.abs(value) / constant, p - 1) * Math.signum(value))), true);
     }
 
     /**
@@ -81,8 +80,8 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("NORM(" + p + ", " + argument1.getName() + ") = " + result.getName());
+        print();
+        System.out.println(getName() + "(" + p + ", " + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -90,8 +89,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("NORM: d" + argument1.getName() + " = d" + result.getName() + " * ABS(" + argument1.getName() + ") / (" + result.getName() + "^" + (p - 1) + " * SGN(" + argument1.getName()   +"))");
+        printArgument1Gradient(true, " * (ABS(" + argument1.getName() + ")" + " / " + result.getName() + ")^" + (p - 1) + " * SGN("  + argument1.getName() + ")");
     }
 
 }
