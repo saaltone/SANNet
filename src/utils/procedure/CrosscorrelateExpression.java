@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -15,6 +14,12 @@ import java.io.Serializable;
  *
  */
 public class CrosscorrelateExpression extends AbstractBinaryExpression implements Serializable {
+
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "CROSSCORRELATE";
 
     /**
      * Stride of cross-correlation operation.
@@ -47,10 +52,19 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterSize) throws MatrixException {
-        super(expressionID, argument1, argument2, result);
+        super(operationName, operationName, expressionID, argument1, argument2, result);
         this.stride = stride;
         this.dilation = dilation;
         this.filterSize = filterSize;
+    }
+
+    /**
+     * Returns signature of operation.
+     *
+     * @return signature of operation.
+     */
+    public String getOperationSignature() {
+        return operationName;
     }
 
     /**
@@ -101,8 +115,7 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("CROSSCORRELATE(" + argument1.getName() + ", " + argument2.getName() + ") = " + result.getName());
+        printSpecificBinaryExpression();
     }
 
     /**
@@ -110,10 +123,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("CROSSCORRELATE: d" + argument1.getName() + " = CROSSCORRELATE_GRADIENT(d" + result.getName() + ", " + argument2.getName() + ")");
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("CROSSCORRELATE: d" + argument2.getName() + " = CROSSCORRELATE_GRADIENT(d" + result.getName() + ", " + argument1.getName() + ")");
+        printArgument1Gradient(false, getName() + "_GRADIENT(d" + result.getName() + ", " + argument2.getName() + ")");
+        printArgument2Gradient(false, false, getName() + "_GRADIENT(d" + result.getName() + ", " + argument1.getName() + ")");
     }
 
 }
