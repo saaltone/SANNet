@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core;
 
@@ -986,6 +985,31 @@ public class NeuralNetwork implements Runnable, Serializable {
         checkNotStarted();
         waitToComplete();
         getInputLayer().setResetStateTesting(resetStateTesting);
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during training.<br>
+     *
+     * @param restoreStateTraining if true recurrent inputs are allowed to be restored.
+     * @throws NeuralNetworkException throws exception if neural network is not started.
+     */
+    public void setRestoreStateTraining(boolean restoreStateTraining) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        getInputLayer().setRestoreStateTraining(restoreStateTraining);
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during testing.<br>
+     * Useful when long input sequence is applied over multiple inferences (prediction) requests.<br>
+     *
+     * @param restoreStateTesting if true recurrent inputs are allowed to be restored.
+     * @throws NeuralNetworkException throws exception if neural network is not started.
+     */
+    public void setRestoreStateTesting(boolean restoreStateTesting) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        getInputLayer().setRestoreStateTesting(restoreStateTesting);
     }
 
     /**
