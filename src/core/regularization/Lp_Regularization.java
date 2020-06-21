@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.regularization;
 
@@ -133,8 +132,7 @@ public class Lp_Regularization implements Regularization, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
-        Matrix.MatrixUnaryOperation function = (value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0;
-        weightGradientSum.add(weight.apply(function), weightGradientSum);
+        weightGradientSum.add(weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0), weightGradientSum);
     }
 
     /**
