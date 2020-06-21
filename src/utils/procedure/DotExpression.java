@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -26,7 +25,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionID, argument1, argument2, result);
+        super("DOT", "x", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -71,8 +70,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DOT: " + argument1.getName() + " x " + argument2.getName() + " = " + result.getName());
+        printBasicBinaryExpression();
     }
 
     /**
@@ -80,10 +78,8 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DOT: d" + argument1.getName() + " = d" + result.getName() + " x " + argument2.getName() + ".T");
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DOT: d" + argument2.getName() + " = " + argument1.getName() + ".T x d" + result.getName());
+        printArgument1Gradient(true, " x " + argument2.getName() + ".T");
+        printArgument2Gradient(false, false, argument1.getName() + ".T x " + getResultGradientName());
     }
 
 }

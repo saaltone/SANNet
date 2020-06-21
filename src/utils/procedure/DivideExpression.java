@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -26,7 +25,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DivideExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionID, argument1, argument2, result);
+        super("DIVIDE", "/", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -71,8 +70,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DIVIDE: " + argument1.getName() + " / " + argument2.getName() + " = " + result.getName());
+        printBasicBinaryExpression();
     }
 
     /**
@@ -80,10 +78,8 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DIVIDE: d" + argument1.getName() + " = d" + result.getName() + " / " + argument2.getName());
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("DIVIDE: d" + argument2.getName() + " = d" + result.getName() + " * " + argument1.getName() + " / " + argument2.getName() + "^2");
+        printArgument1Gradient(true, " / " + argument2.getName());
+        printArgument2Gradient(true, false, " * " + argument1.getName() + " / " + argument2.getName() + "^2");
     }
 
 }
