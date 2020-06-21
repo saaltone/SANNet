@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -49,7 +48,7 @@ public class ProcedureFactory implements Serializable {
          * Set of dependent output and input node pairs are links.
          *
          */
-        private final HashSet<NodeLink> dependentNodes = new HashSet<>();
+        private boolean hasDependentNodes = false;
 
         /**
          * Input sample.
@@ -154,7 +153,7 @@ public class ProcedureFactory implements Serializable {
             previousExpression = expression;
         }
 
-        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradientExpressions.get(0), nextProcedureData.dependentNodes);
+        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradientExpressions.get(0), nextProcedureData.hasDependentNodes);
     }
 
     /**
@@ -240,7 +239,9 @@ public class ProcedureFactory implements Serializable {
         int nextArgumentExpressionID = nodeRegister.getExpressionID(nextArgumentNode);
         if (previousArgumentExpressionID != nextArgumentExpressionID) {
             Node previousResultNode = previousProcedureData.expressions.get(previousArgumentExpressionID).getResult();
-            nextProcedureData.dependentNodes.add(new NodeLink(previousResultNode, nextArgumentNode));
+            nextProcedureData.hasDependentNodes = true;
+            nextArgumentNode.setFromNode(previousResultNode);
+            previousResultNode.setToNode(nextArgumentNode);
         }
     }
 
