@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -13,6 +12,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,6 +75,24 @@ public class Node implements Serializable {
     private final Matrix referenceMatrix;
 
     /**
+     * Sets dependency node backward.
+     *
+     */
+    private Node fromNode;
+
+    /**
+     * Sets dependency node forward.
+     *
+     */
+    private Node toNode;
+
+    /**
+     * Matrix backup for forward dependencies.
+     *
+     */
+    private final HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
+
+    /**
      * Normalizers for node.
      *
      */
@@ -130,21 +148,68 @@ public class Node implements Serializable {
     }
 
     /**
-     * Sets normalizers for node.
+     * Set dependency node backward.
      *
-     * @param normalizers normalizers for node.
+     * @param fromNode from node.
      */
-    public void setNormalizers(HashSet<Normalization> normalizers) {
-        this.normalizers = normalizers;
+    public void setFromNode(Node fromNode) {
+        this.fromNode = fromNode;
     }
 
     /**
-     * Sets regularizers for node.
+     * Set dependency node forward.
      *
-     * @param regularizers regularizers for node.
+     * @param toNode to node.
      */
-    public void setRegularizers(HashSet<Regularization> regularizers) {
-        this.regularizers = regularizers;
+    public void setToNode(Node toNode) {
+        this.toNode = toNode;
+    }
+
+    /**
+     * Updates matrix dependency to forward direction.
+     *
+     * @param index index
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     */
+    public void updateMatrixDependency(int index) throws MatrixException {
+        if (fromNode != null) setMatrix(index, fromNode.getMatrix(index - 1) != null ? fromNode.getMatrix(index - 1) : getEmptyMatrix());
+    }
+
+    /**
+     * Updates gradient dependency to backward direction.
+     *
+     * @param index index
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     */
+    public void updateGradientDependency(int index) throws MatrixException {
+        if (toNode != null) setGradient(index, toNode.getGradient(index + 1) != null ? toNode.getGradient(index + 1) : getEmptyMatrix());
+    }
+
+    /**
+     * Stores matrix dependency
+     *
+     * @param backupIndex backup index
+     * @throws MatrixException throws exception if storing dependency fails.
+     */
+    public void storeMatrixDependency(int backupIndex) throws MatrixException {
+        if (toNode == null) return;
+        MMatrix matricesBackup = new MMatrix();
+        for (Integer index : keySet()) matricesBackup.put(index, getMatrix(index));
+        matrixBackup.put(backupIndex, matricesBackup);
+    }
+
+    /**
+     * Restores matrix dependency.
+     *
+     * @param backupIndex backup index.
+     * @throws MatrixException throws exception if restoring of backup fails.
+     */
+    public void restoreMatrixDependency(int backupIndex) throws MatrixException {
+        if (toNode == null) return;
+        if (matrixBackup.containsKey(backupIndex)) {
+            MMatrix matricesBackup = matrixBackup.get(backupIndex);
+            for (Integer index : matricesBackup.keySet()) matrices.put(index, matricesBackup.get(index));
+        }
     }
 
     /**
@@ -161,20 +226,6 @@ public class Node implements Serializable {
             if (copyGradients) node.setGradient(index, getGradient(index));
         }
         return node;
-    }
-
-    /**
-     * Copies data from given node.
-     *
-     * @param node source node.
-     * @param copyGradients if true copies also gradient information.
-     * @throws MatrixException throws exception is matrix is not defined.
-     */
-    public void setData(Node node, boolean copyGradients) throws MatrixException {
-        for (Integer index : keySet()) {
-            setMatrix(index, node.getMatrix(index));
-            if (copyGradients) setGradient(index, node.getGradient(index));
-        }
     }
 
     /**
@@ -291,9 +342,13 @@ public class Node implements Serializable {
     /**
      * Resets node and removes other data than constant data.
      *
+     * @param resetDependentNodes if true resets also dependent nodes.
      */
-    public void resetNode() {
-        if (isMultiIndex()) matrices = new MMatrix();
+    public void resetNode(boolean resetDependentNodes) {
+        if (isMultiIndex()) {
+            if (toNode == null) matrices = new MMatrix();
+            else if (resetDependentNodes) matrices = new MMatrix();
+        }
         else if (!isConstantNode()) constantMatrix = getEmptyMatrix();
         gradients = new MMatrix();
         constantGradient = null;
@@ -447,6 +502,24 @@ public class Node implements Serializable {
             if (add) getGradient(index).add(outputGradient.sum(), getGradient(index));
             else getGradient(index).subtract(outputGradient.sum(), getGradient(index));
         }
+    }
+
+    /**
+     * Sets normalizers for node.
+     *
+     * @param normalizers normalizers for node.
+     */
+    public void setNormalizers(HashSet<Normalization> normalizers) {
+        this.normalizers = normalizers;
+    }
+
+    /**
+     * Sets regularizers for node.
+     *
+     * @param regularizers regularizers for node.
+     */
+    public void setRegularizers(HashSet<Regularization> regularizers) {
+        this.regularizers = regularizers;
     }
 
     /**
