@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package core.layer.recurrent;
 
 import core.NeuralNetworkException;
@@ -7,8 +12,6 @@ import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
-import utils.procedure.Node;
-import utils.procedure.NodeLink;
 
 import java.util.HashMap;
 
@@ -17,18 +20,6 @@ import java.util.HashMap;
  *
  */
 public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
-
-    /**
-     * Training phase node dependency map.
-     *
-     */
-    private transient HashMap<NodeLink, Node> trainingNodeDependencyMap;
-
-    /**
-     * Testing phase node dependency map.
-     *
-     */
-    private transient HashMap<NodeLink, Node> testingNodeDependencyMap;
 
     /**
      * Flag if state is reset prior start of next training sequence.
@@ -41,6 +32,18 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *
      */
     protected boolean resetStateTesting = false;
+
+    /**
+     * Flag if state is restored prior start of next training phase.
+     *
+     */
+    protected boolean restoreStateTraining = false;
+
+    /**
+     * Flag if state is restored prior start of next test (validate, predict) phase.
+     *
+     */
+    protected boolean restoreStateTesting = false;
 
     /**
      * Previous state;
@@ -77,6 +80,8 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("resetStateTraining", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("resetStateTesting", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("restoreStateTraining", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("restoreStateTesting", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -84,8 +89,10 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Sets parameters used for AbstractRecurrentLayer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value).<br>
-     *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value).<br>
+     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value false).<br>
+     *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value false).<br>
+     *     - restoreStateTraining: true if output is restored prior training phase otherwise false (default value false).<br>
+     *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
      *
      * @param params parameters used for AbstractRecurrentLayer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -95,6 +102,8 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         super.setParams(params);
         if (params.hasParam("resetStateTraining")) resetStateTraining = params.getValueAsBoolean("resetStateTraining");
         if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
+        if (params.hasParam("restoreStateTraining")) restoreStateTraining = params.getValueAsBoolean("restoreStateTraining");
+        if (params.hasParam("restoreStateTesting")) restoreStateTesting = params.getValueAsBoolean("restoreStateTesting");
     }
 
     /**
@@ -130,6 +139,35 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Sets if recurrent inputs of layer are allowed to be restored during training.
+     *
+     * @param restoreStateTraining if true allows restore.
+     */
+    public void restoreStateTraining(boolean restoreStateTraining) {
+        this.restoreStateTraining = restoreStateTraining;
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during testing.
+     *
+     * @param restoreStateTesting if true allows restore.
+     */
+    public void restoreStateTesting(boolean restoreStateTesting) {
+        this.restoreStateTesting = restoreStateTesting;
+    }
+
+    /**
+     * Resets layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void resetLayer() throws MatrixException {
+        procedure.reset(resetStateTraining || resetStateTesting);
+        resetLayerOutputs();
+        resetNormalization();
+    }
+
+    /**
      * Takes single forward processing step process layer input(s).<br>
      * Additionally applies any normalization or regularization defined for layer.<br>
      *
@@ -138,27 +176,17 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public void forwardProcess() throws MatrixException {
         Sequence previousOutputs = prepareForwardProcess();
 
-        if (trainingNodeDependencyMap == null) trainingNodeDependencyMap = new HashMap<>();
-        if (testingNodeDependencyMap == null) testingNodeDependencyMap = new HashMap<>();
-
-        if ((resetStateTraining && isTraining()) || (resetStateTesting && !isTraining())) procedure.resetDependencies();
-        else {
-            if (previousState != isTraining()) {
-                if (isTraining()) procedure.restoreDependencies(trainingNodeDependencyMap);
-                else procedure.restoreDependencies(testingNodeDependencyMap);
+        if (previousState != isTraining()) {
+            procedure.reset(true);
+            if ((previousState && restoreStateTraining) || ((!previousState && restoreStateTesting))) {
+                procedure.storeDependencies(previousState ? 1 : 2);
+            }
+            if ((isTraining() && restoreStateTraining) || ((!isTraining() && restoreStateTesting))) {
+                procedure.restoreDependencies(isTraining() ? 1 : 2);
             }
         }
 
         executeForwardProcess(previousOutputs);
-
-        if (previousState != isTraining()) {
-            if (isTraining()) {
-                if (!resetStateTraining) procedure.storeDependencies(trainingNodeDependencyMap);
-            }
-            else {
-                if (!resetStateTesting) procedure.storeDependencies(testingNodeDependencyMap);
-            }
-        }
 
         previousState = isTraining();
     }
