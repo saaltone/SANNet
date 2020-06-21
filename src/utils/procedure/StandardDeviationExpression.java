@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -18,6 +17,12 @@ import java.io.Serializable;
  *
  */
 public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {
+
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "STANDARD DEVIATION";
 
     /**
      * True if calculation is done as multi matrix.
@@ -47,7 +52,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
-        super(expressionID, argument1, result);
+        super(operationName, operationName, expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -110,8 +115,8 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("STANDARD DEVIATION(" + argument1.getName() + ") = " + result.getName());
+        print();
+        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -119,8 +124,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("STANDARD DEVIATION: d" + argument1.getName() + " = d" + result.getName() + " * SQRT_GRADIENT((" + argument1.getName() + " - MEAN("  + argument1.getName() + ")) * 2 / SIZE(" + argument1.getName() + "))");
+        printArgument1Gradient(true, " * SQRT_GRADIENT((" + argument1.getName() + " - MEAN("  + argument1.getName() + ")) * 2 / SIZE(" + argument1.getName() + "))");
     }
 
 }

@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -16,6 +15,12 @@ import java.io.Serializable;
  *
  */
 public class SumExpression extends AbstractUnaryExpression implements Serializable {
+
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "SUM";
 
     /**
      * True if calculation is done as multi matrix.
@@ -33,7 +38,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SumExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
-        super(expressionID, argument1, result);
+        super(operationName, operationName, expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -90,8 +95,8 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("SUM(" + argument1.getName() + ") = " + result.getName());
+        print();
+        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -99,8 +104,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("SUM: d" + argument1.getName() + " = d" + result.getName());
+        printArgument1Gradient(true, null);
     }
 
 }
