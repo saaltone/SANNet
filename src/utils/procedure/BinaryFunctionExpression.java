@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -18,6 +17,22 @@ import java.io.Serializable;
  */
 public class BinaryFunctionExpression extends AbstractBinaryExpression implements Serializable {
 
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "BINARY FUNCTION";
+
+    /**
+     * Name of operation.
+     *
+     */
+    private final String operationSignature;
+
+    /**
+     * Binary function type.
+     *
+     */
     private final BinaryFunctionType binaryFunctionType;
 
     /**
@@ -37,9 +52,19 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
-        super(expressionID, argument1, argument2, result);
+        super(operationName, String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
         this.binaryFunctionType = binaryFunction.getType();
         this.binaryFunction = binaryFunction;
+        this.operationSignature = String.valueOf(binaryFunctionType);
+    }
+
+    /**
+     * Returns signature of operation.
+     *
+     * @return signature of operation.
+     */
+    public String getOperationSignature() {
+        return operationSignature;
     }
 
     /**
@@ -101,8 +126,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("BINARYFUN: " + " " + argument1 + " " + argument2 + " " + result);
+        printSpecificBinaryExpression();
     }
 
     /**
@@ -110,8 +134,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("BINARYFUN: d" + argument1.getName() + " = d" + result.getName() + " * " + binaryFunctionType + "_GRADIENT(" + result.getName() + ", " + argument2.getName() + ")");
+        printArgument1Gradient(true, " * " + binaryFunctionType + "_GRADIENT(" + result.getName() + ", " + argument2.getName() + ")");
     }
 
 }
