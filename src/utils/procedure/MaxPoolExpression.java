@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -15,6 +14,12 @@ import java.io.Serializable;
  *
  */
 public class MaxPoolExpression extends AbstractUnaryExpression implements Serializable {
+
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "MAX POOL";
 
     /**
      * Stride of max pooling operation.
@@ -45,7 +50,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int poolSize) throws MatrixException {
-        super(expressionID, argument1, result);
+        super(operationName, operationName, expressionID, argument1, result);
         this.stride = stride;
         this.poolSize = poolSize;
     }
@@ -97,8 +102,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("MAXPOOL(" + argument1.getName() + ") = " + result.getName());
+        print();
+        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -106,8 +111,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("MAXPOOL: d" + argument1.getName() +" = MAXPOOL_GRADIENT(d" + result.getName() + ", MAX_ARGS(" + argument1.getName() +"))");
+        printArgument1Gradient(false, getName() + "_GRADIENT(" + getResultGradientName() + ", MAX_ARGS(" + argument1.getName() +"))");
     }
 
 }
