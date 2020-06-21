@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer;
 
@@ -127,6 +126,22 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
+     * Sets if recurrent inputs of layer are allowed to be restored during training.
+     *
+     * @param restoreStateTraining if true allows restore.
+     */
+    public void restoreStateTraining(boolean restoreStateTraining) {
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during testing.
+     *
+     * @param restoreStateTesting if true allows restore.
+     */
+    public void restoreStateTesting(boolean restoreStateTesting) {
+    }
+
+    /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -145,10 +160,19 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @return previous outputs.
      */
     protected Sequence prepareForwardProcess() throws MatrixException {
+        resetLayer();
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
+    }
+
+    /**
+     * Resets layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void resetLayer() throws MatrixException {
         procedure.reset();
         resetLayerOutputs();
         resetNormalization();
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
     }
 
     /**
