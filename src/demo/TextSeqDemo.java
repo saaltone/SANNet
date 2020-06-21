@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package demo;
 
@@ -65,7 +64,6 @@ public class TextSeqDemo {
                     if (input.getValue(row, 0) == 1) letters[index++] = row;
                 }
                 for (int pos = 0; pos < 1000; pos++) {
-                    neuralNetwork.setResetStateTesting(pos == 0);
                     int nextLetter = neuralNetwork.predict(input).argmax()[0];
                     System.out.print((char)ReadTextFile.intToChar(nextLetter));
                     for (int charIndex = 0; charIndex < numOfChars - 1; charIndex++) {

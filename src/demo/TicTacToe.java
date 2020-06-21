@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package demo;
 
@@ -17,8 +16,6 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
 import core.reinforcement.policy.*;
-import core.reinforcement.value.PlainValueFunction;
-import core.reinforcement.value.QTargetValueFunctionEstimator;
 import core.reinforcement.value.QValueFunctionEstimator;
 import core.reinforcement.value.ValueFunctionEstimator;
 import utils.*;
@@ -99,16 +96,15 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         /**
          * Initializes game board.
          *
-         * @param size size as size x size.
          */
-        GameBoard (int size) {
-            this.size = size;
+        GameBoard() {
+            this.size = 3;
 
-            state = new DMatrix(2 * size * size, 1);
+            state = new DMatrix(2 * 3 * 3, 1);
 
-            gameBoard = new GameSlot[size][size];
-            for (int row = 0; row < size; row++) {
-                for (int col = 0; col < size; col++) {
+            gameBoard = new GameSlot[3][3];
+            for (int row = 0; row < 3; row++) {
+                for (int col = 0; col < 3; col++) {
                     gameBoard[row][col] = GameSlot.EMPTY;
                 }
             }
@@ -685,7 +681,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private void playGame() throws MatrixException, NeuralNetworkException, DynamicParamException {
         currentPlayer = random.nextInt(2) == 0 ? Player.NOUGHT : Player.CROSS;
         currentHumanPlayer = humanPlayer;
-        gameBoard = new GameBoard(boardSize);
+        gameBoard = new GameBoard();
         gameStatus = GameStatus.ONGOING;
         ArrayList<Matrix> gameStates = new ArrayList<>();
         gameStates.add(gameBoard.getState());
@@ -862,8 +858,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         boolean nnPolicyEstimator = false;
         boolean nnValueEstimator = false;
         boolean basicPolicy = false;
-        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, boardSize * boardSize, policyGradient)) : new TabularFunctionEstimator(boardSize * boardSize);
-        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", 2 * boardSize * boardSize, (stateValue ? 1 : boardSize * boardSize), false)) : new TabularFunctionEstimator(boardSize * boardSize);
+        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", boardSize * boardSize, policyGradient)) : new TabularFunctionEstimator(boardSize * boardSize);
+        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", (stateValue ? 1 : boardSize * boardSize), false)) : new TabularFunctionEstimator(boardSize * boardSize);
         Policy policy = null;
         switch (policyType) {
             case 1:
@@ -894,16 +890,15 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     /**
      * Builds neural network for tic tac toe player (agent).
      *
-     * @param inputSize input size of neural network (number of states)
      * @param outputSize output size of neural network (number of actions and their values).
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int inputSize, int outputSize, boolean policyGradient) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int outputSize, boolean policyGradient) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addInputLayer("width = " + 18);
         if (!policyGradient) {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");

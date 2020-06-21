@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package demo;
 
@@ -19,7 +18,6 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
 import core.reinforcement.policy.*;
-import core.reinforcement.value.PlainValueFunction;
 import core.reinforcement.value.ValueFunctionEstimator;
 import utils.*;
 import utils.matrix.*;
@@ -597,7 +595,7 @@ public class Maze implements Environment, ActionListener {
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
     public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
-        agent = createAgent(4 * agentHistorySize + 4, 4);
+        agent = createAgent();
         initMaze();
     }
 
@@ -796,15 +794,15 @@ public class Maze implements Environment, ActionListener {
      * @throws IOException throws exception if coping of neural network instance fails.
      * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
      */
-    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean policyGradient = true;
         boolean stateValue = true;
         int policyType = 2;
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean basicPolicy = false;
-        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false)) : new TabularFunctionEstimator(outputAmount);
-        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, (stateValue ? 1 : outputAmount), false, stateValue)) : new TabularFunctionEstimator(outputAmount);
+        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(52, 4, policyGradient, false)) : new TabularFunctionEstimator(4);
+        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(52, (stateValue ? 1 : 4), false, stateValue)) : new TabularFunctionEstimator(4);
         Policy policy = null;
         switch (policyType) {
             case 1:
