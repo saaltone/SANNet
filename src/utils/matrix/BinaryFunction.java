@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.matrix;
 
@@ -168,10 +167,6 @@ public class BinaryFunction implements Serializable {
             case POW:
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
-                break;
-            case NORM:
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.pow(Math.abs(value), constant);
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(Math.abs(value), constant) / value;
                 break;
             case MAX:
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::max;

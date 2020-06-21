@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.matrix;
 
@@ -22,7 +21,6 @@ package utils.matrix;
  *     DIRECT_GRADIENT,
  *     POLICY_GRADIENT,
  *     POW,
- *     NORM,
  *     MAX,
  *     MIN,
  *     CUSTOM
@@ -44,7 +42,6 @@ public enum BinaryFunctionType {
     DIRECT_GRADIENT,
     POLICY_GRADIENT,
     POW,
-    NORM,
     MAX,
     MIN,
     CUSTOM
