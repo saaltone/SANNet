@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -15,6 +14,12 @@ import java.io.Serializable;
  *
  */
 public class UnaryFunctionExpression extends AbstractUnaryExpression implements Serializable {
+
+    /**
+     * Name of operation.
+     *
+     */
+    private static final String operationName = "UNARY FUNCTION";
 
     /**
      * Unary function type.
@@ -38,7 +43,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
-        super(expressionID, argument1, result);
+        super(operationName, String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
     }
@@ -102,8 +107,8 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("UNARYFUN: " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
+        print();
+        System.out.println(getName() + ": " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -111,8 +116,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("UNARYFUN: d" + argument1.getName() + " = d" + result.getName() + " * " + unaryFunctionType + "_GRADIENT(" + result.getName() + ")");
+        printArgument1Gradient(true, " * " + unaryFunctionType + "_GRADIENT(" + result.getName() + ")");
     }
 
 }
