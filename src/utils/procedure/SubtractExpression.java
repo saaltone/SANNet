@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -26,7 +25,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SubtractExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionID, argument1, argument2, result);
+        super("SUBTRACT", "-", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -71,8 +70,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      *
      */
     public void printExpression() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("SUBTRACT: " + argument1.getName() + " - " + argument2.getName() + " = " + result.getName());
+        printBasicBinaryExpression();
     }
 
     /**
@@ -80,10 +78,8 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      *
      */
     public void printGradient() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("SUBTRACT: d" + argument1.getName() + " = d" + result.getName());
-        System.out.print("Expression " +getExpressionID() + ": ");
-        System.out.println("SUBTRACT: d" + argument2.getName() + " = -d" + result.getName());
+        printArgument1Gradient(true, null);
+        printArgument2Gradient(true, true, null);
     }
 
 }
