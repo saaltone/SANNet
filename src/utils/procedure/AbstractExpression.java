@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -18,6 +17,18 @@ import java.util.Set;
 public abstract class AbstractExpression implements Serializable {
 
     private static final long serialVersionUID = -3692842009210981254L;
+
+    /**
+     * Name of expression;
+     *
+     */
+    private final String name;
+
+    /**
+     * Operation signature.
+     *
+     */
+    private final String operationSignature;
 
     /**
      * Unique ID of expression.
@@ -52,16 +63,33 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Constructor for abstract expression.
      *
+     * @param name name of expression.
+     * @param operationSignature operation signature of expression.
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param result result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractExpression(int expressionID, Node argument1, Node result) throws MatrixException {
-        this.expressionID = expressionID;
+    public AbstractExpression(String name, String operationSignature, int expressionID, Node argument1, Node result) throws MatrixException {
         if (argument1 == null) throw new MatrixException("First argument not defined.");
+        this.name = name;
+        this.operationSignature = operationSignature;
+        this.expressionID = expressionID;
         this.argument1 = argument1;
         this.result = result;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns signature of operation.
+     *
+     * @return signature of operation.
+     */
+    public String getOperationSignature() {
+        return operationSignature;
     }
 
     /**
@@ -152,12 +180,23 @@ public abstract class AbstractExpression implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpressionStep(boolean firstCalculateExpressionStep, int index) throws MatrixException {
+        updateExpressionDependency(index);
         if (firstCalculateExpressionStep) forwardRegularize();
         if (firstCalculateExpressionStep) forwardNormalize();
         forwardNormalize(index);
         if (firstCalculateExpressionStep) calculateExpression();
         calculateExpression(index);
         if (firstCalculateExpressionStep) forwardNormalizeFinalize();
+    }
+
+    /**
+     * Updates expression forward direction dependency.
+     *
+     * @param index index
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     */
+    protected void updateExpressionDependency(int index) throws MatrixException {
+        argument1.updateMatrixDependency(index);
     }
 
     /**
@@ -213,11 +252,22 @@ public abstract class AbstractExpression implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     private void calculateGradientStep(boolean lastCalculateGradientStep, int index) throws MatrixException {
+        updateGradientDependency(index);
         if (lastCalculateGradientStep) calculateGradient();
         calculateGradient(index);
         backwardNormalize(index);
         if (lastCalculateGradientStep) backwardNormalize();
         if (lastCalculateGradientStep) backwardRegularize();
+    }
+
+    /**
+     * Updates gradient dependency to backward direction.
+     *
+     * @param index index
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     */
+    protected void updateGradientDependency(int index) throws MatrixException {
+        result.updateGradientDependency(index);
     }
 
     /**
@@ -357,5 +407,129 @@ public abstract class AbstractExpression implements Serializable {
      *
      */
     public abstract void printGradient();
+
+    /**
+     * Prints expression.
+     *
+     */
+    protected void print() {
+        System.out.print("Expression " +getExpressionID() + ": ");
+    }
+
+    /**
+     * Returns gradient identifier name.
+     *
+     * @return gradient identifier name.
+     */
+    protected String getGradientIdentifierName() {
+        return "d";
+    }
+
+    /**
+     * Return gradient name of argument1.
+     *
+     * @return gradient name of argument1.
+     */
+    protected String getArgument1GradientName() {
+        return getGradientIdentifierName() + argument1.getName();
+    }
+
+    /**
+     * Return gradient name of result.
+     *
+     * @return gradient name of result.
+     */
+    protected String getResultGradientName() {
+        return getGradientIdentifierName() + result.getName();
+    }
+
+    /**
+     * Returns gradient prefix for argument1.
+     *
+     * @return gradient prefix for argument1.
+     */
+    protected String getArgument1PrefixName() {
+        return getName() + ": " + getArgument1GradientName() + " = " + "" + getArgument1SumPrefix();
+    }
+
+    /**
+     * Returns argument1 prefix.
+     *
+     * @return argument1 prefix.
+     */
+    protected String getArgument1SumPrefix() {
+        return !argument1.isMultiIndex() ? "sum(" : "";
+    }
+
+    /**
+     * Returns argument1 postfix.
+     *
+     * @return argument1 postfix.
+     */
+    protected String getArgument1SumPostfix() {
+        return !argument1.isMultiIndex() ? ")" : "";
+    }
+
+    /**
+     * Returns node gradient name.
+     *
+     * @param node node
+     * @return node gradient name.
+     */
+    protected String getNodeGradientName(Node node) {
+        return getGradientIdentifierName() + node.getName();
+    }
+
+    /**
+     * Returns node prefix name.
+     *
+     * @param node node
+     * @param negateResult if true result will be negated.
+     * @return node prefix name.
+     */
+    protected String getNodePrefixName(Node node, boolean negateResult) {
+        return getName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
+    }
+
+    /**
+     * Returns node prefix name with result.
+     *
+     * @param node node
+     * @param negateResult if true result will be negated.
+     * @return node prefix name with result.
+     */
+    protected String getNodeWithResultPrefixName(Node node, boolean negateResult) {
+        return getNodePrefixName(node, negateResult) + getResultGradientName();
+    }
+
+    /**
+     * Returns node sum prefix.
+     *
+     * @param node node.
+     * @return node sum prefix.
+     */
+    protected String getNodeSumPrefix(Node node) {
+        return !node.isMultiIndex() ? "sum(" : "";
+    }
+
+    /**
+     * Returns node sum postfix.
+     *
+     * @param node node.
+     * @return node sum postfix.
+     */
+    protected String getNodeSumPostfix(Node node) {
+        return !node.isMultiIndex() ? ")" : "";
+    }
+
+    /**
+     * Prints gradient for argument1
+     *  @param withResultPrefix true if result prefix is added.
+     * @param suffix suffix part for gradient expression.
+     */
+    protected void printArgument1Gradient(boolean withResultPrefix, String suffix) {
+        print();
+        System.out.println((withResultPrefix ? getNodeWithResultPrefixName(argument1, false) : getNodePrefixName(argument1, false)) + (suffix != null ? suffix : "") + getNodeSumPostfix(argument1));
+    }
 
 }
