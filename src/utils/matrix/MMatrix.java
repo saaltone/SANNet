@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix;
 
 import utils.procedure.ProcedureFactory;
@@ -517,9 +522,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix add(MMatrix other, MMatrix result) throws MatrixException {
+    public void add(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
@@ -527,7 +531,6 @@ public class MMatrix implements Cloneable, Serializable {
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
         if (procedureFactory != null) procedureFactory.createAddExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -549,16 +552,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix add(Matrix other, MMatrix result) throws MatrixException {
+    public void add(Matrix other, MMatrix result) throws MatrixException {
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
         if (procedureFactory != null) procedureFactory.createAddExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -580,9 +581,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix subtract(MMatrix other, MMatrix result) throws MatrixException {
+    public void subtract(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
@@ -590,7 +590,6 @@ public class MMatrix implements Cloneable, Serializable {
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
         if (procedureFactory != null) procedureFactory.createSubtractExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -612,16 +611,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix subtract(Matrix other, MMatrix result) throws MatrixException {
+    public void subtract(Matrix other, MMatrix result) throws MatrixException {
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
         if (procedureFactory != null) procedureFactory.createSubtractExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -643,9 +640,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix multiply(MMatrix other, MMatrix result) throws MatrixException {
+    public void multiply(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
@@ -653,7 +649,6 @@ public class MMatrix implements Cloneable, Serializable {
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
         if (procedureFactory != null) procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -675,16 +670,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix multiply(Matrix other, MMatrix result) throws MatrixException {
+    public void multiply(Matrix other, MMatrix result) throws MatrixException {
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
         if (procedureFactory != null) procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -706,9 +699,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix dot(MMatrix other, MMatrix result) throws MatrixException {
+    public void dot(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
@@ -716,7 +708,6 @@ public class MMatrix implements Cloneable, Serializable {
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
         if (procedureFactory != null) procedureFactory.createDotExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -738,16 +729,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix dot(Matrix other, MMatrix result) throws MatrixException {
+    public void dot(Matrix other, MMatrix result) throws MatrixException {
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
         if (procedureFactory != null) procedureFactory.createDotExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -769,9 +758,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix divide(MMatrix other, MMatrix result) throws MatrixException {
+    public void divide(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
@@ -779,7 +767,6 @@ public class MMatrix implements Cloneable, Serializable {
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
         if (procedureFactory != null) procedureFactory.createDivideExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
@@ -801,16 +788,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     * @return result matrix which stores operation result.
      */
-    public MMatrix divide(Matrix other, MMatrix result) throws MatrixException {
+    public void divide(Matrix other, MMatrix result) throws MatrixException {
         double expressionLock = 0;
         synchronizeProcedureFactory(other);
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
         if (procedureFactory != null) procedureFactory.createDivideExpression(expressionLock, this, other, result);
-        return result;
     }
 
     /**
