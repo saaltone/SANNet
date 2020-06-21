@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer.recurrent;
 
@@ -231,22 +230,27 @@ public class GRULayer extends AbstractRecurrentLayer {
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
         Matrix z = Wz.dot(input).add(Uz.dot(previousOutput)).add(bz);
         z = z.apply(sigmoid);
+        z.setName("z");
 
         // r = sigmoid(Wr * x + Ur * out(t-1) + br) → Reset gate
         Matrix r = Wr.dot(input).add(Ur.dot(previousOutput)).add(br);
         r = r.apply(sigmoid);
+        r.setName("r");
 
         // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
         Matrix h = Wh.dot(input).add(Uh.dot(previousOutput).multiply(r)).add(bh);
         h = h.apply(tanh);
+        h.setName("h");
 
         // s = (1 - z) x h + z x out(t-1) → Internal state
         ones = (ones == null) ? new DMatrix(z.getRows(), z.getColumns(), Initialization.ONE) : ones;
+        ones.setName("1");
+
         Matrix s = ones.subtract(z).multiply(h).add(z.multiply(previousOutput));
+        s.setName("Output");
 
         previousOutput = s;
 
-        s.setName("Output");
         MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, s);
         return outputs;

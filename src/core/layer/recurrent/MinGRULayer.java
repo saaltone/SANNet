@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer.recurrent;
 
@@ -206,18 +205,22 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
         Matrix f = Wf.dot(input).add(Uf.dot(previousOutput)).add(bf);
         f = f.apply(sigmoid);
+        f.setName("f");
 
         // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
         Matrix h = Wh.dot(input).add(Uh.dot(previousOutput).multiply(f)).add(bh);
         h = h.apply(tanh);
+        h.setName("h");
 
         // s = (1 - f) x h + f x out(t-1) → Internal state
         ones = (ones == null) ? new DMatrix(f.getRows(), f.getColumns(), Initialization.ONE) : ones;
+        ones.setName("1");
+
         Matrix s = ones.subtract(f).multiply(h).add(f.multiply(previousOutput));
+        s.setName("Output");
 
         previousOutput = s;
 
-        s.setName("Output");
         MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, s);
         return outputs;

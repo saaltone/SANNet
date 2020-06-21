@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer.recurrent;
 
@@ -301,35 +300,40 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         input.setRegularize(true);
 
         previousOutput.setName("PrevOutput");
-        previousCellState.setName("PrevCellState");
+        previousCellState.setName("PrevC");
 
         // i = sigmoid(Wi * x + Ui * out(t-1) + Ci * c(t-1) + bi) → Input gate
         Matrix i = Wi.dot(input).add(Ui.dot(previousOutput)).add(Ci.multiply(previousCellState)).add(bi);
         i = i.apply(sigmoid);
+        i.setName("i");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + Cf * c(t-1) + bf) → Forget gate
         Matrix f = Wf.dot(input).add(Uf.dot(previousOutput)).add(Cf.multiply(previousCellState)).add(bf);
         f = f.apply(sigmoid);
+        f.setName("f");
 
         // s = tanh(Ws * x + Us * out(t-1) + bs) → State update
         Matrix s = Ws.dot(input).add(Us.dot(previousOutput)).add(bs);
         s = s.apply(tanh);
+        s.setName("s");
 
         // c = i x s + f x c(t-1) → Internal cell state
         Matrix c = i.multiply(s).add(previousCellState.multiply(f));
+        c.setName("c");
+
         previousCellState = c;
 
         // o = sigmoid(Wo * x + Uo * out(t-1) + Co * ct + bo) → Output gate
         Matrix o = Wo.dot(input).add(Uo.dot(previousOutput)).add(Co.multiply(c)).add(bo);
         o = o.apply(sigmoid);
+        o.setName("o");
 
         // h = tanh(c) x o or h = c x o → Output
-        Matrix c_ = doubleTanh ? c.apply(tanh) : c;
-        Matrix h = c_.multiply(o);
+        Matrix h = (doubleTanh ? c.apply(tanh) : c).multiply(o);
+        h.setName("Output");
 
         previousOutput = h;
 
-        h.setName("Output");
         MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, h);
         return outputs;
