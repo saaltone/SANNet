@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.normalization;
 
@@ -50,6 +49,12 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      */
     private Matrix gMatrix;
+
+    /**
+     * Matrix for p value.
+     *
+     */
+    private final Matrix pMatrix = new DMatrix(2);
 
     /**
      * Input matrix for procedure construction.
