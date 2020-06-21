@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package utils.procedure;
 
@@ -55,10 +54,10 @@ public class Procedure implements Serializable {
     private final AbstractExpression gradientExpressionChain;
 
     /**
-     * Set of dependent output input node pairs as node links.
+     * True if procedure has dependent nodes.
      *
      */
-    private final HashSet<NodeLink> dependentNodes;
+    private final boolean hasDependentNodes;
 
     /**
      * Constructor for procedure.
@@ -68,15 +67,15 @@ public class Procedure implements Serializable {
      * @param nodes all nodes for procedure.
      * @param expressionChain chain of expressions describing procedure.
      * @param gradientExpressionChain chain of gradient expressions for procedure.
-     * @param dependentNodes node dependencies as node links for output input pair updates.
+     * @param hasDependentNodes true if procedure has dependent nodes.
      */
-    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, AbstractExpression expressionChain, AbstractExpression gradientExpressionChain, HashSet<NodeLink> dependentNodes) {
+    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, AbstractExpression expressionChain, AbstractExpression gradientExpressionChain, boolean hasDependentNodes) {
         this.inputNodes.putAll(inputNodes);
         this.outputNodes.putAll(outputNodes);
         this.nodes.addAll(nodes);
         this.expressionChain = expressionChain;
         this.gradientExpressionChain = gradientExpressionChain;
-        this.dependentNodes = dependentNodes;
+        this.hasDependentNodes = hasDependentNodes;
     }
 
     /**
@@ -102,7 +101,16 @@ public class Procedure implements Serializable {
      *
      */
     public void reset() {
-        for (Node node : nodes) node.resetNode();
+        reset(true);
+    }
+
+    /**
+     * Resets data for every index in nodes of procedure.
+     *
+     * @param resetDependentNodes if true resets also dependent nodes.
+     */
+    public void reset(boolean resetDependentNodes) {
+        for (Node node : nodes) node.resetNode(resetDependentNodes);
     }
 
     /**
@@ -158,57 +166,27 @@ public class Procedure implements Serializable {
      * @return returns true if there are dependencies otherwise returns false.
      */
     public boolean hasDependencies() {
-        return dependentNodes.size() > 0;
+        return hasDependentNodes;
     }
 
     /**
-     * Resets dependencies between output and input nodes.
+     * Stores matrix dependency
      *
+     * @param backupIndex backup index
+     * @throws MatrixException throws exception if storing dependencies fails.
      */
-    public void resetDependencies() {
-        for (NodeLink nodeLink : dependentNodes) nodeLink.reset();
+    public void storeDependencies(int backupIndex) throws MatrixException {
+        for (Node node : nodes) node.storeMatrixDependency(backupIndex);
     }
 
     /**
-     * Stores node dependency data.
+     * Restores matrix dependency.
      *
-     * @param nodeDependencyData node dependency data to be stored.
-     * @throws MatrixException throws exception is matrix is not defined.
+     * @param backupIndex backup index.
+     * @throws MatrixException throws exception if restoring of backup fails.
      */
-    public void storeDependencies(HashMap<NodeLink, Node> nodeDependencyData) throws MatrixException {
-        nodeDependencyData.clear();
-        for (NodeLink nodeLink : dependentNodes) nodeDependencyData.put(nodeLink, nodeLink.copy(false));
-    }
-
-    /**
-     * Restores node dependency data.
-     *
-     * @param nodeDependencyData node dependency data to be restored.
-     * @throws MatrixException throws exception is matrix is not defined.
-     */
-    public void restoreDependencies(HashMap<NodeLink, Node> nodeDependencyData) throws MatrixException {
-        for (NodeLink nodeLink : nodeDependencyData.keySet()) {
-            if (dependentNodes.contains(nodeLink)) nodeLink.setData(nodeDependencyData.get(nodeLink), false);
-        }
-    }
-
-    /**
-     * Returns dependent nodes of procedure.
-     *
-     * @return dependent nodes.
-     */
-    public HashSet<NodeLink> getDependentNodes() {
-        return dependentNodes;
-    }
-
-    /**
-     * Updates data of node dependencies for expression calculation phase.
-     *
-     * @param index index to data for which dependencies are updates.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private void updateDependencies(int index) throws MatrixException {
-        for (NodeLink nodeLink : dependentNodes) nodeLink.updateExpression(index);
+    public void restoreDependencies(int backupIndex) throws MatrixException {
+        for (Node node : nodes) node.restoreMatrixDependency(backupIndex);
     }
 
     /**
@@ -232,8 +210,6 @@ public class Procedure implements Serializable {
      */
     public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException {
         for (Integer sampleIndex : inputSequence.keySet()) {
-            updateDependencies(sampleIndex);
-
             setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
             expressionChain.calculateExpressionStep(sampleIndex, inputSequence.firstKey());
@@ -355,8 +331,6 @@ public class Procedure implements Serializable {
         for (Integer sampleIndex : outputGradientSequence.descendingKeySet()) {
             setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
 
-            updateGradientDependencies(sampleIndex);
-
             gradientExpressionChain.calculateGradientStep(sampleIndex, outputGradientSequence.firstKey());
 
             MMatrix inputSampleGradient = new MMatrix(inputNodes.size());
@@ -451,15 +425,6 @@ public class Procedure implements Serializable {
         return inputSequence.get(0,0);
     }
 
-    /**
-     * Updates data of node dependencies for gradient calculation phase.
-     *
-     * @param index index to data for which dependencies are updates.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private void updateGradientDependencies(int index) throws MatrixException {
-        for (NodeLink nodeLink : dependentNodes) nodeLink.updateGradient(index);
-    }
 
     /**
      * Returns gradient for specific constant matrix.
@@ -469,22 +434,9 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception is no node corresponding reference matrix is found.
      */
     public Matrix getGradient(Matrix constantMatrix) throws MatrixException {
-        return getGradient(constantMatrix, true);
-    }
-
-    /**
-     * Returns gradient for specific constant matrix.
-     *
-     * @param constantMatrix constant matrix.
-     * @param average if true gradient is averaged by dividing by number of entries in node.
-     * @return gradient corresponding specific constant matrix.
-     * @throws MatrixException throws exception is no node corresponding reference matrix is found.
-     */
-    private Matrix getGradient(Matrix constantMatrix, boolean average) throws MatrixException {
         Node node = getNode(constantMatrix);
         if (node == null) throw new MatrixException("No such reference matrix registered.");
-        if (average) return node.getGradient().divide(node.getEntryCount());
-        else return node.getGradient();
+        return node.getGradient().divide(node.getEntryCount());
     }
 
     /**
