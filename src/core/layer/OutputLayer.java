@@ -1,8 +1,7 @@
-/********************************************************
+/*
  * SANNet Neural Network Framework
  * Copyright (C) 2018 - 2020 Simo Aaltonen
- *
- ********************************************************/
+ */
 
 package core.layer;
 
@@ -83,6 +82,22 @@ public class OutputLayer extends AbstractLayer {
      * @param resetStateTesting if true allows reset.
      */
     public void resetStateTesting(boolean resetStateTesting) {
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during training.
+     *
+     * @param restoreStateTraining if true allows restore.
+     */
+    public void restoreStateTraining(boolean restoreStateTraining) {
+    }
+
+    /**
+     * Sets if recurrent inputs of layer are allowed to be restored during testing.
+     *
+     * @param restoreStateTesting if true allows restore.
+     */
+    public void restoreStateTesting(boolean restoreStateTesting) {
     }
 
     /**
