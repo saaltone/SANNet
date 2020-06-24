@@ -206,17 +206,14 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         int outputSize = numberOfFilters * dilatedSize * dilatedSize;
         for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
 
-            for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                int filter = getFilterIndex(filterIndex, channelIndex, previousLayerDepth);
-                Matrix filterWeight = new DMatrix(dilatedSize, dilatedSize, this.initialization, inputSize, outputSize, "Wf" + filterIndex + "-" + channelIndex);
-                filterWeights.put(filter, filterWeight);
-                registerWeight(filterWeight, regulateWeights, true);
-            }
+            Matrix filterWeight = new DMatrix(dilatedSize, dilatedSize, this.initialization, inputSize, outputSize, "Wf" + filterIndex);
+            filterWeights.put(filterIndex, filterWeight);
+            registerWeight(filterWeight, regulateWeights, true);
 
             Matrix filterBias = new DMatrix(0, "Bf" + filterIndex);
             filterBiases.put(filterIndex, filterBias);
-
             registerWeight(filterBias, false, false);
+
         }
     }
 
@@ -245,7 +242,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
             for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
                 Matrix output = filterBiases.get(filterIndex);
                 for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                    Matrix Wf = filterWeights.get(getFilterIndex(filterIndex, channelIndex, previousLayerDepth));
+                    Matrix Wf = filterWeights.get(filterIndex);
                     Matrix input = inputs.get(getInputIndex(channelIndex, sampleIndex, previousLayerDepth));
                     input.setStride(stride);
                     input.setDilation(dilation);
