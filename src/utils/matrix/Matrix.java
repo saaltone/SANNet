@@ -2229,7 +2229,7 @@ public abstract class Matrix implements Cloneable, Serializable {
                 }
             }
         }
-        result.setValue(rowAt, columnAt, sumValue / (poolSize * poolSize));
+        result.setValue(rowAt, columnAt, sumValue / (double)(poolSize * poolSize));
     }
 
     /**
