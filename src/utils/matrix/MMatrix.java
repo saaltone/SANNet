@@ -233,6 +233,24 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
+     * Returns first value of matrices.
+     *
+     * @return first value of matrices.
+     */
+    public Matrix firstValue() {
+        return matrices.get(matrices.firstKey());
+    }
+
+    /**
+     * Returns last value of matrices.
+     *
+     * @return last key of matrices.
+     */
+    public Matrix lastValue() {
+        return matrices.get(matrices.lastKey());
+    }
+
+    /**
      * Returns entries of sample as collection.
      *
      * @return entries of sample as collection.
@@ -917,6 +935,63 @@ public class MMatrix implements Cloneable, Serializable {
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
         return result;
+    }
+
+
+    /**
+     * Flattens MMatrix into one dimensional column vector (matrix)
+     *
+     * @throws MatrixException throws exception if creation of MMatrix fails.
+     */
+    public MMatrix flatten() throws MatrixException {
+        int rows = firstValue().getRows();
+        int cols = firstValue().getColumns();
+        Matrix matrix = new DMatrix(rows * cols * size(), 1);
+        MMatrix mmatrix = new MMatrix(1, matrix);
+        for (Integer index : keySet()) {
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    matrix.setValue(getPosition(rows, cols, row, col, index), 0 , get(index).getValue(row, col));
+                }
+            }
+        }
+        return mmatrix;
+    }
+
+    /**
+     * Returns unflattened MMatrix i.e. samples that have been unflattened from single column vector.
+     *
+     * @param width width of unflattened MMatrix.
+     * @param height height of unflattened MMatrix.
+     * @param depth depth of unflattened MMatrix.
+     * @return unflattened MMatrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public MMatrix unflatten(int width, int height, int depth) throws MatrixException {
+        if (size() != 1) throw new MatrixException("MMatrix cannot be unflattened since it is not column vector (size equals 1).");
+        MMatrix mmatrix = new MMatrix(depth);
+        for (int index = 0; index < depth; index++) {
+            Matrix matrix = new DMatrix(width, height);
+            mmatrix.put(index, matrix);
+            for (int row = 0; row < width; row++) {
+                for (int col = 0; col < height; col++) {
+                    matrix.setValue(row, col, get(0).getValue(getPosition(width, height, row, col, index), 0));
+                }
+            }
+        }
+        return mmatrix;
+    }
+
+    /**
+     * Returns one dimensional index calculated based on width, height and depth.
+     *
+     * @param w weight as input
+     * @param h height as input
+     * @param d depth as input
+     * @return one dimensional index
+     */
+    private int getPosition(int maxWidth, int maxHeight, int w, int h, int d) {
+        return w + maxWidth * h + maxWidth * maxHeight * d;
     }
 
 }
