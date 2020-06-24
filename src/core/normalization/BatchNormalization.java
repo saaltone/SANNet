@@ -36,7 +36,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * Degree of weighting decrease for exponential moving average. Default value 0.9.
      *
      */
-    private double betaValue = 0.99;
+    private double betaValue = 0.9;
 
     /**
      * If true neural network is in state otherwise false.
