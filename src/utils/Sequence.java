@@ -5,7 +5,6 @@
 
 package utils;
 
-import utils.matrix.DMatrix;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -263,24 +262,12 @@ public class Sequence implements Serializable {
     /**
      * Returns flattened sequence i.e. samples that have been flattened into single row with depth one.
      *
-     * @return flattened sequence-
+     * @return flattened sequence.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Sequence flatten() throws MatrixException {
         Sequence flattenedSequence = new Sequence(1);
-        for (Integer sampleIndex : keySet()) {
-            int rows = firstValue().get(0).getRows();
-            int cols = firstValue().get(0).getColumns();
-            Matrix outputMatrix = new DMatrix(rows * cols * getDepth(), 1);
-            flattenedSequence.put(sampleIndex, 0, outputMatrix);
-            for (Integer matrixIndex : sampleKeySet()) {
-                for (int row = 0; row < rows; row++) {
-                    for (int col = 0; col < cols; col++) {
-                        outputMatrix.setValue(getPosition(rows, cols, row, col, matrixIndex), 0 , get(sampleIndex, matrixIndex).getValue(row, col));
-                    }
-                }
-            }
-        }
+        for (Integer sampleIndex : keySet()) flattenedSequence.put(sampleIndex, get(sampleIndex).flatten());
         return flattenedSequence;
     }
 
@@ -295,30 +282,8 @@ public class Sequence implements Serializable {
      */
     public Sequence unflatten(int width, int height, int depth) throws MatrixException {
         Sequence unflattenedSequence = new Sequence(depth);
-        for (Integer sampleIndex : keySet()) {
-            for (int matrixIndex = 0; matrixIndex < depth; matrixIndex++) {
-                Matrix outputMatrix = new DMatrix(width, height);
-                unflattenedSequence.put(sampleIndex, matrixIndex, outputMatrix);
-                for (int row = 0; row < width; row++) {
-                    for (int col = 0; col < height; col++) {
-                        outputMatrix.setValue(row, col, get(sampleIndex, 0).getValue(getPosition(width, height, row, col, matrixIndex), 0));
-                    }
-                }
-            }
-        }
+        for (Integer sampleIndex : keySet()) unflattenedSequence.put(sampleIndex, get(sampleIndex).unflatten(width, height, depth));
         return unflattenedSequence;
-    }
-
-    /**
-     * Returns one dimensional index calculated based on width, height and depth.
-     *
-     * @param w weight as input
-     * @param h height as input
-     * @param d depth as input
-     * @return one dimensional index
-     */
-    private int getPosition(int maxWidth, int maxHeight, int w, int h, int d) {
-        return w + maxWidth * h + maxWidth * maxHeight * d;
     }
 
 }
