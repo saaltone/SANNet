@@ -12,6 +12,11 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeMap;
 
+/**
+ * Defines multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
+ * Class also has operations to calculate sum, mean, variance and standard deviation over multiple matrices element by element.<br>
+ *
+ */
 public class MMatrix implements Cloneable, Serializable {
 
     private static final long serialVersionUID = 2208329722377770337L;
@@ -941,6 +946,7 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Flattens MMatrix into one dimensional column vector (matrix)
      *
+     * @return flattened MMatrix
      * @throws MatrixException throws exception if creation of MMatrix fails.
      */
     public MMatrix flatten() throws MatrixException {
