@@ -14,6 +14,7 @@ import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
+import core.regularization.EarlyStopping;
 import utils.DynamicParamException;
 import utils.Persistence;
 import utils.Sequence;
@@ -57,11 +58,12 @@ public class MNISTDemo {
             neuralNetwork.verboseTraining(10);
             neuralNetwork.setAutoValidate(100);
             neuralNetwork.verboseValidation();
+            neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32, numberOfIterations = 10000"));
-            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32"));
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5000"));
+            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16"));
 
             neuralNetwork.print();
             neuralNetwork.printExpressions();
@@ -71,10 +73,19 @@ public class MNISTDemo {
             neuralNetwork.train();
 
             System.out.println("Predicting...");
+
             Metrics predictionMetrics = new Metrics(MetricsType.CLASSIFICATION);
-            Sequence predict = neuralNetwork.predict(new Sequence(testMNIST.get(0)));
-            predictionMetrics.report(predict, new Sequence(testMNIST.get(1)));
-            predictionMetrics.store(1, false);
+            for (int index = 0; index < 100; index++) {
+                Sequence input = new Sequence(1);
+                Sequence output = new Sequence(1);
+                for (int index1 = 0; index1 < 100; index1++) {
+                    input.put(index1, testMNIST.get(0).get(index * 100 + index1));
+                    output.put(index1, testMNIST.get(1).get(index * 100 + index1));
+                }
+                Sequence predict = neuralNetwork.predict(input);
+                predictionMetrics.report(predict, output);
+                predictionMetrics.store(index, false);
+            }
             predictionMetrics.printReport();
             predictionMetrics.printConfusionMatrix();
 
@@ -103,14 +114,15 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 16, filterSize = 3, stride = 1, asConvolution = true");
-        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 1, stride = 1, avgPool = false");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1, asConvolution = true");
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1, asConvolution = true");
+        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(3, NormalizationType.BATCH_NORMALIZATION);
+        neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
+        neuralNetwork.addNormalizer(4, NormalizationType.BATCH_NORMALIZATION);
         return neuralNetwork;
     }
 
@@ -131,7 +143,7 @@ public class MNISTDemo {
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
-        String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test_mini.csv";
+        String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test.csv";
         HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
         for (MMatrix sample : data.get(0).values()) {
             for (Matrix entry : sample.values()) {
