@@ -27,10 +27,10 @@ public class RAdam implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.RADAM;
 
     /**
-     * Learning rate for RAdam. Default value 0.001.
+     * Learning rate for RAdam. Default value 0.010.
      *
      */
     private double learningRate = 0.001;
@@ -51,7 +51,7 @@ public class RAdam implements Optimizer, Serializable {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private HashMap<Matrix, Integer> iterations;
 
     /**
      * Maximum length of approximated SMA.
@@ -63,32 +63,28 @@ public class RAdam implements Optimizer, Serializable {
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private HashMap<Matrix, Matrix> v;
 
     /**
      * Default constructor for RAdam.
      *
-     * @param optimizationType optimizationType.
      */
-    public RAdam(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public RAdam() {
     }
 
     /**
      * Constructor for RAdam.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for RAdam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public RAdam(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public RAdam(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -170,7 +166,7 @@ public class RAdam implements Optimizer, Serializable {
         Matrix mM = null;
         if (m.containsKey(matrix)) mM = m.get(matrix);
 
-        vM = vM == null ? matrixGradient.power(2).multiply(1 - beta2) : vM.multiply(1 / beta2).add(matrixGradient.power(2).multiply(1 - beta2));
+        vM = vM == null ? matrixGradient.power(2).multiply(1 - beta2) : vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
         v.put(matrix, vM);
 
         mM = mM == null ? matrixGradient.multiply(1 - beta1) : mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1));
@@ -179,15 +175,14 @@ public class RAdam implements Optimizer, Serializable {
         double beta1Iteration = Math.pow(beta1, iteration);
         double beta2Iteration = Math.pow(beta2, iteration);
 
-        Matrix mMhat = mM.multiply(1 / (1 - beta1Iteration));
+        Matrix mMhat = mM.divide(1 - beta1Iteration);
 
-        double stepSize = learningRate / (1 - beta1Iteration);
-
+        double stepSize = learningRate;
         double pt = pinf - 2 * iteration * beta2Iteration / (1 - beta2Iteration);
         if (pt > 4) {
-            Matrix l = vM.apply(UnaryFunctionType.MULINV).multiply(1 - beta2Iteration).apply(UnaryFunctionType.SQRT);
-            double r =  Math.sqrt(((pt - 4) * (pt - 2) * pinf) / ((pinf - 4) * (pinf - 2) * pt));
-            matrix.subtract(mMhat.multiply(l).multiply(r * stepSize), matrix);
+            stepSize *=  Math.sqrt((1 - beta2Iteration) * ((pt - 4) * (pt - 2) * pinf) / ((pinf - 4) * (pinf - 2) * pt));
+            double epsilon = 10E-8;
+            matrix.subtract(mMhat.divide(vM.apply(UnaryFunctionType.SQRT).add(epsilon)).multiply(stepSize), matrix);
         }
         else {
             matrix.subtract(mMhat.multiply(stepSize), matrix);
