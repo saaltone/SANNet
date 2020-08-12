@@ -28,7 +28,7 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.NESTEROV_ACCELERATED_GRADIENT;
 
     /**
      * Learning rate for Nesterov Accelerated Gradient. Default value 0.001.
@@ -46,32 +46,28 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Hash map to store previous velocities.
      *
      */
-    private transient HashMap<Matrix, Matrix> vPrev;
+    private HashMap<Matrix, Matrix> vPrev;
 
     /**
      * Default constructor for Nesterov Accelerated Gradient.
      *
-     * @param optimizationType optimizationType.
      */
-    public NesterovAcceleratedGradient(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public NesterovAcceleratedGradient() {
     }
 
     /**
      * Constructor for Nesterov Accelerated Gradient.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Nesterov Accelerated Gradient.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NesterovAcceleratedGradient(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public NesterovAcceleratedGradient(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

@@ -28,7 +28,7 @@ public class RMSProp implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.RMSPROP;
 
     /**
      * Learning rate for RMSProp. Default value 0.001.
@@ -46,26 +46,22 @@ public class RMSProp implements Optimizer, Serializable {
      * Hash map to store gradients from previous steps.
      *
      */
-    private transient HashMap<Matrix, Matrix> eg2;
+    private HashMap<Matrix, Matrix> eg2;
 
     /**
      * Default constructor for RMSProp.
      *
-     * @param optimizationType optimizationType.
      */
-    public RMSProp(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public RMSProp() {
     }
 
     /**
      * Constructor for RMSProp.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for RMSProp.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public RMSProp(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public RMSProp(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

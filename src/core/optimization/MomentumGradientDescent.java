@@ -27,7 +27,7 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.MOMENTUM_GRADIENT_DESCENT;
 
     /**
      * Learning rate for Momentum Gradient Descent. Default value 0.001.
@@ -45,26 +45,22 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Default constructor for Momentum Gradient Descent.
      *
-     * @param optimizationType optimizationType.
      */
-    public MomentumGradientDescent(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public MomentumGradientDescent() {
     }
 
     /**
      * Constructor for Momentum Gradient Descent.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Momentum Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MomentumGradientDescent(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public MomentumGradientDescent(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

@@ -28,7 +28,7 @@ public class Adagrad implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.ADAGRAD;
 
     /**
      * Learning rate for Adagrad. Default value 0.01.
@@ -45,21 +45,17 @@ public class Adagrad implements Optimizer, Serializable {
     /**
      * Default constructor for Adagrad.
      *
-     * @param optimizationType optimizationType.
      */
-    public Adagrad(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public Adagrad() {
     }
 
     /**
      * Constructor for Adagrad.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Adagrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adagrad(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public Adagrad(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

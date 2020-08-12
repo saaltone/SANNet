@@ -28,7 +28,7 @@ public class Adam implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.ADAM;
 
     /**
      * Learning rate for Adam. Default value 0.001.
@@ -52,13 +52,13 @@ public class Adam implements Optimizer, Serializable {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private HashMap<Matrix, Integer> iterations;
 
     /**
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
@@ -69,21 +69,17 @@ public class Adam implements Optimizer, Serializable {
     /**
      * Default constructor for Adam.
      *
-     * @param optimizationType optimizationType.
      */
-    public Adam(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public Adam() {
     }
 
     /**
      * Constructor for Adam.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Adam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adam(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public Adam(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

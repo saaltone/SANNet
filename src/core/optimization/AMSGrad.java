@@ -28,7 +28,7 @@ public class AMSGrad implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.AMSGRAD;
 
     /**
      * Learning rate for AMSGrad. Default value 0.001.
@@ -52,32 +52,28 @@ public class AMSGrad implements Optimizer, Serializable {
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private HashMap<Matrix, Matrix> v;
 
     /**
      * Default constructor for AMSGrad.
      *
-     * @param optimizationType optimizationType.
      */
-    public AMSGrad(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public AMSGrad() {
     }
 
     /**
      * Constructor for AMSGrad.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for AMSGrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AMSGrad(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public AMSGrad(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

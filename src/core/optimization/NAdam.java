@@ -28,7 +28,7 @@ public class NAdam implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.NADAM;
 
     /**
      * Learning rate for Nadam. Default value 0.001.
@@ -52,38 +52,34 @@ public class NAdam implements Optimizer, Serializable {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private HashMap<Matrix, Integer> iterations;
 
     /**
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private HashMap<Matrix, Matrix> v;
 
     /**
      * Default constructor for Nadam.
      *
-     * @param optimizationType optimizationType.
      */
-    public NAdam(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public NAdam() {
     }
 
     /**
      * Constructor for Nadam.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Nadam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NAdam(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public NAdam(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

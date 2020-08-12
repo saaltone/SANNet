@@ -28,7 +28,7 @@ public class Adamax implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.ADAMAX;
 
     /**
      * Learning rate for Adamax. Default value 0.001.
@@ -52,13 +52,13 @@ public class Adamax implements Optimizer, Serializable {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private HashMap<Matrix, Integer> iterations;
 
     /**
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
@@ -69,21 +69,17 @@ public class Adamax implements Optimizer, Serializable {
     /**
      * Default constructor for Adamax.
      *
-     * @param optimizationType optimizationType.
      */
-    public Adamax(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public Adamax() {
     }
 
     /**
      * Constructor for Adamax.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Adamax.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adamax(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public Adamax(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

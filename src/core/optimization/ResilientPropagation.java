@@ -29,27 +29,25 @@ public class ResilientPropagation implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.RESILIENT_PROPAGATION;
 
     /**
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Hash map to store previous directions.
      *
      */
-    private transient HashMap<Matrix, Matrix> wPrev;
+    private HashMap<Matrix, Matrix> wPrev;
 
     /**
      * Default constructor for Resilient Propagation.
      *
-     * @param optimizationType optimizationType.
      */
-    public ResilientPropagation(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public ResilientPropagation() {
     }
 
     /**

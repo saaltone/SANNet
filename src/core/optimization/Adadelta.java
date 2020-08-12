@@ -28,7 +28,7 @@ public class Adadelta implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.ADADELTA;
 
     /**
      * Learning rate for Adadelta. Default value 1.
@@ -57,21 +57,17 @@ public class Adadelta implements Optimizer, Serializable {
     /**
      * Default constructor for Adadelta.
      *
-     * @param optimizationType optimizationType.
      */
-    public Adadelta(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public Adadelta() {
     }
 
     /**
      * Constructor for Adadelta.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Adadelta.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adadelta(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public Adadelta(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 

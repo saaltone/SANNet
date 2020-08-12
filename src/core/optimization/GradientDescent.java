@@ -27,7 +27,7 @@ public class GradientDescent implements Optimizer, Serializable {
      * Optimization type.
      *
      */
-    private final OptimizationType optimizationType;
+    private final OptimizationType optimizationType = OptimizationType.GRADIENT_DESCENT;
 
     /**
      * Learning rate for Gradient Descent. Default value 0.001.
@@ -38,21 +38,17 @@ public class GradientDescent implements Optimizer, Serializable {
     /**
      * Default constructor for Gradient Descent.
      *
-     * @param optimizationType optimizationType.
      */
-    public GradientDescent(OptimizationType optimizationType) {
-        this.optimizationType = optimizationType;
+    public GradientDescent() {
     }
 
     /**
      * Constructor for Gradient Descent.
      *
-     * @param optimizationType optimizationType.
      * @param params parameters for Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientDescent(OptimizationType optimizationType, String params) throws DynamicParamException {
-        this(optimizationType);
+    public GradientDescent(String params) throws DynamicParamException {
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
