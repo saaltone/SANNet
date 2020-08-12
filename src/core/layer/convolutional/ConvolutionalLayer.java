@@ -238,62 +238,24 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      */
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(numberOfFilters, "Outputs");
-        for (int sampleIndex = 0; sampleIndex < inputs.size() / previousLayerDepth; sampleIndex++) {
-            for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
-                Matrix output = filterBiases.get(filterIndex);
-                for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                    Matrix Wf = filterWeights.get(filterIndex);
-                    Matrix input = inputs.get(getInputIndex(channelIndex, sampleIndex, previousLayerDepth));
-                    input.setStride(stride);
-                    input.setDilation(dilation);
-                    input.setFilterSize(filterSize + (filterSize - 1) * (dilation - 1));
-                    input.setRegularize(true);
-                    if (asConvolution) output = output.add(input.convolve(Wf));
-                    else output = output.add(input.crosscorrelate(Wf));
-                }
-                output.setNormalize(true);
-                output = activationFunction.applyFunction(output);
-                output.setName("Output" + filterIndex);
-                outputs.put(getOutputIndex(filterIndex, sampleIndex, numberOfFilters), output);
+        for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
+            Matrix output = filterBiases.get(filterIndex);
+            for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
+                Matrix Wf = filterWeights.get(filterIndex);
+                Matrix input = inputs.get(channelIndex);
+                input.setStride(stride);
+                input.setDilation(dilation);
+                input.setFilterSize(filterSize + (filterSize - 1) * (dilation - 1));
+                input.setRegularize(true);
+                if (asConvolution) output = output.add(input.convolve(Wf));
+                else output = output.add(input.crosscorrelate(Wf));
             }
+            output.setNormalize(true);
+            output = activationFunction.applyFunction(output);
+            output.setName("Output" + filterIndex);
+            outputs.put(filterIndex, output);
         }
         return outputs;
-    }
-
-    /**
-     * Returns flat filter index by filterIndex, channelIndex and number of channels for a convolutional layer.
-     *
-     * @param filterIndex index for filter.
-     * @param channelIndex index for input channel.
-     * @param channels number of input channels.
-     * @return flat filter index.
-     */
-    private int getFilterIndex(int filterIndex, int channelIndex, int channels) {
-        return channelIndex + filterIndex * channels;
-    }
-
-    /**
-     * Returns output index by filterIndex, sampleIndex and number of filters for a convolutional layer.
-     *
-     * @param filterIndex index for filter.
-     * @param sampleIndex index for current sample.
-     * @param filters number of filters.
-     * @return output index.
-     */
-    private int getOutputIndex(int filterIndex, int sampleIndex, int filters) {
-        return filterIndex + sampleIndex * filters;
-    }
-
-    /**
-     * Returns input index by filterIndex, sampleIndex and number of channels for a convolutional layer.
-     *
-     * @param channelIndex index for channel.
-     * @param sampleIndex index for current sample.
-     * @param channels number of channels.
-     * @return input index.
-     */
-    private int getInputIndex(int channelIndex, int sampleIndex, int channels) {
-        return channelIndex + sampleIndex * channels;
     }
 
     /**
