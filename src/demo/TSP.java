@@ -517,7 +517,7 @@ public class TSP implements Environment {
         Policy policy = null;
         switch (policyType) {
             case 1:
-                policy = new EpsilonGreedyPolicy("epsilonMin = 0");
+                policy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.999, epsilonMin = 0");
                 break;
             case 2:
                 policy = new NoisyPolicy("minExplorationNoise = 0");
@@ -555,23 +555,23 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
+            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.build();
-            neuralNetwork.addNormalizer(3, NormalizationType.BATCH_NORMALIZATION, "beta = 0.9");
-            neuralNetwork.setOptimizer(OptimizationType.ADAM);
+            neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
+            neuralNetwork.setOptimizer(OptimizationType.RADAM);
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.GRAVESLSTM, "width = 60");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 60");
+            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
+            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
             neuralNetwork.build();
             neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
-            neuralNetwork.setOptimizer(OptimizationType.ADAM);
+            neuralNetwork.setOptimizer(OptimizationType.RADAM);
         }
         return neuralNetwork;
     }
