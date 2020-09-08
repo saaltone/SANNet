@@ -5,55 +5,122 @@
 
 package core.reinforcement.value;
 
-import core.reinforcement.RLSample;
-import core.reinforcement.State;
+import core.reinforcement.Agent;
+import core.reinforcement.function.DirectFunctionEstimator;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.matrix.DMatrix;
-import utils.matrix.Matrix;
+
+import java.util.HashMap;
+import java.util.TreeSet;
 
 /**
- * Class that defines PlainValueFunction.
+ * Class that defines PlainValueFunction without function estimator.
  *
  */
 public class PlainValueFunction extends AbstractValueFunction {
 
+    private final DirectFunctionEstimator functionEstimator;
+
+    /**
+     * If true uses baseline for target value update.
+     *
+     */
+    private boolean useBaseline = true;
+
+    /**
+     * Tau value for baseline (mean and standard deviation) averaging.
+     *
+     */
+    private double tau = 0.9;
+
+    /**
+     * Average mean.
+     *
+     */
+    private double averageMean = Double.NEGATIVE_INFINITY;
+
+    /**
+     * Average standard deviation.
+     *
+     */
+    private double averageStd = Double.NEGATIVE_INFINITY;
+
     /**
      * Constructor for PlainValueFunction.
      *
+     * @param functionEstimator reference to DirectFunctionEstimator.
      */
-    public PlainValueFunction() {
+    public PlainValueFunction(DirectFunctionEstimator functionEstimator) {
         super(1);
+        this.functionEstimator = functionEstimator;
     }
 
     /**
      * Constructor for PlainValueFunction.
      *
      * @param numberOfActions number of actions for PlainValueFunction.
+     * @param functionEstimator reference to DirectFunctionEstimator.
      */
-    public PlainValueFunction(int numberOfActions) {
+    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator) {
         super(numberOfActions);
+        this.functionEstimator = functionEstimator;
+        lambda = 1;
     }
 
     /**
      * Constructor for PlainValueFunction.
      *
+     * @param functionEstimator reference to DirectFunctionEstimator.
      * @param params parameters for PlainValueFunction.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public PlainValueFunction(String params) throws DynamicParamException {
+    public PlainValueFunction(DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
         super(1, params);
+        this.functionEstimator = functionEstimator;
+        lambda = 1;
     }
 
     /**
      * Constructor for PlainValueFunction.
      *
      * @param numberOfActions number of actions for PlainValueFunction.
+     * @param functionEstimator reference to DirectFunctionEstimator.
      * @param params parameters for PlainValueFunction.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public PlainValueFunction(int numberOfActions, String params) throws DynamicParamException {
+    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
         super(numberOfActions, params);
+        this.functionEstimator = functionEstimator;
+        lambda = 1;
+    }
+
+    /**
+     * Returns parameters used for PlainValueFunction.
+     *
+     * @return parameters used for PlainValueFunction.
+     */
+    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
+        paramDefs.put("useBaseline", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
+        return paramDefs;
+    }
+
+    /**
+     * Sets parameters used for PlainValueFunction.<br>
+     * <br>
+     * Supported parameters are:<br>
+     *     - useBaseline: if true uses baseline for value function. Default value true.<br>
+     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.9.<br>
+     *
+     * @param params parameters used for PlainValueFunction.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("useBaseline")) useBaseline = params.getValueAsBoolean("useBaseline");
+        if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
     }
 
     /**
@@ -69,31 +136,46 @@ public class PlainValueFunction extends AbstractValueFunction {
     public void stop() {}
 
     /**
-     * Returns new values as empty matrix per number of actions defined.
+     * Returns state value.
      *
-     * @param state state.
-     * @return new values for state.
+     * @param stateTransition state.
+     * @return state value.
      */
-    protected Matrix getValues(State state) {
-        return new DMatrix(getNumberOfActions(), 1);
+    protected double getValue(StateTransition stateTransition) {
+        return stateTransition.stateValue;
     }
 
     /**
-     * Return target value for state based on it's next state.
+     * Returns target value based on next state.
      *
-     * @param nextState next state.
-     * @return target value of sample.
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
      */
-    public double getTargetValue(State nextState) {
-        return nextState.sample.stateValues.getValue(getAction(nextState), 0);
+    public double getTargetValue(StateTransition nextStateTransition) {
+        return nextStateTransition.tdTarget;
     }
 
     /**
-     * Updates baseline value with reward value of sample.
+     * Updates baseline values for state transitions.
      *
-     * @param sample sample.
+     * @param stateTransitions state transitions.
      */
-    protected void updateBaseline(RLSample sample) {
+    protected void updateBaseline(TreeSet<StateTransition> stateTransitions) {
+        if (!useBaseline) return;
+
+        double mean = 0;
+        for (StateTransition stateTransition : stateTransitions) mean += stateTransition.tdTarget;
+        mean /= stateTransitions.size();
+
+        averageMean = averageMean == Double.NEGATIVE_INFINITY ? mean : tau * averageMean + (1 - tau) * mean;
+
+        double std = 0;
+        for (StateTransition stateTransition : stateTransitions) std += Math.pow(stateTransition.tdTarget - mean, 2);
+        std = Math.sqrt(std / (stateTransitions.size() - 1));
+
+        averageStd = averageStd == Double.NEGATIVE_INFINITY ? std : tau * averageStd + (1 - tau) * std;
+
+        for (StateTransition stateTransition : stateTransitions) stateTransition.tdTarget = (stateTransition.tdTarget - averageMean) / averageStd;
     }
 
     /**
@@ -102,22 +184,17 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @return FunctionEstimator.
      */
     public FunctionEstimator getFunctionEstimator() {
-        return null;
+        return functionEstimator;
     }
 
     /**
-     * Updates target value FunctionEstimator.
+     * Updates FunctionEstimator.
      *
+     * @param agent agent.
+     * @param stateTransitions state transitions used to update FunctionEstimator.
      */
-    public void updateTargetFunctionEstimator() {}
-
-    /**
-     * Returns current value error.
-     *
-     * @return current value error.
-     */
-    public double getValueError() {
-        return 0;
+    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) {
+        functionEstimator.update(stateTransitions);
     }
 
 }
