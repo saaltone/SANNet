@@ -7,26 +7,28 @@ package core.reinforcement.function;
 
 import core.NeuralNetwork;
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.Memory;
+import core.reinforcement.memory.StateTransition;
 import utils.DynamicParam;
 import utils.DynamicParamException;
+import utils.matrix.BinaryFunctionType;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.BasicSampler;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 /**
- * Class that defines neural network as function estimator.
+ * Class that defines NNFunctionEstimator.
  *
  */
-public class NNFunctionEstimator implements FunctionEstimator, Serializable {
-
-    private static final long serialVersionUID = 233674344549590971L;
+public class NNFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
      * Neural network function estimator.
@@ -35,13 +37,7 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     private final NeuralNetwork neuralNetwork;
 
     /**
-     * Number of actions for function estimator.
-     *
-     */
-    private final int numberOfActions;
-
-    /**
-     * Update rate for target function estimator.
+     * Update rate of target function.
      *
      */
     private double tau = 0.001;
@@ -50,27 +46,55 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      * If true applies importance sampling weights.
      *
      */
-    private boolean applyImportanceSamplingWeights = true;
+    private final boolean applyImportanceSamplingWeights;
+
+    /**
+     * Intermediate map for state value pairs as value cache.
+     *
+     */
+    private HashMap<Matrix, Matrix> stateValueMap = new HashMap<>();
+
+    /**
+     * Intermediate map for state transition value pairs for update.
+     *
+     */
+    private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
+
+    /**
+     * Parameters for NNFunctionEstimator.
+     *
+     */
+    private String params;
 
     /**
      * Constructor for NNFunctionEstimator.
      *
+     * @param memory memory reference.
      * @param neuralNetwork neural network reference.
+     * @param numberOfActions number of actions.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public NNFunctionEstimator(NeuralNetwork neuralNetwork) {
+    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, int numberOfActions) throws MatrixException {
+        super (memory, numberOfActions);
+        if (neuralNetwork.getOutputLayer().getLayerWidth() < numberOfActions) throw new MatrixException("Neural network has less output than number of actions.");
         this.neuralNetwork = neuralNetwork;
-        numberOfActions = neuralNetwork.getOutputLayer().getLayerWidth();
+        this.isStateActionValueFunction = getNeuralNetwork().getOutputLayer().getLossFunctionType() == BinaryFunctionType.POLICY_VALUE;
+        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
 
     /**
      * Constructor for NNFunctionEstimator.
      *
+     * @param memory memory reference.
      * @param neuralNetwork neural network reference.
+     * @param numberOfActions number of actions.
      * @param params parameters for function
+     * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NNFunctionEstimator(NeuralNetwork neuralNetwork, String params) throws DynamicParamException {
-        this(neuralNetwork);
+    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, int numberOfActions, String params) throws MatrixException, DynamicParamException {
+        this(memory, neuralNetwork, numberOfActions);
+        this.params = params;
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -82,7 +106,6 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("applyImportanceSamplingWeights", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -90,24 +113,13 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      * Sets parameters used for NNFunctionEstimator.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - tau: update rate for for target function (applied is updateCycle = 0). Default value 0.001.<br>
-     *     - applyImportanceSamplingWeights: if true applies importance sampling weights as applicable. Default value True.<br>
+     *     - tau: update rate pf target function. Default value 0.001.<br>
      *
-     * @param params parameters used for NNFunction.
+     * @param params parameters used for NNFunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
-        if (params.hasParam("applyImportanceSamplingWeights")) applyImportanceSamplingWeights = params.getValueAsBoolean("applyImportanceSamplingWeights");
-    }
-
-    /**
-     * Returns number of actions for NNFunctionEstimator.
-     *
-     * @return number of actions for NNFunctionEstimator.
-     */
-    public int getNumberOfActions() {
-        return numberOfActions;
     }
 
     /**
@@ -129,7 +141,7 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     }
 
     /**
-     * Returns neural network as function estimator.
+     * Returns neural network used by NNFunctionEstimator.
      *
      * @return neural network.
      */
@@ -138,14 +150,16 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
     }
 
     /**
-     * Returns copy of function estimator.
+     * Returns copy of NNFunctionEstimator.
      *
-     * @return copy of function estimator.
-     * @throws IOException throws exception if creation of function estimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of function estimator copy fails.
+     * @return copy of NNFunctionEstimator.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator copy() throws IOException, ClassNotFoundException {
-        return new NNFunctionEstimator(neuralNetwork.copy());
+    public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+        return params == null ? new NNFunctionEstimator(memory, neuralNetwork.copy(), numberOfActions) : new NNFunctionEstimator(memory, neuralNetwork.copy(), numberOfActions, params);
     }
 
     /**
@@ -157,51 +171,64 @@ public class NNFunctionEstimator implements FunctionEstimator, Serializable {
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
     public Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException {
-        return neuralNetwork.predict(new MMatrix(state)).get(0);
+        if (stateValueMap.containsKey(state)) return stateValueMap.get(state);
+        Matrix values = neuralNetwork.predict(new MMatrix(state)).get(0);
+        stateValueMap.put(state, values);
+        return values;
     }
 
     /**
-     * Sets importance sampling weights.
+     * Stores state transition values pair.
      *
-     * @param ISWeights importance sampling weights.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @param agent deep agent.
+     * @param stateTransition state transition.
+     * @param values values.
      */
-    public void setImportanceSamplingWeights(TreeMap<Integer, Double> ISWeights) throws NeuralNetworkException {
-        if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(ISWeights);
+    public void store(Agent agent, StateTransition stateTransition, Matrix values) throws AgentException {
+        super.store(agent);
+        stateTransitionValueMap.put(stateTransition, values);
     }
 
     /**
      * Updates (trains) neural network.
      *
-     * @param states states to be updated.
-     * @param stateValues state values to be updated.
+     * @param agent agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if agent is not registered for ongoing update cycle.
      */
-    public void train(LinkedHashMap<Integer, MMatrix> states, LinkedHashMap<Integer, MMatrix> stateValues) throws NeuralNetworkException, DynamicParamException {
+    public void update(Agent agent) throws NeuralNetworkException, DynamicParamException, AgentException {
+        if (!super.updateAndCheck(agent)) return;
+
+        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> stateValues = new LinkedHashMap<>();
+        TreeMap<Integer, Double> importanceSamplingWeights = new TreeMap<>();
+        int index = 0;
+        for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
+            states.put(index, new MMatrix(stateTransition.environmentState.state));
+            stateValues.put(index, new MMatrix(stateTransitionValueMap.get(stateTransition)));
+            if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index++, stateTransition.importanceSamplingWeight);
+            index++;
+        }
+        if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(importanceSamplingWeights);
         neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true"));
+
+        stateValueMap = new HashMap<>();
+        stateTransitionValueMap = new HashMap<>();
     }
 
     /**
-     * Appends parameters of this neural network estimator from another estimator function.
+     * Appends parameters to this NNFunctionEstimator from another NNFunctionEstimator.
      *
      * @param functionEstimator function estimator used to update current function estimator.
      * @param fullUpdate if true full update is done.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException {
+    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException, AgentException {
+        super.append();
         if (fullUpdate) neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), 1);
         else neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), tau);
-    }
-
-    /**
-     * Returns error of FunctionEstimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return error of FunctionEstimator.
-     */
-    public double getError() throws MatrixException {
-        return neuralNetwork.getOutputError();
     }
 
 }
