@@ -41,6 +41,7 @@ public enum BinaryFunctionType {
     HUBER,
     DIRECT_GRADIENT,
     POLICY_GRADIENT,
+    POLICY_VALUE,
     POW,
     MAX,
     MIN,
