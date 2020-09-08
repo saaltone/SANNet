@@ -6,16 +6,14 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.RLSample;
-import core.reinforcement.State;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
-import java.util.TreeMap;
-
 /**
- * Interface for ValueFunction.
+ * Interface that defines ValueFunction.
  *
  */
 public interface ValueFunction {
@@ -35,40 +33,15 @@ public interface ValueFunction {
     void stop();
 
     /**
-     * Sets current episode count.
+     * Updates value function.
      *
-     * @param episodeCount current episode count.
-     */
-    void setEpisode(int episodeCount);
-
-    /**
-     * Return target value for sample originating from next state.
-     *
-     * @param nextState next state.
-     * @return target value of state.
+     * @param agent agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
      */
-    double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Returns TD target of sample.
-     *
-     * @param state state.
-     * @return TD target of state.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    double getTDTarget(State state) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Updates TD target of sample.
-     *
-     * @param sample sample.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void updateTDTarget(RLSample sample) throws NeuralNetworkException, MatrixException;
+    void update(Agent agent) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
 
     /**
      * Returns FunctionEstimator.
@@ -76,32 +49,5 @@ public interface ValueFunction {
      * @return FunctionEstimator.
      */
     FunctionEstimator getFunctionEstimator();
-
-    /**
-     * Updates FunctionEstimator.
-     *
-     * @param samples samples used to update FunctionEstimator.
-     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException;
-
-    /**
-     * Updates target value FunctionEstimator.<br>
-     * If update cycle is greater than 0 makes full update every update cycle episodes else applies smooth update with update rate tau.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void updateTargetFunctionEstimator() throws MatrixException;
-
-    /**
-     * Returns current value error.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return current value error.
-     */
-    double getValueError() throws MatrixException;
 
 }
