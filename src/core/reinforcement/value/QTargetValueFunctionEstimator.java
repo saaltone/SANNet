@@ -6,7 +6,9 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.State;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParam;
 import utils.DynamicParamException;
@@ -14,6 +16,7 @@ import utils.matrix.MatrixException;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.TreeSet;
 
 /**
  * Class that defines QTargetValueFunctionEstimator (Q value function with target function estimator).
@@ -28,10 +31,16 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
     private final FunctionEstimator targetValueFunctionEstimator;
 
     /**
-     * Update cycle (in episodes) for target FunctionEstimator. If update cycle is zero then applies smooth updates with update rate tau.
+     * Update cycle (in episodes) for target FunctionEstimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
      *
      */
     private int updateCycle = 0;
+
+    /**
+     * Update count for update cycle.
+     *
+     */
+    private transient int updateCount = 0;
 
     /**
      * Constructor for QTargetValueFunctionEstimator.
@@ -39,9 +48,11 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * @param functionEstimator reference to FunctionEstimator.
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException {
-        super(functionEstimator);
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+        super(functionEstimator.getNumberOfActions(), functionEstimator);
         targetValueFunctionEstimator = functionEstimator.copy();
     }
 
@@ -53,9 +64,10 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException {
-        super(functionEstimator, params);
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
         setParams(new DynamicParam(params, getParamDefs()));
         targetValueFunctionEstimator = functionEstimator.copy();
     }
@@ -106,27 +118,36 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
     }
 
     /**
-     * Return target value for state based on it's next state.<br>
-     * Uses value function to calculate target action and target value function to calculate target value given target action.<br>
+     * Returns target value based on next state. Uses target action with maximal value as defined by target FunctionEstimator.
      *
-     * @param nextState next state.
-     * @return target value for state.
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException {
-        return targetValueFunctionEstimator.predict(nextState.stateMatrix).getValue(argmax(functionEstimator.predict(nextState.stateMatrix)), 0);
+    public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
+        return functionEstimator.predict(nextStateTransition.environmentState.state).getValue(argmax(targetValueFunctionEstimator.predict(nextStateTransition.environmentState.state), nextStateTransition.environmentState.availableActions), 0);
     }
 
     /**
-     * Updates target value FunctionEstimator.<br>
-     * if update cycle is greater than 0 makes full update every update cycle episodes else applies smooth update with update rate tau.<br>
+     * Updates FunctionEstimator.
      *
+     * @param agent agent.
+     * @param stateTransitions state transitions used to update FunctionEstimator.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateTargetFunctionEstimator() throws MatrixException {
+    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        super.updateFunctionEstimator(agent, stateTransitions);
         if (updateCycle == 0) targetValueFunctionEstimator.append(functionEstimator, false);
-        else if (episodeCount % updateCycle == 0) targetValueFunctionEstimator.append(functionEstimator, true);
+        else {
+            if (++updateCount >= updateCycle) {
+                targetValueFunctionEstimator.append(functionEstimator, true);
+                updateCount = 0;
+            }
+        }
     }
 
 }
