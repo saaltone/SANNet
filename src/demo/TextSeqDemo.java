@@ -103,7 +103,8 @@ public class TextSeqDemo {
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
+//        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
+        neuralNetwork.addRegularizer(RegularizationType.WEIGHT_NOISING);
         return neuralNetwork;
     }
 
