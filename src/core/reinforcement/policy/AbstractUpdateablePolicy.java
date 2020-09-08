@@ -6,61 +6,75 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
-import core.reinforcement.RLSample;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.LinkedHashMap;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Class that defines AbstractUpdateablePolicy. Contains common functions fo updateable policies.
  *
  */
-public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy implements UpdateablePolicy {
-
-    /**
-     * Current value error;
-     *
-     */
-    private transient double valueError;
+public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy implements ActionablePolicy {
 
     /**
      * Constructor for AbstractUpdateablePolicy.
      *
-     * @param policy reference to policy.
+     * @param executablePolicy reference to policy.
      * @param functionEstimator reference to FunctionEstimator.
      */
-    public AbstractUpdateablePolicy(Policy policy, FunctionEstimator functionEstimator) {
-        super(policy, functionEstimator);
+    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
+        super(executablePolicy, functionEstimator);
     }
 
     /**
-     * Updates policy FunctionEstimator.
+     * Returns action with potential state action value offset.
      *
-     * @param samples samples used for policy FunctionEstimator update.
-     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
+     * @param action action.
+     * @return updated action.
+     */
+    protected int getAction(int action) {
+        return getStateValueOffset() + action;
+    }
+
+    /**
+     * Returns advantage.
+     *
+     * @param stateTransition state transition
+     * @return advantage
+     */
+    protected double getAdvantage(StateTransition stateTransition) {
+        return stateTransition.tdTarget - stateTransition.stateValue;
+    }
+
+    /**
+     * Updates policy.
+     *
+     * @param agent agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        if (getFunctionEstimator().sampledSetEmpty()) return;
+        TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
         preProcess();
-        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> policyGradients = new LinkedHashMap<>();
-        for (Integer sampleIndex : samples.descendingKeySet()) {
-            RLSample sample = samples.get(sampleIndex);
-            states.put(sampleIndex, new MMatrix(sample.state.stateMatrix));
-            Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1);
-            policyGradient.setValue(sample.state.action, 0, -getPolicyGradientValue(sample, hasImportanceSamplingWeights));
-            policyGradients.put(sampleIndex, new MMatrix(policyGradient));
+        for (StateTransition stateTransition : stateTransitions) {
+            Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions() + getStateValueOffset(), 1);
+            if (isStateActionValueFunction) policyGradient.setValue(0, 0, stateTransition.tdTarget);
+            policyGradient.setValue(getAction(stateTransition.action), 0, -getPolicyGradientValue(stateTransition));
+            getFunctionEstimator().store(agent, stateTransition, policyGradient);
         }
         postProcess();
-        getFunctionEstimator().train(states, policyGradients);
+        getFunctionEstimator().update(agent);
     }
 
     /**
@@ -70,39 +84,21 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
     protected abstract void preProcess();
 
     /**
-     * Returns policy gradient value for sample.
+     * Returns policy gradient value for StateTransition.
      *
-     * @param sample sample
-     * @param hasImportanceSamplingWeight if true sample has importance sample weight set.
+     * @param stateTransition state transition.
      * @return policy gradient value for sample.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract double getPolicyGradientValue(RLSample sample, boolean hasImportanceSamplingWeight) throws NeuralNetworkException, MatrixException;
+    protected abstract double getPolicyGradientValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
      * Postprocesses policy gradient setting.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected abstract void postProcess() throws MatrixException;
-
-    /**
-     * Sets current value error.
-     *
-     * @param valueError current value error.
-     */
-    public void setValueError(double valueError) {
-        this.valueError = valueError;
-    }
-
-    /**
-     * Returns current value error.
-     *
-     * @return current value error.
-     */
-    protected double getValueError() {
-        return valueError;
-    }
+    protected abstract void postProcess() throws MatrixException, AgentException;
 
 }

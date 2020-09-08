@@ -6,9 +6,12 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.RLSample;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
@@ -18,7 +21,7 @@ import utils.matrix.MatrixException;
 public interface ActionablePolicy {
 
     /**
-     * Starts policy FunctionEstimator.
+     * Starts ActionablePolicy.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -26,17 +29,10 @@ public interface ActionablePolicy {
     void start() throws NeuralNetworkException, MatrixException;
 
     /**
-     * Stops policy FunctionEstimator.
+     * Stops ActionablePolicy.
      *
      */
     void stop();
-
-    /**
-     * Sets current episode count.
-     *
-     * @param episodeCount current episode count.
-     */
-    void setEpisode(int episodeCount);
 
     /**
      * Sets reference to environment.
@@ -53,18 +49,49 @@ public interface ActionablePolicy {
     Environment getEnvironment();
 
     /**
-     * Takes action by applying defined policy,
+     * Set flag if agent is in learning mode.
      *
-     * @param sample sample.
+     * @param isLearning if true agent is in learning mode.
+     */
+    void setLearning(boolean isLearning);
+
+    /**
+     * Return flag is policy is in learning mode.
+     *
+     * @return if true agent is in learning mode.
+     */
+    boolean isLearning();
+
+    /**
+     * Updates policy.
+     *
+     */
+    void update();
+
+    /**
+     * Takes action by applying defined executable policy,
+     *
+     * @param stateTransition state transition.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void act(RLSample sample) throws NeuralNetworkException, MatrixException;
+    void act(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Returns policy FunctionEstimator.
+     * Updates policy.
      *
-     * @return policy FunctionEstimator.
+     * @param agent agent.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
+     */
+    void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
+
+    /**
+     * Returns FunctionEstimator.
+     *
+     * @return FunctionEstimator.
      */
     FunctionEstimator getFunctionEstimator();
 

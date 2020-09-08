@@ -6,8 +6,9 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
-import core.reinforcement.RLSample;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
@@ -23,10 +24,10 @@ import java.util.HashSet;
 public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
 
     /**
-     * If true entropy is calculated when policy is executed.
+     * If true entropy is applied when policy is updated.
      *
      */
-    protected boolean updateEntropy = true;
+    protected boolean applyEntropy = true;
 
     /**
      * Entropy coefficient for policy gradient.
@@ -37,23 +38,23 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
     /**
      * Constructor for UpdateableBasicPolicy.
      *
-     * @param policy reference to UpdateableBasicPolicy.
+     * @param executablePolicy reference to UpdateableBasicPolicy.
      * @param functionEstimator reference to FunctionEstimator.
      */
-    public UpdateableBasicPolicy(Policy policy, FunctionEstimator functionEstimator) {
-        super(policy, functionEstimator);
+    public UpdateableBasicPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
+        super(executablePolicy, functionEstimator);
     }
 
     /**
      * Constructor for UpdateableBasicPolicy.
      *
-     * @param policy reference to policy.
+     * @param executablePolicy reference to executable policy.
      * @param functionEstimator reference to FunctionEstimator.
-     * @param params parameters for policy.
+     * @param params parameters for UpdateableBasicPolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UpdateableBasicPolicy(Policy policy, FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        this(policy, functionEstimator);
+    public UpdateableBasicPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, String params) throws DynamicParamException {
+        this(executablePolicy, functionEstimator);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -64,7 +65,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      */
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("updateEntropy", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("applyEntropy", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("entropyCoefficient", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
     }
@@ -73,75 +74,63 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * Sets parameters used for UpdateableBasicPolicy.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - updateEntropy: If true entropy is calculated for sample. Default value true.<br>
+     *     - applyEntropy: if true entropy is applied when policy is updated. Default value true.<br>
      *     - entropyCoefficient: co-efficient factor for entropy. Default value 0.01.<br>
      *
      * @param params parameters used for UpdateableBasicPolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("updateEntropy")) updateEntropy = params.getValueAsBoolean("updateEntropy");
+        if (params.hasParam("applyEntropy")) applyEntropy = params.getValueAsBoolean("applyEntropy");
         if (params.hasParam("entropyCoefficient")) entropyCoefficient = params.getValueAsDouble("entropyCoefficient");
     }
 
     /**
-     * Takes action by applying defined policy,
+     * Returns FunctionEstimator.
      *
-     * @param sample sample.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void act(RLSample sample) throws NeuralNetworkException, MatrixException {
-        super.act(sample);
-        if (updateEntropy) sample.entropy = getSampleEntropy(currentPolicyValues, sample.state.availableActions);
-    }
-
-    /**
-     * Returns sample entropy.
-     *
-     * @param policyValues policy values.
-     * @param availableActions available actions in state.
-     * @return sample entropy.
-     */
-    private double getSampleEntropy(Matrix policyValues, HashSet<Integer> availableActions) {
-        double entropy = 0;
-        for (Integer action: availableActions) {
-            double actionValue = policyValues.getValue(action, 0);
-            entropy += actionValue * Math.log(actionValue);
-        }
-        return -entropy;
-    }
-
-    /**
-     * Returns policy FunctionEstimator.
-     *
-     * @return policy FunctionEstimator.
+     * @return FunctionEstimator.
      */
     public FunctionEstimator getFunctionEstimator() {
         return functionEstimator;
     }
 
     /**
-     * Preprocesses policy gradient setting.
+     * Preprocesses policy gradient update.
      *
      */
     protected void preProcess() {
     }
 
     /**
-     * Returns policy gradient value for sample.
+     * Returns policy gradient value for update.
      *
-     * @param sample sample
-     * @param hasImportanceSamplingWeight if true sample has importance sample weight set.
-     * @return policy gradient value for sample.
+     * @param stateTransition state transition.
+     * @return policy gradient value for update.
      */
-    protected double getPolicyGradientValue(RLSample sample, boolean hasImportanceSamplingWeight) {
-        double advantage = sample.tdTarget - sample.baseline;
-        return Math.log(sample.policyValue) * (advantage + entropyCoefficient * sample.entropy) + 0.5 * Math.pow(advantage, 2);
+    protected double getPolicyGradientValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
+        double currentPolicyValue = currentPolicyValues.getValue(getAction(stateTransition.action), 0) + 10E-15;
+        return currentPolicyValue * Math.log(currentPolicyValue) * (getAdvantage(stateTransition) + (applyEntropy ? entropyCoefficient * getSampleEntropy(currentPolicyValues, stateTransition.environmentState.availableActions) : 0));
     }
 
     /**
-     * Postprocesses policy gradient setting.
+     * Returns entropy.
+     *
+     * @param policyValues policy values.
+     * @param availableActions available actions in state.
+     * @return entropy.
+     */
+    private double getSampleEntropy(Matrix policyValues, HashSet<Integer> availableActions) {
+        double entropy = 0;
+        for (Integer action: availableActions) {
+            double actionValue = policyValues.getValue(getAction(action), 0);
+            if (actionValue != 0) entropy += -actionValue * Math.log(actionValue);
+        }
+        return entropy;
+    }
+
+    /**
+     * Postprocesses policy gradient update.
      *
      */
     protected void postProcess() {

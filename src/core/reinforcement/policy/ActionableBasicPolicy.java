@@ -6,9 +6,13 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.RLSample;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
+import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -29,36 +33,43 @@ public class ActionableBasicPolicy implements ActionablePolicy, Serializable {
     protected Environment environment;
 
     /**
-     * Current policy values estimated by function estimator.
-     *
-     */
-    protected transient Matrix currentPolicyValues;
-
-    /**
      * Reference to FunctionEstimator.
      *
      */
     protected final FunctionEstimator functionEstimator;
 
     /**
-     * Reference to policy.
+     * If true function estimator is state action value function.
      *
      */
-    protected final Policy policy;
+    protected final boolean isStateActionValueFunction;
 
     /**
-     * Constructor for policy.
+     * Reference to executable policy.
      *
-     * @param policy reference to policy.
+     */
+    protected final ExecutablePolicy executablePolicy;
+
+    /**
+     * If true agent is in learning mode.
+     *
+     */
+    private boolean isLearning = true;
+
+    /**
+     * Constructor for ActionableBasicPolicy.
+     *
+     * @param executablePolicy reference to executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      */
-    public ActionableBasicPolicy(Policy policy, FunctionEstimator functionEstimator) {
-        this.policy = policy;
+    public ActionableBasicPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
+        this.executablePolicy = executablePolicy;
         this.functionEstimator = functionEstimator;
+        isStateActionValueFunction = functionEstimator.isStateActionValue();
     }
 
     /**
-     * Starts policy FunctionEstimator.
+     * Starts ActionableBasicPolicy.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -68,20 +79,11 @@ public class ActionableBasicPolicy implements ActionablePolicy, Serializable {
     }
 
     /**
-     * Stops policy FunctionEstimator.
+     * Stops ActionableBasicPolicy.
      *
      */
     public void stop() {
         functionEstimator.stop();
-    }
-
-    /**
-     * Sets current episode count.
-     *
-     * @param episodeCount current episode count.
-     */
-    public void setEpisode(int episodeCount) {
-        policy.setEpisode(episodeCount);
     }
 
     /**
@@ -103,23 +105,69 @@ public class ActionableBasicPolicy implements ActionablePolicy, Serializable {
     }
 
     /**
-     * Takes action by applying defined policy,
+     * Set flag if agent is in learning mode.
      *
-     * @param sample sample.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param isLearning if true agent is in learning mode.
      */
-    public void act(RLSample sample) throws NeuralNetworkException, MatrixException {
-        sample.state.availableActions = environment.getAvailableActions();
-        currentPolicyValues = functionEstimator.predict(sample.state.stateMatrix);
-        sample.state.action = policy.action(currentPolicyValues, sample.state.availableActions);
-        sample.policyValue = currentPolicyValues.getValue(sample.state.action, 0);
+    public void setLearning(boolean isLearning) {
+        this.isLearning = isLearning;
     }
 
     /**
-     * Returns policy FunctionEstimator.
+     * Return flag is policy is in learning mode.
      *
-     * @return policy FunctionEstimator.
+     * @return if true agent is in learning mode.
+     */
+    public boolean isLearning() {
+        return isLearning;
+    }
+
+    /**
+     * Updates executable policy.
+     *
+     */
+    public void update() {
+        executablePolicy.increment();
+    }
+
+    /**
+     * Return state value offset
+     *
+     * @return state value offset
+     */
+    protected int getStateValueOffset() {
+        return isStateActionValueFunction ? 1 : 0;
+    }
+
+    /**
+     * Takes action by applying defined executable policy.
+     *
+     * @param stateTransition state transition.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void act(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
+        stateTransition.action = executablePolicy.action(currentPolicyValues, stateTransition.environmentState.availableActions, getStateValueOffset());
+        if (isLearning) functionEstimator.add(stateTransition);
+    }
+
+    /**
+     * Updates policy.
+     *
+     * @param agent agent.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
+     */
+    public void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+    }
+
+    /**
+     * Returns FunctionEstimator.
+     *
+     * @return FunctionEstimator.
      */
     public FunctionEstimator getFunctionEstimator() {
         return functionEstimator;

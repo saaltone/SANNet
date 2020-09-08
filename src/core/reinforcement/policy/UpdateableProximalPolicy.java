@@ -6,8 +6,10 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
-import core.reinforcement.RLSample;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -28,36 +30,51 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     private final FunctionEstimator previousFunctionEstimator;
 
     /**
-     * Epsilon value for Proximal Policy clipping function.
+     * Epsilon value for proximal policy value clipping.
      *
      */
     private double epsilon = 0.2;
 
     /**
+     * Update cycle for previous function estimator.
+     *
+     */
+    private int updateCycle = 1;
+
+    /**
+     * Update count for previous function estimator updates.
+     *
+     */
+    private int updateCount = 0;
+
+    /**
      * Constructor for UpdateableProximalPolicy.
      *
-     * @param policy reference to policy.
+     * @param executablePolicy reference to executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws IOException throws exception if creation of previousFunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of previousFunctionEstimator fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UpdateableProximalPolicy(Policy policy, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException {
-        super(policy, functionEstimator);
+    public UpdateableProximalPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+        super(executablePolicy, functionEstimator);
         previousFunctionEstimator = functionEstimator.copy();
     }
 
     /**
      * Constructor for UpdateableProximalPolicy.
      *
-     * @param policy reference to policy.
+     * @param executablePolicy reference to executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      * @param params parameters for policy.
      * @throws IOException throws exception if creation of previousFunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of previousFunctionEstimator fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UpdateableProximalPolicy(Policy policy, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException {
-        this(policy, functionEstimator);
+    public UpdateableProximalPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+        this(executablePolicy, functionEstimator);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -69,6 +86,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("epsilon", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("updateCycle", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
     }
 
@@ -76,13 +94,15 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * Sets parameters used for UpdateableProximalPolicy.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - updateEntropy: Epsilon value for Proximal Policy clipping function. Default value 0.2.<br>
+     *     - epsilon: epsilon value for proximal policy value clipping. Default value 0.2.<br>
+     *     - updateCycle: update cycle for previous estimator function update. Default value 1.<br>
      *
      * @param params parameters used for UpdateableProximalPolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("epsilon")) epsilon = params.getValueAsDouble("epsilon");
+        if (params.hasParam("updateCycle")) updateCycle = params.getValueAsInteger("updateCycle");
     }
 
     /**
@@ -106,36 +126,40 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Preprocesses policy gradient setting.
+     * Preprocesses policy gradient update.
      *
      */
     protected void preProcess() {
     }
 
     /**
-     * Returns policy gradient value for sample.
+     * Returns policy gradient value for update.
      *
-     * @param sample sample
-     * @param hasImportanceSamplingWeight if true sample has importance sample weight set.
+     * @param stateTransition state transition.
      * @return policy gradient value for sample.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected double getPolicyGradientValue(RLSample sample, boolean hasImportanceSamplingWeight) throws NeuralNetworkException, MatrixException {
-        double previousActionValue = previousFunctionEstimator.predict(sample.state.stateMatrix).getValue(sample.state.action, 0);
-        double rValue = sample.policyValue / previousActionValue;
+    protected double getPolicyGradientValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        int action = getAction(stateTransition.action);
+        double currentActionValue = functionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
+        double previousActionValue = previousFunctionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
+        double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
-        double advantage = sample.tdTarget - sample.baseline;
-        return Math.min(rValue * advantage, clippedRValue * advantage);
+        return Math.min(rValue * getAdvantage(stateTransition), clippedRValue * getAdvantage(stateTransition));
     }
 
     /**
-     * Postprocesses policy gradient setting.
+     * Postprocesses policy gradient update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void postProcess() throws MatrixException {
-        previousFunctionEstimator.append(functionEstimator, true);
+    protected void postProcess() throws MatrixException, AgentException {
+        if (++updateCount >= updateCycle) {
+            previousFunctionEstimator.append(functionEstimator, true);
+            updateCount = 0;
+        }
     }
 
 }
