@@ -12,8 +12,6 @@ import core.reinforcement.value.ValueFunction;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
-import java.util.TreeMap;
-
 /**
  * Class that defines Q Learning algorithms.
  *
@@ -21,42 +19,40 @@ import java.util.TreeMap;
 public abstract class AbstractQLearning extends DeepAgent {
 
     /**
-     * Constructor for Q Learning.
+     * Constructor for AbstractQLearning.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
-     * @param buffer reference to buffer.
      * @param valueFunction reference to value function.
      */
-    public AbstractQLearning(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunction valueFunction) {
-        super(environment, policy, buffer, valueFunction);
+    public AbstractQLearning(Environment environment, ActionablePolicy policy, ValueFunction valueFunction) {
+        super(environment, policy, valueFunction);
     }
 
     /**
-     * Constructor for Q Learning.
+     * Constructor for AbstractQLearning.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
-     * @param buffer reference to buffer.
      * @param valueFunction reference to value function.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractQLearning(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunction valueFunction, String params) throws DynamicParamException {
-        super(environment, policy, buffer, valueFunction, params);
+    public AbstractQLearning(Environment environment, ActionablePolicy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
+        super(environment, policy, valueFunction, params);
     }
 
     /**
-     * Updates value function of agent.
+     * Updates agent.
      *
-     * @param samples samples used to update function estimator.
-     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if memory instances of value and policy function are not equal.
      */
-    protected void updateAgent(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws MatrixException, NeuralNetworkException, DynamicParamException {
-        valueFunction.updateFunctionEstimator(samples, hasImportanceSamplingWeights);
+    protected void update() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+        valueFunction.update(this);
+        policy.update();
     }
 
 }
