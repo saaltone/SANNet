@@ -6,15 +6,16 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.*;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Class that defines AbstractValueFunction.
@@ -23,12 +24,6 @@ import java.util.TreeMap;
 public abstract class AbstractValueFunction implements ValueFunction, Serializable {
 
     private static final long serialVersionUID = -7436000520645598105L;
-
-    /**
-     * Current episode count.
-     *
-     */
-    protected transient int episodeCount;
 
     /**
      * Number of actions for value function.
@@ -43,10 +38,29 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     private double gamma = 0.99;
 
     /**
-     * If true uses baseline for target value update.
+     * Lambda value controlling balance between bootstrapped value and future reward of next state.
      *
      */
-    private boolean useBaseline = false;
+    protected double lambda = 0.75;
+
+    /**
+     * Constructor for AbstractValueFunction.
+     *
+     */
+    AbstractValueFunction() {
+        this.numberOfActions = 1;
+    }
+
+    /**
+     * Constructor for AbstractValueFunction.
+     *
+     * @param params parameters for value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    AbstractValueFunction(String params) throws DynamicParamException {
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
 
     /**
      * Constructor for AbstractValueFunction.
@@ -65,8 +79,8 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     AbstractValueFunction(int numberOfActions, String params) throws DynamicParamException {
+        this(numberOfActions);
         setParams(new DynamicParam(params, getParamDefs()));
-        this.numberOfActions = numberOfActions;
     }
 
     /**
@@ -77,7 +91,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("useBaseline", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
     }
 
@@ -85,44 +99,16 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * Sets parameters used for AbstractValueFunction.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - size: discount (gamma) value for value function. Default value 0.99.<br>
-     *     - useBaseline: if true uses baseline (advantage) for value function. Default value false.<br>
+     *     - gamma: discount value for value function. Default value 0.99.<br>
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.75.<br>
      *
      * @param params parameters used for AbstractValueFunction.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
-        if (params.hasParam("useBaseline")) useBaseline = params.getValueAsBoolean("useBaseline");
+        if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
     }
-
-    /**
-     * Sets current episode count.
-     *
-     * @param episodeCount current episode count.
-     */
-    public void setEpisode(int episodeCount) {
-        this.episodeCount = episodeCount;
-    }
-
-    /**
-     * Checks if baseline is in use.
-     *
-     * @return returns true if baseline is used.
-     */
-    protected boolean useBaseline() {
-        return useBaseline;
-    }
-
-    /**
-     * Returns values for state.
-     *
-     * @param state state.
-     * @return values for state.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract Matrix getValues(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Returns number of actions.
@@ -134,61 +120,66 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     }
 
     /**
-     * Returns current action of state.
+     * Returns value for state.
      *
-     * @param state state.
-     * @return current action of sample.
-     */
-    protected int getAction(State state) {
-        return numberOfActions == 1 ? 0 : state.action;
-    }
-
-    /**
-     * Returns TD target of sample.
-     *
-     * @param state state.
-     * @return TD target of state.
+     * @param stateTransition state transition.
+     * @return value for state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getTDTarget(State state) throws NeuralNetworkException, MatrixException {
-        return state.reward + gamma * (state.isFinalState() ? 0 : getTargetValue(state.nextState));
-    }
+    protected abstract double getValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Updates TD target of sample.
+     * Returns target value based on next state.
      *
-     * @param sample sample.
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void updateTDTarget(RLSample sample) throws NeuralNetworkException, MatrixException {
-        sample.stateValues = getValues(sample.state);
-        if (useBaseline()) updateBaseline(sample);
-        sample.tdTarget = getTDTarget(sample.state);
-        sample.tdError = sample.tdTarget - sample.getValue(getAction(sample.state));
-        sample.setValue(getAction(sample.state), sample.tdTarget);
-        if (!sample.state.isFinalState()) sample.timeStep = sample.state.nextState.sample.timeStep;
-    }
+    protected abstract double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Updates baseline value for sample.
+     * Updates baseline value for state transitions.
      *
-     * @param sample sample.
+     * @param stateTransitions state transitions.
      */
-    protected abstract void updateBaseline(RLSample sample);
+    protected abstract void updateBaseline(TreeSet<StateTransition> stateTransitions);
 
     /**
-     * Updates function estimation using samples with updated TD targets.
+     * Updates value function.
      *
-     * @param samples samples for update.
-     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        for (Integer sampleIndex : samples.descendingKeySet()) updateTDTarget(samples.get(sampleIndex));
+    public void update(Agent agent) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+        getFunctionEstimator().sample();
+        if (getFunctionEstimator().sampledSetEmpty()) return;
+        TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
+
+        for (StateTransition stateTransition : stateTransitions) stateTransition.stateValue = getValue(stateTransition);
+        for (StateTransition stateTransition : stateTransitions.descendingSet()) {
+            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getTargetValue(stateTransition.nextStateTransition) + lambda * stateTransition.nextStateTransition.tdTarget));
+            stateTransition.tdError = stateTransition.tdTarget - stateTransition.stateValue;
+        }
+
+        updateBaseline(stateTransitions);
+
+        updateFunctionEstimator(agent, stateTransitions);
     }
+
+    /**
+     * Updates FunctionEstimator.
+     *
+     * @param agent agent.
+     * @param stateTransitions state transitions used to update FunctionEstimator.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
+     */
+    protected abstract void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
 
 }
