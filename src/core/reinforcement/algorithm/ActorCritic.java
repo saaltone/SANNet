@@ -5,42 +5,39 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.Buffer;
 import core.reinforcement.Environment;
-import core.reinforcement.policy.UpdateablePolicy;
-import core.reinforcement.value.ValueFunctionEstimator;
+import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.value.StateValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines actor critic algorithm with Function Estimator.
+ * Class that defines actor critic algorithm.
  *
  */
 public class ActorCritic extends AbstractPolicyGradient {
 
     /**
-     * Constructor for Actor Critic
+     * Constructor for ActorCritic
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param buffer reference to buffer.
-     * @param valueFunctionEstimator reference to value function.
+     * @param actionablePolicy reference to policy.
+     * @param stateValueFunctionEstimator reference to state value function estimator.
      */
-    public ActorCritic(Environment environment, UpdateablePolicy policy, Buffer buffer, ValueFunctionEstimator valueFunctionEstimator) {
-        super(environment, policy, buffer, valueFunctionEstimator);
+    public ActorCritic(Environment environment, ActionablePolicy actionablePolicy, StateValueFunctionEstimator stateValueFunctionEstimator) {
+        super(environment, actionablePolicy, stateValueFunctionEstimator);
     }
 
     /**
-     * Constructor for Actor Critic
+     * Constructor for ActorCritic
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param buffer reference to buffer.
-     * @param valueFunctionEstimator reference to value function.
+     * @param actionablePolicy reference to policy.
+     * @param stateValueFunctionEstimator reference to state value function estimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ActorCritic(Environment environment, UpdateablePolicy policy, Buffer buffer, ValueFunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, policy, buffer, valueFunctionEstimator, params);
+    public ActorCritic(Environment environment, ActionablePolicy actionablePolicy, StateValueFunctionEstimator stateValueFunctionEstimator, String params) throws DynamicParamException {
+        super(environment, actionablePolicy, stateValueFunctionEstimator, params);
     }
 
 }
