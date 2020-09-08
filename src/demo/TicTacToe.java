@@ -12,12 +12,16 @@ import core.layer.LayerType;
 import core.optimization.OptimizationType;
 import core.reinforcement.*;
 import core.reinforcement.algorithm.*;
+import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
+import core.reinforcement.memory.Memory;
+import core.reinforcement.memory.OnlineMemory;
+import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.*;
-import core.reinforcement.value.QValueFunctionEstimator;
-import core.reinforcement.value.ValueFunctionEstimator;
+import core.reinforcement.policy.executablepolicy.*;
+import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
 
@@ -82,16 +86,22 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         final GameSlot[][] gameBoard;
 
         /**
-         * Current state of game (game board reflected as row vector).
+         * Size of game board (size x size)
+         *
+         */
+        private final int size;
+
+        /**
+         * Current state.
          *
          */
         private Matrix state;
 
         /**
-         * Size of game board (size x size)
+         * Available moves from current state.
          *
          */
-        private final int size;
+        private HashSet<Integer> availableMoves;
 
         /**
          * Initializes game board.
@@ -100,13 +110,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         GameBoard() {
             this.size = 3;
 
-            state = new DMatrix(2 * 3 * 3, 1);
-
-            gameBoard = new GameSlot[3][3];
-            for (int row = 0; row < 3; row++) {
-                for (int col = 0; col < 3; col++) {
-                    gameBoard[row][col] = GameSlot.EMPTY;
-                }
+            gameBoard = new GameSlot[size][size];
+            for (GameSlot[] gameSlots : gameBoard) {
+                Arrays.fill(gameSlots, GameSlot.EMPTY);
             }
         }
 
@@ -120,12 +126,45 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
 
         /**
+         * Updates state.
+         *
+         */
+        public void updateState() {
+            state = new DMatrix(2 * size * size, 1);
+            availableMoves = new HashSet<>();
+            for (int row = 0; row < gameBoard.length; row++) {
+                for (int col = 0; col < gameBoard[row].length; col++) {
+                    switch(gameBoard[row][col]) {
+                        case NOUGHT:
+                            state.setValue(getPos(row, col), 0, 1);
+                            break;
+                        case CROSS:
+                            state.setValue(getPos(row, col) + size * size, 0, 1);
+                            break;
+                        case EMPTY:
+                            availableMoves.add(getPos(row, col));
+                            break;
+                    }
+                }
+            }
+        }
+
+        /**
          * Returns current state of game (game board).
          *
          * @return state of game.
          */
         public Matrix getState() {
             return state;
+        }
+
+        /**
+         * Return available moves from current state.
+         *
+         * @return available moves.
+         */
+        public HashSet<Integer> getAvailableMoves() {
+            return availableMoves;
         }
 
         /**
@@ -155,17 +194,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         /**
          * Checks if taken move (action) is valid.
          *
-         * @param action action taken.
-         * @return true if move is valid otherwise false.
-         */
-        public boolean isValidMove(int action) {
-            int[] pos = getPos(action);
-            return isValidMove(pos[0], pos[1]);
-        }
-
-        /**
-         * Checks if taken move (action) is valid.
-         *
          * @param row row of game board.
          * @param col column of game board.
          * @return true if move is valid otherwise false.
@@ -173,21 +201,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         public boolean isValidMove(int row, int col) {
             if (row < 0 || row > boardSize - 1 || col < 0 || col > boardSize - 1) return false;
             else return gameBoard[row][col] == GameSlot.EMPTY;
-        }
-
-        /**
-         * Returns list of available moves (actions).
-         *
-         * @return list of available moves (actions)
-         */
-        public HashSet<Integer> getAvailableMoves() {
-            HashSet<Integer> availableMoves = new HashSet<>();
-            for (int row = 0; row < size; row++) {
-                for (int col = 0; col < size; col++) {
-                    if (isValidMove(row, col)) availableMoves.add(getPos(row, col));
-                }
-            }
-            return availableMoves;
         }
 
         /**
@@ -205,12 +218,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * @param player current player.
          * @param row row of game board.
          * @param col column of game board.
-         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void makeMove(Player player, int row, int col) throws MatrixException {
+        public void makeMove(Player player, int row, int col) {
             gameBoard[row][col] = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
-            state = state.copy();
-            state.setValue((player == Player.NOUGHT ? 0 : size * size) + getPos(row, col), 0, 1);
         }
 
         /**
@@ -218,13 +228,10 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          *
          * @param player current player.
          * @param action action defined.
-         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void makeMove(Player player, int action) throws MatrixException {
+        public void makeMove(Player player, int action) {
             int[] pos = getPos(action);
-            gameBoard[pos[0]][pos[1]] = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
-            state = state.copy();
-            state.setValue((player == Player.NOUGHT ? 0 : size * size) + action, 0, 1);
+            makeMove(player, pos[0], pos[1]);
         }
 
         /**
@@ -355,6 +362,12 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     }
 
     /**
+     * Episode ID
+     *
+     */
+    private int episodeID = 0;
+
+    /**
      * Deep agent for player nought.
      *
      */
@@ -377,6 +390,12 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      */
     private GameBoard gameBoard;
+
+    /**
+     * Current environment state.
+     *
+     */
+    private EnvironmentState environmentState;
 
     /**
      * Current player (actor) of game.
@@ -537,9 +556,100 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
-        nought = createAgent(Player.NOUGHT);
-        cross = createAgent(Player.CROSS);
+        boolean nnPolicyEstimator = false;
+        boolean nnValueEstimator = false;
+        boolean policyGradient = false;
+        boolean stateValue = false;
+        FunctionEstimator policyEstimator;
+        FunctionEstimator valueEstimator;
+        Memory estimatorMemory;
+        estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
+        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(boardSize * boardSize, policyGradient, false), boardSize * boardSize) : new TabularFunctionEstimator(estimatorMemory, boardSize * boardSize);
+        valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(boardSize * boardSize, false, stateValue), (stateValue ? 1 : boardSize * boardSize)) : new TabularFunctionEstimator(estimatorMemory, boardSize * boardSize);
+        nought = createAgent(valueEstimator, policyEstimator, estimatorMemory, policyGradient);
+        cross = createAgent(valueEstimator, policyEstimator, estimatorMemory, policyGradient);
     }
+
+    /**
+     * Creates agent (player).
+     *
+     * @return agent
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     */
+    private Agent createAgent(FunctionEstimator valueEstimator, FunctionEstimator policyEstimator, Memory estimatorMemory, boolean policyGradient) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+        int policyType = 1;
+        boolean basicPolicy = false;
+        ExecutablePolicy executablePolicy = null;
+        switch (policyType) {
+            case 1:
+                executablePolicy = new EpsilonGreedyPolicy("epsilonMin = 0.3");
+                break;
+            case 2:
+                executablePolicy = new NoisyNextBestPolicy();
+                break;
+        }
+        Agent agent;
+        if (!policyGradient) {
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+        }
+        else {
+            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, actionablePolicy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, boardSize * boardSize)));
+            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
+        }
+        agent.start();
+        return agent;
+    }
+
+    /**
+     * Builds neural network for tic tac toe player (agent).
+     *
+     * @param outputSize output size of neural network (number of actions and their values).
+     * @return built neural network
+     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static NeuralNetwork buildNeuralNetwork(int outputSize, boolean policyGradient, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        NeuralNetwork neuralNetwork = new NeuralNetwork();
+        neuralNetwork.addInputLayer("width = " + 18);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        if (!policyGradient) {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " +  + (stateValue ? 1 : outputSize));
+            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
+            neuralNetwork.verboseTraining(100);
+        }
+        else {
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        }
+        neuralNetwork.build();
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.setNeuralNetworkName("TicTacToe");
+        return neuralNetwork;
+    }
+
+    /**
+     * Reward structure i.e. rewards returned to agent during game per action taken.
+     *
+     */
+    public static class RewardStructure {
+        final double WIN = 1;
+        final double DRAW = 0.5;
+        final double LOST = 0;
+        final double MOVE = 0;
+    }
+
+    /**
+     * Reward structure.
+     *
+     */
+    private final RewardStructure rewardStructure = new RewardStructure();
+
 
     /**
      * Initializes window for maze.
@@ -591,7 +701,13 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @param e mouse event.
      */
-    public void mousePressed (MouseEvent e) {}
+    public void mousePressed (MouseEvent e) {
+        lock.lock();
+        humanRow = e.getY() / tileSize;
+        humanCol = e.getX() / tileSize;
+        humanAction.signal();
+        lock.unlock();
+    }
 
     /**
      * Not used.
@@ -620,11 +736,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @param e mouse event.
      */
     public void mouseClicked (MouseEvent e) {
-        lock.lock();
+/*        lock.lock();
         humanRow = e.getY() / tileSize;
         humanCol = e.getX() / tileSize;
         humanAction.signal();
-        lock.unlock();
+        lock.unlock(); */
     }
 
     /**
@@ -634,7 +750,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void playGames() throws MatrixException, NeuralNetworkException, DynamicParamException {
+    private void playGames() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         initWindow();
         jFrame.revalidate();
 
@@ -678,13 +794,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void playGame() throws MatrixException, NeuralNetworkException, DynamicParamException {
+    private void playGame() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         currentPlayer = random.nextInt(2) == 0 ? Player.NOUGHT : Player.CROSS;
         currentHumanPlayer = humanPlayer;
         gameBoard = new GameBoard();
         gameStatus = GameStatus.ONGOING;
-        ArrayList<Matrix> gameStates = new ArrayList<>();
-        gameStates.add(gameBoard.getState());
 
         panelLock.lock();
         ticTacToePanel.setHumanPlayer(currentHumanPlayer);
@@ -702,7 +816,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
 
         if (currentHumanPlayer != Player.NOUGHT) nought.newEpisode();
         if (currentHumanPlayer != Player.CROSS) cross.newEpisode();
+        episodeID++;
+        int timeStep = 0;
         while (gameStatus == GameStatus.ONGOING) {
+            gameBoard.updateState();
+            environmentState = new EnvironmentState(episodeID, ++timeStep, gameBoard.getState(), gameBoard.getAvailableMoves());
             panelLock.lock();
             ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
             panelLock.unlock();
@@ -717,16 +835,18 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 }
                 catch (InterruptedException exception) {}
                 gameBoard.makeMove(currentPlayer, humanRow, humanCol);
+                gameBoard.updateState();
                 gameStatus = gameBoard.updateGameStatus(currentPlayer);
                 lock.unlock();
             }
             else {
                 getAgent().newStep();
                 getAgent().act(currentHumanPlayer != null);
-                gameStates.add(gameBoard.getState());
             }
             currentPlayer = currentPlayer == Player.CROSS ? Player.NOUGHT : Player.CROSS;
         }
+        if (currentHumanPlayer != Player.NOUGHT) nought.endEpisode();
+        if (currentHumanPlayer != Player.CROSS) cross.endEpisode();
 
         panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
@@ -744,30 +864,21 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     }
 
     /**
+     * Returns true if environment is episodic otherwise false.
+     *
+     * @return true if environment is episodic otherwise false.
+     */
+    public boolean isEpisodic() {
+        return true;
+    }
+
+    /**
      * Returns current state of environment.
      *
      * @return state of environment.
      */
-    public Matrix getState() {
-        return gameBoard.getState();
-    }
-
-    /**
-     * True if state is terminal. This is usually true if episode is completed.
-     *
-     * @return true if state is terminal.
-     */
-    public boolean isTerminalState() {
-        return gameStatus != GameStatus.ONGOING;
-    }
-
-    /**
-     * Returns available actions in current state of environment
-     *
-     * @return available actions in current state of environment.
-     */
-    public HashSet<Integer> getAvailableActions() {
-        return gameBoard.getAvailableMoves();
+    public EnvironmentState getState() {
+        return environmentState;
     }
 
     /**
@@ -775,11 +886,10 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @param agent agent that is taking action.
      * @param action action to be taken.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void commitAction(Agent agent, int action) {
         gameBoard.makeMove(currentPlayer, action);
+        gameBoard.updateState();
         gameStatus = gameBoard.updateGameStatus(currentPlayer);
         setReward(agent);
     }
@@ -788,13 +898,12 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * Sets immediate reward for agent.
      *
      * @param agent current agent.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void setReward(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        if (gameStatus == GameStatus.ONGOING) agent.respond(rewardStructure.MOVE, false);
+    private void setReward(Agent agent) {
+        if (gameStatus == GameStatus.ONGOING) agent.respond(rewardStructure.MOVE);
         else {
-            if (currentHumanPlayer != Player.NOUGHT) nought.respond(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.NOUGHT_WON ? rewardStructure.WIN : rewardStructure.LOST, true);
-            if (currentHumanPlayer != Player.CROSS) cross.respond(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.CROSS_WON ? rewardStructure.WIN : rewardStructure.LOST, true);
+            if (currentHumanPlayer != Player.NOUGHT) nought.respond(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.NOUGHT_WON ? rewardStructure.WIN : rewardStructure.LOST);
+            if (currentHumanPlayer != Player.CROSS) cross.respond(gameStatus == GameStatus.DRAW ? rewardStructure.DRAW : gameStatus == GameStatus.CROSS_WON ? rewardStructure.WIN : rewardStructure.LOST);
         }
     }
 
@@ -806,135 +915,5 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     private Agent getAgent() {
         return (currentPlayer == Player.NOUGHT) ? nought : cross;
     }
-
-    /**
-     * Prints game.
-     *
-     * @param gameStates list of game states during game episode.
-     * @param winner winner of game.
-     */
-    private void printGame(ArrayList<Matrix> gameStates, GameStatus winner) {
-        System.out.println("New Game");
-        for (Matrix gameState : gameStates) printBoard(gameState);
-        if (winner != null) System.out.println("WINNER: " + winner);
-        else System.out.println("DRAW");
-    }
-
-    /**
-     * Prints board for a single game state.
-     *
-     * @param gameState single game state.
-     */
-    private void printBoard(Matrix gameState) {
-        for (int row = 0; row < 2 * boardSize + 1; row++) System.out.print("-");
-        System.out.println();
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
-                if (col == 0) System.out.print("|");
-                boolean nought = gameState.getValue(row + col * boardSize, 0) == 1;
-                boolean cross = gameState.getValue(boardSize * boardSize + row + col * boardSize, 0) == 1;
-                if (nought) System.out.print("O");
-                if (!nought && !cross) System.out.print(" ");
-                if (cross) System.out.print("X");
-                System.out.print("|");
-            }
-            System.out.println();
-        }
-        for (int row = 0; row < 2 * boardSize + 1; row++) System.out.print("-");
-        System.out.println();
-    }
-
-    /**
-     * Creates agent (player).
-     *
-     * @return agent
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     */
-    private Agent createAgent(Player player) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        boolean policyGradient = false;
-        boolean stateValue = false;
-        int policyType = 1;
-        boolean nnPolicyEstimator = false;
-        boolean nnValueEstimator = false;
-        boolean basicPolicy = false;
-        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", boardSize * boardSize, policyGradient)) : new TabularFunctionEstimator(boardSize * boardSize);
-        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(player == Player.NOUGHT ? "Nought" : "Cross", (stateValue ? 1 : boardSize * boardSize), false)) : new TabularFunctionEstimator(boardSize * boardSize);
-        Policy policy = null;
-        switch (policyType) {
-            case 1:
-                policy = new EpsilonGreedyPolicy();
-                break;
-            case 2:
-                policy = new NoisyPolicy();
-                break;
-            case 3:
-                policy = new WeightedRandomPolicy();
-                break;
-        }
-        Agent agent;
-        if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
-            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
-//            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
-        }
-        else {
-            UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator);
-//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(boardSize * boardSize));
-            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
-        }
-        agent.start();
-        return agent;
-    }
-
-    /**
-     * Builds neural network for tic tac toe player (agent).
-     *
-     * @param outputSize output size of neural network (number of actions and their values).
-     * @return built neural network
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
-     * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    private static NeuralNetwork buildNeuralNetwork(String neuralNetworkName, int outputSize, boolean policyGradient) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + 18);
-        if (!policyGradient) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 40");
-//            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 40");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
-            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
-            neuralNetwork.verboseTraining(100);
-        }
-        else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 40");
-//            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 40");
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-            neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
-        }
-        neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.setNeuralNetworkName(neuralNetworkName);
-        return neuralNetwork;
-    }
-
-    /**
-     * Reward structure i.e. rewards returned to agent during game per action taken.
-     *
-     */
-    public static class RewardStructure {
-        final double WIN = 1;
-        final double DRAW = 0.5;
-        final double LOST = 0;
-        final double MOVE = 0;
-    }
-
-    /**
-     * Reward structure.
-     *
-     */
-    private final RewardStructure rewardStructure = new RewardStructure();
 
 }
