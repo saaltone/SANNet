@@ -51,12 +51,6 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     private Matrix gMatrix;
 
     /**
-     * Matrix for p value.
-     *
-     */
-    private final Matrix pMatrix = new DMatrix(2);
-
-    /**
      * Input matrix for procedure construction.
      *
      */
