@@ -404,7 +404,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Not used.
      *
-     * @param weight weight for backward's normalization.
+     * @param weight weight for backward normalization.
      * @param weightGradient gradient of weight for backward normalization.
      */
     public void backward(Matrix weight, Matrix weightGradient) {
