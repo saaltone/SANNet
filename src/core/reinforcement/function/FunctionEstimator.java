@@ -6,41 +6,97 @@
 package core.reinforcement.function;
 
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import utils.DynamicParamException;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
- * Interface for function estimators.
+ * Interface defining FunctionEstimator.
  *
  */
 public interface FunctionEstimator {
 
     /**
-     * Returns number of actions for function estimator.
+     * Returns number of actions for FunctionEstimator.
      *
-     * @return number of actions for function estimator.
+     * @return number of actions for FunctionEstimator.
      */
     int getNumberOfActions();
 
     /**
-     * Starts function estimator
+     * Starts FunctionEstimator
      *
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
+     * @throws NeuralNetworkException throws exception if starting of FunctionEstimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
     void start() throws NeuralNetworkException, MatrixException;
 
     /**
-     * Stops function estimator.
+     * Stops FunctionEstimator.
      *
      */
     void stop();
+
+    /**
+     * Registers agent for FunctionEstimator.
+     *
+     * @param agent agent.
+     */
+    void registerAgent(Agent agent);
+
+    /**
+     * Samples memory of FunctionEstimator.
+     *
+     */
+    void sample();
+
+    /**
+     * Returns true if sample set is empty after sampling.
+     *
+     * @return true if sample set is empty after sampling.
+     */
+    boolean sampledSetEmpty();
+
+    /**
+     * Returns sampled state transitions.
+     *
+     * @return sampled state transitions.
+     */
+    TreeSet<StateTransition> getSampledStateTransitions();
+
+    /**
+     * Adds new state transition into memory of FunctionEstimator.
+     *
+     * @param stateTransition state transition
+     */
+    void add(StateTransition stateTransition);
+
+    /**
+     * Updated state transition in memory of FunctionEstimator.
+     *
+     * @param stateTransition state transition
+     */
+    void update(StateTransition stateTransition);
+
+    /**
+     * Updated state transitions in memory of FunctionEstimator.
+     *
+     * @param stateTransitions state transitions
+     */
+    void update(TreeSet<StateTransition> stateTransitions);
+
+    /**
+     * If true value function is combined state action value function.
+     *
+     * @return true if value function is combined state action value function.
+     */
+    boolean isStateActionValue();
 
     /**
      * Returns copy of FunctionEstimator.
@@ -48,8 +104,10 @@ public interface FunctionEstimator {
      * @return copy of FunctionEstimator.
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    FunctionEstimator copy() throws IOException, ClassNotFoundException;
+    FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
 
     /**
      * Predicts state values corresponding to a state.
@@ -62,39 +120,34 @@ public interface FunctionEstimator {
     Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Sets importance sampling weights.
+     * Stores state transition values pair.
      *
-     * @param ISWeights importance sampling weights.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @param agent agent.
+     * @param stateTransition state transition.
+     * @param values values.
+     * @throws AgentException throws exception if agent tries to store values outside ongoing update cycle.
      */
-    void setImportanceSamplingWeights(TreeMap<Integer, Double> ISWeights) throws NeuralNetworkException;
+    void store(Agent agent, StateTransition stateTransition, Matrix values) throws AgentException;
 
     /**
      * Updates (trains) FunctionEstimator.
      *
-     * @param states states to be updated.
-     * @param stateValues state values to be updated.
+     * @param agent agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if agent is not registered for ongoing update cycle.
      */
-    void train(LinkedHashMap<Integer, MMatrix> states, LinkedHashMap<Integer, MMatrix> stateValues) throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
 
     /**
-     * Appends parameters of this FunctionEstimator from another FunctionEstimator.
+     * Appends parameters to this FunctionEstimator from another FunctionEstimator.
      *
-     * @param functionEstimator function estimator used to update current function estimator.
+     * @param functionEstimator FunctionEstimator used to update current FunctionEstimator.
      * @param fullUpdate if true full update is done.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException;
-
-    /**
-     * Returns error of FunctionEstimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return error of FunctionEstimator.
-     */
-    double getError() throws MatrixException;
+    void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException, AgentException;
 
 }
