@@ -60,6 +60,15 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
+     * Returns loss function type.
+     *
+     * @return loss function type.
+     */
+    public BinaryFunctionType getLossFunctionType() {
+        return lossFunction.getType();
+    }
+
+    /**
      * Returns layer type by name
      *
      * @return layer type by name
@@ -192,25 +201,19 @@ public class OutputLayer extends AbstractLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        resetError();
+        error = null;
         resetLayerGradients();
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
-                error.add(getLayerOutputs().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getFunction()), error);
-                Matrix outputGradient = getLayerOutputs().get(sampleIndex, matrixIndex).applyBi(targets.get(sampleIndex, matrixIndex), lossFunction.getDerivative());
+                Matrix outputError = lossFunction.getError(getLayerOutputs().get(sampleIndex, matrixIndex), targets.get(sampleIndex, matrixIndex));
+                if (importanceSamplingWeights != null) outputError.multiply(importanceSamplingWeights.get(matrixIndex), outputError);
+                error = error == null ? outputError : error.add(outputError);
+                Matrix outputGradient = lossFunction.getGradient(getLayerOutputs().get(sampleIndex, matrixIndex), targets.get(sampleIndex, matrixIndex));
                 if (importanceSamplingWeights != null) outputGradient.multiply(importanceSamplingWeights.get(matrixIndex), outputGradient);
                 getLayerGradients().put(sampleIndex, matrixIndex, outputGradient);
             }
         }
-        error.divide(targets.totalSize(), error);
-    }
-
-    /**
-     * Resets error of neural network (output layer).
-     *
-     */
-    private void resetError() {
-        error = new DMatrix(getLayerWidth(), 1);
+        error = lossFunction.getMeanError(error, targets.totalSize());
     }
 
     /**
@@ -220,8 +223,7 @@ public class OutputLayer extends AbstractLayer {
      * @return total error of neural network.
      */
     public double getTotalError() throws MatrixException {
-        if (error == null || targets == null) return 0;
-        else return error.mean() + error() / (double)targets.totalSize();
+        return (error == null || targets == null) ? 0 : error.mean() + error();
     }
 
     /**
@@ -238,7 +240,7 @@ public class OutputLayer extends AbstractLayer {
      * @return cumulated error from regularization.
      */
     public double error() throws MatrixException {
-        return hasPreviousLayer() ? getPreviousLayer().error() : 0;
+        return hasPreviousLayer() ? getPreviousLayer().error() / (double)targets.totalSize() : 0;
     }
 
     /**
