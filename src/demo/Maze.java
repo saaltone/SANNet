@@ -9,16 +9,24 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
+import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.OnlineBuffer;
+import core.reinforcement.EnvironmentState;
+import core.reinforcement.function.DirectFunctionEstimator;
+import core.reinforcement.memory.Memory;
+import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.algorithm.*;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
+import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.*;
-import core.reinforcement.value.ValueFunctionEstimator;
+import core.reinforcement.policy.executablepolicy.*;
+import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
 
@@ -32,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Class that defines maze in where agent takes journeys.<br>
+ * Class that defines maze where agent takes journeys trying to find way out of maze.<br>
  *
  * Reference: https://rosettacode.org/wiki/Maze_generation<br>
  *
@@ -425,6 +433,12 @@ public class Maze implements Environment, ActionListener {
     private int size = 60;
 
     /**
+     * Episode ID
+     *
+     */
+    private int episodeID = 0;
+
+    /**
      * Current time step.
      *
      */
@@ -482,7 +496,7 @@ public class Maze implements Environment, ActionListener {
      * State of environment (agent).
      *
      */
-    private Matrix state;
+    private EnvironmentState environmentState;
 
     /**
      * If true requests agent to be reset to a starting position.
@@ -644,10 +658,10 @@ public class Maze implements Environment, ActionListener {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update of estimator fails.
      */
-    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException {
+    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         while (true) {
-//            agent.newEpisode(false);
             agent.newStep();
             agent.act();
 
@@ -672,12 +686,21 @@ public class Maze implements Environment, ActionListener {
     }
 
     /**
+     * Returns true if environment is episodic otherwise false.
+     *
+     * @return true if environment is episodic otherwise false.
+     */
+    public boolean isEpisodic() {
+        return false;
+    }
+
+    /**
      * Returns current state of environment for the agent.
      *
      * @return state of environment
      */
-    public Matrix getState() {
-        return state;
+    public EnvironmentState getState() {
+        return environmentState;
     }
 
     /**
@@ -685,7 +708,7 @@ public class Maze implements Environment, ActionListener {
      *
      */
     private void updateState() {
-        state = new DMatrix(4 * agentHistorySize + 4, 1);
+        Matrix state = new DMatrix(4 * agentHistorySize + 4, 1);
         Iterator iterator = mazeAgentHistory.iterator();
         int index = 0;
         while (iterator.hasNext()) {
@@ -700,30 +723,14 @@ public class Maze implements Environment, ActionListener {
         state.setValue(4 * agentHistorySize + 1, 0, mazeCell.isConnected(1) ? -1 : 0);
         state.setValue(4 * agentHistorySize + 2, 0, mazeCell.isConnected(2) ? -1 : 0);
         state.setValue(4 * agentHistorySize + 3, 0, mazeCell.isConnected(3) ? -1 : 0);
-    }
 
-    /**
-     * True if state is terminal. This is usually true if episode is completed.
-     *
-     * @return always false.
-     */
-    public boolean isTerminalState() {
-        return false;
-    }
-
-    /**
-     * Returns available actions in current state of environment
-     *
-     * @return available actions in current state of environment.
-     */
-    public HashSet<Integer> getAvailableActions() {
         HashSet<Integer> availableActions = new HashSet<>();
         Cell cell = maze[mazeAgentCurrent.x][mazeAgentCurrent.y];
-        for (int index = 0; index < cell.neighbors.length; index++) {
-            Neighbor neighbor = cell.neighbors[index];
-            if (neighbor != null) if (neighbor.connected) availableActions.add(index);
+        for (int action = 0; action < cell.neighbors.length; action++) {
+            Neighbor neighbor = cell.neighbors[action];
+            if (neighbor != null) if (neighbor.connected) availableActions.add(action);
         }
-        return availableActions;
+        environmentState = new EnvironmentState(++episodeID, 1, state, availableActions);
     }
 
 
@@ -733,7 +740,7 @@ public class Maze implements Environment, ActionListener {
      * @param agent  agent that is taking action.
      * @param action action to be taken.
      */
-    public void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void commitAction(Agent agent, int action) {
         int x = mazeAgentCurrent.x;
         int y = mazeAgentCurrent.y;
         switch (action) {
@@ -756,12 +763,12 @@ public class Maze implements Environment, ActionListener {
      *
      * @param agent agent that is asking for reward.
      */
-    private void setReward(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.respond(0, true);
+    private void setReward(Agent agent) {
+        if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.respond(0);
         else {
             double distanceToStart = 1 - 1 / Math.max(1, Math.sqrt(Math.pow((double)size / 2 - mazeAgentCurrent.x, 2) + Math.pow((double)size / 2 - mazeAgentCurrent.y, 2)));
-            agent.respond(distanceToStart / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3), true);
-//            agent.respond(1 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3), true);
+            double positionPenalty = 1 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3);
+            agent.respond(Math.max(0, distanceToStart * positionPenalty));
         }
     }
 
@@ -797,35 +804,35 @@ public class Maze implements Environment, ActionListener {
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean policyGradient = true;
         boolean stateValue = true;
-        int policyType = 2;
+        int policyType = 1;
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean basicPolicy = false;
-        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(52, 4, policyGradient, false)) : new TabularFunctionEstimator(4);
-        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(52, (stateValue ? 1 : 4), false, stateValue)) : new TabularFunctionEstimator(4);
-        Policy policy = null;
+        Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
+        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(52, 4, policyGradient, false), 4) : new TabularFunctionEstimator(estimatorMemory, 4);
+        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(52, 4, false, stateValue), (stateValue ? 1 : 4)) : new TabularFunctionEstimator(estimatorMemory, 4);
+        ExecutablePolicy executablePolicy = null;
         switch (policyType) {
             case 1:
-                policy = new EpsilonGreedyPolicy();
+                executablePolicy = new EpsilonGreedyPolicy();
                 break;
             case 2:
-                policy = new NoisyPolicy();
+                executablePolicy = new NoisyNextBestPolicy();
                 break;
             case 3:
-                policy = new WeightedRandomPolicy();
+                executablePolicy = new SampledPolicy();
                 break;
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
-            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator), "episodic = False, updateCycle = 10");
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+//            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
-            UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator);
-//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(outputAmount, "useBaseline = True"), "episodic = False, updateCycle = 10");
-//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = False"), "episodic = False, updateCycle = 10");
-            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = True"), "episodic = False, updateCycle = 10");
+            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, actionablePolicy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, 4)));
+            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
@@ -844,29 +851,23 @@ public class Maze implements Environment, ActionListener {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         }
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
         return neuralNetwork;
     }
 
