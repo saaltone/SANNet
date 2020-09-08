@@ -122,7 +122,7 @@ public interface Normalization {
      * Executes backward step for normalization.<br>
      * Used typically for weight normalization.<br>
      *
-     * @param weight weight for backward's normalization.
+     * @param weight weight for backward normalization.
      * @param weightGradient gradient of weight for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
      */
