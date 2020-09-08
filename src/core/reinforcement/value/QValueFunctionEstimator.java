@@ -6,7 +6,7 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.State;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -23,7 +23,7 @@ public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @param functionEstimator reference to FunctionEstimator.
      */
     public QValueFunctionEstimator(FunctionEstimator functionEstimator) {
-        super(functionEstimator);
+        super(functionEstimator.getNumberOfActions(), functionEstimator);
     }
 
     /**
@@ -34,27 +34,19 @@ public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public QValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(functionEstimator, params);
+        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
     }
 
     /**
-     * Return target value for state based on it's next state. Uses max function to choose target value.
+     * Returns target value based on next state. Uses max value of next state.
      *
-     * @param nextState next state.
-     * @return target value for state.
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException {
-        return max(functionEstimator.predict(nextState.stateMatrix));
+    public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
+        return max(functionEstimator.predict(nextStateTransition.environmentState.state), nextStateTransition.environmentState.availableActions);
     }
-
-    /**
-     * Updates target value FunctionEstimator.
-     *
-     */
-    public void updateTargetFunctionEstimator() {}
-
-
 
 }
