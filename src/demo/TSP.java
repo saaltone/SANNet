@@ -11,12 +11,19 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
+import core.regularization.RegularizationType;
 import core.reinforcement.*;
 import core.reinforcement.algorithm.*;
+import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
+import core.reinforcement.memory.Memory;
+import core.reinforcement.memory.OnlineMemory;
+import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.*;
+import core.reinforcement.policy.executablepolicy.*;
+import core.reinforcement.policy.executablepolicy.NoisyNextBestPolicy;
 import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
@@ -62,6 +69,16 @@ public class TSP implements Environment {
         City(double x, double y) {
             this.x = x;
             this.y = y;
+        }
+
+        /**
+         * Calculates distance to another city.
+         *
+         * @param city another city.
+         * @return distance to another city.
+         */
+        double distanceTo(City city) {
+            return Math.sqrt(Math.pow(x - city.x, 2) + Math.pow(y - city.y, 2));
         }
 
     }
@@ -127,11 +144,23 @@ public class TSP implements Environment {
     private double maxDistance = Double.MIN_VALUE;
 
     /**
-     * State of travelling salesman problem. State contains coordinates of cities.<br>
+     * Episode ID
+     *
+     */
+    private int episodeID = 0;
+
+    /**
+     * Current time stamp of episode.
+     *
+     */
+    private int timeStamp = 0;
+
+    /**
+     * State of travelling salesman problem. State contains time stamp of episode, coordinates of cities as state and available actions.<br>
      * If city has been marked with negative coordinates it means city has been already visited during journey.<br>
      *
      */
-    private Matrix state;
+    private EnvironmentState environmentState;
 
     /**
      * Agent that solves travelling salesman problem. Agent acts as travelling salesman.
@@ -152,7 +181,7 @@ public class TSP implements Environment {
     public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         Random random = new Random();
         for (int city = 0; city < cityAmount; city++) cities.put(city, new City(10 * random.nextDouble(), 10 * random.nextDouble()));
-        agent = createAgent(4 * cityAmount, cityAmount);
+        agent = createAgent(4 * cityAmount, cityAmount - 1);
     }
 
     /**
@@ -160,13 +189,20 @@ public class TSP implements Environment {
      *
      */
     private void updateState() {
-        state = new DMatrix(4 * cities.size(), 1);
+        Matrix state = new DMatrix(4 * cities.size(), 1);
         for (Integer index : cities.keySet()) {
             City city = cities.get(index);
             int visited = visitedCities.contains(index) ? 0 : cities.size();
             state.setValue(visited + 2 * index, 0, city.x / 10);
             state.setValue(visited + 2 * index + 1, 0, city.y / 10);
         }
+
+        HashSet<Integer> availableActions = new HashSet<>();
+        for (Integer city : cities.keySet()) {
+            if (!visitedCities.contains(city)) if (city != startCity) availableActions.add(city - 1);
+        }
+
+        environmentState = new EnvironmentState(episodeID, timeStamp, state, availableActions);
     }
 
     /**
@@ -248,12 +284,21 @@ public class TSP implements Environment {
     }
 
     /**
+     * Returns true if environment is episodic otherwise false.
+     *
+     * @return true if environment is episodic otherwise false.
+     */
+    public boolean isEpisodic() {
+        return true;
+    }
+
+    /**
      * Returns current state of environment.
      *
      * @return state of environment.
      */
-    public Matrix getState() {
-        return state;
+    public EnvironmentState getState() {
+        return environmentState;
     }
 
     /**
@@ -262,23 +307,7 @@ public class TSP implements Environment {
      * @return true if state is terminal.
      */
     public boolean isTerminalState() {
-        return visitedCities.size() == cities.size() + 1;
-    }
-
-    /**
-     * Returns available actions in current state of environment
-     *
-     * @return available actions in current state of environment.
-     */
-    public HashSet<Integer> getAvailableActions() {
-        HashSet<Integer> availableActions = new HashSet<>();
-        if (visitedCities.size() == cities.size()) availableActions.add(startCity);
-        else {
-            for (Integer city : cities.keySet()) {
-                if (!visitedCities.contains(city)) availableActions.add(city);
-            }
-        }
-        return availableActions;
+        return visitedCities.size() == cities.size();
     }
 
     /**
@@ -286,10 +315,9 @@ public class TSP implements Environment {
      *
      * @param agent  agent that is taking action.
      * @param action action to be taken.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void commitAction(Agent agent, int action) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        visitedCities.add(action);
+    public void commitAction(Agent agent, int action) {
+        visitedCities.add(action + 1);
         updateState();
         setReward(agent);
     }
@@ -298,16 +326,15 @@ public class TSP implements Environment {
      * Requests immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void setReward(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        int fromCity = visitedCities.get(visitedCities.size() - 2);
-        int toCity = visitedCities.get(visitedCities.size() - 1);
-        double distance = getDistance(cities.get(fromCity), cities.get(toCity));
+    public void setReward(Agent agent) {
+        boolean isTerminalState = isTerminalState();
+        int cityIndex = visitedCities.size() - 1;
+        int fromCity = isTerminalState ? visitedCities.get(cityIndex) : visitedCities.get(cityIndex - 1);
+        int toCity = isTerminalState ? visitedCities.get(0) : visitedCities.get(cityIndex);
+        double distance = cities.get(fromCity).distanceTo(cities.get(toCity));
         totalDistance += distance;
-        if (isTerminalState()) {
+        if (isTerminalState) {
             if (totalDistance < minDistance) {
                 minDistance = totalDistance;
                 visitedCitiesMin = visitedCities;
@@ -316,20 +343,15 @@ public class TSP implements Environment {
                 maxDistance = totalDistance;
                 visitedCitiesMax = visitedCities;
             }
-            agent.respond(minDistance / totalDistance, true);
+            agent.respond(totalDistance == minDistance ? 1 : 0.75 * (1 - totalDistance / maxDistance));
+//            agent.respond(1 - totalDistance / 100);
+//            agent.respond(1 - 10 / totalDistance);
+//            agent.respond((totalDistance - minDistance) / (maxDistance - minDistance));
+//            agent.respond(1 - totalDistance / maxDistance);
+//            agent.respond(Math.pow(1 - totalDistance / maxDistance, 2));
         }
-        else agent.respond(0, false);
-    }
-
-    /**
-     * Returns euclidean distance between two cities.
-     *
-     * @param city1 first city for calculation.
-     * @param city2 second city for calculation.
-     * @return euclidean distance between two cities.
-     */
-    private double getDistance(City city1, City city2) {
-        return Math.sqrt(Math.pow(city1.x - city2.x, 2) + Math.pow(city1.y - city2.y, 2));
+//        else agent.respond(1 - totalDistance / 100);
+        else agent.respond(0);
     }
 
     /**
@@ -471,14 +493,18 @@ public class TSP implements Environment {
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException {
+    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         resetRoute();
 
         getAgent().newEpisode();
+        episodeID++;
+        timeStamp = 0;
         while (!isTerminalState()) {
+            timeStamp++;
             getAgent().newStep();
             getAgent().act();
         }
+        getAgent().endEpisode();
 
         if (redraw) {
             jFrame.remove(tspPanel);
@@ -512,30 +538,42 @@ public class TSP implements Environment {
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean basicPolicy = false;
-        FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false)) : new TabularFunctionEstimator(outputAmount);
-        FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(buildNeuralNetwork(inputAmount, (stateValue ? 1 : outputAmount), false, stateValue)) : new TabularFunctionEstimator(outputAmount);
-        Policy policy = null;
+        Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
+        FunctionEstimator policyEstimator;
+        FunctionEstimator valueEstimator;
+        if (false) {
+            // Uses single neural network estimator for both policy and value functions (works for policy gradients).
+            NeuralNetwork stateActionValueNN = buildNeuralNetwork(inputAmount, outputAmount);
+            policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, outputAmount);
+            valueEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, 1);
+        }
+        else {
+            // Uses separate estimators for value and policy functions.
+            policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
+            valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, false, stateValue), (stateValue ? 1 : outputAmount)) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
+        }
+        ExecutablePolicy executablePolicy = null;
         switch (policyType) {
             case 1:
-                policy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.999, epsilonMin = 0");
+                executablePolicy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.999, epsilonMin = 0");
                 break;
             case 2:
-                policy = new NoisyPolicy("minExplorationNoise = 0");
+                executablePolicy = new NoisyNextBestPolicy("explorationNoiseDecay = 0.999, minExplorationNoise = 0");
                 break;
             case 3:
-                policy = new WeightedRandomPolicy();
+                executablePolicy = new SampledPolicy("thresholdMin = 0");
                 break;
         }
         Agent agent;
         if (!policyGradient) {
-            agent = new DDQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new ReplayBuffer(), new QTargetValueFunctionEstimator(valueEstimator));
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new QValueFunctionEstimator(valueEstimator, "useBaseline = True"));
-//            agent = new Sarsa(this, new ActionableBasicPolicy(policy, valueEstimator), new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
-            UpdateablePolicy updateablePolicy = basicPolicy ? new UpdateableBasicPolicy(policy, policyEstimator) : new UpdateableProximalPolicy(policy, policyEstimator, "epsilon = 0.1");
-//            agent = new PolicyGradient(this, updateablePolicy, new OnlineBuffer(), new PlainValueFunction(outputAmount));
-            agent = new ActorCritic(this, updateablePolicy, new OnlineBuffer(), new ValueFunctionEstimator(valueEstimator, "useBaseline = True, bootstrap = True"));
+            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, actionablePolicy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
+            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
@@ -554,25 +592,43 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
-            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
             neuralNetwork.build();
-            neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
-            neuralNetwork.setOptimizer(OptimizationType.RADAM);
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
-            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 50");
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
             neuralNetwork.build();
-            neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
-            neuralNetwork.setOptimizer(OptimizationType.RADAM);
         }
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        return neuralNetwork;
+    }
+
+    /**
+     * Build neural network for travelling salesman (agent).
+     *
+     * @param inputSize input size of neural network (number of states)
+     * @param outputSize output size of neural network (number of actions and their values).
+     * @return built neural network
+     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        NeuralNetwork neuralNetwork = new NeuralNetwork();
+        neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
+        neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
+        neuralNetwork.build();
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
 
