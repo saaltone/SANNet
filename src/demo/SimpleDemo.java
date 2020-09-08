@@ -11,7 +11,8 @@ import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
-import core.regularization.*;
+import core.regularization.EarlyStopping;
+import core.regularization.RegularizationType;
 import utils.*;
 import core.*;
 import utils.matrix.*;
@@ -43,7 +44,7 @@ public class SimpleDemo {
             neuralNetwork1.print();
             neuralNetwork1.printExpressions();
             neuralNetwork1.printGradients();
-            neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000"));
+            neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
             neuralNetwork1.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
 
             NeuralNetwork neuralNetwork2 = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
@@ -54,7 +55,7 @@ public class SimpleDemo {
             neuralNetwork2.verboseValidation();
             neuralNetwork2.setTrainingEarlyStopping(new EarlyStopping());
             neuralNetwork2.start();
-            neuralNetwork2.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000"));
+            neuralNetwork2.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
             neuralNetwork2.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
 
             neuralNetwork1.train(false, false);
