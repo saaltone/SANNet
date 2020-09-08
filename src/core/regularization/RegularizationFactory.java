@@ -39,6 +39,8 @@ public class RegularizationFactory implements Serializable {
                 return (params == null) ? new L2_Regularization(regularizationType) : new L2_Regularization(regularizationType, params);
             case LP_REGULARIZATION:
                 return (params == null) ? new Lp_Regularization(regularizationType) : new Lp_Regularization(regularizationType, params);
+            case WEIGHT_NOISING:
+                return (params == null) ? new WeightNoising(regularizationType) : new WeightNoising(regularizationType, params);
         }
         throw new NeuralNetworkException("Creation of regularizer failed.");
     }
@@ -68,6 +70,7 @@ public class RegularizationFactory implements Serializable {
         if (regularization instanceof L1_Regularization) return RegularizationType.L1_REGULARIZATION;
         if (regularization instanceof L2_Regularization) return RegularizationType.L2_REGULARIZATION;
         if (regularization instanceof Lp_Regularization) return RegularizationType.LP_REGULARIZATION;
+        if (regularization instanceof WeightNoising) return RegularizationType.WEIGHT_NOISING;
         throw new NeuralNetworkException("Unknown regularization type");
     }
 

@@ -12,7 +12,8 @@ package core.regularization;
  *     GRADIENT_CLIPPING,
  *     L1_REGULARIZATION,
  *     L2_REGULARIZATION,
- *     LP_REGULARIZATION
+ *     LP_REGULARIZATION,
+ *     WEIGHT_NOISING
  *
  */
 public enum RegularizationType {
@@ -21,6 +22,7 @@ public enum RegularizationType {
     GRADIENT_CLIPPING,
     L1_REGULARIZATION,
     L2_REGULARIZATION,
-    LP_REGULARIZATION
+    LP_REGULARIZATION,
+    WEIGHT_NOISING
 
 }
