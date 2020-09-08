@@ -7,9 +7,7 @@ package core.loss;
 
 import core.NeuralNetworkException;
 import utils.*;
-import utils.matrix.BinaryFunction;
-import utils.matrix.BinaryFunctionType;
-import utils.matrix.MatrixException;
+import utils.matrix.*;
 
 /**
  * Defines loss function class for neural network.<br>
@@ -51,7 +49,8 @@ public class LossFunction extends BinaryFunction {
             BinaryFunctionType.SQUARED_HINGE,
             BinaryFunctionType.HUBER,
             BinaryFunctionType.DIRECT_GRADIENT,
-            BinaryFunctionType.POLICY_GRADIENT
+            BinaryFunctionType.POLICY_GRADIENT,
+            BinaryFunctionType.POLICY_VALUE
     };
 
     /**
@@ -87,6 +86,58 @@ public class LossFunction extends BinaryFunction {
             if (lossFunctionType == binaryFunctionType) return;
         }
         throw new NeuralNetworkException("No such loss function available.");
+    }
+
+    /**
+     * Returns error of loss function
+     *
+     * @param output predicted output
+     * @param target actual target
+     * @return error of loss function
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getError(Matrix output, Matrix target) throws MatrixException {
+        if (getType() == BinaryFunctionType.DIRECT_GRADIENT) return target;
+        else if (getType() == BinaryFunctionType.POLICY_VALUE) {
+            Matrix error = new DMatrix(target.getRows(), 1);
+            for (int row = 0; row < target.getRows(); row++) {
+                error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(output.getValue(0, 0) - target.getValue(0, 0), 2)) : target.getValue(row, 0));
+            }
+            return error;
+        }
+        else return output.applyBi(target, getFunction());
+    }
+
+    /**
+     * Returns mean error
+     *
+     * @param totalError total error
+     * @param numberOfErrors number of error;
+     * @return mean error
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getMeanError(Matrix totalError, int numberOfErrors) throws MatrixException {
+        return totalError.divide(numberOfErrors);
+    }
+
+    /**
+     * Returns gradient of loss function
+     *
+     * @param output predicted output
+     * @param target actual target
+     * @return gradient of loss function
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getGradient(Matrix output, Matrix target) throws MatrixException {
+        if (getType() == BinaryFunctionType.DIRECT_GRADIENT) return target;
+        else if (getType() == BinaryFunctionType.POLICY_VALUE) {
+            Matrix gradient = new DMatrix(target.getRows(), 1);
+            for (int row = 0; row < target.getRows(); row++) {
+                gradient.setValue(row, 0 , row == 0 ? (output.getValue(0, 0) - target.getValue(0, 0)) : target.getValue(row, 0));
+            }
+            return gradient;
+        }
+        else return output.applyBi(target, getDerivative());
     }
 
 }
