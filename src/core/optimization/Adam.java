@@ -20,6 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/<br>
  *
  */
+@SuppressWarnings("ALL")
 public class Adam implements Optimizer, Serializable {
 
     private static final long serialVersionUID = 2147864386790210492L;
