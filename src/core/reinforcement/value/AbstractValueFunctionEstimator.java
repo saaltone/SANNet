@@ -6,16 +6,16 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.RLSample;
-import core.reinforcement.State;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
+import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.LinkedHashMap;
-import java.util.TreeMap;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 /**
  * Class that defines AbstractValueFunctionEstimator.
@@ -30,25 +30,35 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     protected FunctionEstimator functionEstimator;
 
     /**
+     * If true function estimator is state action value function.
+     *
+     */
+    private final boolean isStateActionValueFunction;
+
+    /**
      * Constructor for AbstractValueFunctionEstimator
      *
+     * @param numberOfActions number of actions for AbstractValueFunctionEstimator.
      * @param functionEstimator reference to FunctionEstimator.
      */
-    public AbstractValueFunctionEstimator(FunctionEstimator functionEstimator) {
-        super(functionEstimator.getNumberOfActions());
+    public AbstractValueFunctionEstimator(int numberOfActions, FunctionEstimator functionEstimator) {
+        super(numberOfActions);
         this.functionEstimator = functionEstimator;
+        isStateActionValueFunction = functionEstimator.isStateActionValue();
     }
 
     /**
      * Constructor for AbstractValueFunctionEstimator
      *
+     * @param numberOfActions number of actions for AbstractValueFunctionEstimator.
      * @param functionEstimator reference to FunctionEstimator.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(functionEstimator.getNumberOfActions(), params);
+    public AbstractValueFunctionEstimator(int numberOfActions, FunctionEstimator functionEstimator, String params) throws DynamicParamException {
+        super(numberOfActions, params);
         this.functionEstimator = functionEstimator;
+        isStateActionValueFunction = functionEstimator.isStateActionValue();
     }
 
     /**
@@ -70,80 +80,68 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Updates baseline value for sample.
+     * Returns action with potential state action value offset.
      *
-     * @param sample sample.
+     * @param action action.
+     * @return updated action.
      */
-    protected void updateBaseline(RLSample sample) {
-        sample.baseline = sample.getValue(getAction(sample.state));
+    protected int getAction(int action) {
+        return (isStateActionValueFunction ? 1 : 0) + action;
     }
 
     /**
      * Returns values for state.
      *
-     * @param state state.
+     * @param stateTransition state transition.
      * @return values for state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getValues(State state) throws NeuralNetworkException, MatrixException {
-        return functionEstimator.predict(state.stateMatrix);
+    private Matrix getValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        return functionEstimator.predict(stateTransition.environmentState.state);
+    }
+
+    /**
+     * Returns value for state.
+     *
+     * @param stateTransition state transition.
+     * @return value for state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected double getValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        return getValues(stateTransition).getValue(getAction(stateTransition.action), 0);
+    }
+
+    /**
+     * Updates baseline value for state transitions.
+     *
+     * @param stateTransitions state transitions.
+     */
+    protected void updateBaseline(TreeSet<StateTransition> stateTransitions) {
     }
 
     /**
      * Updates FunctionEstimator.
      *
-     * @param samples samples used to update FunctionEstimator.
-     * @param hasImportanceSamplingWeights if true samples contain importance sampling weights otherwise false.
+     * @param agent agent.
+     * @param stateTransitions state transitions used to update FunctionEstimator.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateFunctionEstimator(TreeMap<Integer, RLSample> samples, boolean hasImportanceSamplingWeights) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        super.updateFunctionEstimator(samples, hasImportanceSamplingWeights);
-        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> stateValues = new LinkedHashMap<>();
-        TreeMap<Integer, Double> importanceSamplingWeights = hasImportanceSamplingWeights ? new TreeMap<>() : null;
-        int sampleIndex = 0;
-        for (RLSample sample : samples.values()) {
-            states.put(sampleIndex, new MMatrix(sample.state.stateMatrix));
-            sample.setValue(getAction(sample.state), sample.tdTarget - sample.baseline);
-            stateValues.put(sampleIndex, new MMatrix(sample.stateValues));
-            if (importanceSamplingWeights != null) importanceSamplingWeights.put(sampleIndex, sample.importanceSamplingWeight);
-            sampleIndex++;
-        }
-        getFunctionEstimator().setImportanceSamplingWeights(importanceSamplingWeights);
-        getFunctionEstimator().train(states, stateValues);
-        updateTargetFunctionEstimator();
-    }
+    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        functionEstimator.update(stateTransitions);
 
-    /**
-     * Calculates max of state values.
-     *
-     * @param stateValues state values.
-     * @return max value.
-     */
-    protected double max(Matrix stateValues) {
-        return stateValues.getValue(argmax(stateValues), 0);
-    }
-
-    /**
-     * Calculates argmax of state values.
-     *
-     * @param stateValues state values.
-     * @return argmax value.
-     */
-    protected int argmax(Matrix stateValues) {
-        int action = -1;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for (int row = 0; row < stateValues.getRows(); row++) {
-            double actionValue = stateValues.getValue(row, 0);
-            if (maxValue < actionValue || maxValue == Double.NEGATIVE_INFINITY) {
-                maxValue =  actionValue;
-                action = row;
+        if (!isStateActionValueFunction) {
+            for (StateTransition stateTransition : stateTransitions) {
+                Matrix targetValues = getValues(stateTransition).copy();
+                targetValues.setValue(getAction(stateTransition.action), 0, stateTransition.tdTarget);
+                functionEstimator.store(agent, stateTransition, targetValues);
             }
+            getFunctionEstimator().update(agent);
         }
-        return action;
     }
 
     /**
@@ -156,13 +154,34 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Returns current value error.
+     * Returns max value of state given available actions.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return current value error.
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return max value of state.
      */
-    public double getValueError() throws MatrixException {
-        return functionEstimator.getError();
+    protected double max(Matrix stateValues, HashSet<Integer> availableActions) {
+        return stateValues.getValue(getAction(argmax(stateValues, availableActions)), 0);
+    }
+
+    /**
+     * Returns action with maximum state value given available actions.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return action with maximum state value.
+     */
+    protected int argmax(Matrix stateValues, HashSet<Integer> availableActions) {
+        int maxAction = -1;
+        double maxValue = Double.NEGATIVE_INFINITY;
+        for (int action : availableActions) {
+            double actionValue = stateValues.getValue(getAction(action), 0);
+            if (maxValue == Double.NEGATIVE_INFINITY || actionValue < maxValue) {
+                maxValue = actionValue;
+                maxAction = action;
+            }
+        }
+        return maxAction;
     }
 
 }
