@@ -5,10 +5,9 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.Buffer;
 import core.reinforcement.Environment;
 import core.reinforcement.policy.ActionablePolicy;
-import core.reinforcement.value.ValueFunctionEstimator;
+import core.reinforcement.value.ActionValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
@@ -22,11 +21,10 @@ public class Sarsa extends AbstractQLearning {
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
-     * @param buffer reference to buffer.
-     * @param valueFunctionEstimator reference to valueFunctionEstimator.
+     * @param actionValueFunctionEstimator reference to valueFunctionEstimator.
      */
-    public Sarsa(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunctionEstimator valueFunctionEstimator) {
-        super(environment, policy, buffer, valueFunctionEstimator);
+    public Sarsa(Environment environment, ActionablePolicy policy, ActionValueFunctionEstimator actionValueFunctionEstimator) {
+        super(environment, policy, actionValueFunctionEstimator);
     }
 
     /**
@@ -34,12 +32,11 @@ public class Sarsa extends AbstractQLearning {
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
-     * @param buffer reference to buffer.
-     * @param valueFunctionEstimator reference to valueFunctionEstimator.
+     * @param actionValueFunctionEstimator reference to valueFunctionEstimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Sarsa(Environment environment, ActionablePolicy policy, Buffer buffer, ValueFunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, policy, buffer, valueFunctionEstimator, params);
+    public Sarsa(Environment environment, ActionablePolicy policy, ActionValueFunctionEstimator actionValueFunctionEstimator, String params) throws DynamicParamException {
+        super(environment, policy, actionValueFunctionEstimator, params);
     }
 }
