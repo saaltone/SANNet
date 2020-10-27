@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.*;
 
 import java.io.Serializable;
@@ -125,9 +126,10 @@ public class ProcedureFactory implements Serializable {
      * @param forwardProcedure reference to class that defines forward procedure.
      * @param weights weights to be registered.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @return resulting procedure.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> weights) throws MatrixException {
+    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> weights) throws MatrixException, DynamicParamException {
         registerConstantMatrices(weights);
 
         ProcedureData previousProcedureData = new ProcedureData();
@@ -786,8 +788,9 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @throws MatrixException throws exception if adding of expression fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException {
+    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException, DynamicParamException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
@@ -802,8 +805,9 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @throws MatrixException throws exception if adding of expression fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void createStandardDeviationExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException {
+    public void createStandardDeviationExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException, DynamicParamException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
