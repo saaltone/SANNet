@@ -154,8 +154,9 @@ public interface NeuralNetworkLayer {
      *
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops neural network layer and terminates neural network layer execution thread.<br>
@@ -232,15 +233,17 @@ public interface NeuralNetworkLayer {
      * Executes forward processing step of layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void forwardProcess() throws MatrixException;
+    void forwardProcess() throws MatrixException, DynamicParamException;
 
     /**
      * Executes backward processing step of layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void backwardProcess() throws MatrixException;
+    void backwardProcess() throws MatrixException, DynamicParamException;
 
     /**
      * Resets normalizers and optimizer of layer.
