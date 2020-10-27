@@ -110,8 +110,9 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         super.start();
         previousFunctionEstimator.start();
     }
@@ -126,27 +127,20 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Preprocesses policy gradient update.
-     *
-     */
-    protected void preProcess() {
-    }
-
-    /**
      * Returns policy gradient value for update.
      *
      * @param stateTransition state transition.
-     * @return policy gradient value for sample.
+     * @return policy gradient value.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected double getPolicyGradientValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+    protected double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         int action = getAction(stateTransition.action);
         double currentActionValue = functionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
         double previousActionValue = previousFunctionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
         double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
-        return Math.min(rValue * getAdvantage(stateTransition), clippedRValue * getAdvantage(stateTransition));
+        return -Math.min(rValue * stateTransition.advantage, clippedRValue * stateTransition.advantage);
     }
 
     /**
