@@ -172,8 +172,9 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Additionally applies any normalization or regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forwardProcess() throws MatrixException {
+    public void forwardProcess() throws MatrixException, DynamicParamException {
         Sequence previousOutputs = prepareForwardProcess();
 
         if (previousState != isTraining()) {
@@ -196,8 +197,9 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *
      * @param nextLayerGradients next layer gradients.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException {
+    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException, DynamicParamException {
         procedure.calculateGradient(nextLayerGradients, getLayerGradients(), truncateSteps);
     }
 
