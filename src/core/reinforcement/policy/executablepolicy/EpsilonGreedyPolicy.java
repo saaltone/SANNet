@@ -131,14 +131,15 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * @param stateValueMatrix current state value matrix.
      * @param availableActions available actions in current state
      * @param stateValueOffset state value offset
+     * @param alwaysGreedy if true greedy action is always taken.
      * @return action taken.
      */
-    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset) {
+    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
         if (Math.random() < epsilon) {
             Object[] availableActionsArray = availableActions.toArray();
             return (int)availableActionsArray[random.nextInt(availableActionsArray.length)];
         }
-        else return super.action(stateValueMatrix, availableActions, stateValueOffset);
+        else return super.action(stateValueMatrix, availableActions, stateValueOffset, alwaysGreedy);
     }
 
 }
