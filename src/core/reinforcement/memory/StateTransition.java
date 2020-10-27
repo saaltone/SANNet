@@ -68,6 +68,12 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     public double stateValue;
 
     /**
+     * Action value.
+     *
+     */
+    public double actionValue;
+
+    /**
      * TD target value.
      *
      */
@@ -78,6 +84,12 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      *
      */
     public double tdError;
+
+    /**
+     * Advantage.
+     *
+     */
+    public double advantage;
 
     /**
      * Constructor for StateTransition.
