@@ -137,6 +137,15 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
+     * Resets Memory.
+     *
+     */
+    public void reset() {
+        stateTransitionSet = new TreeSet<>();
+        sampledStateTransitions = new TreeSet<>();
+    }
+
+    /**
      * Samples memory.
      *
      */
