@@ -7,6 +7,7 @@ package utils.procedure;
 
 import core.normalization.Normalization;
 import core.regularization.Regularization;
+import utils.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -90,7 +91,7 @@ public class Node implements Serializable {
      * Matrix backup for forward dependencies.
      *
      */
-    private final HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
+    private HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
 
     /**
      * Normalizers for node.
@@ -353,6 +354,7 @@ public class Node implements Serializable {
         gradients = new MMatrix();
         constantGradient = null;
         entryCount = 0;
+        matrixBackup = new HashMap<>();
     }
 
     /**
@@ -526,8 +528,9 @@ public class Node implements Serializable {
      * Initializes normalization.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initializeNormalization() throws MatrixException {
+    public void initializeNormalization() throws MatrixException, DynamicParamException {
         if (referenceMatrix.isNormalized() && normalizers != null) {
             for (Normalization normalizer : normalizers) {
                 if (isConstantNode()) normalizer.initialize(constantMatrix);
@@ -540,8 +543,9 @@ public class Node implements Serializable {
      * Executes forward normalization to constant node.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forwardNormalize() throws MatrixException {
+    public void forwardNormalize() throws MatrixException, DynamicParamException {
         if (referenceMatrix.isNormalized() && normalizers != null) {
             for (Normalization normalizer : normalizers) {
                 if (isConstantNode()) normalizer.forward(constantMatrix);
@@ -555,8 +559,9 @@ public class Node implements Serializable {
      *
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forwardNormalize(int sampleIndex) throws MatrixException {
+    public void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
         if (isConstantNode()) return;
         if (referenceMatrix.isNormalized() && normalizers != null) {
             for (Normalization normalizer : normalizers) {
@@ -583,8 +588,9 @@ public class Node implements Serializable {
      * Executes backward normalization to constant entry of node.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardNormalize() throws MatrixException {
+    public void backwardNormalize() throws MatrixException, DynamicParamException {
         if (referenceMatrix.isNormalized() && normalizers != null) {
             for (Normalization normalizer : normalizers) {
                 if (isConstantNode()) normalizer.backward(constantMatrix, constantGradient);
@@ -598,8 +604,9 @@ public class Node implements Serializable {
      *
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardNormalize(int sampleIndex) throws MatrixException {
+    public void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
         if (isConstantNode()) return;
         if (referenceMatrix.isNormalized() && normalizers != null) {
             for (Normalization normalizer : normalizers) {
