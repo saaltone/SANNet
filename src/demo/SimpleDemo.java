@@ -12,7 +12,6 @@ import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
 import core.regularization.EarlyStopping;
-import core.regularization.RegularizationType;
 import utils.*;
 import core.*;
 import utils.matrix.*;
