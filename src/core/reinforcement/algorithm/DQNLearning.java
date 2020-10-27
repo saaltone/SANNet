@@ -6,7 +6,7 @@
 package core.reinforcement.algorithm;
 
 import core.reinforcement.Environment;
-import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.policy.Policy;
 import core.reinforcement.value.QValueFunctionEstimator;
 import utils.DynamicParamException;
 
@@ -23,7 +23,7 @@ public class DQNLearning extends AbstractQLearning {
      * @param policy reference to policy.
      * @param qValueFunctionEstimator reference to qValueFunctionEstimator.
      */
-    public DQNLearning(Environment environment, ActionablePolicy policy, QValueFunctionEstimator qValueFunctionEstimator) {
+    public DQNLearning(Environment environment, Policy policy, QValueFunctionEstimator qValueFunctionEstimator) {
         super(environment, policy, qValueFunctionEstimator);
     }
 
@@ -36,7 +36,7 @@ public class DQNLearning extends AbstractQLearning {
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DQNLearning(Environment environment, ActionablePolicy policy, QValueFunctionEstimator qValueFunctionEstimator, String params) throws DynamicParamException {
+    public DQNLearning(Environment environment, Policy policy, QValueFunctionEstimator qValueFunctionEstimator, String params) throws DynamicParamException {
         super(environment, policy, qValueFunctionEstimator, params);
     }
 

@@ -6,7 +6,7 @@
 package core.reinforcement.algorithm;
 
 import core.reinforcement.Environment;
-import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ActionValueFunctionEstimator;
 import utils.DynamicParamException;
 
@@ -23,7 +23,7 @@ public class Sarsa extends AbstractQLearning {
      * @param policy reference to policy.
      * @param actionValueFunctionEstimator reference to valueFunctionEstimator.
      */
-    public Sarsa(Environment environment, ActionablePolicy policy, ActionValueFunctionEstimator actionValueFunctionEstimator) {
+    public Sarsa(Environment environment, Policy policy, ActionValueFunctionEstimator actionValueFunctionEstimator) {
         super(environment, policy, actionValueFunctionEstimator);
     }
 
@@ -36,7 +36,7 @@ public class Sarsa extends AbstractQLearning {
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Sarsa(Environment environment, ActionablePolicy policy, ActionValueFunctionEstimator actionValueFunctionEstimator, String params) throws DynamicParamException {
+    public Sarsa(Environment environment, Policy policy, ActionValueFunctionEstimator actionValueFunctionEstimator, String params) throws DynamicParamException {
         super(environment, policy, actionValueFunctionEstimator, params);
     }
 }
