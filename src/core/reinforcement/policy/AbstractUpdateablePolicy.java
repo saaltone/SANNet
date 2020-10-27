@@ -22,7 +22,7 @@ import java.util.TreeSet;
  * Class that defines AbstractUpdateablePolicy. Contains common functions fo updateable policies.
  *
  */
-public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy implements ActionablePolicy {
+public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
 
     /**
      * Constructor for AbstractUpdateablePolicy.
@@ -35,23 +35,25 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
     }
 
     /**
-     * Returns action with potential state action value offset.
+     * Takes action by applying defined executable policy.
      *
-     * @param action action.
-     * @return updated action.
+     * @param stateTransition state transition.
+     * @param alwaysGreedy if true greedy action is always taken.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected int getAction(int action) {
-        return getStateValueOffset() + action;
+    public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
+        super.act(stateTransition, alwaysGreedy);
+        if (isLearning()) executablePolicy.record(stateTransition);
     }
 
     /**
-     * Returns advantage.
+     * Updates policy.
      *
-     * @param stateTransition state transition
-     * @return advantage
      */
-    protected double getAdvantage(StateTransition stateTransition) {
-        return stateTransition.tdTarget - stateTransition.stateValue;
+    public void update() {
+        if (isLearning()) executablePolicy.update();
+        executablePolicy.finish();
     }
 
     /**
@@ -66,39 +68,43 @@ public abstract class AbstractUpdateablePolicy extends ActionableBasicPolicy imp
     public void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
         if (getFunctionEstimator().sampledSetEmpty()) return;
         TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
+
         preProcess();
         for (StateTransition stateTransition : stateTransitions) {
-            Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions() + getStateValueOffset(), 1);
-            if (isStateActionValueFunction) policyGradient.setValue(0, 0, stateTransition.tdTarget);
-            policyGradient.setValue(getAction(stateTransition.action), 0, -getPolicyGradientValue(stateTransition));
-            getFunctionEstimator().store(agent, stateTransition, policyGradient);
+            Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions() + getStateValueOffset(), 1);
+            if (isStateActionValueFunction) policyValues.setValue(0, 0, stateTransition.tdTarget);
+            policyValues.setValue(getAction(stateTransition.action), 0, getPolicyValue(stateTransition));
+            getFunctionEstimator().store(agent, stateTransition, policyValues);
         }
         postProcess();
+
         getFunctionEstimator().update(agent);
     }
 
     /**
-     * Preprocesses policy gradient setting.
+     * Preprocesses policy gradient update.
      *
      */
-    protected abstract void preProcess();
+    protected void preProcess() {
+    }
 
     /**
-     * Returns policy gradient value for StateTransition.
+     * Returns policy value for StateTransition.
      *
      * @param stateTransition state transition.
      * @return policy gradient value for sample.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract double getPolicyGradientValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    protected abstract double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Postprocesses policy gradient setting.
+     * Postprocesses policy gradient update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected abstract void postProcess() throws MatrixException, AgentException;
+    protected void postProcess() throws MatrixException, AgentException {
+    }
 
 }
