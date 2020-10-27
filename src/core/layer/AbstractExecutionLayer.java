@@ -145,8 +145,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void defineProcedure() throws MatrixException {
+    protected void defineProcedure() throws MatrixException, DynamicParamException {
         procedure = new ProcedureFactory().getProcedure(this, getWeights());
         procedure.setNormalizers(getNormalization());
         procedure.setRegularizers(getRegularization());
@@ -180,8 +181,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * Additionally applies any normalization or regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forwardProcess() throws MatrixException {
+    public void forwardProcess() throws MatrixException, DynamicParamException {
         executeForwardProcess(prepareForwardProcess());
     }
 
@@ -190,8 +192,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @param previousOutputs outputs of previous layer.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void executeForwardProcess(Sequence previousOutputs) throws MatrixException {
+    protected void executeForwardProcess(Sequence previousOutputs) throws MatrixException, DynamicParamException {
         procedure.calculateExpression(previousOutputs, getLayerOutputs());
     }
 
@@ -201,8 +204,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardProcess() throws MatrixException {
+    public void backwardProcess() throws MatrixException, DynamicParamException {
         resetLayerGradients();
         executeBackwardProcess(isConvolutionalLayer() && hasNextLayer() && !getNextLayer().isConvolutionalLayer() ? getNextLayerGradients().unflatten(getLayerWidth(), getLayerHeight(), getLayerDepth()) : getNextLayerGradients());
         updateWeightGradients();
@@ -213,8 +217,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @param nextLayerGradients next layer gradients.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException {
+    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException, DynamicParamException {
         procedure.calculateGradient(nextLayerGradients, getLayerGradients(), -1);
     }
 
@@ -511,8 +516,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * Executes weight updates with regularizers and optimizer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void optimize() throws MatrixException {
+    public void optimize() throws MatrixException, DynamicParamException {
         for (Matrix weight : weightGradientSums.keySet()) optimizer.optimize(weight, weightGradientSums.get(weight));
         for (Normalization normalizer : normalizers) normalizer.optimize();
     }
