@@ -9,9 +9,7 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
-import core.regularization.RegularizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
@@ -814,7 +812,7 @@ public class Maze implements Environment, ActionListener {
         ExecutablePolicy executablePolicy = null;
         switch (policyType) {
             case 1:
-                executablePolicy = new EpsilonGreedyPolicy();
+                executablePolicy = new EpsilonGreedyPolicy("epsilonMin = 0.2");
                 break;
             case 2:
                 executablePolicy = new NoisyNextBestPolicy();
@@ -825,14 +823,14 @@ public class Maze implements Environment, ActionListener {
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
-            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-//            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+            agent = new DQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+//            agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
-            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, actionablePolicy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, 4)));
-            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
+            Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, policy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, 4)));
+            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
