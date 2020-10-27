@@ -112,12 +112,11 @@ public class UnaryFunction implements Serializable {
      *
      * @param unaryFunctionType type of function to be used.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UnaryFunction(UnaryFunctionType unaryFunctionType) throws MatrixException {
+    public UnaryFunction(UnaryFunctionType unaryFunctionType) throws DynamicParamException, MatrixException {
         this.unaryFunctionType = unaryFunctionType;
-        try {
-            setFunction(unaryFunctionType, null);
-        } catch (DynamicParamException exception) {}
+        setFunction(unaryFunctionType, null);
     }
 
     /**
