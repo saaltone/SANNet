@@ -813,8 +813,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @throws NeuralNetworkException throws exception if starting of neural network fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         checkStarted();
 
         trainingMetrics = new Metrics(MetricsType.REGRESSION);
@@ -931,8 +932,13 @@ public class NeuralNetwork implements Runnable, Serializable {
         try {
             while (isProcessing()) completeLockCondition.await();
         }
-        catch (InterruptedException exception) {}
-        executeLock.unlock();
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(exception);
+        }
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -1373,7 +1379,10 @@ public class NeuralNetwork implements Runnable, Serializable {
             try {
                 while (executionState == ExecutionState.IDLE) executeLockCondition.await();
             }
-            catch (InterruptedException exception) {}
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(exception);
+            }
             try {
                 switch (executionState) {
                     case TRAIN:
@@ -1407,8 +1416,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if neural network persistence operation fails.
      * @throws NeuralNetworkException throws exception if neural network training fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void trainIterations() throws MatrixException, IOException, NeuralNetworkException {
+    private void trainIterations() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
         trainingMetrics.resetError();
         trainingSampler.reset();
         for (int iteration = 0; iteration < trainingSampler.getNumberOfIterations(); iteration++) {
@@ -1426,8 +1436,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if neural network persistence operation fails.
      * @throws NeuralNetworkException throws exception if neural network training fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void trainIteration() throws MatrixException, IOException, NeuralNetworkException {
+    private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
         long startTime = System.nanoTime();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.reset();
         Sequence inputSequence = new Sequence(trainingSampler.getDepth());
@@ -1479,8 +1490,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param stateCompleted if flag is sets calls stateCompleted function.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if validation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException {
+    private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException, DynamicParamException {
         validationMetrics.resetError();
         validationSampler.reset();
         for (int sampleIndex = 0; sampleIndex < validationSampler.getNumberOfIterations(); sampleIndex++) {
