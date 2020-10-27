@@ -99,8 +99,9 @@ public class Adagrad implements Optimizer, Serializable {
      * @param bias bias matrix to be optimized.
      * @param biasGradient bias gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
+    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
         optimize(weight, weightGradient);
         optimize(bias, biasGradient);
     }
@@ -112,8 +113,9 @@ public class Adagrad implements Optimizer, Serializable {
      * @param matrix matrix to be optimized.
      * @param matrixGradient matrix gradients for optimization step.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
+    public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
         if (m2Sum == null) m2Sum = new HashMap<>();
 
         Matrix dM2Sum;
