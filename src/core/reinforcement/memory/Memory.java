@@ -49,6 +49,12 @@ public interface Memory {
     void update(TreeSet<StateTransition> stateTransitions);
 
     /**
+     * Resets Memory.
+     *
+     */
+    void reset();
+
+    /**
      * Samples Memory.
      *
      */
