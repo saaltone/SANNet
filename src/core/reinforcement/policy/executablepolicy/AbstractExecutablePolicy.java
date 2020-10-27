@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.memory.StateTransition;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
@@ -101,10 +102,23 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Increments policy.
+     * Resets policy.
      *
+     * @param forceReset force reset.
      */
-    public abstract void increment();
+    public void reset(boolean forceReset) {
+    }
+
+    /**
+     * Takes action decided by external agent.
+     *
+     * @param stateValueMatrix current state value matrix.
+     * @param availableActions available actions in current state
+     * @param stateValueOffset state value offset
+     * @param action action.
+     */
+    public void action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, int action) {
+    }
 
     /**
      * Takes action based on policy.
@@ -112,9 +126,10 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @param stateValueMatrix current state value matrix.
      * @param availableActions available actions in current state
      * @param stateValueOffset state value offset
+     * @param alwaysGreedy if true greedy action is always taken.
      * @return action taken.
      */
-    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset) {
+    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
         PriorityQueue<ActionValueTuple> stateValuePriorityQueue = new PriorityQueue<>((o1, o2) -> Double.compare(o2.value, o1.value));
         double cumulativeValue = 0;
         for (Integer action : availableActions) {
@@ -122,7 +137,29 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
             cumulativeValue += actionValue;
             stateValuePriorityQueue.add(new ActionValueTuple(action, actionValue));
         }
-        return getAction(stateValuePriorityQueue, cumulativeValue);
+        return stateValuePriorityQueue.isEmpty() ? -1 : alwaysGreedy ? stateValuePriorityQueue.poll().action : getAction(stateValuePriorityQueue, cumulativeValue);
+    }
+
+    /**
+     * Records state transition for action execution.
+     *
+     * @param stateTransition state transition.
+     */
+    public void record(StateTransition stateTransition) {
+    }
+
+    /**
+     * Updates policy.
+     *
+     */
+    public void update() {
+    }
+
+    /**
+     * Finishes episode.
+     *
+     */
+    public void finish() {
     }
 
     /**
