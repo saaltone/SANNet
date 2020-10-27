@@ -5,6 +5,7 @@
 
 package utils.matrix;
 
+import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serializable;
@@ -882,8 +883,9 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix variance() throws MatrixException {
+    public Matrix variance() throws MatrixException, DynamicParamException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         Matrix result = variance(mean());
@@ -898,8 +900,9 @@ public class MMatrix implements Cloneable, Serializable {
      * @param meanMatrix matrix containing mean values for variance calculation.
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix variance(Matrix meanMatrix) throws MatrixException {
+    public Matrix variance(Matrix meanMatrix) throws MatrixException, DynamicParamException {
         if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
@@ -917,8 +920,9 @@ public class MMatrix implements Cloneable, Serializable {
      * @param meanMatrix matrix containing mean values for variance calculation.
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException {
+    public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException, DynamicParamException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         Matrix result = variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
@@ -932,8 +936,9 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix standardDeviation() throws MatrixException {
+    public Matrix standardDeviation() throws MatrixException, DynamicParamException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         Matrix result = variance().multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
