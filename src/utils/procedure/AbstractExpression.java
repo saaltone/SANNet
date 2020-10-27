@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
@@ -152,8 +153,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param index index
      * @param firstKey first key of inputs
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(int index, int firstKey) throws MatrixException {
+    public void calculateExpressionStep(int index, int firstKey) throws MatrixException, DynamicParamException {
         calculateExpressionStep(index == firstKey, index);
         if (nextExpression != null) nextExpression.calculateExpressionStep(index, firstKey);
     }
@@ -164,8 +166,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param indices indices
      * @param firstKey first key of inputs
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(Set<Integer> indices, int firstKey) throws MatrixException {
+    public void calculateExpressionStep(Set<Integer> indices, int firstKey) throws MatrixException, DynamicParamException {
         for (Integer index : indices) {
             calculateExpressionStep(index == firstKey, index);
         }
@@ -178,8 +181,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param firstCalculateExpressionStep true if this is first calculation step for expression
      * @param index index
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(boolean firstCalculateExpressionStep, int index) throws MatrixException {
+    public void calculateExpressionStep(boolean firstCalculateExpressionStep, int index) throws MatrixException, DynamicParamException {
         updateExpressionDependency(index);
         if (firstCalculateExpressionStep) forwardRegularize();
         if (firstCalculateExpressionStep) forwardNormalize();
@@ -203,8 +207,9 @@ public abstract class AbstractExpression implements Serializable {
      * Calculates expression.
      *
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void calculateExpression() throws MatrixException;
+    protected abstract void calculateExpression() throws MatrixException, DynamicParamException;
 
     /**
      * Calculates expression.
@@ -220,8 +225,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param index index
      * @param lastKey last key of inputs
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientStep(int index, int lastKey) throws MatrixException {
+    public void calculateGradientStep(int index, int lastKey) throws MatrixException, DynamicParamException {
         calculateGradientStep (index == lastKey, index);
         if (previousExpression != null) previousExpression.calculateGradientStep(index, lastKey);
     }
@@ -233,8 +239,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param lastKey last key of inputs
      * @param steps number of gradient steps taken
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientStep(Set<Integer> indices, int lastKey, int steps) throws MatrixException {
+    public void calculateGradientStep(Set<Integer> indices, int lastKey, int steps) throws MatrixException, DynamicParamException {
         int step = 0;
         for (Integer index : indices) {
             boolean stopAtStep = steps > 0 && ++step >= steps;
@@ -250,8 +257,9 @@ public abstract class AbstractExpression implements Serializable {
      * @param lastCalculateGradientStep true if this is last gradient step for expression
      * @param index index
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientStep(boolean lastCalculateGradientStep, int index) throws MatrixException {
+    private void calculateGradientStep(boolean lastCalculateGradientStep, int index) throws MatrixException, DynamicParamException {
         updateGradientDependency(index);
         if (lastCalculateGradientStep) calculateGradient();
         calculateGradient(index);
@@ -282,15 +290,17 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param index data index.
      * @throws MatrixException throws exception if calculation of gradient fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void calculateGradient(int index) throws MatrixException;
+    protected abstract void calculateGradient(int index) throws MatrixException, DynamicParamException;
 
     /**
      * Execute forward normalization to constant node.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void forwardNormalize() throws MatrixException {
+    protected void forwardNormalize() throws MatrixException, DynamicParamException {
         argument1.forwardNormalize();
     }
 
@@ -299,8 +309,9 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void forwardNormalize(int sampleIndex) throws MatrixException {
+    protected void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
         argument1.forwardNormalize(sampleIndex);
     }
 
@@ -317,8 +328,9 @@ public abstract class AbstractExpression implements Serializable {
      * Execute backward normalization to all entries of node.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void backwardNormalize() throws MatrixException {
+    protected void backwardNormalize() throws MatrixException, DynamicParamException {
         argument1.backwardNormalize();
     }
 
@@ -327,8 +339,9 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param sampleIndex sample index of specific entry.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void backwardNormalize(int sampleIndex) throws MatrixException {
+    protected void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
         argument1.backwardNormalize(sampleIndex);
     }
 
@@ -421,6 +434,7 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @return gradient identifier name.
      */
+    @SuppressWarnings("SameReturnValue")
     protected String getGradientIdentifierName() {
         return "d";
     }
