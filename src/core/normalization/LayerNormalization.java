@@ -149,8 +149,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
         Matrix meanNormalizedInput = input.subtract(input.meanAsMatrix());
 
         Matrix output;
@@ -196,8 +197,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initialize(Node node) throws MatrixException {
+    public void initialize(Node node) throws MatrixException, DynamicParamException {
         initializeProcedure(node.getMatrix(node.firstKey()));
     }
 
@@ -214,8 +216,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param inputMatrix input matrix for initialization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void initializeProcedure(Matrix inputMatrix) throws MatrixException {
+    private void initializeProcedure(Matrix inputMatrix) throws MatrixException, DynamicParamException {
         int rows = inputMatrix.getRows();
         int columns = inputMatrix.getColumns();
 
@@ -238,8 +241,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * @param node node for normalization.
      * @param inputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forward(Node node, int inputIndex) throws MatrixException {
+    public void forward(Node node, int inputIndex) throws MatrixException, DynamicParamException {
         Matrix inputMatrix = node.getMatrix(inputIndex);
         if (inputMatrix.size() < 2) return;
         procedure.reset();
@@ -253,8 +257,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * @param node node for normalization.
      * @param outputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backward(Node node, int outputIndex) throws MatrixException {
+    public void backward(Node node, int outputIndex) throws MatrixException, DynamicParamException {
         Matrix outputGradient =node.getGradient(outputIndex);
         if (outputGradient.size() < 2) return;
 
@@ -312,8 +317,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * Executes optimizer step for normalizer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void optimize() throws MatrixException {
+    public void optimize() throws MatrixException, DynamicParamException {
         for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
         weightGradients = new HashMap<>();
     }

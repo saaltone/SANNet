@@ -170,8 +170,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initialize(Matrix weight) throws MatrixException {
+    public void initialize(Matrix weight) throws MatrixException, DynamicParamException {
         initializeProcedure(weight);
     }
 
@@ -180,8 +181,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      * @param weight weight matrix for initialization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void initializeProcedure(Matrix weight) throws MatrixException {
+    private void initializeProcedure(Matrix weight) throws MatrixException, DynamicParamException {
         if (procedures == null) procedures = new HashMap<>();
         if (!procedures.containsKey(weight)) {
             input = weight;
@@ -194,8 +196,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forward(Matrix weight) throws MatrixException {
+    public void forward(Matrix weight) throws MatrixException, DynamicParamException {
         weights.put(weight, weight.copy());
         procedures.get(weight).reset();
         weight.setEqualTo(procedures.get(weight).calculateExpression(weight));
@@ -219,8 +222,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * @param weight weight for backward normalization.
      * @param weightGradient gradient of weight for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backward(Matrix weight, Matrix weightGradient) throws MatrixException {
+    public void backward(Matrix weight, Matrix weightGradient) throws MatrixException, DynamicParamException {
         weightGradient.setEqualTo(procedures.get(weight).calculateGradient(weightGradient));
     }
 

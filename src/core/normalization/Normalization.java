@@ -51,16 +51,18 @@ public interface Normalization {
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void initialize(Node node) throws MatrixException;
+    void initialize(Node node) throws MatrixException, DynamicParamException;
 
     /**
      * Initializes normalization.
      *
      * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void initialize(Matrix weight) throws MatrixException;
+    void initialize(Matrix weight) throws MatrixException, DynamicParamException;
 
     /**
      * Executes forward step for normalization.<br>
@@ -68,8 +70,9 @@ public interface Normalization {
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void forward(Node node) throws MatrixException;
+    void forward(Node node) throws MatrixException, DynamicParamException;
 
     /**
      * Executes backward step for normalization.<br>
@@ -77,8 +80,9 @@ public interface Normalization {
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void backward(Node node) throws MatrixException;
+    void backward(Node node) throws MatrixException, DynamicParamException;
 
     /**
      * Executes forward step for normalization.<br>
@@ -87,8 +91,9 @@ public interface Normalization {
      * @param node node for normalization.
      * @param inputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void forward(Node node, int inputIndex) throws MatrixException;
+    void forward(Node node, int inputIndex) throws MatrixException, DynamicParamException;
 
     /**
      * Executes forward step for normalization.<br>
@@ -96,8 +101,9 @@ public interface Normalization {
      *
      * @param weight weight for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void forward(Matrix weight) throws MatrixException;
+    void forward(Matrix weight) throws MatrixException, DynamicParamException;
 
     /**
      * Finalizes forward step for normalization.<br>
@@ -115,8 +121,9 @@ public interface Normalization {
      * @param node node for normalization.
      * @param outputIndex input index for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void backward(Node node, int outputIndex) throws MatrixException;
+    void backward(Node node, int outputIndex) throws MatrixException, DynamicParamException;
 
     /**
      * Executes backward step for normalization.<br>
@@ -125,15 +132,17 @@ public interface Normalization {
      * @param weight weight for backward normalization.
      * @param weightGradient gradient of weight for backward normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void backward(Matrix weight, Matrix weightGradient) throws MatrixException;
+    void backward(Matrix weight, Matrix weightGradient) throws MatrixException, DynamicParamException;
 
     /**
      * Executes optimizer step for normalizer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void optimize() throws MatrixException;
+    void optimize() throws MatrixException, DynamicParamException;
 
     /**
      * Returns name of normalization.

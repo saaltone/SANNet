@@ -226,8 +226,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
         mean = input.mean();
         MMatrix meanNormalizedInput = input.subtract(mean);
 
@@ -248,8 +249,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param inputs input matrix for initialization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void initializeProcedure(MMatrix inputs) throws MatrixException {
+    private void initializeProcedure(MMatrix inputs) throws MatrixException, DynamicParamException {
         if (input != null) return;
 
         inputRows = inputs.get(inputs.firstKey()).getRows();
@@ -299,8 +301,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initialize(Node node) throws MatrixException {
+    public void initialize(Node node) throws MatrixException, DynamicParamException {
         initializeProcedure(node.getMatrices());
     }
 
@@ -320,8 +323,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forward(Node node) throws MatrixException {
+    public void forward(Node node) throws MatrixException, DynamicParamException {
         if (node.size() < 2) return;
 
         if (isTraining) {
@@ -354,8 +358,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @param node node for normalization.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backward(Node node) throws MatrixException {
+    public void backward(Node node) throws MatrixException, DynamicParamException {
         if (node.size() < 2) return;
 
         node.setGradients(procedure.calculateGradient(node.getGradients()));
@@ -414,8 +419,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * Executes optimizer step for normalizer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void optimize() throws MatrixException {
+    public void optimize() throws MatrixException, DynamicParamException {
         for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
         weightGradients = new HashMap<>();
     }
