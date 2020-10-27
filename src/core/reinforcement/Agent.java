@@ -20,8 +20,9 @@ public interface Agent {
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops agent.
@@ -85,10 +86,25 @@ public interface Agent {
     void act(boolean alwaysGreedy) throws NeuralNetworkException, MatrixException;
 
     /**
+     * Takes action defined by external agent.
+     *
+     * @param action action.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void act(int action) throws NeuralNetworkException, MatrixException;
+
+    /**
      * Assigns immediate reward from environment in response to action agent executed.
      *
      *  @param reward immediate reward.
      */
     void respond(double reward);
+
+    /**
+     * Resets policy.
+     *
+     */
+    void resetPolicy();
 
 }
