@@ -148,7 +148,6 @@ public class BasicSampler implements Sampler, Serializable {
      */
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("numberOfTrainingIterations", DynamicParam.ParamType.INT);
         paramDefs.put("numberOfIterations", DynamicParam.ParamType.INT);
         paramDefs.put("fullSet", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("randomOrder", DynamicParam.ParamType.BOOLEAN);
