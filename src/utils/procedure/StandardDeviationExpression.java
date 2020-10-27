@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
@@ -40,7 +41,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      * Operation for square root.
      *
      */
-    private final UnaryFunction sqrtFunction = new UnaryFunction(UnaryFunctionType.SQRT);
+    private final UnaryFunction sqrtFunction;
 
     /**
      * Constructor for standard deviation operation.
@@ -50,18 +51,21 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      * @param result result of expression.
      * @param asMultiMatrix true if calculation is done per index otherwise over all indices.
      * @throws MatrixException throws exception if expression arguments are not defined.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
+    public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException, DynamicParamException {
         super(operationName, operationName, expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
+        sqrtFunction = new UnaryFunction(UnaryFunctionType.SQRT);
     }
 
     /**
      * Calculates expression.
      *
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression() throws MatrixException {
+    public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!asMultiMatrix) return;
         if (argument1.getMatrices() == null) throw new MatrixException("Arguments for STANDARD DEVIATION operation not defined");
         mean = argument1.getMatrices().mean();
