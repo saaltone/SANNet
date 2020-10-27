@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
@@ -58,8 +59,9 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      * @param index data index.
      * @throws MatrixException throws exception if calculation of gradient fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
+    public void calculateGradient(int index) throws MatrixException, DynamicParamException {
         if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
         argument1.updateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), true);
         argument2.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), false);
