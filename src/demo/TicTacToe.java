@@ -86,12 +86,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         final GameSlot[][] gameBoard;
 
         /**
-         * Size of game board (size x size)
-         *
-         */
-        private final int size;
-
-        /**
          * Current state.
          *
          */
@@ -108,9 +102,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          *
          */
         GameBoard() {
-            this.size = 3;
-
-            gameBoard = new GameSlot[size][size];
+            gameBoard = new GameSlot[boardSize][boardSize];
             for (GameSlot[] gameSlots : gameBoard) {
                 Arrays.fill(gameSlots, GameSlot.EMPTY);
             }
@@ -130,11 +122,26 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          *
          */
         public void updateState() {
-            state = new DMatrix(2 * size * size, 1);
+            state = new DMatrix(getInputSize(), 1);
             availableMoves = new HashSet<>();
             for (int row = 0; row < gameBoard.length; row++) {
                 for (int col = 0; col < gameBoard[row].length; col++) {
+                    double positionValue = 0;
                     switch(gameBoard[row][col]) {
+                        case NOUGHT:
+                            positionValue = -1;
+                            break;
+                        case CROSS:
+                            positionValue = 1;
+                            break;
+                        case EMPTY:
+                            positionValue = 0;
+                            availableMoves.add(getPos(row, col));
+                            break;
+                    }
+                    if (canonicalGameBoard) positionValue = positionValue * (currentPlayer == Player.NOUGHT ? 1 : -1);
+                    state.setValue(getPos(row, col), 0, positionValue);
+/*                    switch(gameBoard[row][col]) {
                         case NOUGHT:
                             state.setValue(getPos(row, col), 0, 1);
                             break;
@@ -144,7 +151,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                         case EMPTY:
                             availableMoves.add(getPos(row, col));
                             break;
-                    }
+                    } */
                 }
             }
         }
@@ -174,8 +181,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * @param col column of game board.
          * @return action value calculated.
          */
-        private int getPos(int row, int col) {
-            return row + col * size;
+        public int getPos(int row, int col) {
+            return row + col * boardSize;
         }
 
         /**
@@ -184,10 +191,10 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
          * @param action action as input.
          * @return row and col in size 2 array
          */
-        private int[] getPos(int action) {
+        public int[] getPos(int action) {
             int[] pos = new int[2];
-            pos[0] = action % size;
-            pos[1] = action / size;
+            pos[0] = action % boardSize;
+            pos[1] = action / boardSize;
             return pos;
         }
 
@@ -244,20 +251,20 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             int diagonalStatistics = 0;
             int adiagonalStatistics = 0;
             GameSlot targetSlot = player == Player.NOUGHT ? GameSlot.NOUGHT : GameSlot.CROSS;
-            for (int row = 0; row < size; row++) {
+            for (int row = 0; row < boardSize; row++) {
                 int rowStat = 0;
                 int colStat = 0;
-                for (int col = 0; col < size; col++) {
+                for (int col = 0; col < boardSize; col++) {
                     if (gameBoard[row][col] == targetSlot) rowStat++; else rowStat = 0;
                     if (gameBoard[col][row] == targetSlot) colStat++; else colStat = 0;
                 }
-                if (rowStat == size || colStat == size) return player;
+                if (rowStat == boardSize || colStat == boardSize) return player;
 
                 if (gameBoard[row][row] == targetSlot) diagonalStatistics++; else diagonalStatistics = 0;
-                if (gameBoard[row][size - 1 - row] == targetSlot) adiagonalStatistics++; else adiagonalStatistics = 0;
+                if (gameBoard[row][boardSize - 1 - row] == targetSlot) adiagonalStatistics++; else adiagonalStatistics = 0;
             }
 
-            if (diagonalStatistics == size || adiagonalStatistics == size) return player;
+            if (diagonalStatistics == boardSize || adiagonalStatistics == boardSize) return player;
 
             return null;
         }
@@ -362,6 +369,18 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
     }
 
     /**
+     * Size of game board (size x size)
+     *
+     */
+    private static final int boardSize = 3;
+
+    /**
+     * If true game board state is in canonical form i.e. game board of opposite layer is defined as reverse.
+     *
+     */
+    private static final boolean canonicalGameBoard = true;
+
+    /**
      * Episode ID
      *
      */
@@ -378,12 +397,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      */
     private final Agent cross;
-
-    /**
-     * Size of game board (size x size).
-     *
-     */
-    private final int boardSize = 3;
 
     /**
      * Game board.
@@ -560,12 +573,24 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         boolean nnValueEstimator = false;
         boolean policyGradient = false;
         boolean stateValue = false;
-        FunctionEstimator policyEstimator;
-        FunctionEstimator valueEstimator;
         Memory estimatorMemory;
         estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
-        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(boardSize * boardSize, policyGradient, false), boardSize * boardSize) : new TabularFunctionEstimator(estimatorMemory, boardSize * boardSize);
-        valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(boardSize * boardSize, false, stateValue), (stateValue ? 1 : boardSize * boardSize)) : new TabularFunctionEstimator(estimatorMemory, boardSize * boardSize);
+        FunctionEstimator policyEstimator;
+        FunctionEstimator valueEstimator;
+        if (false) {
+            // Uses single neural network estimator for both policy and value functions (works for policy gradients).
+            NeuralNetwork stateActionValueNN = buildNeuralNetwork(getInputSize(), getOutputSize());
+            policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, getOutputSize(), true);
+            valueEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, 1, true);
+        }
+        else {
+            // Uses separate estimators for value and policy functions.
+            policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(getInputSize(), getOutputSize(), policyGradient, false), getOutputSize()) : new TabularFunctionEstimator(estimatorMemory, getOutputSize());
+            valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(getInputSize(), getOutputSize(), false, stateValue), (stateValue ? 1 : getOutputSize())) : new TabularFunctionEstimator(estimatorMemory, getOutputSize());
+        }
+//        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(getInputSize(), getOutputSize(), policyGradient, false), getOutputSize()) : new TabularFunctionEstimator(estimatorMemory, getOutputSize());
+//        valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(getInputSize(), getOutputSize(), false, stateValue), (stateValue ? 1 : getOutputSize())) : new TabularFunctionEstimator(estimatorMemory, getOutputSize());
+//        valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(getInputSize(), getOutputSize()), getOutputSize(), "numberOfIterations = 10") : new TabularFunctionEstimator(estimatorMemory, getOutputSize());
         nought = createAgent(valueEstimator, policyEstimator, estimatorMemory, policyGradient);
         cross = createAgent(valueEstimator, policyEstimator, estimatorMemory, policyGradient);
     }
@@ -591,14 +616,14 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+            agent = new DQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
-            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, actionablePolicy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, boardSize * boardSize)));
-            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
+            Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, policy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, getOutputSize())));
+            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
@@ -613,24 +638,68 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int outputSize, boolean policyGradient, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + 18);
+        neuralNetwork.addInputLayer("width = " + inputSize);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         if (!policyGradient) {
             neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " +  + (stateValue ? 1 : outputSize));
-            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
+            neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.verboseTraining(100);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         }
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
         return neuralNetwork;
+    }
+
+    /**
+     * Builds neural network for tic tac toe player (agent).
+     *
+     * @param outputSize output size of neural network (number of actions and their values).
+     * @return built neural network
+     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        NeuralNetwork neuralNetwork = new NeuralNetwork();
+        neuralNetwork.addInputLayer("width = " + inputSize);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + 1));
+        neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
+        neuralNetwork.verboseTraining(100);
+        neuralNetwork.build();
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
+//        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
+        neuralNetwork.setNeuralNetworkName("TicTacToe");
+        return neuralNetwork;
+    }
+
+    /**
+     * Returns input size of the board.
+     *
+     * @return input size.
+     */
+    public static int getInputSize() {
+        return 1 * boardSize * boardSize;
+    }
+
+    /**
+     * Returns output size of the board.
+     *
+     * @return output size.
+     */
+    public static int getOutputSize() {
+        return boardSize * boardSize;
     }
 
     /**
@@ -736,11 +805,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      * @param e mouse event.
      */
     public void mouseClicked (MouseEvent e) {
-/*        lock.lock();
-        humanRow = e.getY() / tileSize;
-        humanCol = e.getX() / tileSize;
-        humanAction.signal();
-        lock.unlock(); */
     }
 
     /**
@@ -814,8 +878,8 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             cross.disableLearning();
         }
 
-        if (currentHumanPlayer != Player.NOUGHT) nought.newEpisode();
-        if (currentHumanPlayer != Player.CROSS) cross.newEpisode();
+        nought.newEpisode();
+        cross.newEpisode();
         episodeID++;
         int timeStep = 0;
         while (gameStatus == GameStatus.ONGOING) {
@@ -826,6 +890,7 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             panelLock.unlock();
             jFrame.revalidate();
             ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
+            getAgent().newStep();
             if (currentHumanPlayer == currentPlayer) {
                 lock.lock();
                 humanRow = -1;
@@ -833,20 +898,18 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
                 try {
                     while (!gameBoard.isValidMove(humanRow, humanCol)) humanAction.await();
                 }
-                catch (InterruptedException exception) {}
-                gameBoard.makeMove(currentPlayer, humanRow, humanCol);
-                gameBoard.updateState();
-                gameStatus = gameBoard.updateGameStatus(currentPlayer);
+                catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(exception);
+                }
                 lock.unlock();
+                getAgent().act(gameBoard.getPos(humanRow, humanCol));
             }
-            else {
-                getAgent().newStep();
-                getAgent().act(currentHumanPlayer != null);
-            }
+            else getAgent().act(currentHumanPlayer != null);
             currentPlayer = currentPlayer == Player.CROSS ? Player.NOUGHT : Player.CROSS;
         }
-        if (currentHumanPlayer != Player.NOUGHT) nought.endEpisode();
-        if (currentHumanPlayer != Player.CROSS) cross.endEpisode();
+        nought.endEpisode();
+        cross.endEpisode();
 
         panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
@@ -858,7 +921,10 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         if (currentHumanPlayer != null) {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(exception);
+            }
         }
 
     }
@@ -914,6 +980,15 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      */
     private Agent getAgent() {
         return (currentPlayer == Player.NOUGHT) ? nought : cross;
+    }
+
+    /**
+     * Returns opponent agent (player)
+     *
+     * @return opponent agent.
+     */
+    private Agent getOpponentAgent() {
+        return (currentPlayer == Player.NOUGHT) ? cross : nought;
     }
 
 }
