@@ -59,8 +59,9 @@ public class LossFunction extends BinaryFunction {
      * @param binaryFunctionType type of loss function to be used.
      * @throws NeuralNetworkException throws exception if function is not available as loss function.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LossFunction(BinaryFunctionType binaryFunctionType) throws NeuralNetworkException, MatrixException {
+    public LossFunction(BinaryFunctionType binaryFunctionType) throws NeuralNetworkException, MatrixException, DynamicParamException {
         super(binaryFunctionType);
         for (BinaryFunctionType lossFunctionType : lossFunctions) {
             if (lossFunctionType == binaryFunctionType) return;
@@ -101,7 +102,7 @@ public class LossFunction extends BinaryFunction {
         else if (getType() == BinaryFunctionType.POLICY_VALUE) {
             Matrix error = new DMatrix(target.getRows(), 1);
             for (int row = 0; row < target.getRows(); row++) {
-                error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(output.getValue(0, 0) - target.getValue(0, 0), 2)) : target.getValue(row, 0));
+                error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(target.getValue(0, 0) - output.getValue(0, 0), 2)) : target.getValue(row, 0));
             }
             return error;
         }
