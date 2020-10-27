@@ -64,12 +64,11 @@ public class BinaryFunction implements Serializable {
      * Constructor for BinaryFunction.
      *
      * @param binaryFunctionType type of function to be used.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public BinaryFunction(BinaryFunctionType binaryFunctionType) throws MatrixException {
-        try {
-            setFunction(binaryFunctionType, null);
-        } catch (DynamicParamException exception) {}
+    public BinaryFunction(BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
+        setFunction(binaryFunctionType, null);
     }
 
     /**
