@@ -6,8 +6,6 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
 import core.reinforcement.memory.StateTransition;
 import utils.DynamicParam;
 import utils.DynamicParamException;
@@ -26,6 +24,12 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     private static final long serialVersionUID = -7436000520645598105L;
 
     /**
+     * If true value function is state value function otherwise action value function.
+     *
+     */
+    protected final boolean isStateValue;
+
+    /**
      * Number of actions for value function.
      *
      */
@@ -41,7 +45,25 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * Lambda value controlling balance between bootstrapped value and future reward of next state.
      *
      */
-    protected double lambda = 0.75;
+    protected double lambda = 1;
+
+    /**
+     * Moving average TDError.
+     *
+     */
+    private double averageTDError = Double.NEGATIVE_INFINITY;
+
+    /**
+     * Print cycle for average TDError verbosing.
+     *
+     */
+    private int tdErrorPrintCycle = 1000;
+
+    /**
+     * Count for average TDError verbosing.
+     *
+     */
+    private int tdErrorPrintCount = 0;
 
     /**
      * Constructor for AbstractValueFunction.
@@ -49,6 +71,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      */
     AbstractValueFunction() {
         this.numberOfActions = 1;
+        isStateValue = true;
     }
 
     /**
@@ -69,6 +92,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      */
     AbstractValueFunction(int numberOfActions) {
         this.numberOfActions = numberOfActions;
+        isStateValue = false;
     }
 
     /**
@@ -92,6 +116,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
+        paramDefs.put("tdErrorPrintCycle", DynamicParam.ParamType.INT);
         return paramDefs;
     }
 
@@ -100,7 +125,8 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * <br>
      * Supported parameters are:<br>
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.75.<br>
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
+     *     - tdErrorPrintCycle: TD error print cycle. Default value 1000.
      *
      * @param params parameters used for AbstractValueFunction.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -108,6 +134,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
         if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
+        if (params.hasParam("tdErrorPrintCycle")) tdErrorPrintCycle = params.getValueAsInteger("tdErrorPrintCycle");
     }
 
     /**
@@ -124,10 +151,17 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      *
      * @param stateTransition state transition.
      * @return value for state.
+     */
+    protected abstract double getValue(StateTransition stateTransition);
+
+    /**
+     * Updates state value.
+     *
+     * @param stateTransition state transition.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract double getValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    protected abstract void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
      * Returns target value based on next state.
@@ -147,39 +181,51 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
     protected abstract void updateBaseline(TreeSet<StateTransition> stateTransitions);
 
     /**
-     * Updates value function.
+     * Updates value function for set sampled from memory.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    public void update(Agent agent) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        getFunctionEstimator().sample();
+    public void update() throws MatrixException, NeuralNetworkException {
         if (getFunctionEstimator().sampledSetEmpty()) return;
-        TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
-
-        for (StateTransition stateTransition : stateTransitions) stateTransition.stateValue = getValue(stateTransition);
-        for (StateTransition stateTransition : stateTransitions.descendingSet()) {
-            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getTargetValue(stateTransition.nextStateTransition) + lambda * stateTransition.nextStateTransition.tdTarget));
-            stateTransition.tdError = stateTransition.tdTarget - stateTransition.stateValue;
-        }
-
-        updateBaseline(stateTransitions);
-
-        updateFunctionEstimator(agent, stateTransitions);
+        updateValue(getFunctionEstimator().getSampledStateTransitions());
     }
 
     /**
-     * Updates FunctionEstimator.
+     * Updates values for current episode.
      *
-     * @param agent agent.
-     * @param stateTransitions state transitions used to update FunctionEstimator.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @param stateTransition state transition.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected abstract void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
+    public void update(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        StateTransition currentStateTransition = stateTransition;
+        TreeSet<StateTransition> stateTransitions = new TreeSet<>();
+        while (currentStateTransition != null) {
+            stateTransitions.add(currentStateTransition);
+            currentStateTransition = currentStateTransition.previousStateTransition;
+        }
+        updateValue(stateTransitions);
+    }
+
+    /**
+     * Updates value of state transitions.
+     *
+     * @param stateTransitions state transitions.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     */
+    private void updateValue(TreeSet<StateTransition> stateTransitions) throws MatrixException, NeuralNetworkException {
+        for (StateTransition stateTransition : stateTransitions.descendingSet()) {
+            updateValue(stateTransition);
+            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition)));
+            stateTransition.tdError = stateTransition.tdTarget - getValue(stateTransition);
+            stateTransition.advantage = stateTransition.tdError;
+            averageTDError = averageTDError == Double.NEGATIVE_INFINITY ? stateTransition.tdError : 0.99 * averageTDError + 0.01 * stateTransition.tdError;
+            if (tdErrorPrintCycle > 0 && ++tdErrorPrintCount % tdErrorPrintCycle == 0) System.out.println("Average TD error: " + averageTDError);
+        }
+
+        updateBaseline(stateTransitions);
+    }
 
 }
