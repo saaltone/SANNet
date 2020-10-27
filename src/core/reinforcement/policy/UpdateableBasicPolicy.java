@@ -86,31 +86,15 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Returns FunctionEstimator.
-     *
-     * @return FunctionEstimator.
-     */
-    public FunctionEstimator getFunctionEstimator() {
-        return functionEstimator;
-    }
-
-    /**
-     * Preprocesses policy gradient update.
-     *
-     */
-    protected void preProcess() {
-    }
-
-    /**
      * Returns policy gradient value for update.
      *
      * @param stateTransition state transition.
-     * @return policy gradient value for update.
+     * @return policy gradient value.
      */
-    protected double getPolicyGradientValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+    protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
         double currentPolicyValue = currentPolicyValues.getValue(getAction(stateTransition.action), 0) + 10E-15;
-        return currentPolicyValue * Math.log(currentPolicyValue) * (getAdvantage(stateTransition) + (applyEntropy ? entropyCoefficient * getSampleEntropy(currentPolicyValues, stateTransition.environmentState.availableActions) : 0));
+        return -(currentPolicyValue * Math.log(currentPolicyValue) * (stateTransition.advantage + (applyEntropy ? entropyCoefficient * getSampleEntropy(currentPolicyValues, stateTransition.environmentState.availableActions) : 0)));
     }
 
     /**
@@ -127,13 +111,6 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
             if (actionValue != 0) entropy += -actionValue * Math.log(actionValue);
         }
         return entropy;
-    }
-
-    /**
-     * Postprocesses policy gradient update.
-     *
-     */
-    protected void postProcess() {
     }
 
 }
