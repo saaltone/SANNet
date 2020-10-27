@@ -7,6 +7,7 @@ package utils.procedure;
 
 import core.normalization.Normalization;
 import core.regularization.Regularization;
+import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
@@ -117,8 +118,9 @@ public class Procedure implements Serializable {
      * Initializes normalization for every node.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initialize() throws MatrixException {
+    public void initialize() throws MatrixException, DynamicParamException {
         for (Node node : nodes) node.initializeNormalization();
     }
 
@@ -195,8 +197,9 @@ public class Procedure implements Serializable {
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression(Sequence inputSequence, Sequence outputSequence) throws MatrixException {
+    public void calculateExpression(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         if (hasDependencies()) calculateExpressionPerSample(inputSequence, outputSequence);
         else calculateExpressionPerStep(inputSequence, outputSequence);
     }
@@ -207,8 +210,9 @@ public class Procedure implements Serializable {
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException {
+    public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : inputSequence.keySet()) {
             setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
@@ -226,8 +230,9 @@ public class Procedure implements Serializable {
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException {
+    public void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : inputSequence.keySet()) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
         expressionChain.calculateExpressionStep(inputSequence.keySet(), inputSequence.firstKey());
@@ -267,8 +272,9 @@ public class Procedure implements Serializable {
      * @param inputMatrix input matrices.
      * @return output matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix calculateExpression(MMatrix inputMatrix) throws MatrixException {
+    public MMatrix calculateExpression(MMatrix inputMatrix) throws MatrixException, DynamicParamException {
         Sequence inputSequence = new Sequence(1);
         for (Integer index : inputMatrix.keySet()) inputSequence.put(index, new MMatrix(inputMatrix.get(index)));
 
@@ -286,8 +292,9 @@ public class Procedure implements Serializable {
      * @param inputMatrix input matrices.
      * @return output matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix calculateExpression(Matrix inputMatrix) throws MatrixException {
+    public Matrix calculateExpression(Matrix inputMatrix) throws MatrixException, DynamicParamException {
         Sequence inputSequence = new Sequence(1);
         inputSequence.put(0, 0, inputMatrix);
         Sequence outputSequence = new Sequence(1);
@@ -312,8 +319,9 @@ public class Procedure implements Serializable {
      * @param inputGradientSequence input gradients.
      * @param steps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException {
+    public void calculateGradient(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
         if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequence, steps);
         else calculateGradientPerStep(outputGradientSequence, inputGradientSequence, steps);
     }
@@ -325,8 +333,9 @@ public class Procedure implements Serializable {
      * @param inputGradientSequence input gradients.
      * @param steps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException {
+    public void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
         int step = 0;
         for (Integer sampleIndex : outputGradientSequence.descendingKeySet()) {
             setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
@@ -348,8 +357,9 @@ public class Procedure implements Serializable {
      * @param inputGradientSequence input gradients.
      * @param steps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException {
+    public void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
         int step = 0;
         for (Integer sampleIndex : outputGradientSequence.keySet()) {
             setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
@@ -397,8 +407,9 @@ public class Procedure implements Serializable {
      * @param outputGradient output gradient for procedure.
      * @return input gradient.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix calculateGradient(MMatrix outputGradient) throws MatrixException {
+    public MMatrix calculateGradient(MMatrix outputGradient) throws MatrixException, DynamicParamException {
         Sequence outputGradientSequence = new Sequence(1);
         for (Integer index : outputGradient.keySet()) outputGradientSequence.put(index, new MMatrix(outputGradient.get(index)));
 
@@ -416,8 +427,9 @@ public class Procedure implements Serializable {
      * @param outputGradient output gradient for procedure.
      * @return input gradient.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix calculateGradient(Matrix outputGradient) throws MatrixException {
+    public Matrix calculateGradient(Matrix outputGradient) throws MatrixException, DynamicParamException {
         Sequence outputSequence = new Sequence(1);
         outputSequence.put(0, 0, outputGradient);
         Sequence inputSequence = new Sequence(1);
