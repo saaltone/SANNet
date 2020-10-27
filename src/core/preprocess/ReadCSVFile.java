@@ -161,7 +161,8 @@ public class ReadCSVFile {
         try {
             value = Double.parseDouble(item);
         }
-        catch(NumberFormatException e) {}
+        catch (NumberFormatException numberFormatException) {
+        }
         return value;
     }
 
