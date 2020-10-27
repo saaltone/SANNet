@@ -66,7 +66,7 @@ public class DynamicParam implements Serializable {
                     this.value = val;
                 }
                 catch (NumberFormatException exception) {
-                    throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Integer");
+                    throw new IllegalArgumentException("Parameter: " + param + ": Cannot convert value to Integer");
                 }
             }
             if (type == ParamType.LONG) {
