@@ -7,9 +7,7 @@ package core.reinforcement;
 
 import core.NeuralNetworkException;
 import core.reinforcement.memory.StateTransition;
-import core.reinforcement.policy.ActionableBasicPolicy;
-import core.reinforcement.policy.ActionablePolicy;
-import core.reinforcement.policy.executablepolicy.GreedyPolicy;
+import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ValueFunction;
 import utils.DynamicParam;
 import utils.DynamicParamException;
@@ -39,6 +37,12 @@ public abstract class DeepAgent implements Agent, Serializable {
     private final boolean episodic;
 
     /**
+     * If true updates value for episode otherwise set sampled from memory.
+     *
+     */
+    protected boolean updateValuePerEpisode = false;
+
+    /**
      * Reference to current state transition.
      *
      */
@@ -48,13 +52,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      * Reference to current policy.
      *
      */
-    protected final ActionablePolicy policy;
-
-    /**
-     * Reference to greedy policy.
-     *
-     */
-    private final ActionablePolicy greedyPolicy;
+    protected final Policy policy;
 
     /**
      * Reference to value function.
@@ -86,17 +84,30 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @param policy reference to policy.
      * @param valueFunction reference to value function.
      */
-    public DeepAgent(Environment environment, ActionablePolicy policy, ValueFunction valueFunction) {
+    public DeepAgent(Environment environment, Policy policy, ValueFunction valueFunction) {
         this.environment = environment;
         this.episodic = environment.isEpisodic();
         if (!episodic) updateCycle = 10;
         this.policy = policy;
         policy.setEnvironment(environment);
         policy.getFunctionEstimator().registerAgent(this);
-        greedyPolicy = new ActionableBasicPolicy(new GreedyPolicy(), policy.getFunctionEstimator());
-        greedyPolicy.setEnvironment(environment);
         this.valueFunction = valueFunction;
         if (!valueFunction.getFunctionEstimator().isStateActionValue()) valueFunction.getFunctionEstimator().registerAgent(this);
+    }
+
+    /**
+     * Constructor for deep agent.
+     * @param environment reference to environment.
+     * @param policy reference to policy.
+     */
+    public DeepAgent(Environment environment, Policy policy) {
+        this.environment = environment;
+        this.episodic = environment.isEpisodic();
+        if (!episodic) updateCycle = 10;
+        this.policy = policy;
+        policy.setEnvironment(environment);
+        policy.getFunctionEstimator().registerAgent(this);
+        valueFunction = null;
     }
 
     /**
@@ -108,8 +119,21 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @param params parameters for deep agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DeepAgent(Environment environment, ActionablePolicy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
+    public DeepAgent(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
         this(environment, policy, valueFunction);
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Constructor for DeepAgent.
+     *
+     * @param environment reference to environment.
+     * @param policy reference to policy.
+     * @param params parameters for deep agent.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public DeepAgent(Environment environment, Policy policy, String params) throws DynamicParamException {
+        this(environment, policy);
         setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -120,6 +144,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      */
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+        paramDefs.put("updateValuePerEpisode", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("updateCycle", DynamicParam.ParamType.INT);
         paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
@@ -129,6 +154,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      * Sets parameters used for DeepAgent.<br>
      * <br>
      * Supported parameters are:<br>
+     *     - updateValuePerEpisode: if true updates value for episode otherwise set sampled from memory. Default value false.<br>
      *     - updateCycle: estimator update cycle. Default value 5.<br>
      *     - tau: tau value for reward averaging in non-episodic learning. Default value 0.99.<br>
      *
@@ -136,6 +162,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("updateValuePerEpisode")) updateValuePerEpisode = params.getValueAsBoolean("updateValuePerEpisode");
         if (params.hasParam("updateCycle")) updateCycle = params.getValueAsInteger("updateCycle");
         if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
     }
@@ -145,10 +172,11 @@ public abstract class DeepAgent implements Agent, Serializable {
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         policy.start();
-        valueFunction.start();
+        if (valueFunction != null) valueFunction.start();
     }
 
     /**
@@ -157,7 +185,7 @@ public abstract class DeepAgent implements Agent, Serializable {
      */
     public void stop() {
         policy.stop();
-        valueFunction.stop();
+        if (valueFunction != null) valueFunction.stop();
     }
 
     /**
@@ -193,6 +221,8 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @throws AgentException throws exception if update of estimator fails.
      */
     public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+        if (updateValuePerEpisode) valueFunction.update(stateTransition);
+        policy.update();
         if (policy.isLearning() && environment.getState().episodeID > 0 && environment.getState().episodeID % updateCycle == 0) update();
     }
 
@@ -230,9 +260,20 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        if (!alwaysGreedy) policy.act(stateTransition);
-        else greedyPolicy.act(stateTransition);
+        policy.act(stateTransition, alwaysGreedy);
+        environment.commitAction(this, stateTransition.action);
+    }
 
+    /**
+     * Takes action defined by external agent.
+     *
+     * @param action action.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void act(int action) throws NeuralNetworkException, MatrixException {
+        policy.act(stateTransition, action);
+        stateTransition.action = action;
         environment.commitAction(this, stateTransition.action);
     }
 
@@ -258,5 +299,13 @@ public abstract class DeepAgent implements Agent, Serializable {
      * @throws AgentException throws exception if update of estimator fails.
      */
     protected abstract void update() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
+
+    /**
+     * Resets policy.
+     *
+     */
+    public void resetPolicy() {
+        policy.reset(true);
+    }
 
 }
