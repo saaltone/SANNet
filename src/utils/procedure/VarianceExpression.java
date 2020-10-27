@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -52,8 +53,9 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      * Calculates expression.
      *
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression() throws MatrixException {
+    public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!asMultiMatrix) return;
         if (argument1.getMatrices() == null) throw new MatrixException("Arguments for VARIANCE operation not defined");
         mean = argument1.getMatrices().mean();
