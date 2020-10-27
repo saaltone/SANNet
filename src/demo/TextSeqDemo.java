@@ -44,7 +44,7 @@ public class TextSeqDemo {
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             neuralNetwork.setTaskType(MetricsType.CLASSIFICATION);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
-            neuralNetwork.setPersistence(persistence);
+//            neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
             neuralNetwork.start();
             neuralNetwork.print();
