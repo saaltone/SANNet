@@ -37,6 +37,12 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private final NeuralNetwork neuralNetwork;
 
     /**
+     * Number of validation cycles.
+     *
+     */
+    private int numberOfIterations = 1;
+
+    /**
      * Update rate of target function.
      *
      */
@@ -88,6 +94,23 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param memory memory reference.
      * @param neuralNetwork neural network reference.
      * @param numberOfActions number of actions.
+     * @param isStateActionValueFunction true if estimator is state action value function otherwise false.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, int numberOfActions, boolean isStateActionValueFunction) throws MatrixException {
+        super (memory, numberOfActions);
+        if (neuralNetwork.getOutputLayer().getLayerWidth() < numberOfActions) throw new MatrixException("Neural network has less output than number of actions.");
+        this.neuralNetwork = neuralNetwork;
+        this.isStateActionValueFunction = isStateActionValueFunction;
+        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
+    }
+
+    /**
+     * Constructor for NNFunctionEstimator.
+     *
+     * @param memory memory reference.
+     * @param neuralNetwork neural network reference.
+     * @param numberOfActions number of actions.
      * @param params parameters for function
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -99,12 +122,30 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Constructor for NNFunctionEstimator.
+     *
+     * @param memory memory reference.
+     * @param neuralNetwork neural network reference.
+     * @param numberOfActions number of actions.
+     * @param isStateActionValueFunction true if estimator is state action value function otherwise false.
+     * @param params parameters for function
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, int numberOfActions, boolean isStateActionValueFunction, String params) throws MatrixException, DynamicParamException {
+        this(memory, neuralNetwork, numberOfActions, isStateActionValueFunction);
+        this.params = params;
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
      * Returns parameters used for NNFunctionEstimator.
      *
      * @return parameters used for NNFunctionEstimator.
      */
     protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+        paramDefs.put("numberOfIterations", DynamicParam.ParamType.INT);
         paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
         return paramDefs;
     }
@@ -113,12 +154,17 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Sets parameters used for NNFunctionEstimator.<br>
      * <br>
      * Supported parameters are:<br>
+     *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - tau: update rate pf target function. Default value 0.001.<br>
      *
      * @param params parameters used for NNFunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("numberOfIterations")) {
+            numberOfIterations = params.getValueAsInteger("numberOfIterations");
+            if (numberOfIterations < 1) throw new DynamicParamException("Number of iterations must be at least 1.");
+        }
         if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
     }
 
@@ -127,8 +173,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         if (!neuralNetwork.isStarted()) neuralNetwork.start();
     }
 
@@ -160,6 +207,16 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      */
     public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
         return params == null ? new NNFunctionEstimator(memory, neuralNetwork.copy(), numberOfActions) : new NNFunctionEstimator(memory, neuralNetwork.copy(), numberOfActions, params);
+    }
+
+    /**
+     * Resets NNFunctionEstimator.
+     *
+     */
+    public void reset() {
+        super.reset();
+        stateValueMap = new HashMap<>();
+        stateTransitionValueMap = new HashMap<>();
     }
 
     /**
@@ -211,10 +268,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
             index++;
         }
         if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(importanceSamplingWeights);
-        neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true"));
-
-        stateValueMap = new HashMap<>();
-        stateTransitionValueMap = new HashMap<>();
+        neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true, numberOfIterations = " + numberOfIterations));
     }
 
     /**
