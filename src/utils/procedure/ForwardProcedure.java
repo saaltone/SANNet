@@ -5,6 +5,7 @@
 
 package utils.procedure;
 
+import utils.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.MatrixException;
 
@@ -28,7 +29,8 @@ public interface ForwardProcedure {
      *
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    MMatrix getForwardProcedure() throws MatrixException;
+    MMatrix getForwardProcedure() throws MatrixException, DynamicParamException;
 
 }
