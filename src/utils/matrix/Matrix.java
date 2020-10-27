@@ -5,6 +5,7 @@
 
 package utils.matrix;
 
+import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serializable;
@@ -295,6 +296,11 @@ public abstract class Matrix implements Cloneable, Serializable {
         return name;
     }
 
+    /**
+     * Returns true if matrix is scalar otherwise false.
+     *
+     * @return true if matrix is scalar otherwise false.
+     */
     public boolean isScalar() {
         return isScalar;
     }
@@ -713,8 +719,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param unaryFunctionType unaryFunction type to be applied.
      * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void apply(Matrix result, UnaryFunctionType unaryFunctionType) throws MatrixException {
+    public void apply(Matrix result, UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException {
         apply(result, new UnaryFunction(unaryFunctionType));
     }
 
@@ -726,8 +733,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param unaryFunctionType unaryFunction type to be applied.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix apply(UnaryFunctionType unaryFunctionType) throws MatrixException {
+    public Matrix apply(UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException {
         return apply(new UnaryFunction(unaryFunctionType));
     }
 
@@ -832,8 +840,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param result result matrix.
      * @param binaryFunctionType binaryFunction type to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException {
+    public void applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
         applyBi(other, result, new BinaryFunction(binaryFunctionType));
     }
 
@@ -846,8 +855,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param binaryFunctionType binaryFunction type to be applied.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix applyBi(Matrix other, BinaryFunctionType binaryFunctionType) throws MatrixException {
+    public Matrix applyBi(Matrix other, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
         return applyBi(other, new BinaryFunction(binaryFunctionType));
     }
 
@@ -1114,8 +1124,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param power power value to which this elements is to be raised.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix power(double power) throws MatrixException {
+    public Matrix power(double power) throws MatrixException, DynamicParamException {
         return applyBi (asMatrix(power), BinaryFunctionType.POW);
     }
 
@@ -1126,8 +1137,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param power power value to which this elements is to be raised.
      * @param result matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void power(double power, Matrix result) throws MatrixException {
+    public void power(double power, Matrix result) throws MatrixException, DynamicParamException {
         applyBi (asMatrix(power), result, BinaryFunctionType.POW);
     }
 
@@ -1138,8 +1150,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void max(Matrix other, Matrix result) throws MatrixException {
+    public void max(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
         applyBi (other, result, BinaryFunctionType.MAX);
     }
 
@@ -1150,8 +1163,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix max(Matrix other) throws MatrixException {
+    public Matrix max(Matrix other) throws MatrixException, DynamicParamException {
         return applyBi (other, BinaryFunctionType.MAX);
     }
 
@@ -1162,8 +1176,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void min(Matrix other, Matrix result) throws MatrixException {
+    public void min(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
         applyBi (other, result, BinaryFunctionType.MIN);
     }
 
@@ -1174,8 +1189,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix min(Matrix other) throws MatrixException {
+    public Matrix min(Matrix other) throws MatrixException, DynamicParamException {
         return applyBi (other, BinaryFunctionType.MIN);
     }
 
@@ -1187,8 +1203,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void sgnmul(Matrix other, Matrix result) throws MatrixException {
+    public void sgnmul(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
         apply(UnaryFunctionType.SGN).multiply(other.apply(UnaryFunctionType.SGN), result);
     }
 
@@ -1200,8 +1217,9 @@ public abstract class Matrix implements Cloneable, Serializable {
      * @param other matrix which acts as second variable in the operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix sgnmul(Matrix other) throws MatrixException {
+    public Matrix sgnmul(Matrix other) throws MatrixException, DynamicParamException {
         return apply(UnaryFunctionType.SGN).multiply(other.apply(UnaryFunctionType.SGN));
     }
 
@@ -1435,9 +1453,10 @@ public abstract class Matrix implements Cloneable, Serializable {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @throws MatrixException not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @return standard deviation of elements of this matrix.
      */
-    public Matrix standardDeviationAsMatrix() throws MatrixException {
+    public Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         Matrix result = new DMatrix(standardDeviation());
