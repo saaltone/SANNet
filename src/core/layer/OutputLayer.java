@@ -47,6 +47,12 @@ public class OutputLayer extends AbstractLayer {
     private transient TreeMap<Integer, Double> importanceSamplingWeights;
 
     /**
+     * If true neural network is in training state otherwise false.
+     *
+     */
+    private transient boolean training;
+
+    /**
      * Constructor for output layer.
      *
      * @param layerIndex index of layer.
@@ -147,6 +153,7 @@ public class OutputLayer extends AbstractLayer {
      * @param training if true layer is training otherwise false.
      */
     protected void setTraining(boolean training) {
+        this.training = training;
     }
 
     /**
@@ -191,8 +198,19 @@ public class OutputLayer extends AbstractLayer {
     /**
      * Executes forward processing step of execution layer.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardProcess() {
+    public void forwardProcess() throws MatrixException {
+        if (targets == null || targets.isEmpty() || !training) return;
+        error = null;
+        for (Integer sampleIndex : targets.keySet()) {
+            for (Integer matrixIndex : targets.sampleKeySet()) {
+                Matrix outputError = lossFunction.getError(getLayerOutputs().get(sampleIndex, matrixIndex), targets.get(sampleIndex, matrixIndex));
+                if (importanceSamplingWeights != null) outputError.multiply(importanceSamplingWeights.get(matrixIndex), outputError);
+                error = error == null ? outputError : error.add(outputError);
+            }
+        }
+        error = lossFunction.getMeanError(error, targets.totalSize());
     }
 
     /**
@@ -201,19 +219,14 @@ public class OutputLayer extends AbstractLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        error = null;
         resetLayerGradients();
         for (Integer sampleIndex : targets.keySet()) {
             for (Integer matrixIndex : targets.sampleKeySet()) {
-                Matrix outputError = lossFunction.getError(getLayerOutputs().get(sampleIndex, matrixIndex), targets.get(sampleIndex, matrixIndex));
-                if (importanceSamplingWeights != null) outputError.multiply(importanceSamplingWeights.get(matrixIndex), outputError);
-                error = error == null ? outputError : error.add(outputError);
                 Matrix outputGradient = lossFunction.getGradient(getLayerOutputs().get(sampleIndex, matrixIndex), targets.get(sampleIndex, matrixIndex));
                 if (importanceSamplingWeights != null) outputGradient.multiply(importanceSamplingWeights.get(matrixIndex), outputGradient);
                 getLayerGradients().put(sampleIndex, matrixIndex, outputGradient);
             }
         }
-        error = lossFunction.getMeanError(error, targets.totalSize());
     }
 
     /**
