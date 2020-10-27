@@ -11,7 +11,6 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
-import core.regularization.RegularizationType;
 import core.reinforcement.*;
 import core.reinforcement.algorithm.*;
 import core.reinforcement.function.DirectFunctionEstimator;
@@ -34,13 +33,216 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Random;
 
 /**
  * Class that implements deep reinforcement learning solution solving travelling salesman problem.
  *
  */
 public class TSP implements Environment {
+
+    /**
+     * Class that defines tour.
+     *
+     */
+    private static class Tour {
+
+        /**
+         * Number of cities for travelling salesman.
+         *
+         */
+        private final int numberOfCities;
+
+        /**
+         * Hashmap for storing cities.
+         *
+         */
+        private final HashMap<Integer, City> cities = new HashMap<>();
+
+        /**
+         * Ordered list of visited cities.
+         *
+         */
+        private ArrayList<Integer> visitedCities;
+
+        /**
+         * Ordered list of visited cities for previous tour.
+         *
+         */
+        private ArrayList<Integer> visitedCitiesPrevious = null;
+
+        /**
+         * Ordered list of visited cities for shortest tour.
+         *
+         */
+        private ArrayList<Integer> visitedCitiesMin = null;
+
+        /**
+         * Ordered list of visited cities for longest tour.
+         *
+         */
+        private ArrayList<Integer> visitedCitiesMax = null;
+
+        /**
+         * Start city from where travelling salesman start journey from.
+         *
+         */
+        private final int startCity = 0;
+
+        /**
+         * Total distance in formalized form that travelling salesman has travelled.
+         *
+         */
+        private double totalNormalizedDistance = 0;
+
+        /**
+         * Total distance form that travelling salesman has travelled.
+         *
+         */
+        private double totalDistance = 0;
+
+        /**
+         * Length of shortest route found as normalized distance.
+         *
+         */
+        private double minNormalizedDistance = Double.MAX_VALUE;
+
+        /**
+         * Length of shortest route found.
+         *
+         */
+        private double minDistance = Double.MAX_VALUE;
+
+        /**
+         * Length of longest route found as normalized distance.
+         *
+         */
+        private double maxNormalizedDistance = Double.MIN_VALUE;
+
+        /**
+         * Length of longest route found.
+         *
+         */
+        private double maxDistance = Double.MIN_VALUE;
+
+        /**
+         * Distance from previous tour as normalized distance.
+         *
+         */
+        private double lastNormalizedDistance = Double.MIN_VALUE;
+
+        /**
+         * Distance from previous tour.
+         *
+         */
+        private double lastDistance = Double.MIN_VALUE;
+
+        /**
+         * Constructor for tour
+         *
+         * @param numberOfCities number of cities for a tour.
+         */
+        Tour(int numberOfCities) {
+            this.numberOfCities = numberOfCities;
+            for (int index = 0; index < numberOfCities; index++) cities.put(index, new City(Math.random(), Math.random()));
+            normalize();
+        }
+
+        /**
+         * Size of tour as number of cities.
+         *
+         * @return size of tour as number of cities.
+         */
+        int size() {
+            return numberOfCities;
+        }
+
+        /**
+         * Normalizes tour coordinates.
+         *
+         */
+        void normalize() {
+            double xMin = Double.POSITIVE_INFINITY;
+            double xMax = Double.NEGATIVE_INFINITY;
+            double yMin = Double.POSITIVE_INFINITY;
+            double yMax = Double.NEGATIVE_INFINITY;
+            for (City city : cities.values()) {
+                xMin = Math.min(xMin, city.x);
+                xMax = Math.max(xMax, city.x);
+                yMin = Math.min(yMin, city.y);
+                yMax = Math.max(yMax, city.y);
+            }
+            for (City city : cities.values()) city.normalize(xMin, xMax, yMin, yMax);
+        }
+
+        /**
+         * Resets tour.
+         *
+         */
+        void reset() {
+            if (visitedCities != null) {
+                visitedCitiesPrevious = new ArrayList<>(visitedCities);
+                lastNormalizedDistance = totalNormalizedDistance;
+                lastDistance = totalDistance;
+            }
+            visitedCities = new ArrayList<>();
+            visitedCities.add(startCity);
+            totalNormalizedDistance = 0;
+            totalDistance = 0;
+        }
+
+        /**
+         * Add visited city to tour.
+         *
+         * @param cityIndex city index.
+         */
+        void addVisitedCity(int cityIndex) {
+            visitedCities.add(cityIndex);
+            int lastIndex = visitedCities.size() - 1;
+            City cityFrom = cities.get(visitedCities.size() < cities.size() ? visitedCities.get(lastIndex - 1) : visitedCities.get(lastIndex));
+            City cityTo = cities.get(visitedCities.size() < cities.size() ? visitedCities.get(lastIndex) : visitedCities.get(0));
+            totalNormalizedDistance += cityFrom.distanceTo(cityTo, true);
+            totalDistance += cityFrom.distanceTo(cityTo, false);
+            if (isCompleteTour()) record();
+        }
+
+        /**
+         * Records tour.
+         *
+         */
+        void record() {
+            if (minNormalizedDistance == Double.MAX_VALUE || totalNormalizedDistance < minNormalizedDistance) {
+                minNormalizedDistance = totalNormalizedDistance;
+                minDistance = totalDistance;
+                visitedCitiesMin = new ArrayList<>(visitedCities);
+            }
+            if (maxNormalizedDistance == Double.MIN_VALUE || totalNormalizedDistance > maxNormalizedDistance) {
+                maxNormalizedDistance = totalNormalizedDistance;
+                maxDistance = totalDistance;
+                visitedCitiesMax = new ArrayList<>(visitedCities);
+            }
+        }
+
+        /**
+         * Returns true if tour is completed.
+         *
+         * @return true if tour is completed.
+         */
+        boolean isCompleteTour() {
+            return visitedCities.size() == cities.size();
+        }
+
+        /**
+         * Returns unvisited cities.
+         *
+         * @return unvisited cities.
+         */
+        HashSet<Integer> getUnvisitedCities() {
+            HashSet<Integer> unvisitedCities = new HashSet<>();
+            for (Integer index : cities.keySet()) if (!visitedCities.contains(index) && index != startCity) unvisitedCities.add(index - 1);
+            return unvisitedCities;
+        }
+
+    }
 
     /**
      * Class that defines city with coordinates x and y.
@@ -61,6 +263,18 @@ public class TSP implements Environment {
         final double y;
 
         /**
+         * Coordinate x of city.
+         *
+         */
+        double xNormalized;
+
+        /**
+         * Coordinate y of city.
+         *
+         */
+        double yNormalized;
+
+        /**
          * Constructor for city.
          *
          * @param x coordinate x of city.
@@ -72,16 +286,31 @@ public class TSP implements Environment {
         }
 
         /**
+         * Normalizes x and y coordinates
+         *
+         * @param xMin minimum value for x.
+         * @param xMax maximum value for x.
+         * @param yMin minimum value for y.
+         * @param yMax maximum value for y.
+         */
+        void normalize(double xMin, double xMax, double yMin, double yMax) {
+            xNormalized = (x - xMin) / (xMax - xMin);
+            yNormalized = (y - yMin) / (yMax - yMin);
+        }
+
+        /**
          * Calculates distance to another city.
          *
          * @param city another city.
+         * @param asNormalized as normalized distance
          * @return distance to another city.
          */
-        double distanceTo(City city) {
-            return Math.sqrt(Math.pow(x - city.x, 2) + Math.pow(y - city.y, 2));
+        double distanceTo(City city, boolean asNormalized) {
+            return asNormalized ? Math.sqrt(Math.pow(xNormalized - city.xNormalized, 2) + Math.pow(yNormalized - city.yNormalized, 2)) : Math.sqrt(Math.pow(x - city.x, 2) + Math.pow(y - city.y, 2));
         }
 
     }
+
 
     /**
      * Number of cities for travelling salesman.
@@ -90,58 +319,10 @@ public class TSP implements Environment {
     private static final int numberOfCities = 5;
 
     /**
-     * Hashmap for storing cities.
+     * Current tour.
      *
      */
-    private final HashMap<Integer, City> cities = new HashMap<>();
-
-    /**
-     * Ordered list of visited cities.
-     *
-     */
-    private ArrayList<Integer> visitedCities;
-
-    /**
-     * Ordered list of visited cities for previous tour.
-     *
-     */
-    private ArrayList<Integer> visitedCitiesPrevious = null;
-
-    /**
-     * Ordered list of visited cities for shortest tour.
-     *
-     */
-    private ArrayList<Integer> visitedCitiesMin = null;
-
-    /**
-     * Ordered list of visited cities for longest tour.
-     *
-     */
-    private ArrayList<Integer> visitedCitiesMax = null;
-
-    /**
-     * Start city from where travelling salesman start journey from.
-     *
-     */
-    private final int startCity = 0;
-
-    /**
-     * Total distance that travelling salesman has travelled.
-     *
-     */
-    private double totalDistance = 0;
-
-    /**
-     * Length of shortest route found.
-     *
-     */
-    private double minDistance = Double.MAX_VALUE;
-
-    /**
-     * Length of longest route found.
-     *
-     */
-    private double maxDistance = Double.MIN_VALUE;
+    private final Tour tour;
 
     /**
      * Episode ID
@@ -169,6 +350,24 @@ public class TSP implements Environment {
     private final Agent agent;
 
     /**
+     * If true uses compact state representation i.e. defines visited cities as negative coordinates.
+     *
+     */
+    private final boolean compactState = true;
+
+    /**
+     * Window size in x-coordinate direction.
+     *
+     */
+    private final int xWindowSize = 500;
+
+    /**
+     * Window size in y-coordinate direction.
+     *
+     */
+    private final int yWindowSize = 500;
+
+    /**
      * Constructor for travelling salesman problem.
      *
      * @param cityAmount number of cities to be visited.
@@ -179,9 +378,8 @@ public class TSP implements Environment {
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
      */
     public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
-        Random random = new Random();
-        for (int city = 0; city < cityAmount; city++) cities.put(city, new City(10 * random.nextDouble(), 10 * random.nextDouble()));
-        agent = createAgent(4 * cityAmount, cityAmount - 1);
+        tour = new Tour(cityAmount);
+        agent = compactState ? createAgent(2 * tour.size(), tour.size() - 1) : createAgent(4 * tour.size(), tour.size() - 1);
     }
 
     /**
@@ -189,20 +387,27 @@ public class TSP implements Environment {
      *
      */
     private void updateState() {
-        Matrix state = new DMatrix(4 * cities.size(), 1);
-        for (Integer index : cities.keySet()) {
-            City city = cities.get(index);
-            int visited = visitedCities.contains(index) ? 0 : cities.size();
-            state.setValue(visited + 2 * index, 0, city.x / 10);
-            state.setValue(visited + 2 * index + 1, 0, city.y / 10);
+        Matrix state;
+        if (compactState) {
+            state = new DMatrix(2 * tour.cities.size(), 1);
+            for (Integer index : tour.cities.keySet()) {
+                City city = tour.cities.get(index);
+                boolean visited = tour.visitedCities.contains(index);
+                state.setValue(2 * index, 0, city.xNormalized * (visited ? -1 : 1));
+                state.setValue(2 * index + 1, 0, city.yNormalized * (visited ? -1 : 1));
+            }
+        }
+        else {
+            state = new DMatrix(4 * tour.cities.size(), 1);
+            for (Integer index : tour.cities.keySet()) {
+                City city = tour.cities.get(index);
+                int visited = tour.visitedCities.contains(index) ? 0 : tour.cities.size();
+                state.setValue(visited + 2 * index, 0, city.xNormalized);
+                state.setValue(visited + 2 * index + 1, 0, city.yNormalized);
+            }
         }
 
-        HashSet<Integer> availableActions = new HashSet<>();
-        for (Integer city : cities.keySet()) {
-            if (!visitedCities.contains(city)) if (city != startCity) availableActions.add(city - 1);
-        }
-
-        environmentState = new EnvironmentState(episodeID, timeStamp, state, availableActions);
+        environmentState = new EnvironmentState(episodeID, timeStamp, state, tour.getUnvisitedCities());
     }
 
     /**
@@ -210,11 +415,17 @@ public class TSP implements Environment {
      *
      */
     private void resetRoute() {
-        visitedCitiesPrevious = visitedCities;
-        visitedCities = new ArrayList<>();
-        visitedCities.add(startCity);
-        totalDistance = 0;
+        tour.reset();
         updateState();
+    }
+
+    /**
+     * Returns total distance travelling salesman has travelled as normalized distance.
+     *
+     * @return total distance travelling salesman has travelled as normalized distance.
+     */
+    private double getTotalNormalizedDistance() {
+        return tour.totalNormalizedDistance;
     }
 
     /**
@@ -223,7 +434,43 @@ public class TSP implements Environment {
      * @return total distance travelling salesman has travelled.
      */
     private double getTotalDistance() {
-        return totalDistance;
+        return tour.totalDistance;
+    }
+
+    /**
+     * Returns minimum journey travelling salesman has taken as normalized distance.
+     *
+     * @return minimum journey travelling salesman has taken as normalized distance.
+     */
+    private double getMinNormalizedDistance() {
+        return tour.minNormalizedDistance;
+    }
+
+    /**
+     * Returns minimum journey travelling salesman has taken.
+     *
+     * @return minimum journey travelling salesman has taken.
+     */
+    private double getMinDistance() {
+        return tour.minDistance;
+    }
+
+    /**
+     * Returns maximum journey travelling salesman has taken as normalized distance.
+     *
+     * @return maximum journey travelling salesman has taken as normalized distance.
+     */
+    private double getMaxNormalizedDistance() {
+        return tour.maxNormalizedDistance;
+    }
+
+    /**
+     * Returns maximum journey travelling salesman has taken.
+     *
+     * @return maximum journey travelling salesman has taken.
+     */
+    private double getMaxDistance() {
+        return tour.maxDistance;
     }
 
     /**
@@ -232,7 +479,7 @@ public class TSP implements Environment {
      * @return shortest route as indices of cities.
      */
     public ArrayList<Integer> getShortestRoute() {
-        return visitedCitiesMin;
+        return tour.visitedCitiesMin;
     }
 
     /**
@@ -241,7 +488,7 @@ public class TSP implements Environment {
      * @return longest route as indices of cities.
      */
     public ArrayList<Integer> getLongestRoute() {
-        return visitedCitiesMax;
+        return tour.visitedCitiesMax;
     }
 
     /**
@@ -250,7 +497,7 @@ public class TSP implements Environment {
      * @return latest (shortest) route as indices of cities.
      */
     public ArrayList<Integer> getLatestRoute() {
-        return visitedCities;
+        return tour.visitedCities;
     }
 
     /**
@@ -259,7 +506,7 @@ public class TSP implements Environment {
      * @return list of cities.
      */
     public HashMap<Integer, City> getCities() {
-        return cities;
+        return tour.cities;
     }
 
     /**
@@ -274,7 +521,7 @@ public class TSP implements Environment {
             tsp.initWindow();
             for (int tour = 0; tour < 1000000; tour++) {
                 tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " Min: " + tsp.getMinDistance() + " Max: " + tsp.getMaxDistance());
+                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " (" + tsp.getTotalNormalizedDistance() +")" + " Min: " + tsp.getMinDistance() + " (" + tsp.getMinNormalizedDistance() + ")" + " Max: " + tsp.getMaxDistance() + " (" + tsp.getMaxNormalizedDistance() + ")");
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -307,7 +554,7 @@ public class TSP implements Environment {
      * @return true if state is terminal.
      */
     public boolean isTerminalState() {
-        return visitedCities.size() == cities.size();
+        return tour.isCompleteTour();
     }
 
     /**
@@ -317,7 +564,7 @@ public class TSP implements Environment {
      * @param action action to be taken.
      */
     public void commitAction(Agent agent, int action) {
-        visitedCities.add(action + 1);
+        tour.addVisitedCity(action + 1);
         updateState();
         setReward(agent);
     }
@@ -328,48 +575,8 @@ public class TSP implements Environment {
      * @param agent agent that is asking for reward.
      */
     public void setReward(Agent agent) {
-        boolean isTerminalState = isTerminalState();
-        int cityIndex = visitedCities.size() - 1;
-        int fromCity = isTerminalState ? visitedCities.get(cityIndex) : visitedCities.get(cityIndex - 1);
-        int toCity = isTerminalState ? visitedCities.get(0) : visitedCities.get(cityIndex);
-        double distance = cities.get(fromCity).distanceTo(cities.get(toCity));
-        totalDistance += distance;
-        if (isTerminalState) {
-            if (totalDistance < minDistance) {
-                minDistance = totalDistance;
-                visitedCitiesMin = visitedCities;
-            }
-            if (totalDistance > maxDistance) {
-                maxDistance = totalDistance;
-                visitedCitiesMax = visitedCities;
-            }
-            agent.respond(totalDistance == minDistance ? 1 : 0.75 * (1 - totalDistance / maxDistance));
-//            agent.respond(1 - totalDistance / 100);
-//            agent.respond(1 - 10 / totalDistance);
-//            agent.respond((totalDistance - minDistance) / (maxDistance - minDistance));
-//            agent.respond(1 - totalDistance / maxDistance);
-//            agent.respond(Math.pow(1 - totalDistance / maxDistance, 2));
-        }
-//        else agent.respond(1 - totalDistance / 100);
+        if (isTerminalState()) agent.respond((getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 5) : 0));
         else agent.respond(0);
-    }
-
-    /**
-     * Returns minimum journey travelling salesman has taken.
-     *
-     * @return minimum journey travelling salesman has taken.
-     */
-    private double getMinDistance() {
-        return minDistance;
-    }
-
-    /**
-     * Returns maximum journey travelling salesman has taken.
-     *
-     * @return maximum journey travelling salesman has taken.
-     */
-    private double getMaxDistance() {
-        return maxDistance;
     }
 
     /**
@@ -425,8 +632,8 @@ public class TSP implements Environment {
             int lastCityIndex = -1;
             int previousLastCityIndex = -2;
             for (int index = 0; index < drawCities.size() - 1; index++) {
-                City city1 = cities.get(drawCities.get(index));
-                City city2 = cities.get(drawCities.get(index + 1));
+                City city1 = tour.cities.get(drawCities.get(index));
+                City city2 = tour.cities.get(drawCities.get(index + 1));
                 lastCity = city2;
                 lastCityIndex = drawCities.get(index + 1);
                 if (previousExists) {
@@ -435,7 +642,7 @@ public class TSP implements Environment {
                     previousLastCityIndex = previousDrawCities.get(index + 1);
                 }
                 else g.setColor(Color.BLACK);
-                g.drawLine(50 + (int)(city1.x * 40), 50 + (int)(city1.y * 40), 50 + (int)(city2.x * 40), 50 + (int)(city2.y * 40));
+                g.drawLine((int)(0.1 * xWindowSize) + (int)(city1.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city1.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(city2.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city2.yNormalized * (int)(0.8 * yWindowSize)));
             }
             if (lastCity != null) {
                 if (previousExists) {
@@ -443,8 +650,8 @@ public class TSP implements Environment {
                     else g.setColor(Color.RED);
                 }
                 else g.setColor(Color.BLACK);
-                City initialCity = cities.get(startCity);
-                g.drawLine(50 + (int)(lastCity.x * 40), 50 + (int)(lastCity.y * 40), 50 + (int)(initialCity.x * 40), 50 + (int)(initialCity.y * 40));
+                City initialCity = tour.cities.get(tour.startCity);
+                g.drawLine((int)(0.1 * xWindowSize) + (int)(lastCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(lastCity.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(initialCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(initialCity.yNormalized * (int)(0.8 * yWindowSize)));
             }
         }
 
@@ -468,10 +675,10 @@ public class TSP implements Environment {
      */
     private void initWindow() {
         JFrame.setDefaultLookAndFeelDecorated(true);
-        jFrame = new JFrame("Travelling Salesman Problem (" + numberOfCities + " cities)");
+        jFrame = new JFrame("Travelling Salesman Problem (" + tour.size() + " cities)");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setBackground(Color.white);
-        jFrame.setSize(500, 500);
+        jFrame.setSize(xWindowSize, yWindowSize);
         jFrame.add(tspPanel);
         jFrame.setVisible(true);
     }
@@ -510,9 +717,9 @@ public class TSP implements Environment {
             jFrame.remove(tspPanel);
             tspPanel = new TSPPanel();
             jFrame.add(tspPanel);
-            tspPanel.addCities(visitedCities, visitedCitiesPrevious);
+            tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious);
             jFrame.revalidate();
-            tspPanel.paintImmediately(0, 0, 400, 400);
+            tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
         }
     }
 
@@ -541,7 +748,7 @@ public class TSP implements Environment {
         Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator;
         FunctionEstimator valueEstimator;
-        if (false) {
+        if (true) {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
             NeuralNetwork stateActionValueNN = buildNeuralNetwork(inputAmount, outputAmount);
             policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, outputAmount);
@@ -552,6 +759,7 @@ public class TSP implements Environment {
             policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
             valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, false, stateValue), (stateValue ? 1 : outputAmount)) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
         }
+//        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
         ExecutablePolicy executablePolicy = null;
         switch (policyType) {
             case 1:
@@ -566,14 +774,14 @@ public class TSP implements Environment {
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-            agent = new Sarsa(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+//            agent = new DQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+            agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
-            ActionablePolicy actionablePolicy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, actionablePolicy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
-            agent = new ActorCritic(this, actionablePolicy, new StateValueFunctionEstimator(valueEstimator));
+            Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
+//            agent = new PolicyGradient(this, policy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
+            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
         }
         agent.start();
         return agent;
@@ -622,12 +830,16 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        String width = "width = " + (inputSize + 20);
+        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
+//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
         neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
