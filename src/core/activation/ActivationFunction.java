@@ -72,8 +72,9 @@ public class ActivationFunction extends UnaryFunction {
      * @param unaryFunctionType type of activation function to be used.
      * @throws NeuralNetworkException throws exception if function is not available as activation function.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ActivationFunction(UnaryFunctionType unaryFunctionType) throws NeuralNetworkException, MatrixException {
+    public ActivationFunction(UnaryFunctionType unaryFunctionType) throws NeuralNetworkException, MatrixException, DynamicParamException {
         super(unaryFunctionType);
         for (UnaryFunctionType activationFunctionType : activationFunctions) {
             if (activationFunctionType == unaryFunctionType) return;
