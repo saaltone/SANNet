@@ -82,6 +82,14 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
     }
 
     /**
+     * Resets FunctionEstimator.
+     *
+     */
+    public void reset() {
+        memory.reset();
+    }
+
+    /**
      * Samples memory of AbstractFunctionEstimator.
      *
      */

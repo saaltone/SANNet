@@ -34,8 +34,9 @@ public interface FunctionEstimator {
      *
      * @throws NeuralNetworkException throws exception if starting of FunctionEstimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops FunctionEstimator.
@@ -49,6 +50,12 @@ public interface FunctionEstimator {
      * @param agent agent.
      */
     void registerAgent(Agent agent);
+
+    /**
+     * Resets FunctionEstimator.
+     *
+     */
+    void reset();
 
     /**
      * Samples memory of FunctionEstimator.

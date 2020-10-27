@@ -174,6 +174,15 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Resets TabularFunctionEstimator.
+     *
+     */
+    public void reset() {
+        super.reset();
+        stateTransitionValueMap = new HashMap<>();
+    }
+
+    /**
      * Returns (predicts) state value corresponding to a state as stored by TabularFunctionEstimator.
      *
      * @param state state
@@ -221,7 +230,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         // Allows other threads to get execution time.
         try {
             Thread.sleep(1);
-        } catch (InterruptedException e) {}
+        }
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(exception);
+        }
     }
 
     /**
