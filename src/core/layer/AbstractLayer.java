@@ -390,8 +390,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void defineProcedure() throws MatrixException;
+    protected abstract void defineProcedure() throws MatrixException, DynamicParamException;
 
     /**
      * Returns output of next layer or this layer if next layer does not exist.<br>
@@ -462,8 +463,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         if (layerThread != null) return;
         executeLock = new ReentrantLock();
         executeLockCondition = executeLock.newCondition();
@@ -602,8 +604,13 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         try {
             while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.await();
         }
-        catch (InterruptedException exception) {}
-        executeLock.unlock();
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(exception);
+        }
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -617,7 +624,10 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
             try {
                 while (executionState == ExecutionState.IDLE || executionState == ExecutionState.EXECUTING) executeLockCondition.await();
             }
-            catch (InterruptedException exception) {}
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(exception);
+            }
             try {
                 switch (executionState) {
                     case TRAIN:
@@ -673,7 +683,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Executes optimization step.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void optimize() throws MatrixException;
+    protected abstract void optimize() throws MatrixException, DynamicParamException;
 
 }
