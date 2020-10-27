@@ -182,6 +182,14 @@ public class PriorityMemory implements Memory, Serializable {
     }
 
     /**
+     * Resets Memory.
+     *
+     */
+    public void reset() {
+        sampledStateTransitions = new TreeSet<>();
+    }
+
+    /**
      * Samples PriorityMemory.
      *
      */
