@@ -6,6 +6,7 @@
 package core.metrics;
 
 import core.NeuralNetworkException;
+import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
@@ -68,8 +69,9 @@ public class Metrics {
          * @param actual actual (true) sample.
          * @return regression accuracy.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        private double getRegressionAccuracy(Matrix predicted, Matrix actual) throws MatrixException {
+        private double getRegressionAccuracy(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
             return 1 - Math.sqrt(actual.subtract(predicted).power(2).sum());
         }
 
@@ -79,8 +81,9 @@ public class Metrics {
          * @param predicted predicted sample.
          * @param actual actual (true) sample.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        public void update(Matrix predicted, Matrix actual) throws MatrixException {
+        public void update(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
             update(1- getRegressionAccuracy(predicted, actual));
         }
 
@@ -91,8 +94,9 @@ public class Metrics {
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException {
+        public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
             double error = 0;
             for (int sample = 0; sample < actual.size(); sample++) {
                 error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
@@ -107,8 +111,9 @@ public class Metrics {
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        public void update(MMatrix predicted, MMatrix actual) throws MatrixException {
+        public void update(MMatrix predicted, MMatrix actual) throws MatrixException, DynamicParamException {
             double error = 0;
             for (int sample = 0; sample < actual.size(); sample++) {
                 error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
@@ -123,8 +128,9 @@ public class Metrics {
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        public void update(Sequence predicted, Sequence actual) throws MatrixException {
+        public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
             double error = 0;
             for (Integer sampleIndex : predicted.keySet()) {
                 for (Integer matrixIndex : predicted.sampleKeySet()) {
@@ -192,8 +198,9 @@ public class Metrics {
          *
          * @return average R2 values.
          * @throws MatrixException throws exception if matrix operation fails.
+         * @throws DynamicParamException throws exception if parameter (params) setting fails.
          */
-        public Matrix getAverageR2Values() throws MatrixException {
+        public Matrix getAverageR2Values() throws MatrixException, DynamicParamException {
             if (predictions.isEmpty() || actuals.isEmpty()) return null;
             // Calculate mean of actual values.
             Matrix actualMean = null;
@@ -590,8 +597,9 @@ public class Metrics {
      * @param predicted predicted sample.
      * @param actual actual (true) sample.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void report(Matrix predicted, Matrix actual) throws MatrixException {
+    public void report(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
         if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
@@ -604,8 +612,9 @@ public class Metrics {
      * @param actual actual (true) error.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
+    public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException, DynamicParamException {
         if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
@@ -618,8 +627,9 @@ public class Metrics {
      * @param actual actual (true) error.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void report(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException {
+    public void report(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException, DynamicParamException {
         if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
@@ -632,8 +642,9 @@ public class Metrics {
      * @param actual actual (true) error.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
+    public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException, DynamicParamException {
         if (metricsType == MetricsType.REGRESSION) regression.update(predicted, actual);
         else updateConfusion(predicted, actual);
     }
@@ -663,8 +674,9 @@ public class Metrics {
      * @param iteration iteration index for error history.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void store(int iteration) throws MatrixException, NeuralNetworkException {
+    public void store(int iteration) throws MatrixException, NeuralNetworkException, DynamicParamException {
         errors.remove(iteration - errorHistorySize);
         if (metricsType == MetricsType.REGRESSION) {
             errors.put(iteration, regression.getAverageError());
@@ -681,8 +693,9 @@ public class Metrics {
      * @param reset if true resets current error otherwise not.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if calculation of classification accuracy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void store(int iteration, boolean reset) throws MatrixException, NeuralNetworkException {
+    public void store(int iteration, boolean reset) throws MatrixException, NeuralNetworkException, DynamicParamException {
         store(iteration);
         if (reset) resetError();
     }
