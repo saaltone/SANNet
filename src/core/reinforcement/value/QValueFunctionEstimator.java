@@ -15,7 +15,7 @@ import utils.matrix.MatrixException;
  * Class that defines QValueFunctionEstimator (Q value function with function estimator).
  *
  */
-public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
+public class QValueFunctionEstimator extends ActionValueFunctionEstimator {
 
     /**
      * Constructor for QValueFunctionEstimator.
@@ -23,7 +23,7 @@ public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @param functionEstimator reference to FunctionEstimator.
      */
     public QValueFunctionEstimator(FunctionEstimator functionEstimator) {
-        super(functionEstimator.getNumberOfActions(), functionEstimator);
+        super(functionEstimator);
     }
 
     /**
@@ -34,7 +34,7 @@ public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public QValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
+        super(functionEstimator, params);
     }
 
     /**
