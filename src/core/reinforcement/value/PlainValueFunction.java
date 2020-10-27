@@ -142,7 +142,15 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @return state value.
      */
     protected double getValue(StateTransition stateTransition) {
-        return stateTransition.stateValue;
+        return 0;
+    }
+
+    /**
+     * Updates state value.
+     *
+     * @param stateTransition state transition.
+     */
+    protected void updateValue(StateTransition stateTransition) {
     }
 
     /**
@@ -191,10 +199,10 @@ public class PlainValueFunction extends AbstractValueFunction {
      * Updates FunctionEstimator.
      *
      * @param agent agent.
-     * @param stateTransitions state transitions used to update FunctionEstimator.
      */
-    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) {
-        functionEstimator.update(stateTransitions);
+    public void updateFunctionEstimator(Agent agent) {
+        if (getFunctionEstimator().sampledSetEmpty()) return;
+        getFunctionEstimator().update(getFunctionEstimator().getSampledStateTransitions());
     }
 
 }
