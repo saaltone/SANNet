@@ -14,7 +14,6 @@ import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
@@ -66,8 +65,9 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      *
      * @throws NeuralNetworkException throws exception if starting of value FunctionEstimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         functionEstimator.start();
     }
 
@@ -80,14 +80,21 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
+     * Return true is function is state action value function.
+     *
+     * @return true is function is state action value function.
+     */
+    public boolean isStateActionValueFunction() {
+        return isStateActionValueFunction;
+    }
+
+    /**
      * Returns action with potential state action value offset.
      *
      * @param action action.
      * @return updated action.
      */
-    protected int getAction(int action) {
-        return (isStateActionValueFunction ? 1 : 0) + action;
-    }
+    protected abstract int getAction(int action);
 
     /**
      * Returns values for state.
@@ -106,11 +113,21 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      *
      * @param stateTransition state transition.
      * @return value for state.
+     */
+    protected double getValue(StateTransition stateTransition) {
+        return isStateValue ? stateTransition.stateValue : stateTransition.actionValue;
+    }
+
+    /**
+     * Updates state value.
+     *
+     * @param stateTransition state transition.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected double getValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        return getValues(stateTransition).getValue(getAction(stateTransition.action), 0);
+    protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        if (isStateValue) stateTransition.stateValue = getValues(stateTransition).getValue(getAction(stateTransition.action), 0);
+        else stateTransition.actionValue = getValues(stateTransition).getValue(getAction(stateTransition.action), 0);
     }
 
     /**
@@ -125,20 +142,21 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * Updates FunctionEstimator.
      *
      * @param agent agent.
-     * @param stateTransitions state transitions used to update FunctionEstimator.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
-        functionEstimator.update(stateTransitions);
+    public void updateFunctionEstimator(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        if (getFunctionEstimator().sampledSetEmpty()) return;
+        TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
 
-        if (!isStateActionValueFunction) {
+        getFunctionEstimator().update(stateTransitions);
+        if (!isStateActionValueFunction()) {
             for (StateTransition stateTransition : stateTransitions) {
                 Matrix targetValues = getValues(stateTransition).copy();
                 targetValues.setValue(getAction(stateTransition.action), 0, stateTransition.tdTarget);
-                functionEstimator.store(agent, stateTransition, targetValues);
+                getFunctionEstimator().store(agent, stateTransition, targetValues);
             }
             getFunctionEstimator().update(agent);
         }
@@ -151,37 +169,6 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      */
     public FunctionEstimator getFunctionEstimator() {
         return functionEstimator;
-    }
-
-    /**
-     * Returns max value of state given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return max value of state.
-     */
-    protected double max(Matrix stateValues, HashSet<Integer> availableActions) {
-        return stateValues.getValue(getAction(argmax(stateValues, availableActions)), 0);
-    }
-
-    /**
-     * Returns action with maximum state value given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return action with maximum state value.
-     */
-    protected int argmax(Matrix stateValues, HashSet<Integer> availableActions) {
-        int maxAction = -1;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for (int action : availableActions) {
-            double actionValue = stateValues.getValue(getAction(action), 0);
-            if (maxValue == Double.NEGATIVE_INFINITY || actionValue < maxValue) {
-                maxValue = actionValue;
-                maxAction = action;
-            }
-        }
-        return maxAction;
     }
 
 }
