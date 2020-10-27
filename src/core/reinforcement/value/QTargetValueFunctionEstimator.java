@@ -16,13 +16,12 @@ import utils.matrix.MatrixException;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.TreeSet;
 
 /**
  * Class that defines QTargetValueFunctionEstimator (Q value function with target function estimator).
  *
  */
-public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimator {
+public class QTargetValueFunctionEstimator extends ActionValueFunctionEstimator {
 
     /**
      * Target value FunctionEstimator.
@@ -52,7 +51,7 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator);
+        super(functionEstimator);
         targetValueFunctionEstimator = functionEstimator.copy();
     }
 
@@ -67,7 +66,7 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
+        super(functionEstimator, params);
         setParams(new DynamicParam(params, getParamDefs()));
         targetValueFunctionEstimator = functionEstimator.copy();
     }
@@ -102,8 +101,9 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         super.start();
         targetValueFunctionEstimator.start();
     }
@@ -133,14 +133,13 @@ public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimato
      * Updates FunctionEstimator.
      *
      * @param agent agent.
-     * @param stateTransitions state transitions used to update FunctionEstimator.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    public void updateFunctionEstimator(Agent agent, TreeSet<StateTransition> stateTransitions) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
-        super.updateFunctionEstimator(agent, stateTransitions);
+    public void updateFunctionEstimator(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        super.updateFunctionEstimator(agent);
         if (updateCycle == 0) targetValueFunctionEstimator.append(functionEstimator, false);
         else {
             if (++updateCount >= updateCycle) {
