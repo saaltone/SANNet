@@ -128,7 +128,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * Sample size for a batch. Double is used for calculation purposes.
      *
      */
-    private transient double batchSize;
+    private double batchSize;
 
     /**
      * True if Batch normalization is used calculation only with mean and variance excluded.
