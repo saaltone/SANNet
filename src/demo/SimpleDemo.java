@@ -5,15 +5,16 @@
 
 package demo;
 
+import core.NeuralNetwork;
+import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
-import core.optimization.*;
-import core.preprocess.*;
+import core.optimization.OptimizationType;
+import core.preprocess.DataSplitter;
 import core.regularization.EarlyStopping;
-import utils.*;
-import core.*;
+import utils.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
@@ -63,8 +64,29 @@ public class SimpleDemo {
             neuralNetwork1.waitToComplete();
             neuralNetwork2.waitToComplete();
 
+            System.out.println("Testing with few examples...");
+            Random random = new Random();
+            for (int index = 0; index < 10; index++) {
+                int input1 = random.nextInt(75);
+                int input2 = random.nextInt(100 - input1);
+                int result = input1 + input2;
+
+                Matrix inputData = new DMatrix(2, 1);
+                inputData.setValue(0, 0, (double)input1 / 100);
+                inputData.setValue(1, 0, (double)input2 / 100);
+
+                Matrix outputData = neuralNetwork1.predict(inputData);
+                int predictedOutput = (int)(outputData.getValue(0, 0) * 100);
+                System.out.println("Neural network 1: " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
+
+                outputData = neuralNetwork2.predict(inputData);
+                predictedOutput = (int)(outputData.getValue(0, 0) * 100);
+                System.out.println("Neural network 2: " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
+            }
+
             neuralNetwork1.stop();
             neuralNetwork2.stop();
+
         }
         catch (Exception exception) {
             exception.printStackTrace();
@@ -90,7 +112,7 @@ public class SimpleDemo {
         neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
+        neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
