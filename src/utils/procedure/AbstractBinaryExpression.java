@@ -159,7 +159,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      */
     protected void printArgument2Gradient(boolean withResultPrefix, boolean negateResult, String suffix) {
         print();
-        System.out.println((withResultPrefix ? getNodeWithResultPrefixName(argument2, negateResult) : getNodePrefixName(argument2,negateResult)) + (suffix != null ? " " + suffix : "") + getNodeSumPostfix(argument2));
+        System.out.println((withResultPrefix ? getNodeWithResultPrefixName(argument2, negateResult) : getNodePrefixName(argument2, negateResult)) + (suffix != null ? "" + suffix : "") + getNodeSumPostfix(argument2));
     }
 
 }
