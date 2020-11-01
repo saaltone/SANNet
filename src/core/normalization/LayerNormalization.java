@@ -173,6 +173,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      */
     public void reset() {
         weightGradients = new HashMap<>();
+        procedure.reset();
     }
 
     /**
@@ -219,6 +220,8 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void initializeProcedure(Matrix inputMatrix) throws MatrixException, DynamicParamException {
+        if (input != null) return;
+
         int rows = inputMatrix.getRows();
         int columns = inputMatrix.getColumns();
 
@@ -246,8 +249,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     public void forward(Node node, int inputIndex) throws MatrixException, DynamicParamException {
         Matrix inputMatrix = node.getMatrix(inputIndex);
         if (inputMatrix.size() < 2) return;
-        procedure.reset();
-        node.setMatrix(inputIndex, procedure.calculateExpression(inputMatrix));
+        node.setMatrix(inputIndex, procedure.calculateExpression(inputMatrix, inputIndex));
     }
 
     /**
@@ -263,7 +265,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
         Matrix outputGradient =node.getGradient(outputIndex);
         if (outputGradient.size() < 2) return;
 
-        node.setGradient(outputIndex, procedure.calculateGradient(outputGradient));
+        node.setGradient(outputIndex, procedure.calculateGradient(outputGradient, outputIndex));
 
         Matrix gammaGradient = procedure.getGradient(gamma);
         if (!weightGradients.containsKey(gamma)) weightGradients.put(gamma, gammaGradient);
