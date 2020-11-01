@@ -276,6 +276,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      */
     public void reset() {
         weightGradients = new HashMap<>();
+        procedure.reset();
     }
 
     /**
@@ -331,11 +332,10 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
         if (isTraining) {
             batchSize = node.size();
 
-            procedure.reset();
             node.setMatrices(procedure.calculateExpression(node.getMatrices()));
 
-            averageMean = Matrix.exponentialMovingAverage(averageMean, meanNode.getMatrix(), this.betaValue);
-            if (!meanOnly) averageVariance = Matrix.exponentialMovingAverage(averageVariance, varianceNode.getMatrix(), this.betaValue);
+            averageMean = Matrix.exponentialMovingAverage(averageMean, meanNode.getMatrix(), betaValue);
+            if (!meanOnly) averageVariance = Matrix.exponentialMovingAverage(averageVariance, varianceNode.getMatrix(), betaValue);
         }
         else {
             if (!meanOnly) {
