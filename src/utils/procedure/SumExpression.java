@@ -20,7 +20,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * Name of operation.
      *
      */
-    private static final String operationName = "SUM";
+    private static final String expressionName = "SUM";
 
     /**
      * True if calculation is done as multi matrix.
@@ -38,7 +38,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SumExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
-        super(operationName, operationName, expressionID, argument1, result);
+        super(expressionName, expressionName, expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -49,7 +49,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateExpression() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (argument1.getMatrices() == null) throw new MatrixException("Arguments for SUM operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         Matrix sum = argument1.getMatrices().sum();
         result.setMultiIndex(false);
         result.setMatrix(sum);
@@ -63,7 +63,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateExpression(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (argument1.getMatrix(index) == null) throw new MatrixException("Arguments for SUM operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
         result.setMatrix(index, argument1.getMatrix(index).sumAsMatrix());
     }
 
@@ -74,7 +74,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateGradient() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (result.getGradient() == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) argument1.updateGradient(index, result.getGradient(), true);
     }
 
@@ -86,7 +86,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         argument1.updateGradient(index, result.getGradient(index), true);
     }
 
