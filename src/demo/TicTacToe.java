@@ -679,7 +679,6 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         neuralNetwork.verboseTraining(100);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-//        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
         return neuralNetwork;
     }
