@@ -51,14 +51,6 @@ public class ResilientPropagation implements Optimizer, Serializable {
     }
 
     /**
-     * Sets parameters used for Resilient Propagation. Not needed for Resilient Propagation.
-     *
-     * @param params parameters used for Resilient Propagation (not relevant).
-     */
-    public void setParams(DynamicParam params) {
-    }
-
-    /**
      * Resets optimizer state.
      *
      */
