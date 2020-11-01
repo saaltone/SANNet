@@ -112,6 +112,7 @@ public class Procedure implements Serializable {
      */
     public void reset(boolean resetDependentNodes) {
         for (Node node : nodes) node.resetNode(resetDependentNodes);
+        expressionChain.reset();
     }
 
     /**
@@ -290,16 +291,15 @@ public class Procedure implements Serializable {
      * Calculates chain of forward expressions.
      *
      * @param inputMatrix input matrices.
+     * @param sampleIndex sample index.
      * @return output matrix.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix calculateExpression(Matrix inputMatrix) throws MatrixException, DynamicParamException {
-        Sequence inputSequence = new Sequence(1);
-        inputSequence.put(0, 0, inputMatrix);
-        Sequence outputSequence = new Sequence(1);
-        calculateExpressionPerStep(inputSequence, outputSequence);
-        return outputSequence.get(0,0);
+    public Matrix calculateExpression(Matrix inputMatrix, int sampleIndex) throws MatrixException, DynamicParamException {
+        setInputSample(sampleIndex, new MMatrix(inputMatrix));
+        expressionChain.calculateExpressionStep(sampleIndex, 0);
+        return getOutputNodes().get(0).getMatrix(sampleIndex);
     }
 
     /**
@@ -425,16 +425,15 @@ public class Procedure implements Serializable {
      * Calculates backwards chain of gradient expressions.
      *
      * @param outputGradient output gradient for procedure.
+     * @param sampleIndex sample index.
      * @return input gradient.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix calculateGradient(Matrix outputGradient) throws MatrixException, DynamicParamException {
-        Sequence outputSequence = new Sequence(1);
-        outputSequence.put(0, 0, outputGradient);
-        Sequence inputSequence = new Sequence(1);
-        calculateGradientPerStep(outputSequence, inputSequence, -1);
-        return inputSequence.get(0,0);
+    public Matrix calculateGradient(Matrix outputGradient, int sampleIndex) throws MatrixException, DynamicParamException {
+        setOutputSampleGradient(sampleIndex, new MMatrix(outputGradient));
+        gradientExpressionChain.calculateGradientStep(sampleIndex, 0);
+        return getInputNodes().get(0).getGradient(sampleIndex);
     }
 
 
