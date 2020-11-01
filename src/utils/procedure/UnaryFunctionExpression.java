@@ -19,7 +19,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * Name of operation.
      *
      */
-    private static final String operationName = "UNARY FUNCTION";
+    private static final String expressionName = "UNARY FUNCTION";
 
     /**
      * Unary function type.
@@ -43,7 +43,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
-        super(operationName, String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
+        super(expressionName, String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
     }
@@ -80,7 +80,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException("Argument for unary operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Argument for operation not defined");
         result.setMatrix(index, unaryFunction.applyFunction(argument1.getMatrix(index)));
     }
 
@@ -98,7 +98,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         argument1.updateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), true);
     }
 
