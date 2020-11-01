@@ -904,7 +904,6 @@ public class Metrics {
      */
     private Sequence getClassification(Sequence predicted) throws MatrixException {
         Sequence classified = new Sequence(predicted.getDepth());
-        int index = 0;
         for (Integer sampleIndex : predicted.keySet()) {
             for (Integer matrixIndex : predicted.sampleKeySet()) {
                 classified.put(sampleIndex, matrixIndex, getClassification(predicted.get(sampleIndex, matrixIndex)));
