@@ -83,6 +83,14 @@ public class MNISTDemo {
                     output.put(index1, testMNIST.get(1).get(index * 100 + index1));
                 }
                 Sequence predict = neuralNetwork.predict(input);
+                if (index == 0) {
+                    System.out.println("Printing out first 100 predictions...");
+                    for (int index1 = 0; index1 < 100; index1++) {
+                        int[] trueIndex = output.get(index1).get(0).argmax();
+                        int[] predictIndex = predict.get(index1).get(0).argmax();
+                        System.out.println("True label: " + trueIndex[0] + ", Predicted label: " + predictIndex[0]);
+                    }
+                }
                 predictionMetrics.report(predict, output);
                 predictionMetrics.store(index, false);
             }
