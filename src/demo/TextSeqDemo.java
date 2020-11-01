@@ -8,6 +8,7 @@ package demo;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.MetricsType;
+import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
 import core.regularization.RegularizationType;
@@ -103,6 +104,7 @@ public class TextSeqDemo {
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        neuralNetwork.addNormalizer(2, NormalizationType.LAYER_NORMALIZATION);
 //        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
         neuralNetwork.addRegularizer(RegularizationType.WEIGHT_NOISING);
         return neuralNetwork;
