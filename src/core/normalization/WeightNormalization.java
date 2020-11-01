@@ -33,12 +33,6 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     private final NormalizationType normalizationType;
 
     /**
-     * If true neural network is in state otherwise false.
-     *
-     */
-    private transient boolean isTraining;
-
-    /**
      * Tree map for un-normalized weights.
      *
      */
@@ -66,7 +60,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * Procedures for weight normalization.
      *
      */
-    private transient HashMap<Matrix, Procedure> procedures = new HashMap<>();
+    private HashMap<Matrix, Procedure> procedures = new HashMap<>();
 
     /**
      * Constructor for Weight normalization class.
@@ -156,6 +150,8 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
         this.isTraining = isTraining;
     }
 
+    private boolean isTraining = false;
+
     /**
      * Sets optimizer for normalizer.
      *
@@ -209,7 +205,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
         if (!isTraining) return;
         weights.put(weight, weight.copy());
         procedures.get(weight).reset();
-        weight.setEqualTo(procedures.get(weight).calculateExpression(weight));
+        weight.setEqualTo(procedures.get(weight).calculateExpression(weight, 0));
     }
 
     /**
@@ -234,7 +230,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backward(Matrix weight, Matrix weightGradient) throws MatrixException, DynamicParamException {
-        weightGradient.setEqualTo(procedures.get(weight).calculateGradient(weightGradient));
+        weightGradient.setEqualTo(procedures.get(weight).calculateGradient(weightGradient, 0));
     }
 
     /**
