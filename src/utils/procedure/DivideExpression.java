@@ -17,6 +17,12 @@ import java.io.Serializable;
 public class DivideExpression extends AbstractBinaryExpression implements Serializable {
 
     /**
+     * Name of expression.
+     *
+     */
+    private static final String expressionName = "DIVIDE";
+
+    /**
      * Constructor for division operation.
      *
      * @param expressionID unique ID for expression.
@@ -26,7 +32,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DivideExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super("DIVIDE", "/", expressionID, argument1, argument2, result);
+        super(expressionName, "/", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -43,7 +49,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for DIV operation not defined");
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         result.setMatrix(index, argument1.getMatrix(index).divide(argument2.getMatrix(index)));
     }
 
@@ -62,7 +68,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradient(int index) throws MatrixException, DynamicParamException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         argument1.updateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), true);
         argument2.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), false);
     }

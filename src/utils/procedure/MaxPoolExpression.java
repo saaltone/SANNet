@@ -19,7 +19,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * Name of operation.
      *
      */
-    private static final String operationName = "MAX POOL";
+    private static final String expressionName = "MAX POOL";
 
     /**
      * Stride of max pooling operation.
@@ -50,7 +50,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int poolSize) throws MatrixException {
-        super(operationName, operationName, expressionID, argument1, result);
+        super(expressionName, expressionName, expressionID, argument1, result);
         this.stride = stride;
         this.poolSize = poolSize;
     }
@@ -69,7 +69,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException("Arguments for MAXPOOL operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setPoolSize(poolSize);
         maxArgsAt = new int[argument1.getMatrix(index).getRows() - poolSize + 1][argument1.getMatrix(index).getColumns() - poolSize + 1][2];
@@ -90,7 +90,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         if (maxArgsAt == null) throw new MatrixException("Maximum arguments for gradient calculation are not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);

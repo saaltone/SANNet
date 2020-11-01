@@ -16,6 +16,12 @@ import java.io.Serializable;
 public class DotExpression extends AbstractBinaryExpression implements Serializable {
 
     /**
+     * Name of expression.
+     *
+     */
+    private static final String expressionName = "DOT";
+
+    /**
      * Constructor for dot operation.
      *
      * @param expressionID unique ID for expression.
@@ -25,7 +31,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super("DOT", "x", expressionID, argument1, argument2, result);
+        super(expressionName, "x", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -42,7 +48,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for DOT operation not defined");
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
         result.setMatrix(index, argument1.getMatrix(index).dot(argument2.getMatrix(index)));
     }
 
@@ -60,7 +66,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         argument1.updateGradient(index, result.getGradient(index).dot(argument2.getMatrix(index).transpose()), true);
         argument2.updateGradient(index, argument1.getMatrix(index).transpose().dot(result.getGradient(index)), true);
     }

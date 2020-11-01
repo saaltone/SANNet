@@ -19,7 +19,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * Name of operation.
      *
      */
-    private static final String operationName = "AVERAGE POOL";
+    private static final String expressionName = "AVERAGE POOL";
 
     /**
      * Stride of average pooling operation.
@@ -44,7 +44,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public AveragePoolExpression(int expressionID, Node argument1, Node result, int stride, int poolSize) throws MatrixException {
-        super(operationName, operationName, expressionID, argument1, result);
+        super(expressionName, expressionName, expressionID, argument1, result);
         this.stride = stride;
         this.poolSize = poolSize;
     }
@@ -63,7 +63,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException("Arguments for AVERAGE POOL operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setPoolSize(poolSize);
         result.setMatrix(index, argument1.getMatrix(index).averagePool());
@@ -83,7 +83,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);
         argument1.updateGradient(index, result.getGradient(index).averagePoolGradient(), true);
