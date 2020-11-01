@@ -19,7 +19,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * Name of operation.
      *
      */
-    private static final String operationName = "CONVOLVE";
+    private static final String expressionName = "CONVOLVE";
 
     /**
      * Stride of convolution operation.
@@ -52,7 +52,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterSize) throws MatrixException {
-        super(operationName, operationName, expressionID, argument1, argument2, result);
+        super(expressionName, expressionName, expressionID, argument1, argument2, result);
         this.stride = stride;
         this.dilation = dilation;
         this.filterSize = filterSize;
@@ -64,7 +64,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @return signature of operation.
      */
     public String getOperationSignature() {
-        return operationName;
+        return expressionName;
     }
 
     /**
@@ -81,7 +81,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for CONVOLVE operation not defined");
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setDilation(dilation);
         argument1.getMatrix(index).setFilterSize(filterSize);
@@ -102,7 +102,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setDilation(dilation);
         result.getGradient(index).setFilterSize(filterSize);
