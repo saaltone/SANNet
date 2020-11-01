@@ -139,6 +139,14 @@ public abstract class AbstractExpression implements Serializable {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void reset() {
+        if (nextExpression != null) nextExpression.reset();
+    }
+
+    /**
      * Sets previous expression for gradient calculation chain.
      *
      * @param previousExpression previous expression.
