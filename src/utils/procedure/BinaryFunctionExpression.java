@@ -21,7 +21,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * Name of operation.
      *
      */
-    private static final String operationName = "BINARY FUNCTION";
+    private static final String expressionName = "BINARY FUNCTION";
 
     /**
      * Name of operation.
@@ -52,7 +52,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
-        super(operationName, String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
+        super(expressionName, String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
         this.binaryFunctionType = binaryFunction.getType();
         this.binaryFunction = binaryFunction;
         this.operationSignature = String.valueOf(binaryFunctionType);
@@ -99,7 +99,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException("Arguments for bi operation not defined");
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         result.setMatrix(index, binaryFunction.applyFunction(argument1.getMatrix(index), argument2.getMatrix(index)));
     }
 
@@ -117,7 +117,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException("Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         argument1.updateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), true);
     }
 
