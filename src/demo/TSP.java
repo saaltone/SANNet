@@ -161,10 +161,10 @@ public class TSP implements Environment {
          *
          */
         void normalize() {
-            double xMin = Double.POSITIVE_INFINITY;
-            double xMax = Double.NEGATIVE_INFINITY;
-            double yMin = Double.POSITIVE_INFINITY;
-            double yMax = Double.NEGATIVE_INFINITY;
+            double xMin = Double.MAX_VALUE;
+            double xMax = Double.MIN_VALUE;
+            double yMin = Double.MAX_VALUE;
+            double yMax = Double.MIN_VALUE;
             for (City city : cities.values()) {
                 xMin = Math.min(xMin, city.x);
                 xMax = Math.max(xMax, city.x);
@@ -839,7 +839,6 @@ public class TSP implements Environment {
         neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
