@@ -33,6 +33,12 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     private final NormalizationType normalizationType;
 
     /**
+     * If true neural network is in state otherwise false.
+     *
+     */
+    private transient boolean isTraining = false;
+
+    /**
      * Tree map for un-normalized weights.
      *
      */
@@ -149,8 +155,6 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     public void setTraining(boolean isTraining) {
         this.isTraining = isTraining;
     }
-
-    private boolean isTraining = false;
 
     /**
      * Sets optimizer for normalizer.
