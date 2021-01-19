@@ -108,10 +108,12 @@ public class L2_Regularization implements Regularization, Serializable {
      * This is added to the total output error of neural network.<br>
      *
      * @param weight weight matrix.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from L2 regularization.
      */
-    public double error(Matrix weight) {
-        return lambda * weight.norm(2);
+    public double error(Matrix weight) throws DynamicParamException, MatrixException {
+        return lambda * weight.power(2).sum();
     }
 
     /**
