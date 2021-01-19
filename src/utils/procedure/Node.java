@@ -632,9 +632,11 @@ public class Node implements Serializable {
     /**
      * Cumulates error from regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return updated error value.
      */
-    public double cumulateRegularizationError() {
+    public double cumulateRegularizationError() throws DynamicParamException, MatrixException {
         if (!isConstantNode()) return 0;
         double error = 0;
         if (referenceMatrix.isRegularized() && regularizers != null) {
