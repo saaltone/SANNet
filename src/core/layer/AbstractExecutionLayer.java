@@ -526,10 +526,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Cumulates error from (L1 / L2 / Lp) regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from regularization.
      */
-    public double error() throws MatrixException {
+    public double error() throws MatrixException, DynamicParamException {
         double error = procedure.getRegularizationError();
         if (getPreviousLayer() != null) error += getPreviousLayer().error();
         return error;

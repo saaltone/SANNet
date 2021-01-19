@@ -232,10 +232,11 @@ public class OutputLayer extends AbstractLayer {
     /**
      * Returns total error of neural network including impact of regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return total error of neural network.
      */
-    public double getTotalError() throws MatrixException {
+    public double getTotalError() throws MatrixException, DynamicParamException {
         return (error == null || targets == null) ? 0 : error.mean() + error();
     }
 
@@ -249,10 +250,11 @@ public class OutputLayer extends AbstractLayer {
     /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from regularization.
      */
-    public double error() throws MatrixException {
+    public double error() throws MatrixException, DynamicParamException {
         return hasPreviousLayer() ? getPreviousLayer().error() / (double)targets.totalSize() : 0;
     }
 

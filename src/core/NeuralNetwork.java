@@ -1529,10 +1529,11 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Returns neural network output error.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return neural network output error.
      */
-    public double getOutputError() throws MatrixException {
+    public double getOutputError() throws MatrixException, DynamicParamException {
         waitToComplete();
         return getOutputLayer().getTotalError();
     }

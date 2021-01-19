@@ -210,10 +210,11 @@ public interface NeuralNetworkLayer {
     /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from regularization.
      */
-    double error() throws MatrixException;
+    double error() throws MatrixException, DynamicParamException;
 
     /**
      * Marks state completed and propagates information to forward or backward direction depending on given flag.
