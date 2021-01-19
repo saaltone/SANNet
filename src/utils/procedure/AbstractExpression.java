@@ -365,10 +365,11 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Cumulates error from regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return updated error value.
      */
-    public double cumulateRegularizationError() throws MatrixException {
+    public double cumulateRegularizationError() throws MatrixException, DynamicParamException {
         return argument1.cumulateRegularizationError() + (nextExpression != null ? nextExpression.cumulateRegularizationError() : 0);
     }
 

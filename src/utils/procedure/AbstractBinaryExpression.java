@@ -115,10 +115,11 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     /**
      * Cumulates error from regularization.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return updated error value.
      */
-    public double cumulateRegularizationError() throws MatrixException {
+    public double cumulateRegularizationError() throws MatrixException, DynamicParamException {
         return super.cumulateRegularizationError() + argument2.cumulateRegularizationError();
     }
 
