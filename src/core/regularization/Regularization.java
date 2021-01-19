@@ -53,9 +53,11 @@ public interface Regularization {
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
      * @param weight weight matrix.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from regularization.
      */
-    double error(Matrix weight);
+    double error(Matrix weight) throws DynamicParamException, MatrixException;
 
     /**
      * Executes regularization method for backward phase at pre in.
