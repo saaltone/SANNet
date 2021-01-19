@@ -305,10 +305,11 @@ public class Procedure implements Serializable {
     /**
      * Returns regularization error.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @return regularization error.
      */
-    public double getRegularizationError() throws MatrixException {
+    public double getRegularizationError() throws MatrixException, DynamicParamException {
         return expressionChain.cumulateRegularizationError();
     }
 
