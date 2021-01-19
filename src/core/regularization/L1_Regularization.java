@@ -11,6 +11,7 @@ import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunctionType;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -108,10 +109,12 @@ public class L1_Regularization implements Regularization, Serializable {
      * This is added to the total output error of neural network.
      *
      * @param weight weight matrix.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return cumulated error from L1 regularization.
      */
-    public double error(Matrix weight) {
-        return lambda * weight.norm(1);
+    public double error(Matrix weight) throws DynamicParamException, MatrixException {
+        return lambda * weight.apply(UnaryFunctionType.ABS).sum();
     }
 
     /**
@@ -119,10 +122,9 @@ public class L1_Regularization implements Regularization, Serializable {
      *
      * @param weight weight matrix.
      * @param weightGradientSum gradient sum of weight.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
-        weightGradientSum.add(weight.apply((value) -> lambda * Math.abs(value)), weightGradientSum);
+        weightGradientSum.add(weight.apply((value) -> lambda * Math.signum(value)), weightGradientSum);
     }
 
     /**
