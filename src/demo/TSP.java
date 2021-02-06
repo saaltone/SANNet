@@ -13,7 +13,6 @@ import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.*;
 import core.reinforcement.algorithm.*;
-import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
@@ -22,7 +21,6 @@ import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.*;
 import core.reinforcement.policy.executablepolicy.*;
-import core.reinforcement.policy.executablepolicy.NoisyNextBestPolicy;
 import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
@@ -137,9 +135,9 @@ public class TSP implements Environment {
         private double lastDistance = Double.MIN_VALUE;
 
         /**
-         * Constructor for tour
+         * Constructor for tour.
          *
-         * @param numberOfCities number of cities for a tour.
+         * @param numberOfCities number of cities for tour.
          */
         Tour(int numberOfCities) {
             this.numberOfCities = numberOfCities;
@@ -148,28 +146,65 @@ public class TSP implements Environment {
         }
 
         /**
-         * Size of tour as number of cities.
+         * Constructor for tour.
          *
-         * @return size of tour as number of cities.
+         * @param cities array of cities for tour.
+         */
+        Tour(City[] cities) {
+            this.numberOfCities = cities.length;
+            for (int index = 0; index < cities.length; index++) this.cities.put(index, cities[index]);
+            normalize();
+        }
+
+        /**
+         * Constructor for tour.
+         *
+         * @param cities number of cities in list format.
+         */
+        Tour(String[] cities) {
+            this.numberOfCities = cities.length;
+            for (int index = 0; index < cities.length; index++) {
+                String[] city = cities[index].split(", ");
+                double x = Double.parseDouble(city[0]);
+                double y = Double.parseDouble(city[1]);
+                this.cities.put(index, new City(x, y));
+            }
+            normalize();
+        }
+
+        /**
+         * Returns size of tour.
+         *
+         * @return size of tour.
          */
         int size() {
             return numberOfCities;
         }
 
         /**
-         * Normalizes tour coordinates.
+         * Normalizes coordinates of cities.
          *
          */
         void normalize() {
-            double xMin = Double.MAX_VALUE;
-            double xMax = Double.MIN_VALUE;
-            double yMin = Double.MAX_VALUE;
-            double yMax = Double.MIN_VALUE;
+            double xMin = 0;
+            double xMax = 0;
+            double yMin = 0;
+            double yMax = 0;
+            boolean firstCity = true;
             for (City city : cities.values()) {
-                xMin = Math.min(xMin, city.x);
-                xMax = Math.max(xMax, city.x);
-                yMin = Math.min(yMin, city.y);
-                yMax = Math.max(yMax, city.y);
+                if (firstCity) {
+                    xMin = city.x;
+                    xMax = city.x;
+                    yMin = city.y;
+                    yMax = city.y;
+                    firstCity = false;
+                }
+                else {
+                    xMin = Math.min(xMin, city.x);
+                    xMax = Math.max(xMax, city.x);
+                    yMin = Math.min(yMin, city.y);
+                    yMax = Math.max(yMax, city.y);
+                }
             }
             for (City city : cities.values()) city.normalize(xMin, xMax, yMin, yMax);
         }
@@ -191,9 +226,9 @@ public class TSP implements Environment {
         }
 
         /**
-         * Add visited city to tour.
+         * Add visited city to tour. Updates total tour distance.
          *
-         * @param cityIndex city index.
+         * @param cityIndex index of visited city.
          */
         void addVisitedCity(int cityIndex) {
             visitedCities.add(cityIndex);
@@ -206,16 +241,16 @@ public class TSP implements Environment {
         }
 
         /**
-         * Records tour.
+         * Records complete tour. Updates statistics.
          *
          */
         void record() {
-            if (minNormalizedDistance == Double.MAX_VALUE || totalNormalizedDistance < minNormalizedDistance) {
+            if (totalNormalizedDistance < minNormalizedDistance) {
                 minNormalizedDistance = totalNormalizedDistance;
                 minDistance = totalDistance;
                 visitedCitiesMin = new ArrayList<>(visitedCities);
             }
-            if (maxNormalizedDistance == Double.MIN_VALUE || totalNormalizedDistance > maxNormalizedDistance) {
+            if (totalNormalizedDistance > maxNormalizedDistance) {
                 maxNormalizedDistance = totalNormalizedDistance;
                 maxDistance = totalDistance;
                 visitedCitiesMax = new ArrayList<>(visitedCities);
@@ -223,18 +258,18 @@ public class TSP implements Environment {
         }
 
         /**
-         * Returns true if tour is completed.
+         * Checks if tour is complete.
          *
-         * @return true if tour is completed.
+         * @return true if tour is complete otherwise false.
          */
         boolean isCompleteTour() {
             return visitedCities.size() == cities.size();
         }
 
         /**
-         * Returns unvisited cities.
+         * Returns set of unvisited cities.
          *
-         * @return unvisited cities.
+         * @return set of unvisited cities.
          */
         HashSet<Integer> getUnvisitedCities() {
             HashSet<Integer> unvisitedCities = new HashSet<>();
@@ -263,13 +298,13 @@ public class TSP implements Environment {
         final double y;
 
         /**
-         * Coordinate x of city.
+         * Normalized coordinate x of city.
          *
          */
         double xNormalized;
 
         /**
-         * Coordinate y of city.
+         * Normalized coordinate y of city.
          *
          */
         double yNormalized;
@@ -294,8 +329,9 @@ public class TSP implements Environment {
          * @param yMax maximum value for y.
          */
         void normalize(double xMin, double xMax, double yMin, double yMax) {
-            xNormalized = (x - xMin) / (xMax - xMin);
-            yNormalized = (y - yMin) / (yMax - yMin);
+            double diagonal = Math.sqrt(Math.pow(xMax - xMin, 2) + Math.pow(yMax - yMin, 2));
+            xNormalized = (x - xMin) / diagonal;
+            yNormalized = (y - yMin) / diagonal;
         }
 
         /**
@@ -311,18 +347,23 @@ public class TSP implements Environment {
 
     }
 
-
     /**
      * Number of cities for travelling salesman.
      *
      */
-    private static final int numberOfCities = 5;
+    private static final int numberOfCities = 15;
 
     /**
      * Current tour.
      *
      */
     private final Tour tour;
+
+    /**
+     * Count for how many times distance was same between tours.
+     *
+     */
+    private int unchangedDistanceCount = 0;
 
     /**
      * Episode ID
@@ -516,12 +557,13 @@ public class TSP implements Environment {
      */
     public static void main(String[] args) {
         TSP tsp;
+        String stringFormat = "%.5f";
         try {
             tsp = new TSP(numberOfCities);
             tsp.initWindow();
             for (int tour = 0; tour < 1000000; tour++) {
                 tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + tsp.getTotalDistance() + " (" + tsp.getTotalNormalizedDistance() +")" + " Min: " + tsp.getMinDistance() + " (" + tsp.getMinNormalizedDistance() + ")" + " Max: " + tsp.getMaxDistance() + " (" + tsp.getMaxNormalizedDistance() + ")");
+                System.out.println("Tour #" + (tour + 1) + " Total: " + String.format(stringFormat, tsp.getTotalDistance()) + " (" + String.format(stringFormat, tsp.getTotalNormalizedDistance()) +")" + " Min: " + String.format(stringFormat, tsp.getMinDistance()) + " (" + String.format(stringFormat, tsp.getMinNormalizedDistance()) + ")" + " Max: " + String.format(stringFormat, tsp.getMaxDistance()) + " (" + String.format(stringFormat, tsp.getMaxNormalizedDistance()) + ")");
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -575,8 +617,7 @@ public class TSP implements Environment {
      * @param agent agent that is asking for reward.
      */
     public void setReward(Agent agent) {
-        if (isTerminalState()) agent.respond((getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 5) : 0));
-        else agent.respond(0);
+        agent.respond(isTerminalState() ? (getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 2) : 0) : 0);
     }
 
     /**
@@ -599,6 +640,12 @@ public class TSP implements Environment {
         private final ArrayList<Integer> previousDrawCities = new ArrayList<>();
 
         /**
+         * List of cities forming shortest found route.
+         *
+         */
+        private final ArrayList<Integer> shortestDrawCities = new ArrayList<>();
+
+        /**
          * If there is list of previous cities.
          *
          */
@@ -609,7 +656,7 @@ public class TSP implements Environment {
          *
          * @param newDrawCities list of cities to be drawn.
          */
-        void addCities(ArrayList<Integer> newDrawCities, ArrayList<Integer> newPreviousDrawCities) {
+        void addCities(ArrayList<Integer> newDrawCities, ArrayList<Integer> newPreviousDrawCities, ArrayList<Integer> newShortestDrawCities) {
             drawCities.clear();
             drawCities.addAll(newDrawCities);
             if (newPreviousDrawCities != null) {
@@ -618,6 +665,10 @@ public class TSP implements Environment {
                 previousExists = true;
             }
             else previousExists = false;
+            if (newShortestDrawCities != null) {
+                shortestDrawCities.clear();
+                shortestDrawCities.addAll(newShortestDrawCities);
+            }
         }
 
         /**
@@ -626,32 +677,48 @@ public class TSP implements Environment {
          * @param g graphics.
          */
         public void paintComponent(Graphics g) {
-            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D)g;
+            super.paintComponent(g2);
             if (drawCities.isEmpty()) return;
             City lastCity = null;
             int lastCityIndex = -1;
             int previousLastCityIndex = -2;
+            g2.setStroke(new BasicStroke(1));
             for (int index = 0; index < drawCities.size() - 1; index++) {
                 City city1 = tour.cities.get(drawCities.get(index));
                 City city2 = tour.cities.get(drawCities.get(index + 1));
                 lastCity = city2;
                 lastCityIndex = drawCities.get(index + 1);
                 if (previousExists) {
-                    if (drawCities.get(index).equals(previousDrawCities.get(index)) && drawCities.get(index + 1).equals(previousDrawCities.get(index + 1))) g.setColor(Color.BLACK);
-                    else g.setColor(Color.RED);
+                    if (drawCities.get(index).equals(previousDrawCities.get(index)) && drawCities.get(index + 1).equals(previousDrawCities.get(index + 1))) g.setColor(Color.DARK_GRAY);
+                    else g2.setColor(Color.LIGHT_GRAY);
                     previousLastCityIndex = previousDrawCities.get(index + 1);
                 }
-                else g.setColor(Color.BLACK);
-                g.drawLine((int)(0.1 * xWindowSize) + (int)(city1.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city1.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(city2.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city2.yNormalized * (int)(0.8 * yWindowSize)));
+                else g2.setColor(Color.DARK_GRAY);
+                g2.drawLine((int)(0.1 * xWindowSize) + (int)(city1.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city1.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(city2.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city2.yNormalized * (int)(0.8 * yWindowSize)));
             }
             if (lastCity != null) {
                 if (previousExists) {
-                    if (lastCityIndex == previousLastCityIndex) g.setColor(Color.BLACK);
-                    else g.setColor(Color.RED);
+                    if (lastCityIndex == previousLastCityIndex) g.setColor(Color.DARK_GRAY);
+                    else g2.setColor(Color.LIGHT_GRAY);
                 }
-                else g.setColor(Color.BLACK);
+                else g2.setColor(Color.DARK_GRAY);
                 City initialCity = tour.cities.get(tour.startCity);
-                g.drawLine((int)(0.1 * xWindowSize) + (int)(lastCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(lastCity.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(initialCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(initialCity.yNormalized * (int)(0.8 * yWindowSize)));
+                g2.drawLine((int)(0.1 * xWindowSize) + (int)(lastCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(lastCity.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(initialCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(initialCity.yNormalized * (int)(0.8 * yWindowSize)));
+            }
+            if (shortestDrawCities.isEmpty()) return;
+            g2.setStroke(new BasicStroke(2));
+            g2.setColor(Color.RED);
+            lastCity = null;
+            for (int index = 0; index < shortestDrawCities.size() - 1; index++) {
+                City city1 = tour.cities.get(shortestDrawCities.get(index));
+                City city2 = tour.cities.get(shortestDrawCities.get(index + 1));
+                lastCity = city2;
+                g2.drawLine((int)(0.1 * xWindowSize) + (int)(city1.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city1.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(city2.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(city2.yNormalized * (int)(0.8 * yWindowSize)));
+            }
+            if (lastCity != null) {
+                City initialCity = tour.cities.get(tour.startCity);
+                g2.drawLine((int)(0.1 * xWindowSize) + (int)(lastCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(lastCity.yNormalized * (int)(0.8 * yWindowSize)), (int)(0.1 * xWindowSize) + (int)(initialCity.xNormalized * (int)(0.8 * xWindowSize)), (int)(0.1 * yWindowSize) + (int)(initialCity.yNormalized * (int)(0.8 * yWindowSize)));
             }
         }
 
@@ -713,11 +780,15 @@ public class TSP implements Environment {
         }
         getAgent().endEpisode();
 
+        if (tour.lastDistance > 0 && tour.lastDistance == getTotalDistance()) unchangedDistanceCount++;
+        else unchangedDistanceCount = 0;
+        if (unchangedDistanceCount >= 20) getAgent().resetPolicy();
+
         if (redraw) {
             jFrame.remove(tspPanel);
             tspPanel = new TSPPanel();
             jFrame.add(tspPanel);
-            tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious);
+            tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious, tour.visitedCitiesMin);
             jFrame.revalidate();
             tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
         }
@@ -741,14 +812,14 @@ public class TSP implements Environment {
     private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean policyGradient = true;
         boolean stateValue = true;
-        int policyType = 1;
+        int policyType = 0;
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean basicPolicy = false;
         Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator;
         FunctionEstimator valueEstimator;
-        if (true) {
+        if (false) {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
             NeuralNetwork stateActionValueNN = buildNeuralNetwork(inputAmount, outputAmount);
             policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN, outputAmount);
@@ -762,8 +833,11 @@ public class TSP implements Environment {
 //        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
         ExecutablePolicy executablePolicy = null;
         switch (policyType) {
+            case 0:
+                executablePolicy = new GreedyPolicy();
+                break;
             case 1:
-                executablePolicy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.999, epsilonMin = 0");
+                executablePolicy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.9999, epsilonMin = 0");
                 break;
             case 2:
                 executablePolicy = new NoisyNextBestPolicy("explorationNoiseDecay = 0.999, minExplorationNoise = 0");
@@ -774,14 +848,15 @@ public class TSP implements Environment {
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-//            agent = new DDQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
+//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
             agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
         }
         else {
             Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, policy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
-            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
+//            agent = new PolicyGradient(this, actionablePolicy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
+//            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
+            agent = new MCTSLearning(this, new UpdateableMCTSPolicy(policyEstimator), new StateValueFunctionEstimator(valueEstimator, "gamma = 1"), "updateValuePerEpisode = true");
         }
         agent.start();
         return agent;
@@ -800,20 +875,24 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        String width = "width = " + (inputSize + 20);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (stateValue ? 1 : outputSize));
-            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.build();
+//            neuralNetwork.addRegularizer(RegularizationType.LP_REGULARIZATION, "p = 4");
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
             neuralNetwork.build();
         }
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
@@ -831,14 +910,14 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (inputSize + 20);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
 //        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
-//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
         neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
+        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
