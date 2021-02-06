@@ -9,6 +9,7 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
@@ -765,7 +766,7 @@ public class Maze implements Environment, ActionListener {
         if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.respond(0);
         else {
             double distanceToStart = 1 - 1 / Math.max(1, Math.sqrt(Math.pow((double)size / 2 - mazeAgentCurrent.x, 2) + Math.pow((double)size / 2 - mazeAgentCurrent.y, 2)));
-            double positionPenalty = 1 / Math.pow(maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 3);
+            double positionPenalty = Math.pow(1 / (double)maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 10);
             agent.respond(Math.max(0, distanceToStart * positionPenalty));
         }
     }
@@ -802,7 +803,7 @@ public class Maze implements Environment, ActionListener {
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean policyGradient = true;
         boolean stateValue = true;
-        int policyType = 1;
+        int policyType = 2;
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean basicPolicy = false;
@@ -812,10 +813,10 @@ public class Maze implements Environment, ActionListener {
         ExecutablePolicy executablePolicy = null;
         switch (policyType) {
             case 1:
-                executablePolicy = new EpsilonGreedyPolicy("epsilonMin = 0.2");
+                executablePolicy = new EpsilonGreedyPolicy("epsilonMin = 0.25");
                 break;
             case 2:
-                executablePolicy = new NoisyNextBestPolicy();
+                executablePolicy = new NoisyNextBestPolicy("minExplorationNoise = 0");
                 break;
             case 3:
                 executablePolicy = new SampledPolicy();
@@ -856,16 +857,17 @@ public class Maze implements Environment, ActionListener {
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (stateValue ? 1 : outputSize));
-            neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SIN), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.verboseTraining(10);
         }
         else {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
             neuralNetwork.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         }
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
+//        neuralNetwork.addNormalizer(7, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
