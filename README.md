@@ -5,7 +5,7 @@ SANNet is an artificial neural network framework that provides functionalities t
 
 Framework's primary components are neural network instance, input layer, variable number of hidden layers and output layer. Neural network instance and layers run in their dedicated threads to enable concurrency between multiple neural network instances.
 
-SANNet is written on Java and has been built from group up starting from implementation of matrix library and functions. 
+SANNet is written on Java and has been built from ground up starting from implementation of matrix library and functions. 
 
 ## Layers, activation and loss functions
 Framework provides vanilla feedforward layer, recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) and convolutional layers (convolutional layer, max / average pooling layer). All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
