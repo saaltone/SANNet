@@ -5,8 +5,11 @@
 
 package core.reinforcement.algorithm;
 
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.policy.Policy;
+import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.ActionValueFunctionEstimator;
 import utils.DynamicParamException;
 
@@ -20,23 +23,27 @@ public class Sarsa extends AbstractQLearning {
      * Constructor for Sarsa.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param actionValueFunctionEstimator reference to valueFunctionEstimator.
+     * @param executablePolicyType executable policy type.
+     * @param valueFunctionEstimator reference to value function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public Sarsa(Environment environment, Policy policy, ActionValueFunctionEstimator actionValueFunctionEstimator) {
-        super(environment, policy, actionValueFunctionEstimator);
+    public Sarsa(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException {
+        super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new ActionValueFunctionEstimator(valueFunctionEstimator));
     }
 
     /**
      * Constructor for Sarsa.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param actionValueFunctionEstimator reference to valueFunctionEstimator.
+     * @param executablePolicyType executable policy type.
+     * @param valueFunctionEstimator reference to value function estimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public Sarsa(Environment environment, Policy policy, ActionValueFunctionEstimator actionValueFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, policy, actionValueFunctionEstimator, params);
+    public Sarsa(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
+        super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new ActionValueFunctionEstimator(valueFunctionEstimator), params);
     }
+
 }

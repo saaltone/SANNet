@@ -5,8 +5,11 @@
 
 package core.reinforcement.algorithm;
 
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.policy.Policy;
+import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.ActionablePolicy;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.QValueFunctionEstimator;
 import utils.DynamicParamException;
 
@@ -20,24 +23,27 @@ public class DQNLearning extends AbstractQLearning {
      * Constructor for DQNLearning.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param qValueFunctionEstimator reference to qValueFunctionEstimator.
+     * @param executablePolicyType executable policy type.
+     * @param valueFunctionEstimator reference to value function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public DQNLearning(Environment environment, Policy policy, QValueFunctionEstimator qValueFunctionEstimator) {
-        super(environment, policy, qValueFunctionEstimator);
+    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException {
+        super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QValueFunctionEstimator(valueFunctionEstimator));
     }
 
     /**
      * Constructor for DQNLearning.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param qValueFunctionEstimator reference to qValueFunctionEstimator.
+     * @param executablePolicyType executable policy type.
+     * @param valueFunctionEstimator reference to value function estimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public DQNLearning(Environment environment, Policy policy, QValueFunctionEstimator qValueFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, policy, qValueFunctionEstimator, params);
+    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
+        super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QValueFunctionEstimator(valueFunctionEstimator), params);
     }
 
 }
