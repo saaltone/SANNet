@@ -12,6 +12,8 @@ import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.procedure.expression.AbstractExpression;
+import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.*;
