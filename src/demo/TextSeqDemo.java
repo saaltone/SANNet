@@ -18,6 +18,7 @@ import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -36,44 +37,43 @@ public class TextSeqDemo {
      */
     public static void main(String [] args) {
 
+        int numOfInputs = 6;
+
         NeuralNetwork neuralNetwork;
         try {
             String persistenceName = "<PATH>/TextSeqNN";
-            int numOfInputs = 5;
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             neuralNetwork.setTaskType(MetricsType.CLASSIFICATION);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
-//            neuralNetwork.setPersistence(persistence);
+            neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
             neuralNetwork.start();
             neuralNetwork.print();
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
-            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = false, stepSize = 100, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
+            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = true, stepSize = 64, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
             while (neuralNetwork.getTotalIterations() < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
-                int inputRows = data.get(0).get(0).get(0).getRows();
-                int charSize = ReadTextFile.charSize();
-                int numOfChars = inputRows / charSize;
                 Matrix input = data.get(0).get(1).get(0);
-                int[] letters = new int[numOfChars];
-                int index = 0;
-                for (int row = 0; row < inputRows; row++) {
-                    if (input.getValue(row, 0) == 1) letters[index++] = row;
+                ArrayDeque<Integer> letters = new ArrayDeque<>(numOfInputs);
+                for (int row = 0; row < ReadTextFile.charSize() * numOfInputs; row++) {
+                    if (input.getValue(row, 0) == 1) {
+                        letters.addLast(row - letters.size() * ReadTextFile.charSize());
+                    }
                 }
                 for (int pos = 0; pos < 1000; pos++) {
                     int nextLetter = neuralNetwork.predict(input).argmax()[0];
-                    System.out.print((char)ReadTextFile.intToChar(nextLetter));
-                    for (int charIndex = 0; charIndex < numOfChars - 1; charIndex++) {
-                        letters[charIndex] = letters[charIndex + 1] - charSize;
-                    }
-                    letters[numOfChars - 1] = nextLetter + (numOfChars - 1) * charSize;
-                    input = new DMatrix(inputRows, 1);
-                    for (int charIndex = 0; charIndex < numOfChars; charIndex++) {
-                        input.setValue(letters[charIndex], 0, 1);
+                    System.out.print(ReadTextFile.intToChar(nextLetter));
+                    letters.pollFirst();
+                    letters.addLast(nextLetter);
+                    input = new DMatrix(ReadTextFile.charSize() * numOfInputs, 1);
+                    int offset = 0;
+                    for (Integer letter : letters) {
+                        input.setValue(offset + letter, 0, 1);
+                        offset += ReadTextFile.charSize();
                     }
                 }
                 System.out.println();
@@ -99,14 +99,13 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRAVESLSTM, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         neuralNetwork.addNormalizer(2, NormalizationType.LAYER_NORMALIZATION);
-//        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
-        neuralNetwork.addRegularizer(RegularizationType.WEIGHT_NOISING);
+        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
         return neuralNetwork;
     }
 
