@@ -25,16 +25,21 @@ import utils.matrix.UnaryFunctionType;
  *     TANHSIG,
  *     TANHAPPR,
  *     HARDTANH,
- *     EXPONENTIAL,
+ *     EXP,
  *     SOFTPLUS,
  *     SOFTSIGN,
  *     RELU,
+ *     RELU_COS,
+ *     RELU_SIN,
  *     ELU,
  *     SELU,
  *     GELU,
  *     SOFTMAX,
+ *     GUMBEL_SOFTMAX,
  *     GAUSSIAN,
- *     SIN
+ *     SINACT,
+ *     LOGIT,
+ *     CUSTOM
  */
 public class ActivationFunction extends UnaryFunction {
 
@@ -58,12 +63,17 @@ public class ActivationFunction extends UnaryFunction {
             UnaryFunctionType.SOFTPLUS,
             UnaryFunctionType.SOFTSIGN,
             UnaryFunctionType.RELU,
+            UnaryFunctionType.RELU_COS,
+            UnaryFunctionType.RELU_SIN,
             UnaryFunctionType.ELU,
             UnaryFunctionType.SELU,
             UnaryFunctionType.GELU,
             UnaryFunctionType.SOFTMAX,
+            UnaryFunctionType.GUMBEL_SOFTMAX,
             UnaryFunctionType.GAUSSIAN,
-            UnaryFunctionType.SIN
+            UnaryFunctionType.SINACT,
+            UnaryFunctionType.LOGIT,
+            UnaryFunctionType.CUSTOM
     };
 
     /**
@@ -79,7 +89,7 @@ public class ActivationFunction extends UnaryFunction {
         for (UnaryFunctionType activationFunctionType : activationFunctions) {
             if (activationFunctionType == unaryFunctionType) return;
         }
-        throw new NeuralNetworkException("No such activation function available.");
+        throw new NeuralNetworkException("No such activation function available: " + unaryFunctionType);
     }
 
     /**
@@ -96,7 +106,7 @@ public class ActivationFunction extends UnaryFunction {
         for (UnaryFunctionType activationFunctionType : activationFunctions) {
             if (activationFunctionType == unaryFunctionType) return;
         }
-        throw new NeuralNetworkException("No such activation function available.");
+        throw new NeuralNetworkException("No such activation function available: " + unaryFunctionType);
     }
 
 }
