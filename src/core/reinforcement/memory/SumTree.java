@@ -126,7 +126,7 @@ public class SumTree implements Serializable {
      * Current maximum priority of leaf nodes. Used for newly added sample as default priority.
      *
      */
-    private double maxPriority = Double.NEGATIVE_INFINITY;
+    private double maxPriority = 0.001;
 
     /**
      * Default constructor for SumTree.
@@ -219,7 +219,8 @@ public class SumTree implements Serializable {
         stateTransitionNodeHashMap.remove(currentLeafNode.stateTransition);
         currentLeafNode.stateTransition = stateTransition;
         stateTransitionNodeHashMap.put(stateTransition, currentLeafNode);
-        currentLeafNode.updatePriority(maxPriority == Double.NEGATIVE_INFINITY ? 1 : maxPriority);
+        stateTransition.priority = maxPriority = Math.max(maxPriority, stateTransition.priority);
+        currentLeafNode.updatePriority(maxPriority);
         currentLeafNode = currentLeafNode.nextLeafNode;
     }
 

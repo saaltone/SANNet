@@ -5,13 +5,15 @@
 
 package core.reinforcement.memory;
 
+import utils.Configurable;
+
 import java.util.TreeSet;
 
 /**
  * Interface for Memory.
  *
  */
-public interface Memory {
+public interface Memory extends Configurable {
 
     /**
      * Returns size of Memory.
@@ -19,13 +21,6 @@ public interface Memory {
      * @return size of Memory.
      */
     int size();
-
-    /**
-     * Returns size of sampled set.
-     *
-     * @return size of sampled set.
-     */
-    int sampledSize();
 
     /**
      * Adds state transition into Memory.
@@ -65,7 +60,7 @@ public interface Memory {
      *
      * @return retrieved state transitions.
      */
-    TreeSet<StateTransition> getStateTransitions();
+    TreeSet<StateTransition> getSampledStateTransitions();
 
     /**
      * Samples defined number of random state transitions.

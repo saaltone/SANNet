@@ -57,21 +57,11 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Constructor for OnlineMemory with dynamic parameters.
-     *
-     * @param params parameters used for OnlineMemory.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public OnlineMemory(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
-    }
-
-    /**
      * Returns parameters used for OnlineMemory.
      *
      * @return parameters used for OnlineMemory.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("capacity", DynamicParam.ParamType.INT);
         paramDefs.put("batchSize", DynamicParam.ParamType.INT);
@@ -99,15 +89,6 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public int size() {
         return stateTransitionSet.size();
-    }
-
-    /**
-     * Returns size of sampled set.
-     *
-     * @return size of sampled set.
-     */
-    public int sampledSize() {
-        return sampledStateTransitions == null ? 0 : sampledStateTransitions.size();
     }
 
     /**
@@ -142,7 +123,7 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public void reset() {
         stateTransitionSet = new TreeSet<>();
-        sampledStateTransitions = new TreeSet<>();
+        sampledStateTransitions = null;
     }
 
     /**
@@ -159,7 +140,7 @@ public class OnlineMemory implements Memory, Serializable {
      *
      * @return retrieved state transitions.
      */
-    public TreeSet<StateTransition> getStateTransitions() {
+    public TreeSet<StateTransition> getSampledStateTransitions() {
         return sampledStateTransitions;
     }
 

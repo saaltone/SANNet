@@ -65,13 +65,7 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      * State value.
      *
      */
-    public double stateValue;
-
-    /**
-     * Action value.
-     *
-     */
-    public double actionValue;
+    public double value;
 
     /**
      * TD target value.
@@ -167,5 +161,29 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      */
     public int compareTo(StateTransition otherStateTransition) {
         return environmentState.compareTo(otherStateTransition.environmentState);
+    }
+
+    /**
+     * Prints state transition.
+     *
+     */
+    public void print() {
+        environmentState.print();
+        System.out.println("Action: " + action + " Reward: " + reward + " Value: " + value + " TD target: " + tdTarget + " TD error: " + tdError + " Advantage: " + advantage);
+    }
+
+    /**
+     * Print state transition chain.
+     *
+     * @param forward if true prints forward direction otherwise prints backward direction.
+     */
+    public void print(boolean forward) {
+        print();
+        if (forward) {
+            if (nextStateTransition != null) nextStateTransition.print(true);
+        }
+        else {
+            if (previousStateTransition != null) previousStateTransition.print(false);
+        }
     }
 }
