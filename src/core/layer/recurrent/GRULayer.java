@@ -204,6 +204,28 @@ public class GRULayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        Wz.initialize(this.initialization);
+        Wr.initialize(this.initialization);
+        Wh.initialize(this.initialization);
+
+        Uz.initialize(this.initialization);
+        Ur.initialize(this.initialization);
+        Uh.initialize(this.initialization);
+
+        bz.reset();
+        br.reset();
+        bh.reset();
+
+        super.reinitialize();
+    }
+
+    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.

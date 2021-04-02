@@ -92,7 +92,6 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      */
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("truncateSteps", DynamicParam.ParamType.INT);
         paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("regulateRecurrentWeights", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
@@ -102,7 +101,6 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * Sets parameters used for recurrent layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - truncateSteps: number of sequence steps taken in backpropagation phase.<br>
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
      *
@@ -112,7 +110,6 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("truncateSteps")) truncateSteps = params.getValueAsInteger("truncateSteps");
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
         if (params.hasParam("regulateRecurrentWeights")) regulateRecurrentWeights = params.getValueAsBoolean("regulateRecurrentWeights");
     }
@@ -138,6 +135,20 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
 
         registerWeight(bias, false, false);
 
+    }
+
+    /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        weight.initialize(this.initialization);
+        recurrentWeight.initialize(this.initialization);
+        bias.reset();
+
+        super.reinitialize();
     }
 
     /**

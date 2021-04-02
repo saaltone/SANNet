@@ -179,6 +179,25 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        Wf.initialize(this.initialization);
+        Wh.initialize(this.initialization);
+
+        Uf.initialize(this.initialization);
+        Uh.initialize(this.initialization);
+
+        bf.reset();
+        bh.reset();
+
+        super.reinitialize();
+    }
+
+    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.

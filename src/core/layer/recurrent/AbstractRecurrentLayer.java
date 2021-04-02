@@ -25,7 +25,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Flag if state is reset prior start of next training sequence.
      *
      */
-    protected boolean resetStateTraining = false;
+    protected boolean resetStateTraining = true;
 
     /**
      * Flag if state is reset prior start of next test (validate, predict) sequence.
@@ -82,6 +82,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         paramDefs.put("resetStateTesting", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("restoreStateTraining", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("restoreStateTesting", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("truncateSteps", DynamicParam.ParamType.INT);
         return paramDefs;
     }
 
@@ -89,10 +90,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Sets parameters used for AbstractRecurrentLayer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value false).<br>
+     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value true).<br>
      *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value false).<br>
      *     - restoreStateTraining: true if output is restored prior training phase otherwise false (default value false).<br>
      *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
+     *     - truncateSteps: number of sequence steps taken in backpropagation phase (default -1 i.e. not used).<br>
      *
      * @param params parameters used for AbstractRecurrentLayer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -104,6 +106,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
         if (params.hasParam("restoreStateTraining")) restoreStateTraining = params.getValueAsBoolean("restoreStateTraining");
         if (params.hasParam("restoreStateTesting")) restoreStateTesting = params.getValueAsBoolean("restoreStateTesting");
+        if (params.hasParam("truncateSteps")) truncateSteps = params.getValueAsInteger("truncateSteps");
     }
 
     /**
@@ -162,7 +165,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetLayer() throws MatrixException {
-        procedure.reset(resetStateTraining || resetStateTesting);
+        procedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
         resetLayerOutputs();
         resetNormalization();
     }

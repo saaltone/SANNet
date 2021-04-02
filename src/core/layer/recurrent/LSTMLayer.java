@@ -183,8 +183,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * <br>
      * Supported parameters are:<br>
      *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
-     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
-     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
      * @param params parameters used for LSTM layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -236,6 +236,31 @@ public class LSTMLayer extends AbstractRecurrentLayer {
         registerWeight(bo, false, false);
         registerWeight(bs, false, false);
 
+    }
+
+    /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        Wi.initialize(this.initialization);
+        Wf.initialize(this.initialization);
+        Wo.initialize(this.initialization);
+        Ws.initialize(this.initialization);
+
+        Ui.initialize(this.initialization);
+        Uf.initialize(this.initialization);
+        Uo.initialize(this.initialization);
+        Us.initialize(this.initialization);
+
+        bi.reset();
+        bf.reset();
+        bo.reset();
+        bs.reset();
+
+        super.reinitialize();
     }
 
     /**
