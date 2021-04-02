@@ -65,11 +65,13 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Defines if matrix is transposed (true) or not (false).
+     *
      */
     protected boolean isTransposed;
 
     /**
      * Initializer variable.
+     *
      */
     private Initializer initializer;
 
@@ -80,12 +82,15 @@ public abstract class Matrix implements Cloneable, Serializable {
     private Initialization initialization = Initialization.ZERO;
 
     /**
-     * Reference to mask of matrix.
+     * Reference to mask of matrix. If null mask is not used.
+     *
      */
     private Mask mask;
 
     /**
-     * Scaling constant applied in all matrix operations meaning scalingConstant * operation.
+     * Scaling constant applied in all matrix operations meaning scalingConstant * operation.<br>
+     * If constant is 1 effectively no scaling is done.<br>
+     *
      */
     private double scalingConstant = 1;
 
@@ -114,13 +119,14 @@ public abstract class Matrix implements Cloneable, Serializable {
     private int filterSize;
 
     /**
-     * Pool size.
+     * Pool size for pooling operations.
      *
      */
     private int poolSize;
 
     /**
-     * Autogradient for matrix.
+     * Procedure factory reference for matrix.
+     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure and it's gradient.
      *
      */
     private transient ProcedureFactory procedureFactory = null;
@@ -139,11 +145,12 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Random function for matrix class.
+     *
      */
     private final Random random = new Random();
 
     /**
-     * Name for matrix.
+     * Name of matrix.
      *
      */
     protected String name;
@@ -159,6 +166,7 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Function used to reinitialize matrix and it's mask.
+     *
      */
     public void reset() {
         resetMatrix();
@@ -168,6 +176,7 @@ public abstract class Matrix implements Cloneable, Serializable {
     /**
      * Abstract matrix reset function to be implemented by underlying matrix data structure class implementation.<br>
      * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
+     *
      */
     protected abstract void resetMatrix();
 
@@ -192,22 +201,22 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Initialize matrix without parameter.
+     * Initializes matrix.
      *
      * @param initialization type of initialization defined in class Init.
      */
-    protected void initialize(Initialization initialization) {
+    public void initialize(Initialization initialization) {
         initialize(initialization, 0, 0);
     }
 
     /**
-     * Initialize matrix with parameter.
+     * Initializes matrix.
      *
      * @param initialization type of initialization defined in class Init.
      * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
-    protected void initialize(Initialization initialization, int inputs, int outputs) {
+    public void initialize(Initialization initialization, int inputs, int outputs) {
         this.initialization = initialization;
         switch (initialization) {
             case ZERO:
@@ -306,9 +315,9 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns matrix init type.
+     * Returns matrix initialization type.
      *
-     * @return current matrix initializer instance.
+     * @return current matrix initialization type.
      */
     private Initialization getInitialization() {
         return initialization;
@@ -319,7 +328,7 @@ public abstract class Matrix implements Cloneable, Serializable {
      *
      * @param initializer initializer operation.
      */
-    protected void initialize(Initializer initializer) {
+    public void initialize(Initializer initializer) {
         for (int row = 0; row < getRows(); row++) {
             for (int col = 0; col < getColumns(); col++) {
                 setValue(row, col, initializer.value(row, col));
@@ -390,7 +399,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     public abstract int getColumns();
 
     /**
-     *
      * Matrix function used to add value of specific row and column.
      *
      * @param row row of value to be added.
@@ -402,7 +410,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     *
      * Matrix function used to decrease value of specific row and column.
      *
      * @param row row of value to be decreased.
@@ -414,7 +421,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     *
      * Matrix function used to multiply value of specific row and column.
      *
      * @param row row of value to be multiplied.
@@ -426,7 +432,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     *
      * Matrix function used to divide value of specific row and column.
      *
      * @param row row of value to be divided.
@@ -567,7 +572,7 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Sets flag is matrix is regularized.
+     * Sets flag if matrix is regularized.
      *
      * @param regularize if true matrix is regularized.
      */
@@ -1052,7 +1057,7 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
@@ -1064,13 +1069,13 @@ public abstract class Matrix implements Cloneable, Serializable {
         result.setProcedureFactory(procedureFactory);
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.MAX_VALUE);
+        applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.POSITIVE_INFINITY);
         if (procedureFactory != null) procedureFactory.createDivideExpression(expressionLock, this, other, result);
     }
 
     /**
      * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
@@ -1085,7 +1090,7 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant constant used as divider value.
@@ -1104,7 +1109,7 @@ public abstract class Matrix implements Cloneable, Serializable {
 
     /**
      * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid infinity condition.<br>
+     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant constant used as divider value.
@@ -1520,7 +1525,7 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculated exponential moving average.
+     * Calculates exponential moving average.
      *
      * @param currentAverage current average value
      * @param newAverage new average value
@@ -1709,6 +1714,205 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
+     * Returns softmax of this matrix.
+     *
+     * @param result result matrix.
+     * @return softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix softmax(Matrix result) throws MatrixException {
+        if (getColumns() != 1) {
+            throw new MatrixException("Matrix must be a column vector.");
+        }
+        if (getRows() != result.getRows() || getColumns() != result.getColumns()) {
+            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
+        }
+
+        double maxValue = Double.NEGATIVE_INFINITY;
+        double sumValue = 0;
+        if (getMask() == null) {
+            for (int row = 0; row < getRows(); row++) {
+                maxValue = Math.max(maxValue, getValue(row, 0));
+            }
+            for (int row = 0; row < getRows(); row++) {
+                double value = Math.exp(getValue(row, 0) - maxValue);
+                sumValue += value;
+                result.setValue(row, 0, value);
+            }
+            for (int row = 0; row < getRows(); row++) {
+                result.setValue(row, 0, result.getValue(row, 0) / sumValue);
+            }
+        }
+        else {
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    maxValue = Math.max(maxValue, getValue(row, 0));
+                }
+            }
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    double value = Math.exp(getValue(row, 0) - maxValue);
+                    sumValue += value;
+                    result.setValue(row, 0, value);
+                }
+            }
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    result.setValue(row, 0, result.getValue(row, 0) / sumValue);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns softmax of this matrix.
+     *
+     * @return softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix softmax() throws MatrixException {
+        return softmax(new DMatrix(getRows(), getColumns()));
+    }
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
+     *
+     * @param result result matrix.
+     * @return softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix gumbelSoftmax(Matrix result) throws MatrixException {
+        return gumbelSoftmax(result, 1);
+    }
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
+     *
+     * @param result result matrix.
+     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @return softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix gumbelSoftmax(Matrix result, double gumbelSoftmaxTau) throws MatrixException {
+        if (getColumns() != 1) {
+            throw new MatrixException("Matrix must be a column vector.");
+        }
+        if (getRows() != result.getRows() || getColumns() != result.getColumns()) {
+            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
+        }
+
+        double sumValue = 0;
+        double epsilon = 10E-8;
+        if (getMask() == null) {
+            for (int row = 0; row < getRows(); row++) {
+                double exp = Math.exp(getValue(row, 0));
+                double value = Math.exp((Math.log(exp / (1 + exp)) + getGumbelNoise()) / gumbelSoftmaxTau);
+                sumValue += value;
+                result.setValue(row, 0, value);
+            }
+            for (int row = 0; row < getRows(); row++) {
+                result.setValue(row, 0, result.getValue(row, 0) / sumValue);
+            }
+        }
+        else {
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    double exp = Math.exp(getValue(row, 0));
+                    double value = Math.exp((Math.log(exp / (1 + exp)) + getGumbelNoise()) / gumbelSoftmaxTau);
+                    sumValue += value;
+                    result.setValue(row, 0, value);
+                }
+            }
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    result.setValue(row, 0, result.getValue(row, 0) / sumValue);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns Gumbel noise.<br>
+     *
+     * @return Gumbel noise.
+     */
+    private double getGumbelNoise() {
+        double epsilon = 10E-8;
+        return -Math.log(-Math.log(random.nextDouble() + epsilon) + epsilon);
+    }
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies ReLU prior log function plus adds Gumbel noise.<br>
+     *
+     * @return Gumbel softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix gumbelSoftmax() throws MatrixException {
+        return gumbelSoftmax(new DMatrix(getRows(), getColumns()), 1);
+    }
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies ReLU prior log function plus adds Gumbel noise.<br>
+     *
+     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @return Gumbel softmax of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
+        return gumbelSoftmax(new DMatrix(getRows(), getColumns()), gumbelSoftmaxTau);
+    }
+
+    /**
+     * Returns softmax gradient of this matrix.<br>
+     * Assumes that input matrix is softmax result.<br>
+     *
+     * @param result result matrix.
+     * @return softmax gradient of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix softmaxGrad(Matrix result) throws MatrixException {
+        if (getColumns() != 1) {
+            throw new MatrixException("Matrix must be a column vector.");
+        }
+        if (getRows() != result.getRows() || getRows() != result.getColumns()) {
+            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
+        }
+        if (getMask() == null) {
+            for (int row = 0; row < getRows(); row++) {
+                for (int row1 = 0; row1 < getRows(); row1++) {
+                    result.setValue(row1, row, (row == row1 ? 1 : 0) - getValue(row1, 0));
+                }
+            }
+        }
+        else {
+            for (int row = 0; row < getRows(); row++) {
+                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
+                    for (int row1 = 0; row1 < getRows(); row1++) {
+                        result.setValue(row1, row, (row == row1 ? 1 : 0) - getValue(row1, 0));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns softmax gradient of this matrix.
+     *
+     * @return softmax gradient of this matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix softmaxGrad() throws MatrixException {
+        return softmaxGrad(new DMatrix(getRows(), getRows()));
+    }
+
+    /**
      * Sets stride size for convolution and pooling operations.
      *
      * @param stride stride size.
@@ -1761,7 +1965,6 @@ public abstract class Matrix implements Cloneable, Serializable {
     public int getFilterSize() {
         return filterSize;
     }
-
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -2038,7 +2241,7 @@ public abstract class Matrix implements Cloneable, Serializable {
     }
 
     /**
-     *
+     * Updates convolution gradient value.
      *
      * @param resultStartRow result start row.
      * @param resultStartColumn result start column.
