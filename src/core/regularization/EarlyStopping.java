@@ -40,7 +40,7 @@ public class EarlyStopping implements Serializable {
      * Stores previous training error average.
      *
      */
-    private double previousTrainingAverage = Double.MIN_VALUE;
+    private double previousTrainingAverage = Double.NEGATIVE_INFINITY;
 
     /**
      * Size for validation error rolling average.
@@ -58,7 +58,7 @@ public class EarlyStopping implements Serializable {
      * Stores previous validation error average.
      *
      */
-    private double previousValidationAverage = Double.MIN_VALUE;
+    private double previousValidationAverage = Double.NEGATIVE_INFINITY;
 
     /**
      * Reference to training error instance.
@@ -104,7 +104,7 @@ public class EarlyStopping implements Serializable {
     }
 
     /**
-     * Constructor for early dropping class.
+     * Constructor for early stopping class.
      *
      * @param params parameters for early stopping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -175,7 +175,7 @@ public class EarlyStopping implements Serializable {
     public void evaluateTrainingCondition(int iteration) {
         if (!trainingStopCondition && iteration >= trainingAverageSize) {
             double lastAverage = trainingError.getAverage(trainingAverageSize);
-            if (previousTrainingAverage <= lastAverage && previousTrainingAverage != Double.MIN_VALUE) trainingStopCount++;
+            if (previousTrainingAverage <= lastAverage && previousTrainingAverage != Double.NEGATIVE_INFINITY) trainingStopCount++;
             else {
                 previousTrainingAverage = lastAverage;
                 trainingStopCount = 0;
@@ -195,7 +195,7 @@ public class EarlyStopping implements Serializable {
     public void evaluateValidationCondition(int iteration) {
         if (!validationStopCondition && iteration >= validationAverageSize) {
             double lastAverage = validationError.getAverage(validationAverageSize);
-            if (previousValidationAverage <= lastAverage && previousValidationAverage != Double.MIN_VALUE) validationStopCount++;
+            if (previousValidationAverage <= lastAverage && previousValidationAverage != Double.NEGATIVE_INFINITY) validationStopCount++;
             else {
                 previousValidationAverage = lastAverage;
                 validationStopCount = 0;

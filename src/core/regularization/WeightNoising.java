@@ -24,7 +24,7 @@ public class WeightNoising implements Regularization, Serializable {
     private static final long serialVersionUID = -6830727265041914868L;
 
     /**
-     * Random function for NoisyNextBestPolicy.
+     * Random function for WeightNoising.
      *
      */
     private final Random random = new Random();
