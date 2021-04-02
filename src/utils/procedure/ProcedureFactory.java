@@ -7,6 +7,9 @@ package utils.procedure;
 
 import utils.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.expression.*;
+import utils.procedure.node.Node;
+import utils.procedure.node.NodeRegister;
 
 import java.io.Serializable;
 import java.util.*;
@@ -46,7 +49,7 @@ public class ProcedureFactory implements Serializable {
         private final HashMap<Node, AbstractExpression> reverseExpressionMap = new HashMap<>();
 
         /**
-         * Set of dependent output and input node pairs are links.
+         * if true procedure has dependent nodes.
          *
          */
         private boolean hasDependentNodes = false;
@@ -169,7 +172,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Starts building of new procedure.
+     * Starts building new procedure.
      *
      * @param inputSample input sample.
      */
@@ -182,7 +185,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Ends building of current procedure.
+     * Finalizes building current procedure.
      *
      * @param outputMatrices output matrices.
      * @throws MatrixException throws exception if setting of output matrix and node fails.
@@ -322,7 +325,6 @@ public class ProcedureFactory implements Serializable {
 
     /**
      * Checks if there is ongoing procedure. Silently continues with existing expression if flag is set otherwise throws exception.
-     *
      *
      * @param expressionLock unique expression lock key.
      * @param originator originator of procedure request.
@@ -833,7 +835,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records uni (single) argument expression to procedure factory.
+     * Records unary (single) argument expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
@@ -850,7 +852,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records uni (single) argument expression to procedure factory.
+     * Records unary (single) argument expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
