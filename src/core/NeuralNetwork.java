@@ -35,7 +35,7 @@ public class NeuralNetwork implements Runnable, Serializable {
 
     /**
      * Defines states of neural network.
-     *   IDLE: neural network is idle ready for operation call.
+     *   IDLE: neural network is idle ready to execute procedure.
      *   TRAIN: initiates training procedure with single or multiple steps.
      *   PREDICT: initiates predict procedure step.
      *   VALIDATE: initiates validate procedure step.
@@ -49,12 +49,6 @@ public class NeuralNetwork implements Runnable, Serializable {
         VALIDATE,
         TERMINATED
     }
-
-    /**
-     * Name of neural network instance.
-     *
-     */
-    private String neuralNetworkName;
 
     /**
      * Lock for synchronizing neural network thread operations.
@@ -99,28 +93,34 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient Thread neuralNetworkThread;
 
     /**
+     * Name of neural network instance.
+     *
+     */
+    private String neuralNetworkName;
+
+    /**
      * Reference to input layer of neural network.
      *
      */
     private InputLayer inputLayer;
 
     /**
-     * List containing neural network layer in order starting from input layer ending to output layer.
+     * List containing hidden layers for neural network.
      *
      */
     private final ArrayList<AbstractLayer> hiddenLayers = new ArrayList<>();
-
-    /**
-     * List of neural network layers.
-     *
-     */
-    private final ArrayList<NeuralNetworkLayer> neuralNetworkLayers = new ArrayList<>();
 
     /**
      * Reference to output layer of neural network.
      *
      */
     private OutputLayer outputLayer;
+
+    /**
+     * List of neural network layers.
+     *
+     */
+    private final ArrayList<NeuralNetworkLayer> neuralNetworkLayers = new ArrayList<>();
 
     /**
      * Reference to early stopping condition.
@@ -147,7 +147,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     private MetricsType validationMetricsType = MetricsType.REGRESSION;
 
     /**
-     * Structure containing prediction input Sequence.
+     * Structure containing prediction input sequence.
      *
      */
     private transient Sequence predictInputs;
@@ -219,10 +219,19 @@ public class NeuralNetwork implements Runnable, Serializable {
     private int verboseCycle;
 
     /**
-     * Default constructor for neural network.
+     * Constructor for neural network.
      *
      */
     public NeuralNetwork() {
+    }
+
+    /**
+     * Constructor for neural network.
+     *
+     * @param neuralNetworkName name for neural network instance.
+     */
+    public NeuralNetwork(String neuralNetworkName) {
+        this.neuralNetworkName = neuralNetworkName;
     }
 
     /**
@@ -630,7 +639,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
@@ -642,7 +651,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param params parameters for layer.
@@ -655,7 +664,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -668,7 +677,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -682,7 +691,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -696,7 +705,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer for neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -789,10 +798,10 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Unsets (removes) persistence instance.
+     * Remove persistence instance.
      *
      */
-    public void unsetPersistence() {
+    public void removePersistence() {
         waitToComplete();
         this.persistence = null;
     }
@@ -1019,7 +1028,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets training sample sets of neural network.<br>
+     * Sets training sample sets of neural network via sampler.<br>
      * Equal indices of input and output reflect input output pair of neural network.<br>
      *
      * @param trainingSampler training sampler containing training data set.
@@ -1249,9 +1258,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Predicts values based on current test set inputs.<br>
+     * Predicts values based on given inputs.<br>
      * Optionally waits neural network prediction procedure to complete.<br>
-     * Sets specific inputs for prediction.<br>
      *
      * @param inputs test input set for prediction.
      * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior prediction completion.
@@ -1411,7 +1419,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Trains neural network defines number of iterations.
+     * Trains neural network with defined number of iterations.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws IOException throws exception if neural network persistence operation fails.
@@ -1507,9 +1515,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns training error instance.
+     * Returns training metrics instance.
      *
-     * @return training error instance.
+     * @return training metrics instance.
      */
     public Metrics getTrainingMetrics() {
         waitToComplete();
@@ -1564,9 +1572,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns validation error instance.
+     * Returns validation metrics instance.
      *
-     * @return validation error instance.
+     * @return validation metrics instance.
      */
     public Metrics getValidationMetrics() {
         waitToComplete();
@@ -1574,23 +1582,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Verboses validation error.
+     * Verboses validation metrics.
      *
      * @throws NeuralNetworkException throws exception of printing of validation error fails.
      */
     private void verboseValidationStatus() throws NeuralNetworkException {
         System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Validating...");
         validationMetrics.printReport();
-    }
-
-    /**
-     * Verboses validation error.
-     *
-     * @throws NeuralNetworkException throws exception of printing of validation error fails.
-     */
-    public void printValidationReport() throws NeuralNetworkException {
-        waitToComplete();
-        verboseValidationStatus();
     }
 
     /**
@@ -1615,7 +1613,18 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Appends other neural network to this neural network by weight tau. Effectively appends each weight matrix of each layer by this weight factor.
+     * Reinitializes neural network.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        waitToComplete();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.reinitialize();
+    }
+
+    /**
+     * Appends other neural network to this neural network by weight tau. Effectively appends each weight and bias matrix of each layer by this weight factor.
      *
      * @param otherNeuralNetwork other neural network that contributes to this neural network.
      * @param tau tau which controls contribution of other layer.
