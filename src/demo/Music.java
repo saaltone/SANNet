@@ -56,7 +56,7 @@ public class Music {
             NeuralNetwork neuralNetworkVelocity;
             NeuralNetwork neuralNetworkTick;
 
-            String path = "/home/jack/Downloads/";
+            String path = "<PATH>/";
             HashSet<String> fileNames = new HashSet<>();
             fileNames.add(path + "canon4.mid");
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadMIDI.readFile(fileNames);
@@ -73,9 +73,9 @@ public class Music {
             Sequence sequence = ReadMIDI.getSequence(data.get(0), data.get(2), data.get(4), divisionType, resolution, scalingFactor);
             ReadMIDI.play(sequence, 10, true);
 
-            String persistenceNameKey = "/home/jack/Downloads/MusicNNKey";
-            String persistenceNameVelocity = "/home/jack/Downloads/MusicNNVelocity";
-            String persistenceNameTick = "/home/jack/Downloads/MusicNNTick";
+            String persistenceNameKey = "<PATH>/MusicNNKey";
+            String persistenceNameVelocity = "<PATH>/MusicNNVelocity";
+            String persistenceNameTick = "<PATH>/MusicNNTick";
 
             boolean restore = false;
             if (!restore) {
