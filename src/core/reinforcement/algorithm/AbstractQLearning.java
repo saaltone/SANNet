@@ -26,7 +26,7 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @param valueFunction reference to value function.
      */
     public AbstractQLearning(Environment environment, Policy policy, ValueFunction valueFunction) {
-        super(environment, policy, valueFunction);
+        initialize(environment, policy, valueFunction);
     }
 
     /**
@@ -39,25 +39,24 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractQLearning(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
-        super(environment, policy, valueFunction, params);
+        initialize(environment, policy, valueFunction, params);
     }
 
     /**
-     * Updates agent.
+     * Updates value function of agent.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if memory instances of value and policy function are not equal.
      */
-    protected void update() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        valueFunction.getFunctionEstimator().sample();
-        if (!updateValuePerEpisode) valueFunction.update();
-        valueFunction.updateFunctionEstimator(this);
-        policy.increment();
-        policy.reset(false);
-        valueFunction.getFunctionEstimator().reset();
-        policy.getFunctionEstimator().reset();
+    protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+        if(valueFunction.readyToUpdate(this)) {
+            valueFunction.sample();
+            if (!updateValuePerEpisode) valueFunction.update();
+            valueFunction.updateFunctionEstimator();
+            valueFunction.resetFunctionEstimator();
+        }
     }
 
 }
