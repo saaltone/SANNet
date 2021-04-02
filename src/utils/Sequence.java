@@ -160,7 +160,7 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Puts all samples into sequence-
+     * Puts all samples into sequence.
      *
      * @param sequence sequence containing new samples for this sequence.
      */
