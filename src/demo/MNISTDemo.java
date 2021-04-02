@@ -62,8 +62,8 @@ public class MNISTDemo {
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5000"));
-            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16"));
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32, numberOfIterations = 5625"));
+            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
 
             neuralNetwork.print();
             neuralNetwork.printExpressions();
@@ -95,7 +95,6 @@ public class MNISTDemo {
                 predictionMetrics.store(index, false);
             }
             predictionMetrics.printReport();
-            predictionMetrics.printConfusionMatrix();
 
             Persistence.saveNeuralNetwork(persistenceName, neuralNetwork);
 
