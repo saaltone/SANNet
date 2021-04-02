@@ -5,13 +5,13 @@
 
 package core.reinforcement.function;
 
-import core.reinforcement.Agent;
+import core.optimization.*;
 import core.reinforcement.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
+import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -31,28 +31,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<Matrix, Matrix> stateValues = new HashMap<>();
 
     /**
-     * Constant learning rate for training.
+     * Optimizer for TabularFunctionEstimator.
      *
      */
-    private double learningRate = 0.1;
-
-    /**
-     * If true uses polynomial learning rate otherwise constant learning rate.
-     *
-     */
-    private boolean usePolynomialLearningRate = true;
-
-    /**
-     * Omega value adjusting polynomial learning rate.
-     *
-     */
-    private double omega = 0.1;
-
-    /**
-     * Current learning time step.
-     *
-     */
-    private int timeStep = 0;
+    private Optimizer optimizer = new RAdam();
 
     /**
      * Intermediate map for state transition value pairs for function update.
@@ -67,7 +49,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @param numberOfActions number of actions for TabularFunctionEstimator
      */
     public TabularFunctionEstimator(Memory memory, int numberOfActions) {
-        super (memory, numberOfActions);
+        super (memory, numberOfActions, false);
     }
 
     /**
@@ -75,12 +57,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @param memory memory reference.
      * @param numberOfActions number of actions for TabularFunctionEstimator
-     * @param params parameters for function
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param optimizer optimizer
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfActions, String params) throws DynamicParamException {
-        this(memory, numberOfActions);
-        setParams(new DynamicParam(params, getParamDefs()));
+    public TabularFunctionEstimator(Memory memory, int numberOfActions, Optimizer optimizer) {
+        super (memory, numberOfActions, false);
+        this.optimizer = optimizer;
     }
 
     /**
@@ -96,47 +77,17 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns parameters used for TabularFunctionEstimator.
+     * Constructor for TabularFunctionEstimator.
      *
-     * @return parameters used for TabularFunctionEstimator.
+     * @param memory memory reference.
+     * @param numberOfActions number of actions for TabularFunctionEstimator
+     * @param stateValues state values inherited for TabularFunctionEstimator.
+     * @param optimizer optimizer
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("usePolynomialLearningRate", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("omega", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
-    }
-
-    /**
-     * Sets parameters used for TabularFunctionEstimator.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - learningRate: learning rate for updates. Default value 0.1.<br>
-     *     - usePolynomialLearningRate: if true polynomial learning rate is used. Default value false.<br>
-     *     - omega: value adjusting polynomial learning rate. Default value 0.65.<br>
-     *
-     * @param params parameters used for TabularFunctionEstimator.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
-        if (params.hasParam("usePolynomialLearningRate")) usePolynomialLearningRate = params.getValueAsBoolean("usePolynomialLearningRate");
-        if (params.hasParam("omega")) omega = params.getValueAsDouble("omega");
-    }
-
-    /**
-     * Not used.
-     *
-     */
-    public void start() {
-    }
-
-    /**
-     * Not used.
-     *
-     */
-    public void stop() {
+    public TabularFunctionEstimator(Memory memory, int numberOfActions, HashMap<Matrix, Matrix> stateValues, Optimizer optimizer) {
+        this(memory, numberOfActions);
+        this.stateValues = stateValues;
+        this.optimizer = optimizer;
     }
 
     /**
@@ -159,7 +110,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         for (Matrix existingState : stateValues.keySet()) {
             if (state.equals(existingState)) return stateValues.get(existingState);
         }
-        Matrix stateValue = new DMatrix(numberOfActions, 1);
+        Matrix stateValue = new DMatrix(numberOfActions, 1, Initialization.RANDOM);
         stateValues.put(state.copy(), stateValue);
         return stateValue;
     }
@@ -170,7 +121,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @return shallow copy of TabularFunctionEstimator.
      */
     public FunctionEstimator copy() {
-        return new TabularFunctionEstimator(memory, getNumberOfActions(), stateValues);
+        return new TabularFunctionEstimator(memory, getNumberOfActions(), stateValues, optimizer);
     }
 
     /**
@@ -180,6 +131,14 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void reset() {
         super.reset();
         stateTransitionValueMap = new HashMap<>();
+    }
+
+    /**
+     * Reinitializes TabularFunctionEstimator.
+     *
+     */
+    public void reinitialize() {
+        this.reset();
     }
 
     /**
@@ -196,54 +155,44 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Stores state transition values pair.
      *
-     * @param agent agent.
      * @param stateTransition state transition.
      * @param values values.
-     * @throws AgentException throws exception if agent tries to store values outside ongoing update cycle or one of agent are not ready to initiate update cycle.
      */
-    public void store(Agent agent, StateTransition stateTransition, Matrix values) throws AgentException {
-        super.store(agent);
+    public void store(StateTransition stateTransition, Matrix values) {
         stateTransitionValueMap.put(stateTransition, values);
     }
 
     /**
      * Updates (trains) TabularFunctionEstimator.
      *
-     * @param agent agent.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws AgentException throws exception if agent is not registered for ongoing update cycle.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void update(Agent agent) throws MatrixException, AgentException {
-        if (!super.updateAndCheck(agent)) return;
-
+    public void update() throws MatrixException, AgentException, DynamicParamException {
+        HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
-            // currentStateValue: Q(s,a) stored by TabularFunctionEstimator
-            // targetStateValue: reward + gamma * targetValue per updated TD target
-            // Q(s,a) = Q(s,a) + learningRate * (reward + gamma * targetValue - Q(s,a))
-            Matrix currentStateValue = predict(stateTransition.environmentState.state);
-            Matrix targetStateValue = stateTransitionValueMap.get(stateTransition);
-            currentStateValue.add(targetStateValue.subtract(currentStateValue).multiply(getLearningRate()), currentStateValue);
+            Matrix stateValue = predict(stateTransition.environmentState.state);
+            Matrix error = stateValue.subtract(stateTransitionValueMap.get(stateTransition));
+            if (!stateErrors.containsKey(stateValue)) stateErrors.put(stateValue, error);
+            else stateErrors.get(stateValue).add(error, stateErrors.get(stateValue));
+        }
+        for (Matrix stateValue : stateErrors.keySet()) {
+            optimizer.optimize(stateValue, stateErrors.get(stateValue).divide(stateTransitionValueMap.size()));
         }
 
         stateTransitionValueMap = new HashMap<>();
 
         // Allows other threads to get execution time.
         try {
-            Thread.sleep(1);
+            Thread.sleep(0, 1);
         }
         catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(exception);
         }
-    }
 
-    /**
-     * Returns current learning rate
-     *
-     * @return current learning rate.
-     */
-    private double getLearningRate() {
-        return usePolynomialLearningRate ? 1 / Math.pow(1 + ++timeStep, omega) : learningRate;
+        updateComplete();
     }
 
     /**
