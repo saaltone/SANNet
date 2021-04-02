@@ -64,7 +64,6 @@ public class SimpleDemo {
             neuralNetwork1.waitToComplete();
             neuralNetwork2.waitToComplete();
 
-            System.out.println("Testing with few examples...");
             Random random = new Random();
             for (int index = 0; index < 10; index++) {
                 int input1 = random.nextInt(75);
@@ -112,7 +111,7 @@ public class SimpleDemo {
         neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(NormalizationType.WEIGHT_NORMALIZATION);
+        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
