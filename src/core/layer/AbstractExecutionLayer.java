@@ -177,6 +177,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
+     * Reinitializes neural network layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws NeuralNetworkException, MatrixException {
+        if (procedure != null) procedure.reset();
+        resetLayerOutputs();
+        reinitializeNormalization();
+    }
+
+    /**
      * Takes single forward processing step process layer input(s).<br>
      * Additionally applies any normalization or regularization defined for layer.<br>
      *
@@ -457,11 +469,35 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
+     * Reinitializes specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reinitialized.
+     * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
+     */
+    public void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
+        Normalization reinitializeNormalization = null;
+        for (Normalization normalization : normalizers) {
+            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
+                reinitializeNormalization = normalization;
+            }
+        }
+        if (reinitializeNormalization != null) reinitializeNormalization.reinitialize();
+    }
+
+    /**
      * Resets all normalization for layer.
      *
      */
     public void resetNormalization() {
         for (Normalization normalizer : normalizers) normalizer.reset();
+    }
+
+    /**
+     * Reinitializes all normalization for layer.
+     *
+     */
+    public void reinitializeNormalization() {
+        for (Normalization normalizer : normalizers) normalizer.reinitialize();
     }
 
     /**
@@ -537,9 +573,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns number of parameters.
+     * Returns number of layer parameters.
      *
-     * @return number of parameters.
+     * @return number of layer parameters.
      */
     protected int getNumberOfParameters() {
         int numberOfParameters = 0;
@@ -548,7 +584,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Appends other neural network layer with equal weights to this layer by weighted factor tau.
+     * Appends other neural network layer with equal weights to this layer by weighting factor tau.
      *
      * @param otherNeuralNetworkLayer other neural network layer.
      * @param tau tau which controls contribution of other layer.
