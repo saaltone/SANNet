@@ -280,7 +280,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     protected void setLayerHeight(int layerHeight) { this.layerHeight = layerHeight; }
 
     /**
-     * Returns height of neural network layer.
+     * Returns height of neural network layer. Relevant for convolutional layers.
      *
      * @return height of neural network layer.
      */
