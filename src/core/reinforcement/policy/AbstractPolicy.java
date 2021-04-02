@@ -1,21 +1,29 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyFactory;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
+import core.reinforcement.value.ValueFunction;
+import utils.Configurable;
+import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
- * Class that defined AbstractPolicy with common policy functions.
+ * Class that defines AbstractPolicy with common policy functions.
  *
  */
-public abstract class AbstractPolicy implements Policy, Serializable {
+public abstract class AbstractPolicy implements Policy, Configurable, Serializable {
 
     private static final long serialVersionUID = 7604226764648819354L;
 
@@ -24,6 +32,12 @@ public abstract class AbstractPolicy implements Policy, Serializable {
      *
      */
     protected Environment environment;
+
+    /**
+     * Value function for policy.
+     *
+     */
+    protected ValueFunction valueFunction;
 
     /**
      * Reference to FunctionEstimator.
@@ -50,15 +64,52 @@ public abstract class AbstractPolicy implements Policy, Serializable {
     private boolean isLearning = true;
 
     /**
-     * Constructor for ActionablePolicy.
+     * Constructor for AbstractPolicy.
      *
-     * @param executablePolicy reference to executable policy.
+     * @param executablePolicyType executable policy type.
+     * @param functionEstimator reference to FunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     */
+    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+        this.executablePolicy = ExecutablePolicyFactory.create(executablePolicyType);
+        this.functionEstimator = functionEstimator;
+        isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
+    }
+
+    /**
+     * Constructor for AbstractPolicy.
+     *
+     * @param executablePolicy executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      */
     public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
         this.executablePolicy = executablePolicy;
         this.functionEstimator = functionEstimator;
-        isStateActionValueFunction = functionEstimator.isStateActionValue();
+        isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
+    }
+
+    /**
+     * Returns parameters used for AbstractPolicy.
+     *
+     * @return parameters used for AbstractPolicy.
+     */
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
+        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+        paramDefs.putAll(executablePolicy.getParamDefs());
+        paramDefs.putAll(functionEstimator.getParamDefs());
+        return paramDefs;
+    }
+
+    /**
+     * Sets parameters used for AbstractPolicy.<br>
+     *
+     * @param params parameters used for AbstractPolicy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void setParams(DynamicParam params) throws DynamicParamException {
+        executablePolicy.setParams(params);
+        functionEstimator.setParams(params);
     }
 
     /**
@@ -81,6 +132,15 @@ public abstract class AbstractPolicy implements Policy, Serializable {
     }
 
     /**
+     * Registers agent for FunctionEstimator.
+     *
+     * @param agent agent.
+     */
+    public void registerAgent(Agent agent) {
+        functionEstimator.registerAgent(agent);
+    }
+
+    /**
      * Sets reference to environment.
      *
      * @param environment reference to environment.
@@ -96,6 +156,15 @@ public abstract class AbstractPolicy implements Policy, Serializable {
      */
     public Environment getEnvironment() {
         return environment;
+    }
+
+    /**
+     * Sets value function for policy-
+     *
+     * @param valueFunction value function.
+     */
+    public void setValueFunction(ValueFunction valueFunction) {
+        this.valueFunction = valueFunction;
     }
 
     /**
@@ -134,11 +203,11 @@ public abstract class AbstractPolicy implements Policy, Serializable {
     }
 
     /**
-     * Return state value offset
+     * If true value function is combined state action value function.
      *
-     * @return state value offset
+     * @return true if value function is combined state action value function.
      */
-    protected int getStateValueOffset() {
+    protected int isStateActionValueFunction() {
         return isStateActionValueFunction ? 1 : 0;
     }
 
@@ -149,7 +218,7 @@ public abstract class AbstractPolicy implements Policy, Serializable {
      * @return updated action.
      */
     protected int getAction(int action) {
-        return getStateValueOffset() + action;
+        return isStateActionValueFunction() + action;
     }
 
     /**
@@ -159,7 +228,7 @@ public abstract class AbstractPolicy implements Policy, Serializable {
      * @param action action.
      */
     public void act(StateTransition stateTransition, int action) throws MatrixException, NeuralNetworkException {
-        executablePolicy.action(functionEstimator.predict(stateTransition.environmentState.state), stateTransition.environmentState.availableActions, getStateValueOffset(), action);
+        executablePolicy.action(functionEstimator.predict(stateTransition.environmentState.state), stateTransition.environmentState.availableActions, isStateActionValueFunction(), action);
     }
 
     /**
@@ -172,17 +241,8 @@ public abstract class AbstractPolicy implements Policy, Serializable {
      */
     public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
         Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
-        stateTransition.action = executablePolicy.action(currentPolicyValues, stateTransition.environmentState.availableActions, getStateValueOffset(), alwaysGreedy);
+        stateTransition.action = executablePolicy.action(currentPolicyValues, stateTransition.environmentState.availableActions, isStateActionValueFunction(), alwaysGreedy);
         if (isLearning()) functionEstimator.add(stateTransition);
-    }
-
-    /**
-     * Returns FunctionEstimator.
-     *
-     * @return FunctionEstimator.
-     */
-    public FunctionEstimator getFunctionEstimator() {
-        return functionEstimator;
     }
 
 }
