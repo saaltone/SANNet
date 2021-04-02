@@ -5,9 +5,10 @@
 
 package core.reinforcement.policy;
 
-import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
+import utils.DynamicParamException;
 
 /**
  * Class that defines ActionablePolicy.
@@ -18,11 +19,13 @@ public class ActionablePolicy extends AbstractPolicy {
     /**
      * Constructor for ActionablePolicy.
      *
-     * @param executablePolicy reference to executable policy.
+     * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public ActionablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
-        super(executablePolicy, functionEstimator);
+    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+        super(executablePolicyType, functionEstimator);
     }
 
     /**
@@ -33,11 +36,17 @@ public class ActionablePolicy extends AbstractPolicy {
     }
 
     /**
+     * Resets FunctionEstimator.
+     *
+     */
+    public void resetFunctionEstimator() {
+    }
+
+    /**
      * Updates policy.
      *
-     * @param agent agent.
      */
-    public void update(Agent agent) {
+    public void updateFunctionEstimator() {
     }
 
 }
