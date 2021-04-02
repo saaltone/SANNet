@@ -218,6 +218,20 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        int dilatedSize = filterSize + (filterSize - 1) * (dilation - 1);
+        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * dilatedSize * dilatedSize, numberOfFilters * dilatedSize * dilatedSize);
+        for (Matrix bias : filterBiases.values()) bias.reset();
+
+        super.reinitialize();
+    }
+
+    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets previous input.
