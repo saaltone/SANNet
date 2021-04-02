@@ -5,10 +5,14 @@
 
 package core.reinforcement.function;
 
-import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
+import utils.DynamicParam;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+
+import java.util.HashMap;
 
 /**
  * Defines DirectFunctionEstimator (proxy for memory) to be used with PlainValueFunction.
@@ -23,7 +27,7 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param numberOfActions number of actions for DirectFunctionEstimator
      */
     public DirectFunctionEstimator(Memory memory, int numberOfActions) {
-        super (memory, numberOfActions);
+        super (memory, numberOfActions, false);
     }
 
     /**
@@ -38,14 +42,6 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      *
      */
     public void stop() {
-    }
-
-    /**
-     * Not used.
-     *
-     * @param agent agent.
-     */
-    public void registerAgent(Agent agent) {
     }
 
     /**
@@ -69,20 +65,20 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
      * Not used.
-     *
-     * @param agent agent.
      * @param stateTransition state transition.
      * @param values values.
      */
-    public void store(Agent agent, StateTransition stateTransition, Matrix values) {
+    public void store(StateTransition stateTransition, Matrix values) {
     }
 
     /**
      * Not used.
      *
-     * @param agent agent.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void update(Agent agent) {
+    public void update() throws AgentException, MatrixException {
+        updateComplete();
     }
 
     /**
@@ -92,6 +88,23 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param fullUpdate if true full update is done.
      */
     public void append(FunctionEstimator functionEstimator, boolean fullUpdate) {
+    }
+
+    /**
+     * Returns parameters used for DirectFunctionEstimator.
+     *
+     * @return parameters used for DirectFunctionEstimator.
+     */
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
+        return null;
+    }
+
+    /**
+     * Sets parameters used for DirectFunctionEstimator.<br>
+     *
+     * @param params parameters used for OnlineMemory.
+     */
+    public void setParams(DynamicParam params) {
     }
 
 }
