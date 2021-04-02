@@ -68,4 +68,14 @@ public class EnvironmentState implements Serializable, Comparable<EnvironmentSta
         return episodeID > otherEnvironmentState.episodeID ? 1 : episodeID < otherEnvironmentState.episodeID ? -1 : Integer.compare(timeStep, otherEnvironmentState.timeStep);
     }
 
+    /**
+     * Prints environment state.
+     *
+     */
+    public void print() {
+        System.out.println("Episode ID: " + episodeID + " Time step: " + timeStep);
+        state.print();
+        System.out.println(availableActions);
+    }
+
 }
