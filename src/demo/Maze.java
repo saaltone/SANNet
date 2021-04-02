@@ -9,13 +9,11 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.EnvironmentState;
-import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.algorithm.*;
@@ -23,9 +21,7 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
 import core.reinforcement.memory.PriorityMemory;
-import core.reinforcement.policy.*;
 import core.reinforcement.policy.executablepolicy.*;
-import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
 
@@ -602,12 +598,13 @@ public class Maze implements Environment, ActionListener {
      * Initializes agent for the maze and maze itself.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
+     * @throws IOException throws exception if copying of neural network instance fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
         agent = createAgent();
         initMaze();
     }
@@ -797,41 +794,51 @@ public class Maze implements Environment, ActionListener {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if coping of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if coping of neural network instance fails.
+     * @throws IOException throws exception if copying of neural network instance fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
-        boolean policyGradient = true;
-        boolean stateValue = true;
-        int policyType = 2;
+    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
-        boolean basicPolicy = false;
+        boolean policyGradient = true;
+        boolean stateValue = true;
+        int policyType = 1;
         Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(52, 4, policyGradient, false), 4) : new TabularFunctionEstimator(estimatorMemory, 4);
         FunctionEstimator valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(52, 4, false, stateValue), (stateValue ? 1 : 4)) : new TabularFunctionEstimator(estimatorMemory, 4);
-        ExecutablePolicy executablePolicy = null;
+        ExecutablePolicyType executablePolicyType = null;
+        String params = "";
         switch (policyType) {
+            case 0:
+                executablePolicyType = ExecutablePolicyType.GREEDY;
+                break;
             case 1:
-                executablePolicy = new EpsilonGreedyPolicy("epsilonMin = 0.25");
+                executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
+                params += "epsilonInitial = 0.25, epsilonMin = 0.25";
                 break;
             case 2:
-                executablePolicy = new NoisyNextBestPolicy("minExplorationNoise = 0");
+                executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
+                params += "initialExplorationNoise = 0.25, minExplorationNoise = 0.25";
                 break;
             case 3:
-                executablePolicy = new SampledPolicy();
+                executablePolicyType = ExecutablePolicyType.SAMPLED;
+                params += "thresholdInitial = 0.2, thresholdMin = 0.2";
                 break;
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
-            agent = new DQNLearning(this, new ActionablePolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-//            agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, executablePolicyType, valueEstimator, params);
+//            agent = new DQNLearning(this, executablePolicyType, valueEstimator, params);
+            agent = new Sarsa(this, executablePolicyType, valueEstimator, params);
         }
         else {
-            Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, policy, new PlainValueFunction(new DirectFunctionEstimator(estimatorMemory, 4)));
-            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
+//            agent = new ActorCritic(this, executablePolicyType, policyEstimator, valueEstimator, params);
+            agent = new PPO(this, executablePolicyType, policyEstimator, valueEstimator, params);
+//            agent = new SoftActorCriticDiscrete(this, executablePolicyType, policyEstimator, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01"));
+//            agent = new REINFORCE(this, executablePolicyType, policyEstimator, params);
+//            agent = new MCTSLearning(this, valueEstimator, policyEstimator, params);
         }
         agent.start();
         return agent;
@@ -857,7 +864,7 @@ public class Maze implements Environment, ActionListener {
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SIN), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.verboseTraining(10);
         }
@@ -867,6 +874,7 @@ public class Maze implements Environment, ActionListener {
         }
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
+//        neuralNetwork.addNormalizer(NormalizationType.BATCH_NORMALIZATION);
 //        neuralNetwork.addNormalizer(7, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
