@@ -6,6 +6,7 @@
 package core.reinforcement.policy.executablepolicy;
 
 import core.reinforcement.memory.StateTransition;
+import utils.Configurable;
 import utils.matrix.Matrix;
 
 import java.util.HashSet;
@@ -14,7 +15,7 @@ import java.util.HashSet;
  * Interface for ExecutablePolicy.
  *
  */
-public interface ExecutablePolicy {
+public interface ExecutablePolicy extends Configurable {
 
     /**
      * Resets policy.
@@ -58,14 +59,10 @@ public interface ExecutablePolicy {
     void record(StateTransition stateTransition);
 
     /**
-     * Updates policy.
-     *
-     */
-    void update();
-    /**
      * Finishes episode.
      *
+     * @param update if true updates policy.
      */
-    void finish();
+    void finish(boolean update);
 
 }
