@@ -6,40 +6,18 @@
 package core.reinforcement.value;
 
 import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
-import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
-import utils.DynamicParam;
+import core.reinforcement.memory.StateTransition;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * Class that defines QTargetValueFunctionEstimator (Q value function with target function estimator).
  *
  */
-public class QTargetValueFunctionEstimator extends ActionValueFunctionEstimator {
-
-    /**
-     * Target value FunctionEstimator.
-     *
-     */
-    private final FunctionEstimator targetValueFunctionEstimator;
-
-    /**
-     * Update cycle (in episodes) for target FunctionEstimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
-     *
-     */
-    private int updateCycle = 0;
-
-    /**
-     * Update count for update cycle.
-     *
-     */
-    private transient int updateCount = 0;
+public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimator {
 
     /**
      * Constructor for QTargetValueFunctionEstimator.
@@ -51,8 +29,8 @@ public class QTargetValueFunctionEstimator extends ActionValueFunctionEstimator 
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
-        super(functionEstimator);
-        targetValueFunctionEstimator = functionEstimator.copy();
+        super(functionEstimator.getNumberOfActions(), functionEstimator);
+        functionEstimator.setTargetFunctionEstimator();
     }
 
     /**
@@ -66,55 +44,8 @@ public class QTargetValueFunctionEstimator extends ActionValueFunctionEstimator 
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
-        super(functionEstimator, params);
-        setParams(new DynamicParam(params, getParamDefs()));
-        targetValueFunctionEstimator = functionEstimator.copy();
-    }
-
-    /**
-     * Returns parameters used for QTargetValueFunctionEstimator.
-     *
-     * @return parameters used for QTargetValueFunctionEstimator.
-     */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("updateCycle", DynamicParam.ParamType.INT);
-        return paramDefs;
-    }
-
-    /**
-     * Sets parameters used for QTargetValueFunctionEstimator.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - updateCycle; update cycle for target function (assumes full update). Default value 0 i.e. applies smooth update.<br>
-     *
-     * @param params parameters used for QTargetValueFunctionEstimator.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void setParams(DynamicParam params) throws DynamicParamException {
-        super.setParams(params);
-        if (params.hasParam("updateCycle")) updateCycle = params.getValueAsInteger("updateCycle");
-    }
-
-    /**
-     * Starts FunctionEstimator
-     *
-     * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
-        super.start();
-        targetValueFunctionEstimator.start();
-    }
-
-    /**
-     * Stops FunctionEstimator
-     *
-     */
-    public void stop() {
-        super.stop();
-        targetValueFunctionEstimator.stop();
+        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
+        functionEstimator.setTargetFunctionEstimator();
     }
 
     /**
@@ -126,27 +57,7 @@ public class QTargetValueFunctionEstimator extends ActionValueFunctionEstimator 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
-        return functionEstimator.predict(nextStateTransition.environmentState.state).getValue(argmax(targetValueFunctionEstimator.predict(nextStateTransition.environmentState.state), nextStateTransition.environmentState.availableActions), 0);
-    }
-
-    /**
-     * Updates FunctionEstimator.
-     *
-     * @param agent agent.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
-     */
-    public void updateFunctionEstimator(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
-        super.updateFunctionEstimator(agent);
-        if (updateCycle == 0) targetValueFunctionEstimator.append(functionEstimator, false);
-        else {
-            if (++updateCount >= updateCycle) {
-                targetValueFunctionEstimator.append(functionEstimator, true);
-                updateCount = 0;
-            }
-        }
+        return functionEstimator.getTargetFunctionEstimator().predict(nextStateTransition.environmentState.state).getValue(functionEstimator.argmax(functionEstimator.predict(nextStateTransition.environmentState.state), nextStateTransition.environmentState.availableActions), 0);
     }
 
 }
