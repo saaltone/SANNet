@@ -35,7 +35,8 @@ public class MMatrix implements Cloneable, Serializable {
     private TreeMap<Integer, Matrix> matrices;
 
     /**
-     * Autogradient for matrix.
+     * Procedure factory reference for matrix.
+     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure and it's gradient.
      *
      */
     private transient ProcedureFactory procedureFactory = null;
@@ -156,6 +157,7 @@ public class MMatrix implements Cloneable, Serializable {
 
     /**
      * Function used to reinitialize matrix and it's mask.
+     *
      */
     public void clear() {
         matrices = new TreeMap<>();
@@ -600,7 +602,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix to this matrix.
+     * Subtracts other matrix from this matrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -617,7 +619,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix to this matrix.
+     * Subtracts other matrix from this matrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -646,7 +648,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix to this matrix.
+     * Subtracts other matrix from this matrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -735,7 +737,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Dots other matrix with this matrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -748,7 +750,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Dots other matrix with this matrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -947,6 +949,79 @@ public class MMatrix implements Cloneable, Serializable {
         return result;
     }
 
+    /**
+     * Applies softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void softmax(MMatrix result) throws MatrixException {
+        for (Integer index : matrices.keySet()) result.put(index, get(index).softmax());
+    }
+
+    /**
+     * Applies softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public MMatrix softmax() throws MatrixException {
+        MMatrix result = new MMatrix();
+        softmax(result);
+        return result;
+    }
+
+    /**
+     * Applies Gumbel softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void gumbelSoftmax(MMatrix result) throws MatrixException {
+        gumbelSoftmax(result, 1);
+    }
+
+    /**
+     * Applies Gumbel softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void gumbelSoftmax(MMatrix result, double gumbelSoftmaxTau) throws MatrixException {
+        for (Integer index : matrices.keySet()) result.put(index, get(index).gumbelSoftmax(gumbelSoftmaxTau));
+    }
+
+    /**
+     * Applies Gumbel softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public MMatrix gumbelSoftmax() throws MatrixException {
+        MMatrix result = new MMatrix();
+        gumbelSoftmax(result, 1);
+        return result;
+    }
+
+    /**
+     * Applies Gumbel softmax to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public MMatrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
+        MMatrix result = new MMatrix();
+        gumbelSoftmax(result, gumbelSoftmaxTau);
+        return result;
+    }
 
     /**
      * Flattens MMatrix into one dimensional column vector (matrix)
