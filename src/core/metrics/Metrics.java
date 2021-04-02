@@ -12,6 +12,8 @@ import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
@@ -152,7 +154,7 @@ public class Metrics {
         }
 
         /**
-         * Cumulates predictions and actuals R2 values calculation.
+         * Cumulates predictions and actuals for R2 values calculation.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -251,58 +253,64 @@ public class Metrics {
     public static class Classification {
 
         /**
+         * Features classified.
+         *
+         */
+        private HashSet<Integer> features = new HashSet<>();
+
+        /**
          * True positive counts for each feature.
          *
          */
-        private int[] TP;
+        private HashMap<Integer, Integer> TP = new HashMap<>();
 
         /**
          * False positive counts for each feature.
          *
          */
-        private int[] FP;
+        private HashMap<Integer, Integer> FP = new HashMap<>();
 
         /**
          * True negative counts for each feature.
          *
          */
-        private int[] TN;
+        private HashMap<Integer, Integer> TN = new HashMap<>();
 
         /**
          * False negative counts for each feature.
          *
          */
-        private int[] FN;
+        private HashMap<Integer, Integer> FN = new HashMap<>();
 
         /**
          * Total true positive count over all features.
          *
          */
-        private int TPTot;
+        private int TPTotal;
 
         /**
          * Total false positive count over all features.
          *
          */
-        private int FPTot;
+        private int FPTotal;
 
         /**
          * Total true negative count over all features.
          *
          */
-        private int TNTot;
+        private int TNTotal;
 
         /**
          * Total False negative count over all features.
          *
          */
-        private int FNTot;
+        private int FNTotal;
 
         /**
          * Confusion matrix.
          *
          */
-        int[][] confusion;
+        HashMap<Integer, HashMap<Integer, Integer>> confusion;
 
         /**
          * Default constructor for classification class.
@@ -317,33 +325,93 @@ public class Metrics {
          * @param actual actual (true) sample.
          */
         public void update(Matrix predicted, Matrix actual) {
-            if (confusion == null) reset (actual.getRows());
+            if (confusion == null) reset();
             for (int predictedRow = 0; predictedRow < predicted.getRows(); predictedRow++) {
+                features.add(predictedRow);
                 for (int actualRow = 0; actualRow < actual.getRows(); actualRow++) {
                     double actualValue = actual.getValue(predictedRow, 0);
                     double predictedValue = predicted.getValue(actualRow, 0);
-                    if (actualValue == 1 && predictedValue == 1) confusion[predictedRow][actualRow]++;
+                    if (actualValue == 1 && predictedValue == 1) incrementConfusion(predictedRow, actualRow);
                     if (predictedRow == actualRow) {
-                        if (actualValue == 1 && predictedValue == 1) { TP[predictedRow]++; TPTot++; }
-                        if (actualValue == 0 && predictedValue == 0) { TN[predictedRow]++; TNTot++; }
-                        if (actualValue == 1 && predictedValue == 0) { FN[predictedRow]++; FNTot++; }
-                        if (actualValue == 0 && predictedValue == 1) { FP[predictedRow]++; FPTot++; }
+                        if (actualValue == 1 && predictedValue == 1) incrementTP(predictedRow);
+                        if (actualValue == 0 && predictedValue == 0) incrementTN(predictedRow);
+                        if (actualValue == 1 && predictedValue == 0) incrementFN(predictedRow);
+                        if (actualValue == 0 && predictedValue == 1) incrementFP(predictedRow);
                     }
                 }
             }
         }
 
         /**
+         * Increments confusion matrix.
+         *
+         * @param predictedRow predicted row
+         * @param actualRow actual row
+         */
+        private void incrementConfusion(int predictedRow, int actualRow) {
+            if (confusion == null) confusion = new HashMap<>();
+            HashMap<Integer, Integer> actuals;
+            if (confusion.containsKey(predictedRow)) actuals = confusion.get(predictedRow);
+            else {
+                actuals = new HashMap<>();
+                confusion.put(predictedRow, actuals);
+            }
+            if (!actuals.containsKey(actualRow)) actuals.put(actualRow, 1);
+            else actuals.put(actualRow, actuals.get(actualRow) + 1);
+        }
+
+        /**
+         * Increments true positive count.
+         *
+         * @param row row
+         */
+        private void incrementTP(int row) {
+            if (!TP.containsKey(row)) TP.put(row, 1);
+            else TP.put(row, TP.get(row) + 1);
+            TPTotal++;
+        }
+
+        /**
+         * Increments true negative count.
+         *
+         * @param row row
+         */
+        private void incrementTN(int row) {
+            if (!TN.containsKey(row)) TN.put(row, 1);
+            else TN.put(row, TN.get(row) + 1);
+            TNTotal++;
+        }
+
+        /**
+         * Increments false negative count.
+         *
+         * @param row row
+         */
+        private void incrementFN(int row) {
+            if (!FN.containsKey(row)) FN.put(row, 1);
+            else FN.put(row, FN.get(row) + 1);
+            FNTotal++;
+        }
+
+        /**
+         * Increments false positive count.
+         *
+         * @param row row
+         */
+        private void incrementFP(int row) {
+            if (!FP.containsKey(row)) FP.put(row, 1);
+            else FP.put(row, FP.get(row) + 1);
+            FPTotal++;
+        }
+
+        /**
          * Updates classification statistics and confusion matrix for multiple samples.<br>
-         * Assumes tree map structure for samples.<br>
+         * Assumes b for samples.<br>
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
-         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void update(MMatrix predicted, MMatrix actual) throws MatrixException {
-            if (confusion == null) reset (actual.values().toArray(new Matrix[0])[0].getRows());
-            else if (confusion.length != actual.values().toArray(new Matrix[0])[0].getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+        public void update(MMatrix predicted, MMatrix actual) {
             for (int sample = 0; sample < actual.size(); sample++) {
                 update(predicted.get(sample), actual.get(sample));
             }
@@ -355,11 +423,8 @@ public class Metrics {
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
-         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void update(Sequence predicted, Sequence actual) throws MatrixException {
-            if (confusion == null) reset (actual.firstValue().get(0).getRows());
-            else if (confusion.length != actual.firstValue().get(0).getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+        public void update(Sequence predicted, Sequence actual) {
             for (Integer sampleIndex : predicted.keySet()) {
                 for (Integer matrixIndex : predicted.sampleKeySet()) {
                     update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
@@ -369,15 +434,12 @@ public class Metrics {
 
         /**
          * Updates classification statistics and confusion matrix for multiple samples.<br>
-         * Assumes hash map structure for samples.<br>
+         * Assumes linked hash map structure for samples.<br>
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
-         * @throws MatrixException throws exception if matrix operation fails.
          */
-        public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException {
-            if (confusion == null) reset (actual.values().toArray(new Matrix[0])[0].getRows());
-            else if (confusion.length != actual.values().toArray(new Matrix[0])[0].getRows()) throw new MatrixException("Classification and sample feature amounts do not match");
+        public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) {
             for (int sample = 0; sample < actual.size(); sample++) {
                 update(predicted.get(sample), actual.get(sample));
             }
@@ -386,54 +448,67 @@ public class Metrics {
         /**
          * Resets classification statistics.
          *
-         * @param featureAmount number of samples for statistics after reset.
          */
-        public void reset(int featureAmount) {
-            TP = new int[featureAmount];
-            FP = new int[featureAmount];
-            TN = new int[featureAmount];
-            FN = new int[featureAmount];
-            TPTot = 0;
-            FPTot = 0;
-            TNTot = 0;
-            FNTot = 0;
-            confusion = new int[featureAmount][featureAmount];
+        public void reset() {
+            features = new HashSet<>();
+            TP = new HashMap<>();
+            FP = new HashMap<>();
+            TN = new HashMap<>();
+            FN = new HashMap<>();
+            TPTotal = 0;
+            FPTotal = 0;
+            TNTotal = 0;
+            FNTotal = 0;
+            confusion = new HashMap<>();
+        }
+
+        /**
+         * Returns classified features.
+         *
+         * @return classified features.
+         */
+        public HashSet<Integer> getFeatures() {
+            return features;
         }
 
         /**
          * Returns true positive statistics.
          *
+         * @param feature feature.
          * @return true positive statistics.
          */
-        public int[] getTP() {
-            return TP;
+        public int getTP(int feature) {
+            return TP.getOrDefault(feature, 0);
         }
 
         /**
          * Returns false positive statistics.
          *
+         * @param feature feature.
          * @return false positive statistics.
          */
-        public int[] getFP() {
-            return FP;
+        public int getFP(int feature) {
+            return FP.getOrDefault(feature, 0);
         }
 
         /**
          * Returns true negative statistics.
          *
+         * @param feature feature.
          * @return true negative statistics.
          */
-        public int[] getTN() {
-            return TN;
+        public int getTN(int feature) {
+            return TN.getOrDefault(feature, 0);
         }
 
         /**
          * Returns false negative statistics.
          *
+         * @param feature feature.
          * @return false negative statistics.
          */
-        public int[] getFN() {
-            return FN;
+        public int getFN(int feature) {
+            return FN.getOrDefault(feature, 0);
         }
 
         /**
@@ -441,8 +516,8 @@ public class Metrics {
          *
          * @return total true positive count.
          */
-        public int getTPTot() {
-            return TPTot;
+        public int getTPTotal() {
+            return TPTotal;
         }
 
         /**
@@ -450,8 +525,8 @@ public class Metrics {
          *
          * @return total false positive count.
          */
-        public int getFPTot() {
-            return FPTot;
+        public int getFPTotal() {
+            return FPTotal;
         }
 
         /**
@@ -459,8 +534,8 @@ public class Metrics {
          *
          * @return total true negative count.
          */
-        public int getTNTot() {
-            return TNTot;
+        public int getTNTotal() {
+            return TNTotal;
         }
 
         /**
@@ -468,8 +543,8 @@ public class Metrics {
          *
          * @return total false negative count.
          */
-        public int getFNTot() {
-            return FNTot;
+        public int getFNTotal() {
+            return FNTotal;
         }
 
         /**
@@ -477,8 +552,19 @@ public class Metrics {
          *
          * @return confusion matrix.
          */
-        public int[][] getConfusion() {
+        public HashMap<Integer, HashMap<Integer, Integer>> getConfusion() {
             return confusion;
+        }
+
+        /**
+         * Returns specific value in confusion matrix.
+         *
+         * @param predictedRow predicted row.
+         * @param actualRow actual row.
+         * @return specific value in confusion matrix.
+         */
+        public int getConfusionValue(int predictedRow, int actualRow) {
+            return confusion.get(predictedRow) == null ? 0 : confusion.get(predictedRow).getOrDefault(actualRow, 0);
         }
 
     }
@@ -718,12 +804,12 @@ public class Metrics {
     public TreeMap<Integer, Double> getMovingAverage(int lastNIterations) {
         TreeMap<Integer, Double> movingAverage = new TreeMap<>();
         if (errors.size() == 0) return new TreeMap<>();
-        double curAvg = 0;
+        double currentAverage = 0;
         int start = Integer.MIN_VALUE;
         for (Integer index : errors.descendingKeySet()) {
             if (start == Integer.MIN_VALUE) start = index;
-            curAvg = start == index ? errors.get(index) : 0.9 * curAvg + 0.1 * errors.get(index);
-            movingAverage.put(index, curAvg);
+            currentAverage = start == index ? errors.get(index) : 0.9 * currentAverage + 0.1 * errors.get(index);
+            movingAverage.put(index, currentAverage);
             if (index <= start - lastNIterations) break;
         }
         return movingAverage;
@@ -760,23 +846,23 @@ public class Metrics {
     }
 
     /**
-     * Get average error of last N iteration.
+     * Get average error of last N iterations.
      *
      * @param lastNIterations number of iterations to be included into average error.
      * @return average error of last N iteration.
      */
     public double getAverage(int lastNIterations) {
         if (errors.size() == 0) return 0;
-        double curAvg = 0;
+        double currentAverage = 0;
         int count = 0;
         int start = Integer.MIN_VALUE;
         for (Integer index : errors.descendingKeySet()) {
             if (start == Integer.MIN_VALUE) start = index;
-            curAvg += errors.get(index);
+            currentAverage += errors.get(index);
             count++;
             if (index <= start - lastNIterations && lastNIterations != -1) break;
         }
-        return curAvg / (double)count;
+        return currentAverage / (double)count;
     }
 
     /**
@@ -796,7 +882,7 @@ public class Metrics {
      */
     public double getMin(int lastNIterations) {
         if (errors.size() == 0) return 0;
-        double min = Double.MAX_VALUE;
+        double min = Double.POSITIVE_INFINITY;
         int start = Integer.MIN_VALUE;
         for (Integer index : errors.descendingKeySet()) {
             if (start == Integer.MIN_VALUE) start = index;
@@ -823,7 +909,7 @@ public class Metrics {
      */
     public double getMax(int lastNIterations) {
         if (errors.size() == 0) return 0;
-        double max = Double.MIN_VALUE;
+        double max = Double.NEGATIVE_INFINITY;
         int start = Integer.MIN_VALUE;
         for (Integer index : errors.descendingKeySet()) {
             if (start == Integer.MIN_VALUE) start = index;
@@ -991,16 +1077,22 @@ public class Metrics {
     public double classificationAccuracy() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         if (averageType == AverageType.MACRO) {
-            double avg = 0;
-            for (int item = 0; item < classification.getTP().length; item++) {
-                if ((double)(classification.getTP()[item] + classification.getFP()[item] + classification.getTN()[item] + classification.getFN()[item]) != 0) {
-                    avg += (double)(classification.getTP()[item] + classification.getTN()[item]) / (double)(classification.getTP()[item] + classification.getFP()[item] + classification.getTN()[item] + classification.getFN()[item]);
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double TP = classification.getTP(feature);
+                double FP = classification.getFP(feature);
+                double TN = classification.getTN(feature);
+                double FN = classification.getFN(feature);
+                if (FP + TN + FP + FN > 0) {
+                    average += (TP + TN) / (TP + FP + TN + FN);
+                    averageCount++;
                 }
             }
-            return avg / (double)classification.getTP().length;
+            return averageCount == 0 ? 0 : average / (double)averageCount;
         }
         else {
-            return (double)(classification.getTPTot() + classification.getTNTot()) / (double)(classification.getTPTot() + classification.getFPTot() + classification.getTNTot() + classification.getFNTot());
+            return (double)(classification.getTPTotal() + classification.getTNTotal()) / (double)(classification.getTPTotal() + classification.getFPTotal() + classification.getTNTotal() + classification.getFNTotal());
         }
     }
 
@@ -1015,16 +1107,22 @@ public class Metrics {
     public double classificationErrorRate() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         if (averageType == AverageType.MACRO) {
-            double avg = 0;
-            for (int item = 0; item < classification.getTP().length; item++) {
-                if ((double)(classification.getTP()[item] + classification.getFP()[item] + classification.getTN()[item] + classification.getFN()[item]) != 0) {
-                    avg += (double)(classification.getFP()[item] + classification.getFN()[item]) / (double)(classification.getTP()[item] + classification.getFP()[item] + classification.getTN()[item] + classification.getFN()[item]);
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double TP = classification.getTP(feature);
+                double FP = classification.getFP(feature);
+                double TN = classification.getTN(feature);
+                double FN = classification.getFN(feature);
+                if (FP + TN + FP + FN > 0) {
+                    average += (FP + FN) / (TP + FP + TN + FN);
+                    averageCount++;
                 }
             }
-            return avg / (double)classification.getTP().length;
+            return averageCount == 0 ? 0 : average / (double)averageCount;
         }
         else {
-            return (double)(classification.getFPTot() + classification.getFNTot()) / (double)(classification.getTPTot() + classification.getFPTot() + classification.getTNTot() + classification.getFNTot());
+            return (double)(classification.getFPTotal() + classification.getFNTotal()) / (double)(classification.getTPTotal() + classification.getFPTotal() + classification.getTNTotal() + classification.getFNTotal());
         }
     }
 
@@ -1040,16 +1138,20 @@ public class Metrics {
     public double classificationPrecision() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         if (averageType == AverageType.MACRO) {
-            double avg = 0;
-            for (int item = 0; item < classification.getTP().length; item++) {
-                if ((double)(classification.getTP()[item] + classification.getFP()[item]) != 0) {
-                    avg += (double)(classification.getTP()[item]) / (double)(classification.getTP()[item] + classification.getFP()[item]);
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double TP = classification.getTP(feature);
+                double FP = classification.getFP(feature);
+                if (TP + FP > 0) {
+                    average += TP / (TP + FP);
+                    averageCount++;
                 }
             }
-            return avg / (double)classification.getTP().length;
+            return averageCount == 0 ? 0 : average / (double)averageCount;
         }
         else {
-            return (double)(classification.getTPTot()) / (double)(classification.getTPTot() + classification.getFPTot());
+            return (double)(classification.getTPTotal()) / (double)(classification.getTPTotal() + classification.getFPTotal());
         }
     }
 
@@ -1065,16 +1167,20 @@ public class Metrics {
     public double classificationRecall() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         if (averageType == AverageType.MACRO) {
-            double avg = 0;
-            for (int item = 0; item < classification.getTP().length; item++) {
-                if ((double)(classification.getTP()[item] + classification.getFN()[item]) != 0) {
-                    avg += (double)(classification.getTP()[item]) / (double)(classification.getTP()[item] + classification.getFN()[item]);
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double TP = classification.getTP(feature);
+                double FN = classification.getFN(feature);
+                if (TP + FN > 0) {
+                    average += TP / (TP + FN);
+                    averageCount++;
                 }
             }
-            return avg / (double)classification.getTP().length;
+            return averageCount == 0 ? 0 : average / (double)averageCount;
         }
         else {
-            return (double)(classification.getTPTot()) / (double)(classification.getTPTot() + classification.getFNTot());
+            return (double)(classification.getTPTotal()) / (double)(classification.getTPTotal() + classification.getFNTotal());
         }
     }
 
@@ -1090,16 +1196,20 @@ public class Metrics {
     public double classificationSpecificity() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         if (averageType == AverageType.MACRO) {
-            double avg = 0;
-            for (int item = 0; item < classification.getTN().length; item++) {
-                if ((double)(classification.getTN()[item] + classification.getFP()[item]) != 0) {
-                    avg += (double)(classification.getTN()[item]) / (double)(classification.getTN()[item] + classification.getFP()[item]);
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double FP = classification.getFP(feature);
+                double TN = classification.getTN(feature);
+                if (TN + FP > 0) {
+                    average += TN / (TN + FP);
+                    averageCount++;
                 }
             }
-            return avg / (double)classification.getTN().length;
+            return averageCount == 0 ? 0 : average / (double)averageCount;
         }
         else {
-            return (double)(classification.getTNTot()) / (double)(classification.getTNTot() + classification.getFPTot());
+            return (double)(classification.getTNTotal()) / (double)(classification.getTNTotal() + classification.getFPTotal());
         }
     }
 
@@ -1111,11 +1221,32 @@ public class Metrics {
      * @return classification F1 score.
      * @throws NeuralNetworkException throws exception if metrics is not defined as classification type.
      */
-    public double classificationF1score() throws NeuralNetworkException {
+    public double classificationF1Score() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
-        double precision = classificationPrecision();
-        double recall = classificationRecall();
-        return 2 * precision * recall / (precision + recall);
+        if (averageType == AverageType.MACRO) {
+            double average = 0;
+            int averageCount = 0;
+            for (Integer feature : classification.getFeatures()) {
+                double TP = classification.getTP(feature);
+                double FP = classification.getFP(feature);
+                double FN = classification.getFN(feature);
+                double precision = TP / (TP + FP);
+                double recall =  TP / (TP + FN);
+                if (precision + recall > 0) {
+                    average += 2 * precision * recall / (precision + recall);
+                    averageCount++;
+                }
+            }
+            return averageCount == 0 ? 0 : average / (double)averageCount;
+        }
+        else {
+            double TP = classification.getTPTotal();
+            double FP = classification.getFPTotal();
+            double FN = classification.getFNTotal();
+            double precision = TP / (TP + FP);
+            double recall =  TP / (TP + FN);
+            return precision + recall > 0 ? 2 * precision * recall / (precision + recall) : 0;
+        }
     }
 
     /**
@@ -1124,7 +1255,7 @@ public class Metrics {
      * @return confusion matrix.
      * @throws NeuralNetworkException throws exception if metrics is not defined as classification type.
      */
-    public int[][] confusionMatrix() throws NeuralNetworkException {
+    public HashMap<Integer, HashMap<Integer, Integer>> confusionMatrix() throws NeuralNetworkException {
         if (metricsType != MetricsType.CLASSIFICATION) throw new NeuralNetworkException("Not classification metric.");
         return classification.getConfusion();
     }
@@ -1141,7 +1272,8 @@ public class Metrics {
             System.out.println("  Precision: " + classificationPrecision());
             System.out.println("  Recall: " + classificationRecall());
             System.out.println("  Specificity: " + classificationSpecificity());
-            System.out.println("  F1 Score: " + classificationF1score());
+            System.out.println("  F1 Score: " + classificationF1Score());
+            printConfusionMatrix();
         }
         else {
             System.out.println("Regression accuracy: " + (1 - getAverage(-1)));
@@ -1158,12 +1290,12 @@ public class Metrics {
             return;
         }
         System.out.println("Confusion matrix (actual value as rows, predicted value as columns):");
-        int[][] confusionMatrix = classification.getConfusion();
-        for (int[] matrix : confusionMatrix) {
+        for (Integer predictedRow : classification.getFeatures()) {
             System.out.print("[");
-            for (int j = 0; j < confusionMatrix[0].length; j++) {
-                System.out.print(matrix[j]);
-                if (j < confusionMatrix[0].length - 1) System.out.print(" ");
+            int index = 0;
+            for (Integer actualRow : classification.getFeatures()) {
+                System.out.print(classification.getConfusionValue(predictedRow, actualRow));
+                if (index++ < classification.getFeatures().size() - 1) System.out.print(" ");
             }
             System.out.println("]");
         }
