@@ -89,6 +89,13 @@ public class OneHotEncoder {
         return output;
     }
 
+    /**
+     * Return mapping key corresponding to a specific value.
+     *
+     * @param mapping current mapping.
+     * @param value value.
+     * @return mapping key corresponding to a specific value.
+     */
     private int getMappingKey(HashMap<Double, Integer> mapping, double value) {
         if (mapping.containsKey(value)) return mapping.get(value);
         else {

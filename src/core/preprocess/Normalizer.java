@@ -144,8 +144,8 @@ public class Normalizer {
         }
         for (Integer row : minMaxRows) {
             if (adjust) {
-                minimumValues.put(row, Double.MAX_VALUE);
-                maximumValues.put(row, Double.MIN_VALUE);
+                minimumValues.put(row, Double.POSITIVE_INFINITY);
+                maximumValues.put(row, Double.NEGATIVE_INFINITY);
                 for (Integer entry : data.keySet()) {
                     for (Integer depth : data.get(entry).keySet()) {
                         minimumValues.put(row, Math.min(minimumValues.get(row), data.get(entry).get(depth).getValue(row, 0)));
@@ -222,8 +222,8 @@ public class Normalizer {
         }
         for (Integer row : minMaxRows) {
             if (adjust) {
-                minimumValues.put(row, Double.MAX_VALUE);
-                maximumValues.put(row, Double.MIN_VALUE);
+                minimumValues.put(row, Double.POSITIVE_INFINITY);
+                maximumValues.put(row, Double.NEGATIVE_INFINITY);
                 for (Integer entry : data.keySet()) {
                     for (Integer index : data.get(entry).keySet()) {
                         for (Integer depth : data.get(entry).get(index).keySet()) {

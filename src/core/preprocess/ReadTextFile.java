@@ -17,7 +17,7 @@ import java.util.Scanner;
 
 /**
  * Defines class for reading text file.<br>
- * Reads text file and maps each character as separate input or output columns.<br>
+ * Reads text file and maps each character as separate input or output columns (one-hot encodes characters).<br>
  * Number of characters in input and output can be specified.<br>
  *
  */
@@ -126,7 +126,7 @@ public class ReadTextFile {
      * @param intAt integer to be mapped.
      * @return mapped character value.
      */
-    public static int intToChar(int intAt) {
+    public static char intToChar(int intAt) {
         int mappedChar = 32;
         if (intAt >= 1 && intAt <= 10) mappedChar = intAt + 47;
         if (intAt >= 11 && intAt <= 36) mappedChar = intAt + 86;
@@ -137,7 +137,7 @@ public class ReadTextFile {
         if (intAt == 41) mappedChar = 63;
         if (intAt == 42) mappedChar = 228;
         if (intAt == 43) mappedChar = 246;
-        return mappedChar;
+        return (char)mappedChar;
     }
 
     /**
