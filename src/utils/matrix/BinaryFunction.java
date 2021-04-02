@@ -23,16 +23,19 @@ public class BinaryFunction implements Serializable {
 
     /**
      * Lambda function to calculate function.
+     *
      */
     private Matrix.MatrixBinaryOperation function;
 
     /**
      * Lambda function to calculate derivative of function.
+     *
      */
     private Matrix.MatrixBinaryOperation derivative;
 
     /**
      * Defines type of function such as Sigmoid, ReLU.
+     *
      */
     private BinaryFunctionType binaryFunctionType;
 
