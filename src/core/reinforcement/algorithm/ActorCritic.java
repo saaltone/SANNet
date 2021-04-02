@@ -5,8 +5,11 @@
 
 package core.reinforcement.algorithm;
 
+import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
-import core.reinforcement.policy.Policy;
+import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
+import core.reinforcement.policy.updateablepolicy.UpdateableBasicPolicy;
 import core.reinforcement.value.StateValueFunctionEstimator;
 import utils.DynamicParamException;
 
@@ -20,24 +23,29 @@ public class ActorCritic extends AbstractPolicyGradient {
      * Constructor for ActorCritic
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param stateValueFunctionEstimator reference to state value function estimator.
+     * @param executablePolicyType executable policy type.
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param valueFunctionEstimator reference to value function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public ActorCritic(Environment environment, Policy policy, StateValueFunctionEstimator stateValueFunctionEstimator) {
-        super(environment, policy, stateValueFunctionEstimator);
+    public ActorCritic(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException {
+        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new StateValueFunctionEstimator(valueFunctionEstimator));
     }
 
     /**
      * Constructor for ActorCritic
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
-     * @param stateValueFunctionEstimator reference to state value function estimator.
-     * @param params parameters for agent.
+     * @param executablePolicyType executable policy type.
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param valueFunctionEstimator reference to value function estimator.
+     * @param params parameters
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public ActorCritic(Environment environment, Policy policy, StateValueFunctionEstimator stateValueFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, policy, stateValueFunctionEstimator, params);
+    public ActorCritic(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
+        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new StateValueFunctionEstimator(valueFunctionEstimator), params);
     }
 
 }
