@@ -26,7 +26,7 @@ public class DMask extends Mask {
     private final int columns;
 
     /**
-     * Mask data structure as two dimensional row column array-
+     * Mask data structure as two dimensional row column array.
      *
      */
     private boolean[][] mask;
@@ -45,6 +45,7 @@ public class DMask extends Mask {
 
     /**
      * Stack to store masks.
+     *
      */
     private Stack<boolean[][]> maskStack = new Stack<>();
 
@@ -94,7 +95,7 @@ public class DMask extends Mask {
     }
 
     /**
-     * Retrieves copy of mask.
+     * Returns copy of mask.
      *
      * @return copy of mask.
      */
