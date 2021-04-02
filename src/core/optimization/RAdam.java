@@ -89,9 +89,9 @@ public class RAdam implements Optimizer, Serializable {
     }
 
     /**
-     * Returns parameters used for Adam.
+     * Returns parameters used for RAdam.
      *
-     * @return parameters used for Adam.
+     * @return parameters used for RAdam.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
