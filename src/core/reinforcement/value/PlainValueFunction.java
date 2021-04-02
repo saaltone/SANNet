@@ -6,6 +6,7 @@
 package core.reinforcement.value;
 
 import core.reinforcement.Agent;
+import core.reinforcement.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
@@ -21,6 +22,10 @@ import java.util.TreeSet;
  */
 public class PlainValueFunction extends AbstractValueFunction {
 
+    /**
+     * Reference to direct function estimator.
+     *
+     */
     private final DirectFunctionEstimator functionEstimator;
 
     /**
@@ -53,8 +58,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @param functionEstimator reference to DirectFunctionEstimator.
      */
     public PlainValueFunction(DirectFunctionEstimator functionEstimator) {
-        super(1);
-        this.functionEstimator = functionEstimator;
+        this(1, functionEstimator);
     }
 
     /**
@@ -70,38 +74,11 @@ public class PlainValueFunction extends AbstractValueFunction {
     }
 
     /**
-     * Constructor for PlainValueFunction.
-     *
-     * @param functionEstimator reference to DirectFunctionEstimator.
-     * @param params parameters for PlainValueFunction.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public PlainValueFunction(DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(1, params);
-        this.functionEstimator = functionEstimator;
-        lambda = 1;
-    }
-
-    /**
-     * Constructor for PlainValueFunction.
-     *
-     * @param numberOfActions number of actions for PlainValueFunction.
-     * @param functionEstimator reference to DirectFunctionEstimator.
-     * @param params parameters for PlainValueFunction.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(numberOfActions, params);
-        this.functionEstimator = functionEstimator;
-        lambda = 1;
-    }
-
-    /**
      * Returns parameters used for PlainValueFunction.
      *
      * @return parameters used for PlainValueFunction.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("useBaseline", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
@@ -119,6 +96,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("useBaseline")) useBaseline = params.getValueAsBoolean("useBaseline");
         if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
     }
@@ -136,12 +114,30 @@ public class PlainValueFunction extends AbstractValueFunction {
     public void stop() {}
 
     /**
+     * Not used.
+     *
+     * @param agent agent.
+     */
+    public void registerAgent(Agent agent) {
+        functionEstimator.registerAgent(agent);
+    }
+
+    /**
+     * Return true is function is state action value function.
+     *
+     * @return true is function is state action value function.
+     */
+    public boolean isStateActionValueFunction() {
+        return false;
+    }
+
+    /**
      * Returns state value.
      *
      * @param stateTransition state.
      * @return state value.
      */
-    protected double getValue(StateTransition stateTransition) {
+    public double getValue(StateTransition stateTransition) {
         return 0;
     }
 
@@ -196,13 +192,58 @@ public class PlainValueFunction extends AbstractValueFunction {
     }
 
     /**
+     * Resets FunctionEstimator.
+     *
+     */
+    public void resetFunctionEstimator() {
+        getFunctionEstimator().reset();
+    }
+
+    /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @return true if all registered agents are ready to update.
+     */
+    public boolean readyToUpdate(Agent agent) throws AgentException {
+        return getFunctionEstimator().readyToUpdate(agent);
+    }
+
+    /**
+     * Updated state transitions in memory of FunctionEstimator.
+     *
+     * @param stateTransitions state transitions
+     */
+    public void updateFunctionEstimatorMemory(TreeSet<StateTransition> stateTransitions) {
+        getFunctionEstimator().update(stateTransitions);
+    }
+
+    /**
+     * Samples memory of FunctionEstimator.
+     *
+     */
+    public void sample() {
+        getFunctionEstimator().sample();
+    }
+
+    /**
+     * Returns sampled state transitions.
+     *
+     * @return sampled state transitions.
+     */
+    public TreeSet<StateTransition> getSampledStateTransitions() {
+        return getFunctionEstimator().getSampledStateTransitions();
+    }
+
+    /**
      * Updates FunctionEstimator.
      *
-     * @param agent agent.
      */
-    public void updateFunctionEstimator(Agent agent) {
-        if (getFunctionEstimator().sampledSetEmpty()) return;
-        getFunctionEstimator().update(getFunctionEstimator().getSampledStateTransitions());
+    public void updateFunctionEstimator() {
+        TreeSet<StateTransition> sampledStateTransitions = getSampledStateTransitions();
+        if (sampledStateTransitions == null) return;
+
+        getFunctionEstimator().update(sampledStateTransitions);
     }
 
 }
