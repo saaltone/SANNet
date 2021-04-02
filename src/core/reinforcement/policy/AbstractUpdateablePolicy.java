@@ -6,11 +6,11 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
-import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
@@ -27,7 +27,19 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     /**
      * Constructor for AbstractUpdateablePolicy.
      *
-     * @param executablePolicy reference to policy.
+     * @param executablePolicyType executable policy type.
+     * @param functionEstimator reference to FunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     */
+    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+        super(executablePolicyType, functionEstimator);
+    }
+
+    /**
+     * Constructor for AbstractUpdateablePolicy.
+     *
+     * @param executablePolicy executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      */
     public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
@@ -52,33 +64,49 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      *
      */
     public void update() {
-        if (isLearning()) executablePolicy.update();
-        executablePolicy.finish();
+        executablePolicy.finish(isLearning());
+    }
+
+    /**
+     * Resets FunctionEstimator.
+     *
+     */
+    public void resetFunctionEstimator() {
+        functionEstimator.reset();
     }
 
     /**
      * Updates policy.
      *
-     * @param agent agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    public void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
-        if (getFunctionEstimator().sampledSetEmpty()) return;
-        TreeSet<StateTransition> stateTransitions = getFunctionEstimator().getSampledStateTransitions();
+    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+        TreeSet<StateTransition> sampledStateTransitions = functionEstimator.getSampledStateTransitions();
+        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) return;
 
         preProcess();
-        for (StateTransition stateTransition : stateTransitions) {
-            Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions() + getStateValueOffset(), 1);
-            if (isStateActionValueFunction) policyValues.setValue(0, 0, stateTransition.tdTarget);
-            policyValues.setValue(getAction(stateTransition.action), 0, getPolicyValue(stateTransition));
-            getFunctionEstimator().store(agent, stateTransition, policyValues);
-        }
+        for (StateTransition stateTransition : sampledStateTransitions) functionEstimator.store(stateTransition, getPolicyValues(stateTransition));
         postProcess();
 
-        getFunctionEstimator().update(agent);
+        functionEstimator.update();
+    }
+
+    /**
+     * Returns policy values.
+     *
+     * @param stateTransition state transition.
+     * @return policy values.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     */
+    private Matrix getPolicyValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions() + isStateActionValueFunction(), 1);
+        if (isStateActionValueFunction) policyValues.setValue(0, 0, stateTransition.tdTarget);
+        policyValues.setValue(getAction(stateTransition.action), 0, getPolicyValue(stateTransition));
+        return policyValues;
     }
 
     /**
