@@ -63,7 +63,7 @@ public class Persistence implements Serializable {
     private int totalCount = 0;
 
     /**
-     * Default constructor.
+     * Default constructor for persistence class.
      *
      */
     public Persistence() {
