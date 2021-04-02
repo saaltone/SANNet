@@ -46,6 +46,7 @@ public class SMask extends Mask {
 
     /**
      * Stack to store masks.
+     *
      */
     private Stack<HashMap<Integer, Boolean>> maskStack = new Stack<>();
 
