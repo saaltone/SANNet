@@ -8,16 +8,18 @@ package core.reinforcement.value;
 import core.NeuralNetworkException;
 import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
-import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
+import utils.Configurable;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
+
+import java.util.TreeSet;
 
 /**
  * Interface that defines ValueFunction.
  *
  */
-public interface ValueFunction {
+public interface ValueFunction extends Configurable {
 
     /**
      * Starts FunctionEstimator
@@ -33,6 +35,38 @@ public interface ValueFunction {
      *
      */
     void stop();
+
+    /**
+     * Registers agent for FunctionEstimator.
+     *
+     * @param agent agent.
+     */
+    void registerAgent(Agent agent);
+
+    /**
+     * Return true is function is state action value function.
+     *
+     * @return true is function is state action value function.
+     */
+    boolean isStateActionValueFunction();
+
+    /**
+     * Returns value for state.
+     *
+     * @param stateTransition state transition.
+     * @return value for state.
+     */
+   double getValue(StateTransition stateTransition);
+
+    /**
+     * Returns target value based on next state.
+     *
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
      * Updates value function.
@@ -52,21 +86,48 @@ public interface ValueFunction {
     void update(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
+     * Resets FunctionEstimator.
+     *
+     */
+    void resetFunctionEstimator();
+
+    /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @throws AgentException throws exception if agent is not registered for function estimator.
+     * @return true if all registered agents are ready to update.
+     */
+    boolean readyToUpdate(Agent agent) throws AgentException;
+
+    /**
+     * Updated state transitions in memory of FunctionEstimator.
+     *
+     * @param stateTransitions state transitions
+     */
+    void updateFunctionEstimatorMemory(TreeSet<StateTransition> stateTransitions);
+
+    /**
+     * Samples memory of FunctionEstimator.
+     *
+     */
+    void sample();
+
+    /**
+     * Returns sampled state transitions.
+     *
+     * @return sampled state transitions.
+     */
+    TreeSet<StateTransition> getSampledStateTransitions();
+
+    /**
      * Updates FunctionEstimator.
      *
-     * @param agent agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    void updateFunctionEstimator(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
-
-    /**
-     * Returns FunctionEstimator.
-     *
-     * @return FunctionEstimator.
-     */
-    FunctionEstimator getFunctionEstimator();
+    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
 
 }
