@@ -41,7 +41,7 @@ public class OutputLayer extends AbstractLayer {
     private transient Sequence targets;
 
     /**
-     * Important sampling weights for gradient calculation.
+     * Importance sampling weights for gradient calculation.
      *
      */
     private transient TreeMap<Integer, Double> importanceSamplingWeights;
@@ -148,6 +148,13 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     */
+    public void reinitialize() {
+    }
+
+    /**
      * Sets training flag.
      *
      * @param training if true layer is training otherwise false.
@@ -196,7 +203,7 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Executes forward processing step of execution layer.
+     * Executes forward processing step of output layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
@@ -214,7 +221,7 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Executes backward step of neural network.
+     * Executes backward step of output layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
@@ -342,6 +349,21 @@ public class OutputLayer extends AbstractLayer {
      *
      */
     public void resetNormalization() {
+    }
+
+    /**
+     * Reinitializes specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reinitialized.
+     */
+    public void reinitializeNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    public void reinitializeNormalization() {
     }
 
     /**
