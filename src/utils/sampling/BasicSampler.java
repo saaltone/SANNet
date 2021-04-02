@@ -47,7 +47,7 @@ public class BasicSampler implements Sampler, Serializable {
     private boolean fullSet = false;
 
     /**
-     * If true samples at random start. Default value true.
+     * If true samples at random start. Default value false.
      *
      */
     private boolean randomStart = false;
