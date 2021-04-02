@@ -115,6 +115,13 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     */
+    public void reinitialize() {
+    }
+
+    /**
      * Sets training flag.
      *
      * @param training if true layer is training otherwise false.
@@ -236,6 +243,21 @@ public class InputLayer extends AbstractLayer {
      *
      */
     public void resetNormalization() {
+    }
+
+    /**
+     * Reinitializes specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reinitialized.
+     */
+    public void reinitializeNormalization(NormalizationType normalizationType) {
+    }
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    public void reinitializeNormalization() {
     }
 
     /**
