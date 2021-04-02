@@ -9,7 +9,6 @@ import core.NeuralNetwork;
 import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.reinforcement.*;
 import core.reinforcement.algorithm.*;
@@ -19,9 +18,7 @@ import core.reinforcement.function.TabularFunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.memory.PriorityMemory;
-import core.reinforcement.policy.*;
 import core.reinforcement.policy.executablepolicy.*;
-import core.reinforcement.value.*;
 import utils.*;
 import utils.matrix.*;
 
@@ -36,6 +33,7 @@ import java.util.HashSet;
  * Class that implements deep reinforcement learning solution solving travelling salesman problem.
  *
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class TSP implements Environment {
 
     /**
@@ -102,37 +100,37 @@ public class TSP implements Environment {
          * Length of shortest route found as normalized distance.
          *
          */
-        private double minNormalizedDistance = Double.MAX_VALUE;
+        private double minNormalizedDistance = Double.POSITIVE_INFINITY;
 
         /**
          * Length of shortest route found.
          *
          */
-        private double minDistance = Double.MAX_VALUE;
+        private double minDistance = Double.POSITIVE_INFINITY;
 
         /**
          * Length of longest route found as normalized distance.
          *
          */
-        private double maxNormalizedDistance = Double.MIN_VALUE;
+        private double maxNormalizedDistance = Double.NEGATIVE_INFINITY;
 
         /**
          * Length of longest route found.
          *
          */
-        private double maxDistance = Double.MIN_VALUE;
+        private double maxDistance = Double.NEGATIVE_INFINITY;
 
         /**
          * Distance from previous tour as normalized distance.
          *
          */
-        private double lastNormalizedDistance = Double.MIN_VALUE;
+        private double lastNormalizedDistance = Double.NEGATIVE_INFINITY;
 
         /**
          * Distance from previous tour.
          *
          */
-        private double lastDistance = Double.MIN_VALUE;
+        private double lastDistance = Double.NEGATIVE_INFINITY;
 
         /**
          * Constructor for tour.
@@ -347,6 +345,7 @@ public class TSP implements Environment {
 
     }
 
+
     /**
      * Number of cities for travelling salesman.
      *
@@ -413,12 +412,13 @@ public class TSP implements Environment {
      *
      * @param cityAmount number of cities to be visited.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws IOException throws exception if copying of neural network instance fails.
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
         tour = new Tour(cityAmount);
         agent = compactState ? createAgent(2 * tour.size(), tour.size() - 1) : createAgent(4 * tour.size(), tour.size() - 1);
     }
@@ -617,7 +617,7 @@ public class TSP implements Environment {
      * @param agent agent that is asking for reward.
      */
     public void setReward(Agent agent) {
-        agent.respond(isTerminalState() ? (getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 2) : 0) : 0);
+        agent.respond(isTerminalState() ? (getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 6) : 0) : 0);
     }
 
     /**
@@ -808,14 +808,17 @@ public class TSP implements Environment {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     * @throws IOException throws exception if copying of neural network instance fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
+     * @throws AgentException throws exception if creation of executable policy fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
+    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+        boolean nnPolicyEstimator = true;
+        boolean nnValueEstimator = true;
         boolean policyGradient = true;
         boolean stateValue = true;
         int policyType = 0;
-        boolean nnPolicyEstimator = true;
-        boolean nnValueEstimator = true;
-        boolean basicPolicy = false;
         Memory estimatorMemory = true ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator;
         FunctionEstimator valueEstimator;
@@ -830,33 +833,37 @@ public class TSP implements Environment {
             policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, policyGradient, false), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
             valueEstimator = nnValueEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount, false, stateValue), (stateValue ? 1 : outputAmount)) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
         }
-//        policyEstimator = nnPolicyEstimator ? new NNFunctionEstimator(estimatorMemory, buildNeuralNetwork(inputAmount, outputAmount), outputAmount) : new TabularFunctionEstimator(estimatorMemory, outputAmount);
-        ExecutablePolicy executablePolicy = null;
+        ExecutablePolicyType executablePolicyType = null;
+        String params = "";
         switch (policyType) {
             case 0:
-                executablePolicy = new GreedyPolicy();
+                executablePolicyType = ExecutablePolicyType.GREEDY;
                 break;
             case 1:
-                executablePolicy = new EpsilonGreedyPolicy("epsilonDecayRate = 0.9999, epsilonMin = 0");
+                executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
+                params += "epsilonInitial = 1, epsilonDecayRate = 0.999, epsilonMin = 0";
                 break;
             case 2:
-                executablePolicy = new NoisyNextBestPolicy("explorationNoiseDecay = 0.999, minExplorationNoise = 0");
+                executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
+                params += "initialExplorationNoise = 1, explorationNoiseDecay = 0.999, minExplorationNoise = 0";
                 break;
             case 3:
-                executablePolicy = new SampledPolicy("thresholdMin = 0");
+                executablePolicyType = ExecutablePolicyType.SAMPLED;
+                params += "thresholdInitial = 0.7, thresholdMin = 0";
                 break;
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QTargetValueFunctionEstimator(valueEstimator));
-//            agent = new DQNLearning(this, new ActionableBasicPolicy(executablePolicy, valueEstimator), new QValueFunctionEstimator(valueEstimator));
-            agent = new Sarsa(this, new ActionablePolicy(executablePolicy, valueEstimator), new ActionValueFunctionEstimator(valueEstimator));
+//            agent = new DDQNLearning(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 150, targetFunctionTau = 0.01"));
+            agent = new DQNLearning(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "agentUpdateCycle = 100"));
+//            agent = new Sarsa(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "agentUpdateCycle = 100"));
         }
         else {
-            Policy policy = basicPolicy ? new UpdateableBasicPolicy(executablePolicy, policyEstimator) : new UpdateableProximalPolicy(executablePolicy, policyEstimator);
-//            agent = new PolicyGradient(this, actionablePolicy,new PlainValueFunction(outputAmount, new DirectFunctionEstimator(estimatorMemory, outputAmount)));
-//            agent = new ActorCritic(this, policy, new StateValueFunctionEstimator(valueEstimator));
-            agent = new MCTSLearning(this, new UpdateableMCTSPolicy(policyEstimator), new StateValueFunctionEstimator(valueEstimator, "gamma = 1"), "updateValuePerEpisode = true");
+//            agent = new ActorCritic(this, executablePolicyType, policyEstimator, valueEstimator, params);
+//            agent = new PPO(this, executablePolicyType, policyEstimator, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "lambda = 1"));
+//            agent = new SoftActorCriticDiscrete(this, executablePolicyType, policyEstimator, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1"));
+//            agent = new REINFORCE(this, executablePolicyType, policyEstimator, params);
+            agent = new MCTSLearning(this, policyEstimator, valueEstimator, params + "gamma = 1, updateValuePerEpisode = true");
         }
         agent.start();
         return agent;
@@ -875,15 +882,15 @@ public class TSP implements Environment {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyFunction, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        String width = "width = " + (inputSize + 20);
+        String width = "width = " + (4 * inputSize);
 //        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
+//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.build();
-//            neuralNetwork.addRegularizer(RegularizationType.LP_REGULARIZATION, "p = 4");
             neuralNetwork.verboseTraining(10);
         }
         else {
@@ -892,7 +899,6 @@ public class TSP implements Environment {
             neuralNetwork.build();
         }
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
-        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
@@ -917,7 +923,6 @@ public class TSP implements Environment {
         neuralNetwork.addOutputLayer(BinaryFunctionType.POLICY_VALUE);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
-        neuralNetwork.addNormalizer(3, NormalizationType.WEIGHT_NORMALIZATION);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
