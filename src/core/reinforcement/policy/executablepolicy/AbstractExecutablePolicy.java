@@ -11,9 +11,7 @@ import utils.DynamicParamException;
 import utils.matrix.Matrix;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * Class that defines AbstractExecutablePolicy which contains shared functions for executable policies.
@@ -82,7 +80,7 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      *
      * @return parameters used for AbstractExecutablePolicy.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("asSoftMax", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
@@ -130,14 +128,11 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @return action taken.
      */
     public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
-        PriorityQueue<ActionValueTuple> stateValuePriorityQueue = new PriorityQueue<>((o1, o2) -> Double.compare(o2.value, o1.value));
-        double cumulativeValue = 0;
+        TreeSet<ActionValueTuple> stateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
         for (Integer action : availableActions) {
-            double actionValue = !asSoftMax ? stateValueMatrix.getValue(action + stateValueOffset, 0) : Math.exp(stateValueMatrix.getValue(action + stateValueOffset, 0));
-            cumulativeValue += actionValue;
-            stateValuePriorityQueue.add(new ActionValueTuple(action, actionValue));
+            stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? stateValueMatrix.getValue(action + stateValueOffset, 0) : Math.exp(stateValueMatrix.getValue(action + stateValueOffset, 0))));
         }
-        return stateValuePriorityQueue.isEmpty() ? -1 : alwaysGreedy ? stateValuePriorityQueue.poll().action : getAction(stateValuePriorityQueue, cumulativeValue);
+        return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? stateValueSet.pollLast().action : getAction(stateValueSet);
     }
 
     /**
@@ -149,26 +144,19 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Updates policy.
-     *
-     */
-    public void update() {
-    }
-
-    /**
      * Finishes episode.
      *
+     * @param update if true update executed.
      */
-    public void finish() {
+    public void finish(boolean update) {
     }
 
     /**
      * Returns action based on policy.
      *
-     * @param stateValuePriorityQueue priority queue containing action values in decreasing order.
-     * @param cumulativeValue cumulative value of actions.
+     * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
      */
-    protected abstract int getAction(PriorityQueue<ActionValueTuple> stateValuePriorityQueue, double cumulativeValue);
+    protected abstract int getAction(TreeSet<ActionValueTuple> stateValueSet);
 
 }

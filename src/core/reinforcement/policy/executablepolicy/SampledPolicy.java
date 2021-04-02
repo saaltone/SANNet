@@ -9,11 +9,11 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 
 import java.util.HashMap;
-import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.TreeSet;
 
 /**
- * Class that defined SampledPolicy which chooses action based on weighted random cumulative value.
+ * Class that defines SampledPolicy.
  *
  */
 public class SampledPolicy extends AbstractExecutablePolicy {
@@ -72,7 +72,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      * @return parameters used for SampledPolicy.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("thresholdInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("thresholdMin", DynamicParam.ParamType.DOUBLE);
@@ -92,6 +92,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("thresholdInitial")) thresholdInitial = params.getValueAsDouble("thresholdInitial");
         if (params.hasParam("thresholdMin")) thresholdMin = params.getValueAsDouble("thresholdMin");
         if (params.hasParam("thresholdDecay")) thresholdDecay = params.getValueAsDouble("thresholdDecay");
@@ -109,19 +110,19 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     /**
      * Returns action based on policy.
      *
-     * @param stateValuePriorityQueue priority queue containing action values in decreasing order.
-     * @param cumulativeValue cumulative value of actions.
+     * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
      */
-    protected int getAction(PriorityQueue<ActionValueTuple> stateValuePriorityQueue, double cumulativeValue) {
-        double thresholdValue = cumulativeValue * thresholdCurrent * random.nextDouble();
-        double currentCumulativeValue = 0;
-        while (!stateValuePriorityQueue.isEmpty()) {
-            ActionValueTuple actionValueTuple = stateValuePriorityQueue.poll();
-            currentCumulativeValue += actionValueTuple.value;
-            if (thresholdValue <= currentCumulativeValue) return actionValueTuple.action;
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+        double lowValue = stateValueSet.first().value;
+        double highValue = stateValueSet.last().value;
+        double thresholdValue = highValue - (highValue - lowValue) * thresholdCurrent * random.nextDouble();
+        int defaultAction = stateValueSet.first().action;
+        while (!stateValueSet.isEmpty()) {
+            ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
+            if (actionValueTuple.value >= thresholdValue) return actionValueTuple.action;
         }
-        return -1;
+        return defaultAction;
     }
 
 }

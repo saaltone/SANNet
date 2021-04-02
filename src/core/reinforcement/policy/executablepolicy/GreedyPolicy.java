@@ -7,7 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.DynamicParamException;
 
-import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 /**
  * Class that defines GreedyPolicy.
@@ -42,12 +42,11 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
     /**
      * Returns action based on policy.
      *
-     * @param stateValuePriorityQueue priority queue containing action values in decreasing order.
-     * @param cumulativeValue cumulative value of actions.
+     * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
      */
-    protected int getAction(PriorityQueue<ActionValueTuple> stateValuePriorityQueue, double cumulativeValue) {
-        return stateValuePriorityQueue.isEmpty() ? -1 : stateValuePriorityQueue.poll().action;
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+        return stateValueSet.isEmpty() ? -1 : stateValueSet.pollLast().action;
     }
 
 }

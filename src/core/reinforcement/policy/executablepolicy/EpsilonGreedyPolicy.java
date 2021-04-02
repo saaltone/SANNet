@@ -85,7 +85,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      * @return parameters used for EpsilonGreedyPolicy.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
@@ -107,6 +107,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
         if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
         if (params.hasParam("epsilonDecayRate")) epsilonDecayRate = params.getValueAsDouble("epsilonDecayRate");

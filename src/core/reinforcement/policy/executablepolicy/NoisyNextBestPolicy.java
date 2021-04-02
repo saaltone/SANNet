@@ -9,8 +9,8 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 
 import java.util.HashMap;
-import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.TreeSet;
 
 /**
  * Class that defines NoisyNextBestPolicy.
@@ -73,7 +73,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      *
      * @return parameters used for NoisyNextBestPolicy.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("initialExplorationNoise", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("minExplorationNoise", DynamicParam.ParamType.DOUBLE);
@@ -93,6 +93,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
         if (params.hasParam("initialExplorationNoise")) initialExplorationNoise = params.getValueAsDouble("initialExplorationNoise");
         if (params.hasParam("minExplorationNoise")) minExplorationNoise = params.getValueAsDouble("minExplorationNoise");
         if (params.hasParam("explorationNoiseDecay")) explorationNoiseDecay = params.getValueAsDouble("explorationNoiseDecay");
@@ -110,13 +111,12 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     /**
      * Returns action based on policy.
      *
-     * @param stateValuePriorityQueue priority queue containing action values in decreasing order.
-     * @param cumulativeValue cumulative value of actions.
+     * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
      */
-    protected int getAction(PriorityQueue<ActionValueTuple> stateValuePriorityQueue, double cumulativeValue) {
-        if (stateValuePriorityQueue.size() > 1 && explorationNoise > random.nextDouble()) stateValuePriorityQueue.poll();
-        return stateValuePriorityQueue.isEmpty() ? -1 : stateValuePriorityQueue.poll().action;
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+        if (stateValueSet.size() > 1 && explorationNoise > random.nextDouble()) stateValueSet.pollLast();
+        return stateValueSet.isEmpty() ? -1 : stateValueSet.pollLast().action;
     }
 
 }

@@ -127,14 +127,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
 
         /**
-         * Sets update action probability.
-         *
-         */
-        void setUpdateActionProbability() {
-            childState.setUpdateActionProbability();
-        }
-
-        /**
          * Updates action value
          *
          */
@@ -212,12 +204,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          */
         private final HashMap<Integer, Action> actions = new HashMap<>();
-
-        /**
-         * If true update for action probabilities is needed.
-         *
-         */
-        private boolean updateActionProbabilities = true;
 
         /**
          * Reference to action with maximum value.
@@ -329,11 +315,12 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         public int act(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
             updateActionProbabilities(stateValueMatrix, availableActions, stateValueOffset);
             maxAction = null;
-            double maxValue = Double.MIN_VALUE;
+            double maxValue = Double.NEGATIVE_INFINITY;
             if (alwaysGreedy) {
-                for (Action action : actions.values()) {
+                for (Integer actionID : availableActions) {
+                    Action action = actions.get(actionID);
                     double currentValue = action.getPolicyValue();
-                    if (maxValue == Double.MIN_VALUE || maxValue < currentValue) {
+                    if (maxValue == Double.NEGATIVE_INFINITY || maxValue < currentValue) {
                         maxValue = currentValue;
                         maxAction = action;
                     }
@@ -342,9 +329,10 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
             else {
                 incrementVisitCount();
                 HashMap<Integer, Double> dirichletDistribution = getDirichletDistribution(alpha, availableActions);
-                for (Action action : actions.values()) {
+                for (Integer actionID : availableActions) {
+                    Action action = actions.get(actionID);
                     double currentValue = action.getPUCT(dirichletDistribution.get(action.actionID), epsilon);
-                    if (maxValue == Double.MIN_VALUE || maxValue < currentValue) {
+                    if (maxValue == Double.NEGATIVE_INFINITY || maxValue < currentValue) {
                         maxValue = currentValue;
                         maxAction = action;
                     }
@@ -398,15 +386,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
 
         /**
-         * Sets flag to update action probabilities for MCTS.
-         *
-         */
-        public void setUpdateActionProbability() {
-            updateActionProbabilities = true;
-            for (Action action : actions.values()) action.setUpdateActionProbability();
-        }
-
-        /**
          * Updates action probabilities for state.
          *
          * @param stateValueMatrix current state value matrix.
@@ -414,8 +393,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * @param stateValueOffset state value offset
          */
         private void updateActionProbabilities(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset) {
-            if (!actions.isEmpty()) if (!updateActionProbabilities) return;
-            updateActionProbabilities = false;
             for (Integer action : availableActions) {
                 double actionValue = stateValueMatrix.getValue(action + stateValueOffset, 0);
                 if (actions.containsKey(action)) actions.get(action).setActionProbability(actionValue);
@@ -434,7 +411,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         public void update(Stack<StateTransition> stateTransitionStack) {
             StateTransition stateTransition = stateTransitionStack.pop();
             getMaxAction().updateActionValue(stateTransition.tdTarget);
-            stateTransition.actionValue = getMaxAction().getPolicyValue();
+            stateTransition.value = getMaxAction().getPolicyValue();
             if (hasParentState()) getParentState().update(stateTransitionStack);
         }
 
@@ -522,7 +499,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      * @return parameters used for MCTSPolicy.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("cPUCT", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
@@ -570,7 +547,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      */
     public void increment() {
-        if (rootState != null) rootState.setUpdateActionProbability();
     }
 
     /**
@@ -619,19 +595,15 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Updates policy.
-     *
-     */
-    public void update() {
-        if (currentState == null || stateTransitionStack.isEmpty()) return;
-        currentState.update(stateTransitionStack);
-    }
-
-    /**
      * Finishes episode.
      *
+     * @param update if true update is executed.
      */
-    public void finish() {
+    public void finish(boolean update) {
+        if (update) {
+            if (currentState == null || stateTransitionStack.isEmpty()) return;
+            currentState.update(stateTransitionStack);
+        }
         stateTransitionStack = new Stack<>();
         currentState = null;
     }
