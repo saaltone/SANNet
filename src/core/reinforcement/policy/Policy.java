@@ -10,18 +10,19 @@ import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.memory.StateTransition;
-import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.value.ValueFunction;
+import utils.Configurable;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
- * Interface for ActionablePolicy.
+ * Interface for Policy.
  *
  */
-public interface Policy {
+public interface Policy extends Configurable {
 
     /**
-     * Starts ActionablePolicy.
+     * Starts Policy.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -30,10 +31,17 @@ public interface Policy {
     void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Stops ActionablePolicy.
+     * Stops Policy.
      *
      */
     void stop();
+
+    /**
+     * Registers agent for FunctionEstimator.
+     *
+     * @param agent agent.
+     */
+    void registerAgent(Agent agent);
 
     /**
      * Sets reference to environment.
@@ -48,6 +56,13 @@ public interface Policy {
      * @return reference to environment.
      */
     Environment getEnvironment();
+
+    /**
+     * Sets value function for policy.
+     *
+     * @param valueFunction value function.
+     */
+    void setValueFunction(ValueFunction valueFunction);
 
     /**
      * Set flag if agent is in learning mode.
@@ -103,21 +118,19 @@ public interface Policy {
     void update();
 
     /**
-     * Updates policy.
+     * Resets FunctionEstimator.
      *
-     * @param agent agent.
+     */
+    void resetFunctionEstimator();
+
+    /**
+     * Updates FunctionEstimator.
+     *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    void update(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
-
-    /**
-     * Returns FunctionEstimator.
-     *
-     * @return FunctionEstimator.
-     */
-    FunctionEstimator getFunctionEstimator();
+    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
 
 }
