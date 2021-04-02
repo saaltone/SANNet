@@ -136,6 +136,19 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Reinitializes layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, NeuralNetworkException {
+        weight.initialize(this.initialization);
+        bias.reset();
+
+        super.reinitialize();
+    }
+
+    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.
