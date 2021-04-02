@@ -18,16 +18,19 @@ public abstract class Mask implements Cloneable, Serializable {
 
     /**
      * Defines if mask is transposed (true) or not (false).
+     *
      */
     boolean isTransposed;
 
     /**
      * Bernoulli probability for selecting if entry (row, column) is masked or not.
+     *
      */
     double probability = 0;
 
     /**
      * Random function for mask class.
+     *
      */
     private final Random random = new Random();
 
@@ -193,9 +196,9 @@ public abstract class Mask implements Cloneable, Serializable {
     public abstract void clearMaskStack();
 
     /**
-     * Returns true with defined probability as masking probability of this matrix.
+     * Returns true with defined masking probability of this matrix.
      *
-     * @return true with defined probability.
+     * @return true with defined masking probability.
      */
     private boolean isMaskedByProbability() {
         return random.nextDouble() > probability;
