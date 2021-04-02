@@ -7,6 +7,7 @@ package core.reinforcement.value;
 
 import core.NeuralNetworkException;
 import core.reinforcement.memory.StateTransition;
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -19,15 +20,9 @@ import java.util.TreeSet;
  * Class that defines AbstractValueFunction.
  *
  */
-public abstract class AbstractValueFunction implements ValueFunction, Serializable {
+public abstract class AbstractValueFunction implements ValueFunction, Configurable, Serializable {
 
     private static final long serialVersionUID = -7436000520645598105L;
-
-    /**
-     * If true value function is state value function otherwise action value function.
-     *
-     */
-    protected final boolean isStateValue;
 
     /**
      * Number of actions for value function.
@@ -70,8 +65,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      *
      */
     AbstractValueFunction() {
-        this.numberOfActions = 1;
-        isStateValue = true;
+        this(1);
     }
 
     /**
@@ -92,7 +86,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      */
     AbstractValueFunction(int numberOfActions) {
         this.numberOfActions = numberOfActions;
-        isStateValue = false;
     }
 
     /**
@@ -112,7 +105,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      *
      * @return parameters used for AbstractValueFunction.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
+    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
         paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
@@ -152,7 +145,9 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * @param stateTransition state transition.
      * @return value for state.
      */
-    protected abstract double getValue(StateTransition stateTransition);
+    public double getValue(StateTransition stateTransition) {
+        return stateTransition.value;
+    }
 
     /**
      * Updates state value.
@@ -162,16 +157,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected abstract void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Returns target value based on next state.
-     *
-     * @param nextStateTransition next state transition.
-     * @return target value based on next state
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
      * Updates baseline value for state transitions.
@@ -187,12 +172,11 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     public void update() throws MatrixException, NeuralNetworkException {
-        if (getFunctionEstimator().sampledSetEmpty()) return;
-        updateValue(getFunctionEstimator().getSampledStateTransitions());
+        updateValue(getSampledStateTransitions());
     }
 
     /**
-     * Updates values for current episode.
+     * Updates values for current state transition chain.
      *
      * @param stateTransition state transition.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -205,6 +189,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
             stateTransitions.add(currentStateTransition);
             currentStateTransition = currentStateTransition.previousStateTransition;
         }
+
         updateValue(stateTransitions);
     }
 
@@ -216,6 +201,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Serializab
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     private void updateValue(TreeSet<StateTransition> stateTransitions) throws MatrixException, NeuralNetworkException {
+        if (stateTransitions == null) return;
         for (StateTransition stateTransition : stateTransitions.descendingSet()) {
             updateValue(stateTransition);
             stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition)));
