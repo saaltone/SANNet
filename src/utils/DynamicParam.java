@@ -38,6 +38,7 @@ public class DynamicParam implements Serializable {
      *
      */
     private static class TypeValue {
+
         /**
          * Defines parameter type.
          *
@@ -110,8 +111,8 @@ public class DynamicParam implements Serializable {
                 this.value = newValue;
             }
             if (type == ParamType.BOOLEAN) {
-                if (newValue.toUpperCase().equals("TRUE")) this.value = true;
-                else if (newValue.toUpperCase().equals("FALSE")) this.value = false;
+                if (newValue.equalsIgnoreCase("TRUE")) this.value = true;
+                else if (newValue.equalsIgnoreCase("FALSE")) this.value = false;
                 else throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Boolean");
                 this.type = type;
             }
@@ -255,13 +256,14 @@ public class DynamicParam implements Serializable {
      * @throws DynamicParamException throws exception if parameters are not provided or parameter is properly defined.
      */
     public DynamicParam(String params, HashMap<String, ParamType> nameTypes) throws DynamicParamException {
+        if (params.isEmpty()) return;
         String[] paramsList = params.split(",");
         if (paramsList.length == 0) throw new DynamicParamException("No parameters found.");
         for (String s : paramsList) setParamByVal(s, nameTypes);
     }
 
     /**
-     * Defines parameter based on give name value and name type pairs.
+     * Defines parameter based on given name value and name type pairs.
      *
      * @param param parameter to be set as name value pair separated by equal sign.
      * @param nameTypes name type list of parameters.
@@ -289,7 +291,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as integer.
      *
      * @param param name of parameter.
      * @return value of parameter as integer.
@@ -301,7 +303,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as long.
      *
      * @param param name of parameter.
      * @return value of parameter as long.
@@ -313,7 +315,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as float.
      *
      * @param param name of parameter.
      * @return value of parameter as float.
@@ -325,7 +327,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as double.
      *
      * @param param name of parameter.
      * @return value of parameter as double.
@@ -337,7 +339,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as character.
      *
      * @param param name of parameter.
      * @return value of parameter as character.
@@ -349,7 +351,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as string.
      *
      * @param param name of parameter.
      * @return value of parameter as string.
@@ -361,7 +363,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Returns value of parameter.
+     * Returns value of parameter as boolean.
      *
      * @param param name of parameter.
      * @return value of parameter as boolean.
@@ -373,7 +375,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Checks if name by specific parameter exists.
+     * Checks if specific parameter exists by name.
      *
      * @param param name of parameter.
      * @return true if parameter is found otherwise false.
