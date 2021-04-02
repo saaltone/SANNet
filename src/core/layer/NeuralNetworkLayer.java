@@ -231,6 +231,14 @@ public interface NeuralNetworkLayer {
     void initialize() throws NeuralNetworkException;
 
     /**
+     * Reinitializes neural network layer.
+     *
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void reinitialize() throws NeuralNetworkException, MatrixException;
+
+    /**
      * Executes forward processing step of layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -333,6 +341,20 @@ public interface NeuralNetworkLayer {
     void resetNormalization();
 
     /**
+     * Reinitializes specific normalization for layer.
+     *
+     * @param normalizationType normalization method to be reinitialized.
+     * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
+     */
+    void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException;
+
+    /**
+     * Resets all normalization for layer.
+     *
+     */
+    void reinitializeNormalization();
+
+    /**
      * Sets optimizer for layer.<br>
      * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
      *
@@ -354,7 +376,7 @@ public interface NeuralNetworkLayer {
     HashMap<Integer, Matrix> getWeightsMap();
 
     /**
-     * Appends other neural network layer with equal weights to this layer by weighted factor tau.
+     * Appends other neural network layer with equal weights to this layer by weighting factor tau.
      *
      * @param otherNeuralNetworkLayer other neural network layer.
      * @param tau tau which controls contribution of other layer.
