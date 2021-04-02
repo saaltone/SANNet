@@ -21,12 +21,19 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
     /**
      * Constructor for AbstractPolicyGradient.
      *
+     */
+    public AbstractPolicyGradient() {
+    }
+
+    /**
+     * Constructor for AbstractPolicyGradient.
+     *
      * @param environment reference to environment.
      * @param policy reference to policy.
      * @param valueFunction reference to value function.
      */
     public AbstractPolicyGradient(Environment environment, Policy policy, ValueFunction valueFunction) {
-        super(environment, policy, valueFunction);
+        initialize(environment, policy, valueFunction);
     }
 
     /**
@@ -39,26 +46,26 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractPolicyGradient(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
-        super(environment, policy, valueFunction, params);
+        initialize(environment, policy, valueFunction, params);
     }
 
     /**
-     * Updates agent.
+     * Updates policy and value functions of agent.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if function estimator update fails.
      */
-    protected void update() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        valueFunction.getFunctionEstimator().sample();
-        if (!updateValuePerEpisode) valueFunction.update();
-        valueFunction.updateFunctionEstimator(this);
-        policy.update(this);
-        policy.increment();
-        policy.reset(false);
-        valueFunction.getFunctionEstimator().reset();
-        policy.getFunctionEstimator().reset();
+    protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+        if(valueFunction.readyToUpdate(this)) {
+            valueFunction.sample();
+            if (!updateValuePerEpisode) valueFunction.update();
+            valueFunction.updateFunctionEstimator();
+            policy.updateFunctionEstimator();
+            valueFunction.resetFunctionEstimator();
+            policy.resetFunctionEstimator();
+        }
     }
 
 }
