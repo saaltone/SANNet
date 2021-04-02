@@ -9,7 +9,7 @@ import core.optimization.Optimizer;
 import utils.*;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
-import utils.procedure.Node;
+import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
@@ -42,7 +42,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     private boolean meanOnly = false;
 
     /**
-     * Optimizer for Layer normalization;
+     * Optimizer for layer normalization;
      *
      */
     private Optimizer optimizer;
@@ -54,13 +54,13 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     private Matrix input;
 
     /**
-     * Learnable parameter gamma of Layer normalization layer.
+     * Learnable parameter gamma of layer normalization layer.
      *
      */
     private Matrix gamma;
 
     /**
-     * Learnable parameter beta of Layer normalization layer.
+     * Learnable parameter beta of layer normalization layer.
      *
      */
     private Matrix beta;
@@ -90,7 +90,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     private final Matrix epsilonMatrix = new DMatrix(10E-8);
 
     /**
-     * Constructor for Layer normalization class.
+     * Constructor for layer normalization class.
      *
      * @param normalizationType normalizationType.
      */
@@ -99,10 +99,10 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Constructor for Layer normalization class.
+     * Constructor for layer normalization class.
      *
      * @param normalizationType normalizationType.
-     * @param params parameters for Layer normalization.
+     * @param params parameters for layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public LayerNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
@@ -111,9 +111,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Returns parameters used for Layer normalization.
+     * Returns parameters used for layer normalization.
      *
-     * @return parameters used for Layer normalization.
+     * @return parameters used for layer normalization.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -122,12 +122,12 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Sets parameters used for Layer normalization.<br>
+     * Sets parameters used for layer normalization.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
+     *     - meanOnly: true if normalization is done only by using mean otherwise false (default value false).<br>
      *
-     * @param params parameters used for Layer normalization.
+     * @param params parameters used for layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -168,16 +168,26 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Resets Layer normalizer.
+     * Resets layer normalizer.
      *
      */
     public void reset() {
         weightGradients = new HashMap<>();
-        procedure.reset();
+        if (procedure != null) procedure.reset();
     }
 
     /**
-     * Sets flag for Layer normalization if neural network is in training state.
+     * Reinitializes normalizer.
+     *
+     */
+    public void reinitialize() {
+        if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
+        if (beta != null) beta.reset();
+        reset();
+    }
+
+    /**
+     * Sets flag for layer normalization if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
@@ -253,7 +263,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Executes backward propagation step for Layer normalization.<br>
+     * Executes backward propagation step for layer normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
      * @param node node for normalization.

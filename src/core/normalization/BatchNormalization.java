@@ -9,7 +9,7 @@ import core.optimization.Optimizer;
 import utils.*;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
-import utils.procedure.Node;
+import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
@@ -45,13 +45,13 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     private transient boolean isTraining;
 
     /**
-     * Learnable parameter gamma of Layer normalization layer.
+     * Learnable parameter gamma of batch normalization layer.
      *
      */
     private Matrix gamma;
 
     /**
-     * Learnable parameter beta of Layer normalization layer.
+     * Learnable parameter beta of batch normalization layer.
      *
      */
     private Matrix beta;
@@ -63,7 +63,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     private final HashSet<Matrix> weights = new HashSet<>();
 
     /**
-     * Set of weights to be managed.
+     * Set of weight gradients to be managed.
      *
      */
     private HashMap<Matrix, Matrix> weightGradients = new HashMap<>();
@@ -131,13 +131,13 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     private double batchSize;
 
     /**
-     * True if Batch normalization is used calculation only with mean and variance excluded.
+     * True if batch normalization is used calculation only with mean and variance excluded.
      *
      */
     private boolean meanOnly = false;
 
     /**
-     * Optimizer for Batch normalization;
+     * Optimizer for batch normalization;
      *
      */
     private Optimizer optimizer;
@@ -155,14 +155,14 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     private Procedure procedure;
 
     /**
-     * Epsilon term for Batch normalization. Default value 10E-8.<br>
+     * Epsilon term for batch normalization. Default value 10E-8.<br>
      * Term provides mathematical stability for normalizer.<br>
      *
      */
     private final Matrix epsilonMatrix = new DMatrix(10E-8, "epsilon");
 
     /**
-     * Default constructor for Batch normalization class.
+     * Default constructor for batch normalization class.
      *
      * @param normalizationType normalizationType.
      */
@@ -171,10 +171,10 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Constructor for Batch normalization class.
+     * Constructor for batch normalization class.
      *
      * @param normalizationType normalizationType.
-     * @param params parameters for Batch normalization.
+     * @param params parameters for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public BatchNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
@@ -183,9 +183,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Returns parameters used for Batch normalization.
+     * Returns parameters used for batch normalization.
      *
-     * @return parameters used for Batch normalization.
+     * @return parameters used for batch normalization.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -195,13 +195,13 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Sets parameters used for Batch Normalization.<br>
+     * Sets parameters used for batch Normalization.<br>
      * <br>
      * Supported parameters are:<br>
      *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
      *     - beta: degree of weighting decrease for exponential moving average. Default value 0.9.<br>
      *
-     * @param params parameters used for Batch normalization.
+     * @param params parameters used for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -245,7 +245,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Initializes layer normalization procedure.
+     * Initializes batch normalization procedure.
      *
      * @param inputs input matrix for initialization.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -271,16 +271,26 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Resets Batch normalizer.
+     * Resets batch normalizer.
      *
      */
     public void reset() {
         weightGradients = new HashMap<>();
-        procedure.reset();
+        if (procedure != null) procedure.reset();
     }
 
     /**
-     * Sets flag for Batch normalization if neural network is in training state.
+     * Reinitializes normalizer.
+     *
+     */
+    public void reinitialize() {
+        if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
+        if (beta != null) beta.reset();
+        reset();
+    }
+
+    /**
+     * Sets flag for batch normalization if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
@@ -317,7 +327,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Executes forward propagation step for Batch normalization at step start.<br>
+     * Executes forward propagation step for batch normalization at step start.<br>
      * Calculates feature wise mean and variance for batch of samples.<br>
      * Stores mean and variance into rolling averages respectively.<br>
      * Removes mean and variance from input samples.<br>
@@ -353,7 +363,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     }
 
     /**
-     * Executes backward propagation step for Batch normalization.<br>
+     * Executes backward propagation step for batch normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
      * @param node node for normalization.

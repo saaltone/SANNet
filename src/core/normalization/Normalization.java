@@ -10,7 +10,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.procedure.Node;
+import utils.procedure.node.Node;
 
 /**
  * Interface for normalization functions.
@@ -31,6 +31,12 @@ public interface Normalization {
      *
      */
     void reset();
+
+    /**
+     * Reinitializes normalizer.
+     *
+     */
+    void reinitialize();
 
     /**
      * Indicates to normalizer if neural network is in training mode.

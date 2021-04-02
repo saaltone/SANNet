@@ -16,7 +16,6 @@ import java.io.Serializable;
  */
 public class NormalizationFactory implements Serializable {
 
-
     /**
      * Creates normalizer instance with given type with defined parameters.
      *

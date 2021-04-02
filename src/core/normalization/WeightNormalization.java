@@ -9,7 +9,7 @@ import core.optimization.Optimizer;
 import utils.*;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
-import utils.procedure.Node;
+import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
@@ -69,7 +69,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     private HashMap<Matrix, Procedure> procedures = new HashMap<>();
 
     /**
-     * Constructor for Weight normalization class.
+     * Constructor for weight normalization class.
      *
      * @param normalizationType normalizationType.
      */
@@ -79,10 +79,10 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Constructor for Weight normalization class.
+     * Constructor for weight normalization class.
      *
      * @param normalizationType normalizationType.
-     * @param params parameters for Weight normalization.
+     * @param params parameters for weight normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public WeightNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
@@ -92,9 +92,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Returns parameters used for Weight normalization.
+     * Returns parameters used for weight normalization.
      *
-     * @return parameters used for Weight normalization.
+     * @return parameters used for weight normalization.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -103,7 +103,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Sets parameters used for Weight Normalization.<br>
+     * Sets parameters used for weight Normalization.<br>
      * <br>
      * Supported parameters are:<br>
      *     - g: g multiplier value for normalization. Default value 1.<br>
@@ -140,7 +140,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Resets Weight normalizer.
+     * Resets normalizer.
      *
      */
     public void reset() {
@@ -148,7 +148,15 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Sets flag for Weight normalization if neural network is in training state.
+     * Reinitializes normalizer.
+     *
+     */
+    public void reinitialize() {
+        reset();
+    }
+
+    /**
+     * Sets flag for weight normalization if neural network is in training state.
      *
      * @param isTraining if true neural network is in state otherwise false.
      */
