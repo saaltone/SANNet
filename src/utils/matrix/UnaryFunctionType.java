@@ -18,6 +18,7 @@ package utils.matrix;
  *     SINH,
  *     SQRT,
  *     CBRT,
+ *     MULINV,
  *     TAN,
  *     TANH,
  *     LINEAR,
@@ -31,12 +32,16 @@ package utils.matrix;
  *     SOFTPLUS,
  *     SOFTSIGN,
  *     RELU,
+ *     RELU_COS,
+ *     RELU_SIN,
  *     ELU,
  *     SELU,
  *     GELU,
  *     SOFTMAX,
+ *     GUMBEL_SOFTMAX,
  *     GAUSSIAN,
  *     SINACT,
+ *     LOGIT,
  *     CUSTOM
  *
  */
@@ -66,12 +71,16 @@ public enum UnaryFunctionType {
     SOFTPLUS,
     SOFTSIGN,
     RELU,
+    RELU_COS,
+    RELU_SIN,
     ELU,
     SELU,
     GELU,
     SOFTMAX,
+    GUMBEL_SOFTMAX,
     GAUSSIAN,
     SINACT,
+    LOGIT,
     CUSTOM
 
 }

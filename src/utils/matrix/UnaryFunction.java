@@ -7,7 +7,6 @@ package utils.matrix;
 
 import utils.DynamicParam;
 import utils.DynamicParamException;
-import utils.procedure.ProcedureFactory;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -83,17 +82,10 @@ public class UnaryFunction implements Serializable {
     private double SELULambda = 1.0507;
 
     /**
-     * Matrix populated with ones.
+     * Stores tau value for Gumbel Softmax.
      *
      */
-    private Matrix ones;
-
-    /**
-     * Identity matrix.
-     *
-     */
-    private Matrix identity;
-
+    private double gumbelSoftmaxTau = 2.75;
 
     /**
      * Constructor for UnaryFunction to create custom function.
@@ -125,6 +117,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
+     *     - tau: default value for Gumbel Softmax 2.65.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters used for function.
@@ -143,6 +136,8 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
+     *     - tau: default value for Gumbel Softmax 5.<br>
+     *     - tauDecay: default value for Gumbel Softmax 0.999. <br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters as DynamicParam type for function.
@@ -259,6 +254,14 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
                 return;
+            case RELU_COS:
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.max(0, value) + Math.cos(value);
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < 0 ? 0 : 1) - Math.sin(value);
+                return;
+            case RELU_SIN:
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.max(0, value) + Math.sin(value);
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < 0 ? 0 : 1) + Math.cos(value);
+                return;
             case ELU:
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -290,7 +293,17 @@ public class UnaryFunction implements Serializable {
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3)))) + (value * (0.134145 * Math.pow(value, 2) + 1) * Math.pow(1 / Math.cosh((0.044715 * Math.pow(value, 3) + value) * Math.sqrt(2 / Math.PI)), 2)) / Math.sqrt(2 * Math.PI);
                 return;
             case SOFTMAX:
-                function = (Matrix.MatrixUnaryOperation & Serializable) Math::exp;
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
+                return;
+            case GUMBEL_SOFTMAX:
+                if (params != null) {
+                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
+                    paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
+                    DynamicParam dParams = new DynamicParam(params, paramDefs);
+                    if (dParams.hasParam("tau")) gumbelSoftmaxTau = dParams.getValueAsDouble("tau");
+                }
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 return;
             case GAUSSIAN:
@@ -300,6 +313,10 @@ public class UnaryFunction implements Serializable {
             case SINACT:
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? -1 : value > 0.5 * Math.PI ? 1 : Math.sin(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? 0 : value > 0.5 * Math.PI ? 0 : Math.cos(value);
+                return;
+            case LOGIT:
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.log(value / (1 - value));
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / ((value - 1) * value);
                 return;
             case CUSTOM:
                 throw new MatrixException("Custom function cannot defined with this constructor.");
@@ -346,23 +363,25 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Applies function to matrix (value)
+     * Applies function to matrix (input)
      *
-     * @param value matrix
+     * @param input matrix
      * @param inplace if true function is applied in place.
      * @return resulted matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyFunction(Matrix value, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? value : value.getNewMatrix();
-        value.apply(result, this);
-        if (unaryFunctionType == UnaryFunctionType.SOFTMAX) {
-            ProcedureFactory procedureFactory = result.getProcedureFactory();
-            result.removeProcedureFactory();
-            result = result.subtract(result.max()); // stable softmax X - max(X)
-            result.apply(result, function);
-            result.divide(result.sum(), result); // e^X / sum(e^X)
-            result.setProcedureFactory(procedureFactory);
+    public Matrix applyFunction(Matrix input, boolean inplace) throws MatrixException {
+        Matrix result = inplace ? input : input.getNewMatrix();
+        switch (unaryFunctionType) {
+            case SOFTMAX:
+                input.softmax(result);
+                break;
+            case GUMBEL_SOFTMAX:
+                input.gumbelSoftmax(result, gumbelSoftmaxTau);
+                break;
+            default:
+                input.apply(result, this);
+                break;
         }
         return result;
     }
@@ -370,19 +389,18 @@ public class UnaryFunction implements Serializable {
     /**
      * Calculates inner gradient.
      *
-     * @param value value for gradient calculation.
+     * @param result result for gradient calculation.
      * @param gradient outer gradient.
      * @return inner gradient
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyGradient(Matrix value, Matrix gradient) throws MatrixException {
-        if (unaryFunctionType != UnaryFunctionType.SOFTMAX) return gradient.multiply(value.apply(derivative));
-        else {
-            ones = (ones != null && ones.getRows() == value.getRows()) ? ones : new DMatrix(value.getRows(), 1, Initialization.ONE);
-            identity = (identity != null && identity.getRows() == value.getRows()) ? identity : new DMatrix(value.getRows(), value.getRows(), Initialization.IDENTITY);
-            // Calculate diagonal entries of 1 - arg and other entries -out i.e. identity - arg
-            // Finally dot result by gradient resulting into derivative
-            return identity.subtract(value.dot(ones.transpose())).dot(gradient);
+    public Matrix applyGradient(Matrix result, Matrix gradient) throws MatrixException {
+        switch (unaryFunctionType) {
+            case SOFTMAX:
+            case GUMBEL_SOFTMAX:
+                return result.softmaxGrad().dot(gradient);
+            default:
+                return gradient.multiply(result.apply(derivative));
         }
     }
 
