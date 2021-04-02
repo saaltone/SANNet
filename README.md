@@ -15,7 +15,7 @@ Framework supports multiple layer activation functions and loss functions for ou
 ## Reinforcement learning
 Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards.
 
-Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA), policy based (Actor Critic, REINFORCE) and Monte Carlo Tree Search (MCTS) based reinforcement learning algorithms. It supports online and replay buffering. It has support for multiple policies (greedy policy, epsilon greedy policy, noisy next best policy, sampled policy).
+Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA), policy based (Actor Critic, Proximal Policy Optimization, Discrete Soft Actor Critic, REINFORCE) and Monte Carlo Tree Search (MCTS) based reinforcement learning algorithms. It supports online and replay buffering. It has support for multiple policies (greedy policy, epsilon greedy policy, noisy next best policy, sampled policy).
 
 ## Optimization
 Framework implements most typically used optimization methods starting from basic vanilla gradient descent up to more sofisticated parameter optimization methods such as Adam and AMSGrad.
