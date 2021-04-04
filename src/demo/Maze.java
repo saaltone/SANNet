@@ -874,8 +874,6 @@ public class Maze implements Environment, ActionListener {
         }
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
-//        neuralNetwork.addNormalizer(NormalizationType.BATCH_NORMALIZATION);
-//        neuralNetwork.addNormalizer(7, NormalizationType.WEIGHT_NORMALIZATION);
         return neuralNetwork;
     }
 
