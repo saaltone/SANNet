@@ -938,16 +938,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void waitToComplete() {
         if (!isStarted()) return;
         executeLock.lock();
-        try {
-            while (isProcessing()) completeLockCondition.await();
-        }
-        catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(exception);
-        }
-        finally {
-            executeLock.unlock();
-        }
+        if (isProcessing()) completeLockCondition.awaitUninterruptibly();
+        executeLock.unlock();
     }
 
     /**
@@ -1384,13 +1376,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void run() {
         while (true) {
             executeLock.lock();
-            try {
-                while (executionState == ExecutionState.IDLE) executeLockCondition.await();
-            }
-            catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(exception);
-            }
+            if (executionState == ExecutionState.IDLE) executeLockCondition.awaitUninterruptibly();
             try {
                 switch (executionState) {
                     case TRAIN:
