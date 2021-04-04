@@ -15,7 +15,7 @@ Framework supports multiple layer activation functions and loss functions for ou
 ## Reinforcement learning
 Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards.
 
-Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA), policy based (Actor Critic, REINFORCE) and Monte Carlo Tree Search (MCTS) based reinforcement learning algorithms. It supports online and replay buffering. It has support for multiple policies (greedy policy, epsilon greedy policy, noisy next best policy, sampled policy).
+Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA), policy based (Actor Critic, Proximal Policy Optimization, Discrete Soft Actor Critic, REINFORCE) and Monte Carlo Tree Search (MCTS) based reinforcement learning algorithms. It supports online and replay buffering. It has support for multiple policies (greedy policy, epsilon greedy policy, noisy next best policy, sampled policy).
 
 ## Optimization
 Framework implements most typically used optimization methods starting from basic vanilla gradient descent up to more sofisticated parameter optimization methods such as Adam and AMSGrad.
@@ -30,6 +30,6 @@ Framework supports following normalization methods: batch normalization, layer n
 Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed.
 
 ## Utilities
-Framework provides libraries to read inputs from CSV and text files, normalize, split and encode data. It also has persistence support to serialize trained neural network instances into file and restore trained neural network instances from file for later use.
+Framework provides libraries to read inputs from CSV, text and MIDI files, normalize, split, encode and decode data. It also has persistence support to serialize trained neural network instances into file and restore trained neural network instances from file for later use.
 
 All feedback is welcome.
