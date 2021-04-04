@@ -241,14 +241,14 @@ public class ReadMIDI {
         if (!wait) return sequencer;
 
         int timeOut = 0;
-        while (sequencer.isRunning() && timeOut < playTime) {
-            try {
+        try {
+            while (sequencer.isRunning() && timeOut < playTime) {
                 Thread.sleep(1000);
-            } catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(exception);
+                timeOut++;
             }
-            timeOut++;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(exception);
         }
 
         sequencer.stop();
