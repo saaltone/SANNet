@@ -124,6 +124,15 @@ public interface Policy extends Configurable {
     void resetFunctionEstimator();
 
     /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @throws AgentException throws exception if agent is not registered for function estimator.
+     * @return true if all registered agents are ready to update.
+     */
+    boolean readyToUpdate(Agent agent) throws AgentException;
+
+    /**
      * Updates FunctionEstimator.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
