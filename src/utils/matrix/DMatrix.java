@@ -10,7 +10,7 @@ package utils.matrix;
  * Dense matrix assumes full array data structure including storage of zero values.<br>
  *
  */
-public class DMatrix extends Matrix {
+public class DMatrix extends ComputableMatrix {
 
     /**
      * Matrix data structure as two dimensional row column array.
@@ -36,10 +36,9 @@ public class DMatrix extends Matrix {
      * @param name name of matrix.
      */
     public DMatrix(double scalarValue, String name) {
-        super(true);
+        super(true, name);
         matrix = new double[1][1];
         matrix[0][0] = scalarValue;
-        this.name = name;
     }
 
     /**
@@ -61,9 +60,8 @@ public class DMatrix extends Matrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, String name) {
-        super(false);
+        super(false, name);
         matrix = new double[rows][columns];
-        this.name = name;
     }
 
     /**
@@ -92,10 +90,9 @@ public class DMatrix extends Matrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs, String name) {
-        super(false);
+        super(false, name);
         matrix = new double[rows][columns];
         initialize(initialization, inputs, outputs);
-        this.name = name;
     }
 
     /**
@@ -120,10 +117,9 @@ public class DMatrix extends Matrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, Initialization initialization, String name) {
-        super(false);
+        super(false, name);
         matrix = new double[rows][columns];
         initialize(initialization);
-        this.name = name;
     }
 
     /**
@@ -134,11 +130,10 @@ public class DMatrix extends Matrix {
      * @param initializer initializer.
      * @param name name of matrix.
      */
-    public DMatrix(int rows, int columns, Initializer initializer, String name) {
-        super(false);
+    public DMatrix(int rows, int columns, Matrix.Initializer initializer, String name) {
+        super(false, name);
         matrix = new double[rows][columns];
         initialize(initializer);
-        this.name = name;
     }
 
     /**
@@ -148,7 +143,7 @@ public class DMatrix extends Matrix {
      * @param columns defines number of columns in matrix.
      * @param initializer initializer.
      */
-    public DMatrix(int rows, int columns, Initializer initializer) {
+    public DMatrix(int rows, int columns, Matrix.Initializer initializer) {
         super(false);
         matrix = new double[rows][columns];
         initialize(initializer);
@@ -201,7 +196,7 @@ public class DMatrix extends Matrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        matrix[!isTransposed ? row : column][!isTransposed ? column : row] = value;
+        matrix[isScalar() ? 0 : row][isScalar() ? 0 : column] = value;
     }
 
     /**
@@ -212,7 +207,7 @@ public class DMatrix extends Matrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix[isScalar() ? 0 : !isTransposed ? row : column][isScalar() ? 0 : !isTransposed ? column : row];
+        return matrix[isScalar() ? 0 : row][isScalar() ? 0 : column];
     }
 
     /**
@@ -230,7 +225,7 @@ public class DMatrix extends Matrix {
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return !isTransposed ? matrix.length : matrix[0].length;
+        return matrix.length;
     }
 
     /**
@@ -239,7 +234,7 @@ public class DMatrix extends Matrix {
      * @return number of columns in matrix.
      */
     public int getColumns() {
-        return !isTransposed ? matrix[0].length : matrix.length;
+        return matrix[0].length;
     }
 
     /**
@@ -252,11 +247,23 @@ public class DMatrix extends Matrix {
     }
 
     /**
+     * Returns new matrix of dimensions rows x columns.<br>
+     * To be implemented by underlying matrix data structure class implementation.<br>
+     * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
+     *
+     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
+     * @return new matrix of dimensions rows x columns.
+     */
+    public Matrix getNewMatrix(boolean asTransposed) {
+        return isScalar() ? new DMatrix(0) : !asTransposed ? new DMatrix(getRows(), getColumns()) :  new DMatrix(getColumns(), getRows());
+    }
+
+    /**
      * Copies new matrix into this matrix. Assumes equal dimensions for both matrices.
      *
      * @param newMatrix new matrix to be copied inside this matrix.
      */
-    protected void copyMatrixData(Matrix newMatrix) {
+    public void copyMatrixData(Matrix newMatrix) {
         matrix = new double[newMatrix.getRows()][newMatrix.getColumns()];
         for (int row = 0; row < newMatrix.getRows(); row++) {
             for (int column = 0; column < newMatrix.getColumns(); column++) {

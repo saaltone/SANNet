@@ -13,7 +13,7 @@ import java.util.HashMap;
  * This matrix type is useful when input sample is expected to contain mostly zero values.<br>
  *
  */
-public class SMatrix extends Matrix {
+public class SMatrix extends ComputableMatrix {
 
     /**
      * Matrix data structure as hash map.
@@ -32,6 +32,17 @@ public class SMatrix extends Matrix {
      *
      */
     private int columns;
+
+    /**
+     * Constructor for scalar matrix (size 1x1).
+     *
+     * @param scalarValue value for matrix.
+     */
+    public SMatrix(double scalarValue) {
+        super(true);
+        this.rows = 1;
+        this.columns = 1;
+    }
 
     /**
      * Constructor for sparse matrix.
@@ -82,7 +93,7 @@ public class SMatrix extends Matrix {
      * @param columns defines number of columns in matrix.
      * @param initializer initializer.
      */
-    public SMatrix(int rows, int columns, Initializer initializer) {
+    public SMatrix(int rows, int columns, Matrix.Initializer initializer) {
         super(false);
         this.rows = rows;
         this.columns = columns;
@@ -144,7 +155,7 @@ public class SMatrix extends Matrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put((!isTransposed ? row : column) * columns + (!isTransposed ? column : row), value);
+        if (value != 0) matrix.put(isScalar() ? 0 : row * columns + column, value);
     }
 
     /**
@@ -155,7 +166,7 @@ public class SMatrix extends Matrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix.getOrDefault((!isTransposed ? row : column) * columns + (!isTransposed ? column : row), (double)0);
+        return matrix.getOrDefault(isScalar() ? 0 : row * columns + column, (double)0);
     }
 
     /**
@@ -173,7 +184,7 @@ public class SMatrix extends Matrix {
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return !isTransposed ? rows : columns;
+        return rows;
     }
 
     /**
@@ -182,7 +193,7 @@ public class SMatrix extends Matrix {
      * @return number of columns in matrix.
      */
     public int getColumns() {
-        return !isTransposed ? columns : rows;
+        return columns;
     }
 
     /**
@@ -191,7 +202,17 @@ public class SMatrix extends Matrix {
      * @return new matrix of dimensions rows x columns.
      */
     public Matrix getNewMatrix() {
-        return new SMatrix(getRows(), getColumns());
+        return isScalar() ? new SMatrix(0) : new SMatrix(getRows(), getColumns());
+    }
+
+    /**
+     * Returns new matrix of dimensions rows x columns.<br>
+     *
+     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
+     * @return new matrix of dimensions rows x columns.
+     */
+    public Matrix getNewMatrix(boolean asTransposed) {
+        return isScalar() ? new SMatrix(0) : !asTransposed ? new SMatrix(getRows(), getColumns()) :  new SMatrix(getColumns(), getRows());
     }
 
     /**
@@ -199,7 +220,7 @@ public class SMatrix extends Matrix {
      *
      * @param newMatrix new matrix to be copied inside this matrix.
      */
-    protected void copyMatrixData(Matrix newMatrix) {
+    public void copyMatrixData(Matrix newMatrix) {
         rows = newMatrix.getRows();
         columns = newMatrix.getColumns();
         matrix = new HashMap<>();
