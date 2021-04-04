@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy;
 
+import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -40,6 +41,17 @@ public class ActionablePolicy extends AbstractPolicy {
      *
      */
     public void resetFunctionEstimator() {
+    }
+
+    /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @throws AgentException throws exception if agent is not registered for function estimator.
+     * @return true if all registered agents are ready to update.
+     */
+    public boolean readyToUpdate(Agent agent) throws AgentException {
+        return true;
     }
 
     /**
