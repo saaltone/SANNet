@@ -30,6 +30,6 @@ Framework supports following normalization methods: batch normalization, layer n
 Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed.
 
 ## Utilities
-Framework provides libraries to read inputs from CSV and text files, normalize, split and encode data. It also has persistence support to serialize trained neural network instances into file and restore trained neural network instances from file for later use.
+Framework provides libraries to read inputs from CSV, text and MIDI files, normalize, split, encode and decode data. It also has persistence support to serialize trained neural network instances into file and restore trained neural network instances from file for later use.
 
 All feedback is welcome.
