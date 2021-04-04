@@ -6,6 +6,7 @@
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
+import core.reinforcement.Agent;
 import core.reinforcement.AgentException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
@@ -73,6 +74,17 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      */
     public void resetFunctionEstimator() {
         functionEstimator.reset();
+    }
+
+    /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @throws AgentException throws exception if agent is not registered for function estimator.
+     * @return true if all registered agents are ready to update.
+     */
+    public boolean readyToUpdate(Agent agent) throws AgentException {
+        return functionEstimator.readyToUpdate(agent);
     }
 
     /**
