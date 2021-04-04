@@ -106,10 +106,10 @@ public class Node implements Serializable {
     private HashSet<Regularization> regularizers;
 
     /**
-     * Number of matrix / gradient entries.
+     * Number of cumulated gradient entries.
      *
      */
-    private int entryCount = 0;
+    private int cumulatedGradientEntryCount = 0;
 
     /**
      * Constructor for node. Records dimensions of reference matrix as node data dimensions.
@@ -279,15 +279,6 @@ public class Node implements Serializable {
     }
 
     /**
-     * Returns entry count.
-     *
-     * @return entry count.
-     */
-    public int getEntryCount() {
-        return entryCount;
-    }
-
-    /**
      * Returns size of node.
      *
      * @return size of node.
@@ -355,7 +346,7 @@ public class Node implements Serializable {
         else if (!isConstantNode()) constantMatrix = getEmptyMatrix();
         gradients = new MMatrix();
         constantGradient = null;
-        entryCount = 0;
+        cumulatedGradientEntryCount = 0;
         matrixBackup = new HashMap<>();
     }
 
@@ -469,6 +460,16 @@ public class Node implements Serializable {
     }
 
     /**
+     * Returns gradient mean (average).
+     *
+     * @return gradient mean (average).
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getGradientMean() throws MatrixException {
+        return cumulatedGradientEntryCount == 0 ? getEmptyMatrix() : getGradient().divide(cumulatedGradientEntryCount);
+    }
+
+    /**
      * Returns gradient matrix of node.
      *
      * @param index data index for gradient.
@@ -488,24 +489,20 @@ public class Node implements Serializable {
     }
 
     /**
-     * Updates gradient.
+     * Cumulates gradient.
      *
      * @param index data index.
      * @param outputGradient output gradient.
-     * @param add if true output gradient contribution is added to node gradient otherwise subtracted.
+     * @param negateGradient if true output gradient contribution is negated prior being cumulated.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void updateGradient(int index, Matrix outputGradient, boolean add) throws MatrixException {
-        entryCount++;
+    public void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException {
         if (getGradient(index) == null) setGradient(index, getEmptyMatrix());
-        if (!referenceMatrix.isScalar()) {
-            if (add) getGradient(index).add(outputGradient, getGradient(index));
-            else getGradient(index).subtract(outputGradient, getGradient(index));
-        }
-        else {
-            if (add) getGradient(index).add(outputGradient.sum(), getGradient(index));
-            else getGradient(index).subtract(outputGradient.sum(), getGradient(index));
-        }
+
+        if (!negateGradient) getGradient(index).add(outputGradient, getGradient(index));
+        else getGradient(index).subtract(outputGradient, getGradient(index));
+
+        cumulatedGradientEntryCount++;
     }
 
     /**
@@ -658,7 +655,7 @@ public class Node implements Serializable {
         if (!isConstantNode()) return;
         if (referenceMatrix.isRegularized() && regularizers != null) {
             for (Regularization regularizer : regularizers) {
-                regularizer.backward(constantMatrix, constantGradient.divide(entryCount));
+                regularizer.backward(constantMatrix, constantGradient.divide(cumulatedGradientEntryCount));
             }
         }
     }
