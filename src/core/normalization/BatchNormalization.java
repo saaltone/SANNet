@@ -344,8 +344,8 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
 
             node.setMatrices(procedure.calculateExpression(node.getMatrices()));
 
-            averageMean = Matrix.exponentialMovingAverage(averageMean, meanNode.getMatrix(), betaValue);
-            if (!meanOnly) averageVariance = Matrix.exponentialMovingAverage(averageVariance, varianceNode.getMatrix(), betaValue);
+            averageMean = meanNode.getMatrix().exponentialMovingAverage(averageMean, betaValue);
+            if (!meanOnly) averageVariance = varianceNode.getMatrix().exponentialMovingAverage(averageVariance, betaValue);
         }
         else {
             if (!meanOnly) {
