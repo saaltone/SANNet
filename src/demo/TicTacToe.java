@@ -1052,14 +1052,11 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         int players = playerList.size();
         int noughtIndex;
         int crossIndex;
-        if (players % 2 == 0) {
-            noughtIndex = 2 * random.nextInt(players / 2);
-            crossIndex = 2 * random.nextInt(players / 2) + 1;
-        }
-        else {
-            noughtIndex = 2 * random.nextInt((players + 1) / 2);
-            crossIndex = 2 * random.nextInt(players / 2) + 1;
-        }
+
+        if (players % 2 == 0) noughtIndex = 2 * random.nextInt(players / 2);
+        else noughtIndex = 2 * random.nextInt((players + 1) / 2);
+        crossIndex = 2 * random.nextInt(players / 2) + 1;
+
         currentPlayerList.add(playerList.get(noughtIndex));
         currentPlayerList.get(0).setPlayerRole(PlayerRole.NOUGHT);
         currentPlayerList.add(playerList.get(crossIndex));
