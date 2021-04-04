@@ -345,7 +345,6 @@ public class TSP implements Environment {
 
     }
 
-
     /**
      * Number of cities for travelling salesman.
      *
@@ -883,8 +882,6 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (4 * inputSize);
-//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
-//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         if (!policyFunction) {
@@ -916,7 +913,6 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (inputSize + 20);
-//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
