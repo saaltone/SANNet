@@ -450,7 +450,7 @@ public class Procedure implements Serializable {
     public Matrix getGradient(Matrix constantMatrix) throws MatrixException {
         Node node = getNode(constantMatrix);
         if (node == null) throw new MatrixException("No such reference matrix registered.");
-        return node.getGradient().divide(node.getEntryCount());
+        return node.getGradientMean();
     }
 
     /**
