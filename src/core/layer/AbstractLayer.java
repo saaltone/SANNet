@@ -601,16 +601,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     void waitToComplete() {
         executeLock.lock();
-        try {
-            while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.await();
-        }
-        catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(exception);
-        }
-        finally {
-            executeLock.unlock();
-        }
+        if (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
+        executeLock.unlock();
     }
 
     /**
@@ -621,13 +613,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public void run() {
         while (true) {
             executeLock.lock();
-            try {
-                while (executionState == ExecutionState.IDLE || executionState == ExecutionState.EXECUTING) executeLockCondition.await();
-            }
-            catch (InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(exception);
-            }
+            if (executionState == ExecutionState.IDLE || executionState == ExecutionState.EXECUTING) executeLockCondition.awaitUninterruptibly();
             try {
                 switch (executionState) {
                     case TRAIN:
