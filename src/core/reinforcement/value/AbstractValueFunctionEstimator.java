@@ -170,7 +170,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @return true if all registered agents are ready to update.
      */
     public boolean readyToUpdate(Agent agent) throws AgentException {
-        return functionEstimator.readyToUpdate(agent);
+        return isStateActionValueFunction() || functionEstimator.readyToUpdate(agent);
     }
 
     /**
