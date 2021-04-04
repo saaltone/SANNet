@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.DynamicParamException;
 
+import java.util.Objects;
 import java.util.TreeSet;
 
 /**
@@ -46,7 +47,7 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * @return chosen action.
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
-        return stateValueSet.isEmpty() ? -1 : stateValueSet.pollLast().action;
+        return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action;
     }
 
 }

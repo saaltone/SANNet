@@ -9,6 +9,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -120,7 +121,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
         int defaultAction = stateValueSet.first().action;
         while (!stateValueSet.isEmpty()) {
             ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
-            if (actionValueTuple.value >= thresholdValue) return actionValueTuple.action;
+            if (Objects.requireNonNull(actionValueTuple).value >= thresholdValue) return actionValueTuple.action;
         }
         return defaultAction;
     }
