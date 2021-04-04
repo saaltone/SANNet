@@ -119,7 +119,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
-        argument1.updateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), true);
+        argument1.cumulateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), false);
     }
 
     /**

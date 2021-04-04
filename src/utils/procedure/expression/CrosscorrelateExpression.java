@@ -107,8 +107,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setDilation(dilation);
         result.getGradient(index).setFilterSize(filterSize);
-        argument1.updateGradient(index, result.getGradient(index).crosscorrelateOutputGradient(argument2.getMatrix(index)), true);
-        argument2.updateGradient(index, result.getGradient(index).crosscorrelateFilterGradient(argument1.getMatrix(index)), true);
+        argument1.cumulateGradient(index, result.getGradient(index).crosscorrelateOutputGradient(argument2.getMatrix(index)), false);
+        argument2.cumulateGradient(index, result.getGradient(index).crosscorrelateFilterGradient(argument1.getMatrix(index)), false);
     }
 
     /**

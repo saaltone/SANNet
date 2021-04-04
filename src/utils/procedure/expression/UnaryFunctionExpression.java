@@ -100,7 +100,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
-        argument1.updateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), true);
+        argument1.cumulateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
     }
 
     /**

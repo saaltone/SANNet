@@ -77,7 +77,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
-        argument1.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index).applyBi(result.getMatrix(index), (value, constant) -> Math.pow(Math.abs(value) / constant, p - 1) * Math.signum(value))), true);
+        argument1.cumulateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index).applyBi(result.getMatrix(index), (value, constant) -> Math.pow(Math.abs(value) / constant, p - 1) * Math.signum(value))), false);
     }
 
     /**

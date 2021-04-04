@@ -87,7 +87,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);
-        argument1.updateGradient(index, result.getGradient(index).averagePoolGradient(), true);
+        argument1.cumulateGradient(index, result.getGradient(index).averagePoolGradient(), false);
     }
 
     /**

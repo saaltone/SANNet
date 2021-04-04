@@ -95,7 +95,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
         if (maxArgsAt == null) throw new MatrixException("Maximum arguments for gradient calculation are not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);
-        argument1.updateGradient(index, result.getGradient(index).maxPoolGradient(maxArgsAt), true);
+        argument1.cumulateGradient(index, result.getGradient(index).maxPoolGradient(maxArgsAt), false);
     }
 
     /**

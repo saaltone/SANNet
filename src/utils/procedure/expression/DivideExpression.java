@@ -70,8 +70,8 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public void calculateGradient(int index) throws MatrixException, DynamicParamException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
-        argument1.updateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), true);
-        argument2.updateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), false);
+        argument1.cumulateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), false);
+        argument2.cumulateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), true);
     }
 
     /**

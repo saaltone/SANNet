@@ -76,7 +76,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
         if (!asMultiMatrix) return;
         if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         Matrix meanGradient = result.getGradient().multiply(1 / (double)argument1.size());
-        for (Integer index : argument1.keySet()) argument1.updateGradient(index, meanGradient, true);
+        for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, meanGradient, false);
     }
 
     /**
@@ -89,7 +89,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
         if (asMultiMatrix) return;
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         Matrix meanGradient = result.getGradient(index).multiply(1 / (double)argument1.getMatrix(index).size());
-        argument1.updateGradient(index, meanGradient, true);
+        argument1.cumulateGradient(index, meanGradient, false);
     }
 
     /**

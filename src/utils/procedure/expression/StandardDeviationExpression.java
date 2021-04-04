@@ -117,7 +117,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
         if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) {
             Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size() - 1).apply(sqrtFunction.getDerivative());
-            argument1.updateGradient(index, result.getGradient().multiply(standardDeviationGradient),true);
+            argument1.cumulateGradient(index, result.getGradient().multiply(standardDeviationGradient), false);
         }
     }
 
@@ -131,7 +131,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
         if (asMultiMatrix) return;
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(means.get(index)).multiply(2 / (double)(result.getGradient(index).size() - 1)).apply(sqrtFunction.getDerivative());
-        argument1.updateGradient(index, result.getGradient(index).multiply(standardDeviationGradient), true);
+        argument1.cumulateGradient(index, result.getGradient(index).multiply(standardDeviationGradient), false);
     }
 
     /**

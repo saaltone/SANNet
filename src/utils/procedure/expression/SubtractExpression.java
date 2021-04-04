@@ -68,8 +68,8 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
-        argument1.updateGradient(index, result.getGradient(index), true);
-        argument2.updateGradient(index, result.getGradient(index), false);
+        argument1.cumulateGradient(index, result.getGradient(index), false);
+        argument2.cumulateGradient(index, result.getGradient(index), true);
     }
 
     /**
