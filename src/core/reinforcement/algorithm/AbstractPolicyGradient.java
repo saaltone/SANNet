@@ -58,7 +58,7 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * @throws AgentException throws exception if function estimator update fails.
      */
     protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        if(valueFunction.readyToUpdate(this)) {
+        if(policy.readyToUpdate(this) && valueFunction.readyToUpdate(this)) {
             valueFunction.sample();
             if (!updateValuePerEpisode) valueFunction.update();
             valueFunction.updateFunctionEstimator();
