@@ -214,10 +214,11 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forward(Matrix weight) throws MatrixException, DynamicParamException {
-        if (!isTraining) return;
-        weights.put(weight, weight.copy());
-        procedures.get(weight).reset();
-        weight.setEqualTo(procedures.get(weight).calculateExpression(weight, 0));
+        if (isTraining) {
+            weights.put(weight, weight.copy());
+            procedures.get(weight).reset();
+            weight.setEqualTo(procedures.get(weight).calculateExpression(weight, 0));
+        }
     }
 
     /**
@@ -228,8 +229,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardFinalize(Matrix weight) throws MatrixException {
-        if (!isTraining) return;
-        weight.setEqualTo(weights.get(weight));
+        if (isTraining) weight.setEqualTo(weights.get(weight));
     }
 
     /**
@@ -296,7 +296,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      */
     public void printExpressions() {
         if (procedures.size() == 0) return;
-        System.out.println("Normalization: " + getName() + " : ");
+        System.out.println("Normalization: " + getName() + ":");
         for (Procedure procedure : procedures.values()) procedure.printExpressionChain();
         System.out.println();
     }
@@ -307,7 +307,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      */
     public void printGradients() {
         if (procedures.size() == 0) return;
-        System.out.println("Normalization: " + getName() + " : ");
+        System.out.println("Normalization: " + getName() + ":");
         for (Procedure procedure : procedures.values()) procedure.printGradientChain();
         System.out.println();
     }

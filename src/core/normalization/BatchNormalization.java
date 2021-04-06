@@ -451,7 +451,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      */
     public void printExpressions() {
         if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ": ");
+        System.out.println("Normalization: " + getName() + ":");
         procedure.printExpressionChain();
         System.out.println();
     }
@@ -462,7 +462,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      */
     public void printGradients() {
         if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ": ");
+        System.out.println("Normalization: " + getName() + ":");
         procedure.printGradientChain();
         System.out.println();
     }
