@@ -138,14 +138,10 @@ public class DropOut implements Regularization, Serializable {
      */
     private void forward(Matrix matrix) throws MatrixException {
         if (isTraining) {
-            matrix.setScalingConstant(1 / probability);
+            matrix.multiply(1 / probability, matrix);
             matrix.setMask();
             matrix.getMask().setMaskProbability(probability);
             matrix.getMask().maskRowByProbability();
-        }
-        else {
-            matrix.unsetScalingConstant();
-            matrix.unsetMask();
         }
     }
 
