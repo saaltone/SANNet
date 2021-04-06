@@ -27,13 +27,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private Mask mask;
 
     /**
-     * Scaling constant applied in all matrix operations meaning scalingConstant * operation.<br>
-     * If constant is 1 effectively no scaling is done.<br>
-     *
-     */
-    private double scalingConstant = 1;
-
-    /**
      * If true matrix is treated as scalar (1x1) matrix otherwise as normal matrix.
      *
      */
@@ -877,7 +870,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix power(double power) throws MatrixException, DynamicParamException {
-        return applyBi (asMatrix(power), BinaryFunctionType.POW);
+        return applyBi (constantAsMatrix(power), BinaryFunctionType.POW);
     }
 
     /**
@@ -890,7 +883,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void power(double power, Matrix result) throws MatrixException, DynamicParamException {
-        applyBi (asMatrix(power), result, BinaryFunctionType.POW);
+        applyBi (constantAsMatrix(power), result, BinaryFunctionType.POW);
     }
 
     /**
@@ -1021,22 +1014,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param constant constant value.
      * @return constant matrix.
      */
-    public Matrix asMatrix(double constant) {
+    public Matrix constantAsMatrix(double constant) {
         Matrix constantMatrix = new DMatrix(constant);
         constantMatrix.setValue(0, 0, constant);
         return constantMatrix;
-    }
-
-    /**
-     * Takes element wise cumulative sum of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return cumulative sum of this matrix.
-     */
-    public double sum() {
-        Matrix.MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> value;
-        double[] result = count(operation);
-        return result[0];
     }
 
     /**
@@ -1049,22 +1030,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix sumAsMatrix() throws MatrixException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = asMatrix(sum());
+        Matrix result = constantAsMatrix(sum());
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) procedureFactory.createSumExpression(expressionLock, this, result);
         return result;
-    }
-
-    /**
-     * Takes mean of elements of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return mean of elements of this matrix.
-     */
-    public double mean() {
-        Matrix.MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> value;
-        double[] result = count(operation);
-        return result[1] > 0 ? result[0] / result[1] : 0;
     }
 
     /**
@@ -1077,7 +1046,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix meanAsMatrix() throws MatrixException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = asMatrix(mean());
+        Matrix result = constantAsMatrix(mean());
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) procedureFactory.createMeanExpression(expressionLock, this, result);
         return result;
@@ -1103,7 +1072,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix varianceAsMatrix() throws MatrixException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = asMatrix(variance());
+        Matrix result = constantAsMatrix(variance());
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) procedureFactory.createVarianceExpression(expressionLock, this, result);
         return result;
@@ -1116,21 +1085,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param mean mean value given as input.
      * @return variance of elements of this matrix.
      */
-    public double variance(double mean) {
-        Matrix.MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> Math.pow(value - mean, 2);
-        double[] result = count(operation);
-        return result[1] > 0 ? result[0] / result[1] : 0;
-    }
-
-    /**
-     * Takes variance of elements of this matrix with mean value given as input parameter.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param mean mean value given as input.
-     * @return variance of elements of this matrix.
-     */
     public Matrix varianceAsMatrix(Matrix mean) {
-        return asMatrix(variance(mean.getValue(0, 0)));
+        return constantAsMatrix(variance(mean.getValue(0, 0)));
     }
 
     /**
@@ -1167,34 +1123,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param mean mean value given as input.
      * @return standard deviation of elements of this matrix.
      */
-    public double standardDeviation(double mean) {
-        Matrix.MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> Math.pow(value - mean, 2);
-        double[] result = count(operation);
-        return result[1] > 1 ? Math.sqrt(result[0] / (result[1] - 1)) : 0;
-    }
-
-    /**
-     * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param mean mean value given as input.
-     * @return standard deviation of elements of this matrix.
-     */
     public Matrix standardDeviationAsMatrix(Matrix mean) {
-        return asMatrix(standardDeviation(mean.getValue(0, 0)));
-    }
-
-    /**
-     * Takes cumulative p- norm (p is number equal or bigger than 1) of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param p p value for norm.
-     * @return cumulative norm value of matrix.
-     */
-    public double norm(int p) {
-        Matrix.MatrixUnaryOperation operation = (Matrix.MatrixUnaryOperation & Serializable) value -> Math.pow(Math.abs(value), p);
-        double[] result = count(operation);
-        return Math.pow(result[0], 1 / (double)p);
+        return constantAsMatrix(standardDeviation(mean.getValue(0, 0)));
     }
 
     /**
@@ -1208,7 +1138,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix normAsMatrix(int p) throws MatrixException {
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = asMatrix(norm(p));
+        Matrix result = constantAsMatrix(norm(p));
         result.setProcedureFactory(procedureFactory);
         if (procedureFactory != null) procedureFactory.createNormExpression(expressionLock, this, result, p);
         return result;
@@ -1224,20 +1154,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix exponentialMovingAverage(Matrix currentAverage, double beta) throws MatrixException {
         return currentAverage == null ? this : currentAverage.multiply(beta).add(multiply(1 - beta));
-    }
-
-    /**
-     * Normalizes other matrix by removing mean and standard deviation.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix to be normalized.
-     * @return normalized matrix.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix normalize(Matrix other) throws MatrixException {
-        double mean = other.mean();
-        double standardDeviation = other.standardDeviation();
-        return other.apply(other, (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value - mean) / standardDeviation);
     }
 
     /**
@@ -1274,69 +1190,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return minimum value of matrix.
-     * @throws MatrixException not thrown in any situation.
      */
-    public double min() throws MatrixException {
-        return argMinMax(true, new int[2]);
-    }
-
-    /**
-     * Returns minimum value of matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @throws MatrixException not thrown in any situation.
-     * @return minimum value of matrix.
-     */
-    public Matrix minAsMatrix() throws MatrixException {
-        return asMatrix(min());
-    }
-
-    /**
-     * Returns argmin meaning row and column of matrix containing minimum value.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @throws MatrixException not thrown in any situation.
-     * @return array containing row and column in this order that points to minimum value of matrix.
-     */
-    public int[] argmin() throws MatrixException {
-        int[] index = new int[2];
-        argMinMax(true, index);
-        return index;
+    public Matrix minAsMatrix() {
+        return constantAsMatrix(min());
     }
 
     /**
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
      * @return maximum value of matrix.
      */
-    public double max() throws MatrixException {
-        return argMinMax(false, new int[2]);
-    }
-
-    /**
-     * Returns maximum value of matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @throws MatrixException not thrown in any situation.
-     * @return maximum value of matrix.
-     */
-    public Matrix maxAsMatrix() throws MatrixException {
-        return asMatrix(max());
-    }
-
-    /**
-     * Returns argmax meaning row and column of matrix containing maximum value.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @return array containing row and column in this order that points to maximum value of matrix.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public int[] argmax() throws MatrixException {
-        int[] index = new int[2];
-        argMinMax(false, index);
-        return index;
+    public Matrix maxAsMatrix() {
+        return constantAsMatrix(max());
     }
 
     /**
@@ -1780,32 +1646,5 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return mask of this matrix.
      */
     protected abstract Mask getNewMask();
-
-    /**
-     * Sets scaling constant that scales (multiplies) each matrix element by this constant.<br>
-     * Default value is 1.<br>
-     *
-     * @param scalingConstant scaling constant to be set.
-     */
-    public void setScalingConstant(double scalingConstant) {
-        this.scalingConstant = scalingConstant;
-    }
-
-    /**
-     * Unsets scaling constant for matrix (resets it to default value 1).
-     *
-     */
-    public void unsetScalingConstant() {
-        scalingConstant = 1;
-    }
-
-    /**
-     * Returns scaling constant.
-     *
-     * @return scaling constant.
-     */
-    protected double getScalingConstant() {
-        return scalingConstant;
-    }
 
 }

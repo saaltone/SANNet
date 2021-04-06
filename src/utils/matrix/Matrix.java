@@ -733,17 +733,7 @@ public interface Matrix {
      * @param constant constant value.
      * @return constant matrix.
      */
-    Matrix asMatrix(double constant);
-
-    /**
-     * Takes cumulative sum of single variable operation applied over each element of this matrix.<br>
-     * Returns result array which has first element containing cumulative sum and second element number of elements.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param operation single variable operation defined as lambda operator.
-     * @return array containing cumulative sum and element count as elements.
-     */
-    double[] count(MatrixUnaryOperation operation);
+    Matrix constantAsMatrix(double constant);
 
     /**
      * Takes element wise cumulative sum of this matrix.<br>
@@ -880,14 +870,13 @@ public interface Matrix {
     Matrix exponentialMovingAverage(Matrix currentAverage, double beta) throws MatrixException;
 
     /**
-     * Normalizes other matrix by removing mean and standard deviation.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
+     * Normalizes matrix by removing mean and variance.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
-     * @param other matrix to be normalized.
+     * @param inplace if true matrix is normalized in place otherwise copy of normalized matrix is returned.
      * @return normalized matrix.
-     * @throws MatrixException not thrown in any situation.
      */
-    Matrix normalize(Matrix other) throws MatrixException;
+     Matrix normalize(boolean inplace);
 
     /**
      * Normalizes (scales) this matrix to new min and max values.<br>
@@ -912,69 +901,52 @@ public interface Matrix {
     Matrix minMax(Matrix other, double newMinimum, double newMaximum) throws MatrixException;
 
     /**
-     * Finds minimum or maximum element of matrix and return this value with row and column information.<br>
+     * Returns minimum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param isMinimum If true finds minimum value with row and column information otherwise maximum value.
-     * @param index two dimensional array used to return minimum or maximum value row and column in this order.
-     * @return minimum or maximum value found.
-     * @throws MatrixException thrown if index dimensions do not match.
+     * @return minimum value of matrix.
      */
-    double argMinMax(boolean isMinimum, int[] index) throws MatrixException;
+    double min();
 
     /**
      * Returns minimum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return minimum value of matrix.
-     * @throws MatrixException not thrown in any situation.
      */
-    double min() throws MatrixException;
-
-    /**
-     * Returns minimum value of matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @throws MatrixException not thrown in any situation.
-     * @return minimum value of matrix.
-     */
-    Matrix minAsMatrix() throws MatrixException;
+    Matrix minAsMatrix();
 
     /**
      * Returns argmin meaning row and column of matrix containing minimum value.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
      * @return array containing row and column in this order that points to minimum value of matrix.
      */
-    int[] argmin() throws MatrixException;
+    int[] argmin();
 
     /**
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
      * @return maximum value of matrix.
      */
-    double max() throws MatrixException;
+    double max();
 
     /**
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
      * @return maximum value of matrix.
      */
-    Matrix maxAsMatrix() throws MatrixException;
+    Matrix maxAsMatrix();
 
     /**
      * Returns argmax meaning row and column of matrix containing maximum value.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return array containing row and column in this order that points to maximum value of matrix.
-     * @throws MatrixException not thrown in any situation.
      */
-    int[] argmax() throws MatrixException;
+    int[] argmax();
 
     /**
      * Returns softmax of this matrix.
@@ -1367,19 +1339,5 @@ public interface Matrix {
      * @return if true mask exists and is masked at specific column.
      */
     boolean hasColumnMaskAt(Matrix matrix, int column);
-
-    /**
-     * Sets scaling constant that scales (multiplies) each matrix element by this constant.<br>
-     * Default value is 1.<br>
-     *
-     * @param scalingConstant scaling constant to be set.
-     */
-    void setScalingConstant(double scalingConstant);
-
-    /**
-     * Unsets scaling constant for matrix (resets it to default value 1).
-     *
-     */
-    void unsetScalingConstant();
 
 }
