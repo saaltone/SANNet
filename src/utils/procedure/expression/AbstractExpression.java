@@ -162,12 +162,13 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param index index
      * @param firstKey first key of inputs
+     * @param lastKey last key of inputs
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(int index, int firstKey) throws MatrixException, DynamicParamException {
-        calculateExpressionStep(index == firstKey, index);
-        if (nextExpression != null) nextExpression.calculateExpressionStep(index, firstKey);
+    public void calculateExpressionStep(int index, int firstKey, int lastKey) throws MatrixException, DynamicParamException {
+        calculateExpressionStep(index == firstKey, index == lastKey, index);
+        if (nextExpression != null) nextExpression.calculateExpressionStep(index, firstKey, lastKey);
     }
 
     /**
@@ -175,32 +176,34 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param indices indices
      * @param firstKey first key of inputs
+     * @param lastKey last key of inputs
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(Set<Integer> indices, int firstKey) throws MatrixException, DynamicParamException {
+    public void calculateExpressionStep(Set<Integer> indices, int firstKey, int lastKey) throws MatrixException, DynamicParamException {
         for (Integer index : indices) {
-            calculateExpressionStep(index == firstKey, index);
+            calculateExpressionStep(index == firstKey, index == lastKey, index);
         }
-        if (nextExpression != null) nextExpression.calculateExpressionStep(indices, firstKey);
+        if (nextExpression != null) nextExpression.calculateExpressionStep(indices, firstKey, lastKey);
     }
 
     /**
      * Calculates entire expression step including normalization and regulation.
      *
-     * @param firstCalculateExpressionStep true if this is first calculation step for expression
+     * @param firstStep true if this is first calculation step for expression
+     * @param lastStep true if this is last calculation step for expression
      * @param index index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(boolean firstCalculateExpressionStep, int index) throws MatrixException, DynamicParamException {
+    public void calculateExpressionStep(boolean firstStep, boolean lastStep, int index) throws MatrixException, DynamicParamException {
         updateExpressionDependency(index);
-        if (firstCalculateExpressionStep) forwardRegularize();
-        if (firstCalculateExpressionStep) forwardNormalize();
+        if (firstStep) forwardRegularize();
+        if (firstStep) forwardNormalize();
         forwardNormalize(index);
-        if (firstCalculateExpressionStep) calculateExpression();
+        if (firstStep) calculateExpression();
         calculateExpression(index);
-        if (firstCalculateExpressionStep) forwardNormalizeFinalize();
+        if (lastStep) forwardNormalizeFinalize();
     }
 
     /**
@@ -264,18 +267,18 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Calculates gradient step including normalization and regulation.
      *
-     * @param lastCalculateGradientStep true if this is last gradient step for expression
+     * @param lastStep true if this is last gradient step for expression
      * @param index index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientStep(boolean lastCalculateGradientStep, int index) throws MatrixException, DynamicParamException {
+    private void calculateGradientStep(boolean lastStep, int index) throws MatrixException, DynamicParamException {
         updateGradientDependency(index);
-        if (lastCalculateGradientStep) calculateGradient();
+        if (lastStep) calculateGradient();
         calculateGradient(index);
         backwardNormalize(index);
-        if (lastCalculateGradientStep) backwardNormalize();
-        if (lastCalculateGradientStep) backwardRegularize();
+        if (lastStep) backwardNormalize();
+        if (lastStep) backwardRegularize();
     }
 
     /**

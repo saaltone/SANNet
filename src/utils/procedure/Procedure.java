@@ -219,7 +219,7 @@ public class Procedure implements Serializable {
         for (Integer sampleIndex : inputSequence.keySet()) {
             setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
-            expressionChain.calculateExpressionStep(sampleIndex, inputSequence.firstKey());
+            expressionChain.calculateExpressionStep(sampleIndex, inputSequence.firstKey(), inputSequence.lastKey());
 
             MMatrix outputSample = new MMatrix(getOutputNodes().size());
             setOutputSample(sampleIndex, outputSample);
@@ -238,7 +238,7 @@ public class Procedure implements Serializable {
     public void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : inputSequence.keySet()) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
-        expressionChain.calculateExpressionStep(inputSequence.keySet(), inputSequence.firstKey());
+        expressionChain.calculateExpressionStep(inputSequence.keySet(), inputSequence.firstKey(), inputSequence.lastKey());
 
         for (Integer sampleIndex : inputSequence.keySet()) {
             MMatrix outputSample = new MMatrix(getOutputNodes().size());
@@ -300,7 +300,7 @@ public class Procedure implements Serializable {
      */
     public Matrix calculateExpression(Matrix inputMatrix, int sampleIndex) throws MatrixException, DynamicParamException {
         setInputSample(sampleIndex, new MMatrix(inputMatrix));
-        expressionChain.calculateExpressionStep(sampleIndex, 0);
+        expressionChain.calculateExpressionStep(sampleIndex, 0, 0);
         return getOutputNodes().get(0).getMatrix(sampleIndex);
     }
 
