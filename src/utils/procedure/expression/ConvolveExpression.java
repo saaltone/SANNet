@@ -107,7 +107,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setDilation(dilation);
         result.getGradient(index).setFilterSize(filterSize);
-        argument1.cumulateGradient(index, result.getGradient(index).convolveOutputGradient(argument2.getMatrix(index)), false);
+        argument1.cumulateGradient(index, result.getGradient(index).convolveInputGradient(argument2.getMatrix(index)), false);
         argument2.cumulateGradient(index, result.getGradient(index).convolveFilterGradient(argument1.getMatrix(index)), false);
     }
 

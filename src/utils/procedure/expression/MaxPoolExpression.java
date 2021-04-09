@@ -9,6 +9,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * Class that describes expression for max pooling operation.
@@ -35,10 +36,10 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     private final int poolSize;
 
     /**
-     * Maximum arguments for max pool operation.
+     * Maximum positions for max pool operation.
      *
      */
-    private int [][][] maxArgsAt;
+    private final HashMap<Integer, HashMap<Integer, Integer>> maxPos = new HashMap<>();
 
     /**
      * Constructor for max pooling operation.
@@ -73,8 +74,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
         if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setPoolSize(poolSize);
-        maxArgsAt = new int[argument1.getMatrix(index).getRows() - poolSize + 1][argument1.getMatrix(index).getColumns() - poolSize + 1][2];
-        result.setMatrix(index, argument1.getMatrix(index).maxPool(maxArgsAt));
+        maxPos.put(index, new HashMap<>());
+        result.setMatrix(index, argument1.getMatrix(index).maxPool(maxPos.get(index)));
     }
 
     /**
@@ -92,10 +93,10 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
-        if (maxArgsAt == null) throw new MatrixException("Maximum arguments for gradient calculation are not defined.");
+        if (!maxPos.containsKey(index)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setPoolSize(poolSize);
-        argument1.cumulateGradient(index, result.getGradient(index).maxPoolGradient(maxArgsAt), false);
+        argument1.cumulateGradient(index, result.getGradient(index).maxPoolGradient(maxPos.remove(index)), false);
     }
 
     /**
