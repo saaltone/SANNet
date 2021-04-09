@@ -4,6 +4,7 @@ import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -1268,7 +1269,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix convolve(Matrix filter) throws MatrixException {
-        return convolve(filter, true);
+        Matrix result = new DMatrix(getRows() - getFilterSize() + 1, getColumns() - getFilterSize() + 1);
+        convolve(filter, result);
+        return result;
     }
 
     /**
@@ -1279,20 +1282,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix crosscorrelate(Matrix filter) throws MatrixException {
-        return convolve(filter, false);
-    }
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return calculated value of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix convolve(Matrix filter, boolean asConvolution) throws MatrixException {
         Matrix result = new DMatrix(getRows() - getFilterSize() + 1, getColumns() - getFilterSize() + 1);
-        convolve(filter, result, asConvolution);
+        crosscorrelate(filter, result);
         return result;
     }
 
@@ -1301,19 +1292,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param filter filter matrix.
      * @param result calculated value of convolution.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void convolve(Matrix filter, Matrix result, boolean asConvolution) throws MatrixException {
+    public void convolve(Matrix filter, Matrix result) throws MatrixException {
         synchronizeProcedureFactory(filter);
         result.setProcedureFactory(procedureFactory);
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        applyConvolve(filter, result, asConvolution);
-        if (procedureFactory != null) {
-            if (asConvolution) procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
-            else procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
-        }
+        applyConvolve(filter, result);
+        if (procedureFactory != null) procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
     }
 
     /**
@@ -1321,41 +1308,55 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param filter filter matrix.
      * @param result calculated value of convolution.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyConvolve(Matrix filter, Matrix result, boolean asConvolution);
+    public void crosscorrelate(Matrix filter, Matrix result) throws MatrixException {
+        synchronizeProcedureFactory(filter);
+        result.setProcedureFactory(procedureFactory);
+        double expressionLock = 0;
+        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
+        applyCrosscorrelate(filter, result);
+        if (procedureFactory != null) procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
+    }
 
     /**
-     * Calculates gradient of convolution for output.
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of convolution.
+     */
+    protected abstract void applyConvolve(Matrix filter, Matrix result);
+
+    /**
+     * Calculates crosscorrelation between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of crosscorrelation.
+     */
+    protected abstract void applyCrosscorrelate(Matrix filter, Matrix result);
+
+    /**
+     * Calculates gradient of convolution for input.
      *
      * @param filter filter for convolutional operator.
      * @return output gradient.
      */
-    public Matrix convolveOutputGradient(Matrix filter) {
-        return convolveOutputGradient(filter, true);
+    public Matrix convolveInputGradient(Matrix filter) {
+        Matrix inputGradient = new DMatrix(getRows() + getFilterSize() - 1, getColumns() + getFilterSize() - 1);
+        convolveInputGradient(filter, inputGradient);
+        return inputGradient;
     }
 
     /**
-     * Calculates gradient of cross-correlation for output.
+     * Calculates gradient of cross-correlation for input.
      *
      * @param filter filter for cross-correlation operator.
      * @return output gradient.
      */
-    public Matrix crosscorrelateOutputGradient(Matrix filter) {
-        return convolveOutputGradient(filter, false);
-    }
-
-    /**
-     * Calculates gradient of convolution for output.
-     *
-     * @param filter filter for convolutional operator.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return output gradient.
-     */
-    public Matrix convolveOutputGradient(Matrix filter, boolean asConvolution) {
-        Matrix result = new DMatrix(getRows() + getFilterSize() - 1, getColumns() + getFilterSize() - 1);
-        convolveOutputGradient(filter, result, asConvolution);
-        return result;
+    public Matrix crosscorrelateInputGradient(Matrix filter) {
+        Matrix inputGradient = new DMatrix(getRows() + getFilterSize() - 1, getColumns() + getFilterSize() - 1);
+        crosscorrelateInputGradient(filter, inputGradient);
+        return inputGradient;
     }
 
     /**
@@ -1365,7 +1366,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return filter gradient.
      */
     public Matrix convolveFilterGradient(Matrix input) {
-        return convolveFilterGradient(input, true);
+        Matrix filterGradient = new DMatrix(getFilterSize(), getFilterSize());
+        convolveFilterGradient(input, filterGradient);
+        return filterGradient;
     }
 
     /**
@@ -1375,32 +1378,21 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return filter gradient.
      */
     public Matrix crosscorrelateFilterGradient(Matrix input) {
-        return convolveFilterGradient(input, false);
+        Matrix filterGradient = new DMatrix(getFilterSize(), getFilterSize());
+        crosscorrelateFilterGradient(input, filterGradient);
+        return filterGradient;
     }
 
     /**
-     * Calculates gradient of convolution for filter.
+     * Calculates max pooling operation for this matrix.
      *
-     * @param input input for convolutional operator.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return filter gradient.
-     */
-    public Matrix convolveFilterGradient(Matrix input, boolean asConvolution) {
-        Matrix result = new DMatrix(input.getRows() - getRows() + 1, input.getColumns() - getColumns() + 1);
-        convolveFilterGradient(input, result, asConvolution);
-        return result;
-    }
-
-    /**
-     * Calculates max pooling operation for this matrix and returns max arguments.
-     *
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix maxPool(int [][][] maxArgumentsAt) throws MatrixException {
+    public Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
         Matrix result = new DMatrix(getRows() - getPoolSize() + 1, getColumns() - getPoolSize() + 1);
-        maxPool(result, maxArgumentsAt);
+        maxPool(result, maxPos);
         return result;
     }
 
@@ -1408,14 +1400,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates max pooling operation for this matrix and returns max arguments.
      *
      * @param result result matrix.
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void maxPool(Matrix result, int [][][] maxArgumentsAt) throws MatrixException {
+    public void maxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException {
         result.setProcedureFactory(procedureFactory);
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        applyMaxPool(result, maxArgumentsAt);
+        applyMaxPool(result, maxPos);
         if (procedureFactory != null) procedureFactory.createMaxPoolExpression(expressionLock, this, result, getStride(), getPoolSize());
     }
 
@@ -1423,20 +1415,20 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates max pooling operation for this matrix and returns max arguments.
      *
      * @param result result matrix.
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      */
-    protected abstract void applyMaxPool(Matrix result, int [][][] maxArgumentsAt);
+    protected abstract void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos);
 
     /**
      * Calculates gradient of max pooling operation for this matrix.
      *
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @return result matrix.
      */
-    public Matrix maxPoolGradient(int [][][] maxArgumentsAt) {
-        Matrix result = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
-        maxPoolGradient(result, maxArgumentsAt);
-        return result;
+    public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) {
+        Matrix inputGradient = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
+        maxPoolGradient(inputGradient, maxPos);
+        return inputGradient;
     }
 
     /**
@@ -1475,12 +1467,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Calculates gradient of average pooling operation for this matrix.
      *
-     * @return result matrix.
+     * @return input gradient.
      */
     public Matrix averagePoolGradient() {
-        Matrix result = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
-        averagePoolGradient(result);
-        return result;
+        Matrix inputGradient = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
+        averagePoolGradient(inputGradient);
+        return inputGradient;
     }
 
     /**

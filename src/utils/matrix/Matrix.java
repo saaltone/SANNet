@@ -8,6 +8,8 @@ package utils.matrix;
 import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
+import java.util.HashMap;
+
 /**
  * Interface that implements matrix with extensive set of matrix operations and masking for matrix.<br>
  *
@@ -1075,10 +1077,10 @@ public interface Matrix {
     Matrix convolve(Matrix filter) throws MatrixException;
 
     /**
-     * Calculates cross-correlation between this matrix and filter matrix.
+     * Calculates crosscorrelation between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @return calculated value of cross-correlation.
+     * @return calculated value of crosscorrelation.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix crosscorrelate(Matrix filter) throws MatrixException;
@@ -1087,21 +1089,19 @@ public interface Matrix {
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return calculated value of convolution.
+     * @param result calculated value of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix convolve(Matrix filter, boolean asConvolution) throws MatrixException;
+    void convolve(Matrix filter, Matrix result) throws MatrixException;
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
+     * Calculates crosscorrelate between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param result calculated value of crosscorrelate.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void convolve(Matrix filter, Matrix result, boolean asConvolution) throws MatrixException;
+    void crosscorrelate(Matrix filter, Matrix result) throws MatrixException;
 
     /**
      * Calculates gradient of convolution for output.
@@ -1109,7 +1109,7 @@ public interface Matrix {
      * @param filter filter for convolutional operator.
      * @return output gradient.
      */
-    Matrix convolveOutputGradient(Matrix filter);
+    Matrix convolveInputGradient(Matrix filter);
 
     /**
      * Calculates gradient of cross-correlation for output.
@@ -1117,25 +1117,23 @@ public interface Matrix {
      * @param filter filter for cross-correlation operator.
      * @return output gradient.
      */
-    Matrix crosscorrelateOutputGradient(Matrix filter);
+    Matrix crosscorrelateInputGradient(Matrix filter);
 
     /**
-     * Calculates gradient of convolution for output.
+     * Calculates gradient of convolution for input.
      *
      * @param filter filter for convolutional operator.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return output gradient.
+     * @param inputGradient input gradient.
      */
-    Matrix convolveOutputGradient(Matrix filter, boolean asConvolution);
+    void convolveInputGradient(Matrix filter, Matrix inputGradient);
 
     /**
-     * Calculates gradient of convolution for output.
+     * Calculates gradient of crosscorrelation for input.
      *
-     * @param filter filter for convolutional operator.
-     * @param result output gradient.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param filter filter for crosscorrelation operator.
+     * @param inputGradient input gradient.
      */
-    void convolveOutputGradient(Matrix filter, Matrix result, boolean asConvolution);
+    void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient);
 
     /**
      * Calculates gradient of convolution for filter.
@@ -1146,9 +1144,9 @@ public interface Matrix {
     Matrix convolveFilterGradient(Matrix input);
 
     /**
-     * Calculates gradient of cross-correlation for filter.
+     * Calculates gradient of crosscorrelation for filter.
      *
-     * @param input input for cross-correlation operator.
+     * @param input input for crosscorrelation operator.
      * @return filter gradient.
      */
     Matrix crosscorrelateFilterGradient(Matrix input);
@@ -1157,19 +1155,17 @@ public interface Matrix {
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return filter gradient.
+     * @param filterGradient filter gradient.
      */
-    Matrix convolveFilterGradient(Matrix input, boolean asConvolution);
+    void convolveFilterGradient(Matrix input, Matrix filterGradient);
 
     /**
-     * Calculates gradient of convolution for filter.
+     * Calculates gradient of crosscorrelation for filter.
      *
-     * @param input input for convolutional operator.
-     * @param resultGradient filter gradient.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param input input for crosscorrelation operator.
+     * @param filterGradient filter gradient.
      */
-    void convolveFilterGradient(Matrix input, Matrix resultGradient, boolean asConvolution);
+    void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient);
 
     /**
      * Sets size of pool for pooling operation.
@@ -1186,38 +1182,38 @@ public interface Matrix {
     int getPoolSize();
 
     /**
-     * Calculates max pooling operation for this matrix and returns max arguments.
+     * Calculates max pooling operation for this matrix.
      *
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix maxPool(int [][][] maxArgumentsAt) throws MatrixException;
+    Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates max pooling operation for this matrix and returns max arguments.
      *
      * @param result result matrix.
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void maxPool(Matrix result, int [][][] maxArgumentsAt) throws MatrixException;
+    void maxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates gradient of max pooling operation for this matrix.
      *
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      * @return result matrix.
      */
-    Matrix maxPoolGradient(int [][][] maxArgumentsAt);
+    Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos);
 
     /**
      * Calculates gradient for max pool operation.
      *
      * @param result result matrix.
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum positions for each row and col value.
      */
-    void maxPoolGradient(Matrix result, int[][][] maxArgumentsAt);
+    void maxPoolGradient(Matrix result, HashMap<Integer, Integer> maxPos);
 
     /**
      * Calculates average pooling operation for this matrix.
