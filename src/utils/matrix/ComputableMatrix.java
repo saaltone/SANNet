@@ -1,6 +1,8 @@
 package utils.matrix;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -56,6 +58,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         public void apply(int row, int column, double value) {
             other.setValue(row, column, value);
         }
+
     }
 
     /**
@@ -227,6 +230,25 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             this.value += value;
             count++;
         }
+
+        /**
+         * Returns sum after operation is applied.
+         *
+         * @return sum.
+         */
+        public double getSum() {
+            return value;
+        }
+
+        /**
+         * Returns mean after operation is applied.
+         *
+         * @return mean.
+         */
+        public double getMean() {
+            return value / (double)count;
+        }
+
     }
 
     /**
@@ -274,6 +296,24 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             count++;
         }
 
+        /**
+         * Returns variance after operation is applied.
+         *
+         * @return variance.
+         */
+        public double getVariance() {
+            return count > 0 ? value / (double)count : 0;
+        }
+
+        /**
+         * Returns standard deviation after operation is applied.
+         *
+         * @return standard deviation.
+         */
+        public double getStandardDeviation() {
+            return count > 1 ? Math.sqrt(value / (double)(count - 1)) : 0;
+        }
+
     }
 
     /**
@@ -313,6 +353,16 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         public void apply(int row, int column, double value) {
             this.value += Math.pow(Math.abs(value), p);
         }
+
+        /**
+         * Returns norm after operation is applied.
+         *
+         * @return norm.
+         */
+        public double getNorm() {
+            return Math.pow(value, 1 / (double)p);
+        }
+
     }
 
     /**
@@ -361,6 +411,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         public void apply(int row, int column, double value) {
             result.setValue(row, column, (value - mean) / variance);
         }
+
     }
 
     /**
@@ -401,6 +452,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
                 this.column = column;
             }
         }
+
     }
 
     /**
@@ -441,31 +493,745 @@ public abstract class ComputableMatrix extends AbstractMatrix {
                 this.column = column;
             }
         }
+
+    }
+
+    /**
+     * Defines Softmax gradient matrix operation.
+     *
+     */
+    private static class SoftmaxGradientOperation implements MatrixOperation {
+
+        /**
+         * First matrix.
+         *
+         */
+        final Matrix first;
+
+        /**
+         * Result matrix.
+         *
+         */
+        final Matrix result;
+
+        /**
+         * Constructor for Softmax gradient matrix operation.
+         *
+         * @param result result matrix.
+         */
+        public SoftmaxGradientOperation(Matrix first, Matrix result) {
+            this.first = first;
+            this.result = result;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param row1 current row1.
+         * @param value current value.
+         */
+        public void apply(int row, int row1, double value) {
+            result.setValue(row1, row, (row == row1 ? 1 : 0) - first.getValue(row1, 0));
+        }
+
+    }
+
+    /**
+     * Defines abstract convolution matrix operation.
+     *
+     */
+    private static abstract class AbstractConvolutionOperation implements MatrixOperation {
+
+        /**
+         * Input matrix.
+         *
+         */
+        final Matrix input;
+
+        /**
+         * Filter matrix.
+         *
+         */
+        final Matrix filter;
+
+        /**
+         * Result matrix.
+         *
+         */
+        final Matrix result;
+
+        /**
+         * Matrix dilation value.
+         *
+         */
+        final int dilation;
+
+        /**
+         * Filter row size.
+         *
+         */
+        final int filterRowSize;
+
+        /**
+         * Filter column size.
+         *
+         */
+        final int filterColumnSize;
+
+        /**
+         * Constructor for abstract convolution operation.
+         *
+         * @param input input
+         * @param filter filter
+         * @param result result
+         * @param dilation dilation step
+         */
+        public AbstractConvolutionOperation(Matrix input, Matrix filter, Matrix result, int dilation) {
+            this.input = input;
+            this.filter = filter;
+            this.result = result;
+            this.dilation = dilation;
+            this.filterRowSize = filter.getRows();
+            this.filterColumnSize = filter.getColumns();
+        }
+
+    }
+
+    /**
+     * Defines crosscorrelation matrix operation.
+     *
+     */
+    private static class CrosscorrelationOperation extends AbstractConvolutionOperation {
+
+        /**
+         * Constructor for crosscorrelation operation.
+         *
+         * @param input input
+         * @param filter filter
+         * @param result result
+         * @param dilation dilation step
+         */
+        public CrosscorrelationOperation(Matrix input, Matrix filter, Matrix result, int dilation) {
+            super(input, filter, result, dilation);
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            double resultValue = 0;
+            for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
+                    resultValue += input.getValue(row + filterRow, column + filterColumn) * filter.getValue(filterRow, filterColumn);
+                }
+            }
+            result.setValue(row, column, resultValue);
+        }
+
+    }
+
+    /**
+     * Defines convolution matrix operation.
+     *
+     */
+    private static class ConvolutionOperation extends AbstractConvolutionOperation {
+
+        /**
+         * Constructor for convolution operation.
+         *
+         * @param input input
+         * @param filter filter
+         * @param result result
+         * @param dilation dilation step
+         */
+        public ConvolutionOperation(Matrix input, Matrix filter, Matrix result, int dilation) {
+            super(input, filter, result, dilation);
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            double resultValue = 0;
+            for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
+                    resultValue += input.getValue(row + filterRow, column + filterColumn) * filter.getValue(filterRowSize - 1 - filterRow, filterColumnSize - 1 - filterColumn);
+                }
+            }
+            result.setValue(row, column, resultValue);
+        }
+
+    }
+
+    /**
+     * Defines crosscorrelation input gradient operation.
+     *
+     */
+    private static class CrosscorrelationInputGradientOperation implements MatrixOperation {
+
+        /**
+         * Filter matrix.
+         *
+         */
+        final Matrix filter;
+
+        /**
+         * Number of rows in filter.
+         *
+         */
+        final int filterRows;
+
+        /**
+         * Number of columns in filter.
+         *
+         */
+        final int filterColumns;
+
+        /**
+         * Resulting input gradient.
+         *
+         */
+        final Matrix inputGradient;
+
+        /**
+         * Dilation.
+         *
+         */
+        final int dilation;
+
+        /**
+         * Constructor for crosscorrelation input gradient operation.
+         *
+         * @param filter filter
+         * @param inputGradient input gradient
+         * @param dilation dilation step
+         */
+        public CrosscorrelationInputGradientOperation(Matrix filter, Matrix inputGradient, int dilation) {
+            this.filter = filter;
+            filterRows = filter.getRows();
+            filterColumns = filter.getColumns();
+            this.inputGradient = inputGradient;
+            this.dilation = dilation;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            for (int filterRow = 0; filterRow < filterRows; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumns; filterColumn += dilation) {
+                    inputGradient.incrementByValue(row + filterRow, column + filterColumn, filter.getValue(filterRow, filterColumn) * value);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Defines convolution input gradient operation.
+     *
+     */
+    private static class ConvolutionInputGradientOperation implements MatrixOperation {
+
+        /**
+         * Filter matrix.
+         *
+         */
+        final Matrix filter;
+
+        /**
+         * Number of rows in filter.
+         *
+         */
+        final int filterRows;
+
+        /**
+         * Number of columns in filter.
+         *
+         */
+        final int filterColumns;
+
+        /**
+         * Resulting input gradient.
+         *
+         */
+        final Matrix inputGradient;
+
+        /**
+         * Dilation.
+         *
+         */
+        final int dilation;
+
+        /**
+         * Constructor for convolution input gradient operation.
+         *
+         * @param filter filter
+         * @param inputGradient input gradient
+         * @param dilation dilation step
+         */
+        public ConvolutionInputGradientOperation(Matrix filter, Matrix inputGradient, int dilation) {
+            this.filter = filter;
+            filterRows = filter.getRows();
+            filterColumns = filter.getColumns();
+            this.inputGradient = inputGradient;
+            this.dilation = dilation;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            for (int filterRow = 0; filterRow < filterRows; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumns; filterColumn += dilation) {
+                    inputGradient.incrementByValue(row + filterRow, column + filterColumn, filter.getValue(filterRows - 1 - filterRow, filterColumns - 1 - filterColumn) * value);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Defines crosscorrelation filter gradient operation.
+     *
+     */
+    private static class CrosscorrelationFilterGradientOperation implements MatrixOperation {
+
+        /**
+         * Input matrix.
+         *
+         */
+        final Matrix input;
+
+        /**
+         * Number of rows in filter.
+         *
+         */
+        final int filterRows;
+
+        /**
+         * Number of columns in filter.
+         *
+         */
+        final int filterColumns;
+
+        /**
+         * Resulting filter gradient.
+         *
+         */
+        final Matrix filterGradient;
+
+        /**
+         * Dilation.
+         *
+         */
+        final int dilation;
+
+        /**
+         * Constructor for crosscorrelation filter gradient operation.
+         *
+         * @param input input
+         * @param filterGradient input gradient
+         * @param dilation dilation step
+         */
+        public CrosscorrelationFilterGradientOperation(Matrix input, Matrix filterGradient, int dilation) {
+            this.input = input;
+            filterRows = filterGradient.getRows();
+            filterColumns = filterGradient.getColumns();
+            this.filterGradient = filterGradient;
+            this.dilation = dilation;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            for (int filterRow = 0; filterRow < filterRows; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumns; filterColumn += dilation) {
+                    filterGradient.incrementByValue(filterRow, filterColumn, input.getValue(row + filterRow, column + filterColumn) * value);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Defines convolution filter gradient operation.
+     *
+     */
+    private static class ConvolutionFilterGradientOperation implements MatrixOperation {
+
+        /**
+         * Input matrix.
+         *
+         */
+        final Matrix input;
+
+        /**
+         * Number of rows in filter.
+         *
+         */
+        final int filterRows;
+
+        /**
+         * Number of columns in filter.
+         *
+         */
+        final int filterColumns;
+
+        /**
+         * Resulting filter gradient.
+         *
+         */
+        final Matrix filterGradient;
+
+        /**
+         * Dilation.
+         *
+         */
+        final int dilation;
+
+        /**
+         * Constructor for convolution filter gradient operation.
+         *
+         * @param input input
+         * @param filterGradient input gradient
+         * @param dilation dilation step
+         */
+        public ConvolutionFilterGradientOperation(Matrix input, Matrix filterGradient, int dilation) {
+            this.input = input;
+            filterRows = filterGradient.getRows();
+            filterColumns = filterGradient.getColumns();
+            this.filterGradient = filterGradient;
+            this.dilation = dilation;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            for (int filterRow = 0; filterRow < filterRows; filterRow += dilation) {
+                for (int filterColumn = 0; filterColumn < filterColumns; filterColumn += dilation) {
+                    filterGradient.incrementByValue(filterRows - 1 - filterRow, filterColumns - 1 - filterColumn, input.getValue(row + filterRow, column + filterColumn) * value);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Defines max pooling operation.
+     *
+     */
+    private static class MaxPoolOperation implements MatrixOperation {
+
+        /**
+         * Input matrix.
+         *
+         */
+        final Matrix input;
+
+        /**
+         * Number of inputs rows.
+         *
+         */
+        final int inputRows;
+
+        /**
+         * Number of inputs columns.
+         *
+         */
+        final int inputColumns;
+
+        /**
+         * Result.
+         *
+         */
+        final Matrix result;
+
+        /**
+         * Number of rows in pool.
+         *
+         */
+        final int poolRows;
+
+        /**
+         * Number of columns in pool.
+         *
+         */
+        final int poolColumns;
+
+        /**
+         * Maximum position for each resulting row and column.
+         *
+         */
+        final HashMap<Integer, Integer> maxPos;
+
+        /**
+         * Constructor for max pooling operation.
+         *
+         * @param input input
+         * @param poolRows pool size in rows.
+         * @param poolColumns pool size in columns.
+         * @param maxPos maximum position for each resulting row and column..
+         */
+        public MaxPoolOperation(Matrix input, Matrix result, int poolRows, int poolColumns, HashMap<Integer, Integer> maxPos) {
+            this.input = input;
+            this.inputRows = input.getRows();
+            this.inputColumns = input.getColumns();
+            this.result = result;
+            this.poolRows = poolRows;
+            this.poolColumns = poolColumns;
+            this.maxPos = maxPos;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            int maxRow = -1;
+            int maxColumn = -1;
+            double maxValue = Double.NEGATIVE_INFINITY;
+            for (int poolRow = 0; poolRow < poolRows; poolRow++) {
+                for (int poolColumn = 0; poolColumn < poolColumns; poolColumn++) {
+                    int inputRow = row + poolRow;
+                    int inputColumn = column + poolColumn;
+                    double inputValue = input.getValue(inputRow, inputColumn);
+                    if (maxValue < inputValue) {
+                        maxValue = inputValue;
+                        maxRow = inputRow;
+                        maxColumn = inputColumn;
+                    }
+                }
+            }
+            result.setValue(row, column, maxValue);
+            maxPos.put(2 * (row * inputColumns + column), maxRow);
+            maxPos.put(2 * (row * inputColumns + column) + 1, maxColumn);
+        }
+
+    }
+
+    /**
+     * Defines max pooling gradient operation.
+     *
+     */
+    private static class MaxPoolGradientOperation implements MatrixOperation {
+
+        /**
+         * Input gradient.
+         *
+         */
+        final Matrix inputGradient;
+
+        /**
+         * Number of inputs rows.
+         *
+         */
+        final int inputRows;
+
+        /**
+         * Number of inputs columns.
+         *
+         */
+        final int inputColumns;
+
+        /**
+         * Maximum position for each resulting row and column.
+         *
+         */
+        final HashMap<Integer, Integer> maxPos;
+
+        /**
+         * Constructor for max pooling gradient operation.
+         *
+         * @param inputGradient input gradient
+         * @param maxPos maximum positions for row and column.
+         */
+        public MaxPoolGradientOperation(Matrix inputGradient, HashMap<Integer, Integer> maxPos) {
+            this.inputGradient = inputGradient;
+            this.inputRows = inputGradient.getRows();
+            this.inputColumns = inputGradient.getColumns();
+            this.maxPos = maxPos;
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            inputGradient.setValue(maxPos.get(2 * (row * inputColumns + column)), maxPos.get(2 * (row * inputColumns + column) + 1), value);
+        }
+
+    }
+
+    /**
+     * Defines average pooling operation.
+     *
+     */
+    private static class AveragePoolOperation implements MatrixOperation {
+
+        /**
+         * Input matrix.
+         *
+         */
+        final Matrix input;
+
+        /**
+         * Resulting filter gradient.
+         *
+         */
+        final Matrix result;
+
+        /**
+         * Number of rows in pool.
+         *
+         */
+        final int poolRows;
+
+        /**
+         * Number of columns in pool.
+         *
+         */
+        final int poolColumns;
+
+        /**
+         * Inverted size of pool 1 / (rows * columns)
+         *
+         */
+        final double invertedPoolSize;
+
+        /**
+         * Constructor for average pooling operation.
+         *
+         * @param input input
+         * @param poolRows pool size in rows.
+         * @param poolColumns pool size in columns.
+         */
+        public AveragePoolOperation(Matrix input, Matrix result, int poolRows, int poolColumns) {
+            this.input = input;
+            this.result = result;
+            this.poolRows = poolRows;
+            this.poolColumns = poolColumns;
+            this.invertedPoolSize = 1 / (double)(poolRows * poolColumns);
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            double sumValue = 0;
+            for (int poolRow = 0; poolRow < poolRows; poolRow++) {
+                for (int poolColumn = 0; poolColumn < poolColumns; poolColumn++) {
+                    sumValue += input.getValue(row + poolRow, column + poolColumn);
+                }
+            }
+            result.setValue(row, column, sumValue * invertedPoolSize);
+        }
+
+    }
+
+    /**
+     * Defines average pooling gradient operation.
+     *
+     */
+    private static class AveragePoolGradientOperation implements MatrixOperation {
+
+        /**
+         * Input gradient.
+         *
+         */
+        final Matrix inputGradient;
+
+        /**
+         * Inverted size of pool 1 / (rows * columns)
+         *
+         */
+        final double invertedPoolSize;
+
+        /**
+         * Constructor for average pooling gradient operation.
+         *
+         * @param inputGradient input gradient
+         * @param poolRows pool size in rows.
+         * @param poolColumns pool size in columns.
+         */
+        public AveragePoolGradientOperation(Matrix inputGradient, int poolRows, int poolColumns) {
+            this.inputGradient = inputGradient;
+            this.invertedPoolSize = 1 / (double)(poolRows * poolColumns);
+        }
+
+        /**
+         * Applies operation.
+         *
+         * @param row current row.
+         * @param column current column.
+         * @param value current value.
+         */
+        public void apply(int row, int column, double value) {
+            inputGradient.setValue(row, column, value * invertedPoolSize);
+        }
+
     }
 
     /**
      * Stride size for convolutional and pooling operations.
      *
      */
-    private int stride;
+    private int stride = 1;
 
     /**
      * Dilation step size for convolutional operations.
      *
      */
-    private int dilation;
+    private int dilation = 1;
 
     /**
      * Filter size for convolutional operations.
      *
      */
-    private int filterSize;
+    private int filterSize = 3;
 
     /**
      * Pool size for pooling operations.
      *
      */
-    private int poolSize;
+    private int poolSize = 2;
 
     /**
      * Random function for matrix class.
@@ -611,23 +1377,26 @@ public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
      * Applies matrix operation.
-     *  @param matrixOperation matrix operation.
+     *
+     * @param matrixOperation matrix operation.
      * @param rows number of matrix rows.
      * @param columns number of matrix columns.
      * @param provideValue if true value will be provided for matrix operation otherwise zero (no value) if provided.
      */
     private void applyMatrixOperation(MatrixOperation matrixOperation, Matrix other, int rows, int columns, final boolean provideValue) {
+        final int rowStride = stride;
+        final int columnStride = stride;
         if (!hasMask(other)) {
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < rows; row += rowStride) {
+                for (int column = 0; column < columns; column += columnStride) {
                     matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
                 }
             }
         }
         else {
-            for (int row = 0; row < rows; row++) {
+            for (int row = 0; row < rows; row += rowStride) {
                 if (!hasRowMaskAt(row, other)) {
-                    for (int column = 0; column < columns; column++) {
+                    for (int column = 0; column < columns; column += columnStride) {
                         if (!hasMaskAt(row, column, other) && !hasColumnMaskAt(column, other)) {
                             matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
                         }
@@ -690,7 +1459,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public double sum() {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation();
         applyMatrixOperation(sumMatrixOperation);
-        return sumMatrixOperation.value;
+        return sumMatrixOperation.getSum();
     }
 
     /**
@@ -702,7 +1471,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public double mean() {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation();
         applyMatrixOperation(sumMatrixOperation);
-        return sumMatrixOperation.count > 0 ? sumMatrixOperation.value / (double) sumMatrixOperation.count : 0;
+        return sumMatrixOperation.getMean();
     }
 
     /**
@@ -715,7 +1484,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public double variance(double mean) {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(mean);
         applyMatrixOperation(varianceMatrixOperation);
-        return varianceMatrixOperation.count > 0 ? varianceMatrixOperation.value / (double) varianceMatrixOperation.count : 0;
+        return varianceMatrixOperation.getVariance();
     }
 
     /**
@@ -728,7 +1497,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public double standardDeviation(double mean) {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(mean);
         applyMatrixOperation(varianceMatrixOperation);
-        return varianceMatrixOperation.count > 1 ? Math.sqrt(varianceMatrixOperation.value / ((double) varianceMatrixOperation.count - 1)) : 0;
+        return varianceMatrixOperation.getStandardDeviation();
     }
 
     /**
@@ -741,7 +1510,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public double norm(int p) {
         NormMatrixOperation normMatrixOperation = new NormMatrixOperation(p);
         applyMatrixOperation(normMatrixOperation);
-        return Math.pow(normMatrixOperation.value, 1 / (double)p);
+        return normMatrixOperation.getNorm();
     }
 
     /**
@@ -882,22 +1651,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getRows() != result.getRows() || getRows() != result.getColumns()) {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
         }
-        if (getMask() == null) {
-            for (int row = 0; row < getRows(); row++) {
-                for (int row1 = 0; row1 < getRows(); row1++) {
-                    result.setValue(row1, row, (row == row1 ? 1 : 0) - getValue(row1, 0));
-                }
-            }
-        }
-        else {
-            for (int row = 0; row < getRows(); row++) {
-                if (!hasRowMaskAt(this, row) && !hasMaskAt(this, row, 0) && !hasColumnMaskAt(this, 0)) {
-                    for (int row1 = 0; row1 < getRows(); row1++) {
-                        result.setValue(row1, row, (row == row1 ? 1 : 0) - getValue(row1, 0));
-                    }
-                }
-            }
-        }
+
+        SoftmaxGradientOperation softmaxGradientOperation = new SoftmaxGradientOperation(this, result);
+        applyMatrixOperation(softmaxGradientOperation, null, getRows(), getRows(), false);
+
         return result;
     }
 
@@ -959,143 +1716,66 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param result calculated result of convolution.
      */
-    protected void applyConvolve(Matrix filter, Matrix result, boolean asConvolution) {
-        for (int resultRow = 0; resultRow < result.getRows(); resultRow += stride) {
-            for (int resultColumn = 0; resultColumn < result.getColumns(); resultColumn += stride) {
-                convolve(filter, result, resultRow, resultColumn, asConvolution);
-            }
-        }
+    protected void applyConvolve(Matrix filter, Matrix result) {
+        ConvolutionOperation convolutionOperation = new ConvolutionOperation(this, filter, result, dilation);
+        applyMatrixOperation(convolutionOperation, null, result.getRows(), result.getColumns(), false);
     }
 
     /**
-     * Calculates convolution between this matrix and filter matrix for a specific slice row and column.
+     * Calculates convolution between this matrix and filter matrix.
      *
-     * @param filter filter
-     * @param result result of operation.
-     * @param inputRow row of input.
-     * @param inputColumn column of input.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param filter filter matrix.
+     * @param result calculated result of convolution.
      */
-    private void convolve(Matrix filter, Matrix result, int inputRow, int inputColumn, boolean asConvolution) {
-        double resultValue = 0;
-        if (getMask() == null && filter.getMask() == null) {
-            for (int filterRow = 0; filterRow < filterSize; filterRow++) {
-                for (int filterColumn = 0; filterColumn < filterSize; filterColumn++) {
-                    resultValue += getValue(inputRow + filterRow, inputColumn + filterColumn) * getSliceValue(filter, 0, 0, filterRow, filterColumn, filterSize, filterSize, asConvolution);
-                }
-            }
-        }
-        else {
-            for (int filterRow = 0; filterRow < filterSize; filterRow++) {
-                if (!hasRowMaskAt(this, filterRow) && !hasRowMaskAt(filter, filterRow)) {
-                    for (int filterColumn = 0; filterColumn < filterSize; filterColumn++) {
-                        if (!hasMaskAt(this, filterRow, filterColumn) && !hasColumnMaskAt(this, filterColumn) && !hasMaskAt(filter, filterRow, filterColumn) && !hasColumnMaskAt(filter, filterColumn)) {
-                            resultValue += getValue(inputRow + filterRow, inputColumn + filterColumn) * getSliceValue(filter, 0, 0, filterRow, filterColumn, filterSize, filterSize, asConvolution);
-                        }
-                    }
-                }
-            }
-        }
-        result.setValue(inputRow, inputColumn, resultValue);
+    protected void applyCrosscorrelate(Matrix filter, Matrix result) {
+        CrosscorrelationOperation crosscorrelationOperation = new CrosscorrelationOperation(this, filter, result, dilation);
+        applyMatrixOperation(crosscorrelationOperation, null, result.getRows(), result.getColumns(), false);
     }
 
     /**
-     * Return value at specific slice position.
+     * Calculates gradient of convolution for input.
      *
-     * @param slice reference to slice.
-     * @param sliceStartRow start row at slice.
-     * @param sliceStartColumn start column at slice.
-     * @param sliceRow row at slice.
-     * @param sliceColumn column at slice.
-     * @param sliceRows number of slice rows.
-     * @param sliceColumns number of slice columns.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return value of slice at specific position.
+     * @param filter filter for convolution operator.
+     * @param inputGradient input gradient.
      */
-    private double getSliceValue(Matrix slice, int sliceStartRow, int sliceStartColumn, int sliceRow, int sliceColumn, int sliceRows, int sliceColumns, boolean asConvolution) {
-        int trueSliceRow = getSlicePosition(sliceRow, sliceRows, asConvolution);
-        int trueSliceColumn = getSlicePosition(sliceColumn, sliceColumns, asConvolution);
-        return (trueSliceRow % dilation == 0 && trueSliceColumn % dilation == 0) ? slice.getValue(sliceStartRow + trueSliceRow, sliceStartColumn + trueSliceColumn) : 0;
+    public void convolveInputGradient(Matrix filter, Matrix inputGradient) {
+        ConvolutionInputGradientOperation convolutionInputGradientOperation = new ConvolutionInputGradientOperation(filter, inputGradient, dilation);
+        applyMatrixOperation(convolutionInputGradientOperation, null, getRows(), getColumns(), true);
     }
 
     /**
-     * Result position at slice.
+     * Calculates gradient of crosscorrelation for input.
      *
-     * @param slicePosition position at slice
-     * @param sliceSize size of slice.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     * @return position.
+     * @param filter filter for crosscorrelation operator.
+     * @param inputGradient input gradient.
      */
-    private int getSlicePosition(int slicePosition, int sliceSize, boolean asConvolution) {
-        return asConvolution ? sliceSize - 1 - slicePosition : slicePosition;
-    }
-
-    /**
-     * Calculates gradient of convolution for output.
-     *
-     * @param filter filter for convolutional operator.
-     * @param resultGradient result gradient.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
-     */
-    public void convolveOutputGradient(Matrix filter, Matrix resultGradient, boolean asConvolution) {
-        for (int gradientRow = 0; gradientRow < getRows(); gradientRow += stride) {
-            for (int gradientColumn = 0; gradientColumn < getColumns(); gradientColumn += stride) {
-                convolveGradient(filter, 0, 0, resultGradient, gradientRow, gradientColumn, getValue(gradientRow, gradientColumn), filterSize, filterSize, asConvolution);
-            }
-        }
+    public void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) {
+        CrosscorrelationInputGradientOperation crosscorrelationInputGradientOperation = new CrosscorrelationInputGradientOperation(filter, inputGradient, dilation);
+        applyMatrixOperation(crosscorrelationInputGradientOperation, null, getRows(), getColumns(), true);
     }
 
     /**
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
-     * @param resultGradient result gradient.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param filterGradient result gradient.
      */
-    public void convolveFilterGradient(Matrix input, Matrix resultGradient, boolean asConvolution) {
-        for (int gradientRow = 0; gradientRow < getRows(); gradientRow += stride) {
-            for (int gradientColumn = 0; gradientColumn < getColumns(); gradientColumn += stride) {
-                convolveGradient(input, gradientRow, gradientColumn, resultGradient, 0, 0, getValue(gradientRow, gradientColumn), resultGradient.getRows(), resultGradient.getColumns(), asConvolution);
-            }
-        }
+    public void convolveFilterGradient(Matrix input, Matrix filterGradient) {
+        ConvolutionFilterGradientOperation convolutionFilterGradientOperation = new ConvolutionFilterGradientOperation(input, filterGradient, dilation);
+        applyMatrixOperation(convolutionFilterGradientOperation, null, getRows(), getColumns(), true);
     }
 
     /**
-     * Calculates gradient slice for convolution operation. This matrix is output gradient for calculation.
+     * Calculates gradient of crosscorrelation for filter.
      *
-     * @param input input.
-     * @param inputRow input row.
-     * @param inputColumn input column.
-     * @param resultGradient resulting gradient matrix.
-     * @param gradientRow gradient row.
-     * @param gradientColumn gradient column.
-     * @param gradientValue gradient value.
-     * @param sliceRows size of slice (filter) in rows.
-     * @param sliceColumns size of slice (filter) in columns.
-     * @param asConvolution if true taken operation as convolution otherwise as crosscorrelation.
+     * @param input input for crosscorrelation operator.
+     * @param filterGradient result gradient.
      */
-    private void convolveGradient(Matrix input, int inputRow, int inputColumn, Matrix resultGradient, int gradientRow, int gradientColumn, double gradientValue, int sliceRows, int sliceColumns, boolean asConvolution) {
-        if (getMask() == null && input.getMask() == null) {
-            for (int sliceRow = 0; sliceRow < sliceRows; sliceRow++) {
-                for (int sliceColumn = 0; sliceColumn < sliceColumns; sliceColumn++) {
-                    resultGradient.incrementByValue(gradientRow + sliceRow, gradientColumn + sliceColumn, getSliceValue(input, inputRow, inputColumn, sliceRow, sliceColumn, sliceRows, sliceColumns, asConvolution) * gradientValue);
-                }
-            }
-        }
-        else {
-            for (int sliceRow = 0; sliceRow < sliceRows; sliceRow++) {
-                if (!hasRowMaskAt(this, sliceRow) && !hasRowMaskAt(input, sliceRows - 1 - sliceRow)) {
-                    for (int sliceColumn = 0; sliceColumn < sliceColumns; sliceColumn++) {
-                        if (!hasMaskAt(this, sliceRow, sliceColumn) && !hasColumnMaskAt(this, sliceColumn) && !hasMaskAt(input, sliceRows - 1 - sliceRow, sliceColumn) && !hasColumnMaskAt(input, sliceColumns - 1 - sliceColumn)) {
-                            resultGradient.incrementByValue(gradientRow + sliceRow, gradientColumn + sliceColumn, getSliceValue(input, inputRow, inputColumn, sliceRow, sliceColumn, sliceRows, sliceColumns, asConvolution) * gradientValue);
-                        }
-                    }
-                }
-            }
-        }
+    public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) {
+        CrosscorrelationFilterGradientOperation crosscorrelationFilterGradientOperation = new CrosscorrelationFilterGradientOperation(input, filterGradient, dilation);
+        applyMatrixOperation(crosscorrelationFilterGradientOperation, null, getRows(), getColumns(), true);
     }
 
     /**
@@ -1120,89 +1800,22 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates max pooling operation for this matrix and returns max arguments.
      *
      * @param result result matrix.
-     * @param maxArgumentsAt arguments on maximum row and col value.
+     * @param maxPos maximum position for each result row and column value.
      */
-    protected void applyMaxPool(Matrix result, int [][][] maxArgumentsAt) {
-        for (int resultRow = 0; resultRow < result.getRows(); resultRow += stride) {
-            for (int resultColumn = 0; resultColumn < result.getColumns(); resultColumn += stride) {
-                maxPool(result, resultRow, resultColumn, maxArgumentsAt);
-            }
-        }
-    }
-
-    /**
-     *
-     * @param result result matrix.
-     * @param resultRow result row.
-     * @param resultColumn result column.
-     * @param maxArgs arguments on maximum row and col value.
-     */
-    private void maxPool(Matrix result, int resultRow, int resultColumn, int [][][] maxArgs) {
-        double maxValue = Double.NEGATIVE_INFINITY;
-        if (getMask() == null) {
-            for (int poolRow = 0; poolRow < poolSize; poolRow++) {
-                for (int poolColumn = 0; poolColumn < poolSize; poolColumn++) {
-                    int inputRow = resultRow + poolRow;
-                    int inputColumn = resultColumn + poolColumn;
-                    double inputValue = getValue(inputRow, inputColumn);
-                    if (maxValue < inputValue) {
-                        maxValue = inputValue;
-                        maxArgs[resultRow][resultColumn][0] = inputRow;
-                        maxArgs[resultRow][resultColumn][1] = inputColumn;
-                    }
-                }
-            }
-        }
-        else {
-            for (int poolRow = 0; poolRow < poolSize; poolRow++) {
-                if (!hasRowMaskAt(this, poolRow)) {
-                    for (int poolColumn = 0; poolColumn < poolSize; poolColumn++) {
-                        if (!hasMaskAt(this, poolRow, poolColumn) && !hasColumnMaskAt(this, poolColumn)) {
-                            int inputRow = resultRow + poolRow;
-                            int inputColumn = resultColumn + poolColumn;
-                            double inputValue = getValue(inputRow, inputColumn);
-                            if (maxValue < inputValue) {
-                                maxValue = inputValue;
-                                maxArgs[resultRow][resultColumn][0] = inputRow;
-                                maxArgs[resultRow][resultColumn][1] = inputColumn;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        result.setValue(resultRow, resultColumn, maxValue);
+    protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) {
+        MaxPoolOperation maxPoolOperation = new MaxPoolOperation(this, result, poolSize, poolSize, maxPos);
+        applyMatrixOperation(maxPoolOperation, null, result.getRows(), result.getColumns(), false);
     }
 
     /**
      * Calculates gradient for max pool operation.
      *
-     * @param result result matrix.
-     * @param maxArgs arguments on maximum row and col value.
+     * @param inputGradient input gradient.
+     * @param maxPos maximum position for each result row and column value.
      */
-    public void maxPoolGradient(Matrix result, int[][][] maxArgs) {
-        for (int gradientRow = 0; gradientRow < getRows(); gradientRow += stride) {
-            for (int gradientColumn = 0; gradientColumn < getColumns(); gradientColumn += stride) {
-                maxPoolGradient(result, gradientRow, gradientColumn, maxArgs[gradientRow][gradientColumn]);
-            }
-        }
-    }
-
-    /**
-     * Calculates gradient for max pool operation at certain row and column position.
-     *
-     * @param result result matrix.
-     * @param gradientRow gradient row position.
-     * @param gradientColumn gradient column position.
-     * @param maxArgs arguments on maximum row and col value.
-     */
-    private void maxPoolGradient(Matrix result, int gradientRow, int gradientColumn, int[] maxArgs) {
-        if (getMask() == null) result.setValue(maxArgs[0], maxArgs[1], getValue(gradientRow, gradientColumn));
-        else {
-            if (!hasRowMaskAt(this, gradientRow) && !hasMaskAt(this, gradientRow, gradientColumn) && !hasColumnMaskAt(this, gradientColumn)) {
-                result.setValue(maxArgs[0], maxArgs[1],  getValue(gradientRow, gradientColumn));
-            }
-        }
+    public void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) {
+        MaxPoolGradientOperation maxPoolGradientOperation = new MaxPoolGradientOperation(inputGradient, maxPos);
+        applyMatrixOperation(maxPoolGradientOperation, null, getRows(), getColumns(), true);
     }
 
     /**
@@ -1211,70 +1824,18 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param result result matrix.
      */
     protected void applyAveragePool(Matrix result) {
-        for (int resultRow = 0; resultRow < result.getRows(); resultRow += stride) {
-            for (int resultColumn = 0; resultColumn < result.getColumns(); resultColumn += stride) {
-                averagePool(result, resultRow, resultColumn);
-            }
-        }
-    }
-
-    /**
-     * Calculates average pooling operation for this matrix.
-     *
-     * @param result result matrix.
-     * @param resultRow result row
-     * @param resultColumn result column
-     */
-    private void averagePool(Matrix result, int resultRow, int resultColumn) {
-        double sumValue = 0;
-        if (getMask() == null) {
-            for (int row = 0; row < poolSize; row++) {
-                for (int column = 0; column < poolSize; column++) {
-                    sumValue += getValue(resultRow + row, resultColumn + column);
-                }
-            }
-        }
-        else {
-            for (int row = 0; row < poolSize; row++) {
-                if (!hasRowMaskAt(this, row)) {
-                    for (int column = 0; column < poolSize; column++) {
-                        if (!hasMaskAt(this, row, column) && !hasColumnMaskAt(this, column)) {
-                            sumValue += getValue(resultRow + row, resultColumn + column);
-                        }
-                    }
-                }
-            }
-        }
-        result.setValue(resultRow, resultColumn, sumValue / (double)(poolSize * poolSize));
+        AveragePoolOperation averagePoolOperation = new AveragePoolOperation(this, result, poolSize, poolSize);
+        applyMatrixOperation(averagePoolOperation, null, result.getRows(), result.getColumns(), false);
     }
 
     /**
      * Calculates gradient of average pooling operation for this matrix.
      *
-     * @param result result matrix.
+     * @param inputGradient input gradient.
      */
-    public void averagePoolGradient(Matrix result) {
-        for (int resultRow = 0; resultRow < result.getRows(); resultRow += stride) {
-            for (int resultColumn = 0; resultColumn < result.getColumns(); resultColumn += stride) {
-                averagePoolGradient(result, resultRow, resultColumn);
-            }
-        }
-    }
-
-    /**
-     * Calculates gradient of average pooling operation for this matrix.
-     *
-     * @param result result matrix.
-     * @param resultRow result row
-     * @param resultColumn result column
-     */
-    private void averagePoolGradient(Matrix result, int resultRow, int resultColumn) {
-        if (getMask() == null) result.setValue(resultRow, resultColumn, 1 / (double)(poolSize * poolSize));
-        else {
-            if (!hasRowMaskAt(this, resultRow) && !hasMaskAt(this, resultRow, resultColumn) && !hasColumnMaskAt(this, resultColumn)) {
-                result.setValue(resultRow, resultColumn, 1 / (double)(poolSize * poolSize));
-            }
-        }
+    public void averagePoolGradient(Matrix inputGradient) {
+        AveragePoolGradientOperation averagePoolGradientOperation = new AveragePoolGradientOperation(inputGradient, poolSize, poolSize);
+        applyMatrixOperation(averagePoolGradientOperation, null, getRows(), getColumns(), false);
     }
 
 }
