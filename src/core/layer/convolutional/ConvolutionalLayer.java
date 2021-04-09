@@ -93,7 +93,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * If true convolution operation and gradient is calculated as convolution (flipped filter) otherwise as cross-correlation.
      *
      */
-    private boolean asConvolution = true;
+    private boolean asConvolution = false;
 
     /**
      * Input matrices for procedure construction.
@@ -144,7 +144,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      *     - stride: size of stride. Default size 1.<br>
      *     - dilation: dilation step for filter. Default step 1.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
-     *     - asConvolution: true if convolutional layer applies convolution operation otherwise applies crosscorrelation (default true).<br>
+     *     - asConvolution: true if convolutional layer applies convolution operation otherwise applies crosscorrelation (default false).<br>
      *
      * @param params parameters used for convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -182,17 +182,16 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws NeuralNetworkException {
-        int dilatedSize = filterSize + (filterSize - 1) * (dilation - 1);
 
         previousLayerWidth = getPreviousLayerWidth();
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
 
-        if ((previousLayerWidth - dilatedSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
-        if ((previousLayerHeight - dilatedSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
+        if ((previousLayerWidth - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
+        if ((previousLayerHeight - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
 
-        int layerWidth = ((previousLayerWidth - dilatedSize) / stride) + 1;
-        int layerHeight = ((previousLayerHeight - dilatedSize) / stride) + 1;
+        int layerWidth = ((previousLayerWidth - filterSize) / stride) + 1;
+        int layerHeight = ((previousLayerHeight - filterSize) / stride) + 1;
 
         if (layerWidth < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + layerWidth);
         if (layerHeight < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + layerHeight);
@@ -202,11 +201,11 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         setLayerHeight(layerHeight);
         setLayerDepth(numberOfFilters);
 
-        int inputSize = previousLayerDepth * dilatedSize * dilatedSize;
-        int outputSize = numberOfFilters * dilatedSize * dilatedSize;
+        int inputSize = previousLayerDepth * filterSize * filterSize;
+        int outputSize = numberOfFilters * filterSize * filterSize;
         for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
 
-            Matrix filterWeight = new DMatrix(dilatedSize, dilatedSize, this.initialization, inputSize, outputSize, "Wf" + filterIndex);
+            Matrix filterWeight = new DMatrix(filterSize, filterSize, this.initialization, inputSize, outputSize, "Wf" + filterIndex);
             filterWeights.put(filterIndex, filterWeight);
             registerWeight(filterWeight, regulateWeights, true);
 
@@ -224,8 +223,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void reinitialize() throws MatrixException, NeuralNetworkException {
-        int dilatedSize = filterSize + (filterSize - 1) * (dilation - 1);
-        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * dilatedSize * dilatedSize, numberOfFilters * dilatedSize * dilatedSize);
+        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * filterSize * filterSize, numberOfFilters * filterSize * filterSize);
         for (Matrix bias : filterBiases.values()) bias.reset();
 
         super.reinitialize();
@@ -259,7 +257,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
                 Matrix input = inputs.get(channelIndex);
                 input.setStride(stride);
                 input.setDilation(dilation);
-                input.setFilterSize(filterSize + (filterSize - 1) * (dilation - 1));
+                input.setFilterSize(filterSize);
                 input.setRegularize(true);
                 if (asConvolution) output = output.add(input.convolve(Wf));
                 else output = output.add(input.crosscorrelate(Wf));

@@ -183,17 +183,16 @@ public class PoolingLayer extends AbstractExecutionLayer {
      */
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(previousLayerDepth, "Outputs");
-        Matrix output;
 
         for (int channelIndex = 0; channelIndex < inputs.size(); channelIndex++) {
             Matrix input = inputs.get(channelIndex);
-
             input.setStride(stride);
             input.setPoolSize(poolSize);
 
+            Matrix output;
             outputs.put(channelIndex, output = new DMatrix(layerWidth, layerHeight, "Output" + channelIndex));
 
-            if (!averagePool) input.maxPool(output, new int[output.getRows()][output.getColumns()][2]);
+            if (!averagePool) input.maxPool(output, new HashMap<>());
             else input.averagePool(output);
         }
 
