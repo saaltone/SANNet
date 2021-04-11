@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that implements sequence of samples.
+ * Class that implements sequence of samples.<br>
  *
  */
 public class Sequence implements Serializable {

@@ -119,7 +119,7 @@ public class DynamicParam implements Serializable {
         }
 
         /**
-         * Construction to construct parameter from name, type and value (as object).
+         * Constructor to construct parameter from name, type and value (as object).
          *
          * @param param parameter name.
          * @param type parameter type.

@@ -6,7 +6,7 @@
 package utils;
 
 /**
- * Class defining dynamic parameter exception thrown in dynamic parameter handling error situations.
+ * Class defining dynamic parameter exception thrown in dynamic parameter handling error situations.<br>
  *
  */
 public class DynamicParamException extends Exception {

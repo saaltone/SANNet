@@ -19,7 +19,7 @@ public class Persistence implements Serializable {
     private static final long serialVersionUID = -6113168833637330117L;
 
     /**
-     * Attribute to define if snapshots are store at specific intervals.
+     * Attribute to define if snapshots are stored at specific intervals.
      *
      */
     private boolean snapshot = false;
