@@ -18,9 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 /**
- * Implements class that defines basic metrics for classification and regression.<br>
+ * Implements class that defines metrics for classification and regression.<br>
  * <br>
- * Reference: https://en.wikipedia.org/wiki/Precision_and_recall and https://en.wikipedia.org/wiki/Sensitivity_and_specificity<br>
+ * Reference: https://en.wikipedia.org/wiki/Precision_and_recall and https://en.wikipedia.org/wiki/Sensitivity_and_specificity <br>
  *
  */
 public class Metrics {
@@ -90,8 +90,7 @@ public class Metrics {
         }
 
         /**
-         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
-         * Assumes hash map structure for samples.<br>
+         * Updates regression accuracy for multiple predicted / actual sample pairs.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -107,8 +106,7 @@ public class Metrics {
         }
 
         /**
-         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
-         * Assumes tree map structure for samples.<br>
+         * Updates regression accuracy for multiple predicted / actual sample pairs.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -124,8 +122,7 @@ public class Metrics {
         }
 
         /**
-         * Updates regression accuracy for multiple predicted / actual sample pairs.<br>
-         * Assumes sequence for samples.<br>
+         * Updates regression accuracy for multiple predicted / actual sample pairs.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -319,7 +316,7 @@ public class Metrics {
         Classification() {}
 
         /**
-         * Updates classification statistics and confusion matrix for a sample.
+         * Updates classification statistics and confusion matrix for a predicted / actual (true) sample pair.
          *
          * @param predicted predicted sample.
          * @param actual actual (true) sample.
@@ -406,7 +403,6 @@ public class Metrics {
 
         /**
          * Updates classification statistics and confusion matrix for multiple samples.<br>
-         * Assumes b for samples.<br>
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -418,8 +414,7 @@ public class Metrics {
         }
 
         /**
-         * Updates classification statistics and confusion matrix for multiple samples.<br>
-         * Assumes sequence for samples.<br>
+         * Updates classification statistics and confusion matrix for multiple samples.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -433,8 +428,7 @@ public class Metrics {
         }
 
         /**
-         * Updates classification statistics and confusion matrix for multiple samples.<br>
-         * Assumes linked hash map structure for samples.<br>
+         * Updates classification statistics and confusion matrix for multiple samples.
          *
          * @param predicted predicted samples.
          * @param actual actual (true) samples.
@@ -596,6 +590,12 @@ public class Metrics {
     private boolean multiClass;
 
     /**
+     * Defines threshold value for multiclass classification. If value of class is below threshold it is classified as negative (1) otherwise classified as positive (1).
+     *
+     */
+    private double multiClassThreshold = 0.5;
+
+    /**
      * Reference to regression statistics.
      *
      */
@@ -645,6 +645,21 @@ public class Metrics {
     }
 
     /**
+     * Constructor for metrics class.
+     *
+     * @param metricsType metrics type as classification or regression.
+     * @param multiClass if true assumes multi class classification otherwise assumes single class.
+     * @param multiClassThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     * @throws NeuralNetworkException throws neural network exception if metrics type is not defined.
+     */
+    public Metrics(MetricsType metricsType, boolean multiClass, double multiClassThreshold) throws NeuralNetworkException {
+        this(metricsType);
+        this.multiClass = multiClass;
+        if (multiClassThreshold < 0 || multiClassThreshold > 1) throw new NeuralNetworkException("Multiclass threshold must be between 0 ad 1.");
+        this.multiClassThreshold = multiClassThreshold;
+    }
+
+    /**
      * Sets classification average type: macro or micro.
      *
      * @param averageType average type for classification.
@@ -691,8 +706,7 @@ public class Metrics {
     }
 
     /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.<br>
-     * Assumes hash map structure for samples.<br>
+     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
      * @param actual actual (true) error.
@@ -706,8 +720,7 @@ public class Metrics {
     }
 
     /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.<br>
-     * Assumes tree map structure for samples.<br>
+     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
      * @param actual actual (true) error.
@@ -721,8 +734,7 @@ public class Metrics {
     }
 
     /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.<br>
-     * Assumes sequence for samples.<br>
+     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
      * @param actual actual (true) error.
@@ -942,7 +954,7 @@ public class Metrics {
             return predicted.apply(classification);
         }
         else {
-            Matrix.MatrixUnaryOperation classification = (value) -> value < 0.5 ? 0 : 1;
+            Matrix.MatrixUnaryOperation classification = (value) -> value < multiClassThreshold ? 0 : 1;
             return predicted.apply(classification);
         }
     }
@@ -950,7 +962,6 @@ public class Metrics {
     /**
      * Returns classification for (predicted) multiple samples.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
-     * Assumes tree map structure for samples.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
@@ -966,7 +977,6 @@ public class Metrics {
     /**
      * Returns classification for (predicted) multiple samples.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
-     * Assumes hash map structure for samples.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
@@ -982,7 +992,6 @@ public class Metrics {
     /**
      * Returns classification for (predicted) multiple samples.<br>
      * Takes into consideration if single class or multi class classification for metrics is defined.<br>
-     * Assumes sequence for samples.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
@@ -999,7 +1008,7 @@ public class Metrics {
     }
 
     /**
-     * Updates confusion and classification statistics by including new predicted / actual sample pair.
+     * Updates confusion and classification statistics by including new predicted / actual (true) sample pair.
      *
      * @param predicted predicted sample.
      * @param actual actual (true) sample.
@@ -1011,8 +1020,7 @@ public class Metrics {
     }
 
     /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual sample pairs.<br>
-     * Assumes tree map structure for samples.<br>
+     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
      *
      * @param predicted predicted samples.
      * @param actual actual (true) samples.
@@ -1026,8 +1034,7 @@ public class Metrics {
     }
 
     /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual sample pairs.<br>
-     * Assumes sequence for samples.<br>
+     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
      *
      * @param predicted predicted samples.
      * @param actual actual (true) samples.
@@ -1041,8 +1048,7 @@ public class Metrics {
     }
 
     /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual sample pairs.<br>
-     * Assumes hash map structure for samples.<br>
+     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
      *
      * @param predicted predicted samples.
      * @param actual actual (true) samples.

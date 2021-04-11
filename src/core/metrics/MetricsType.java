@@ -6,7 +6,8 @@
 package core.metrics;
 
 /**
- * Enum for metrics type.<br>
+ * Defines supported metrics types.<br>
+ * <br>
  * Currently supported types are:
  *     REGRESSION,
  *     CLASSIFICATION
