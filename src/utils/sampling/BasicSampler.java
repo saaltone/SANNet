@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines BasicSampler for neural network.
+ * Class that defines BasicSampler for neural network.<br>
  *
  */
 public class BasicSampler implements Sampler, Serializable {
@@ -59,7 +59,7 @@ public class BasicSampler implements Sampler, Serializable {
     private boolean randomOrder = true;
 
     /**
-     * If true sample steps in forward order (no valid for randomOrder sampling). Default value true.
+     * If true sample steps in forward order (not valid for randomOrder sampling). Default value true.
      *
      */
     private boolean stepForward = true;
@@ -167,8 +167,8 @@ public class BasicSampler implements Sampler, Serializable {
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - fullSet: if true samples entire input as single set. Default value false.<br>
+     *     - randomStart: if true samples at random start. Default value false.<br>
      *     - randomOrder: if true samples in random order. Default value true.<br>
-     *     - randomOrder: if true samples at random start. Default value false.<br>
      *     - stepForward: if true samples sampling steps in forward order (not valid for randomOrder sampling). Default value true.<br>
      *     - stepSize: number of steps taken forward or backward when sampling (not valid for randomOrder sampling). Default value 1.<br>
      *     - shuffleSamples: if true shuffles sampled samples. Default value false.<br>

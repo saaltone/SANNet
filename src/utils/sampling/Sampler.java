@@ -10,7 +10,7 @@ import utils.Sequence;
 import utils.matrix.MatrixException;
 
 /**
- * Interface for Sampler.
+ * Interface for Sampler.<br>
  *
  */
 public interface Sampler {

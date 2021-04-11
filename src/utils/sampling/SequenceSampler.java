@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines SequenceSampler for neural network.
+ * Class that defines SequenceSampler for neural network.<br>
  *
  */
 public class SequenceSampler implements Sampler, Serializable {
