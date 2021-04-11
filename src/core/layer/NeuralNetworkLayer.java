@@ -17,7 +17,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Interface for neural network layer.
+ * Interface for neural network layer.<br>
  *
  */
 public interface NeuralNetworkLayer {
@@ -128,8 +128,7 @@ public interface NeuralNetworkLayer {
     void setRestoreStateTesting(boolean restoreStateTesting);
 
     /**
-     * Returns output of next layer or this layer if next layer does not exist.<br>
-     * Effectively output of neural network.<br>
+     * Returns output of neural network.
      *
      * @return output of neural network.
      */
@@ -189,7 +188,7 @@ public interface NeuralNetworkLayer {
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
-     * Uses existing training inputs and outputs.<br>
+     * Uses existing testing inputs.<br>
      *
      */
     void predict();
@@ -369,9 +368,9 @@ public interface NeuralNetworkLayer {
     void resetOptimizer();
 
     /**
-     * Returns ordered map of weights.
+     * Returns map of weights.
      *
-     * @return ordered map of weights.
+     * @return map of weights.
      */
     HashMap<Integer, Matrix> getWeightsMap();
 
@@ -385,7 +384,7 @@ public interface NeuralNetworkLayer {
     void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException;
 
     /**
-     * Prints structure and metadata of neural network.
+     * Prints structure and metadata of neural network layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */

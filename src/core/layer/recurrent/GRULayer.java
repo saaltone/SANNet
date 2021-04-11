@@ -93,13 +93,13 @@ public class GRULayer extends AbstractRecurrentLayer {
     private Matrix previousOutput;
 
     /**
-     * Tanh activation function needed for Graves LSTM
+     * Tanh activation function needed for GRU
      *
      */
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for Graves LSTM
+     * Sigmoid activation function needed for GRU
      *
      */
     private final ActivationFunction sigmoid;
@@ -155,8 +155,8 @@ public class GRULayer extends AbstractRecurrentLayer {
      * Sets parameters used for GRU layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
-     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
      * @param params parameters used for GRU layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.

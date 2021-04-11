@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
- * Defines class for output layer of neural network.
+ * Defines class for output layer of neural network.<br>
  *
  */
 public class OutputLayer extends AbstractLayer {
@@ -383,9 +383,9 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Returns ordered map of weights.
+     * Returns map of weights.
      *
-     * @return ordered map of weights.
+     * @return map of weights.
      */
     public HashMap<Integer, Matrix> getWeightsMap() {
         return null;
@@ -401,7 +401,7 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Prints structure and metadata of neural network.
+     * Prints structure and metadata of neural network layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
@@ -410,14 +410,14 @@ public class OutputLayer extends AbstractLayer {
     }
 
     /**
-     * Prints expression chains of neural network.
+     * Prints expression chains of neural network layer.
      *
      */
     public void printExpressions() {
     }
 
     /**
-     * Prints gradient chains of neural network.
+     * Prints gradient chains of neural network layer.
      *
      */
     public void printGradients() {

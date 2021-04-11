@@ -74,13 +74,13 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     private Matrix previousOutput;
 
     /**
-     * Tanh activation function needed for Graves LSTM
+     * Tanh activation function needed for Minimal GRU
      *
      */
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for Graves LSTM
+     * Sigmoid activation function needed for Minimal GRU
      *
      */
     private final ActivationFunction sigmoid;
@@ -104,7 +104,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     private Matrix input;
 
     /**
-     * Constructor for minimal GRU layer.
+     * Constructor for Minimal GRU layer.
      *
      * @param layerIndex layer Index.
      * @param initialization initialization function for weight.
@@ -121,9 +121,9 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns parameters used for minimal GRU layer.
+     * Returns parameters used for Minimal GRU layer.
      *
-     * @return parameters used for minimal GRU layer.
+     * @return parameters used for Minimal GRU layer.
      */
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
@@ -133,13 +133,13 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Sets parameters used for minimal GRU layer.<br>
+     * Sets parameters used for Minimal GRU layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
-     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
-     * @param params parameters used for minimal GRU layer.
+     * @param params parameters used for Minimal GRU layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -150,7 +150,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Initializes minimal GRU layer.<br>
+     * Initializes Minimal GRU layer.<br>
      * Initializes weights and bias and their gradients.<br>
      *
      */

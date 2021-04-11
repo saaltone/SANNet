@@ -16,7 +16,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Class that implements functions specific and common for all recurrent layers.
+ * Implements functions specific and common for all recurrent layers.<br>
  *
  */
 public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
@@ -106,7 +106,10 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         if (params.hasParam("resetStateTesting")) resetStateTesting = params.getValueAsBoolean("resetStateTesting");
         if (params.hasParam("restoreStateTraining")) restoreStateTraining = params.getValueAsBoolean("restoreStateTraining");
         if (params.hasParam("restoreStateTesting")) restoreStateTesting = params.getValueAsBoolean("restoreStateTesting");
-        if (params.hasParam("truncateSteps")) truncateSteps = params.getValueAsInteger("truncateSteps");
+        if (params.hasParam("truncateSteps")) {
+            truncateSteps = params.getValueAsInteger("truncateSteps");
+            if (truncateSteps < 0) throw new NeuralNetworkException("Truncate steps cannot be less than 0.");
+        }
     }
 
     /**

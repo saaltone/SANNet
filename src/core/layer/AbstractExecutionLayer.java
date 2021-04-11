@@ -189,7 +189,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Takes single forward processing step process layer input(s).<br>
+     * Takes single forward processing step to process layer input(s).<br>
      * Additionally applies any normalization or regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -236,7 +236,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Registers weights of next layer.
+     * Registers weights of layer.
      *
      * @param weight weight matrix to be registered.
      * @param forRegularization true if weight is registered for regularization otherwise false.
@@ -269,9 +269,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns ordered map of weights.
+     * Returns map of weights.
      *
-     * @return ordered map of weights.
+     * @return map of weights.
      */
     public HashMap<Integer, Matrix> getWeightsMap() {
         return weightsMap;
@@ -383,9 +383,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns set of regularization methods.
+     * Returns set of regularization methods applied to layer.
      *
-     * @return set of regularization methods.
+     * @return set of regularization methods applied to layer.
      */
     public HashSet<Regularization> getRegularization() {
         return regularizers;
@@ -444,9 +444,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns set of normalization methods.
+     * Returns set of normalization methods applied to layer.
      *
-     * @return set of normalization methods.
+     * @return set of normalization methods applied to layer.
      */
     public HashSet<Normalization> getNormalization() {
         return normalizers;
@@ -646,7 +646,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract String getLayerDetailsByName();
 
     /**
-     * Prints structure and metadata of neural network.
+     * Prints structure and metadata of neural network layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
@@ -657,11 +657,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         System.out.println(getNormalizersByName());
         System.out.println(getRegularizersByName());
         String layerDetailsByName = getLayerDetailsByName();
-        if (layerDetailsByName != null) System.out.println("Layer Details [ " + layerDetailsByName + " ]");
+        if (layerDetailsByName != null) System.out.println("Layer details [ " + layerDetailsByName + " ]");
     }
 
     /**
-     * Prints expression chains of neural network.
+     * Prints forward expression chains of layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
@@ -673,7 +673,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Prints gradient chains of neural network.
+     * Prints backward gradient chains of layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */

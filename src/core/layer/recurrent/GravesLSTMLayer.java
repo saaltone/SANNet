@@ -13,7 +13,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Class for Graves type of Long Short Term Memory (LSTM)<br>
+ * Implements Graves type of Long Short Term Memory (LSTM)<br>
  * <br>
  * Reference: https://www.cs.toronto.edu/~graves/phd.pdf<br>
  * <br>

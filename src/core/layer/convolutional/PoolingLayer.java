@@ -13,7 +13,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Defines class for pooling layer that executes either average or max pooling.<br>
+ * Implements pooling layer that executes either average or max pooling.<br>
  * <br>
  * Reference: https://pdfs.semanticscholar.org/5d79/11c93ddcb34cac088d99bd0cae9124e5dcd1.pdf<br>
  *
@@ -53,10 +53,16 @@ public class PoolingLayer extends AbstractExecutionLayer {
     private int layerHeight;
 
     /**
-     * Step size of pooling operation.
+     * Row size for pooling.
      *
      */
-    private int poolSize;
+    private int poolRowSize = 2;
+
+    /**
+     * Column size for pooling.
+     *
+     */
+    private int poolColumnSize = 2;
 
     /**
      * Defines stride i.e. size of step when moving over image.
@@ -98,6 +104,8 @@ public class PoolingLayer extends AbstractExecutionLayer {
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("poolSize", DynamicParam.ParamType.INT);
+        paramDefs.put("poolRowSize", DynamicParam.ParamType.INT);
+        paramDefs.put("poolColumnSize", DynamicParam.ParamType.INT);
         paramDefs.put("stride", DynamicParam.ParamType.INT);
         paramDefs.put("avgPool", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
@@ -107,7 +115,9 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * Sets parameters used for max pooling layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - poolSize size of pool.<br>
+     *     - poolSize size of pool. Default size 2.<br>
+     *     - poolRowSize row size of pool. Default size 2.<br>
+     *     - poolColumnSize column size of pool. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
      *     - avgPool: if true does average pooling otherwise does max pooling.<br>
      *
@@ -117,8 +127,22 @@ public class PoolingLayer extends AbstractExecutionLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("poolSize")) poolSize = params.getValueAsInteger("poolSize");
-        if (params.hasParam("stride")) stride = params.getValueAsInteger("stride");
+        if (params.hasParam("poolSize")) {
+            poolRowSize = poolColumnSize = params.getValueAsInteger("poolSize");
+            if (poolRowSize < 2) throw new NeuralNetworkException("Pool size must be at least 2.");
+        }
+        if (params.hasParam("poolRowSize")) {
+            poolRowSize = params.getValueAsInteger("poolRowSize");
+            if (poolRowSize < 2) throw new NeuralNetworkException("Pool row size must be at least 2.");
+        }
+        if (params.hasParam("poolColumnSize")) {
+            poolColumnSize = params.getValueAsInteger("poolColumnSize");
+            if (poolColumnSize < 2) throw new NeuralNetworkException("Pool column size must be at least 2.");
+        }
+        if (params.hasParam("stride")) {
+            stride = params.getValueAsInteger("stride");
+            if (stride < 1) throw new NeuralNetworkException("Stride must be at least 1.");
+        }
         if (params.hasParam("avgPool")) averagePool = params.getValueAsBoolean("avgPool");
     }
 
@@ -147,11 +171,11 @@ public class PoolingLayer extends AbstractExecutionLayer {
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
 
-        if ((previousLayerWidth - poolSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + previousLayerWidth + " - poolSize: " + poolSize + " must be divisible by stride: " + stride);
-        if ((previousLayerHeight - poolSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heightIn: " + previousLayerHeight + " - poolSize: " + poolSize + " must be divisible by stride: " + stride);
+        if ((previousLayerWidth - poolRowSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + previousLayerWidth + " - poolRowSize: " + poolRowSize + " must be divisible by stride: " + stride);
+        if ((previousLayerHeight - poolColumnSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heightIn: " + previousLayerHeight + " - poolColumnSize: " + poolColumnSize + " must be divisible by stride: " + stride);
 
-        layerWidth = ((previousLayerWidth - poolSize) / stride) + 1;
-        layerHeight = ((previousLayerHeight - poolSize) / stride) + 1;
+        layerWidth = ((previousLayerWidth - poolRowSize) / stride) + 1;
+        layerHeight = ((previousLayerHeight - poolColumnSize) / stride) + 1;
 
         if (layerWidth < 1) throw new NeuralNetworkException("Pooling layer width cannot be less than 1: " + layerWidth);
         if (layerHeight < 1) throw new NeuralNetworkException("Pooling layer height cannot be less than 1: " + layerHeight);
@@ -187,7 +211,8 @@ public class PoolingLayer extends AbstractExecutionLayer {
         for (int channelIndex = 0; channelIndex < inputs.size(); channelIndex++) {
             Matrix input = inputs.get(channelIndex);
             input.setStride(stride);
-            input.setPoolSize(poolSize);
+            input.setPoolRowSize(poolRowSize);
+            input.setPoolColumnSize(poolColumnSize);
 
             Matrix output;
             outputs.put(channelIndex, output = new DMatrix(layerWidth, layerHeight, "Output" + channelIndex));
@@ -207,7 +232,8 @@ public class PoolingLayer extends AbstractExecutionLayer {
     protected String getLayerDetailsByName() {
         String layerDetailsByName = "";
         layerDetailsByName += "Pooling type: " + (averagePool ? "Average" : "Max") + ", ";
-        layerDetailsByName += "Pool size: " + poolSize + ", ";
+        layerDetailsByName += "Pool row size: " + poolRowSize + ", ";
+        layerDetailsByName += "Pool column size: " + poolColumnSize + ", ";
         layerDetailsByName += "Stride: " + stride;
         return layerDetailsByName;
     }

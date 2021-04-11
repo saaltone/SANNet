@@ -101,8 +101,8 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * Sets parameters used for recurrent layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value).<br>
-     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
      * @param params parameters used for recurrent layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.

@@ -15,7 +15,7 @@ import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
 
 /**
- * Factory class to construct neural network layers.
+ * Factory class to construct neural network layers.<br>
  *
  */
 public class LayerFactory {

@@ -13,7 +13,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Class for Peephole Long Short Term Memory (LSTM)<br>
+ * Implements Peephole Long Short Term Memory (LSTM)<br>
  * <br>
  * Reference: https://en.wikipedia.org/wiki/Long_short-term_memory<br>
  * <br>
@@ -101,13 +101,13 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     private Matrix previousCellState;
 
     /**
-     * Tanh activation function needed for Graves LSTM
+     * Tanh activation function needed for Peephole LSTM
      *
      */
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for Graves LSTM
+     * Sigmoid activation function needed for Peephole LSTM
      *
      */
     private final ActivationFunction sigmoid;

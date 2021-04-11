@@ -84,13 +84,12 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     private transient Thread layerThread;
 
     /**
-     * Connector forward to next layer.
-     *
+     * Reference to next layer
      */
     private NeuralNetworkLayer nextLayer;
 
     /**
-     * Connector backward to previous layer.
+     * Reference to previous layer.
      *
      */
     private NeuralNetworkLayer previousLayer;
@@ -114,13 +113,13 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     private int layerDepth = 1;
 
     /**
-     * Tree map for storing outputs of neural network layer.
+     * Outputs of neural network layer.
      *
      */
     private transient Sequence layerOutputs;
 
     /**
-     * Gradients for neural network layer.
+     * Gradients of neural network layer.
      *
      */
     private transient Sequence layerGradients;
@@ -137,9 +136,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Returns parameters used for layer.
+     * Returns parameters used for abstract layer.
      *
-     * @return parameters used for layer.
+     * @return parameters used for abstract layer.
      */
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -150,14 +149,14 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Sets parameters used for layer.<br>
+     * Sets parameters used for abstract layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - width: width of layer.<br>
-     *     - height: height of layer.<br>
-     *     - depth: depth of layer.<br>
+     *     - width: width of layer. Default 1.<br>
+     *     - height: height of layer. Default 1.<br>
+     *     - depth: depth of layer. Default 1.<br>
      *
-     * @param params parameters used for Graves LSTM layer.
+     * @param params parameters used for abstract layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -395,8 +394,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     protected abstract void defineProcedure() throws MatrixException, DynamicParamException;
 
     /**
-     * Returns output of next layer or this layer if next layer does not exist.<br>
-     * Effectively output of neural network.<br>
+     * Returns output of neural network.
      *
      * @return output of neural network.
      */
@@ -531,7 +529,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
-     * Uses existing training inputs and outputs.<br>
+     * Uses existing testing inputs.<br>
      *
      */
     public void predict() {
@@ -558,7 +556,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
 
     /**
      * Sets next execution state.
-     *  @param executionState next execution state.
+     * @param executionState next execution state.
      *
      */
     private void nextState(ExecutionState executionState) {

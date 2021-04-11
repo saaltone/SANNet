@@ -15,7 +15,7 @@ import utils.matrix.Matrix;
 import java.util.HashMap;
 
 /**
- * Defines class for input layer of neural network.
+ * Defines class for input layer of neural network.<br>
  *
  */
 public class InputLayer extends AbstractLayer {
@@ -137,7 +137,7 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Executes backward processing step. Not relevant for input layer.
+     * Executes backward processing step.
      *
      */
     public void backwardProcess() {
@@ -277,9 +277,9 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Returns ordered map of weights.
+     * Returns map of weights.
      *
-     * @return ordered map of weights.
+     * @return map of weights.
      */
     public HashMap<Integer, Matrix> getWeightsMap() {
         return null;
@@ -304,14 +304,14 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Prints expression chains of neural network.
+     * Prints expression chains of neural network layer.
      *
      */
     public void printExpressions() {
     }
 
     /**
-     * Prints gradient chains of neural network.
+     * Prints gradient chains of neural network layer.
      *
      */
     public void printGradients() {

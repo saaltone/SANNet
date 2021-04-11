@@ -14,7 +14,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Implements non-recurrent feed forward layer.
+ * Implements non-recurrent feedforward layer.<br>
  *
  */
 public class FeedforwardLayer extends AbstractExecutionLayer {
@@ -56,12 +56,12 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     private Matrix input;
 
     /**
-     * Constructor for feed forward layer.
+     * Constructor for feedforward layer.
      *
      * @param layerIndex layer Index.
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight.
-     * @param params parameters for feed forward layer.
+     * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
@@ -74,9 +74,9 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns parameters used for feed forward layer.
+     * Returns parameters used for feedforward layer.
      *
-     * @return parameters used for feed forward layer.
+     * @return parameters used for feedforward layer.
      */
     public HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
@@ -86,13 +86,13 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Sets parameters used for feed forward layer.<br>
+     * Sets parameters used for feedforward layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false (default value).<br>
-     *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity.
+     *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
+     *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity. Default value false.<br>
      *
-     * @param params parameters used for feed forward layer.
+     * @param params parameters used for feedforward layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -117,7 +117,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return false; }
 
     /**
-     * Initializes feed forward layer.<br>
+     * Initializes feedforward layer.<br>
      * Initializes weight and bias and their gradients.<br>
      *
      */

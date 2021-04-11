@@ -14,7 +14,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Defines class for convolutional layer.<br>
+ * Implements convolutional layer.<br>
  * <br>
  * Reference: https://pdfs.semanticscholar.org/5d79/11c93ddcb34cac088d99bd0cae9124e5dcd1.pdf<br>
  *
@@ -48,10 +48,16 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     private int numberOfFilters;
 
     /**
-     * Defines filter size (filter size x filter size).
+     * Defines filter dimension in terms of rows.
      *
      */
-    private int filterSize;
+    private int filterRowSize = 3;
+
+    /**
+     * Defines filter dimension in terms of columns.
+     *
+     */
+    private int filterColumnSize = 3;
 
     /**
      * Defines stride i.e. size of step when moving filter over image.
@@ -90,7 +96,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     protected ActivationFunction activationFunction;
 
     /**
-     * If true convolution operation and gradient is calculated as convolution (flipped filter) otherwise as cross-correlation.
+     * If true convolution operation and gradient is calculated as convolution (flipped filter) otherwise as crosscorrelation.
      *
      */
     private boolean asConvolution = false;
@@ -128,6 +134,8 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
         paramDefs.put("filters", DynamicParam.ParamType.INT);
         paramDefs.put("filterSize", DynamicParam.ParamType.INT);
+        paramDefs.put("filterRowSize", DynamicParam.ParamType.INT);
+        paramDefs.put("filterColumnSize", DynamicParam.ParamType.INT);
         paramDefs.put("stride", DynamicParam.ParamType.INT);
         paramDefs.put("dilation", DynamicParam.ParamType.INT);
         paramDefs.put("regulateWeights", DynamicParam.ParamType.BOOLEAN);
@@ -140,7 +148,9 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - filters: number of filters.<br>
-     *     - filterSize size of filter.<br>
+     *     - filterSize size of filter. Default value 3.<br>
+     *     - filterRowSize size of filter in terms of rows. Overrides filterSize parameter. Default value 3.<br>
+     *     - filterColumnSize size of filter in terms of columns. Overrides filterSize parameter. Default value 3.<br>
      *     - stride: size of stride. Default size 1.<br>
      *     - dilation: dilation step for filter. Default step 1.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
@@ -152,10 +162,30 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("filters")) numberOfFilters = params.getValueAsInteger("filters");
-        if (params.hasParam("filterSize")) filterSize = params.getValueAsInteger("filterSize");
-        if (params.hasParam("stride")) stride = params.getValueAsInteger("stride");
-        if (params.hasParam("dilation")) dilation = params.getValueAsInteger("dilation");
+        if (params.hasParam("filters")) {
+            numberOfFilters = params.getValueAsInteger("filters");
+            if (numberOfFilters < 1) throw new NeuralNetworkException("At least one filter must be defined. Number of filters cannot be: " + numberOfFilters);
+        }
+        if (params.hasParam("filterSize")) {
+            filterRowSize = filterColumnSize = params.getValueAsInteger("filterSize");
+            if (filterRowSize < 1) throw new NeuralNetworkException("Filter size must be at least 1.");
+        }
+        if (params.hasParam("filterRowSize")) {
+            filterRowSize = params.getValueAsInteger("filterRowSize");
+            if (filterRowSize < 1) throw new NeuralNetworkException("Filter row size must be at least 1.");
+        }
+        if (params.hasParam("filterColumnSize")) {
+            filterColumnSize = params.getValueAsInteger("filterColumnSize");
+            if (filterColumnSize < 1) throw new NeuralNetworkException("Filter column size must be at least 1.");
+        }
+        if (params.hasParam("stride")) {
+            stride = params.getValueAsInteger("stride");
+            if (stride < 1) throw new NeuralNetworkException("Stride must be at least 1.");
+        }
+        if (params.hasParam("dilation")) {
+            dilation = params.getValueAsInteger("dilation");
+            if (dilation < 1) throw new NeuralNetworkException("Dilation must be at least 1.");
+        }
         if (params.hasParam("regulateWeights")) regulateWeights = params.getValueAsBoolean("regulateWeights");
         if (params.hasParam("asConvolution")) asConvolution = params.getValueAsBoolean("asConvolution");
     }
@@ -187,11 +217,15 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
 
-        if ((previousLayerWidth - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
-        if ((previousLayerHeight - filterSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterSize: " + filterSize + " must be divisible by stride: " + stride);
+        // Enlarge filter size with dilation factor.
+        filterRowSize = filterRowSize + (filterRowSize - 1) * (dilation - 1);
+        filterColumnSize = filterColumnSize + (filterColumnSize - 1) * (dilation - 1);
 
-        int layerWidth = ((previousLayerWidth - filterSize) / stride) + 1;
-        int layerHeight = ((previousLayerHeight - filterSize) / stride) + 1;
+        if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
+        if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
+
+        int layerWidth = ((previousLayerWidth - filterRowSize) / stride) + 1;
+        int layerHeight = ((previousLayerHeight - filterColumnSize) / stride) + 1;
 
         if (layerWidth < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + layerWidth);
         if (layerHeight < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + layerHeight);
@@ -201,11 +235,9 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         setLayerHeight(layerHeight);
         setLayerDepth(numberOfFilters);
 
-        int inputSize = previousLayerDepth * filterSize * filterSize;
-        int outputSize = numberOfFilters * filterSize * filterSize;
         for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
 
-            Matrix filterWeight = new DMatrix(filterSize, filterSize, this.initialization, inputSize, outputSize, "Wf" + filterIndex);
+            Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, this.initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize, "Wf" + filterIndex);
             filterWeights.put(filterIndex, filterWeight);
             registerWeight(filterWeight, regulateWeights, true);
 
@@ -223,7 +255,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void reinitialize() throws MatrixException, NeuralNetworkException {
-        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * filterSize * filterSize, numberOfFilters * filterSize * filterSize);
+        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize);
         for (Matrix bias : filterBiases.values()) bias.reset();
 
         super.reinitialize();
@@ -257,7 +289,8 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
                 Matrix input = inputs.get(channelIndex);
                 input.setStride(stride);
                 input.setDilation(dilation);
-                input.setFilterSize(filterSize);
+                input.setFilterRowSize(filterRowSize);
+                input.setFilterColumnSize(filterColumnSize);
                 input.setRegularize(true);
                 if (asConvolution) output = output.add(input.convolve(Wf));
                 else output = output.add(input.crosscorrelate(Wf));
@@ -277,9 +310,10 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      */
     protected String getLayerDetailsByName() {
         String layerDetailsByName = "";
-        layerDetailsByName += "Pooling type: " + (asConvolution ? "Convolution" : "Cross-correlation") + ", ";
+        layerDetailsByName += "Pooling type: " + (asConvolution ? "Convolution" : "Crosscorrelation") + ", ";
         layerDetailsByName += "Number of filters: " + numberOfFilters + ", ";
-        layerDetailsByName += "Filter size: " + filterSize + ", ";
+        layerDetailsByName += "Filter row size: " + filterRowSize + ", ";
+        layerDetailsByName += "Filter column size: " + filterColumnSize + ", ";
         layerDetailsByName += "Stride: " + stride + ", ";
         layerDetailsByName += "Dilation: " + dilation + ", ";
         layerDetailsByName += "Activation function: " + activationFunction.getName();

@@ -13,7 +13,7 @@ import utils.matrix.*;
 import java.util.HashMap;
 
 /**
- * Class for Long Short Term Memory (LSTM)<br>
+ * Implements Long Short Term Memory (LSTM)<br>
  * <br>
  * Reference: https://en.wikipedia.org/wiki/Long_short-term_memory<br>
  * <br>
@@ -113,13 +113,13 @@ public class LSTMLayer extends AbstractRecurrentLayer {
     private Matrix previousCellState;
 
     /**
-     * Tanh activation function needed for Graves LSTM
+     * Tanh activation function needed for LSTM
      *
      */
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for Graves LSTM
+     * Sigmoid activation function needed for LSTM
      *
      */
     private final ActivationFunction sigmoid;
