@@ -15,7 +15,7 @@ import java.util.HashMap;
  * Defines two (binary) argument function class.<br>
  * Provides calculation for both function and it's derivative.<br>
  * <br>
- * Functions supported are listed in related type enum.
+ * Functions supported are listed in related type enum.<br>
  */
 public class BinaryFunction implements Serializable {
 
@@ -40,13 +40,13 @@ public class BinaryFunction implements Serializable {
     private BinaryFunctionType binaryFunctionType;
 
     /**
-     * Alpha value for Huber loss.
+     * Delta value for Huber loss.
      *
      */
     private double huberDelta = 1;
 
     /**
-     * Margin value for Hinge loss.
+     * Margin value for hinge loss.
      *
      */
     private double hingeMargin = 1;
@@ -77,7 +77,7 @@ public class BinaryFunction implements Serializable {
     /**
      * Constructor for BinaryFunction.<br>
      * Supported parameters are:<br>
-     *     - alpha: default value for Huber loss 1.<br>
+     *     - delta: default value for Huber loss 1.<br>
      *     - hinge: default value for hinge margin 1.<br>
      *
      * @param binaryFunctionType type of function to be used.
@@ -93,7 +93,7 @@ public class BinaryFunction implements Serializable {
      * Sets function with parameters.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - alpha: default value for Huber loss 1.<br>
+     *     - delta: default value for Huber loss 1.<br>
      *     - hinge: default value for hinge margin 1.<br>
      *
      * @param binaryFunctionType type of function to be used.
@@ -240,12 +240,12 @@ public class BinaryFunction implements Serializable {
     }
 
     /**
-     * Calculates inner gradient.
+     * Calculates gradient.
      *
-     * @param value value for inner gradient calculation.
-     * @param constant constant value for inner gradient calculation.
-     * @param gradient outer gradient value for inner gradient calculation.
-     * @return inner gradient
+     * @param value value for gradient calculation.
+     * @param constant constant for gradient calculation.
+     * @param gradient incoming gradient for gradient calculation.
+     * @return resulting gradient
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix value, Matrix constant, Matrix gradient) throws MatrixException {

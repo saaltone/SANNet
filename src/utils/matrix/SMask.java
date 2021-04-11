@@ -8,7 +8,7 @@ package utils.matrix;
 import java.util.HashMap;
 
 /**
- * Implements sparse mask to mask sparse matrices.
+ * Implements sparse mask to mask sparse matrices.<br>
  *
  */
 public class SMask extends AbstractMask {
@@ -74,19 +74,19 @@ public class SMask extends AbstractMask {
     }
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions.
      *
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     public Mask getNewMask() {
         return new SMask(getRows(), getColumns());
     }
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions optionally as transposed.
      *
      * @param asTransposed if true returns new mask as transposed otherwise with unchanged dimensions.
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     public Mask getNewMask(boolean asTransposed) {
         return !asTransposed ? new SMask(getRows(), getColumns()) : new SMask(getColumns(), getRows());
@@ -129,7 +129,7 @@ public class SMask extends AbstractMask {
     }
 
     /**
-     * Internal function used to set masking of specific row and column.
+     * Sets mask at specific row and column.
      *
      * @param row row of value to be set.
      * @param column column of value to be set.
@@ -140,7 +140,7 @@ public class SMask extends AbstractMask {
     }
 
     /**
-     * Internal function used to get masking of specific row and column.
+     * Returns mask at specific row and column.
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.

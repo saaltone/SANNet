@@ -6,7 +6,7 @@
 package utils.matrix;
 
 /**
- * Class defining matrix exception thrown in matrix operation error situations.
+ * Class defining matrix exception thrown in matrix operation error situations.<br>
  *
  */
 public class MatrixException extends Exception {

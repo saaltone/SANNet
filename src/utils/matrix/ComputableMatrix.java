@@ -1,12 +1,11 @@
 package utils.matrix;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Class that defines computable operations for matrices.
+ * Class that defines computable operations for matrices.<br>
  *
  */
 public abstract class ComputableMatrix extends AbstractMatrix {
@@ -18,7 +17,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     private interface MatrixOperation {
 
         /**
-         * Method to apply matrix operation.
+         * Applies operation.
          *
          * @param row current row.
          * @param column current column.
@@ -153,6 +152,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
 
     }
 
+    /**
+     * Defines dot operation.
+     *
+     */
     private static class DotMatrixOperation implements MatrixOperation {
 
         /**
@@ -995,10 +998,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         /**
          * Constructor for max pooling operation.
          *
-         * @param input input
+         * @param input input.
+         * @param result result.
          * @param poolRows pool size in rows.
          * @param poolColumns pool size in columns.
-         * @param maxPos maximum position for each resulting row and column..
+         * @param maxPos maximum position for each resulting row and column.
          */
         public MaxPoolOperation(Matrix input, Matrix result, int poolRows, int poolColumns, HashMap<Integer, Integer> maxPos) {
             this.input = input;
@@ -1109,7 +1113,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         final Matrix input;
 
         /**
-         * Resulting filter gradient.
+         * Result.
          *
          */
         final Matrix result;
@@ -1135,7 +1139,8 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         /**
          * Constructor for average pooling operation.
          *
-         * @param input input
+         * @param input input.
+         * @param result result.
          * @param poolRows pool size in rows.
          * @param poolColumns pool size in columns.
          */
@@ -1222,16 +1227,28 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     private int dilation = 1;
 
     /**
-     * Filter size for convolutional operations.
+     * Filter row size for convolutional operations.
      *
      */
-    private int filterSize = 3;
+    private int filterRowSize = 3;
 
     /**
-     * Pool size for pooling operations.
+     * Filter column size for convolutional operations.
      *
      */
-    private int poolSize = 2;
+    private int filterColumnSize = 3;
+
+    /**
+     * Pool row size for pooling operations.
+     *
+     */
+    private int poolRowSize = 2;
+
+    /**
+     * Pool column size for pooling operations.
+     *
+     */
+    private int poolColumnSize = 2;
 
     /**
      * Random function for matrix class.
@@ -1300,7 +1317,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking if matrix is masked.<br>
      *
      * @param result matrix which stores operation result.
-     * @param matrixUnaryOperation single variable operation defined as lambda operator.
+     * @param matrixUnaryOperation single variable operation defined as matrix unary operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
      */
@@ -1323,7 +1340,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
-     * @param matrixBinaryOperation two variable operation defined as lambda operator.
+     * @param matrixBinaryOperation two variable operation defined as matrix binary operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
@@ -1451,10 +1468,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Takes element wise cumulative sum of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates sum of matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
-     * @return cumulative sum of this matrix.
+     * @return sum of matrix.
      */
     public double sum() {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation();
@@ -1463,10 +1480,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Takes mean of elements of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates mean of matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
-     * @return mean of elements of this matrix.
+     * @return mean of matrix.
      */
     public double mean() {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation();
@@ -1475,11 +1492,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Takes variance of elements of this matrix with mean value given as input parameter.<br>
+     * Calculates variance of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param mean mean value given as input.
-     * @return variance of elements of this matrix.
+     * @return variance of matrix.
      */
     public double variance(double mean) {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(mean);
@@ -1488,11 +1505,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates standard deviation of matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
      * @param mean mean value given as input.
-     * @return standard deviation of elements of this matrix.
+     * @return standard deviation of matrix.
      */
     public double standardDeviation(double mean) {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(mean);
@@ -1501,11 +1518,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Takes cumulative p- norm (p is number equal or bigger than 1) of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Calculates cumulative p- norm (p is number equal or bigger than 1) of matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
      * @param p p value for norm.
-     * @return cumulative norm value of matrix.
+     * @return norm of matrix.
      */
     public double norm(int p) {
         NormMatrixOperation normMatrixOperation = new NormMatrixOperation(p);
@@ -1541,7 +1558,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
      * Returns argmin meaning row and column of matrix containing minimum value.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
      * @return array containing row and column in this order that points to minimum value of matrix.
      */
@@ -1556,7 +1573,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
      * Returns maximum value of matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
      * @return maximum value of matrix.
      */
@@ -1568,7 +1585,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
      * Returns argmax meaning row and column of matrix containing maximum value.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Applies masking element wise if matrix is masked.<br>
      *
      * @return array containing row and column in this order that points to maximum value of matrix.
      */
@@ -1582,10 +1599,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Returns softmax of this matrix.
+     * Returns softmax of matrix.
      *
      * @param result result matrix.
-     * @return softmax of this matrix.
+     * @return softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmax(Matrix result) throws MatrixException {
@@ -1604,12 +1621,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Returns Gumbel softmax of this matrix.<br>
+     * Returns Gumbel softmax of matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
      * @param result result matrix.
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @return softmax of this matrix.
+     * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax(Matrix result, double gumbelSoftmaxTau) throws MatrixException {
@@ -1637,11 +1654,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Returns softmax gradient of this matrix.<br>
+     * Returns softmax gradient of matrix.<br>
      * Assumes that input matrix is softmax result.<br>
      *
      * @param result result matrix.
-     * @return softmax gradient of this matrix.
+     * @return softmax gradient of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmaxGrad(Matrix result) throws MatrixException {
@@ -1695,21 +1712,39 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Sets filter size for convolution operations.
+     * Sets filter row size for convolution operations.
      *
-     * @param filterSize filter size.
+     * @param filterRowSize filter row size.
      */
-    public void setFilterSize(int filterSize) {
-        this.filterSize = filterSize;
+    public void setFilterRowSize(int filterRowSize) {
+        this.filterRowSize = filterRowSize;
     }
 
     /**
-     * Returns filter size.
+     * Sets filter column size for convolution operations.
      *
-     * @return filter size
+     * @param filterColumnSize filter column size.
      */
-    public int getFilterSize() {
-        return filterSize;
+    public void setFilterColumnSize(int filterColumnSize) {
+        this.filterColumnSize = filterColumnSize;
+    }
+
+    /**
+     * Returns filter row size.
+     *
+     * @return filter row size
+     */
+    public int getFilterRowSize() {
+        return filterRowSize;
+    }
+
+    /**
+     * Returns filter column size.
+     *
+     * @return filter column size
+     */
+    public int getFilterColumnSize() {
+        return filterColumnSize;
     }
 
     /**
@@ -1760,7 +1795,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
-     * @param filterGradient result gradient.
+     * @param filterGradient filter gradient.
      */
     public void convolveFilterGradient(Matrix input, Matrix filterGradient) {
         ConvolutionFilterGradientOperation convolutionFilterGradientOperation = new ConvolutionFilterGradientOperation(input, filterGradient, dilation);
@@ -1771,7 +1806,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of crosscorrelation for filter.
      *
      * @param input input for crosscorrelation operator.
-     * @param filterGradient result gradient.
+     * @param filterGradient filter gradient.
      */
     public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) {
         CrosscorrelationFilterGradientOperation crosscorrelationFilterGradientOperation = new CrosscorrelationFilterGradientOperation(input, filterGradient, dilation);
@@ -1779,31 +1814,49 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Sets size of pool for pooling operation.
+     * Sets row size of pool for pooling operation.
      *
-     * @param poolSize pool size.
+     * @param poolRowSize pool row size.
      */
-    public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
+    public void setPoolRowSize(int poolRowSize) {
+        this.poolRowSize = poolRowSize;
     }
 
     /**
-     * Returns pool size.
+     * Returns pool row size.
      *
-     * @return pool size.
+     * @return pool row size.
      */
-    public int getPoolSize() {
-        return poolSize;
+    public int getPoolRowSize() {
+        return poolRowSize;
     }
 
     /**
-     * Calculates max pooling operation for this matrix and returns max arguments.
+     * Sets column size of pool for pooling operation.
+     *
+     * @param poolColumnSize pool column size.
+     */
+    public void setPoolColumnSize(int poolColumnSize) {
+        this.poolColumnSize = poolColumnSize;
+    }
+
+    /**
+     * Returns pool column size.
+     *
+     * @return pool column size.
+     */
+    public int getPoolColumnSize() {
+        return poolColumnSize;
+    }
+
+    /**
+     * Calculates max pooling operation for matrix and returns max arguments.
      *
      * @param result result matrix.
      * @param maxPos maximum position for each result row and column value.
      */
     protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) {
-        MaxPoolOperation maxPoolOperation = new MaxPoolOperation(this, result, poolSize, poolSize, maxPos);
+        MaxPoolOperation maxPoolOperation = new MaxPoolOperation(this, result, getPoolRowSize(), getPoolColumnSize(), maxPos);
         applyMatrixOperation(maxPoolOperation, null, result.getRows(), result.getColumns(), false);
     }
 
@@ -1819,22 +1872,22 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Calculates average pooling operation for this matrix.
+     * Calculates average pooling operation for matrix.
      *
      * @param result result matrix.
      */
     protected void applyAveragePool(Matrix result) {
-        AveragePoolOperation averagePoolOperation = new AveragePoolOperation(this, result, poolSize, poolSize);
+        AveragePoolOperation averagePoolOperation = new AveragePoolOperation(this, result, getPoolRowSize(), getPoolColumnSize());
         applyMatrixOperation(averagePoolOperation, null, result.getRows(), result.getColumns(), false);
     }
 
     /**
-     * Calculates gradient of average pooling operation for this matrix.
+     * Calculates gradient of average pooling operation for matrix.
      *
      * @param inputGradient input gradient.
      */
     public void averagePoolGradient(Matrix inputGradient) {
-        AveragePoolGradientOperation averagePoolGradientOperation = new AveragePoolGradientOperation(inputGradient, poolSize, poolSize);
+        AveragePoolGradientOperation averagePoolGradientOperation = new AveragePoolGradientOperation(inputGradient, getPoolRowSize(), getPoolColumnSize());
         applyMatrixOperation(averagePoolGradientOperation, null, getRows(), getColumns(), false);
     }
 

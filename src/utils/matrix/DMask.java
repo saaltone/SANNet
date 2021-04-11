@@ -6,7 +6,7 @@
 package utils.matrix;
 
 /**
- * Implements dense mask to mask dense matrices.
+ * Implements dense mask to mask dense matrices.<br>
  *
  */
 public class DMask extends AbstractMask {
@@ -73,19 +73,19 @@ public class DMask extends AbstractMask {
     }
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions.
      *
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     public Mask getNewMask() {
         return new DMask(getRows(), getColumns());
     }
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions optionally as transposed.
      *
      * @param asTransposed if true returns new mask as transposed otherwise with unchanged dimensions.
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     public Mask getNewMask(boolean asTransposed) {
         return !asTransposed ? new DMask(getRows(), getColumns()) : new DMask(getColumns(), getRows());
@@ -128,7 +128,7 @@ public class DMask extends AbstractMask {
     }
 
     /**
-     * Sets masking of specific row and column.
+     * Sets mask at specific row and column.
      *
      * @param row row of value to be get.
      * @param column column of value to be get.
@@ -139,7 +139,7 @@ public class DMask extends AbstractMask {
     }
 
     /**
-     * Returns masking of specific row and column.
+     * Returns mask at specific row and column.
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.
@@ -150,7 +150,7 @@ public class DMask extends AbstractMask {
     }
 
     /**
-     * Clears and removes mask.
+     * Clears mask.
      *
      */
     public void clear() {

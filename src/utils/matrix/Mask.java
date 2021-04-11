@@ -6,23 +6,23 @@
 package utils.matrix;
 
 /**
- * Interface defining masking of matrices.
+ * Interface defining masking of matrices.<br>
  *
  */
 public interface Mask {
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions.
      *
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     Mask getNewMask();
 
     /**
-     * Returns new mask of dimensions rows x columns.<br>
+     * Returns new mask of same dimensions optionally as transposed.
      *
      * @param asTransposed if true returns new mask as transposed otherwise with unchanged dimensions.
-     * @return new mask of dimensions rows x columns.
+     * @return new mask of same dimensions.
      */
     Mask getNewMask(boolean asTransposed);
 
@@ -83,7 +83,7 @@ public interface Mask {
     void clear();
 
     /**
-     * Checks if mask is set at specific row and / or column
+     * Checks if mask is set at specific row and column
      *
      * @param row row to be checked.
      * @param column column to be checked.
@@ -107,7 +107,7 @@ public interface Mask {
     double getMaskProbability();
 
     /**
-     * Sets mask for element at specific row and column.
+     * Sets mask at specific row and column.
      *
      * @param row row of mask to be set.
      * @param column column of mask to be set.
@@ -116,7 +116,7 @@ public interface Mask {
     void setMask(int row, int column, boolean value);
 
     /**
-     * Returns mask for element at specific row and column.
+     * Returns mask at specific row and column.
      *
      * @param row row of mask to be returned.
      * @param column column of mask to be returned.

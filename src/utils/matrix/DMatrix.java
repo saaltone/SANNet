@@ -189,7 +189,7 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Matrix function used to set value of specific row and column.
+     * Sets value of matrix at specific row and column.
      *
      * @param row row of value to be set.
      * @param column column of value to be set.
@@ -200,7 +200,7 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Matrix function used to get value of specific row and column.
+     * Returns value of matrix at specific row and column.
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.
@@ -238,28 +238,26 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns new matrix of dimensions rows x columns
+     * Returns new matrix of same dimensions.
      *
-     * @return new matrix of dimensions rows x columns.
+     * @return new matrix of same dimensions.
      */
     public Matrix getNewMatrix() {
         return isScalar() ? new DMatrix(0) : new DMatrix(getRows(), getColumns());
     }
 
     /**
-     * Returns new matrix of dimensions rows x columns.<br>
-     * To be implemented by underlying matrix data structure class implementation.<br>
-     * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
+     * Returns new matrix of same dimensions optionally as transposed.
      *
      * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
-     * @return new matrix of dimensions rows x columns.
+     * @return new matrix of same dimensions.
      */
     public Matrix getNewMatrix(boolean asTransposed) {
         return isScalar() ? new DMatrix(0) : !asTransposed ? new DMatrix(getRows(), getColumns()) :  new DMatrix(getColumns(), getRows());
     }
 
     /**
-     * Copies new matrix into this matrix. Assumes equal dimensions for both matrices.
+     * Copies new matrix data into this matrix. Assumes equal dimensions for both matrices.
      *
      * @param newMatrix new matrix to be copied inside this matrix.
      */

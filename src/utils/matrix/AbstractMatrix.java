@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Abstract class that implements common operations for matrices.
+ * Abstract class that implements common operations for matrices.<br>
  *
  */
 public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix {
@@ -94,8 +94,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Abstract matrix reset function to be implemented by underlying matrix data structure class implementation.<br>
-     * This is typically dense matrix (DMatrix class) or sparse matrix (SMatrix class).<br>
+     * Resets matrix.
      *
      */
     protected abstract void resetMatrix();
@@ -111,9 +110,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns value from normal distribution defined by standard deviation (stdev).
+     * Returns value from normal distribution defined by standard deviation.
      *
-     * @param standardDeviation standard deviation of the distribution.
+     * @param standardDeviation standard deviation of normal distribution.
      * @return random value drawn from the distribution.
      */
     private double normal(double standardDeviation) {
@@ -269,7 +268,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Matrix function used to add value of specific row and column.
+     * Increment value of specific row and column.
      *
      * @param row row of value to be added.
      * @param column column of value to be added.
@@ -280,7 +279,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Matrix function used to decrease value of specific row and column.
+     * Decrease value of specific row and column.
      *
      * @param row row of value to be decreased.
      * @param column column of value to be decreased.
@@ -291,7 +290,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Matrix function used to multiply value of specific row and column.
+     * Multiply value of specific row and column.
      *
      * @param row row of value to be multiplied.
      * @param column column of value to be multiplied.
@@ -302,7 +301,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Matrix function used to divide value of specific row and column.
+     * Divide value of specific row and column.
      *
      * @param row row of value to be divided.
      * @param column column of value to be divided.
@@ -339,12 +338,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix copy() throws MatrixException {
         Matrix newMatrix;
-        // Make shallow copy of matrix leaving references internal objects which are shared.
+        // Make deep copy of matrix.
         try {
             newMatrix = (Matrix)super.clone();
             newMatrix.setInitializer(initializer);
-            // Copy matrix data
-            newMatrix.copyMatrixData(this);
+            newMatrix.copyMatrixData(this); // Copy matrix data
             if (getMask() != null) newMatrix.setMask(getMask().copy());
         } catch (CloneNotSupportedException exception) {
             throw new MatrixException("Cloning of matrix failed.");
@@ -452,9 +450,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies single variable operation to this matrix and return operation result.<br>
-     * Example of operation can be applying square root operation to this matrix or
-     * multiplying current matrix with constant number.<br>
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
      * @param matrixUnaryOperation single variable operation defined as lambda operator.
@@ -483,7 +480,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies unaryFunction to this matrix and return operation result.<br>
+     * Applies unaryFunction to this matrix.<br>
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
@@ -512,7 +509,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies unaryFunction to this matrix and return operation result.<br>
+     * Applies unaryFunction to this matrix.<br>
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
@@ -526,9 +523,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies two variable operation to this matrix and other matrix and stores operation result into result matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix or
-     * multiplying current matrix with other matrix.<br>
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
      * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
@@ -541,9 +537,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies binaryFunction to this matrix.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
      * @param result result matrix.
@@ -560,9 +556,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies binaryFunction to this matrix and return operation result.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
      * @param binaryFunction binaryFunction to be applied.
@@ -576,9 +572,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies binaryFunction to this matrix.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
      * @param result result matrix.
@@ -591,9 +587,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Applies binaryFunction to this matrix and return operation result.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
      * @param binaryFunctionType binaryFunction type to be applied.
@@ -1010,7 +1006,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns constant as constant matrix.
+     * Returns constant as matrix.
      *
      * @param constant constant value.
      * @return constant matrix.
@@ -1025,7 +1021,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes element wise cumulative sum of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @return cumulative sum of this matrix.
+     * @return sum of matrix.
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix sumAsMatrix() throws MatrixException {
@@ -1042,7 +1038,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @throws MatrixException not thrown in any situation.
-     * @return mean of elements of this matrix.
+     * @return mean of matrix.
      */
     public Matrix meanAsMatrix() throws MatrixException {
         double expressionLock = 0;
@@ -1057,7 +1053,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes variance of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @return variance of elements of this matrix.
+     * @return variance of matrix.
      */
     public double variance() {
         return variance(mean());
@@ -1068,7 +1064,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @throws MatrixException not thrown in any situation.
-     * @return variance of elements of this matrix.
+     * @return variance of matrix.
      */
     public Matrix varianceAsMatrix() throws MatrixException {
         double expressionLock = 0;
@@ -1084,7 +1080,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param mean mean value given as input.
-     * @return variance of elements of this matrix.
+     * @return variance of matrix.
      */
     public Matrix varianceAsMatrix(Matrix mean) {
         return constantAsMatrix(variance(mean.getValue(0, 0)));
@@ -1094,7 +1090,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes standard deviation of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @return standard deviation of elements of this matrix.
+     * @return standard deviation of matrix.
      */
     public double standardDeviation() {
         return standardDeviation(mean());
@@ -1106,7 +1102,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @throws MatrixException not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @return standard deviation of elements of this matrix.
+     * @return standard deviation of matrix.
      */
     public Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException {
         double expressionLock = 0;
@@ -1122,7 +1118,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param mean mean value given as input.
-     * @return standard deviation of elements of this matrix.
+     * @return standard deviation of matrix.
      */
     public Matrix standardDeviationAsMatrix(Matrix mean) {
         return constantAsMatrix(standardDeviation(mean.getValue(0, 0)));
@@ -1134,7 +1130,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param p p value for norm.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @return cumulative norm value of matrix.
+     * @return norm of matrix.
      */
     public Matrix normAsMatrix(int p) throws MatrixException {
         double expressionLock = 0;
@@ -1209,7 +1205,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Returns softmax of this matrix.
      *
-     * @return softmax of this matrix.
+     * @return softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmax() throws MatrixException {
@@ -1221,7 +1217,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
      * @param result result matrix.
-     * @return softmax of this matrix.
+     * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax(Matrix result) throws MatrixException {
@@ -1232,7 +1228,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Returns Gumbel softmax of this matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
-     * @return Gumbel softmax of this matrix.
+     * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax() throws MatrixException {
@@ -1244,7 +1240,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @return Gumbel softmax of this matrix.
+     * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
@@ -1254,7 +1250,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Returns softmax gradient of this matrix.
      *
-     * @return softmax gradient of this matrix.
+     * @return softmax gradient of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmaxGrad() throws MatrixException {
@@ -1265,24 +1261,24 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @return calculated value of convolution.
+     * @return calculated result of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix convolve(Matrix filter) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterSize() + 1, getColumns() - getFilterSize() + 1);
+        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         convolve(filter, result);
         return result;
     }
 
     /**
-     * Calculates cross-correlation between this matrix and filter matrix.
+     * Calculates crosscorrelation between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @return calculated value of cross-correlation.
+     * @return calculated result of crosscorrelation.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix crosscorrelate(Matrix filter) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterSize() + 1, getColumns() - getFilterSize() + 1);
+        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         crosscorrelate(filter, result);
         return result;
     }
@@ -1291,7 +1287,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
+     * @param result calculated result of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void convolve(Matrix filter, Matrix result) throws MatrixException {
@@ -1300,14 +1296,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         applyConvolve(filter, result);
-        if (procedureFactory != null) procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
+        if (procedureFactory != null) procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
     }
 
     /**
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
+     * @param result calculated result of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void crosscorrelate(Matrix filter, Matrix result) throws MatrixException {
@@ -1316,14 +1312,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         applyCrosscorrelate(filter, result);
-        if (procedureFactory != null) procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterSize());
+        if (procedureFactory != null) procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
     }
 
     /**
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
+     * @param result calculated result of convolution.
      */
     protected abstract void applyConvolve(Matrix filter, Matrix result);
 
@@ -1331,7 +1327,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates crosscorrelation between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of crosscorrelation.
+     * @param result calculated result of crosscorrelation.
      */
     protected abstract void applyCrosscorrelate(Matrix filter, Matrix result);
 
@@ -1339,22 +1335,22 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates gradient of convolution for input.
      *
      * @param filter filter for convolutional operator.
-     * @return output gradient.
+     * @return input gradient.
      */
     public Matrix convolveInputGradient(Matrix filter) {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterSize() - 1, getColumns() + getFilterSize() - 1);
+        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         convolveInputGradient(filter, inputGradient);
         return inputGradient;
     }
 
     /**
-     * Calculates gradient of cross-correlation for input.
+     * Calculates gradient of crosscorrelation for input.
      *
-     * @param filter filter for cross-correlation operator.
-     * @return output gradient.
+     * @param filter filter for crosscorrelation operator.
+     * @return input gradient.
      */
     public Matrix crosscorrelateInputGradient(Matrix filter) {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterSize() - 1, getColumns() + getFilterSize() - 1);
+        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         crosscorrelateInputGradient(filter, inputGradient);
         return inputGradient;
     }
@@ -1366,19 +1362,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return filter gradient.
      */
     public Matrix convolveFilterGradient(Matrix input) {
-        Matrix filterGradient = new DMatrix(getFilterSize(), getFilterSize());
+        Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
         convolveFilterGradient(input, filterGradient);
         return filterGradient;
     }
 
     /**
-     * Calculates gradient of cross-correlation for filter.
+     * Calculates gradient of crosscorrelation for filter.
      *
-     * @param input input for cross-correlation operator.
+     * @param input input for crosscorrelation operator.
      * @return filter gradient.
      */
     public Matrix crosscorrelateFilterGradient(Matrix input) {
-        Matrix filterGradient = new DMatrix(getFilterSize(), getFilterSize());
+        Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
         crosscorrelateFilterGradient(input, filterGradient);
         return filterGradient;
     }
@@ -1391,7 +1387,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getPoolSize() + 1, getColumns() - getPoolSize() + 1);
+        Matrix result = new DMatrix(getRows() - getPoolRowSize() + 1, getColumns() - getPoolColumnSize() + 1);
         maxPool(result, maxPos);
         return result;
     }
@@ -1408,7 +1404,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         applyMaxPool(result, maxPos);
-        if (procedureFactory != null) procedureFactory.createMaxPoolExpression(expressionLock, this, result, getStride(), getPoolSize());
+        if (procedureFactory != null) procedureFactory.createMaxPoolExpression(expressionLock, this, result, getStride(), getPoolRowSize(), getPoolColumnSize());
     }
 
     /**
@@ -1423,10 +1419,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates gradient of max pooling operation for this matrix.
      *
      * @param maxPos maximum positions for each row and col value.
-     * @return result matrix.
+     * @return input gradient.
      */
     public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) {
-        Matrix inputGradient = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
+        Matrix inputGradient = new DMatrix(getRows() + getPoolRowSize() - 1, getColumns() + getPoolColumnSize() - 1);
         maxPoolGradient(inputGradient, maxPos);
         return inputGradient;
     }
@@ -1438,7 +1434,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix averagePool() throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getPoolSize() + 1, getColumns() - getPoolSize() + 1);
+        Matrix result = new DMatrix(getRows() - getPoolRowSize() + 1, getColumns() - getPoolColumnSize() + 1);
         averagePool(result);
         return result;
     }
@@ -1454,15 +1450,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         double expressionLock = 0;
         if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
         applyAveragePool(result);
-        if (procedureFactory != null) procedureFactory.createAveragePoolExpression(expressionLock, this, result, getStride(), getPoolSize());
+        if (procedureFactory != null) procedureFactory.createAveragePoolExpression(expressionLock, this, result, getStride(), getPoolRowSize(), getPoolColumnSize());
     }
 
     /**
      * Calculates average pooling operation for this matrix.
      *
-     * @param result result matrix.
+     * @param inputGradient input gradient.
      */
-    protected abstract void applyAveragePool(Matrix result);
+    protected abstract void applyAveragePool(Matrix inputGradient);
 
     /**
      * Calculates gradient of average pooling operation for this matrix.
@@ -1470,7 +1466,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return input gradient.
      */
     public Matrix averagePoolGradient() {
-        Matrix inputGradient = new DMatrix(getRows() + getPoolSize() - 1, getColumns() + getPoolSize() - 1);
+        Matrix inputGradient = new DMatrix(getRows() + getPoolRowSize() - 1, getColumns() + getPoolColumnSize() - 1);
         averagePoolGradient(inputGradient);
         return inputGradient;
     }
@@ -1478,7 +1474,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Transposes matrix.
      *
-     * @return new matrix but as transposed that is with flipped rows and columns.
+     * @return new matrix but as transposed with flipped rows and columns.
      * @throws MatrixException throws exception if transpose operation fails.
      */
     public Matrix transpose() throws MatrixException {
@@ -1598,7 +1594,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns if matrix has mask at specific position.
+     * Checks if matrix has mask at specific position.
      *
      * @param matrix matrix as input.
      * @param row specific row.
@@ -1610,7 +1606,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns if matrix has mask at specific row.
+     * Checks if matrix has mask at specific row.
      *
      * @param matrix matrix as input.
      * @param row specific row.
@@ -1621,7 +1617,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns if matrix has mask at specific column.
+     * Checks if matrix has mask at specific column.
      *
      * @param matrix matrix as input.
      * @param column specific column.

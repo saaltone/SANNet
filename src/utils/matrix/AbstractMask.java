@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Random;
 
 /**
- * Abstract class that implements common operations for masking.
+ * Abstract class that implements common operations for masking.<br>
  *
  */
 public abstract class AbstractMask implements Cloneable, Serializable, Mask {
@@ -41,9 +41,9 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
-     * Creates new mask with object full copy of this mask.
+     * Creates new mask with full copy of this mask.
      *
-     * @return newly created reference mask.
+     * @return newly created mask copy.
      */
     public Mask copy() {
         return getCopy();
@@ -52,7 +52,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     /**
      * Transposes mask.
      *
-     * @return reference to this mask but with transposed that is flipped rows and columns.
+     * @return reference to this mask but as transposed with flipped rows and columns.
      */
     public Mask transpose() {
         Mask transposedMask = getNewMask(true);
@@ -71,18 +71,18 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
-     * Checks if mask is set at specific row and / or column
+     * Checks if mask is set at specific row and column
      *
-     * @param row row to be checked.
-     * @param column column to be checked.
-     * @return result of mask check.
+     * @param row row.
+     * @param column column.
+     * @return return true if mask is set at row and column.
      */
     public boolean isMasked(int row, int column) {
         return getRowMask(row) || getColumnMask(column) || getMask(row, column);
     }
 
     /**
-     * Sets bernoulli probability to mask specific element.
+     * Sets bernoulli probability to mask specific row and column.
      *
      * @param probability masking probability between 0 (0%) and 1 (100%).
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
@@ -102,7 +102,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
-     * Returns true with defined masking probability of this mask.
+     * Returns true with defined masking probability.
      *
      * @return true with defined masking probability.
      */
@@ -111,7 +111,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
-     * Sets masking for this mask with given bernoulli probability.
+     * Sets masking with given bernoulli probability for each row and column.
      *
      */
     public void maskByProbability() {

@@ -6,6 +6,8 @@
 package utils.matrix;
 
 /**
+ * Defines supported binary functions.<br>
+ * <br>
  * Following functions are supported:
  *     MEAN_SQUARED_ERROR,
  *     MEAN_SQUARED_LOGARITHMIC_ERROR,

@@ -23,7 +23,7 @@ public class MMatrix implements Cloneable, Serializable {
     private static final long serialVersionUID = 2208329722377770337L;
 
     /**
-     * Max size for MMatrix.
+     * Capacity for MMatrix.
      *
      */
     private final int capacity;
@@ -42,7 +42,7 @@ public class MMatrix implements Cloneable, Serializable {
     private transient ProcedureFactory procedureFactory = null;
 
     /**
-     * Name for matrix.
+     * Name for MMatrix.
      *
      */
     private String name;
@@ -68,7 +68,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Constructor for sample with capacity limitation.
+     * Constructor with capacity limitation.
      *
      * @param capacity capacity of MMatrix.
      * @throws MatrixException throws exception if depth is less than 1.
@@ -80,7 +80,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Constructor for sample with capacity limitation.
+     * Constructor with capacity limitation.
      *
      * @param capacity capacity of MMatrix.
      * @param name name of matrix.
@@ -174,9 +174,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns sample entries.
+     * Returns matrices.
      *
-     * @return sample entries.
+     * @return matrices.
      */
     public TreeMap<Integer, Matrix> get() {
         return matrices;
@@ -232,9 +232,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns last key of node.
+     * Returns last key of matrices.
      *
-     * @return last key of node.
+     * @return last key of matrices.
      */
     public int lastKey() {
         return matrices.lastKey();
@@ -252,23 +252,23 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Returns last value of matrices.
      *
-     * @return last key of matrices.
+     * @return last value of matrices.
      */
     public Matrix lastValue() {
         return matrices.get(matrices.lastKey());
     }
 
     /**
-     * Returns entries of sample as collection.
+     * Returns matrices as collection.
      *
-     * @return entries of sample as collection.
+     * @return matrices as collection.
      */
     public Collection<Matrix> values() {
         return matrices.values();
     }
 
     /**
-     * Checks if sample contains specific entry.
+     * Checks if MMatrix contains specific entry.
      *
      * @param matrix specific entry.
      * @return returns true is matrix is contained inside sample.
@@ -296,7 +296,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Creates new matrix with object reference to the matrix data of this matrix.
+     * Creates new MMatrix with object reference to the matrix data of this MMatrix.
      *
      * @return newly created reference matrix.
      * @throws MatrixException throws exception if mask operation fails or cloning of matrix fails.
@@ -313,7 +313,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Creates new matrix with object full copy of this matrix.
+     * Creates new MMatrix with object full copy of this MMatrix.
      *
      * @return newly created reference matrix.
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
@@ -342,7 +342,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Checks if this matrix and other matrix are equal in dimensions (rows x columns).
+     * Checks if this matrix and other matrix are equal in size.
      *
      * @param other other matrix to be compared against.
      * @return true if matrices are of same size otherwise false.
@@ -379,9 +379,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Synchronizes this and other matrix procedure factories.
+     * Synchronizes this and other MMatrix procedure factories.
      *
-     * @param other other matrix
+     * @param other other MMatrix
      * @throws MatrixException throws exception if his and other matrices have conflicting procedure factories.
      */
     private void synchronizeProcedureFactory(MMatrix other) throws MatrixException {
@@ -413,7 +413,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Makes current matrix data equal to other matrix data.
+     * Makes current MMatrix data equal to other MMatrix data.
      *
      * @param other other matrix to be copied as data of this matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
@@ -426,7 +426,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Checks if data of other matrix is equal to data of this matrix
+     * Checks if data of other MMatrix is equal to data of this MMatrix
      *
      * @param other matrix to be compared.
      * @return true is data of this and other matrix are equal otherwise false.
@@ -441,9 +441,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies unaryFunction to this matrix.<br>
+     * Applies unaryFunction to this MMatrix.<br>
      * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param unaryFunction unaryFunction to be applied.
      * @param result result matrix.
@@ -458,9 +458,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies unaryFunction to this matrix and return operation result.<br>
+     * Applies unaryFunction to this MMatrix.<br>
      * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param unaryFunction unaryFunction to be applied.
      * @return matrix which stores operation result.
@@ -473,9 +473,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies binaryFunction to this matrix.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies binaryFunction to this MMatrix.<br>
+     * Example of operation can be subtraction of other MMatrix from this MMatrix.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param other other matrix
      * @param result result matrix.
@@ -492,9 +492,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies binaryFunction to this matrix and return operation result.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies binaryFunction to this MMatrix.<br>
+     * Example of operation can be subtraction of other MMatrix from this MMatrix.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param other other matrix
      * @param binaryFunction binaryFunction to be applied.
@@ -508,9 +508,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies binaryFunction to this matrix.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies binaryFunction to this MMatrix.<br>
+     * Example of operation can be subtraction of other MMatrix from this MMatrix.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param other other matrix
      * @param result result matrix.
@@ -527,9 +527,9 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies binaryFunction to this matrix and return operation result.<br>
-     * Example of operation can be applying power operation to this and other matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Applies binaryFunction to this MMatrix.<br>
+     * Example of operation can be subtraction of other MMatrix from this MMatrix.<br>
+     * Applies masking if MMatrix is masked.<br>
      *
      * @param other other matrix
      * @param binaryFunction binaryFunction to be applied.
@@ -543,7 +543,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Adds other matrix to this matrix.
+     * Adds other MMatrix to this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -560,7 +560,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Adds other matrix to this matrix.
+     * Adds other MMatrix to this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -573,7 +573,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Adds other matrix to this matrix.
+     * Adds other MMatrix to this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -589,7 +589,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Adds other matrix to this matrix.
+     * Adds other MMatrix to this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -602,7 +602,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix from this matrix.
+     * Subtracts other MMatrix from this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -619,7 +619,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix from this matrix.
+     * Subtracts other MMatrix from this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -632,7 +632,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix to this matrix.
+     * Subtracts other MMatrix from this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -648,7 +648,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Subtracts other matrix from this matrix.
+     * Subtracts other MMatrix from this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -661,7 +661,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Multiplies other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -678,7 +678,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Multiplies other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -691,7 +691,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Multiplies other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -707,7 +707,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Multiplies other matrix with this matrix.
+     * Multiplies other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -720,7 +720,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Dots other matrix with this matrix.
+     * Dots other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -737,7 +737,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Dots other matrix with this matrix.
+     * Dots other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -750,7 +750,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Dots other matrix with this matrix.
+     * Dots other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -766,7 +766,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Dots other matrix with this matrix.
+     * Dots other MMatrix with this MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @return result matrix which stores operation result.
@@ -779,7 +779,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Divides this matrix with other matrix.
+     * Divides this MMatrix with other MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -796,7 +796,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Divides this matrix with other matrix.
+     * Divides this MMatrix with other MMatrix.
      *
      * @param other other matrix.
      * @return result matrix which stores operation result.
@@ -809,7 +809,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Divides this matrix with other matrix.
+     * Divides this MMatrix with other MMatrix.
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
@@ -825,7 +825,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Divides this matrix with other matrix.
+     * Divides this MMatrix with other MMatrix.
      *
      * @param other other matrix.
      * @return result matrix which stores operation result.
@@ -841,7 +841,7 @@ public class MMatrix implements Cloneable, Serializable {
      * Calculates sum or mean.
      *
      * @param asMean if true returns mean otherwise sum.
-     * @return result of counting
+     * @return result of sum or mean
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean) throws MatrixException {
@@ -897,7 +897,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates variance over multiple matrices.
+     * Calculates variance.
      *
      * @param meanMatrix matrix containing mean values for variance calculation.
      * @return resulting variance
@@ -917,7 +917,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates standard deviation over multiple matrices.
+     * Calculates standard deviation.
      *
      * @param meanMatrix matrix containing mean values for variance calculation.
      * @return resulting variance
@@ -934,7 +934,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Calculates standard deviation over multiple matrices.
+     * Calculates standard deviation.
      *
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
@@ -950,8 +950,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates softmax.
      *
      * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -961,8 +960,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates softmax.
      *
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
@@ -974,8 +972,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies Gumbel softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates Gumbel softmax.
      *
      * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -985,8 +982,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies Gumbel softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates Gumbel softmax.
      *
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
      * @param result result matrix.
@@ -997,8 +993,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies Gumbel softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates Gumbel softmax.
      *
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
@@ -1010,8 +1005,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Applies Gumbel softmax to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
+     * Calculates Gumbel softmax.
      *
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
      * @return matrix which stores operation result.
