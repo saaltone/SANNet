@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines norm expression.
+ * Class that defines norm expression.<br>
  *
  */
 public class NormExpression extends AbstractUnaryExpression implements Serializable {

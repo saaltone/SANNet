@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for multiply operation.
+ * Class that describes expression for multiply operation.<br>
  *
  */
 public class MultiplyExpression extends AbstractBinaryExpression implements Serializable {
@@ -23,6 +23,12 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
     private static final String expressionName = "MULTIPLY";
 
     /**
+     * Operation signature.
+     *
+     */
+    private static final String operationSignature = "*";
+
+    /**
      * Constructor for multiply operation.
      *
      * @param expressionID unique ID for expression.
@@ -32,7 +38,7 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MultiplyExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, "*", expressionID, argument1, argument2, result);
+        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
     }
 
     /**
@@ -85,8 +91,8 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      *
      */
     public void printGradient() {
-        printArgument1Gradient(true, " * " + argument2.getName());
-        printArgument2Gradient(true, false, " * " + argument1.getName());
+        printArgument1Gradient(true, " " + operationSignature + " " + argument2.getName());
+        printArgument2Gradient(true, false, " " + operationSignature + " " + argument1.getName());
     }
 
 }

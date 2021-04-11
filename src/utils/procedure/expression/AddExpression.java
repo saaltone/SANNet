@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for add operation.
+ * Class that describes expression for add operation.<br>
  *
  */
 public class AddExpression extends AbstractBinaryExpression implements Serializable {
@@ -23,6 +23,12 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
     private static final String expressionName = "ADD";
 
     /**
+     * Operation signature.
+     *
+     */
+    private static final String operationSignature = "+";
+
+    /**
      * Constructor for add operation.
      *
      * @param expressionID unique ID for expression.
@@ -32,7 +38,7 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public AddExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, "+", expressionID, argument1, argument2, result);
+        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
     }
 
     /**

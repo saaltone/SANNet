@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for subtraction operation.
+ * Class that describes expression for subtraction operation.<br>
  *
  */
 public class SubtractExpression extends AbstractBinaryExpression implements Serializable {
@@ -23,6 +23,12 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
     private static final String expressionName = "SUBTRACT";
 
     /**
+     * Operation signature.
+     *
+     */
+    private static final String operationSignature = "-";
+
+    /**
      * Constructor for subtraction operation.
      *
      * @param expressionID unique ID for expression.
@@ -32,7 +38,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SubtractExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, "-", expressionID, argument1, argument2, result);
+        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
     }
 
     /**

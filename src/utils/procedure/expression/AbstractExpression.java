@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * Abstract class that describes single computable expression including gradient expression.<br>
- * Assumes underlying class that implemented specific expression.<br>
+ * Assumes underlying class that implements specific expression.<br>
  *
  */
 public abstract class AbstractExpression implements Serializable {
@@ -82,6 +82,11 @@ public abstract class AbstractExpression implements Serializable {
         this.result = result;
     }
 
+    /**
+     * Returns name of expression.
+     *
+     * @return name of expression.
+     */
     public String getName() {
         return name;
     }
@@ -141,20 +146,20 @@ public abstract class AbstractExpression implements Serializable {
     }
 
     /**
-     * Resets expression.
-     *
-     */
-    public void reset() {
-        if (nextExpression != null) nextExpression.reset();
-    }
-
-    /**
      * Sets previous expression for gradient calculation chain.
      *
      * @param previousExpression previous expression.
      */
     public void setPreviousExpression(AbstractExpression previousExpression) {
         this.previousExpression = previousExpression;
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    public void reset() {
+        if (nextExpression != null) nextExpression.reset();
     }
 
     /**
@@ -448,7 +453,6 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @return gradient identifier name.
      */
-    @SuppressWarnings("SameReturnValue")
     protected String getGradientIdentifierName() {
         return "d";
     }
@@ -509,25 +513,25 @@ public abstract class AbstractExpression implements Serializable {
     }
 
     /**
-     * Returns node prefix name.
+     * Returns node gradient prefix name.
      *
      * @param node node
      * @param negateResult if true result will be negated.
-     * @return node prefix name.
+     * @return node gradient prefix name.
      */
-    protected String getNodePrefixName(Node node, boolean negateResult) {
+    protected String getNodeGradientPrefixName(Node node, boolean negateResult) {
         return getName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
     }
 
     /**
-     * Returns node prefix name with result.
+     * Returns node gradient prefix name with result.
      *
      * @param node node
      * @param negateResult if true result will be negated.
-     * @return node prefix name with result.
+     * @return node gradient prefix name with result.
      */
-    protected String getNodeWithResultPrefixName(Node node, boolean negateResult) {
-        return getNodePrefixName(node, negateResult) + getResultGradientName();
+    protected String getNodeGradientWithResultPrefixName(Node node, boolean negateResult) {
+        return getNodeGradientPrefixName(node, negateResult) + getResultGradientName();
     }
 
     /**
@@ -552,12 +556,13 @@ public abstract class AbstractExpression implements Serializable {
 
     /**
      * Prints gradient for argument1
-     *  @param withResultPrefix true if result prefix is added.
+     *
+     * @param withResultPrefix true if result prefix is added.
      * @param suffix suffix part for gradient expression.
      */
     protected void printArgument1Gradient(boolean withResultPrefix, String suffix) {
         print();
-        System.out.println((withResultPrefix ? getNodeWithResultPrefixName(argument1, false) : getNodePrefixName(argument1, false)) + (suffix != null ? suffix : "") + getNodeSumPostfix(argument1));
+        System.out.println((withResultPrefix ? getNodeGradientWithResultPrefixName(argument1, false) : getNodeGradientPrefixName(argument1, false)) + (suffix != null ? suffix : "") + getNodeSumPostfix(argument1));
     }
 
 }

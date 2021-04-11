@@ -9,7 +9,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 /**
- * Class that defines unary expression.
+ * Class that defines unary expression.<br>
  *
  */
 public abstract class AbstractUnaryExpression extends AbstractExpression {

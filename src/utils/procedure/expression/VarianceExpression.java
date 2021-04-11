@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that describes expression for variance operation.
+ * Class that describes expression for variance operation.<br>
  *
  */
 public class VarianceExpression extends AbstractUnaryExpression implements Serializable {

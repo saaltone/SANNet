@@ -10,7 +10,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 /**
- * Class that defines AbstractBinaryExpression.
+ * Class that defines AbstractBinaryExpression.<br>
  *
  */
 public abstract class AbstractBinaryExpression extends AbstractExpression {
@@ -162,7 +162,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      */
     protected void printArgument2Gradient(boolean withResultPrefix, boolean negateResult, String suffix) {
         print();
-        System.out.println((withResultPrefix ? getNodeWithResultPrefixName(argument2, negateResult) : getNodePrefixName(argument2, negateResult)) + (suffix != null ? "" + suffix : "") + getNodeSumPostfix(argument2));
+        System.out.println((withResultPrefix ? getNodeGradientWithResultPrefixName(argument2, negateResult) : getNodeGradientPrefixName(argument2, negateResult)) + (suffix != null ? "" + suffix : "") + getNodeSumPostfix(argument2));
     }
 
 }

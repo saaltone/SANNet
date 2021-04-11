@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for unary function.
+ * Class that describes expression for unary function.<br>
  *
  */
 public class UnaryFunctionExpression extends AbstractUnaryExpression implements Serializable {

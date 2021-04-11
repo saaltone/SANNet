@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for division operation.
+ * Class that describes expression for division operation.<br>
  *
  */
 public class DivideExpression extends AbstractBinaryExpression implements Serializable {
@@ -24,6 +24,12 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
     private static final String expressionName = "DIVIDE";
 
     /**
+     * Operation signature.
+     *
+     */
+    private static final String operationSignature = "/";
+
+    /**
      * Constructor for division operation.
      *
      * @param expressionID unique ID for expression.
@@ -33,7 +39,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DivideExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, "/", expressionID, argument1, argument2, result);
+        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
     }
 
     /**
@@ -87,8 +93,8 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      */
     public void printGradient() {
-        printArgument1Gradient(true, " / " + argument2.getName());
-        printArgument2Gradient(true, false, " * " + argument1.getName() + " / " + argument2.getName() + "^2");
+        printArgument1Gradient(true, " " + operationSignature + " " + argument2.getName());
+        printArgument2Gradient(true, false, " * " + argument1.getName() + " " + operationSignature + " " + argument2.getName() + "^2");
     }
 
 }

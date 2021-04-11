@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for mean function.
+ * Class that describes expression for mean function.<br>
  *
  */
 public class MeanExpression extends AbstractUnaryExpression implements Serializable {

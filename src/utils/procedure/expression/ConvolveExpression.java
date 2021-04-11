@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for convolution operation.
+ * Class that describes expression for convolution operation.<br>
  *
  */
 public class ConvolveExpression extends AbstractBinaryExpression implements Serializable {
@@ -35,10 +35,16 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
     private final int dilation;
 
     /**
-     * Filter size;
+     * Filter row size;
      *
      */
-    private final int filterSize;
+    private final int filterRowSize;
+
+    /**
+     * Filter column size;
+     *
+     */
+    private final int filterColumnSize;
 
     /**
      * Constructor for convolution operation.
@@ -48,15 +54,17 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @param argument2 second argument.
      * @param result result of expression.
      * @param stride stride of convolution operation.
-     * @param dilation dilation step size for cross-correlation operation.
-     * @param filterSize filter size.
+     * @param dilation dilation step size for convolution operation.
+     * @param filterRowSize filter row size.
+     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterSize) throws MatrixException {
+    public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         super(expressionName, expressionName, expressionID, argument1, argument2, result);
         this.stride = stride;
         this.dilation = dilation;
-        this.filterSize = filterSize;
+        this.filterRowSize = filterRowSize;
+        this.filterColumnSize = filterColumnSize;
     }
 
     /**
@@ -85,7 +93,8 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setDilation(dilation);
-        argument1.getMatrix(index).setFilterSize(filterSize);
+        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
+        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
         result.setMatrix(index, argument1.getMatrix(index).convolve(argument2.getMatrix(index)));
     }
 
@@ -106,7 +115,8 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setDilation(dilation);
-        result.getGradient(index).setFilterSize(filterSize);
+        result.getGradient(index).setFilterRowSize(filterRowSize);
+        result.getGradient(index).setFilterColumnSize(filterColumnSize);
         argument1.cumulateGradient(index, result.getGradient(index).convolveInputGradient(argument2.getMatrix(index)), false);
         argument2.cumulateGradient(index, result.getGradient(index).convolveFilterGradient(argument1.getMatrix(index)), false);
     }

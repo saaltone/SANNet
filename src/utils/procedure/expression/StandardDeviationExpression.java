@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that describes expression for standard deviation operation.
+ * Class that describes expression for standard deviation operation.<br>
  *
  */
 public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {
@@ -49,7 +49,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      * Operation for square root.
      *
      */
-    private final UnaryFunction sqrtFunction;
+    private final UnaryFunction sqrtFunction = new UnaryFunction(UnaryFunctionType.SQRT);
 
     /**
      * Constructor for standard deviation operation.
@@ -64,7 +64,6 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
     public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException, DynamicParamException {
         super(expressionName, expressionName, expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
-        sqrtFunction = new UnaryFunction(UnaryFunctionType.SQRT);
     }
 
     /**

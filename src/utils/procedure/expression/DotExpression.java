@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for dot operation.
+ * Class that describes expression for dot operation.<br>
  *
  */
 public class DotExpression extends AbstractBinaryExpression implements Serializable {
@@ -23,6 +23,12 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
     private static final String expressionName = "DOT";
 
     /**
+     * Operation signature.
+     *
+     */
+    private static final String operationSignature = "x";
+
+    /**
      * Constructor for dot operation.
      *
      * @param expressionID unique ID for expression.
@@ -32,7 +38,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, "x", expressionID, argument1, argument2, result);
+        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
     }
 
     /**
@@ -85,8 +91,8 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      *
      */
     public void printGradient() {
-        printArgument1Gradient(true, " x " + argument2.getName() + ".T");
-        printArgument2Gradient(false, false, argument1.getName() + ".T x " + getResultGradientName());
+        printArgument1Gradient(true, " " + operationSignature + " " + argument2.getName() + ".T");
+        printArgument2Gradient(false, false, argument1.getName() + ".T" + " " + operationSignature + " " + getResultGradientName());
     }
 
 }

@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for sum.
+ * Class that describes expression for sum.<br>
  *
  */
 public class SumExpression extends AbstractUnaryExpression implements Serializable {

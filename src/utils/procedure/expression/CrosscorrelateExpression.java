@@ -11,7 +11,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for cross-correlation operation.
+ * Class that describes expression for crosscorrelation operation.<br>
  *
  */
 public class CrosscorrelateExpression extends AbstractBinaryExpression implements Serializable {
@@ -23,40 +23,48 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
     private static final String expressionName = "CROSSCORRELATE";
 
     /**
-     * Stride of cross-correlation operation.
+     * Stride of crosscorrelation operation.
      *
      */
     private final int stride;
 
     /**
-     * Dilation step size for cross-correlation operation.
+     * Dilation step size for crosscorrelation operation.
      *
      */
     private final int dilation;
 
     /**
-     * Filter size;
+     * Filter row size;
      *
      */
-    private final int filterSize;
+    private final int filterRowSize;
 
     /**
-     * Constructor for cross-correlation operation.
+     * Filter column size;
+     *
+     */
+    private final int filterColumnSize;
+
+    /**
+     * Constructor for crosscorrelation operation.
      *
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param argument2 second argument.
      * @param result result of expression.
-     * @param stride stride of cross-correlation operation.
-     * @param dilation dilation step size for cross-correlation operation.
-     * @param filterSize filter size.
+     * @param stride stride of crosscorrelation operation.
+     * @param dilation dilation step size for crosscorrelation operation.
+     * @param filterRowSize filter row size.
+     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterSize) throws MatrixException {
+    public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         super(expressionName, expressionName, expressionID, argument1, argument2, result);
         this.stride = stride;
         this.dilation = dilation;
-        this.filterSize = filterSize;
+        this.filterRowSize = filterRowSize;
+        this.filterColumnSize = filterColumnSize;
     }
 
     /**
@@ -85,7 +93,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
         argument1.getMatrix(index).setDilation(dilation);
-        argument1.getMatrix(index).setFilterSize(filterSize);
+        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
+        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
         result.setMatrix(index, argument1.getMatrix(index).crosscorrelate(argument2.getMatrix(index)));
     }
 
@@ -106,7 +115,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
         if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
         result.getGradient(index).setStride(stride);
         result.getGradient(index).setDilation(dilation);
-        result.getGradient(index).setFilterSize(filterSize);
+        result.getGradient(index).setFilterRowSize(filterRowSize);
+        result.getGradient(index).setFilterColumnSize(filterColumnSize);
         argument1.cumulateGradient(index, result.getGradient(index).crosscorrelateInputGradient(argument2.getMatrix(index)), false);
         argument2.cumulateGradient(index, result.getGradient(index).crosscorrelateFilterGradient(argument1.getMatrix(index)), false);
     }
