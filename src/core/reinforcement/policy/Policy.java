@@ -65,7 +65,7 @@ public interface Policy extends Configurable {
     void setValueFunction(ValueFunction valueFunction);
 
     /**
-     * Set flag if agent is in learning mode.
+     * Sets flag if agent is in learning mode.
      *
      * @param isLearning if true agent is in learning mode.
      */
@@ -102,7 +102,7 @@ public interface Policy extends Configurable {
     void act(StateTransition stateTransition, int action) throws MatrixException, NeuralNetworkException;
 
     /**
-     * Takes action by applying defined executable policy,
+     * Takes action defined by executable policy.
      *
      * @param stateTransition state transition.
      * @param alwaysGreedy if true greedy action is always taken.

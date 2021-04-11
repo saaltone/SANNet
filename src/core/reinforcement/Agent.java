@@ -10,7 +10,7 @@ import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
- * Interface defining agent.
+ * Interface defining agent.<br>
  *
  */
 public interface Agent {
@@ -37,7 +37,7 @@ public interface Agent {
     void newEpisode();
 
     /**
-     * Begins new (episode) step for agent.
+     * Begins new step for agent.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.

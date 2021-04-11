@@ -17,7 +17,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Class that defines UpdateableSoftQPolicy.
+ * Class that defines UpdateableSoftQPolicy.<br>
  *
  */
 public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
@@ -47,7 +47,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     private double cumulativeAlphaLoss = 0;
 
     /**
-     * Loss count for alpha loss.
+     * Update count for alpha loss.
      *
      */
     private int alphaLossCount = 0;

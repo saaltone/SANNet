@@ -15,7 +15,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines discrete Soft Actor Critic algorithm.
+ * Class that defines discrete Soft Actor Critic algorithm.<br>
  *
  */
 public class SoftActorCriticDiscrete extends AbstractPolicyGradient {

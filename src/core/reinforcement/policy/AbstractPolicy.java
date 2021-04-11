@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that defines AbstractPolicy with common policy functions.
+ * Class that defines AbstractPolicy with common policy functions.<br>
  *
  */
 public abstract class AbstractPolicy implements Policy, Configurable, Serializable {
@@ -168,7 +168,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     }
 
     /**
-     * Set flag if agent is in learning mode.
+     * Sets flag if agent is in learning mode.
      *
      * @param isLearning if true agent is in learning mode.
      */
@@ -232,7 +232,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     }
 
     /**
-     * Takes action by applying defined executable policy.
+     * Takes action defined by executable policy.
      *
      * @param stateTransition state transition.
      * @param alwaysGreedy if true greedy action is always taken.

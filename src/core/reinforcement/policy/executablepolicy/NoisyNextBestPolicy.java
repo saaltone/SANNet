@@ -14,8 +14,8 @@ import java.util.Random;
 import java.util.TreeSet;
 
 /**
- * Class that defines NoisyNextBestPolicy.
- * Policy make a greedy decision (chooses best policy) or next best policy according to exploration probability.
+ * Class that defines NoisyNextBestPolicy.<br>
+ * Policy make a greedy decision (chooses best policy) or next best policy according to exploration probability.<br>
  *
  */
 public class NoisyNextBestPolicy extends AbstractExecutablePolicy {

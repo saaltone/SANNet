@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class that defines vanilla UpdateableBasicPolicy.
+ * Class that defines vanilla UpdateableBasicPolicy.<br>
  *
  */
 public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {

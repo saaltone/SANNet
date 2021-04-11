@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines OnlineMemory.
+ * Class that defines OnlineMemory.<br>
  *
  */
 public class OnlineMemory implements Memory, Serializable {

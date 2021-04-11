@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
- * Class that implements AbstractFunctionEstimator containing memory management operations and agent handling.
+ * Class that implements AbstractFunctionEstimator containing memory management operations and agent handling.<br>
  *
  */
 public abstract class AbstractFunctionEstimator implements FunctionEstimator, Serializable {
@@ -232,7 +232,7 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
     }
 
     /**
-     * Updated state transition in memory of AbstractFunctionEstimator.
+     * Updates state transition in memory of AbstractFunctionEstimator.
      *
      * @param stateTransition state transition
      */
@@ -241,7 +241,7 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
     }
 
     /**
-     * Updated state transitions in memory of AbstractFunctionEstimator.
+     * Updates state transitions in memory of AbstractFunctionEstimator.
      *
      * @param stateTransitions state transitions
      */

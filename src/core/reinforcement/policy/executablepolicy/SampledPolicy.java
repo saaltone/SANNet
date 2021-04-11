@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.TreeSet;
 
 /**
- * Class that defines SampledPolicy.
+ * Class that defines SampledPolicy.<br>
  *
  */
 public class SampledPolicy extends AbstractExecutablePolicy {
@@ -118,12 +118,11 @@ public class SampledPolicy extends AbstractExecutablePolicy {
         double lowValue = stateValueSet.first().value;
         double highValue = stateValueSet.last().value;
         double thresholdValue = highValue - (highValue - lowValue) * thresholdCurrent * random.nextDouble();
-        int defaultAction = stateValueSet.first().action;
         while (!stateValueSet.isEmpty()) {
             ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
             if (Objects.requireNonNull(actionValueTuple).value >= thresholdValue) return actionValueTuple.action;
         }
-        return defaultAction;
+        return stateValueSet.first().action;
     }
 
 }

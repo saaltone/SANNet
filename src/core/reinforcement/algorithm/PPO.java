@@ -12,7 +12,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines Proximal Policy Optimization (PPO)
+ * Class that defines Proximal Policy Optimization (PPO).<br>
  *
  */
 public class PPO extends AbstractPolicyGradient {

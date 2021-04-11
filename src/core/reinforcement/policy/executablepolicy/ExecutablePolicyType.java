@@ -1,7 +1,8 @@
 package core.reinforcement.policy.executablepolicy;
 
 /**
- * Defines executable policy type.
+ * Defines executable policy type.<br>
+ * <br>
  * Currently supported types are:
  *     GREEDY,
  *     EPSILON_GREEDY,

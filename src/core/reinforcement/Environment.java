@@ -6,7 +6,7 @@
 package core.reinforcement;
 
 /**
- * Interface defining Environment.
+ * Interface defining environment for agent.<br>
  *
  */
 public interface Environment {

@@ -12,7 +12,7 @@ import utils.matrix.MatrixException;
 import java.io.Serializable;
 
 /**
- * Class that implements StateTransition containing information of state matrix, action and available actions, reward and reference to previous and next states transitions.
+ * Class that implements StateTransition containing information of state matrix, action and available actions, reward and reference to previous and next states transitions.<br>
  *
  */
 public class StateTransition implements Serializable, Comparable<StateTransition> {
@@ -153,7 +153,7 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     /**
      * Compares this StateTransition to other StateTransition.<br>
      * If other StateTransition is precedent to this StateTransition returns 1.<br>
-     * If other StateTransition succeeds this StateTransition returns 1.<br>
+     * If other StateTransition succeeds this StateTransition returns -1.<br>
      * Otherwise returns 0.<br>
      *
      * @param otherStateTransition other StateTransition.

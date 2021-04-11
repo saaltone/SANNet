@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
- * Class that defines AbstractValueFunction.
+ * Class that defines AbstractValueFunction.<br>
  *
  */
 public abstract class AbstractValueFunction implements ValueFunction, Configurable, Serializable {

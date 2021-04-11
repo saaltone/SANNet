@@ -8,7 +8,7 @@ import core.reinforcement.policy.executablepolicy.MCTSPolicy;
 import utils.matrix.MatrixException;
 
 /**
- * Class that defines updateable MCTS policy.
+ * Class that defines updateable MCTS policy.<br>
  *
  */
 public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {

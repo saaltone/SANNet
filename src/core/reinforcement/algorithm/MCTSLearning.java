@@ -8,7 +8,7 @@ import core.reinforcement.value.StateValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines MCTS learning algorithm.
+ * Class that defines MCTS learning algorithm.<br>
  *
  */
 public class MCTSLearning extends AbstractPolicyGradient {

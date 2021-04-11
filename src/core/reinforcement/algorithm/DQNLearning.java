@@ -14,7 +14,7 @@ import core.reinforcement.value.QValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines Q Learning.
+ * Class that defines Q Learning.<br>
  *
  */
 public class DQNLearning extends AbstractQLearning {

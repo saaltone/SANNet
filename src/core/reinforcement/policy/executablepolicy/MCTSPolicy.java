@@ -9,12 +9,12 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines MCTSPolicy.
- *
- * Reference: https://medium.com/@jonathan_hui/monte-carlo-tree-search-mcts-in-alphago-zero-8a403588276a
- * Reference: https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5
- * Reference: https://lczero.org/blog/2018/12/alphazero-paper-and-lc0-v0191/
- * Reference: https://github.com/suragnair/alpha-zero-general/blob/master/MCTS.py
+ * Class that defines MCTSPolicy.<br>
+ * <br>
+ * Reference: https://medium.com/@jonathan_hui/monte-carlo-tree-search-mcts-in-alphago-zero-8a403588276a <br>
+ * Reference: https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5 <br>
+ * Reference: https://lczero.org/blog/2018/12/alphazero-paper-and-lc0-v0191/ <br>
+ * Reference: https://github.com/suragnair/alpha-zero-general/blob/master/MCTS.py <br>
  *
  */
 public class MCTSPolicy implements ExecutablePolicy, Serializable {

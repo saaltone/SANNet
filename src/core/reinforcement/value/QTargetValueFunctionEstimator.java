@@ -14,7 +14,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines QTargetValueFunctionEstimator (Q value function with target function estimator).
+ * Class that defines QTargetValueFunctionEstimator (Q value function with target function estimator).<br>
  *
  */
 public class QTargetValueFunctionEstimator extends AbstractValueFunctionEstimator {

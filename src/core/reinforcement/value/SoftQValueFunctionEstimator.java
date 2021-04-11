@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.TreeSet;
 
 /**
- * Class that defines SoftQValueFunctionEstimator (Soft Q value function with target function estimator).
+ * Class that defines SoftQValueFunctionEstimator (Soft Q value function with target function estimator).<br>
  *
  */
 public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator {

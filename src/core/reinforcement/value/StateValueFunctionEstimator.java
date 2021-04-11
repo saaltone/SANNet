@@ -10,7 +10,7 @@ import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines StateValueFunctionEstimator (state value function with function estimator).
+ * Class that defines StateValueFunctionEstimator (state value function with function estimator).<br>
  *
  */
 public class StateValueFunctionEstimator extends AbstractValueFunctionEstimator {
@@ -36,7 +36,7 @@ public class StateValueFunctionEstimator extends AbstractValueFunctionEstimator 
     }
 
     /**
-     * Returns action with potential state action value offset.
+     * Returns action. Always 0.
      *
      * @param action action.
      * @return updated action.

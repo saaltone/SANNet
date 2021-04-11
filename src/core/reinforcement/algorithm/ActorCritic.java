@@ -14,7 +14,7 @@ import core.reinforcement.value.StateValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines actor critic algorithm.
+ * Class that defines actor critic algorithm.<br>
  *
  */
 public class ActorCritic extends AbstractPolicyGradient {

@@ -12,7 +12,7 @@ import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.DynamicParamException;
 
 /**
- * Class that defines ActionablePolicy.
+ * Class that defines ActionablePolicy.<br>
  *
  */
 public class ActionablePolicy extends AbstractPolicy {

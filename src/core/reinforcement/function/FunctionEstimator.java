@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
- * Interface defining FunctionEstimator.
+ * Interface defining FunctionEstimator.<br>
  *
  */
 public interface FunctionEstimator extends Configurable {
@@ -33,7 +33,7 @@ public interface FunctionEstimator extends Configurable {
     int getNumberOfActions();
 
     /**
-     * Starts FunctionEstimator
+     * Starts FunctionEstimator.
      *
      * @throws NeuralNetworkException throws exception if starting of FunctionEstimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -105,14 +105,14 @@ public interface FunctionEstimator extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updated state transition in memory of FunctionEstimator.
+     * Updates state transition in memory of FunctionEstimator.
      *
      * @param stateTransition state transition
      */
     void update(StateTransition stateTransition);
 
     /**
-     * Updated state transitions in memory of FunctionEstimator.
+     * Updates state transitions in memory of FunctionEstimator.
      *
      * @param stateTransitions state transitions
      */

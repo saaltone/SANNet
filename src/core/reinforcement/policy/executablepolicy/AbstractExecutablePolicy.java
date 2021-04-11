@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines AbstractExecutablePolicy which contains shared functions for executable policies.
+ * Class that defines AbstractExecutablePolicy which contains shared functions for executable policies.<br>
  *
  */
 public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Serializable {

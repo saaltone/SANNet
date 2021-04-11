@@ -12,7 +12,7 @@ import utils.matrix.Matrix;
 import java.util.HashSet;
 
 /**
- * Interface for ExecutablePolicy.
+ * Interface for ExecutablePolicy.<br>
  *
  */
 public interface ExecutablePolicy extends Configurable {

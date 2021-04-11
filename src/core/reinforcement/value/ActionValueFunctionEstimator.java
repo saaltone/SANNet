@@ -10,7 +10,7 @@ import core.reinforcement.memory.StateTransition;
 import utils.DynamicParamException;
 
 /**
- * Class that defines ActionValueFunctionEstimator (action value function with function estimator).
+ * Class that defines ActionValueFunctionEstimator (action value function with function estimator).<br>
  *
  */
 public class ActionValueFunctionEstimator extends AbstractValueFunctionEstimator {

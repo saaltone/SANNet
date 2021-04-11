@@ -17,7 +17,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines Double Q Learning.
+ * Class that defines Double Q Learning.<br>
  *
  */
 public class DDQNLearning extends AbstractQLearning {

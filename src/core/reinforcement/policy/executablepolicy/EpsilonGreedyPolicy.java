@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Class that defines EpsilonGreedyPolicy.
+ * Class that defines EpsilonGreedyPolicy.<br>
  *
  */
 public class EpsilonGreedyPolicy extends GreedyPolicy {
@@ -50,10 +50,10 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     private double epsilonDecayRate = 0.999;
 
     /**
-     * If true epsilon decays along action count otherwise decays by epsilon decay rate.
+     * If true epsilon decays along update count otherwise decays by epsilon decay rate.
      *
      */
-    private boolean epsilonDecayByUpdate = false;
+    private boolean epsilonDecayByUpdateCount = false;
 
     /**
      * Count for policy updates.
@@ -90,7 +90,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
         paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
         paramDefs.put("epsilonDecayRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecayByUpdate", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("epsilonDecayByUpdateCount", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -100,8 +100,8 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * Supported parameters are:<br>
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.2.<br>
-     *     - epsilonDecay: Decay rate of epsilon. Default value 0.999.<br>
-     *     - epsilonDecayByEpisode: If true epsilon decays along policy update count otherwise decays by epsilon decay rate. Default value true.<br>
+     *     - epsilonDecayRate: Decay rate of epsilon. Default value 0.999.<br>
+     *     - epsilonDecayByUpdateCount: If true epsilon decays along policy update count otherwise decays by epsilon decay rate. Default value false.<br>
      *
      * @param params parameters used for EpsilonGreedyPolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -111,7 +111,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
         if (params.hasParam("epsilonInitial")) epsilonInitial = params.getValueAsDouble("epsilonInitial");
         if (params.hasParam("epsilonMin")) epsilonMin = params.getValueAsDouble("epsilonMin");
         if (params.hasParam("epsilonDecayRate")) epsilonDecayRate = params.getValueAsDouble("epsilonDecayRate");
-        if (params.hasParam("epsilonDecayByUpdate")) epsilonDecayByUpdate = params.getValueAsBoolean("epsilonDecayByUpdate");
+        if (params.hasParam("epsilonDecayByUpdateCount")) epsilonDecayByUpdateCount = params.getValueAsBoolean("epsilonDecayByUpdateCount");
         epsilon = epsilonInitial;
     }
 
@@ -121,7 +121,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      */
     public void increment() {
         if (epsilon > epsilonMin) {
-            if (epsilonDecayByUpdate) epsilon = epsilonInitial / (double)epsilonUpdateCount++;
+            if (epsilonDecayByUpdateCount) epsilon = epsilonInitial / (double)epsilonUpdateCount++;
             else epsilon *= epsilonDecayRate;
         }
     }

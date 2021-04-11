@@ -13,7 +13,7 @@ import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
- * Class that defines policy gradient algorithms.
+ * Class that defines policy gradient algorithms.<br>
  *
  */
 public abstract class AbstractPolicyGradient extends DeepAgent {

@@ -15,7 +15,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines REINFORCE algorithm.
+ * Class that defines REINFORCE algorithm.<br>
  *
  */
 public class REINFORCE extends AbstractPolicyGradient {

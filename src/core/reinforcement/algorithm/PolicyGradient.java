@@ -11,7 +11,7 @@ import core.reinforcement.value.ValueFunction;
 import utils.DynamicParamException;
 
 /**
- * Class that defines generic PolicyGradient algorithm.<br>
+ * Class that defines generic policy gradient algorithm.<br>
  * Can be used to implement Actor Critic and REINFORCE algorithms.<br>
  *
  */

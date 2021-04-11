@@ -20,7 +20,8 @@ import utils.matrix.MatrixException;
 import java.util.TreeSet;
 
 /**
- * Class that defines AbstractUpdateablePolicy. Contains common functions fo updateable policies.
+ * Class that defines AbstractUpdateablePolicy.<br>
+ * Contains common functions fo updateable policies.<br>
  *
  */
 public abstract class AbstractUpdateablePolicy extends AbstractPolicy {

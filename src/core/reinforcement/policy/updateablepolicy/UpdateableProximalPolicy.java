@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 /**
- * Class that defines UpdateableProximalPolicy. Implements Proximal Policy Optimization (PPO).
+ * Class that defines UpdateableProximalPolicy. Implements Proximal Policy Optimization (PPO).<br>
  *
  */
 public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {

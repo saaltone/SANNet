@@ -19,7 +19,7 @@ import java.util.HashMap;
 
 /**
  * Class that defines tabular state action function estimator.<br>
- * Reference for polynomial learning rate: https://www.jmlr.org/papers/volume5/evendar03a/evendar03a.pdf.<br>
+ * Reference for polynomial learning rate: https://www.jmlr.org/papers/volume5/evendar03a/evendar03a.pdf <br>
  *
  */
 public class TabularFunctionEstimator extends AbstractFunctionEstimator {
@@ -85,8 +85,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @param optimizer optimizer
      */
     public TabularFunctionEstimator(Memory memory, int numberOfActions, HashMap<Matrix, Matrix> stateValues, Optimizer optimizer) {
-        this(memory, numberOfActions);
-        this.stateValues = stateValues;
+        this(memory, numberOfActions, stateValues);
         this.optimizer = optimizer;
     }
 

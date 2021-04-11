@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
- * Class that defines PlainValueFunction without function estimator.
+ * Class that defines PlainValueFunction without function estimator.<br>
  *
  */
 public class PlainValueFunction extends AbstractValueFunction {
@@ -50,7 +50,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * Average standard deviation.
      *
      */
-    private double averageStd = Double.NEGATIVE_INFINITY;
+    private double averageStandardDeviation = Double.NEGATIVE_INFINITY;
 
     /**
      * Constructor for PlainValueFunction.
@@ -177,9 +177,9 @@ public class PlainValueFunction extends AbstractValueFunction {
         for (StateTransition stateTransition : stateTransitions) std += Math.pow(stateTransition.tdTarget - mean, 2);
         std = Math.sqrt(std / (stateTransitions.size() - 1));
 
-        averageStd = averageStd == Double.NEGATIVE_INFINITY ? std : tau * averageStd + (1 - tau) * std;
+        averageStandardDeviation = averageStandardDeviation == Double.NEGATIVE_INFINITY ? std : tau * averageStandardDeviation + (1 - tau) * std;
 
-        for (StateTransition stateTransition : stateTransitions) stateTransition.tdTarget = (stateTransition.tdTarget - averageMean) / averageStd;
+        for (StateTransition stateTransition : stateTransitions) stateTransition.tdTarget = (stateTransition.tdTarget - averageMean) / averageStandardDeviation;
     }
 
     /**
@@ -210,7 +210,7 @@ public class PlainValueFunction extends AbstractValueFunction {
     }
 
     /**
-     * Updated state transitions in memory of FunctionEstimator.
+     * Updates state transitions in memory of FunctionEstimator.
      *
      * @param stateTransitions state transitions
      */

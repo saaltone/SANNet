@@ -16,7 +16,7 @@ import java.util.Random;
  * Links leaf nodes together as forward cycled list.<br>
  * Stores mapping of state transition and each leaf node containing respective state transition.<br>
  * <br>
- * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay and https://github.com/jaromiru/AI-blog/blob/master/SumTree.py<br>
+ * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay and https://github.com/jaromiru/AI-blog/blob/master/SumTree.py <br>
  *
  */
 public class SumTree implements Serializable {
@@ -36,19 +36,19 @@ public class SumTree implements Serializable {
         double prioritySum;
 
         /**
-         * Parent node of node. If null node is root node.
+         * Parent node. If null node is root node.
          *
          */
         Node parentNode;
 
         /**
-         * Left child node of node. If null there is no left node and if right node is null as well node is leaf node.
+         * Left child node. If null there is no left node and if right node is null as well node is leaf node.
          *
          */
         Node leftNode;
 
         /**
-         * Right child node of node. If null there is no right node and if left node is null as well node is leaf node.
+         * Right child node. If null there is no right node and if left node is null as well node is leaf node.
          *
          */
         Node rightNode;
@@ -117,7 +117,7 @@ public class SumTree implements Serializable {
     private final Node rootNode;
 
     /**
-     * Current node of sum tree where new state transition is to be added.
+     * Current leaf node of sum tree where new state transition is to be added.
      *
      */
     private Node currentLeafNode;
@@ -201,7 +201,7 @@ public class SumTree implements Serializable {
     }
 
     /**
-     * Returns total priority of sum tree i.e. priority sum of sum tree stored in root node.
+     * Returns total priority of sum tree i.e. total priority sum of sum tree stored in root node.
      *
      * @return total priority of sum tree.
      */

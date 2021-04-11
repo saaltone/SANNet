@@ -6,7 +6,7 @@ import utils.DynamicParamException;
 import java.io.Serializable;
 
 /**
- * Factory class that creates executable policy instances.
+ * Factory class that creates executable policy instances.<br>
  *
  */
 public class ExecutablePolicyFactory implements Serializable {
@@ -14,7 +14,7 @@ public class ExecutablePolicyFactory implements Serializable {
     private static final long serialVersionUID = 4044647047494437807L;
 
     /**
-     * Creates executable policy instance with given type with defined parameters.
+     * Creates executable policy instance of given type with defined parameters.
      *
      * @param executablePolicyType type of executable policy.
      * @param params parameters for executable policy.
@@ -37,7 +37,7 @@ public class ExecutablePolicyFactory implements Serializable {
     }
 
     /**
-     * Creates executable policy instance with given type with defined parameters.
+     * Creates executable policy instance of given type with defined parameters.
      *
      * @param executablePolicyType type of executable policy.
      * @return constructed executable policy.
@@ -56,8 +56,8 @@ public class ExecutablePolicyFactory implements Serializable {
      * @throws AgentException throws exception is executable policy is of unknown type.
      */
     public static ExecutablePolicyType getExecutablePolicyType(ExecutablePolicy executablePolicy) throws AgentException {
-        if (executablePolicy instanceof GreedyPolicy) return ExecutablePolicyType.GREEDY;
         if (executablePolicy instanceof EpsilonGreedyPolicy) return ExecutablePolicyType.EPSILON_GREEDY;
+        if (executablePolicy instanceof GreedyPolicy) return ExecutablePolicyType.GREEDY;
         if (executablePolicy instanceof NoisyNextBestPolicy) return ExecutablePolicyType.NOISY_NEXT_BEST;
         if (executablePolicy instanceof SampledPolicy) return ExecutablePolicyType.SAMPLED;
         throw new AgentException("Unknown executable policy type");

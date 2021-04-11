@@ -15,7 +15,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines DirectFunctionEstimator (proxy for memory) to be used with PlainValueFunction.
+ * Defines DirectFunctionEstimator (proxy for memory) to be used with PlainValueFunction.<br>
  *
  */
 public class DirectFunctionEstimator extends AbstractFunctionEstimator {
@@ -65,6 +65,7 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
      * Not used.
+
      * @param stateTransition state transition.
      * @param values values.
      */

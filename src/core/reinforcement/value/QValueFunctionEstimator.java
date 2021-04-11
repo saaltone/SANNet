@@ -11,7 +11,7 @@ import core.reinforcement.function.FunctionEstimator;
 import utils.matrix.MatrixException;
 
 /**
- * Class that defines QValueFunctionEstimator (Q value function with function estimator).
+ * Class that defines QValueFunctionEstimator (Q value function with function estimator).<br>
  *
  */
 public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {

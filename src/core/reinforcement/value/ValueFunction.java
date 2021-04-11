@@ -16,7 +16,7 @@ import utils.matrix.MatrixException;
 import java.util.TreeSet;
 
 /**
- * Interface that defines ValueFunction.
+ * Interface that defines ValueFunction.<br>
  *
  */
 public interface ValueFunction extends Configurable {
@@ -101,7 +101,7 @@ public interface ValueFunction extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updated state transitions in memory of FunctionEstimator.
+     * Updates state transitions in memory of FunctionEstimator.
      *
      * @param stateTransitions state transitions
      */

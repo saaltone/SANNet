@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.TreeSet;
 
 /**
- * Class that implements prioritized replay memory based on sum tree structure.
+ * Class that implements prioritized replay memory based on sum tree structure.<br>
  * <br>
  * Reference: https://arxiv.org/pdf/1511.05952.pdf<br>
  *

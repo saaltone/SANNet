@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 /**
- * Class that defines NNFunctionEstimator.
+ * Class that defines NNFunctionEstimator.<br>
  *
  */
 public class NNFunctionEstimator extends AbstractFunctionEstimator {

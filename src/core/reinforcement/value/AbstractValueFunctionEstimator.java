@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
- * Class that defines AbstractValueFunctionEstimator.
+ * Class that defines AbstractValueFunctionEstimator.<br>
  *
  */
 public abstract class AbstractValueFunctionEstimator extends AbstractValueFunction {
@@ -174,7 +174,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Updated state transitions in memory of FunctionEstimator.
+     * Updates state transitions in memory of FunctionEstimator.
      *
      * @param stateTransitions state transitions
      */

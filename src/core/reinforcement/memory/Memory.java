@@ -10,53 +10,53 @@ import utils.Configurable;
 import java.util.TreeSet;
 
 /**
- * Interface for Memory.
+ * Interface for memory.<br>
  *
  */
 public interface Memory extends Configurable {
 
     /**
-     * Returns size of Memory.
+     * Returns size of memory.
      *
-     * @return size of Memory.
+     * @return size of memory.
      */
     int size();
 
     /**
-     * Adds state transition into Memory.
+     * Adds state transition into memory.
      *
      * @param stateTransition sample to be stored.
      */
     void add(StateTransition stateTransition);
 
     /**
-     * Updates state transition in Memory with new error value.
+     * Updates state transition in memory with new error value.
      *
      * @param stateTransition state transition to be updated.
      */
     void update(StateTransition stateTransition);
 
     /**
-     * Updates state transitions in Memory with new error values.
+     * Updates state transitions in memory with new error values.
      *
      * @param stateTransitions state transitions.
      */
     void update(TreeSet<StateTransition> stateTransitions);
 
     /**
-     * Resets Memory.
+     * Resets memory.
      *
      */
     void reset();
 
     /**
-     * Samples Memory.
+     * Samples memory.
      *
      */
     void sample();
 
     /**
-     * Samples defined number of state transitions from Memory.
+     * Samples defined number of state transitions from memory.
      *
      * @return retrieved state transitions.
      */

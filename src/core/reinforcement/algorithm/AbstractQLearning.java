@@ -13,7 +13,7 @@ import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
- * Class that defines Q Learning algorithms.
+ * Class that defines Q Learning algorithms.<br>
  *
  */
 public abstract class AbstractQLearning extends DeepAgent {

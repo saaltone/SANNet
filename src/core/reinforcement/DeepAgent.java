@@ -18,7 +18,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that defines DeepAgent.
+ * Class that defines DeepAgent.<br>
  *
  */
 public abstract class DeepAgent implements Agent, Configurable, Serializable {
@@ -38,7 +38,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     private boolean episodic;
 
     /**
-     * If true updates value for episode otherwise set sampled from memory.
+     * If true updates value after each episode is completed.
      *
      */
     protected boolean updateValuePerEpisode = false;
@@ -184,7 +184,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * Sets parameters used for DeepAgent.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - updateValuePerEpisode: if true updates value for episode otherwise set sampled from memory. Default value false.<br>
+     *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
      *

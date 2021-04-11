@@ -14,7 +14,7 @@ import core.reinforcement.value.ActionValueFunctionEstimator;
 import utils.DynamicParamException;
 
 /**
- * Class that defines Sarsa algorithm.
+ * Class that defines Sarsa algorithm.<br>
  *
  */
 public class Sarsa extends AbstractQLearning {

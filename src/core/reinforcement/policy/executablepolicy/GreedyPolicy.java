@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Class that defines GreedyPolicy.
+ * Class that defines GreedyPolicy.<br>
  *
  */
 public class GreedyPolicy extends AbstractExecutablePolicy {

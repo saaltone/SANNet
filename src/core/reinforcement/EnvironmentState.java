@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Class that defines current state of environment.
+ * Class that defines current state of environment.<br>
  *
  */
 public class EnvironmentState implements Serializable, Comparable<EnvironmentState> {
