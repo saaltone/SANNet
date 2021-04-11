@@ -255,7 +255,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds regularizer for specific neural network layer.
+     * Adds regularizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
@@ -267,7 +267,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds regularizer for all neural network layers.
+     * Adds regularizer to all neural network layers.
      *
      * @param regularizationType type of regularizer.
      * @throws NeuralNetworkException throws neural network exception if adding of regularizer fails.
@@ -278,7 +278,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds regularizer for specific neural network layer.<br>
+     * Adds regularizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
@@ -296,7 +296,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds regularizer for all neural network layers.
+     * Adds regularizer to all neural network layers.
      *
      * @param regularizationType type of regularizer.
      * @param params parameters for regularizer.
@@ -311,7 +311,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Removes regularizer from specific neural network layer.<br>
+     * Removes regularizer from specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param regularizationType type of regularizer.
@@ -367,7 +367,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds normalizer for specific neural network layer.<br>
+     * Adds normalizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
@@ -379,7 +379,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds normalizer for all neural network layers.
+     * Adds normalizer to all neural network layers.
      *
      * @param normalizationType type of normalizer.
      * @throws NeuralNetworkException throws neural network exception if adding of normalizer fails.
@@ -390,7 +390,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds normalizer for specific neural network layer.<br>
+     * Adds normalizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
@@ -408,7 +408,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds normalizer for all neural network layers.
+     * Adds normalizer to all neural network layers.
      *
      * @param normalizationType type of normalizer.
      * @param params parameters for normalizer.
@@ -423,7 +423,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Removes normalizer from specific neural network layer.<br>
+     * Removes normalizer from specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param normalizationType type of normalizer.
@@ -479,7 +479,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets normalization for all neural network layers.
+     * Resets normalization of all neural network layers.
      *
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
      */
@@ -504,7 +504,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets normalization for specific neural network layer.
+     * Resets normalization of specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if resetting of normalization fails.
@@ -535,7 +535,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets optimizer for specific neural network layer.<br>
+     * Sets optimizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param optimization type of optimizer.
@@ -553,7 +553,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets optimizer for all neural network layers.
+     * Sets optimizer to all neural network layers.
      *
      * @param optimization type of optimizer.
      * @param params parameters for optimizer.
@@ -568,7 +568,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets optimizer for specific neural network layer.<br>
+     * Sets optimizer to specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @param optimization type of optimizer.
@@ -580,7 +580,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets optimizer for all neural network layers.
+     * Sets optimizer to all neural network layers.
      *
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
@@ -591,7 +591,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets optimizer for all neural network layers.
+     * Resets optimizer of all neural network layers.
      *
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
      */
@@ -603,7 +603,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets optimizer for specific neural network layer.
+     * Resets optimizer of specific neural network layer.
      *
      * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
      * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
@@ -618,7 +618,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds input layer for neural network.
+     * Adds input layer to neural network.
      *
      * @param params parameters for input layer.
      * @throws NeuralNetworkException throws neural network exception if adding of input layer fails.
@@ -639,7 +639,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
@@ -651,7 +651,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param params parameters for layer.
@@ -664,7 +664,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -677,7 +677,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -691,7 +691,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -705,7 +705,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds hidden layer for neural network. Layers are executed in order which they are added.
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
@@ -721,7 +721,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds output layer for neural network.
+     * Adds output layer to neural network.
      *
      * @param lossFunctionType loss function type for output layer.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
@@ -733,7 +733,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Adds output layer for neural network.
+     * Adds output layer to neural network.
      *
      * @param lossFunctionType loss function type for output layer.
      * @param params parameters for loss function.
@@ -758,7 +758,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Returns list of neural network layers.
      *
-     * @return list of neural network layers..
+     * @return list of neural network layers.
      */
     public ArrayList<NeuralNetworkLayer> getNeuralNetworkLayers() {
         return neuralNetworkLayers;
@@ -787,7 +787,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets persistence instance for neural network.<br>
+     * Sets persistence instance to neural network.<br>
      * Persistence is used to serialize neural network instance and store to file or deserialize neural network from file.<br>
      *
      * @param persistence persistence instance.
@@ -798,7 +798,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Remove persistence instance.
+     * Removes persistence instance.
      *
      */
     public void removePersistence() {
@@ -970,7 +970,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.<br>
+     * Sets if recurrent inputs of layer are allowed to be reset during training.
      *
      * @param resetStateTraining if true recurrent inputs are allowed to be reset.
      * @throws NeuralNetworkException throws exception if neural network is not started.
@@ -995,7 +995,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.<br>
+     * Sets if recurrent inputs of layer are allowed to be restored during training.
      *
      * @param restoreStateTraining if true recurrent inputs are allowed to be restored.
      * @throws NeuralNetworkException throws exception if neural network is not started.
@@ -1272,7 +1272,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets verbosing of for validation phase.<br>
+     * Sets verbosing for validation phase.<br>
      * Follows training verbosing cycle.<br>
      *
      */
@@ -1282,7 +1282,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Unsets verbosing of for validation phase.
+     * Unsets verbosing for validation phase.
      *
      */
     public void unverboseValidation() {
