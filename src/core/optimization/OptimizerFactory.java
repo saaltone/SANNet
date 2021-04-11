@@ -9,7 +9,7 @@ import core.NeuralNetworkException;
 import utils.DynamicParamException;
 
 /**
- * Defines factory class to construct optimizers.
+ * Defines factory class to construct optimizers.<br>
  *
  */
 public class OptimizerFactory {

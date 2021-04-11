@@ -17,7 +17,7 @@ import java.util.HashMap;
 /**
  * Class that implements RMSProp optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/<br>
+ * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
 public class RMSProp implements Optimizer, Serializable {

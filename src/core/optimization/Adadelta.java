@@ -17,7 +17,7 @@ import java.util.HashMap;
 /**
  * Class that implements Adadelta optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/<br>
+ * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
 public class Adadelta implements Optimizer, Serializable {
@@ -87,7 +87,7 @@ public class Adadelta implements Optimizer, Serializable {
      * Sets parameters used for Adadelta.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - learningRate: learning rate for optimizer. Default value 0.1.<br>
+     *     - learningRate: learning rate for optimizer. Default value 1.<br>
      *     - gamma: gamma value for optimizer. Default value 0.95.<br>
      *
      * @param params parameters used for Adadelta.

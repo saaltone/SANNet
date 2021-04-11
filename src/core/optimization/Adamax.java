@@ -17,7 +17,7 @@ import java.util.HashMap;
 /**
  * Class that implements Adamax optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/<br>
+ * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
 public class Adamax implements Optimizer, Serializable {

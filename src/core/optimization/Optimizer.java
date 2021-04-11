@@ -10,7 +10,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Interface for optimizers.
+ * Interface for optimizers.<br>
  *
  */
 public interface Optimizer {
