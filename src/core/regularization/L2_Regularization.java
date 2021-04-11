@@ -29,7 +29,7 @@ public class L2_Regularization implements Regularization, Serializable {
      * Type of regularization.
      *
      */
-    private final RegularizationType regularizationType;
+    private final RegularizationType regularizationType = RegularizationType.L2_REGULARIZATION;
 
     /**
      * Regularization rate.
@@ -40,21 +40,17 @@ public class L2_Regularization implements Regularization, Serializable {
     /**
      * Constructor for L2 regularization class.
      *
-     * @param regularizationType regularizationType.
      */
-    public L2_Regularization(RegularizationType regularizationType) {
-        this.regularizationType = regularizationType;
+    public L2_Regularization() {
     }
 
     /**
      * Constructor for L2 regularization class.
      *
-     * @param regularizationType regularizationType.
      * @param params parameters for L2 regularization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public L2_Regularization(RegularizationType regularizationType, String params) throws DynamicParamException {
-        this(regularizationType);
+    public L2_Regularization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Class that adds noise to the weights during training (backward) phase.
+ * Class that adds noise to the weights during training (backward) phase.<br>
  *
  */
 public class WeightNoising implements Regularization, Serializable {
@@ -24,7 +24,7 @@ public class WeightNoising implements Regularization, Serializable {
     private static final long serialVersionUID = -6830727265041914868L;
 
     /**
-     * Random function for WeightNoising.
+     * Random function for weight noising.
      *
      */
     private final Random random = new Random();
@@ -33,7 +33,7 @@ public class WeightNoising implements Regularization, Serializable {
      * Type of regularization.
      *
      */
-    private final RegularizationType regularizationType;
+    private final RegularizationType regularizationType = RegularizationType.WEIGHT_NOISING;
 
     /**
      * Current noise.
@@ -60,31 +60,28 @@ public class WeightNoising implements Regularization, Serializable {
     private double noiseDecay = 0.999;
 
     /**
-     * Constructor for WeightNoising class.
+     * Constructor for weight noising class.
      *
-     * @param regularizationType regularizationType.
      */
-    public WeightNoising(RegularizationType regularizationType) {
-        this.regularizationType = regularizationType;
+    public WeightNoising() {
         currentNoise = initialNoise;
     }
 
     /**
-     * Constructor for WeightNoising class.
+     * Constructor for weight noising class.
      *
-     * @param regularizationType regularizationType.
      * @param params parameters for gradient clipping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WeightNoising(RegularizationType regularizationType, String params) throws DynamicParamException {
-        this(regularizationType);
+    public WeightNoising(String params) throws DynamicParamException {
+        this();
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
-     * Returns parameters used for WeightNoising.
+     * Returns parameters used for weight noising.
      *
-     * @return parameters used for WeightNoising.
+     * @return parameters used for weight noising.
      */
     private HashMap<String, DynamicParam.ParamType> getParamDefs() {
         HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
@@ -98,11 +95,11 @@ public class WeightNoising implements Regularization, Serializable {
      * Sets parameters used for WeightNoising.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - initialNoise: initial noise level. Default value 0.1.<br>
+     *     - initialNoise: initial noise level. Default value 0.02.<br>
      *     - minNoise: minimum noise level. Default value 0.<br>
      *     - noiseDecay: noise decay factor. Default value 0.999.<br>
      *
-     * @param params parameters used for WeightNoising.
+     * @param params parameters used for weight noising.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -145,7 +142,7 @@ public class WeightNoising implements Regularization, Serializable {
     }
 
     /**
-     * Executes WeightNoising prior weight update step for neural network.<br>
+     * Executes weight noising prior weight update step for neural network.<br>
      *
      */
     public void backward(Matrix weight, Matrix weightGradientSum) {

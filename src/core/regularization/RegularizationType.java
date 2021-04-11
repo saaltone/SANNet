@@ -6,7 +6,8 @@
 package core.regularization;
 
 /**
- * Enum for regularization type.<br>
+ * Defines supported regularization types.<br>
+ * <br>
  * Currently supported types are:
  *     DROPOUT,
  *     GRADIENT_CLIPPING,

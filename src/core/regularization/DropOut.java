@@ -32,7 +32,7 @@ public class DropOut implements Regularization, Serializable {
      * Type of regularization.
      *
      */
-    private final RegularizationType regularizationType;
+    private final RegularizationType regularizationType = RegularizationType.DROPOUT;
 
     /**
      * If true neural network is in state otherwise false.
@@ -49,21 +49,17 @@ public class DropOut implements Regularization, Serializable {
     /**
      * Constructor for drop out class.
      *
-     * @param regularizationType regularizationType.
      */
-    public DropOut(RegularizationType regularizationType) {
-        this.regularizationType = regularizationType;
+    public DropOut() {
     }
 
     /**
      * Constructor for drop out class.
      *
-     * @param regularizationType regularizationType.
      * @param params parameters for drop out.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DropOut(RegularizationType regularizationType, String params) throws DynamicParamException {
-        this(regularizationType);
+    public DropOut(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

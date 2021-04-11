@@ -30,7 +30,7 @@ public class Lp_Regularization implements Regularization, Serializable {
      * Type of regularization.
      *
      */
-    private final RegularizationType regularizationType;
+    private final RegularizationType regularizationType = RegularizationType.LP_REGULARIZATION;
 
     /**
      * Regularization rate.
@@ -47,21 +47,17 @@ public class Lp_Regularization implements Regularization, Serializable {
     /**
      * Constructor for Lp regularization class.
      *
-     * @param regularizationType regularizationType.
      */
-    public Lp_Regularization(RegularizationType regularizationType) {
-        this.regularizationType = regularizationType;
+    public Lp_Regularization() {
     }
 
     /**
      * Constructor for Lp regularization class.
      *
-     * @param regularizationType regularizationType.
      * @param params parameters for Lp regularization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Lp_Regularization(RegularizationType regularizationType, String params) throws DynamicParamException {
-        this(regularizationType);
+    public Lp_Regularization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

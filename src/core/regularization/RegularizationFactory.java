@@ -11,7 +11,7 @@ import utils.DynamicParamException;
 import java.io.Serializable;
 
 /**
- * Factory class that creates regularizer instances.
+ * Factory class that creates regularizer instances.<br>
  *
  */
 public class RegularizationFactory implements Serializable {
@@ -30,17 +30,17 @@ public class RegularizationFactory implements Serializable {
     public static Regularization create(RegularizationType regularizationType, String params) throws DynamicParamException, NeuralNetworkException {
         switch (regularizationType) {
             case DROPOUT:
-                return (params == null) ? new DropOut(regularizationType) : new DropOut(regularizationType, params);
+                return (params == null) ? new DropOut() : new DropOut(params);
             case GRADIENT_CLIPPING:
-                return (params == null) ? new GradientClipping(regularizationType) : new GradientClipping(regularizationType, params);
+                return (params == null) ? new GradientClipping() : new GradientClipping(params);
             case L1_REGULARIZATION:
-                return (params == null) ? new L1_Regularization(regularizationType) : new L1_Regularization(regularizationType, params);
+                return (params == null) ? new L1_Regularization() : new L1_Regularization(params);
             case L2_REGULARIZATION:
-                return (params == null) ? new L2_Regularization(regularizationType) : new L2_Regularization(regularizationType, params);
+                return (params == null) ? new L2_Regularization() : new L2_Regularization(params);
             case LP_REGULARIZATION:
-                return (params == null) ? new Lp_Regularization(regularizationType) : new Lp_Regularization(regularizationType, params);
+                return (params == null) ? new Lp_Regularization() : new Lp_Regularization(params);
             case WEIGHT_NOISING:
-                return (params == null) ? new WeightNoising(regularizationType) : new WeightNoising(regularizationType, params);
+                return (params == null) ? new WeightNoising() : new WeightNoising(params);
         }
         throw new NeuralNetworkException("Creation of regularizer failed.");
     }

@@ -30,7 +30,7 @@ public class GradientClipping implements Regularization, Serializable {
      * Type of regularization.
      *
      */
-    private final RegularizationType regularizationType;
+    private final RegularizationType regularizationType = RegularizationType.GRADIENT_CLIPPING;
 
     /**
      * Threshold for gradient clipping.
@@ -41,21 +41,17 @@ public class GradientClipping implements Regularization, Serializable {
     /**
      * Constructor for gradient clipping class.
      *
-     * @param regularizationType regularizationType.
      */
-    public GradientClipping(RegularizationType regularizationType) {
-        this.regularizationType = regularizationType;
+    public GradientClipping() {
     }
 
     /**
      * Constructor for gradient clipping class.
      *
-     * @param regularizationType regularizationType.
      * @param params parameters for gradient clipping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientClipping(RegularizationType regularizationType, String params) throws DynamicParamException {
-        this(regularizationType);
+    public GradientClipping(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

@@ -13,7 +13,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Interface for regularization functions.
+ * Interface for regularization functions.<br>
  *
  */
 public interface Regularization {
@@ -60,7 +60,7 @@ public interface Regularization {
     double error(Matrix weight) throws DynamicParamException, MatrixException;
 
     /**
-     * Executes regularization method for backward phase at pre in.
+     * Executes regularization method for backward phase.
      *
      * @param weight weight matrix.
      * @param weightGradientSum gradient sum of weight.

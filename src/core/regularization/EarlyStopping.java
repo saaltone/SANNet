@@ -19,7 +19,6 @@ import java.util.HashMap;
  * Reference: https://www.researchgate.net/publication/2874749_Early_Stopping_-_But_When<br>
  *
  */
-@SuppressWarnings("SameReturnValue")
 public class EarlyStopping implements Serializable {
 
     private static final long serialVersionUID = -8362385201353383426L;
