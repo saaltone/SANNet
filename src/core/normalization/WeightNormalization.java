@@ -17,9 +17,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that implements Weight Normalization for neural network layer.<br>
+ * Class that implements weight normalization for neural network layer.<br>
  * <br>
- * Reference: https://arxiv.org/pdf/1602.07868.pdf<br>
+ * Reference: https://arxiv.org/pdf/1602.07868.pdf <br>
  *
  */
 public class WeightNormalization implements Normalization, ForwardProcedure, Serializable {
@@ -30,7 +30,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * Type of normalization.
      *
      */
-    private final NormalizationType normalizationType;
+    private final NormalizationType normalizationType = NormalizationType.WEIGHT_NORMALIZATION;
 
     /**
      * If true neural network is in state otherwise false.
@@ -39,7 +39,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     private transient boolean isTraining = false;
 
     /**
-     * Tree map for un-normalized weights.
+     * Map for un-normalized weights.
      *
      */
     private transient HashMap<Matrix, Matrix> weights = new HashMap<>();
@@ -54,7 +54,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * Matrix for g value.
      *
      */
-    private Matrix gMatrix;
+    private final Matrix gMatrix;
 
     /**
      * Input matrix for procedure construction.
@@ -71,24 +71,20 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     /**
      * Constructor for weight normalization class.
      *
-     * @param normalizationType normalizationType.
      */
-    public WeightNormalization(NormalizationType normalizationType) {
-        this.normalizationType = normalizationType;
+    public WeightNormalization() {
         gMatrix = new DMatrix(g, "g");
     }
 
     /**
      * Constructor for weight normalization class.
      *
-     * @param normalizationType normalizationType.
      * @param params parameters for weight normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WeightNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
-        this(normalizationType);
+    public WeightNormalization(String params) throws DynamicParamException {
+        this();
         this.setParams(new DynamicParam(params, getParamDefs()));
-        gMatrix = new DMatrix(g);
     }
 
     /**
@@ -233,7 +229,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
     }
 
     /**
-     * Executes backward propagation step for Weight normalization.<br>
+     * Executes backward propagation step for weight normalization.<br>
      * Calculates gradients backwards at step end for previous layer.<br>
      *
      * @param weight weight for backward normalization.

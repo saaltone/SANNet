@@ -19,10 +19,10 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Class that implements Layer Normalization for neural network layer.<br>
- * Layer Normalization is particularly well suited for recurrent neural networks as it normalizes each sample independently.<br>
+ * Class that implements layer normalization for neural network layer.<br>
+ * Layer normalization is particularly well suited for recurrent neural networks as it normalizes each sample independently.<br>
  * <br>
- * Reference: https://www.cs.toronto.edu/~hinton/absps/LayerNormalization.pdf<br>
+ * Reference: https://www.cs.toronto.edu/~hinton/absps/LayerNormalization.pdf <br>
  *
  */
 public class LayerNormalization implements Normalization, ForwardProcedure, Serializable {
@@ -33,7 +33,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * Type of normalization.
      *
      */
-    private final NormalizationType normalizationType;
+    private final NormalizationType normalizationType = NormalizationType.LAYER_NORMALIZATION;
 
     /**
      * True if layer normalization is used calculation only with mean and variance excluded.
@@ -92,21 +92,17 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Constructor for layer normalization class.
      *
-     * @param normalizationType normalizationType.
      */
-    public LayerNormalization(NormalizationType normalizationType) {
-        this.normalizationType = normalizationType;
+    public LayerNormalization() {
     }
 
     /**
      * Constructor for layer normalization class.
      *
-     * @param normalizationType normalizationType.
      * @param params parameters for layer normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LayerNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
-        this(normalizationType);
+    public LayerNormalization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

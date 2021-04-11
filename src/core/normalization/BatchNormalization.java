@@ -17,9 +17,9 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that implements Batch Normalization for neural network layer.<br>
+ * Class that implements batch normalization for neural network layer.<br>
  * <br>
- * Reference: http://proceedings.mlr.press/v37/ioffe15.pdf<br>
+ * Reference: http://proceedings.mlr.press/v37/ioffe15.pdf <br>
  *
  */
 public class BatchNormalization implements Normalization, ForwardProcedure, Serializable {
@@ -30,7 +30,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * Type of normalization.
      *
      */
-    private final NormalizationType normalizationType;
+    private final NormalizationType normalizationType = NormalizationType.BATCH_NORMALIZATION;
 
     /**
      * Degree of weighting decrease for exponential moving average. Default value 0.9.
@@ -164,21 +164,17 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Default constructor for batch normalization class.
      *
-     * @param normalizationType normalizationType.
      */
-    public BatchNormalization(NormalizationType normalizationType) {
-        this.normalizationType = normalizationType;
+    public BatchNormalization() {
     }
 
     /**
      * Constructor for batch normalization class.
      *
-     * @param normalizationType normalizationType.
      * @param params parameters for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BatchNormalization(NormalizationType normalizationType, String params) throws DynamicParamException {
-        this(normalizationType);
+    public BatchNormalization(String params) throws DynamicParamException {
         this.setParams(new DynamicParam(params, getParamDefs()));
     }
 

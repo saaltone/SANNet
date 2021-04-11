@@ -6,7 +6,8 @@
 package core.normalization;
 
 /**
- * Enum for normalization type.<br>
+ * Defines supported normalization types.<br>
+ * <br>
  * Currently supported types are:
  *     BATCH_NORMALIZATION,
  *     LAYER_NORMALIZATION,

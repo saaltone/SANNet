@@ -13,7 +13,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 /**
- * Interface for normalization functions.
+ * Interface for normalization functions.<br>
  *
  */
 public interface Normalization {
