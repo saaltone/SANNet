@@ -261,7 +261,7 @@ public class Normalizer {
      * @param row row corresponding minimum value.
      * @return minimum value.
      */
-    public double getMin(int row) {
+    public double getMinValue(int row) {
         return minimumValues.get(row);
     }
 
@@ -280,7 +280,7 @@ public class Normalizer {
      * @param row row corresponding maximum value.
      * @return maximum value.
      */
-    public double getMax(int row) {
+    public double getMaxValue(int row) {
         return maximumValues.get(row);
     }
 
@@ -480,7 +480,7 @@ public class Normalizer {
      * @param row row corresponding standard deviation value.
      * @return standard deviation value.
      */
-    public double getStd(int row) {
+    public double getStandardDeviation(int row) {
         return standardDeviations.get(row);
     }
 

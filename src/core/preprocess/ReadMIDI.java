@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 /**
- * Class that reads, encodes, plays and writes out MIDI file.
+ * Class that reads, encodes, plays and writes out MIDI file.<br>
  *
  */
 public class ReadMIDI {

@@ -21,7 +21,6 @@ import java.util.Scanner;
  * Number of characters in input and output can be specified.<br>
  *
  */
-@SuppressWarnings("ALL")
 public class ReadTextFile {
 
     /**

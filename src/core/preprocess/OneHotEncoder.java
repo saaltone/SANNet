@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 /**
- * Class for one hot encoding data.
+ * Class for one hot encoding data.<br>
  *
  */
 public class OneHotEncoder {
