@@ -10,7 +10,7 @@ import utils.matrix.MMatrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines interface for forward procedure.
+ * Defines interface for forward procedure.<br>
  *
  */
 public interface ForwardProcedure {

@@ -61,13 +61,13 @@ public class ProcedureFactory implements Serializable {
         private MMatrix inputSample;
 
         /**
-         * Input node.
+         * Input nodes.
          *
          */
         private final HashMap<Integer, Node> inputNodes = new HashMap<>();
 
         /**
-         * Output node.
+         * Output nodes.
          *
          */
         private final HashMap<Integer, Node> outputNodes = new HashMap<>();
@@ -81,7 +81,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Node register.
+     * Reference to node register.
      *
      */
     private final NodeRegister nodeRegister = new NodeRegister();
@@ -163,8 +163,8 @@ public class ProcedureFactory implements Serializable {
 
     /**
      * Registers set of constant matrices.
-     * @param matrices matrices to be registered.
      *
+     * @param matrices matrices to be registered.
      */
     private void registerConstantMatrices(Set<Matrix> matrices) {
         if (matrices == null) return;
@@ -233,11 +233,11 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Updates dependencies between previous (output) and current (input) arg node.<br>
-     * Records dependencies to current procedure data as node links.<br>
+     * Updates dependencies between previous (output) and current (input) node.<br>
+     * Records dependencies to respective nodes.<br>
      *
-     * @param previousArgumentNode previous arg node.
-     * @param nextArgumentNode current arg node.
+     * @param previousArgumentNode previous node.
+     * @param nextArgumentNode current node.
      */
     private void updateNodeLink(ProcedureData previousProcedureData, ProcedureData nextProcedureData, Node previousArgumentNode, Node nextArgumentNode) {
         int previousArgumentExpressionID = nodeRegister.getExpressionID(previousArgumentNode);
@@ -287,7 +287,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Starts new expression and reserves procedure factory.
+     * Starts new expression and reserves procedure factory with expression lock.
      *
      * @param originator originator of procedure request.
      * @throws MatrixException throws exception if procedure factory is already reserved by another request
@@ -298,7 +298,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Starts new expression and reserves procedure factory.
+     * Starts new expression and reserves procedure factory with expression lock.
      *
      * @param originator originator of procedure request.
      * @param silentlyContinue if true silently returns and continues creation of existing procedure without throwing exception.
@@ -618,15 +618,16 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride of convolution operation.
      * @param dilation dilation step size.
-     * @param filterSize filter size.
+     * @param filterRowSize filter row size.
+     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterSize) throws MatrixException {
+    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
         Node resultNode = defineNode(result, true);
-        ConvolveExpression expression = new ConvolveExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterSize);
+        ConvolveExpression expression = new ConvolveExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
         storeExpression(expression, resultNode);
     }
 
@@ -639,15 +640,16 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride for operation.
      * @param dilation dilation step size.
-     * @param filterSize filter size.
+     * @param filterRowSize filter row size.
+     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterSize) throws MatrixException {
+    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
         Node resultNode = defineNode(result, true);
-        CrosscorrelateExpression expression = new CrosscorrelateExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterSize);
+        CrosscorrelateExpression expression = new CrosscorrelateExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
         storeExpression(expression, resultNode);
     }
 
@@ -658,14 +660,15 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param stride stride for operation.
-     * @param poolSize pool size for operation.
+     * @param poolRowSize pool row size for operation.
+     * @param poolColumnSize pool column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolSize) throws MatrixException {
+    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolRowSize, int poolColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
-        MaxPoolExpression expression = new MaxPoolExpression(currentExpressionID++, node1, resultNode, stride, poolSize);
+        MaxPoolExpression expression = new MaxPoolExpression(currentExpressionID++, node1, resultNode, stride, poolRowSize, poolColumnSize);
         storeExpression(expression, resultNode);
     }
 
@@ -676,14 +679,15 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param stride stride for operation.
-     * @param poolSize pool size for operation.
+     * @param poolRowSize pool row size for operation.
+     * @param poolColumnSize pool column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolSize) throws MatrixException {
+    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolRowSize, int poolColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
-        AveragePoolExpression expression = new AveragePoolExpression(currentExpressionID++, node1, resultNode, stride, poolSize);
+        AveragePoolExpression expression = new AveragePoolExpression(currentExpressionID++, node1, resultNode, stride, poolRowSize, poolColumnSize);
         storeExpression(expression, resultNode);
     }
 
@@ -835,7 +839,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records unary (single) argument expression to procedure factory.
+     * Records unary (single argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
@@ -852,7 +856,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records unary (single) argument expression to procedure factory.
+     * Records unary (single argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
@@ -869,7 +873,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records binary (two) argument expression to procedure factory.
+     * Records binary (two argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
@@ -888,7 +892,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records binary (two) argument expression to procedure factory.
+     * Records binary (two argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
@@ -907,7 +911,7 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records binary (two) argument expression to procedure factory.
+     * Records binary (two argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.

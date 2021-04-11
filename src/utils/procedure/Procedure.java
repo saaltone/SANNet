@@ -19,7 +19,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Defines computable procedure that has chain of forward computable expressions and backward computable gradient expressions (automatic gradient).
+ * Defines computable procedure that has chain of forward computable expressions and backward computable gradient expressions (based on automatic gradient).<br>
  *
  */
 public class Procedure implements Serializable {
@@ -27,13 +27,13 @@ public class Procedure implements Serializable {
     private static final long serialVersionUID = 9207418704022664014L;
 
     /**
-     * Input node.
+     * Input nodes.
      *
      */
     private final HashMap<Integer, Node> inputNodes = new HashMap<>();
 
     /**
-     * Output node.
+     * Output nodes.
      *
      */
     private final HashMap<Integer, Node> outputNodes = new HashMap<>();
@@ -195,7 +195,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs.
+     * Calculates chain of forward expressions.
      *
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
@@ -208,7 +208,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs.
+     * Calculates chain of forward expressions sample by sample.
      *
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
@@ -228,7 +228,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs per expression step.
+     * Calculates chain of forward expressions for all samples.
      *
      * @param inputSequence input sequence.
      * @param outputSequence output sequence.
@@ -316,7 +316,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs per gradient expression step.
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
      *
      * @param outputGradientSequence output gradients.
      * @param inputGradientSequence input gradients.
@@ -330,7 +330,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs per gradient expression step per sample.
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step per sample.
      *
      * @param outputGradientSequence output gradients.
      * @param inputGradientSequence input gradients.
@@ -354,7 +354,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates chain of forward expressions for multiple inputs per gradient expression step.
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
      *
      * @param outputGradientSequence output gradients.
      * @param inputGradientSequence input gradients.
@@ -405,7 +405,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates backwards chain of gradient expressions.
+     * Calculates backward chain of gradient expressions.
      *
      * @param outputGradient output gradient for procedure.
      * @return input gradient.
@@ -425,7 +425,7 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates backwards chain of gradient expressions.
+     * Calculates backward chain of gradient expressions.
      *
      * @param outputGradient output gradient for procedure.
      * @param sampleIndex sample index.

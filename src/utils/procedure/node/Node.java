@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Class that implements node for expression calculation. Node contains value(s) of arguments for expression.<br>
+ * Class that implements node for expression calculation.<br>
  * Stores both matrices and gradients for multiple data indices.<br>
  * Supports constant node where data is shared between data indices.<br>
  *
@@ -40,7 +40,7 @@ public class Node implements Serializable {
     private transient MMatrix matrices;
 
     /**
-     * Constant matrix if node is of type contains type
+     * Constant matrix if node is treated as constant node.
      *
      */
     private Matrix constantMatrix;
@@ -58,7 +58,7 @@ public class Node implements Serializable {
     private transient MMatrix gradients;
 
     /**
-     * Constant gradient if node is of constant type
+     * Constant gradient node is treated as constant node.
      *
      */
     private transient Matrix constantGradient;
@@ -112,7 +112,7 @@ public class Node implements Serializable {
     private int cumulatedGradientEntryCount = 0;
 
     /**
-     * Constructor for node. Records dimensions of reference matrix as node data dimensions.
+     * Constructor for node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.
@@ -137,7 +137,7 @@ public class Node implements Serializable {
     }
 
     /**
-     * Constructor for node. Records dimensions of reference matrix as node data dimensions.
+     * Constructor for node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.
@@ -250,7 +250,7 @@ public class Node implements Serializable {
     }
 
     /**
-     * Returns if node is constant node type.
+     * Checks if node is of constant node type.
      *
      * @return true if node is constant node type otherwise false.
      */
@@ -270,7 +270,7 @@ public class Node implements Serializable {
     }
 
     /**
-     * Returns true if node is of type multi index.
+     * Checks if node is of type multi index.
      *
      * @return true if node is of type multi index.
      */
@@ -325,9 +325,9 @@ public class Node implements Serializable {
     }
 
     /**
-     * Returns empty matrix with size of reference matrix.
+     * Returns empty matrix with dimensions of reference matrix.
      *
-     * @return empty matrix with size of reference matrix.
+     * @return empty matrix with dimensions of reference matrix.
      */
     public Matrix getEmptyMatrix() {
         return referenceMatrix.getNewMatrix();
@@ -460,19 +460,9 @@ public class Node implements Serializable {
     }
 
     /**
-     * Returns gradient mean (average).
-     *
-     * @return gradient mean (average).
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix getGradientMean() throws MatrixException {
-        return cumulatedGradientEntryCount == 0 ? getEmptyMatrix() : getGradient().divide(cumulatedGradientEntryCount);
-    }
-
-    /**
      * Returns gradient matrix of node.
      *
-     * @param index data index for gradient.
+     * @param index data index of gradient.
      * @return gradient matrix of node.
      */
     public Matrix getGradient(int index) {
@@ -486,6 +476,16 @@ public class Node implements Serializable {
      */
     public MMatrix getGradients() {
         return gradients;
+    }
+
+    /**
+     * Returns gradient mean (average).
+     *
+     * @return gradient mean (average).
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getGradientMean() throws MatrixException {
+        return cumulatedGradientEntryCount == 0 ? getEmptyMatrix() : getGradient().divide(cumulatedGradientEntryCount);
     }
 
     /**

@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * Class that provides node instances and keeps register of them.
+ * Class that provides node instances and keeps register of them.<br>
  *
  */
 public class NodeRegister implements Serializable {
@@ -49,6 +49,7 @@ public class NodeRegister implements Serializable {
             this.node = node;
             this.expressionID = expressionID;
         }
+
     }
 
     /**
@@ -58,7 +59,7 @@ public class NodeRegister implements Serializable {
     private final HashMap<Matrix, NodeEntry> entriesByMatrix = new HashMap<>();
 
     /**
-     * Map to maintain dependencies of matrices and node entries.
+     * Map to maintain dependencies of multi-matrices and node entries.
      *
      */
     private final HashMap<MMatrix, NodeEntry> entriesByMMatrix = new HashMap<>();
@@ -76,7 +77,7 @@ public class NodeRegister implements Serializable {
     private final HashMap<Matrix, Node> nodeMatrixMap = new HashMap<>();
 
     /**
-     * Map to maintain dependencies of matrices and node.
+     * Map to maintain dependencies of multi-matrices and node.
      *
      */
     private final HashMap<MMatrix, Node> nodeMMatrixMap = new HashMap<>();
@@ -90,7 +91,7 @@ public class NodeRegister implements Serializable {
 
     /**
      * Defines and returns node by matrix.<br>
-     * If node is not existing creates node and records in which procedure and expression ID it was created in.<br>
+     * If node is not existing creates node with unique expression ID.<br>
      *
      * @param matrix reference to matrix
      * @param isConstantNode if true node is marked as constant type
@@ -112,7 +113,7 @@ public class NodeRegister implements Serializable {
 
     /**
      * Defines and returns node by matrix.<br>
-     * If node is not existing creates node and records in which procedure and expression ID it was created in.<br>
+     * If node is not existing creates node with unique expression ID.<br>
      *
      * @param matrix reference to matrix
      * @param isConstantNode if true node is marked as constant type
@@ -220,9 +221,9 @@ public class NodeRegister implements Serializable {
     }
 
     /**
-     * Checks if node register contains matrix.
+     * Checks if node register contains multi-matrix.
      *
-     * @param matrix matrix in question.
+     * @param matrix multi-matrix in question.
      * @return true is matrix is contained by the node register otherwise false.
      */
     public boolean contains(MMatrix matrix) {
