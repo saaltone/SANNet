@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class that implements deep reinforcement learning solution solving travelling salesman problem.
+ * Class that implements deep reinforcement learning solution solving travelling salesman problem.<br>
  *
  */
 @SuppressWarnings("SpellCheckingInspection")

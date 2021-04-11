@@ -37,7 +37,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Class that implements tic tac toe game using deep reinforcement learning.
+ * Class that implements tic tac toe game using deep reinforcement learning.<br>
  *
  */
 public class TicTacToe implements Environment, ActionListener, MouseListener {

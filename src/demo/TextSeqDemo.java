@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 /**
- * Creates recurrent neural network (RNN) that learns sequences of text.
- * RNN reads one or more characters as input and learns next character as output.
- * During validation phase RNN reproduces sequences it has learnt during training process.
+ * Creates recurrent neural network (RNN) that learns sequences of text.<br>
+ * RNN reads one or more characters as input and learns next character as output.<br>
+ * During validation phase RNN reproduces sequences it has learnt during training process.<br>
  *
  */
 public class TextSeqDemo {

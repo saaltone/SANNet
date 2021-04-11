@@ -23,9 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.Random;
 
 /**
- * Creates two instances of neural network.
- * Neural network instances are learning to calculate two numbers together between zero and 100.
- * Instances are run concurrently in separate threads.
+ * Creates two instances of neural network.<br>
+ * Neural network instances are learning to calculate two numbers together between zero and 100.<br>
+ * Instances run concurrently in separate threads.<br>
  *
  */
 public class SimpleDemo {

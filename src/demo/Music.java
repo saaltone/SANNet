@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 
 /**
  * Demo that synthesizes music by learning musical patterns from MIDI file.<br>
- * Uses recurrent neural network as basis to learn and synthesize music.
+ * Uses recurrent neural network as basis to learn and synthesize music.<br>
  *
  */
 public class Music {
