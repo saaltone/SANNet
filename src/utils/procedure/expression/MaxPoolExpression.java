@@ -18,28 +18,22 @@ import java.util.HashMap;
 public class MaxPoolExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Name of operation.
-     *
-     */
-    private static final String expressionName = "MAX POOL";
-
-    /**
      * Stride of max pooling operation.
      *
      */
     private final int stride;
 
     /**
-     * Row size of pool.
+     * Row size of filter.
      *
      */
-    private final int poolRowSize;
+    private final int filterRowSize;
 
     /**
-     * Column size of pool.
+     * Column size of filter.
      *
      */
-    private final int poolColumnSize;
+    private final int filterColumnSize;
 
     /**
      * Maximum positions for max pool operation.
@@ -54,15 +48,15 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @param argument1 first argument.
      * @param result result of expression.
      * @param stride stride of pooling operation.
-     * @param poolRowSize pool row size for operation.
-     * @param poolColumnSize pool column size for operation.
+     * @param filterRowSize filter row size for operation.
+     * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int poolRowSize, int poolColumnSize) throws MatrixException {
-        super(expressionName, expressionName, expressionID, argument1, result);
+    public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+        super("MAX_POOL", "MAX_POOL", expressionID, argument1, result);
         this.stride = stride;
-        this.poolRowSize = poolRowSize;
-        this.poolColumnSize = poolColumnSize;
+        this.filterRowSize = filterRowSize;
+        this.filterColumnSize = filterColumnSize;
     }
 
     /**
@@ -79,10 +73,10 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         argument1.getMatrix(index).setStride(stride);
-        argument1.getMatrix(index).setPoolRowSize(poolRowSize);
-        argument1.getMatrix(index).setPoolColumnSize(poolColumnSize);
+        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
+        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
         maxPos.put(index, new HashMap<>());
         result.setMatrix(index, argument1.getMatrix(index).maxPool(maxPos.get(index)));
     }
@@ -101,10 +95,10 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         if (!maxPos.containsKey(index)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
-        result.getGradient(index).setPoolRowSize(poolRowSize);
-        result.getGradient(index).setPoolColumnSize(poolColumnSize);
+        result.getGradient(index).setFilterRowSize(filterRowSize);
+        result.getGradient(index).setFilterColumnSize(filterColumnSize);
         argument1.cumulateGradient(index, result.getGradient(index).maxPoolGradient(maxPos.remove(index)), false);
     }
 
@@ -114,7 +108,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public void printExpression() {
         print();
-        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
@@ -122,7 +116,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      *
      */
     public void printGradient() {
-        printArgument1Gradient(false, getName() + "_GRADIENT(" + getResultGradientName() + ", ARGMAX(" + argument1.getName() +"))");
+        printArgument1Gradient(false, getExpressionName() + "_GRADIENT(" + getResultGradientName() + ", ARGMAX(" + argument1.getName() +"))");
     }
 
 }
