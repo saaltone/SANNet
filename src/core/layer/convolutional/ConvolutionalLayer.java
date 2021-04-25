@@ -11,6 +11,7 @@ import core.layer.AbstractExecutionLayer;
 import utils.*;
 import utils.matrix.*;
 
+import java.io.Serial;
 import java.util.HashMap;
 
 /**
@@ -21,6 +22,7 @@ import java.util.HashMap;
  */
 public class ConvolutionalLayer extends AbstractExecutionLayer {
 
+    @Serial
     private static final long serialVersionUID = -7210767738512077627L;
 
     /**
