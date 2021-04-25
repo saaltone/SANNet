@@ -34,27 +34,17 @@ public class LayerFactory {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public static AbstractExecutionLayer create(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        switch (layerType) {
-            case FEEDFORWARD:
-                return new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
-            case RECURRENT:
-                return new RecurrentLayer(layerIndex, activationFunction, initialization, params);
-            case LSTM:
-                return new LSTMLayer(layerIndex, initialization, params);
-            case PEEPHOLELSTM:
-                return new PeepholeLSTMLayer(layerIndex, initialization, params);
-            case GRAVESLSTM:
-                return new GravesLSTMLayer(layerIndex, initialization, params);
-            case GRU:
-                return new GRULayer(layerIndex, initialization, params);
-            case MINGRU:
-                return new MinGRULayer(layerIndex, initialization, params);
-            case CONVOLUTIONAL:
-                return new ConvolutionalLayer(layerIndex, activationFunction, initialization, params);
-            case POOLING:
-                return new PoolingLayer(layerIndex, initialization, params);
-        }
-        return null;
+        return switch (layerType) {
+            case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
+            case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
+            case LSTM -> new LSTMLayer(layerIndex, initialization, params);
+            case PEEPHOLELSTM -> new PeepholeLSTMLayer(layerIndex, initialization, params);
+            case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, initialization, params);
+            case GRU -> new GRULayer(layerIndex, initialization, params);
+            case MINGRU -> new MinGRULayer(layerIndex, initialization, params);
+            case CONVOLUTIONAL -> new ConvolutionalLayer(layerIndex, activationFunction, initialization, params);
+            case POOLING -> new PoolingLayer(layerIndex, initialization, params);
+        };
     }
 
     /**
