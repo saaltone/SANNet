@@ -412,12 +412,9 @@ public class TSP implements Environment {
      * @param cityAmount number of cities to be visited.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if copying of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException {
         tour = new Tour(cityAmount);
         agent = compactState ? createAgent(2 * tour.size(), tour.size() - 1) : createAgent(4 * tour.size(), tour.size() - 1);
     }
@@ -807,12 +804,9 @@ public class TSP implements Environment {
      * @return agent
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if copying of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException {
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean policyGradient = true;
@@ -835,21 +829,19 @@ public class TSP implements Environment {
         ExecutablePolicyType executablePolicyType = null;
         String params = "";
         switch (policyType) {
-            case 0:
-                executablePolicyType = ExecutablePolicyType.GREEDY;
-                break;
-            case 1:
+            case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
+            case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
                 params += "epsilonInitial = 1, epsilonDecayRate = 0.999, epsilonMin = 0";
-                break;
-            case 2:
+            }
+            case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
                 params += "initialExplorationNoise = 1, explorationNoiseDecay = 0.999, minExplorationNoise = 0";
-                break;
-            case 3:
+            }
+            case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 params += "thresholdInitial = 0.7, thresholdMin = 0";
-                break;
+            }
         }
         Agent agent;
         if (!policyGradient) {
@@ -882,6 +874,8 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (4 * inputSize);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
+//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         if (!policyFunction) {
@@ -913,6 +907,7 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (inputSize + 20);
+//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
