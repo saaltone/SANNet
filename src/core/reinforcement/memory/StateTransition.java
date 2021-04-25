@@ -9,6 +9,7 @@ import core.reinforcement.EnvironmentState;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -17,6 +18,7 @@ import java.io.Serializable;
  */
 public class StateTransition implements Serializable, Comparable<StateTransition> {
 
+    @Serial
     private static final long serialVersionUID = 3018272924414901045L;
 
     /**

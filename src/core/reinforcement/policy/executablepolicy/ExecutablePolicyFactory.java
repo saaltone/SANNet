@@ -3,6 +3,7 @@ package core.reinforcement.policy.executablepolicy;
 import core.reinforcement.AgentException;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -11,6 +12,7 @@ import java.io.Serializable;
  */
 public class ExecutablePolicyFactory implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 4044647047494437807L;
 
     /**
@@ -20,20 +22,14 @@ public class ExecutablePolicyFactory implements Serializable {
      * @param params parameters for executable policy.
      * @return constructed executable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException, AgentException {
-        switch (executablePolicyType) {
-            case GREEDY:
-                return new GreedyPolicy();
-            case EPSILON_GREEDY:
-                return params == null ? new EpsilonGreedyPolicy() : new EpsilonGreedyPolicy(params);
-            case NOISY_NEXT_BEST:
-                return params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
-            case SAMPLED:
-                return params == null ? new SampledPolicy() : new SampledPolicy(params);
-        }
-        throw new AgentException("Creation of executable policy failed.");
+    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException {
+        return switch (executablePolicyType) {
+            case GREEDY -> new GreedyPolicy();
+            case EPSILON_GREEDY -> params == null ? new EpsilonGreedyPolicy() : new EpsilonGreedyPolicy(params);
+            case NOISY_NEXT_BEST -> params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
+            case SAMPLED -> params == null ? new SampledPolicy() : new SampledPolicy(params);
+        };
     }
 
     /**
@@ -42,9 +38,8 @@ public class ExecutablePolicyFactory implements Serializable {
      * @param executablePolicyType type of executable policy.
      * @return constructed executable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType) throws DynamicParamException, AgentException {
+    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType) throws DynamicParamException {
         return create(executablePolicyType, null);
     }
 

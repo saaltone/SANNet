@@ -8,6 +8,7 @@ package core.reinforcement.memory;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
@@ -21,6 +22,7 @@ import java.util.TreeSet;
  */
 public class PriorityMemory implements Memory, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -160305763452683523L;
 
     /**

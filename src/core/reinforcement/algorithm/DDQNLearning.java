@@ -5,7 +5,6 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.ActionablePolicy;
@@ -31,10 +30,9 @@ public class DDQNLearning extends AbstractQLearning {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public DDQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException {
+    public DDQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException {
         super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator));
     }
 
@@ -48,10 +46,9 @@ public class DDQNLearning extends AbstractQLearning {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public DDQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+    public DDQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
         super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator), params);
     }
 

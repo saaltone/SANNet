@@ -1,6 +1,5 @@
 package core.reinforcement.algorithm;
 
-import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -28,9 +27,8 @@ public class PPO extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public PPO(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException {
+    public PPO(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException {
         super(environment, new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator), new StateValueFunctionEstimator(valueFunctionEstimator));
     }
 
@@ -46,9 +44,8 @@ public class PPO extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public PPO(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+    public PPO(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
         super(environment, new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator), new StateValueFunctionEstimator(valueFunctionEstimator), params);
     }
 

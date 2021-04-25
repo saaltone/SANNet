@@ -5,7 +5,6 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.ActionablePolicy;
@@ -26,9 +25,8 @@ public class DQNLearning extends AbstractQLearning {
      * @param executablePolicyType executable policy type.
      * @param valueFunctionEstimator reference to value function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException {
+    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator) throws DynamicParamException {
         super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QValueFunctionEstimator(valueFunctionEstimator));
     }
 
@@ -40,9 +38,8 @@ public class DQNLearning extends AbstractQLearning {
      * @param valueFunctionEstimator reference to value function estimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
+    public DQNLearning(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException {
         super(environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator), new QValueFunctionEstimator(valueFunctionEstimator), params);
     }
 

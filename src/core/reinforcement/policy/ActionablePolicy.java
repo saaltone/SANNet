@@ -6,7 +6,6 @@
 package core.reinforcement.policy;
 
 import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.DynamicParamException;
@@ -23,9 +22,8 @@ public class ActionablePolicy extends AbstractPolicy {
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException {
         super(executablePolicyType, functionEstimator);
     }
 

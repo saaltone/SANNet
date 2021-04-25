@@ -5,6 +5,7 @@
 
 package core.reinforcement.memory;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.Random;
  */
 public class SumTree implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1588699500252286228L;
 
     /**

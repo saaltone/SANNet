@@ -12,6 +12,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -22,6 +23,7 @@ import java.util.TreeSet;
  */
 public abstract class AbstractValueFunction implements ValueFunction, Configurable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -7436000520645598105L;
 
     /**

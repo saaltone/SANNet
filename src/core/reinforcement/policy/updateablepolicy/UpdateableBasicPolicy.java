@@ -6,7 +6,6 @@
 package core.reinforcement.policy.updateablepolicy;
 
 import core.NeuralNetworkException;
-import core.reinforcement.AgentException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.AbstractUpdateablePolicy;
@@ -43,9 +42,8 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public UpdateableBasicPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+    public UpdateableBasicPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException {
         super(executablePolicyType, functionEstimator);
     }
 

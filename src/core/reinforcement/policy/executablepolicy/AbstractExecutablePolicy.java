@@ -10,6 +10,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -19,6 +20,7 @@ import java.util.*;
  */
 public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3999341188546094490L;
 
     /**

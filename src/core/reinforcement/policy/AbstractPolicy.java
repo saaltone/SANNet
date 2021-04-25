@@ -2,7 +2,6 @@ package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
 import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
@@ -16,6 +15,7 @@ import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -25,6 +25,7 @@ import java.util.HashMap;
  */
 public abstract class AbstractPolicy implements Policy, Configurable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 7604226764648819354L;
 
     /**
@@ -69,9 +70,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException {
         this.executablePolicy = ExecutablePolicyFactory.create(executablePolicyType);
         this.functionEstimator = functionEstimator;
         isStateActionValueFunction = functionEstimator.isStateActionValueFunction();

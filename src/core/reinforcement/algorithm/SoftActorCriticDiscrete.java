@@ -1,7 +1,6 @@
 package core.reinforcement.algorithm;
 
 import core.NeuralNetworkException;
-import core.reinforcement.AgentException;
 import core.reinforcement.Environment;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -32,9 +31,8 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException, NeuralNetworkException {
+    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, NeuralNetworkException {
         Matrix softQAlphaMatrix = new DMatrix(1, 1);
         initialize(environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, softQAlphaMatrix), new SoftQValueFunctionEstimator(policyFunctionEstimator, valueFunctionEstimator, softQAlphaMatrix));
     }
@@ -52,9 +50,8 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException, NeuralNetworkException {
+    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, NeuralNetworkException {
         Matrix softQAlphaMatrix = new DMatrix(1, 1);
         initialize(environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, softQAlphaMatrix), new SoftQValueFunctionEstimator(policyFunctionEstimator, valueFunctionEstimator, softQAlphaMatrix), params);
     }

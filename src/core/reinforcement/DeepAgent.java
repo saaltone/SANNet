@@ -14,6 +14,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -23,6 +24,7 @@ import java.util.HashMap;
  */
 public abstract class DeepAgent implements Agent, Configurable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -1720953512017473344L;
 
     /**

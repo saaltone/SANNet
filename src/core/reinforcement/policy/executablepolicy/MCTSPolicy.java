@@ -5,6 +5,7 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -19,6 +20,7 @@ import java.util.*;
  */
 public class MCTSPolicy implements ExecutablePolicy, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6567362723286339425L;
 
     /**

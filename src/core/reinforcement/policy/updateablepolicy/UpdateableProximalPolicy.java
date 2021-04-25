@@ -57,9 +57,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws ClassNotFoundException throws exception if creation of previousFunctionEstimator fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException {
+    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
         super(executablePolicyType, functionEstimator);
         previousFunctionEstimator = functionEstimator.copy();
     }

@@ -16,6 +16,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.TreeSet;
  */
 public abstract class AbstractFunctionEstimator implements FunctionEstimator, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -557430597852291426L;
 
     /**

@@ -8,6 +8,7 @@ package core.reinforcement.memory;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -17,6 +18,7 @@ import java.util.*;
  */
 public class OnlineMemory implements Memory, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8600974850562595903L;
 
     /**

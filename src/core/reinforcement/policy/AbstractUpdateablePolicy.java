@@ -32,9 +32,8 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
+    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException {
         super(executablePolicyType, functionEstimator);
     }
 

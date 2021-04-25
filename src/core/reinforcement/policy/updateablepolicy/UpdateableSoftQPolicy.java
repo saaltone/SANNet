@@ -65,9 +65,8 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @param functionEstimator reference to FunctionEstimator.
      * @param softQAlphaMatrix reference to softQAlphaMatrix.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      */
-    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException, AgentException {
+    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException {
         super(executablePolicyType, functionEstimator);
         this.softQAlphaMatrix = softQAlphaMatrix;
     }
