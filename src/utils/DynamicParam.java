@@ -5,6 +5,7 @@
 
 package utils;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -16,6 +17,7 @@ import java.util.HashMap;
  */
 public class DynamicParam implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -5783783860424243849L;
 
     /**
