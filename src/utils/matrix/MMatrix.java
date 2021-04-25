@@ -8,6 +8,7 @@ package utils.matrix;
 import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
@@ -20,6 +21,7 @@ import java.util.TreeMap;
  */
 public class MMatrix implements Cloneable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 2208329722377770337L;
 
     /**
