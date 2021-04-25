@@ -240,13 +240,13 @@ public class Maze implements Environment, ActionListener {
          * @return opposite direction.
          */
         public int getOppositeDirection(int direction) {
-            switch (direction) {
-                case 0: return 1;
-                case 1: return 0;
-                case 2: return 3;
-                case 3: return 2;
-                default: return -1;
-            }
+            return switch (direction) {
+                case 0 -> 1;
+                case 1 -> 0;
+                case 2 -> 3;
+                case 3 -> 2;
+                default -> -1;
+            };
         }
 
         /**
@@ -601,10 +601,9 @@ public class Maze implements Environment, ActionListener {
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws IOException throws exception if copying of neural network instance fails.
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         agent = createAgent();
         initMaze();
     }
@@ -740,10 +739,10 @@ public class Maze implements Environment, ActionListener {
         int x = mazeAgentCurrent.x;
         int y = mazeAgentCurrent.y;
         switch (action) {
-            case 0: x--; break;
-            case 1: x++; break;
-            case 2: y--; break;
-            case 3: y++; break;
+            case 0 -> x--;
+            case 1 -> x++;
+            case 2 -> y--;
+            case 3 -> y++;
         }
         mazeAgentCurrent = new MazeAgent(x, y, action);
         if (mazeAgentHistory.size() == agentHistorySize) mazeAgentHistory.pollFirst();
@@ -796,10 +795,9 @@ public class Maze implements Environment, ActionListener {
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws IOException throws exception if copying of neural network instance fails.
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean policyGradient = true;
@@ -811,21 +809,19 @@ public class Maze implements Environment, ActionListener {
         ExecutablePolicyType executablePolicyType = null;
         String params = "";
         switch (policyType) {
-            case 0:
-                executablePolicyType = ExecutablePolicyType.GREEDY;
-                break;
-            case 1:
+            case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
+            case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
                 params += "epsilonInitial = 0.25, epsilonMin = 0.25";
-                break;
-            case 2:
+            }
+            case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
                 params += "initialExplorationNoise = 0.25, minExplorationNoise = 0.25";
-                break;
-            case 3:
+            }
+            case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 params += "thresholdInitial = 0.2, thresholdMin = 0.2";
-                break;
+            }
         }
         Agent agent;
         if (!policyGradient) {
