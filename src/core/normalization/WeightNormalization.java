@@ -13,6 +13,7 @@ import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -24,6 +25,7 @@ import java.util.HashMap;
  */
 public class WeightNormalization implements Normalization, ForwardProcedure, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1741544680542755148L;
 
     /**

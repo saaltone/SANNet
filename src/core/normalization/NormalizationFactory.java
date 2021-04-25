@@ -23,18 +23,13 @@ public class NormalizationFactory implements Serializable {
      * @param params parameters for normalizer.
      * @return constructed normalizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if creation of normalizer fails.
      */
-    public static Normalization create(NormalizationType normalizationType, String params) throws DynamicParamException, NeuralNetworkException {
-        switch (normalizationType) {
-            case BATCH_NORMALIZATION:
-                return (params == null) ? new BatchNormalization() : new BatchNormalization(params);
-            case LAYER_NORMALIZATION:
-                return (params == null) ? new LayerNormalization() : new LayerNormalization(params);
-            case WEIGHT_NORMALIZATION:
-                return (params == null) ? new WeightNormalization() : new WeightNormalization(params);
-        }
-        throw new NeuralNetworkException("Creation of normalizer failed.");
+    public static Normalization create(NormalizationType normalizationType, String params) throws DynamicParamException {
+        return switch (normalizationType) {
+            case BATCH_NORMALIZATION -> (params == null) ? new BatchNormalization() : new BatchNormalization(params);
+            case LAYER_NORMALIZATION -> (params == null) ? new LayerNormalization() : new LayerNormalization(params);
+            case WEIGHT_NORMALIZATION -> (params == null) ? new WeightNormalization() : new WeightNormalization(params);
+        };
     }
 
     /**
@@ -43,9 +38,8 @@ public class NormalizationFactory implements Serializable {
      * @param normalizationType type of normalizer.
      * @return constructed normalizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if creation of normalizer fails.
      */
-    public static Normalization create(NormalizationType normalizationType) throws DynamicParamException, NeuralNetworkException {
+    public static Normalization create(NormalizationType normalizationType) throws DynamicParamException {
         return create(normalizationType, null);
     }
 

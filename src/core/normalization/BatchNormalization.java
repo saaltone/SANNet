@@ -13,6 +13,7 @@ import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -24,6 +25,7 @@ import java.util.*;
  */
 public class BatchNormalization implements Normalization, ForwardProcedure, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 3466341546851269706L;
 
     /**
