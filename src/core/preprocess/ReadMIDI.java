@@ -55,14 +55,13 @@ public class ReadMIDI {
                 for (int trackIndex = 0; trackIndex < track.size(); trackIndex++) {
                     MidiEvent midiEvent = track.get(trackIndex);
                     MidiMessage midiMessage = midiEvent.getMessage();
-                    if (midiMessage instanceof ShortMessage) {
-                        ShortMessage shortMessage = (ShortMessage) midiMessage;
+                    if (midiMessage instanceof ShortMessage shortMessage) {
                         SMatrix noteData1;
                         SMatrix noteData2;
                         SMatrix noteData3;
                         long tick;
                         switch (shortMessage.getCommand()) {
-                            case ShortMessage.NOTE_ON:
+                            case ShortMessage.NOTE_ON -> {
                                 noteData1 = new SMatrix(128, 1);
                                 noteData1.setValue(shortMessage.getData1(), 0, 1);
                                 result.get(0).put(result.get(0).size(), new MMatrix(noteData1));
@@ -74,8 +73,8 @@ public class ReadMIDI {
                                 noteData3.setValue(0, 0, (double) (tick - previousTick));
                                 result.get(4).put(result.get(4).size(), new MMatrix(noteData3));
                                 previousTick = tick;
-                                break;
-                            case ShortMessage.NOTE_OFF:
+                            }
+                            case ShortMessage.NOTE_OFF -> {
                                 noteData1 = new SMatrix(128, 1);
                                 noteData1.setValue(shortMessage.getData1(), 0, -1);
                                 result.get(0).put(result.get(0).size(), new MMatrix(noteData1));
@@ -87,7 +86,7 @@ public class ReadMIDI {
                                 noteData3.setValue(0, 0, (double) (tick - previousTick));
                                 result.get(4).put(result.get(4).size(), new MMatrix(noteData3));
                                 previousTick = tick;
-                                break;
+                            }
                         }
                     }
                 }
