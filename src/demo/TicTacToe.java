@@ -333,17 +333,13 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
             for (int row = 0; row < gameBoard.length; row++) {
                 for (int col = 0; col < gameBoard[row].length; col++) {
                     double positionValue = 0;
-                    switch(gameBoard[row][col]) {
-                        case NOUGHT:
-                            positionValue = -1;
-                            break;
-                        case CROSS:
-                            positionValue = 1;
-                            break;
-                        case EMPTY:
+                    switch (gameBoard[row][col]) {
+                        case NOUGHT -> positionValue = -1;
+                        case CROSS -> positionValue = 1;
+                        case EMPTY -> {
                             positionValue = 0;
                             availableMoves.add(getPos(row, col));
-                            break;
+                        }
                     }
                     if (canonicalGameBoard) positionValue = positionValue * (currentPlayerList.get(currentPlayer).getPlayerRole() == PlayerRole.NOUGHT ? 1 : -1);
                     state.setValue(getPos(row, col), 0, positionValue);
@@ -734,12 +730,9 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if copying of neural network instance fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
-     * @throws AgentException throws exception if creation of executable policy fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException {
         int numberfOfAgents = 2;
 
         boolean nnPolicyEstimator = false;
@@ -755,21 +748,19 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         ExecutablePolicyType executablePolicyType = null;
         String params = "";
         switch (policyType) {
-            case 0:
-                executablePolicyType = ExecutablePolicyType.GREEDY;
-                break;
-            case 1:
+            case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
+            case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
                 params += "epsilonInitial = 1, epsilonMin = 0.2";
-                break;
-            case 2:
+            }
+            case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
                 params += "initialExplorationNoise = 1, minExplorationNoise = 0.2";
-                break;
-            case 3:
+            }
+            case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 params += "thresholdInitial = 0.2, thresholdMin = 0.2";
-                break;
+            }
         }
 
         MCTSPolicy sharedMCTSPolicy = new MCTSPolicy();
@@ -796,6 +787,21 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
     }
 
+    /**
+     * Returns value estimator
+     *
+     * @param valueFunctionEstimator reference to value function estimator.
+     * @param stateValue if true function is state value function estimator otherwise false.
+     * @param nnFunctionEstimator if true neural network function estimator is used.
+     * @param onlineMemory if true online memory is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @param sharedFunctionEstimator if true share function estimator is used between value functions.
+     * @param singleFunctionEstimator if true single combined policy and value estimator is used.
+     * @return function estimator.
+     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
     public FunctionEstimator getValueEstimator(FunctionEstimator valueFunctionEstimator, boolean stateValue, boolean nnFunctionEstimator, boolean onlineMemory, boolean sharedMemory, boolean sharedFunctionEstimator, boolean singleFunctionEstimator) throws DynamicParamException, NeuralNetworkException, MatrixException {
         if (sharedFunctionEstimator && valueFunctionEstimator != null) return valueFunctionEstimator;
         else {
@@ -812,6 +818,22 @@ public class TicTacToe implements Environment, ActionListener, MouseListener {
         }
     }
 
+    /**
+     * Returns policy estimator.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param memory reference to memory.
+     * @param policyGradient if policy gradient algorithm is applied.
+     * @param nnFunctionEstimator if true neural network function estimator is used.
+     * @param onlineMemory if true online memory is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @param sharedFunctionEstimator if true share function estimator is used between value functions.
+     * @param singleFunctionEstimator if true single combined policy and value estimator is used.
+     * @return function estimator.
+     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
     public FunctionEstimator getPolicyEstimator(FunctionEstimator policyFunctionEstimator, Memory memory, boolean policyGradient, boolean nnFunctionEstimator, boolean onlineMemory, boolean sharedMemory, boolean sharedFunctionEstimator, boolean singleFunctionEstimator) throws DynamicParamException, NeuralNetworkException, MatrixException {
         if (sharedFunctionEstimator && policyFunctionEstimator != null) return policyFunctionEstimator;
         else {
