@@ -16,6 +16,7 @@ import java.io.*;
  */
 public class Persistence implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6113168833637330117L;
 
     /**
