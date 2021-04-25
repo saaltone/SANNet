@@ -15,6 +15,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.expression.AbstractExpression;
 import utils.procedure.node.Node;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -24,6 +25,7 @@ import java.util.*;
  */
 public class Procedure implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 9207418704022664014L;
 
     /**
