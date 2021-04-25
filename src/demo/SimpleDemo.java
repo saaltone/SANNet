@@ -30,6 +30,11 @@ import java.util.Random;
  */
 public class SimpleDemo {
 
+    /**
+     * Main function for simple demo.
+     *
+     * @param args arguments
+     */
     public static void main(String [] args) {
 
         try {
