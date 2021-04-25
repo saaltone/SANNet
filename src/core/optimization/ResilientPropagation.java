@@ -11,6 +11,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -23,6 +24,7 @@ import java.util.HashMap;
  */
 public class ResilientPropagation implements Optimizer, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -5041801098584596493L;
 
     /**

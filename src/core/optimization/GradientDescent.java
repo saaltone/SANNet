@@ -10,6 +10,7 @@ import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -21,6 +22,7 @@ import java.util.HashMap;
  */
 public class GradientDescent implements Optimizer, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 954492995414169438L;
 
     /**

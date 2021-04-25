@@ -23,33 +23,20 @@ public class OptimizerFactory {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public static Optimizer create(OptimizationType optimizationType, String params) throws DynamicParamException {
-        switch (optimizationType) {
-            case GRADIENT_DESCENT:
-                return (params == null) ? new GradientDescent() : new GradientDescent(params);
-            case MOMENTUM_GRADIENT_DESCENT:
-                return (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
-            case NESTEROV_ACCELERATED_GRADIENT:
-                return (params == null) ? new NesterovAcceleratedGradient() : new NesterovAcceleratedGradient(params);
-            case ADAGRAD:
-                return (params == null) ? new Adagrad() : new Adagrad(params);
-            case ADADELTA:
-                return (params == null) ? new Adadelta() : new Adadelta(params);
-            case RMSPROP:
-                return (params == null) ? new RMSProp() : new RMSProp(params);
-            case ADAM:
-                return (params == null) ? new Adam() : new Adam(params);
-            case ADAMAX:
-                return (params == null) ? new Adamax() : new Adamax(params);
-            case NADAM:
-                return (params == null) ? new NAdam() : new NAdam(params);
-            case RADAM:
-                return (params == null) ? new RAdam() : new RAdam(params);
-            case AMSGRAD:
-                return (params == null) ? new AMSGrad() : new AMSGrad(params);
-            case RESILIENT_PROPAGATION:
-                return new ResilientPropagation();
-        }
-        return null;
+        return switch (optimizationType) {
+            case GRADIENT_DESCENT -> (params == null) ? new GradientDescent() : new GradientDescent(params);
+            case MOMENTUM_GRADIENT_DESCENT -> (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
+            case NESTEROV_ACCELERATED_GRADIENT -> (params == null) ? new NesterovAcceleratedGradient() : new NesterovAcceleratedGradient(params);
+            case ADAGRAD -> (params == null) ? new Adagrad() : new Adagrad(params);
+            case ADADELTA -> (params == null) ? new Adadelta() : new Adadelta(params);
+            case RMSPROP -> (params == null) ? new RMSProp() : new RMSProp(params);
+            case ADAM -> (params == null) ? new Adam() : new Adam(params);
+            case ADAMAX -> (params == null) ? new Adamax() : new Adamax(params);
+            case NADAM -> (params == null) ? new NAdam() : new NAdam(params);
+            case RADAM -> (params == null) ? new RAdam() : new RAdam(params);
+            case AMSGRAD -> (params == null) ? new AMSGrad() : new AMSGrad(params);
+            case RESILIENT_PROPAGATION -> new ResilientPropagation();
+        };
     }
 
     /**
