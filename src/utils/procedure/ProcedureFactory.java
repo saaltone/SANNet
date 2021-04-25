@@ -11,6 +11,7 @@ import utils.procedure.expression.*;
 import utils.procedure.node.Node;
 import utils.procedure.node.NodeRegister;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -21,6 +22,7 @@ import java.util.*;
  */
 public class ProcedureFactory implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -4961334078305757207L;
 
     /**
@@ -660,15 +662,15 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param stride stride for operation.
-     * @param poolRowSize pool row size for operation.
-     * @param poolColumnSize pool column size for operation.
+     * @param filterRowSize filter row size for operation.
+     * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolRowSize, int poolColumnSize) throws MatrixException {
+    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
-        MaxPoolExpression expression = new MaxPoolExpression(currentExpressionID++, node1, resultNode, stride, poolRowSize, poolColumnSize);
+        MaxPoolExpression expression = new MaxPoolExpression(currentExpressionID++, node1, resultNode, stride, filterRowSize, filterColumnSize);
         storeExpression(expression, resultNode);
     }
 
@@ -679,15 +681,15 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param stride stride for operation.
-     * @param poolRowSize pool row size for operation.
-     * @param poolColumnSize pool column size for operation.
+     * @param filterRowSize filter row size for operation.
+     * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int poolRowSize, int poolColumnSize) throws MatrixException {
+    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node resultNode = defineNode(result, true);
-        AveragePoolExpression expression = new AveragePoolExpression(currentExpressionID++, node1, resultNode, stride, poolRowSize, poolColumnSize);
+        AveragePoolExpression expression = new AveragePoolExpression(currentExpressionID++, node1, resultNode, stride, filterRowSize, filterColumnSize);
         storeExpression(expression, resultNode);
     }
 
