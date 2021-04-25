@@ -1,5 +1,6 @@
 package utils.matrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Random;
 
@@ -9,6 +10,7 @@ import java.util.Random;
  */
 public abstract class AbstractMask implements Cloneable, Serializable, Mask {
 
+    @Serial
     private static final long serialVersionUID = -4902569287054022460L;
 
     /**
