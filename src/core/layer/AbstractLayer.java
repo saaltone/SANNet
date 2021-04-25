@@ -11,6 +11,7 @@ import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
@@ -24,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3851862716566007887L;
 
     /**
@@ -176,19 +178,11 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws NeuralNetworkException throws exception if operation fails.
      */
     public String getLayerName() throws NeuralNetworkException {
-        String layerName;
-        switch (layerIndex) {
-            case 0:
-                layerName = "InputLayer";
-                break;
-            case -1:
-                layerName = "OutputLayer";
-                break;
-            default:
-                layerName = "Hidden Layer " + layerIndex + " - " + getTypeByName();
-                break;
-        }
-        return layerName;
+        return switch (layerIndex) {
+            case 0 -> "InputLayer";
+            case -1 -> "OutputLayer";
+            default -> "Hidden Layer " + layerIndex + " - " + getTypeByName();
+        };
     }
 
     /**
