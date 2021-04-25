@@ -62,7 +62,7 @@ public class MNISTDemo {
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 32, numberOfIterations = 5625"));
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
             neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
 
             neuralNetwork.print();
@@ -123,7 +123,7 @@ public class MNISTDemo {
         neuralNetwork.addInputLayer("width = 28, height = 28");
         neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1, asConvolution = false");
         neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1, asConvolution = false");
-        neuralNetwork.addHiddenLayer(LayerType.POOLING, "poolSize = 2, stride = 1, avgPool = false");
+        neuralNetwork.addHiddenLayer(LayerType.POOLING, "filterSize = 2, stride = 1, avgPool = false");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
