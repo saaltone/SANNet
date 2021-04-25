@@ -11,6 +11,7 @@ import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MMatrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -20,6 +21,7 @@ import java.util.*;
  */
 public class BasicSampler implements Sampler, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1745926046002213714L;
 
     /**
