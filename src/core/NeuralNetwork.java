@@ -31,6 +31,7 @@ import utils.sampling.Sampler;
  */
 public class NeuralNetwork implements Runnable, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -1075977720550636471L;
 
     /**
@@ -1379,21 +1380,16 @@ public class NeuralNetwork implements Runnable, Serializable {
             if (executionState == ExecutionState.IDLE) executeLockCondition.awaitUninterruptibly();
             try {
                 switch (executionState) {
-                    case TRAIN:
-                        trainIterations();
-                        break;
-                    case PREDICT:
-                        predictInput();
-                        break;
-                    case VALIDATE:
-                        validateInput(true);
-                        break;
-                    case TERMINATED:
+                    case TRAIN -> trainIterations();
+                    case PREDICT -> predictInput();
+                    case VALIDATE -> validateInput(true);
+                    case TERMINATED -> {
                         getInputLayer().stop();
                         neuralNetworkThread = null;
                         completeLockCondition.signal();
                         executeLock.unlock();
                         return;
+                    }
                 }
             }
             catch (Exception exception) {
