@@ -266,6 +266,13 @@ public interface Matrix {
     void removeProcedureFactory();
 
     /**
+     * Returns true if matrix has procedure factory otherwise false.
+     *
+     * @return true if matrix has procedure factory otherwise false.
+     */
+    boolean hasProcedureFactory();
+
+    /**
      * Sets flag if matrix is normalized.
      *
      * @param normalize if true matrix is normalized.
@@ -1055,30 +1062,30 @@ public interface Matrix {
     int getDilation();
 
     /**
-     * Sets filter row size for convolution operations.
+     * Sets filter row size for convolution and pooling operations.
      *
      * @param filterRowSize filter row size.
      */
     void setFilterRowSize(int filterRowSize);
 
     /**
-     * Sets filter column size for convolution operations.
+     * Sets filter column size for convolution and pooling operations.
      *
      * @param filterColumnSize filter column size.
      */
     void setFilterColumnSize(int filterColumnSize);
 
     /**
-     * Returns filter row size.
+     * Returns filter row size for convolution and pooling operations.
      *
-     * @return filter row size
+     * @return filter row size for convolution and pooling operations.
      */
     int getFilterRowSize();
 
     /**
-     * Returns filter column size.
+     * Returns filter column size for convolution and pooling operations.
      *
-     * @return filter column size
+     * @return filter column size for convolution and pooling operations.
      */
     int getFilterColumnSize();
 
@@ -1181,34 +1188,6 @@ public interface Matrix {
      * @param filterGradient filter gradient.
      */
     void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient);
-
-    /**
-     * Sets ro size of pool for pooling operation.
-     *
-     * @param poolRowSize pool row size.
-     */
-    void setPoolRowSize(int poolRowSize);
-
-    /**
-     * Returns pool row size.
-     *
-     * @return pool row size.
-     */
-    int getPoolRowSize();
-
-    /**
-     * Sets column size of pool for pooling operation.
-     *
-     * @param poolColumnSize pool column size.
-     */
-    void setPoolColumnSize(int poolColumnSize);
-
-    /**
-     * Returns pool column size.
-     *
-     * @return pool column size.
-     */
-    int getPoolColumnSize();
 
     /**
      * Calculates max pooling operation for this matrix.
