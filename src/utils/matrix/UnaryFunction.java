@@ -8,6 +8,7 @@ package utils.matrix;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -19,6 +20,7 @@ import java.util.HashMap;
  */
 public class UnaryFunction implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -726049214135549929L;
 
     /**
@@ -373,15 +375,9 @@ public class UnaryFunction implements Serializable {
     public Matrix applyFunction(Matrix input, boolean inplace) throws MatrixException {
         Matrix result = inplace ? input : input.getNewMatrix();
         switch (unaryFunctionType) {
-            case SOFTMAX:
-                input.softmax(result);
-                break;
-            case GUMBEL_SOFTMAX:
-                input.gumbelSoftmax(result, gumbelSoftmaxTau);
-                break;
-            default:
-                input.apply(result, this);
-                break;
+            case SOFTMAX -> input.softmax(result);
+            case GUMBEL_SOFTMAX -> input.gumbelSoftmax(result, gumbelSoftmaxTau);
+            default -> input.apply(result, this);
         }
         return result;
     }
@@ -395,13 +391,10 @@ public class UnaryFunction implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix result, Matrix gradient) throws MatrixException {
-        switch (unaryFunctionType) {
-            case SOFTMAX:
-            case GUMBEL_SOFTMAX:
-                return result.softmaxGrad().dot(gradient);
-            default:
-                return gradient.multiply(result.apply(derivative));
-        }
+        return switch (unaryFunctionType) {
+            case SOFTMAX, GUMBEL_SOFTMAX -> result.softmaxGrad().dot(gradient);
+            default -> gradient.multiply(result.apply(derivative));
+        };
     }
 
     /**
