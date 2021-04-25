@@ -9,6 +9,7 @@ import core.metrics.Metrics;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -21,6 +22,7 @@ import java.util.HashMap;
  */
 public class EarlyStopping implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -8362385201353383426L;
 
     /**

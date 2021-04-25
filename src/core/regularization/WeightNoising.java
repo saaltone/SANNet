@@ -11,6 +11,7 @@ import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Random;
@@ -21,6 +22,7 @@ import java.util.Random;
  */
 public class WeightNoising implements Regularization, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6830727265041914868L;
 
     /**

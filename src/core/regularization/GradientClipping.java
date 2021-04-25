@@ -12,6 +12,7 @@ import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -24,6 +25,7 @@ import java.util.HashMap;
  */
 public class GradientClipping implements Regularization, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -2462517110247269075L;
 
     /**

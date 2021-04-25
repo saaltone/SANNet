@@ -13,6 +13,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -24,6 +25,7 @@ import java.util.HashMap;
  */
 public class L1_Regularization implements Regularization, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -7323953827581797724L;
 
     /**

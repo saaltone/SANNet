@@ -8,6 +8,7 @@ package core.regularization;
 import core.NeuralNetworkException;
 import utils.DynamicParamException;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -16,6 +17,7 @@ import java.io.Serializable;
  */
 public class RegularizationFactory implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6528056993847962735L;
 
     /**
@@ -25,24 +27,16 @@ public class RegularizationFactory implements Serializable {
      * @param params parameters for regularization.
      * @return constructed regularizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if creation of regularizer fails.
      */
-    public static Regularization create(RegularizationType regularizationType, String params) throws DynamicParamException, NeuralNetworkException {
-        switch (regularizationType) {
-            case DROPOUT:
-                return (params == null) ? new DropOut() : new DropOut(params);
-            case GRADIENT_CLIPPING:
-                return (params == null) ? new GradientClipping() : new GradientClipping(params);
-            case L1_REGULARIZATION:
-                return (params == null) ? new L1_Regularization() : new L1_Regularization(params);
-            case L2_REGULARIZATION:
-                return (params == null) ? new L2_Regularization() : new L2_Regularization(params);
-            case LP_REGULARIZATION:
-                return (params == null) ? new Lp_Regularization() : new Lp_Regularization(params);
-            case WEIGHT_NOISING:
-                return (params == null) ? new WeightNoising() : new WeightNoising(params);
-        }
-        throw new NeuralNetworkException("Creation of regularizer failed.");
+    public static Regularization create(RegularizationType regularizationType, String params) throws DynamicParamException {
+        return switch (regularizationType) {
+            case DROPOUT -> (params == null) ? new DropOut() : new DropOut(params);
+            case GRADIENT_CLIPPING -> (params == null) ? new GradientClipping() : new GradientClipping(params);
+            case L1_REGULARIZATION -> (params == null) ? new L1_Regularization() : new L1_Regularization(params);
+            case L2_REGULARIZATION -> (params == null) ? new L2_Regularization() : new L2_Regularization(params);
+            case LP_REGULARIZATION -> (params == null) ? new Lp_Regularization() : new Lp_Regularization(params);
+            case WEIGHT_NOISING -> (params == null) ? new WeightNoising() : new WeightNoising(params);
+        };
     }
 
     /**
@@ -51,9 +45,8 @@ public class RegularizationFactory implements Serializable {
      * @param regularizationType type of regularizer.
      * @return constructed regularizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if creation of regularizer fails.
      */
-    public static Regularization create(RegularizationType regularizationType) throws DynamicParamException, NeuralNetworkException {
+    public static Regularization create(RegularizationType regularizationType) throws DynamicParamException {
         return create(regularizationType, null);
     }
 
