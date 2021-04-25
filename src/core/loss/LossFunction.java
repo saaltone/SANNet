@@ -9,6 +9,8 @@ import core.NeuralNetworkException;
 import utils.*;
 import utils.matrix.*;
 
+import java.io.Serial;
+
 /**
  * Defines loss function class for neural network.<br>
  * Provides calculation for both function and it's derivative.<br>
@@ -31,6 +33,7 @@ import utils.matrix.*;
  */
 public class LossFunction extends BinaryFunction {
 
+    @Serial
     private static final long serialVersionUID = 6218297482907539129L;
 
     /**
