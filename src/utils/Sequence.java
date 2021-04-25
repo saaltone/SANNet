@@ -9,6 +9,7 @@ import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
@@ -18,6 +19,7 @@ import java.util.*;
  */
 public class Sequence implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 4183245025751674913L;
 
     /**
