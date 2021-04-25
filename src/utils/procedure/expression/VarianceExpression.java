@@ -20,12 +20,6 @@ import java.util.HashMap;
 public class VarianceExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Name of operation.
-     *
-     */
-    private static final String expressionName = "VARIANCE";
-
-    /**
      * True if calculation is done as multi matrix.
      *
      */
@@ -53,7 +47,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public VarianceExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
-        super(expressionName, expressionName, expressionID, argument1, result);
+        super("VARIANCE", "VARIANCE", expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -75,7 +69,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!asMultiMatrix) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         mean = argument1.getMatrices().mean();
         result.setMultiIndex(false);
         result.setMatrix(argument1.getMatrices().variance(mean));
@@ -89,7 +83,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateExpression(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
         Matrix mean = argument1.getMatrix(index).meanAsMatrix();
         if (means == null) means = new HashMap<>();
         means.put(index, mean);
@@ -103,7 +97,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateGradient() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) {
             Matrix varianceGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size());
             argument1.cumulateGradient(index, result.getGradient().multiply(varianceGradient), false);
@@ -118,7 +112,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         Matrix varianceGradient = argument1.getMatrix(index).subtract(means.get(index)).multiply(2 / (double)argument1.getMatrix(index).size());
         argument1.cumulateGradient(index, result.getGradient(index).multiply(varianceGradient), false);
     }
@@ -129,7 +123,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void printExpression() {
         print();
-        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**

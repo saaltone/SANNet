@@ -9,6 +9,7 @@ import utils.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 
@@ -19,13 +20,14 @@ import java.util.Set;
  */
 public abstract class AbstractExpression implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -3692842009210981254L;
 
     /**
      * Name of expression;
      *
      */
-    private final String name;
+    private final String expressionName;
 
     /**
      * Operation signature.
@@ -66,16 +68,16 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Constructor for abstract expression.
      *
-     * @param name name of expression.
+     * @param expressionName name of expression.
      * @param operationSignature operation signature of expression.
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param result result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractExpression(String name, String operationSignature, int expressionID, Node argument1, Node result) throws MatrixException {
+    public AbstractExpression(String expressionName, String operationSignature, int expressionID, Node argument1, Node result) throws MatrixException {
         if (argument1 == null) throw new MatrixException("First argument not defined.");
-        this.name = name;
+        this.expressionName = expressionName;
         this.operationSignature = operationSignature;
         this.expressionID = expressionID;
         this.argument1 = argument1;
@@ -87,8 +89,8 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @return name of expression.
      */
-    public String getName() {
-        return name;
+    public String getExpressionName() {
+        return expressionName;
     }
 
     /**
@@ -481,7 +483,7 @@ public abstract class AbstractExpression implements Serializable {
      * @return gradient prefix for argument1.
      */
     protected String getArgument1PrefixName() {
-        return getName() + ": " + getArgument1GradientName() + " = " + "" + getArgument1SumPrefix();
+        return getExpressionName() + ": " + getArgument1GradientName() + " = " + "" + getArgument1SumPrefix();
     }
 
     /**
@@ -520,7 +522,7 @@ public abstract class AbstractExpression implements Serializable {
      * @return node gradient prefix name.
      */
     protected String getNodeGradientPrefixName(Node node, boolean negateResult) {
-        return getName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
+        return getExpressionName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
     }
 
     /**

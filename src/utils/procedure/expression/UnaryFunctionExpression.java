@@ -17,12 +17,6 @@ import java.io.Serializable;
 public class UnaryFunctionExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Name of operation.
-     *
-     */
-    private static final String expressionName = "UNARY FUNCTION";
-
-    /**
      * Unary function type.
      *
      */
@@ -44,7 +38,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
-        super(expressionName, String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
+        super("UNARY_FUNCTION", String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
     }
@@ -81,7 +75,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Argument for operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Argument for operation not defined");
         result.setMatrix(index, unaryFunction.applyFunction(argument1.getMatrix(index)));
     }
 
@@ -99,7 +93,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         argument1.cumulateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
     }
 
@@ -109,7 +103,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void printExpression() {
         print();
-        System.out.println(getName() + ": " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + ": " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**

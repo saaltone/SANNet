@@ -141,7 +141,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      */
     protected void printBasicBinaryExpression() {
         print();
-        System.out.println(getName() + ": " + argument1.getName() + " " + getOperationSignature() + " " + argument2.getName() + " = " + result.getName());
+        System.out.println(getExpressionName() + ": " + argument1.getName() + " " + getOperationSignature() + " " + argument2.getName() + " = " + result.getName());
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
      */
     protected void printSpecificBinaryExpression() {
         print();
-        System.out.println(getName() + ": " + getOperationSignature() + "(" + argument1.getName() + ", " + " " + argument2.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + ": " + getOperationSignature() + "(" + argument1.getName() + ", " + " " + argument2.getName() + ") = " + result.getName());
     }
 
     /**

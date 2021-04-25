@@ -18,18 +18,6 @@ import java.io.Serializable;
 public class DivideExpression extends AbstractBinaryExpression implements Serializable {
 
     /**
-     * Name of expression.
-     *
-     */
-    private static final String expressionName = "DIVIDE";
-
-    /**
-     * Operation signature.
-     *
-     */
-    private static final String operationSignature = "/";
-
-    /**
      * Constructor for division operation.
      *
      * @param expressionID unique ID for expression.
@@ -39,7 +27,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DivideExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(expressionName, operationSignature, expressionID, argument1, argument2, result);
+        super("DIVIDE", "/", expressionID, argument1, argument2, result);
     }
 
     /**
@@ -56,7 +44,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
+        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         result.setMatrix(index, argument1.getMatrix(index).divide(argument2.getMatrix(index)));
     }
 
@@ -75,7 +63,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradient(int index) throws MatrixException, DynamicParamException {
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         argument1.cumulateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), false);
         argument2.cumulateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), true);
     }
@@ -93,8 +81,8 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      */
     public void printGradient() {
-        printArgument1Gradient(true, " " + operationSignature + " " + argument2.getName());
-        printArgument2Gradient(true, false, " * " + argument1.getName() + " " + operationSignature + " " + argument2.getName() + "^2");
+        printArgument1Gradient(true, " " + getOperationSignature() + " " + argument2.getName());
+        printArgument2Gradient(true, false, " * " + argument1.getName() + " " + getOperationSignature() + " " + argument2.getName() + "^2");
     }
 
 }

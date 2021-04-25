@@ -18,12 +18,6 @@ import java.io.Serializable;
 public class MeanExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Name of operation.
-     *
-     */
-    private static final String expressionName = "MEAN";
-
-    /**
      * True if calculation is done as multi matrix.
      *
      */
@@ -39,7 +33,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MeanExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
-        super(expressionName, expressionName, expressionID, argument1, result);
+        super("MEAN", "MEAN", expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -50,7 +44,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateExpression() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         result.setMultiIndex(false);
         result.setMatrix(argument1.getMatrices().mean());
     }
@@ -63,7 +57,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateExpression(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
         result.setMatrix(index, argument1.getMatrix(index).meanAsMatrix());
     }
 
@@ -74,7 +68,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateGradient() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         Matrix meanGradient = result.getGradient().multiply(1 / (double)argument1.size());
         for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, meanGradient, false);
     }
@@ -87,7 +81,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         Matrix meanGradient = result.getGradient(index).multiply(1 / (double)argument1.getMatrix(index).size());
         argument1.cumulateGradient(index, meanGradient, false);
     }
@@ -98,7 +92,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void printExpression() {
         print();
-        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**

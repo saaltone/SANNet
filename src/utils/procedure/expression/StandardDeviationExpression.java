@@ -22,12 +22,6 @@ import java.util.HashMap;
 public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Name of operation.
-     *
-     */
-    private static final String expressionName = "STANDARD DEVIATION";
-
-    /**
      * True if calculation is done as multi matrix.
      *
      */
@@ -62,7 +56,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException, DynamicParamException {
-        super(expressionName, expressionName, expressionID, argument1, result);
+        super("STANDARD_DEVIATION", "STANDARD_DEVIATION", expressionID, argument1, result);
         this.asMultiMatrix = asMultiMatrix;
     }
 
@@ -84,7 +78,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!asMultiMatrix) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(expressionName + ": Arguments for operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         mean = argument1.getMatrices().mean();
         Matrix standardDeviation = argument1.getMatrices().standardDeviation(mean);
         result.setMultiIndex(false);
@@ -99,7 +93,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void calculateExpression(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (argument1.getMatrix(index) == null) throw new MatrixException(expressionName + "Arguments for operation not defined");
+        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
         Matrix mean = argument1.getMatrix(index).meanAsMatrix();
         if (means == null) means = new HashMap<>();
         means.put(index, mean);
@@ -113,7 +107,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void calculateGradient() throws MatrixException {
         if (!asMultiMatrix) return;
-        if (result.getGradient() == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) {
             Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size() - 1).apply(sqrtFunction.getDerivative());
             argument1.cumulateGradient(index, result.getGradient().multiply(standardDeviationGradient), false);
@@ -128,7 +122,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
-        if (result.getGradient(index) == null) throw new MatrixException(expressionName + ": Result gradient not defined.");
+        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(means.get(index)).multiply(2 / (double)(result.getGradient(index).size() - 1)).apply(sqrtFunction.getDerivative());
         argument1.cumulateGradient(index, result.getGradient(index).multiply(standardDeviationGradient), false);
     }
@@ -139,7 +133,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void printExpression() {
         print();
-        System.out.println(getName() + "(" + argument1.getName() + ") = " + result.getName());
+        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
     }
 
     /**
