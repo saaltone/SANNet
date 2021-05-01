@@ -17,6 +17,20 @@ import java.util.HashMap;
 public interface Matrix {
 
     /**
+     * Sets name for matrix.
+     *
+     * @param name matrix name.
+     */
+    void setName(String name);
+
+    /**
+     * Returns name of matrix.
+     *
+     * @return name of matrix.
+     */
+    String getName();
+
+    /**
      * Defines interface to be used as part of lambda function to initialize Matrix.
      */
     interface Initializer {
@@ -74,6 +88,13 @@ public interface Matrix {
     void setInitializer(Initializer initializer);
 
     /**
+     * Returns initializer of matrix.
+     *
+     * @return initializer.
+     */
+    Matrix.Initializer getInitializer();
+
+    /**
      * Initializes matrix.
      *
      * @param initialization type of initialization defined in class Init.
@@ -88,20 +109,6 @@ public interface Matrix {
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
     void initialize(Initialization initialization, int inputs, int outputs);
-
-    /**
-     * Sets name for matrix.
-     *
-     * @param name matrix name.
-     */
-    void setName(String name);
-
-    /**
-     * Returns name of matrix.
-     *
-     * @return name of matrix.
-     */
-    String getName();
 
     /**
      * Returns true if matrix is scalar otherwise false.
@@ -236,6 +243,35 @@ public interface Matrix {
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     Matrix copy() throws MatrixException;
+
+    /**
+     * Slices current matrix by creating reference to existing matrix.
+     *
+     * @param startRow start row of slice.
+     * @param startColumn start column of slice.
+     * @param endRow  end row of slice.
+     * @param endColumn  end column of slice.
+     * @return sliced matrix.
+     * @throws MatrixException throws exception if slicing fails.
+     */
+    Matrix slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
+
+    /**
+     * Slices matrix.
+     *
+     * @param startRow start row of slice.
+     * @param startColumn start column of slice.
+     * @param endRow  end row of slice.
+     * @param endColumn  end column of slice.
+     * @throws MatrixException throws exception if slicing fails.
+     */
+    void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
+
+    /**
+     * Removes slicing of matrix.
+     *
+     */
+    void unslice();
 
     /**
      * Checks if this matrix and other matrix are equal in dimensions (rows x columns).
@@ -750,8 +786,9 @@ public interface Matrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @return sum of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double sum();
+    double sum() throws MatrixException;
 
     /**
      * Takes element wise cumulative sum of this matrix.<br>
@@ -767,8 +804,9 @@ public interface Matrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @return mean of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double mean();
+    double mean() throws MatrixException;
 
     /**
      * Takes mean of elements of this matrix.<br>
@@ -784,8 +822,9 @@ public interface Matrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @return variance of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double variance();
+    double variance() throws MatrixException;
 
     /**
      * Takes variance of elements of this matrix.<br>
@@ -802,8 +841,9 @@ public interface Matrix {
      *
      * @param mean mean value given as input.
      * @return variance of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double variance(double mean);
+    double variance(double mean) throws MatrixException;
 
     /**
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
@@ -811,16 +851,18 @@ public interface Matrix {
      *
      * @param mean mean value given as input.
      * @return variance of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix varianceAsMatrix(Matrix mean);
+    Matrix varianceAsMatrix(Matrix mean) throws MatrixException;
 
     /**
      * Takes standard deviation of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double standardDeviation();
+    double standardDeviation() throws MatrixException;
 
     /**
      * Takes standard deviation of elements of this matrix.<br>
@@ -838,8 +880,9 @@ public interface Matrix {
      *
      * @param mean mean value given as input.
      * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double standardDeviation(double mean);
+    double standardDeviation(double mean) throws MatrixException;
 
     /**
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
@@ -847,8 +890,9 @@ public interface Matrix {
      *
      * @param mean mean value given as input.
      * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix standardDeviationAsMatrix(Matrix mean);
+    Matrix standardDeviationAsMatrix(Matrix mean) throws MatrixException;
 
     /**
      * Takes cumulative p- norm (p is number equal or bigger than 1) of this matrix.<br>
@@ -856,8 +900,9 @@ public interface Matrix {
      *
      * @param p p value for norm.
      * @return norm of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double norm(int p);
+    double norm(int p) throws MatrixException;
 
     /**
      * Takes cumulative p- norm (p is number equal or bigger than 1) of this matrix.<br>
@@ -885,8 +930,9 @@ public interface Matrix {
      *
      * @param inplace if true matrix is normalized in place otherwise copy of normalized matrix is returned.
      * @return normalized matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-     Matrix normalize(boolean inplace);
+     Matrix normalize(boolean inplace) throws MatrixException;
 
     /**
      * Normalizes (scales) this matrix to new min and max values.<br>
@@ -915,48 +961,54 @@ public interface Matrix {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return minimum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double min();
+    double min() throws MatrixException;
 
     /**
      * Returns minimum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return minimum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix minAsMatrix();
+    Matrix minAsMatrix() throws MatrixException;
 
     /**
      * Returns argmin meaning row and column of matrix containing minimum value.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return array containing row and column in this order that points to minimum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    int[] argmin();
+    int[] argmin() throws MatrixException;
 
     /**
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return maximum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    double max();
+    double max() throws MatrixException;
 
     /**
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return maximum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix maxAsMatrix();
+    Matrix maxAsMatrix() throws MatrixException;
 
     /**
      * Returns argmax meaning row and column of matrix containing maximum value.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return array containing row and column in this order that points to maximum value of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    int[] argmax();
+    int[] argmax() throws MatrixException;
 
     /**
      * Returns softmax of this matrix.
@@ -1099,15 +1151,6 @@ public interface Matrix {
     Matrix convolve(Matrix filter) throws MatrixException;
 
     /**
-     * Calculates crosscorrelation between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @return calculated value of crosscorrelation.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix crosscorrelate(Matrix filter) throws MatrixException;
-
-    /**
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
@@ -1115,6 +1158,15 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     void convolve(Matrix filter, Matrix result) throws MatrixException;
+
+    /**
+     * Calculates crosscorrelation between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return calculated value of crosscorrelation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix crosscorrelate(Matrix filter) throws MatrixException;
 
     /**
      * Calculates crosscorrelate between this matrix and filter matrix.
@@ -1126,68 +1178,150 @@ public interface Matrix {
     void crosscorrelate(Matrix filter, Matrix result) throws MatrixException;
 
     /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return calculated value of Winograd convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix winogradConvolve(Matrix filter) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void winogradConvolve(Matrix filter, Matrix result) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void winogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param result calculated value of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void winogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
+
+    /**
      * Calculates gradient of convolution for output.
      *
      * @param filter filter for convolutional operator.
      * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix convolveInputGradient(Matrix filter);
+    Matrix convolveInputGradient(Matrix filter) throws MatrixException;
 
     /**
      * Calculates gradient of crosscorrelation for output.
      *
      * @param filter filter for crosscorrelation operator.
      * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix crosscorrelateInputGradient(Matrix filter);
+    Matrix crosscorrelateInputGradient(Matrix filter) throws MatrixException;
 
     /**
      * Calculates gradient of convolution for input.
      *
      * @param filter filter for convolutional operator.
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void convolveInputGradient(Matrix filter, Matrix inputGradient);
+    void convolveInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException;
 
     /**
      * Calculates gradient of crosscorrelation for input.
      *
      * @param filter filter for crosscorrelation operator.
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient);
+    void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException;
 
     /**
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
      * @return filter gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix convolveFilterGradient(Matrix input);
+    Matrix convolveFilterGradient(Matrix input) throws MatrixException;
 
     /**
      * Calculates gradient of crosscorrelation for filter.
      *
      * @param input input for crosscorrelation operator.
      * @return filter gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix crosscorrelateFilterGradient(Matrix input);
+    Matrix crosscorrelateFilterGradient(Matrix input) throws MatrixException;
 
     /**
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
      * @param filterGradient filter gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void convolveFilterGradient(Matrix input, Matrix filterGradient);
+    void convolveFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException;
 
     /**
      * Calculates gradient of crosscorrelation for filter.
      *
      * @param input input for crosscorrelation operator.
      * @param filterGradient filter gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient);
+    void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException;
 
     /**
      * Calculates max pooling operation for this matrix.
@@ -1212,16 +1346,18 @@ public interface Matrix {
      *
      * @param maxPos maximum positions for each row and col value.
      * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos);
+    Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates gradient for max pool operation.
      *
      * @param inputGradient input gradient.
      * @param maxPos maximum positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos);
+    void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates average pooling operation for this matrix.
@@ -1243,23 +1379,24 @@ public interface Matrix {
      * Calculates gradient of average pooling operation for this matrix.
      *
      * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix averagePoolGradient();
+    Matrix averagePoolGradient() throws MatrixException;
 
     /**
      * Calculates gradient of average pooling operation for this matrix.
      *
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void averagePoolGradient(Matrix inputGradient);
+    void averagePoolGradient(Matrix inputGradient) throws MatrixException;
 
     /**
      * Transposes matrix.
      *
      * @return new matrix but as transposed that is with flipped rows and columns.
-     * @throws MatrixException throws exception if transpose operation fails.
      */
-    Matrix transpose() throws MatrixException;
+    Matrix transpose();
 
     /**
      * Concatenates this and other matrix vertically.
@@ -1319,29 +1456,10 @@ public interface Matrix {
     /**
      * Returns if matrix has mask at specific position.
      *
-     * @param matrix matrix as input.
      * @param row specific row.
      * @param column specific column.
      * @return if true mask exists and is masked at specific position (row + column).
      */
-    boolean hasMaskAt(Matrix matrix, int row, int column);
-
-    /**
-     * Returns if matrix has mask at specific row.
-     *
-     * @param matrix matrix as input.
-     * @param row specific row.
-     * @return if true mask exists and is masked at specific row.
-     */
-    boolean hasRowMaskAt(Matrix matrix, int row);
-
-    /**
-     * Returns if matrix has mask at specific column.
-     *
-     * @param matrix matrix as input.
-     * @param column specific column.
-     * @return if true mask exists and is masked at specific column.
-     */
-    boolean hasColumnMaskAt(Matrix matrix, int column);
+    boolean hasMaskAt(int row, int column);
 
 }
