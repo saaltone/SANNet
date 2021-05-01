@@ -87,6 +87,8 @@ public class ReadMIDI {
                                 result.get(4).put(result.get(4).size(), new MMatrix(noteData3));
                                 previousTick = tick;
                             }
+                            default -> {
+                            }
                         }
                     }
                 }
@@ -187,6 +189,7 @@ public class ReadMIDI {
         Sequence sequence = new Sequence(divisionType, resolution);
         Track track = sequence.createTrack();
         long currentTick = 0;
+        boolean firstEntry = true;
         for (Integer index : dataKey.keySet()) {
             Matrix record1 = dataKey.get(index).get(0);
             Matrix record2 = dataVelocity.get(index).get(0);
@@ -208,6 +211,35 @@ public class ReadMIDI {
                     maxData2Value = currentValue;
                     maxData2Pos = pos;
                 }
+            }
+            if (firstEntry) {
+                ShortMessage shortMessage;
+                MidiEvent midiEvent;
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 0);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 7, 127);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 10, 58);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 1, 10);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 91, 65);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                shortMessage = new ShortMessage();
+                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 93, 110);
+                midiEvent = new MidiEvent(shortMessage, currentTick);
+                track.add(midiEvent);
+                firstEntry = false;
             }
             ShortMessage shortMessage = new ShortMessage();
             shortMessage.setMessage((maxData1Value >0 && maxData2Value > 0) ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF, maxData1Pos, maxData2Pos);
@@ -273,11 +305,12 @@ public class ReadMIDI {
      *
      * @param sequence sequence
      * @param fileName file
+     * @param version version number of file
      * @throws IOException throw exception is writing to file fails.
      */
-    public static void writeMIDI(Sequence sequence, String fileName) throws IOException {
+    public static void writeMIDI(Sequence sequence, String fileName, int version) throws IOException {
         int midiType = MidiSystem.getMidiFileTypes(sequence)[0];
-        MidiSystem.write(sequence, midiType, new File(fileName));
+        MidiSystem.write(sequence, midiType, new File(fileName + "_" + version + ".mid"));
     }
 
 }
