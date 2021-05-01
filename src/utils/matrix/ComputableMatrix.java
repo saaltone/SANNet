@@ -12,6 +12,18 @@ import java.util.Random;
 public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
+     * Initializer variable.
+     *
+     */
+    private Matrix.Initializer initializer;
+
+    /**
+     * If true matrix is treated as scalar (1x1) matrix otherwise as normal matrix.
+     *
+     */
+    private final boolean isScalar;
+
+    /**
      * Stride size for convolutional and pooling operations.
      *
      */
@@ -47,7 +59,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param isScalar true if matrix is scalar (size 1x1).
      */
     protected ComputableMatrix(boolean isScalar) {
-        super(isScalar);
+        this.isScalar = isScalar;
     }
 
     /**
@@ -57,7 +69,211 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param name name if matrix.
      */
     protected ComputableMatrix(boolean isScalar, String name) {
-        super(isScalar, name);
+        super(name);
+        this.isScalar = isScalar;
+    }
+
+    /**
+     * Returns value from uniform distribution within -range to +range.
+     *
+     * @param range range of the distribution.
+     * @return random value drawn from the distribution.
+     */
+    private double uniform(double range) {
+        return (2 * random.nextDouble()- 1)  * range;
+    }
+
+    /**
+     * Returns value from normal distribution defined by standard deviation.
+     *
+     * @param standardDeviation standard deviation of normal distribution.
+     * @return random value drawn from the distribution.
+     */
+    private double normal(double standardDeviation) {
+        return random.nextGaussian() * standardDeviation;
+    }
+
+    /**
+     * Sets initializer of matrix.
+     *
+     * @param initializer initializer.
+     */
+    public void setInitializer(Matrix.Initializer initializer) {
+        this.initializer = initializer;
+    }
+
+    /**
+     * Returns initializer of matrix.
+     *
+     * @return initializer.
+     */
+    public Matrix.Initializer getInitializer() {
+        return initializer;
+    }
+
+    /**
+     * Initializes matrix.
+     *
+     * @param initialization type of initialization defined in class Init.
+     */
+    public void initialize(Initialization initialization) {
+        initialize(initialization, 0, 0);
+    }
+
+    /**
+     * Initializes matrix.
+     *
+     * @param initialization type of initialization defined in class Init.
+     * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
+     * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
+     */
+    public void initialize(Initialization initialization, int inputs, int outputs) {
+        switch (initialization) {
+            case ZERO:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> 0;
+                break;
+            case ONE:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> 1;
+                initialize(initializer);
+                break;
+            case RANDOM:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> random.nextDouble();
+                initialize(initializer);
+                break;
+            case IDENTITY:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0;
+                initialize(initializer);
+                break;
+            case NORMAL_XAVIER:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(getRows() + getColumns())));
+                initialize(initializer);
+                break;
+            case UNIFORM_XAVIER:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows() + getColumns())));
+                initialize(initializer);
+                break;
+            case NORMAL_HE:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double)getRows())));
+                initialize(initializer);
+                break;
+            case UNIFORM_HE:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows())));
+                initialize(initializer);
+                break;
+            case NORMAL_LECUN:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(getRows())));
+                initialize(initializer);
+                break;
+            case UNIFORM_LECUN:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(getRows())));
+                initialize(initializer);
+                break;
+            case NORMAL_XAVIER_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs + inputs)));
+                initialize(initializer);
+                break;
+            case UNIFORM_XAVIER_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs + inputs)));
+                initialize(initializer);
+                break;
+            case NORMAL_HE_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs)));
+                initialize(initializer);
+                break;
+            case UNIFORM_HE_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs)));
+                initialize(initializer);
+                break;
+            case NORMAL_LECUN_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(outputs)));
+                initialize(initializer);
+                break;
+            case UNIFORM_LECUN_CONV:
+                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(outputs)));
+                initialize(initializer);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Returns true if matrix is scalar otherwise false.
+     *
+     * @return true if matrix is scalar otherwise false.
+     */
+    public boolean isScalar() {
+        return isScalar;
+    }
+
+    /**
+     * Initializes matrix with given initializer operation.
+     *
+     * @param initializer initializer operation.
+     */
+    public void initialize(Matrix.Initializer initializer) {
+        for (int row = 0; row < getRows(); row++) {
+            for (int col = 0; col < getColumns(); col++) {
+                setValue(row, col, initializer.value(row, col));
+            }
+        }
+    }
+
+    /**
+     * Initializes matrix with given value.
+     *
+     * @param value initialization value.
+     */
+    public void initializeToValue(double value) {
+        for (int row = 0; row < getRows(); row++) {
+            for (int col = 0; col < getColumns(); col++) {
+                setValue(row, col, value);
+            }
+        }
+    }
+
+    /**
+     * Increment value of specific row and column.
+     *
+     * @param row row of value to be added.
+     * @param column column of value to be added.
+     * @param value to be added.
+     */
+    public void incrementByValue(int row, int column, double value) {
+        setValue(row, column, getValue(row, column) + value);
+    }
+
+    /**
+     * Decrease value of specific row and column.
+     *
+     * @param row row of value to be decreased.
+     * @param column column of value to be decreased.
+     * @param value to be decreased.
+     */
+    public void decrementByValue(int row, int column, double value) {
+        setValue(row, column, getValue(row, column) - value);
+    }
+
+    /**
+     * Multiply value of specific row and column.
+     *
+     * @param row row of value to be multiplied.
+     * @param column column of value to be multiplied.
+     * @param value to be multiplied.
+     */
+    public void multiplyByValue(int row, int column, double value) {
+        setValue(row, column, getValue(row, column) * value);
+    }
+
+    /**
+     * Divide value of specific row and column.
+     *
+     * @param row row of value to be divided.
+     * @param column column of value to be divided.
+     * @param value to be divided.
+     */
+    public void divideByValue(int row, int column, double value) {
+        setValue(row, column, getValue(row, column) / value);
     }
 
     /**
@@ -179,15 +395,16 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies matrix operation.
      *
      * @param matrixOperation matrix operation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyMatrixOperation(MatrixOperation matrixOperation) {
+    public void applyMatrixOperation(MatrixOperation matrixOperation) throws MatrixException {
         final int rows = matrixOperation.getRows();
         final int columns = matrixOperation.getColumns();
         final Matrix other = matrixOperation.getAnother();
         final boolean provideValue = matrixOperation.getProvideValue();
         final int rowStride = stride;
         final int columnStride = stride;
-        if (!hasMask(other)) {
+        if (!matrixOperation.hasMask(this, other)) {
             for (int row = 0; row < rows; row += rowStride) {
                 for (int column = 0; column < columns; column += columnStride) {
                     matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
@@ -196,11 +413,9 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         }
         else {
             for (int row = 0; row < rows; row += rowStride) {
-                if (!hasRowMaskAt(row, other)) {
-                    for (int column = 0; column < columns; column += columnStride) {
-                        if (!hasMaskAt(row, column, other) && !hasColumnMaskAt(column, other)) {
-                            matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
-                        }
+                for (int column = 0; column < columns; column += columnStride) {
+                    if (!matrixOperation.hasMaskAt(row, column, this, other)) {
+                        matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
                     }
                 }
             }
@@ -208,56 +423,13 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Check if matrix and optionally other matrix has mask.
-     *
-     * @param other other matrix.
-     * @return returns true if this or other matrix has mask.
-     */
-    private boolean hasMask(Matrix other) {
-        return getMask() != null || (other != null && other.getMask() != null);
-    }
-
-    /**
-     * Check if matrix and optionally other matrix has mask at specific row and column.
-     *
-     * @param row row.
-     * @param column column.
-     * @param other other matrix.
-     * @return returns true if this or other matrix has mask at specific row and column.
-     */
-    private boolean hasMaskAt(int row, int column, Matrix other) {
-        return hasMaskAt(this, row, column) || (other != null && hasMaskAt(other, row, column));
-    }
-
-    /**
-     * Check if matrix and optionally other matrix has mask at specific row.
-     *
-     * @param row row.
-     * @param other other matrix.
-     * @return returns true if this or other matrix has mask at specific row.
-     */
-    private boolean hasRowMaskAt(int row, Matrix other) {
-        return hasRowMaskAt(this, row) || (other != null && hasRowMaskAt(other, row));
-    }
-
-    /**
-     * Check if matrix and optionally other matrix has mask at specific column.
-     *
-     * @param column column.
-     * @param other other matrix.
-     * @return returns true if this or other matrix has mask at specific column.
-     */
-    private boolean hasColumnMaskAt(int column, Matrix other) {
-        return hasColumnMaskAt(this, column) || (other != null && hasColumnMaskAt(other, column));
-    }
-
-    /**
      * Calculates sum of matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return sum of matrix.
      */
-    public double sum() {
+    public double sum() throws MatrixException {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(sumMatrixOperation);
         return sumMatrixOperation.getSum();
@@ -267,9 +439,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates mean of matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return mean of matrix.
      */
-    public double mean() {
+    public double mean() throws MatrixException {
         SumMatrixOperation sumMatrixOperation = new SumMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(sumMatrixOperation);
         return sumMatrixOperation.getMean();
@@ -280,9 +453,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param mean mean value given as input.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return variance of matrix.
      */
-    public double variance(double mean) {
+    public double variance(double mean) throws MatrixException {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(getRows(), getColumns(), mean);
         applyMatrixOperation(varianceMatrixOperation);
         return varianceMatrixOperation.getVariance();
@@ -293,9 +467,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @param mean mean value given as input.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return standard deviation of matrix.
      */
-    public double standardDeviation(double mean) {
+    public double standardDeviation(double mean) throws MatrixException {
         VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(getRows(), getColumns(), mean);
         applyMatrixOperation(varianceMatrixOperation);
         return varianceMatrixOperation.getStandardDeviation();
@@ -306,9 +481,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @param p p value for norm.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return norm of matrix.
      */
-    public double norm(int p) {
+    public double norm(int p) throws MatrixException {
         NormMatrixOperation normMatrixOperation = new NormMatrixOperation(getRows(), getColumns(), p);
         applyMatrixOperation(normMatrixOperation);
         return normMatrixOperation.getNorm();
@@ -319,9 +495,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if matrix is masked.<br>
      *
      * @param inplace if true matrix is normalized in place otherwise copy of normalized matrix is returned.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return normalized matrix.
      */
-    public Matrix normalize(boolean inplace) {
+    public Matrix normalize(boolean inplace) throws MatrixException {
         Matrix result = inplace ? this : getNewMatrix();
         NormalizeMatrixOperation normalizeMatrixOperation = new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance());
         normalizeMatrixOperation.setResult(result);
@@ -333,9 +510,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns minimum value of matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return minimum value of matrix.
      */
-    public double min() {
+    public double min() throws MatrixException {
         MinMatrixOperation minMatrixOperation = new MinMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(minMatrixOperation);
         return minMatrixOperation.getValue();
@@ -345,9 +523,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns argmin meaning row and column of matrix containing minimum value.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return array containing row and column in this order that points to minimum value of matrix.
      */
-    public int[] argmin() {
+    public int[] argmin() throws MatrixException {
         MinMatrixOperation minMatrixOperation = new MinMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(minMatrixOperation);
         int[] result = new int[2];
@@ -360,9 +539,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns maximum value of matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return maximum value of matrix.
      */
-    public double max() {
+    public double max() throws MatrixException {
         MaxMatrixOperation maxMatrixOperation = new MaxMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(maxMatrixOperation);
         return maxMatrixOperation.getValue();
@@ -372,9 +552,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns argmax meaning row and column of matrix containing maximum value.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      * @return array containing row and column in this order that points to maximum value of matrix.
      */
-    public int[] argmax() {
+    public int[] argmax() throws MatrixException {
         MaxMatrixOperation maxMatrixOperation = new MaxMatrixOperation(getRows(), getColumns());
         applyMatrixOperation(maxMatrixOperation);
         int[] result = new int[2];
@@ -538,9 +719,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param result calculated result of convolution.
      */
-    protected void applyConvolve(Matrix filter, Matrix result) {
+    protected void applyConvolve(Matrix filter, Matrix result) throws MatrixException {
         ConvolutionMatrixOperation convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), dilation);
         convolutionMatrixOperation.setInput(this);
         convolutionMatrixOperation.setFilter(filter);
@@ -552,9 +734,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param result calculated result of convolution.
      */
-    protected void applyCrosscorrelate(Matrix filter, Matrix result) {
+    protected void applyCrosscorrelate(Matrix filter, Matrix result) throws MatrixException {
         CrosscorrelationMatrixOperation crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), dilation);
         crosscorrelationMatrixOperation.setInput(this);
         crosscorrelationMatrixOperation.setFilter(filter);
@@ -563,12 +746,68 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @param result calculated result of convolution.
+     */
+    protected void applyWinogradConvolve(Matrix filter, Matrix result) throws MatrixException {
+        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns());
+        winogradConvolutionMatrixOperation.setInput(this);
+        winogradConvolutionMatrixOperation.setFilter(filter);
+        winogradConvolutionMatrixOperation.setResult(result);
+        applyMatrixOperation(winogradConvolutionMatrixOperation);
+    }
+
+    /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated result of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void applyWinogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
+        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT, G, GT);
+        winogradConvolutionMatrixOperation.setInput(this);
+        winogradConvolutionMatrixOperation.setFilter(filter);
+        winogradConvolutionMatrixOperation.setResult(result);
+        applyMatrixOperation(winogradConvolutionMatrixOperation);
+    }
+
+    /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param result calculated result of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void applyWinogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
+        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT);
+        winogradConvolutionMatrixOperation.setInput(this);
+        winogradConvolutionMatrixOperation.setFilter(preprocessedFilter);
+        winogradConvolutionMatrixOperation.setResult(result);
+        applyMatrixOperation(winogradConvolutionMatrixOperation);
+    }
+
+    /**
      * Calculates gradient of convolution for input.
      *
      * @param filter filter for convolution operator.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param inputGradient input gradient.
      */
-    public void convolveInputGradient(Matrix filter, Matrix inputGradient) {
+    public void convolveInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
         ConvolutionInputGradientMatrixOperation convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), dilation);
         convolutionInputGradientMatrixOperation.setFilter(filter);
         convolutionInputGradientMatrixOperation.setInputGradient(inputGradient);
@@ -579,9 +818,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of crosscorrelation for input.
      *
      * @param filter filter for crosscorrelation operator.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param inputGradient input gradient.
      */
-    public void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) {
+    public void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
         CrosscorrelationInputGradientMatrixOperation crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), dilation);
         crosscorrelationInputGradientMatrixOperation.setFilter(filter);
         crosscorrelationInputGradientMatrixOperation.setInputGradient(inputGradient);
@@ -592,9 +832,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of convolution for filter.
      *
      * @param input input for convolutional operator.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param filterGradient filter gradient.
      */
-    public void convolveFilterGradient(Matrix input, Matrix filterGradient) {
+    public void convolveFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
         ConvolutionFilterGradientMatrixOperation convolutionFilterGradientMatrixOperation = new ConvolutionFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), dilation);
         convolutionFilterGradientMatrixOperation.setInput(input);
         convolutionFilterGradientMatrixOperation.setFilterGradient(filterGradient);
@@ -605,9 +846,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of crosscorrelation for filter.
      *
      * @param input input for crosscorrelation operator.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param filterGradient filter gradient.
      */
-    public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) {
+    public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
         CrosscorrelationFilterGradientMatrixOperation crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), dilation);
         crosscorrelationFilterGradientMatrixOperation.setInput(input);
         crosscorrelationFilterGradientMatrixOperation.setFilterGradient(filterGradient);
@@ -618,9 +860,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates max pooling operation for matrix and returns max arguments.
      *
      * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param maxPos maximum position for each result row and column value.
      */
-    protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) {
+    protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException {
         MaxPoolMatrixOperation maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize());
         maxPoolMatrixOperation.setInput(this);
         maxPoolMatrixOperation.setResult(result);
@@ -632,9 +875,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient for max pool operation.
      *
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @param maxPos maximum position for each result row and column value.
      */
-    public void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) {
+    public void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) throws MatrixException {
         MaxPoolGradientMatrixOperation maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns());
         maxPoolGradientMatrixOperation.setInputGradient(inputGradient);
         maxPoolGradientMatrixOperation.setMaxPos(maxPos);
@@ -645,8 +889,9 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates average pooling operation for matrix.
      *
      * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void applyAveragePool(Matrix result) {
+    protected void applyAveragePool(Matrix result) throws MatrixException {
         AveragePoolMatrixOperation averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), getFilterRowSize(), getFilterColumnSize());
         averagePoolMatrixOperation.setInput(this);
         averagePoolMatrixOperation.setResult(result);
@@ -657,8 +902,9 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Calculates gradient of average pooling operation for matrix.
      *
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void averagePoolGradient(Matrix inputGradient) {
+    public void averagePoolGradient(Matrix inputGradient) throws MatrixException {
         AveragePoolGradientMatrixOperation averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize());
         averagePoolGradientMatrixOperation.setInputGradient(inputGradient);
         applyMatrixOperation(averagePoolGradientMatrixOperation);
