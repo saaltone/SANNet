@@ -121,8 +121,8 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1, asConvolution = false");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1, asConvolution = false");
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1, asConvolution = false, asWinogradConvolution = false");
+        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1, asConvolution = false, asWinogradConvolution = false");
         neuralNetwork.addHiddenLayer(LayerType.POOLING, "filterSize = 2, stride = 1, avgPool = false");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
