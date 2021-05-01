@@ -6,7 +6,6 @@ import utils.procedure.ProcedureFactory;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Random;
 
 /**
  * Abstract class that implements common operations for matrices.<br>
@@ -18,22 +17,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private static final long serialVersionUID = 4372639167186260605L;
 
     /**
-     * Initializer variable.
-     *
-     */
-    private Matrix.Initializer initializer;
-
-    /**
      * Reference to mask of matrix. If null mask is not used.
      *
      */
     private Mask mask;
-
-    /**
-     * If true matrix is treated as scalar (1x1) matrix otherwise as normal matrix.
-     *
-     */
-    private final boolean isScalar;
 
     /**
      * Procedure factory reference for matrix.
@@ -55,12 +42,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private boolean regularize = false;
 
     /**
-     * Random function for matrix class.
-     *
-     */
-    private final Random random = new Random();
-
-    /**
      * Name of matrix.
      *
      */
@@ -69,151 +50,17 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Constructor for matrix.
      *
-     * @param isScalar true if matrix is scalar (size 1x1).
      */
-    protected AbstractMatrix(boolean isScalar) {
-        this.isScalar = isScalar;
+    protected AbstractMatrix() {
     }
 
     /**
      * Constructor for matrix.
      *
-     * @param isScalar true if matrix is scalar (size 1x1).
      * @param name name if matrix.
      */
-    protected AbstractMatrix(boolean isScalar, String name) {
-        this(isScalar);
+    protected AbstractMatrix(String name) {
         this.name = name;
-    }
-
-    /**
-     * Function used to reinitialize matrix and it's mask.
-     *
-     */
-    public void reset() {
-        resetMatrix();
-        if (mask != null) mask.clear();
-    }
-
-    /**
-     * Resets matrix.
-     *
-     */
-    protected abstract void resetMatrix();
-
-    /**
-     * Returns value from uniform distribution within -range to +range.
-     *
-     * @param range range of the distribution.
-     * @return random value drawn from the distribution.
-     */
-    private double uniform(double range) {
-        return (2 * random.nextDouble()- 1)  * range;
-    }
-
-    /**
-     * Returns value from normal distribution defined by standard deviation.
-     *
-     * @param standardDeviation standard deviation of normal distribution.
-     * @return random value drawn from the distribution.
-     */
-    private double normal(double standardDeviation) {
-        return random.nextGaussian() * standardDeviation;
-    }
-
-    /**
-     * Sets initializer of matrix.
-     *
-     * @param initializer initializer.
-     */
-    public void setInitializer(Matrix.Initializer initializer) {
-        this.initializer = initializer;
-    }
-
-    /**
-     * Initializes matrix.
-     *
-     * @param initialization type of initialization defined in class Init.
-     */
-    public void initialize(Initialization initialization) {
-        initialize(initialization, 0, 0);
-    }
-
-    /**
-     * Initializes matrix.
-     *
-     * @param initialization type of initialization defined in class Init.
-     * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
-     * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
-     */
-    public void initialize(Initialization initialization, int inputs, int outputs) {
-        switch (initialization) {
-            case ZERO:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> 0;
-                break;
-            case ONE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> 1;
-                initialize(initializer);
-                break;
-            case RANDOM:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> random.nextDouble();
-                initialize(initializer);
-                break;
-            case IDENTITY:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0;
-                initialize(initializer);
-                break;
-            case NORMAL_XAVIER:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(getRows() + getColumns())));
-                initialize(initializer);
-                break;
-            case UNIFORM_XAVIER:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows() + getColumns())));
-                initialize(initializer);
-                break;
-            case NORMAL_HE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double)getRows())));
-                initialize(initializer);
-                break;
-            case UNIFORM_HE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows())));
-                initialize(initializer);
-                break;
-            case NORMAL_LECUN:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(getRows())));
-                initialize(initializer);
-                break;
-            case UNIFORM_LECUN:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(getRows())));
-                initialize(initializer);
-                break;
-            case NORMAL_XAVIER_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs + inputs)));
-                initialize(initializer);
-                break;
-            case UNIFORM_XAVIER_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs + inputs)));
-                initialize(initializer);
-                break;
-            case NORMAL_HE_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs)));
-                initialize(initializer);
-                break;
-            case UNIFORM_HE_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs)));
-                initialize(initializer);
-                break;
-            case NORMAL_LECUN_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(outputs)));
-                initialize(initializer);
-                break;
-            case UNIFORM_LECUN_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(outputs)));
-                initialize(initializer);
-                break;
-            default:
-                break;
-        }
     }
 
     /**
@@ -235,83 +82,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns true if matrix is scalar otherwise false.
+     * Function used to reinitialize matrix and it's mask.
      *
-     * @return true if matrix is scalar otherwise false.
      */
-    public boolean isScalar() {
-        return isScalar;
+    public void reset() {
+        resetMatrix();
+        if (mask != null) mask.clear();
     }
 
     /**
-     * Initializes matrix with given initializer operation.
+     * Resets matrix.
      *
-     * @param initializer initializer operation.
      */
-    public void initialize(Matrix.Initializer initializer) {
-        for (int row = 0; row < getRows(); row++) {
-            for (int col = 0; col < getColumns(); col++) {
-                setValue(row, col, initializer.value(row, col));
-            }
-        }
-    }
-
-    /**
-     * Initializes matrix with given value.
-     *
-     * @param value initialization value.
-     */
-    public void initializeToValue(double value) {
-        for (int row = 0; row < getRows(); row++) {
-            for (int col = 0; col < getColumns(); col++) {
-                setValue(row, col, value);
-            }
-        }
-    }
-
-    /**
-     * Increment value of specific row and column.
-     *
-     * @param row row of value to be added.
-     * @param column column of value to be added.
-     * @param value to be added.
-     */
-    public void incrementByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) + value);
-    }
-
-    /**
-     * Decrease value of specific row and column.
-     *
-     * @param row row of value to be decreased.
-     * @param column column of value to be decreased.
-     * @param value to be decreased.
-     */
-    public void decrementByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) - value);
-    }
-
-    /**
-     * Multiply value of specific row and column.
-     *
-     * @param row row of value to be multiplied.
-     * @param column column of value to be multiplied.
-     * @param value to be multiplied.
-     */
-    public void multiplyByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) * value);
-    }
-
-    /**
-     * Divide value of specific row and column.
-     *
-     * @param row row of value to be divided.
-     * @param column column of value to be divided.
-     * @param value to be divided.
-     */
-    public void divideByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) / value);
-    }
+    protected abstract void resetMatrix();
 
     /**
      * Creates new matrix with object reference to the matrix data of this matrix.
@@ -324,7 +107,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         // Make shallow copy of matrix leaving references internal objects which are shared.
         try {
             newMatrix = (Matrix)super.clone();
-            newMatrix.setInitializer(initializer);
+            newMatrix.setInitializer(getInitializer());
             if (getMask() != null) newMatrix.setMask(getMask());
         } catch (CloneNotSupportedException exception) {
             throw new MatrixException("Cloning of matrix failed.");
@@ -343,13 +126,29 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         // Make deep copy of matrix.
         try {
             newMatrix = (Matrix)super.clone();
-            newMatrix.setInitializer(initializer);
+            newMatrix.setInitializer(getInitializer());
             newMatrix.copyMatrixData(this); // Copy matrix data
             if (getMask() != null) newMatrix.setMask(getMask().copy());
         } catch (CloneNotSupportedException exception) {
             throw new MatrixException("Cloning of matrix failed.");
         }
         return newMatrix;
+    }
+
+    /**
+     * Slices current matrix.
+     *
+     * @param startRow start row of slice.
+     * @param startColumn start column of slice.
+     * @param endRow  end row of slice.
+     * @param endColumn  end column of slice.
+     * @return sliced matrix.
+     * @throws MatrixException throws exception if slicing fails.
+     */
+    public Matrix slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
+        Matrix referenceMatrix = reference();
+        referenceMatrix.sliceAt(startRow, startColumn, endRow, endColumn);
+        return referenceMatrix;
     }
 
     /**
@@ -832,7 +631,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.POSITIVE_INFINITY);
+            applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2);
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
     }
@@ -1092,7 +891,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @return variance of matrix.
      */
-    public double variance() {
+    public double variance() throws MatrixException {
         return variance(mean());
     }
 
@@ -1121,7 +920,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param mean mean value given as input.
      * @return variance of matrix.
      */
-    public Matrix varianceAsMatrix(Matrix mean) {
+    public Matrix varianceAsMatrix(Matrix mean) throws MatrixException {
         return constantAsMatrix(variance(mean.getValue(0, 0)));
     }
 
@@ -1130,8 +929,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double standardDeviation() {
+    public double standardDeviation() throws MatrixException {
         return standardDeviation(mean());
     }
 
@@ -1160,8 +960,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param mean mean value given as input.
      * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix standardDeviationAsMatrix(Matrix mean) {
+    public Matrix standardDeviationAsMatrix(Matrix mean) throws MatrixException {
         return constantAsMatrix(standardDeviation(mean.getValue(0, 0)));
     }
 
@@ -1231,7 +1032,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @return minimum value of matrix.
      */
-    public Matrix minAsMatrix() {
+    public Matrix minAsMatrix() throws MatrixException {
         return constantAsMatrix(min());
     }
 
@@ -1241,7 +1042,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @return maximum value of matrix.
      */
-    public Matrix maxAsMatrix() {
+    public Matrix maxAsMatrix() throws MatrixException {
         return constantAsMatrix(max());
     }
 
@@ -1351,6 +1152,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param result calculated result of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
+    protected abstract void applyConvolve(Matrix filter, Matrix result) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated result of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
     public void crosscorrelate(Matrix filter, Matrix result) throws MatrixException {
         if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyCrosscorrelate(filter, result);
         else {
@@ -1363,20 +1173,163 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     */
-    protected abstract void applyConvolve(Matrix filter, Matrix result);
-
-    /**
      * Calculates crosscorrelation between this matrix and filter matrix.
      *
      * @param filter filter matrix.
      * @param result calculated result of crosscorrelation.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyCrosscorrelate(Matrix filter, Matrix result);
+    protected abstract void applyCrosscorrelate(Matrix filter, Matrix result) throws MatrixException;
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix winogradConvolve(Matrix filter) throws MatrixException {
+        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        winogradConvolve(filter, result);
+        return result;
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void winogradConvolve(Matrix filter, Matrix result) throws MatrixException {
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result);
+        else {
+            synchronizeProcedureFactory(filter);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            applyWinogradConvolve(filter, result);
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+        }
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
+        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        winogradConvolve(filter, result, A, AT, C, CT, G, GT);
+        return result;
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated value of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void winogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
+        else {
+            synchronizeProcedureFactory(filter);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+        }
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @return calculated value of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
+        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        winogradConvolve(preprocessedFilter, result, A, AT, C, CT);
+        return result;
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param result calculated value of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void winogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
+        if (!hasProcedureFactory() && !preprocessedFilter.hasProcedureFactory()) applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
+        else {
+            synchronizeProcedureFactory(preprocessedFilter);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+        }
+    }
+
+    /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated result of convolution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract void applyWinogradConvolve(Matrix filter, Matrix result) throws MatrixException;
+
+    /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @param result calculated result of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @param G G matrix
+     * @param GT G transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract void applyWinogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
+
+    /**
+     * Calculates Winograd convolution between this matrix and filter matrix.
+     *
+     * @param preprocessedFilter preprocessed filter matrix.
+     * @param result calculated result of convolution.
+     * @param A A matrix
+     * @param AT A transposed matrix
+     * @param C C matrix
+     * @param CT C transposed matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract void applyWinogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
 
     /**
      * Calculates gradient of convolution for input.
@@ -1384,7 +1337,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param filter filter for convolutional operator.
      * @return input gradient.
      */
-    public Matrix convolveInputGradient(Matrix filter) {
+    public Matrix convolveInputGradient(Matrix filter) throws MatrixException {
         Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         convolveInputGradient(filter, inputGradient);
         return inputGradient;
@@ -1396,7 +1349,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param filter filter for crosscorrelation operator.
      * @return input gradient.
      */
-    public Matrix crosscorrelateInputGradient(Matrix filter) {
+    public Matrix crosscorrelateInputGradient(Matrix filter) throws MatrixException {
         Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         crosscorrelateInputGradient(filter, inputGradient);
         return inputGradient;
@@ -1408,7 +1361,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param input input for convolutional operator.
      * @return filter gradient.
      */
-    public Matrix convolveFilterGradient(Matrix input) {
+    public Matrix convolveFilterGradient(Matrix input) throws MatrixException {
         Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
         convolveFilterGradient(input, filterGradient);
         return filterGradient;
@@ -1420,7 +1373,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param input input for crosscorrelation operator.
      * @return filter gradient.
      */
-    public Matrix crosscorrelateFilterGradient(Matrix input) {
+    public Matrix crosscorrelateFilterGradient(Matrix input) throws MatrixException {
         Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
         crosscorrelateFilterGradient(input, filterGradient);
         return filterGradient;
@@ -1461,16 +1414,18 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param result result matrix.
      * @param maxPos maximum positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos);
+    protected abstract void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates gradient of max pooling operation for this matrix.
      *
      * @param maxPos maximum positions for each row and col value.
      * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) {
+    public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) throws MatrixException {
         Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         maxPoolGradient(inputGradient, maxPos);
         return inputGradient;
@@ -1508,15 +1463,16 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates average pooling operation for this matrix.
      *
      * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyAveragePool(Matrix inputGradient);
+    protected abstract void applyAveragePool(Matrix inputGradient) throws MatrixException;
 
     /**
      * Calculates gradient of average pooling operation for this matrix.
      *
      * @return input gradient.
      */
-    public Matrix averagePoolGradient() {
+    public Matrix averagePoolGradient() throws MatrixException {
         Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         averagePoolGradient(inputGradient);
         return inputGradient;
@@ -1526,16 +1482,23 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Transposes matrix.
      *
      * @return new matrix but as transposed with flipped rows and columns.
-     * @throws MatrixException throws exception if transpose operation fails.
      */
-    public Matrix transpose() throws MatrixException {
+    public Matrix transpose() {
         Matrix transposedMatrix = getNewMatrix(true);
         for (int row = 0; row < getRows(); row++) {
             for (int column = 0; column < getColumns(); column++) {
                 transposedMatrix.setValue(column, row, getValue(row, column));
             }
         }
-        if (getMask() != null) transposedMatrix.setMask(getMask().transpose());
+        if (getMask() != null) {
+            transposedMatrix.setMask();
+            Mask transposedMask = transposedMatrix.getMask();
+            for (int row = 0; row < getRows(); row++) {
+                for (int column = 0; column < getColumns(); column++) {
+                    if (hasMaskAt(row, column)) transposedMask.setMask(column, row, true);
+                }
+            }
+        }
         return transposedMatrix;
     }
 
@@ -1647,35 +1610,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Checks if matrix has mask at specific position.
      *
-     * @param matrix matrix as input.
      * @param row specific row.
      * @param column specific column.
      * @return if true mask exists and is masked at specific position (row + column).
      */
-    public boolean hasMaskAt(Matrix matrix, int row, int column) {
-        return matrix.getMask() != null && matrix.getMask().getMask(row, column);
-    }
-
-    /**
-     * Checks if matrix has mask at specific row.
-     *
-     * @param matrix matrix as input.
-     * @param row specific row.
-     * @return if true mask exists and is masked at specific row.
-     */
-    public boolean hasRowMaskAt(Matrix matrix, int row) {
-        return matrix.getMask() == null || matrix.getMask().getRowMask(row);
-    }
-
-    /**
-     * Checks if matrix has mask at specific column.
-     *
-     * @param matrix matrix as input.
-     * @param column specific column.
-     * @return if true mask exists and is masked at specific column.
-     */
-    public boolean hasColumnMaskAt(Matrix matrix, int column) {
-        return matrix.getMask() == null || matrix.getMask().getColumnMask(column);
+    public boolean hasMaskAt(int row, int column) {
+        return getMask() != null && getMask().getMask(row, column);
     }
 
     /**
