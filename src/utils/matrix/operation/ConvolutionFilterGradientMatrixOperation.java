@@ -1,5 +1,7 @@
 package utils.matrix.operation;
 
+import utils.matrix.MatrixException;
+
 /**
  * Defines convolution filter gradient matrix operation.
  *
@@ -25,13 +27,36 @@ public class ConvolutionFilterGradientMatrixOperation extends AbstractConvolutio
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                filterGradient.incrementByValue(filterRowSize - 1 - filterRow, filterColumnSize - 1 - filterColumn, input.getValue(row + filterRow, column + filterColumn) * value);
+                filterGradient.incrementByValue(filterRowSize - 1 - filterRow, filterColumnSize - 1 - filterColumn, input.getValue(filterRow, filterColumn) * value);
             }
         }
+        input.unslice();
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyMask(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
+            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
+                if (!hasMaskAt(filterRow, filterColumn, input)) {
+                    filterGradient.incrementByValue(filterRowSize - 1 - filterRow, filterColumnSize - 1 - filterColumn, input.getValue(filterRow, filterColumn) * value);
+                }
+            }
+        }
+        input.unslice();
     }
 
 }

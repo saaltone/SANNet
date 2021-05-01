@@ -1,5 +1,7 @@
 package utils.matrix.operation;
 
+import utils.matrix.MatrixException;
+
 /**
  * Defines crosscorrelation input gradient matrix operation.
  *
@@ -25,13 +27,36 @@ public class CrosscorrelationInputGradientMatrixOperation extends AbstractConvol
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, double value) throws MatrixException {
+        inputGradient.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                inputGradient.incrementByValue(row + filterRow, column + filterColumn, filter.getValue(filterRow, filterColumn) * value);
+                inputGradient.incrementByValue(filterRow, filterColumn, filter.getValue(filterRow, filterColumn) * value);
             }
         }
+        inputGradient.unslice();
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyMask(int row, int column, double value) throws MatrixException {
+        inputGradient.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
+            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
+                if (!hasMaskAt(filterRow, filterColumn, filter)) {
+                    inputGradient.incrementByValue(filterRow, filterColumn, filter.getValue(filterRow, filterColumn) * value);
+                }
+            }
+        }
+        inputGradient.unslice();
     }
 
 }

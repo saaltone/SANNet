@@ -1,6 +1,7 @@
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines average pooling matrix operation.
@@ -104,15 +105,40 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         double sumValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                sumValue += input.getValue(row + filterRow, column + filterColumn);
+                sumValue += input.getValue(filterRow, filterColumn);
             }
         }
         result.setValue(row, column, sumValue * invertedFilterSize);
+        input.unslice();
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyMask(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        double sumValue = 0;
+        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
+            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
+                if (!hasMaskAt(filterRow, filterColumn, input)) {
+                    sumValue += input.getValue(filterRow, filterColumn);
+                }
+            }
+        }
+        result.setValue(row, column, sumValue * invertedFilterSize);
+        input.unslice();
     }
 
 }
