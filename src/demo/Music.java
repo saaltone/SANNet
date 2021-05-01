@@ -61,14 +61,9 @@ public class Music {
             fileNames.add(path + "canon4.mid");
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadMIDI.readFile(fileNames);
             long scalingFactor = ReadMIDI.scaleTickData(data.get(4), data.get(5), 250);
-            float divisionType = 0;
-            int resolution = 0;
-            for (String fileNme : fileNames) {
-                divisionType += ReadMIDI.getDivisionType(fileNme);
-                resolution += ReadMIDI.getResolution(fileNme);
-            }
-            divisionType /= (double)fileNames.size();
-            resolution /= (double)fileNames.size();
+
+            float divisionType = Sequence.PPQ;
+            int resolution = 320;
 
             Sequence sequence = ReadMIDI.getSequence(data.get(0), data.get(2), data.get(4), divisionType, resolution, scalingFactor);
             ReadMIDI.play(sequence, 10, true);
@@ -118,6 +113,7 @@ public class Music {
             neuralNetworkTick.setTrainingData(new BasicSampler(data.get(4), data.get(5),params));
 
             int totalIterations = neuralNetworkKey.getTotalIterations();
+            int fileVersion = 0;
             while (neuralNetworkKey.getTotalIterations() - totalIterations < 100000) {
                 NeuralNetwork neuralNetworkKeyForPrediction = neuralNetworkKey.copy();
                 NeuralNetwork neuralNetworkVelocityForPrediction = neuralNetworkVelocity.copy();
@@ -155,6 +151,7 @@ public class Music {
 
                 System.out.println("Get MIDI sequence...");
                 Sequence resultSequence = ReadMIDI.getSequence(resultKey, resultVelocity, resultTick, divisionType, resolution, scalingFactor);
+                ReadMIDI.writeMIDI(resultSequence, path + "Result", ++fileVersion);
                 System.out.println("Play MIDI...");
                 Sequencer sequencer = ReadMIDI.play(resultSequence, 30, false);
 
@@ -164,7 +161,6 @@ public class Music {
 
                 System.out.println("Play MIDI complete...");
                 ReadMIDI.stopPlaying(sequencer);
-                ReadMIDI.writeMIDI(resultSequence, path + "Result.mid");
             }
             neuralNetworkKey.stop();
             neuralNetworkVelocity.stop();
