@@ -1,6 +1,7 @@
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashMap;
 
@@ -131,8 +132,37 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        int maxRow = -1;
+        int maxColumn = -1;
+        double maxValue = Double.NEGATIVE_INFINITY;
+        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
+            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
+                double filterValue = input.getValue(filterRow, filterColumn);
+                if (maxValue < filterValue) {
+                    maxValue = filterValue;
+                    maxRow = filterRow;
+                    maxColumn = filterColumn;
+                }
+            }
+        }
+        result.setValue(row, column, maxValue);
+        maxPos.put(2 * (row * inputColumnSize + column), row + maxRow);
+        maxPos.put(2 * (row * inputColumnSize + column) + 1, column + maxColumn);
+        input.unslice();
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     */
+    public void applyMask(int row, int column, double value) {
         int maxRow = -1;
         int maxColumn = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
