@@ -147,104 +147,104 @@ public class UnaryFunction implements Serializable {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private void setFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
-        switch(unaryFunctionType) {
-            case ABS:
+        switch (unaryFunctionType) {
+            case ABS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::abs;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value / Math.abs(value);
-                return;
-            case COS:
+            }
+            case COS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cos;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -Math.sin(value);
-                return;
-            case COSH:
+            }
+            case COSH -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cosh;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) Math::sinh;
-                return;
-            case EXP:
+            }
+            case EXP -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::exp;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) Math::exp;
-                return;
-            case LOG:
+            }
+            case LOG -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::log;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / value;
-                return;
-            case LOG10:
+            }
+            case LOG10 -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::log10;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (Math.log(10) * value);
-                return;
-            case SGN:
+            }
+            case SGN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::signum;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0;
-                return;
-            case SIN:
+            }
+            case SIN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::sin;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) Math::cos;
-                return;
-            case SINH:
+            }
+            case SINH -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::sinh;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) Math::cosh;
-                return;
-            case SQRT:
+            }
+            case SQRT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::sqrt;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (2 * Math.sqrt(value));
-                return;
-            case CBRT:
+            }
+            case CBRT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cbrt;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (3 * Math.cbrt(value * value));
-                return;
-            case MULINV:
+            }
+            case MULINV -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / Math.pow(value, 2);
-                return;
-            case TAN:
+            }
+            case TAN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::tan;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 + Math.pow(Math.tan(value), 2);
-                return;
-            case TANH:
+            }
+            case TANH -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::tanh;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 - Math.pow(Math.tanh(value), 2);
-                return;
-            case LINEAR:
+            }
+            case LINEAR -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
-                return;
-            case SIGMOID:
+            }
+            case SIGMOID -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (1 + Math.exp(-value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value) / Math.pow(1 + Math.exp(value), 2);
-                return;
-            case SWISH:
+            }
+            case SWISH -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value / (1 + Math.exp(-value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value) * (Math.exp(value) + value + 1) / Math.pow(1 + Math.exp(value), 2);
-                return;
-            case HARDSIGMOID:
+            }
+            case HARDSIGMOID -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.min(1, Math.max(0, 0.125 * value + 0.5));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < -4 || value > 4) ? 0 : 0.125;
-                return;
-            case BIPOLARSIGMOID:
+            }
+            case BIPOLARSIGMOID -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 2 / (1 + Math.exp(-value)) - 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 2 * Math.exp(value) / Math.pow(Math.exp(value) + 1, 2);
-                return;
-            case TANHSIG:
+            }
+            case TANHSIG -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 2 / (Math.exp(-2 * value) + 1) - 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 4 * Math.exp(2 * value) / Math.pow(Math.exp(2 * value) + 1, 2);
-                return;
-            case TANHAPPR:
+            }
+            case TANHAPPR -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 4 * Math.exp(2 * value) / Math.pow((Math.exp(2 * value) + 1), 2);
-                return;
-            case HARDTANH:
+            }
+            case HARDTANH -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.min(1, Math.max(-1, 0.5 * value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < -2 || value > 2) ? 0 : 0.5;
-                return;
-            case SOFTPLUS:
+            }
+            case SOFTPLUS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.log(1 + Math.exp(value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -2 * value * Math.exp(-1 * Math.pow(value, 2) / 2);
-                return;
-            case SOFTSIGN:
+            }
+            case SOFTSIGN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value / (Math.abs(value) + 1);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / Math.pow((Math.abs(value) + 1), 2);
-                return;
-            case RELU:
+            }
+            case RELU -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
@@ -255,16 +255,16 @@ public class UnaryFunction implements Serializable {
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
-                return;
-            case RELU_COS:
+            }
+            case RELU_COS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.max(0, value) + Math.cos(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < 0 ? 0 : 1) - Math.sin(value);
-                return;
-            case RELU_SIN:
+            }
+            case RELU_SIN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.max(0, value) + Math.sin(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value < 0 ? 0 : 1) + Math.cos(value);
-                return;
-            case ELU:
+            }
+            case ELU -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
@@ -275,8 +275,8 @@ public class UnaryFunction implements Serializable {
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * (Math.exp(value) - 1) : value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * Math.exp(value) : 1;
-                return;
-            case SELU:
+            }
+            case SELU -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
@@ -289,16 +289,16 @@ public class UnaryFunction implements Serializable {
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * (Math.exp(value) - 1) : SELULambda * value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * Math.exp(value) : SELULambda;
-                return;
-            case GELU:
+            }
+            case GELU -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * value * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3))));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3)))) + (value * (0.134145 * Math.pow(value, 2) + 1) * Math.pow(1 / Math.cosh((0.044715 * Math.pow(value, 3) + value) * Math.sqrt(2 / Math.PI)), 2)) / Math.sqrt(2 * Math.PI);
-                return;
-            case SOFTMAX:
+            }
+            case SOFTMAX -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
-                return;
-            case GUMBEL_SOFTMAX:
+            }
+            case GUMBEL_SOFTMAX -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
@@ -307,22 +307,21 @@ public class UnaryFunction implements Serializable {
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
-                return;
-            case GAUSSIAN:
+            }
+            case GAUSSIAN -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(-1 * Math.pow(value, 2) / 2);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -2 * value * Math.exp(-1 * Math.pow(value, 2) / 2);
-                return;
-            case SINACT:
+            }
+            case SINACT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? -1 : value > 0.5 * Math.PI ? 1 : Math.sin(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? 0 : value > 0.5 * Math.PI ? 0 : Math.cos(value);
-                return;
-            case LOGIT:
+            }
+            case LOGIT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.log(value / (1 - value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / ((value - 1) * value);
-                return;
-            case CUSTOM:
-                throw new MatrixException("Custom function cannot defined with this constructor.");
-            default:
+            }
+            case CUSTOM -> throw new MatrixException("Custom function cannot be defined with this constructor.");
+            default -> throw new MatrixException("Unknown unary function.");
         }
     }
 
