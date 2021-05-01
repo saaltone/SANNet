@@ -59,12 +59,6 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     public Mask transpose() {
         Mask transposedMask = getNewMask(true);
         for (int row = 0; row < getRows(); row++) {
-            if (getRowMask(row)) transposedMask.setColumnMask(row, getRowMask(row));
-        }
-        for (int column = 0; column < getColumns(); column++) {
-            if (getColumnMask(column)) transposedMask.setRowMask(column, getColumnMask(column));
-        }
-        for (int row = 0; row < getRows(); row++) {
             for (int column = 0; column < getColumns(); column++) {
                 if (getMask(row, column)) transposedMask.setMask(column, row, getMask(row, column));
             }
@@ -80,7 +74,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return return true if mask is set at row and column.
      */
     public boolean isMasked(int row, int column) {
-        return getRowMask(row) || getColumnMask(column) || getMask(row, column);
+        return getMask(row, column);
     }
 
     /**
