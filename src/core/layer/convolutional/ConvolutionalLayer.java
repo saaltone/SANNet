@@ -104,6 +104,12 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
     private boolean asConvolution = false;
 
     /**
+     * If true applies Winograd convolution operation otherwise applies normal convolution or crosscorrelation (default false).
+     *
+     */
+    private boolean asWinogradConvolution = false;
+
+    /**
      * Input matrices for procedure construction.
      *
      */
@@ -142,6 +148,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         paramDefs.put("dilation", DynamicParam.ParamType.INT);
         paramDefs.put("regulateWeights", DynamicParam.ParamType.BOOLEAN);
         paramDefs.put("asConvolution", DynamicParam.ParamType.BOOLEAN);
+        paramDefs.put("asWinogradConvolution", DynamicParam.ParamType.BOOLEAN);
         return paramDefs;
     }
 
@@ -157,6 +164,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      *     - dilation: dilation step for filter. Default step 1.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *     - asConvolution: true if convolutional layer applies convolution operation otherwise applies crosscorrelation (default false).<br>
+     *     - asWinogradConvolution: true if convolutional layer applies Winograd convolution operation otherwise applies normal convolution or crosscorrelation (default false).<br>
      *
      * @param params parameters used for convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -190,6 +198,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         }
         if (params.hasParam("regulateWeights")) regulateWeights = params.getValueAsBoolean("regulateWeights");
         if (params.hasParam("asConvolution")) asConvolution = params.getValueAsBoolean("asConvolution");
+        if (params.hasParam("asWinogradConvolution")) asWinogradConvolution = params.getValueAsBoolean("asWinogradConvolution");
     }
 
     /**
@@ -219,15 +228,30 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
 
-        // Enlarge filter size with dilation factor.
-        filterRowSize = filterRowSize + (filterRowSize - 1) * (dilation - 1);
-        filterColumnSize = filterColumnSize + (filterColumnSize - 1) * (dilation - 1);
+        int layerWidth;
+        int layerHeight;
 
-        if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
-        if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
+        if (asWinogradConvolution) {
+            asConvolution = false;
+            filterRowSize = filterColumnSize = 3;
+            stride = 2;
+            dilation = 1;
 
-        int layerWidth = ((previousLayerWidth - filterRowSize) / stride) + 1;
-        int layerHeight = ((previousLayerHeight - filterColumnSize) / stride) + 1;
+            layerWidth = previousLayerWidth - 2;
+            layerHeight = previousLayerHeight - 2;
+        }
+        else {
+            // Enlarge filter size with dilation factor.
+            filterRowSize = filterRowSize + (filterRowSize - 1) * (dilation - 1);
+            filterColumnSize = filterColumnSize + (filterColumnSize - 1) * (dilation - 1);
+
+            if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
+            if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
+
+            layerWidth = ((previousLayerWidth - filterRowSize) / stride) + 1;
+            layerHeight = ((previousLayerHeight - filterColumnSize) / stride) + 1;
+        }
+
 
         if (layerWidth < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + layerWidth);
         if (layerHeight < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + layerHeight);
@@ -294,8 +318,11 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
                 input.setFilterRowSize(filterRowSize);
                 input.setFilterColumnSize(filterColumnSize);
                 input.setRegularize(true);
-                if (asConvolution) output = output.add(input.convolve(Wf));
-                else output = output.add(input.crosscorrelate(Wf));
+                if (asWinogradConvolution) output = output.add(input.winogradConvolve(Wf));
+                else {
+                    if (asConvolution) output = output.add(input.convolve(Wf));
+                    else output = output.add(input.crosscorrelate(Wf));
+                }
             }
             output.setNormalize(true);
             output = activationFunction.applyFunction(output);
