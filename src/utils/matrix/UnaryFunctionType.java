@@ -6,7 +6,7 @@
 package utils.matrix;
 
 /**
- * Defines suppoted unary functions.<br>
+ * Defines supported unary functions.<br>
  * <br>
  * Following functions are supported:
  *     ABS,
