@@ -656,6 +656,28 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
+     * Records crosscorrelate expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param argument2 second argument of expression.
+     * @param result result of expression.
+     * @param stride stride for operation.
+     * @param dilation dilation step size.
+     * @param filterRowSize filter row size.
+     * @param filterColumnSize filter column size.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createWinogradConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        Node node1 = defineNode(argument1, false);
+        Node node2 = defineNode(argument2, false);
+        Node resultNode = defineNode(result, true);
+        WinogradConvolutionExpression expression = new WinogradConvolutionExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
+        storeExpression(expression, resultNode);
+    }
+
+    /**
      * Records max pool expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
