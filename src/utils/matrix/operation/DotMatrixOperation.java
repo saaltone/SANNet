@@ -100,6 +100,19 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
+     * Check if first matrix and optionally second matrix has mask at specific row and column.
+     *
+     * @param row row.
+     * @param column column.
+     * @param first first matrix.
+     * @param second second matrix.
+     * @return returns true if first or second matrix has mask at specific row and column.
+     */
+    public boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
+        return false;
+    }
+
+    /**
      * Applies operation.
      *
      * @param row current row.
@@ -109,6 +122,21 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     public void apply(int row, int column, double value) {
         for (int x = 0; x < first.getColumns(); x++) {
             result.setValue(row, column, result.getValue(row, column) + first.getValue(row, x) * second.getValue(x, column));
+        }
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     */
+    public void applyMask(int row, int column, double value) {
+        for (int x = 0; x < first.getColumns(); x++) {
+            if (!hasMaskAt(row, x, first) && !hasMaskAt(x, column, second)) {
+                result.setValue(row, column, result.getValue(row, column) + first.getValue(row, x) * second.getValue(x, column));
+            }
         }
     }
 
