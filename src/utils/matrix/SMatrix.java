@@ -34,6 +34,36 @@ public class SMatrix extends ComputableMatrix {
     private int columns;
 
     /**
+     * Slice start row.
+     *
+     */
+    private int sliceStartRow;
+
+    /**
+     * Slice start column.
+     *
+     */
+    private int sliceStartColumn;
+
+    /**
+     * Number of rows in slice.
+     *
+     */
+    private int sliceRows;
+
+    /**
+     * Number of columns in slice.
+     *
+     */
+    private int sliceColumns;
+
+    /**
+     * Size of slice (sliceRows * sliceColumns)
+     *
+     */
+    private int sliceSize;
+
+    /**
      * Constructor for scalar matrix (size 1x1).
      *
      * @param scalarValue value for matrix.
@@ -42,6 +72,7 @@ public class SMatrix extends ComputableMatrix {
         super(true);
         this.rows = 1;
         this.columns = 1;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -54,6 +85,7 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -69,6 +101,7 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
         initialize(initialization, inputs, outputs);
     }
 
@@ -83,6 +116,7 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
         initialize(initialization);
     }
 
@@ -97,6 +131,7 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
         initialize(initializer);
     }
 
@@ -111,6 +146,7 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
         for (Integer index : data.keySet()) matrix.put(index, data.get(index));
     }
 
@@ -126,8 +162,45 @@ public class SMatrix extends ComputableMatrix {
         super(false);
         this.rows = rows;
         this.columns = columns;
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
         if (referTo) matrix.putAll(data);
         else for (Integer index : data.keySet()) matrix.put(index, data.get(index));
+    }
+
+    /**
+     * Updates slice dimensions.
+     *
+     */
+    private void updateSliceDimensions(int startRow, int startColumn, int endRow, int endColumn) {
+        sliceStartRow = startRow;
+        sliceStartColumn = startColumn;
+        sliceRows = endRow - sliceStartRow + 1;
+        sliceColumns = endColumn - sliceStartColumn + 1;
+        sliceSize = sliceRows * sliceColumns;
+    }
+
+    /**
+     * Slices matrix.
+     *
+     * @param startRow start row of slice.
+     * @param startColumn start column of slice.
+     * @param endRow  end row of slice.
+     * @param endColumn  end column of slice.
+     * @throws MatrixException throws exception if slicing fails.
+     */
+    public void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
+        if (startRow < 0 || startColumn < 0 || endRow > rows -1 || endColumn > columns - 1) {
+            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + rows + "x" + columns);
+        }
+        else updateSliceDimensions(startRow, startColumn, endRow, endColumn);
+    }
+
+    /**
+     * Removes slicing of matrix.
+     *
+     */
+    public void unslice() {
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -155,7 +228,7 @@ public class SMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put(isScalar() ? 0 : row * columns + column, value);
+        if (value != 0) matrix.put(isScalar() ? 0 : (sliceStartRow + row) * columns + (sliceStartColumn + column), value);
     }
 
     /**
@@ -166,7 +239,7 @@ public class SMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix.getOrDefault(isScalar() ? 0 : row * columns + column, (double)0);
+        return matrix.getOrDefault(isScalar() ? 0 : (sliceStartRow + row) * columns + (sliceStartColumn + column), (double)0);
     }
 
     /**
@@ -175,7 +248,7 @@ public class SMatrix extends ComputableMatrix {
      * @return size of matrix.
      */
     public int size() {
-        return rows * columns;
+        return sliceSize;
     }
 
     /**
@@ -184,7 +257,7 @@ public class SMatrix extends ComputableMatrix {
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return rows;
+        return sliceRows;
     }
 
     /**
@@ -193,7 +266,7 @@ public class SMatrix extends ComputableMatrix {
      * @return number of columns in matrix.
      */
     public int getColumns() {
-        return columns;
+        return sliceColumns;
     }
 
     /**
