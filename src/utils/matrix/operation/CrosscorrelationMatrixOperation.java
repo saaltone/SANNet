@@ -1,5 +1,7 @@
 package utils.matrix.operation;
 
+import utils.matrix.MatrixException;
+
 /**
  * Defines crosscorrelation matrix operation.
  *
@@ -25,15 +27,40 @@ public class CrosscorrelationMatrixOperation extends AbstractConvolutionMatrixOp
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         double resultValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                resultValue += input.getValue(row + filterRow, column + filterColumn) * filter.getValue(filterRow, filterColumn);
+                resultValue += input.getValue(filterRow, filterColumn) * filter.getValue(filterRow, filterColumn);
             }
         }
         result.setValue(row, column, resultValue);
+        input.unslice();
+    }
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyMask(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        double resultValue = 0;
+        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
+            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
+                if (!hasMaskAt(filterRow, filterColumn, input, filter)) {
+                    resultValue += input.getValue(filterRow, filterColumn) * filter.getValue(filterRow, filterColumn);
+                }
+            }
+        }
+        result.setValue(row, column, resultValue);
+        input.unslice();
     }
 
 }
