@@ -105,40 +105,40 @@ public class BinaryFunction implements Serializable {
      */
     private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         this.binaryFunctionType = binaryFunctionType;
-        switch(binaryFunctionType) {
-            case MEAN_SQUARED_ERROR:
+        switch (binaryFunctionType) {
+            case MEAN_SQUARED_ERROR -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.5 * Math.pow(value - constant, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (value - constant);
-                break;
-            case MEAN_SQUARED_LOGARITHMIC_ERROR:
+            }
+            case MEAN_SQUARED_LOGARITHMIC_ERROR -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.pow(Math.log(constant + 1) - Math.log(value + 1), 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -2 * (Math.log(constant + 1) - Math.log(value + 1)) / (constant + 1);
-                break;
-            case MEAN_ABSOLUTE_ERROR:
+            }
+            case MEAN_ABSOLUTE_ERROR -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.signum(value - constant);
-                break;
-            case MEAN_ABSOLUTE_PERCENTAGE_ERROR:
+            }
+            case MEAN_ABSOLUTE_PERCENTAGE_ERROR -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * Math.abs((value - constant) / constant);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * (value - constant) / (Math.abs(constant) * Math.abs(value - constant));
-                break;
-            case CROSS_ENTROPY:
+            }
+            case CROSS_ENTROPY -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value));
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value);
-                break;
-            case KULLBACK_LEIBLER:
+            }
+            case KULLBACK_LEIBLER -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (constant * Math.log(constant) - constant * Math.log((value)));
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value);
-                break;
-            case NEGATIVE_LOG_LIKELIHOOD:
+            }
+            case NEGATIVE_LOG_LIKELIHOOD -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log((value));
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -1 / value;
-                break;
-            case POISSON:
+            }
+            case POISSON -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> value - constant * Math.log(value);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant / value;
-                break;
-            case HINGE:
+            }
+            case HINGE -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("margin", DynamicParam.ParamType.DOUBLE);
@@ -146,13 +146,13 @@ public class BinaryFunction implements Serializable {
                     if (dParams.hasParam("margin")) hingeMargin = dParams.getValueAsDouble("margin");
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : hingeMargin - constant * value;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : - constant;
-                break;
-            case SQUARED_HINGE:
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : -constant;
+            }
+            case SQUARED_HINGE -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant * value <= 0 ? 0 : Math.pow(1 - constant * value, 2);
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant * value <= 0 ? 0 : - 2 * constant * (1 - constant * value);
-                break;
-            case HUBER:
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1 - constant * value <= 0 ? 0 : -2 * constant * (1 - constant * value);
+            }
+            case HUBER -> {
                 if (params != null) {
                     HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
                     paramDefs.put("delta", DynamicParam.ParamType.DOUBLE);
@@ -161,29 +161,29 @@ public class BinaryFunction implements Serializable {
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * Math.abs(value - constant) - 0.5 * Math.pow(huberDelta, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? value - constant : huberDelta * Math.signum(value - constant);
-                break;
-            case DIRECT_GRADIENT:
+            }
+            case DIRECT_GRADIENT -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant;
-            case POLICY_GRADIENT: // -Math.log(policy_value at i, t) * Q_value (or A_value) at i, t
+            }
+            case POLICY_GRADIENT -> { // -Math.log(policy_value at i, t) * Q_value (or A_value) at i, t
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log(value) * constant;
-            case POW:
+            }
+            case POW -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
-                break;
-            case MAX:
+            }
+            case MAX -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::max;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
-                break;
-            case MIN:
+            }
+            case MIN -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::min;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
-                break;
-            case CUSTOM:
-                throw new MatrixException("Custom function cannot defined with this constructor.");
-            default:
-                break;
+            }
+            case CUSTOM -> throw new MatrixException("Custom function cannot defined with this constructor.");
+            default -> throw new MatrixException("Unknown binary function.");
         }
     }
 
