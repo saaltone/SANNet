@@ -32,18 +32,6 @@ public class SMask extends AbstractMask {
     private HashMap<Integer, Boolean> mask = new HashMap<>();
 
     /**
-     * Hash map to store row mask information.
-     *
-     */
-    private HashMap<Integer, Boolean> rowMask = new HashMap<>();
-
-    /**
-     * Hash map to store column mask information.
-     *
-     */
-    private HashMap<Integer, Boolean> columnMask = new HashMap<>();
-
-    /**
      * Constructor for sparse mask.
      *
      * @param rows defines number of rows in mask.
@@ -60,16 +48,12 @@ public class SMask extends AbstractMask {
      * @param rows defines number of rows in mask.
      * @param columns defines number of columns in mask.
      * @param data mask data.
-     * @param rowData row mask data.
-     * @param columnData column mask data.
      * @param probability probability of masking.
      */
-    protected SMask(int rows, int columns, HashMap<Integer, Boolean> data, HashMap<Integer, Boolean> rowData, HashMap<Integer, Boolean> columnData, double probability) {
+    protected SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability) {
         this.rows = rows;
         this.columns = columns;
         mask.putAll(data);
-        rowMask.putAll(rowData);
-        columnMask.putAll(columnData);
         this.probability = probability;
     }
 
@@ -98,7 +82,7 @@ public class SMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new SMask(rows, columns, mask, rowMask, columnMask, probability);
+        return new SMask(rows, columns, mask, probability);
     }
 
     /**
@@ -157,8 +141,6 @@ public class SMask extends AbstractMask {
      */
     public void clear() {
         mask = new HashMap<>();
-        rowMask = new HashMap<>();
-        columnMask = new HashMap<>();
     }
 
     /**
@@ -168,18 +150,7 @@ public class SMask extends AbstractMask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setRowMask(int row, boolean value) {
-        rowMask.put(row, value);
-    }
-
-    /**
-     * Returns mask value for row mask.
-     *
-     * @param row row of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    public boolean getRowMask(int row) {
-        if (mask == null) return false;
-        return rowMask.getOrDefault(row, false);
+        for (int column = 0; column < columns; column++) mask.put(row * columns + column, value);
     }
 
     /**
@@ -189,18 +160,7 @@ public class SMask extends AbstractMask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setColumnMask(int column, boolean value) {
-        columnMask.put(column, value);
-    }
-
-    /**
-     * Returns mask value for column mask.
-     *
-     * @param column column of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    public boolean getColumnMask(int column) {
-        if (mask == null) return false;
-        return columnMask.getOrDefault(column, false);
+        for (int row = 0; row < rows; row++) mask.put(row * columns + column, value);
     }
 
 }

@@ -139,14 +139,6 @@ public interface Mask {
     void setRowMask(int row, boolean value);
 
     /**
-     * Returns mask value for row mask.
-     *
-     * @param row row of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    boolean getRowMask(int row);
-
-    /**
      * Sets row masking for this mask with given bernoulli probability.
      *
      */
@@ -159,14 +151,6 @@ public interface Mask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     void setColumnMask(int column, boolean value);
-
-    /**
-     * Returns mask value for column mask.
-     *
-     * @param col column of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    boolean getColumnMask(int col);
 
     /**
      * Sets column masking for this mask with given bernoulli probability.

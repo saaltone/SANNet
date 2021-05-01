@@ -30,18 +30,6 @@ public class DMask extends AbstractMask {
     private boolean[][] mask;
 
     /**
-     * Row mask data structure.
-     *
-     */
-    private boolean[] rowMask;
-
-    /**
-     * Column mask data structure.
-     *
-     */
-    private boolean[] columnMask;
-
-    /**
      * Constructor for dense mask.
      *
      * @param rows defines number of rows in mask.
@@ -51,24 +39,18 @@ public class DMask extends AbstractMask {
         this.rows = rows;
         this.columns = columns;
         mask = new boolean[rows][columns];
-        rowMask = new boolean[rows];
-        columnMask = new boolean[columns];
     }
 
     /**
      * Constructor for dense mask.
      *
      * @param data clones mask data from given mask data.
-     * @param rowData clones row mask data from given row mask data.
-     * @param columnData clones column mask data from given column mask data.
      * @param probability probability of masking.
      */
-    protected DMask(boolean[][] data, boolean[] rowData, boolean[] columnData, double probability) {
+    protected DMask(boolean[][] data, double probability) {
         rows = data.length;
         columns = data[0].length;
         mask = data.clone();
-        rowMask = rowData.clone();
-        columnMask = columnData.clone();
         this.probability = probability;
     }
 
@@ -97,7 +79,7 @@ public class DMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new DMask(mask, rowMask, columnMask, probability);
+        return new DMask(mask, probability);
     }
 
     /**
@@ -155,8 +137,6 @@ public class DMask extends AbstractMask {
      */
     public void clear() {
         mask = new boolean[rows][columns];
-        rowMask = new boolean[rows];
-        columnMask = new boolean[columns];
     }
 
     /**
@@ -166,17 +146,7 @@ public class DMask extends AbstractMask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setRowMask(int row, boolean value) {
-        rowMask[row] = value;
-    }
-
-    /**
-     * Returns mask value for row mask.
-     *
-     * @param row row of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    public boolean getRowMask(int row) {
-        return rowMask[row];
+        for (int column = 0; column < mask[0].length; column++) mask[row][column] = value;
     }
 
     /**
@@ -186,17 +156,7 @@ public class DMask extends AbstractMask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setColumnMask(int column, boolean value) {
-        columnMask[column] = value;
-    }
-
-    /**
-     * Returns mask value for column mask.
-     *
-     * @param column column of mask to be returned.
-     * @return true if row mask is set otherwise false.
-     */
-    public boolean getColumnMask(int column) {
-        return columnMask[column];
+        for (int row = 0; row < mask.length; row++) mask[row][column] = value;
     }
 
 }
