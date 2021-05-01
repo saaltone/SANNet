@@ -1,6 +1,7 @@
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines interface for matrix operation.
@@ -42,7 +43,38 @@ public interface MatrixOperation {
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void apply(int row, int column, double value);
+    void apply(int row, int column, double value) throws MatrixException;
+
+    /**
+     * Applies operation assuming masked matrices.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void applyMask(int row, int column, double value) throws MatrixException;
+
+    /**
+     * Check if first matrix and optionally second matrix has mask.
+     *
+     * @param first first matrix.
+     * @param second second matrix.
+     * @return returns true if first or second matrix has mask.
+     */
+    boolean hasMask(Matrix first, Matrix second);
+
+    /**
+     * Check if first matrix and optionally second matrix has mask at specific row and column.
+     *
+     * @param row row.
+     * @param column column.
+     * @param first first matrix.
+     * @param second second matrix.
+     * @return returns true if first or second matrix has mask at specific row and column.
+     */
+    boolean hasMaskAt(int row, int column, Matrix first, Matrix second);
 
 }
