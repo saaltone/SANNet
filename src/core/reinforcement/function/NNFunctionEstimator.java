@@ -235,7 +235,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         TreeMap<Integer, Double> importanceSamplingWeights = new TreeMap<>();
         int index = 0;
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
-            states.put(index, new MMatrix(stateTransition.environmentState.state));
+            states.put(index, new MMatrix(stateTransition.environmentState.state()));
             stateValues.put(index, new MMatrix(stateTransitionValueMap.get(stateTransition)));
             if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index++, stateTransition.importanceSamplingWeight);
             index++;

@@ -104,8 +104,8 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix policyValues = functionEstimator.predict(stateTransition.environmentState.state);
-        double target_entropy = -(double)stateTransition.environmentState.availableActions.size();
+        Matrix policyValues = functionEstimator.predict(stateTransition.environmentState.state());
+        double target_entropy = -(double)stateTransition.environmentState.availableActions().size();
         cumulativeAlphaLoss += -softQAlpha * (policyValues.getValue(getAction(stateTransition.action), 0) + target_entropy) / target_entropy;
         alphaLossCount++;
         return -(valueFunction.getValue(stateTransition) - softQAlpha * Math.log(policyValues.getValue(getAction(stateTransition.action), 0)));

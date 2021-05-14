@@ -122,8 +122,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      */
     protected double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         int action = getAction(stateTransition.action);
-        double currentActionValue = functionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
-        double previousActionValue = previousFunctionEstimator.predict(stateTransition.environmentState.state).getValue(action, 0);
+        double currentActionValue = functionEstimator.predict(stateTransition.environmentState.state()).getValue(action, 0);
+        double previousActionValue = previousFunctionEstimator.predict(stateTransition.environmentState.state()).getValue(action, 0);
         double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
         return -Math.min(rValue * stateTransition.advantage, clippedRValue * stateTransition.advantage);

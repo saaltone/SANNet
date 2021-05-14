@@ -126,13 +126,13 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public boolean equals(StateTransition otherStateTransition) throws MatrixException {
-        if (!compare(environmentState.state, otherStateTransition.environmentState.state)) return false;
+        if (!compare(environmentState.state(), otherStateTransition.environmentState.state())) return false;
         if (action != otherStateTransition.action) return false;
         if (reward != otherStateTransition.reward) return false;
         if (nextStateTransition == null && otherStateTransition.nextStateTransition == null) return true;
         else {
             if (nextStateTransition == null || otherStateTransition.nextStateTransition == null) return false;
-            else return compare(nextStateTransition.environmentState.state, otherStateTransition.nextStateTransition.environmentState.state);
+            else return compare(nextStateTransition.environmentState.state(), otherStateTransition.nextStateTransition.environmentState.state());
         }
     }
 

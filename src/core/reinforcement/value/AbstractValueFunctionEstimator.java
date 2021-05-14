@@ -132,7 +132,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Matrix getValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return functionEstimator.predict(stateTransition.environmentState.state);
+        return functionEstimator.predict(stateTransition.environmentState.state());
     }
 
     /**

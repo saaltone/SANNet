@@ -34,7 +34,7 @@ public class QValueFunctionEstimator extends AbstractValueFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
-        return functionEstimator.max(functionEstimator.predict(nextStateTransition.environmentState.state), nextStateTransition.environmentState.availableActions);
+        return functionEstimator.max(functionEstimator.predict(nextStateTransition.environmentState.state()), nextStateTransition.environmentState.availableActions());
     }
 
 }

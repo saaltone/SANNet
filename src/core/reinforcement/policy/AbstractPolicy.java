@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package core.reinforcement.policy;
 
 import core.NeuralNetworkException;
@@ -228,7 +233,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @param action action.
      */
     public void act(StateTransition stateTransition, int action) throws MatrixException, NeuralNetworkException {
-        executablePolicy.action(functionEstimator.predict(stateTransition.environmentState.state), stateTransition.environmentState.availableActions, isStateActionValueFunction(), action);
+        executablePolicy.action(functionEstimator.predict(stateTransition.environmentState.state()), stateTransition.environmentState.availableActions(), isStateActionValueFunction(), action);
     }
 
     /**
@@ -240,8 +245,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
-        stateTransition.action = executablePolicy.action(currentPolicyValues, stateTransition.environmentState.availableActions, isStateActionValueFunction(), alwaysGreedy);
+        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state());
+        stateTransition.action = executablePolicy.action(currentPolicyValues, stateTransition.environmentState.availableActions(), isStateActionValueFunction(), alwaysGreedy);
         if (isLearning()) functionEstimator.add(stateTransition);
     }
 

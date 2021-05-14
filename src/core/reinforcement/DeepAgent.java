@@ -255,7 +255,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         if (updateValuePerEpisode) valueFunction.update(stateTransition);
         policy.update();
-        if (policy.isLearning() && environment.getState().episodeID > 0 && environment.getState().episodeID % agentUpdateCycle == 0) update();
+        if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() % agentUpdateCycle == 0) update();
     }
 
     /**

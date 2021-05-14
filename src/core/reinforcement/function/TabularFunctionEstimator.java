@@ -171,7 +171,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void update() throws MatrixException, AgentException, DynamicParamException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
-            Matrix stateValue = predict(stateTransition.environmentState.state);
+            Matrix stateValue = predict(stateTransition.environmentState.state());
             Matrix error = stateValue.subtract(stateTransitionValueMap.get(stateTransition));
             if (!stateErrors.containsKey(stateValue)) stateErrors.put(stateValue, error);
             else stateErrors.get(stateValue).add(error, stateErrors.get(stateValue));

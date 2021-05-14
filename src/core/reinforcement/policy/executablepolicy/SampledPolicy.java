@@ -115,14 +115,14 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      * @return chosen action.
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
-        double lowValue = stateValueSet.first().value;
-        double highValue = stateValueSet.last().value;
+        double lowValue = stateValueSet.first().value();
+        double highValue = stateValueSet.last().value();
         double thresholdValue = highValue - (highValue - lowValue) * thresholdCurrent * random.nextDouble();
         while (!stateValueSet.isEmpty()) {
             ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
-            if (Objects.requireNonNull(actionValueTuple).value >= thresholdValue) return actionValueTuple.action;
+            if (Objects.requireNonNull(actionValueTuple).value() >= thresholdValue) return actionValueTuple.action();
         }
-        return stateValueSet.first().action;
+        return stateValueSet.first().action();
     }
 
 }

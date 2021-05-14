@@ -117,7 +117,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         if (stateValueSet.size() > 1 && explorationNoise > random.nextDouble()) stateValueSet.pollLast();
-        return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action;
+        return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
     }
 
 }

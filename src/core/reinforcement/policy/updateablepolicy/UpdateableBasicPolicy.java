@@ -82,10 +82,10 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state);
+        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state());
         double epsilon = 10E-8;
         double currentPolicyValue = currentPolicyValues.getValue(getAction(stateTransition.action), 0) + epsilon;
-        return -(currentPolicyValue * Math.log(currentPolicyValue) * (stateTransition.advantage + (applyEntropy ? entropyCoefficient * getSampleEntropy(currentPolicyValues, stateTransition.environmentState.availableActions) : 0)));
+        return -(currentPolicyValue * Math.log(currentPolicyValue) * (stateTransition.advantage + (applyEntropy ? entropyCoefficient * getSampleEntropy(currentPolicyValues, stateTransition.environmentState.availableActions()) : 0)));
     }
 
     /**
