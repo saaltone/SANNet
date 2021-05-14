@@ -381,8 +381,8 @@ public interface Matrix {
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param unaryFunction unaryFunction to be applied.
      * @param result result matrix.
+     * @param unaryFunction unaryFunction to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     void apply(Matrix result, UnaryFunction unaryFunction) throws MatrixException;
@@ -403,8 +403,8 @@ public interface Matrix {
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
+     * @param result result matrix
      * @param unaryFunctionType unaryFunction type to be applied.
-     * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -479,10 +479,11 @@ public interface Matrix {
      * @param other other matrix
      * @param result result matrix.
      * @param binaryFunctionType binaryFunction type to be applied.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException;
+    Matrix applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException;
 
     /**
      * Applies two variable operation to this matrix.<br>
