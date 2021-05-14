@@ -11,49 +11,15 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Class that defines current state of environment.<br>
+ * Record that defines state of environment.<br>
+ * <br>
+ * @param episodeID episode ID.
+ * @param timeStep time step.
+ * @param state state of environment.
+ * @param availableActions actions available at state.
  *
  */
-public class EnvironmentState implements Serializable, Comparable<EnvironmentState> {
-
-    /**
-     * Episode ID
-     *
-     */
-    public final int episodeID;
-
-    /**
-     * Time step of episode.
-     *
-     */
-    public final int timeStep;
-
-    /**
-     * State of environment at episode ID and time step.
-     *
-     */
-    public final Matrix state;
-
-    /**
-     * Actions available at state.
-     *
-     */
-    public final HashSet<Integer> availableActions;
-
-    /**
-     * Constructor for environment state.
-     *
-     * @param episodeID episode ID.
-     * @param timeStep time step.
-     * @param state state of environment.
-     * @param availableActions actions available at state.
-     */
-    public EnvironmentState(int episodeID, int timeStep, Matrix state, HashSet<Integer> availableActions) {
-        this.episodeID = episodeID;
-        this.timeStep = timeStep;
-        this.state = state;
-        this.availableActions = availableActions;
-    }
+public record EnvironmentState(int episodeID, int timeStep, Matrix state, HashSet<Integer> availableActions) implements Serializable, Comparable<EnvironmentState> {
 
     /**
      * Compares this environment state to other environment state.<br>
