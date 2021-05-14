@@ -6,18 +6,27 @@
 package core.normalization;
 
 /**
- * Defines supported normalization types.<br>
- * <br>
- * Currently supported types are:
- *     BATCH_NORMALIZATION,
- *     LAYER_NORMALIZATION,
- *     WEIGHT_NORMALIZATION,
+ * Defines supported normalization types.
  *
  */
 public enum NormalizationType {
 
+    /**
+     * Batch normalization that normalizes over batch per feature.
+     *
+     */
     BATCH_NORMALIZATION,
+
+    /**
+     * Layer normalization that normalizes per sample over all features.
+     *
+     */
     LAYER_NORMALIZATION,
+
+    /**
+     * Weight normalization that normalizes each weight using norm of weight.
+     *
+     */
     WEIGHT_NORMALIZATION,
 
 }
