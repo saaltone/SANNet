@@ -1,8 +1,16 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.procedure.expression;
 
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.CrosscorrelationFilterGradientMatrixOperation;
+import utils.matrix.operation.CrosscorrelationInputGradientMatrixOperation;
+import utils.matrix.operation.WinogradConvolutionMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -12,54 +20,6 @@ import java.io.Serializable;
  *
  */
 public class WinogradConvolutionExpression extends AbstractBinaryExpression implements Serializable {
-
-    /**
-     * Stride of crosscorrelation operation.
-     *
-     */
-    private final int stride;
-
-    /**
-     * Dilation step size for crosscorrelation operation.
-     *
-     */
-    private final int dilation;
-
-    /**
-     * Filter row size;
-     *
-     */
-    private final int filterRowSize;
-
-    /**
-     * Filter column size;
-     *
-     */
-    private final int filterColumnSize;
-
-    /**
-     * A matrix for Winograd convolution.
-     *
-     */
-    private final Matrix A;
-
-    /**
-     * A transposed matrix for Winograd convolution.
-     *
-     */
-    private final Matrix AT;
-
-    /**
-     * C matrix for Winograd convolution.
-     *
-     */
-    private final Matrix C;
-
-    /**
-     * C transposed matrix for Winograd convolution.
-     *
-     */
-    private final Matrix CT;
 
     /**
      * G matrix for Winograd convolution.
@@ -80,6 +40,24 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
     private Matrix preprocessedFilter;
 
     /**
+     * Reference to crosscorrelation matrix operation.
+     *
+     */
+    private final WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation;
+
+    /**
+     * Reference to crosscorrelation input gradient matrix operation.
+     *
+     */
+    private final CrosscorrelationInputGradientMatrixOperation crosscorrelationInputGradientMatrixOperation;
+
+    /**
+     * Reference to crosscorrelation filter gradient matrix operation.
+     *
+     */
+    private final CrosscorrelationFilterGradientMatrixOperation crosscorrelationFilterGradientMatrixOperation;
+
+    /**
      * Constructor for Winograd convolution operation.
      *
      * @param expressionID unique ID for expression.
@@ -94,11 +72,8 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("WINOGRAD_CONVOLUTION", "WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
-        this.stride = stride;
-        this.dilation = dilation;
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
-        AT = new DMatrix(2, 4);
+
+        Matrix AT = new DMatrix(2, 4);
         AT.setValue(0, 0, 1);
         AT.setValue(0, 1, 1);
         AT.setValue(0, 2, 1);
@@ -108,27 +83,27 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
         AT.setValue(1, 2, -1);
         AT.setValue(1, 3, -1);
         maskZeros(AT);
-        A = AT.transpose();
+        Matrix a = AT.transpose();
 
-        C = new DMatrix(4, 4);
-        C.setValue(0, 0, 1);
-        C.setValue(0, 1, 0);
-        C.setValue(0, 2, -1);
-        C.setValue(0, 3, 0);
-        C.setValue(1, 0, 0);
-        C.setValue(1, 1, 1);
-        C.setValue(1, 2, 1);
-        C.setValue(1, 3, 0);
-        C.setValue(2, 0, 0);
-        C.setValue(2, 1, -1);
-        C.setValue(2, 2, 1);
-        C.setValue(2, 3, 0);
-        C.setValue(3, 0, 0);
-        C.setValue(3, 1, 1);
-        C.setValue(3, 2, 0);
-        C.setValue(3, 3, -1);
-        maskZeros(C);
-        CT = C.transpose();
+        Matrix c = new DMatrix(4, 4);
+        c.setValue(0, 0, 1);
+        c.setValue(0, 1, 0);
+        c.setValue(0, 2, -1);
+        c.setValue(0, 3, 0);
+        c.setValue(1, 0, 0);
+        c.setValue(1, 1, 1);
+        c.setValue(1, 2, 1);
+        c.setValue(1, 3, 0);
+        c.setValue(2, 0, 0);
+        c.setValue(2, 1, -1);
+        c.setValue(2, 2, 1);
+        c.setValue(2, 3, 0);
+        c.setValue(3, 0, 0);
+        c.setValue(3, 1, 1);
+        c.setValue(3, 2, 0);
+        c.setValue(3, 3, -1);
+        maskZeros(c);
+        Matrix CT = c.transpose();
 
         G = new DMatrix(4, 3);
         G.setValue(0, 0, 1);
@@ -145,6 +120,10 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
         G.setValue(3, 2, 1);
         maskZeros(G);
         GT = G.transpose();
+
+        winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), a, AT, c, CT);
+        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
+        crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
     }
 
     /**
@@ -176,13 +155,8 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        argument1.getMatrix(index).setStride(stride);
-        argument1.getMatrix(index).setDilation(dilation);
-        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
-        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
         if (preprocessedFilter == null) preprocessedFilter = G.dot(argument2.getMatrix(index)).dot(GT);
-        result.setMatrix(index, argument1.getMatrix(index).winogradConvolve(preprocessedFilter, A, AT, C, CT));
-//        result.setMatrix(index, argument1.getMatrix(index).winogradConvolve(argument2.getMatrix(index), A, AT, C, CT, G, GT));
+        winogradConvolutionMatrixOperation.apply(argument1.getMatrix(index), preprocessedFilter, result.getNewMatrix(index));
     }
 
     /**
@@ -200,12 +174,8 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        result.getGradient(index).setStride(stride);
-        result.getGradient(index).setDilation(dilation);
-        result.getGradient(index).setFilterRowSize(filterRowSize);
-        result.getGradient(index).setFilterColumnSize(filterColumnSize);
-        argument1.cumulateGradient(index, result.getGradient(index).crosscorrelateInputGradient(argument2.getMatrix(index)), false);
-        argument2.cumulateGradient(index, result.getGradient(index).crosscorrelateFilterGradient(argument1.getMatrix(index)), false);
+        argument1.cumulateGradient(index, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        argument2.cumulateGradient(index, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
         preprocessedFilter = null;
     }
 

@@ -7,6 +7,7 @@ package utils.procedure.expression;
 
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.SumMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;

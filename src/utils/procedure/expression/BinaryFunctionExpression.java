@@ -8,6 +8,7 @@ package utils.procedure.expression;
 import utils.matrix.BinaryFunction;
 import utils.matrix.BinaryFunctionType;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.BinaryMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -31,6 +32,12 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
     private final BinaryFunction binaryFunction;
 
     /**
+     * Binary matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation binaryMatrixOperation;
+
+    /**
      * Constructor for binary function.
      *
      * @param expressionID unique ID for expression.
@@ -44,6 +51,12 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
         super("BINARY_FUNCTION", String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
         this.binaryFunctionType = binaryFunction.getType();
         this.binaryFunction = binaryFunction;
+
+        // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
+        int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
+        int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
+
+        binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, binaryFunction.getFunction());
     }
 
     /**
@@ -79,7 +92,8 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        result.setMatrix(index, binaryFunction.applyFunction(argument1.getMatrix(index), argument2.getMatrix(index)));
+//        result.setMatrix(index, binaryFunction.applyFunction(argument1.getMatrix(index), argument2.getMatrix(index)));
+        binaryMatrixOperation.applyFunction(argument1.getMatrix(index), argument2.getMatrix(index), result.getNewMatrix(index));
     }
 
     /**
@@ -97,7 +111,8 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), false);
+//        argument1.cumulateGradient(index, binaryFunction.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), false);
+        argument1.cumulateGradient(index, binaryMatrixOperation.applyGradient(result.getMatrix(index), argument2.getMatrix(index), result.getGradient(index)), false);
     }
 
     /**

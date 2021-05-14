@@ -5,8 +5,9 @@
 
 package utils.procedure.expression;
 
-import utils.DynamicParamException;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.BinaryMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -16,6 +17,24 @@ import java.io.Serializable;
  *
  */
 public class DivideExpression extends AbstractBinaryExpression implements Serializable {
+
+    /**
+     * Reference to divide matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation divideMatrixOperation;
+
+    /**
+     * Reference to multiply matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation multiplyMatrixOperation;
+
+    /**
+     * Reference to divide gradient matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation divideGradientMatrixOperation;
 
     /**
      * Constructor for division operation.
@@ -28,6 +47,14 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public DivideExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
         super("DIVIDE", "/", expressionID, argument1, argument2, result);
+
+        // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
+        int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
+        int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
+
+        divideMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2);
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
+        divideGradientMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / (value2 * value2));
     }
 
     /**
@@ -45,7 +72,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        result.setMatrix(index, argument1.getMatrix(index).divide(argument2.getMatrix(index)));
+        divideMatrixOperation.apply(argument1.getMatrix(index), argument2.getMatrix(index), result.getNewMatrix(index));
     }
 
     /**
@@ -60,12 +87,13 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      *
      * @param index data index.
      * @throws MatrixException throws exception if calculation of gradient fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(int index) throws MatrixException, DynamicParamException {
+    public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, result.getGradient(index).divide(argument2.getMatrix(index)), false);
-        argument2.cumulateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index)).divide(argument2.getMatrix(index).power(2)), true);
+        argument1.cumulateGradient(index, divideMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        Matrix multiplyGradientResult = multiplyMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix());
+        Matrix divideGradientResult = divideGradientMatrixOperation.apply(multiplyGradientResult, argument2.getMatrix(index), argument1.getEmptyMatrix());
+        argument2.cumulateGradient(index, divideGradientResult, true);
     }
 
     /**

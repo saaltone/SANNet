@@ -6,6 +6,8 @@
 package utils.procedure.expression;
 
 import utils.matrix.*;
+import utils.matrix.operation.BinaryMatrixOperation;
+import utils.matrix.operation.NormMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -15,6 +17,24 @@ import java.io.Serializable;
  *
  */
 public class NormExpression extends AbstractUnaryExpression implements Serializable {
+
+    /**
+     * Reference to norm matrix operation.
+     *
+     */
+    private final NormMatrixOperation normMatrixOperation;
+
+    /**
+     * Reference to norm gradient matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation normGradientMatrixOperation;
+
+    /**
+     * Reference to multiply matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation multiplyMatrixOperation;
 
     /**
      * Power of norm.
@@ -35,6 +55,10 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         super("NORM", "NORM", expressionID, argument1, result);
         if (p < 2) throw new MatrixException("Norm p value must be at least 2.");
         this.p = p;
+
+        normMatrixOperation = new NormMatrixOperation(argument1.getRows(), argument1.getColumns(), p);
+        normGradientMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> Math.pow(Math.abs(value1) / value2, p - 1) * Math.signum(value1));
+        multiplyMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
     }
 
     /**
@@ -52,7 +76,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        result.setMatrix(index, argument1.getMatrix(index).normAsMatrix(p));
+        result.setMatrix(index, argument1.getMatrix(index).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(index))));
     }
 
     /**
@@ -71,7 +95,9 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
-        argument1.cumulateGradient(index, result.getGradient(index).multiply(argument1.getMatrix(index).applyBi(result.getMatrix(index), (value, constant) -> Math.pow(Math.abs(value) / constant, p - 1) * Math.signum(value))), false);
+        Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(index), result.getMatrix(index), argument1.getEmptyMatrix());
+        Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(index), normGradientMatrix, argument1.getEmptyMatrix());
+        argument1.cumulateGradient(index, resultMatrix, false);
     }
 
     /**

@@ -6,6 +6,7 @@
 package utils.procedure.expression;
 
 import utils.matrix.MatrixException;
+import utils.matrix.operation.*;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -17,28 +18,22 @@ import java.io.Serializable;
 public class ConvolveExpression extends AbstractBinaryExpression implements Serializable {
 
     /**
-     * Stride of convolution operation.
+     * Reference to convolution matrix operation.
      *
      */
-    private final int stride;
+    private final ConvolutionMatrixOperation convolutionMatrixOperation;
 
     /**
-     * Dilation step size for convolution operation.
+     * Reference to convolution input gradient matrix operation.
      *
      */
-    private final int dilation;
+    private final ConvolutionInputGradientMatrixOperation convolutionInputGradientMatrixOperation;
 
     /**
-     * Filter row size;
+     * Reference to convolution filter gradient matrix operation.
      *
      */
-    private final int filterRowSize;
-
-    /**
-     * Filter column size;
-     *
-     */
-    private final int filterColumnSize;
+    private final ConvolutionFilterGradientMatrixOperation convolutionFilterGradientMatrixOperation;
 
     /**
      * Constructor for convolution operation.
@@ -55,10 +50,9 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("CONVOLVE", "CONVOLVE", expressionID, argument1, argument2, result);
-        this.stride = stride;
-        this.dilation = dilation;
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
+        convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
+        convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
+        convolutionFilterGradientMatrixOperation = new ConvolutionFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
     }
 
     /**
@@ -76,11 +70,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        argument1.getMatrix(index).setStride(stride);
-        argument1.getMatrix(index).setDilation(dilation);
-        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
-        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
-        result.setMatrix(index, argument1.getMatrix(index).convolve(argument2.getMatrix(index)));
+        convolutionMatrixOperation.apply(argument1.getMatrix(index), argument2.getMatrix(index), result.getNewMatrix(index));
     }
 
     /**
@@ -98,12 +88,8 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        result.getGradient(index).setStride(stride);
-        result.getGradient(index).setDilation(dilation);
-        result.getGradient(index).setFilterRowSize(filterRowSize);
-        result.getGradient(index).setFilterColumnSize(filterColumnSize);
-        argument1.cumulateGradient(index, result.getGradient(index).convolveInputGradient(argument2.getMatrix(index)), false);
-        argument2.cumulateGradient(index, result.getGradient(index).convolveFilterGradient(argument1.getMatrix(index)), false);
+        argument1.cumulateGradient(index, convolutionInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        argument2.cumulateGradient(index, convolutionFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
     }
 
     /**

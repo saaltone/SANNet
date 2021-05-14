@@ -6,6 +6,8 @@
 package utils.procedure.expression;
 
 import utils.matrix.*;
+import utils.matrix.operation.BinaryMatrixOperation;
+import utils.matrix.operation.UnaryMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -29,6 +31,12 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     private final UnaryFunction unaryFunction;
 
     /**
+     * Binary matrix operation.
+     *
+     */
+    private final UnaryMatrixOperation unaryMatrixOperation;
+
+    /**
      * Constructor for unary function.
      *
      * @param expressionID unique ID for expression.
@@ -41,6 +49,8 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
         super("UNARY_FUNCTION", String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
+
+        unaryMatrixOperation = new UnaryMatrixOperation(argument1.getRows(), argument1.getColumns(), unaryFunction);
     }
 
     /**
@@ -76,7 +86,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Argument for operation not defined");
-        result.setMatrix(index, unaryFunction.applyFunction(argument1.getMatrix(index)));
+        unaryMatrixOperation.applyFunction(argument1.getMatrix(index), result.getNewMatrix(index));
     }
 
     /**
@@ -94,7 +104,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, unaryFunction.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
+        argument1.cumulateGradient(index, unaryMatrixOperation.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
     }
 
     /**

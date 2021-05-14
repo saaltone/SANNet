@@ -310,9 +310,8 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param index data index.
      * @throws MatrixException throws exception if calculation of gradient fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void calculateGradient(int index) throws MatrixException, DynamicParamException;
+    protected abstract void calculateGradient(int index) throws MatrixException;
 
     /**
      * Execute forward normalization to constant node.

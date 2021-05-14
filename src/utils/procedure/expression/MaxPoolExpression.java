@@ -6,10 +6,13 @@
 package utils.procedure.expression;
 
 import utils.matrix.MatrixException;
+import utils.matrix.operation.MaxPoolGradientMatrixOperation;
+import utils.matrix.operation.MaxPoolMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Stack;
 
 /**
  * Class that describes expression for max pooling operation.<br>
@@ -18,28 +21,28 @@ import java.util.HashMap;
 public class MaxPoolExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * Stride of max pooling operation.
+     * Reference to max pool matrix operation.
      *
      */
-    private final int stride;
+    private final MaxPoolMatrixOperation maxPoolMatrixOperation;
 
     /**
-     * Row size of filter.
+     * Reference to max pool gradient matrix operation.
      *
      */
-    private final int filterRowSize;
-
-    /**
-     * Column size of filter.
-     *
-     */
-    private final int filterColumnSize;
+    private final MaxPoolGradientMatrixOperation maxPoolGradientMatrixOperation;
 
     /**
      * Maximum positions for max pool operation.
      *
      */
     private final HashMap<Integer, HashMap<Integer, Integer>> maxPos = new HashMap<>();
+
+    /**
+     * Stack for caching maximum position instances.
+     *
+     */
+    private final Stack<HashMap<Integer, Integer>> maxPosCache = new Stack<>();
 
     /**
      * Constructor for max pooling operation.
@@ -54,9 +57,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("MAX_POOL", "MAX_POOL", expressionID, argument1, result);
-        this.stride = stride;
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
+        maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
+        maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), stride);
     }
 
     /**
@@ -74,11 +76,9 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        argument1.getMatrix(index).setStride(stride);
-        argument1.getMatrix(index).setFilterRowSize(filterRowSize);
-        argument1.getMatrix(index).setFilterColumnSize(filterColumnSize);
-        maxPos.put(index, new HashMap<>());
-        result.setMatrix(index, argument1.getMatrix(index).maxPool(maxPos.get(index)));
+        if (!maxPosCache.empty()) maxPos.put(index, maxPosCache.pop());
+        else maxPos.put(index, new HashMap<>());
+        maxPoolMatrixOperation.apply(argument1.getMatrix(index), maxPos.get(index), result.getNewMatrix(index));
     }
 
     /**
@@ -97,9 +97,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         if (!maxPos.containsKey(index)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
-        result.getGradient(index).setFilterRowSize(filterRowSize);
-        result.getGradient(index).setFilterColumnSize(filterColumnSize);
-        argument1.cumulateGradient(index, result.getGradient(index).maxPoolGradient(maxPos.remove(index)), false);
+        argument1.cumulateGradient(index, maxPoolGradientMatrixOperation.apply(result.getGradient(index), maxPos.get(index), argument1.getEmptyMatrix()), false);
+        maxPosCache.push(maxPos.remove(index));
     }
 
     /**

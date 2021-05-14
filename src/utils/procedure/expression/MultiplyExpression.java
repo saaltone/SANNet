@@ -5,7 +5,9 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.BinaryMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -15,6 +17,12 @@ import java.io.Serializable;
  *
  */
 public class MultiplyExpression extends AbstractBinaryExpression implements Serializable {
+
+    /**
+     * Reference to multiply matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation multiplyMatrixOperation;
 
     /**
      * Constructor for multiply operation.
@@ -27,6 +35,12 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public MultiplyExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
         super("MULTIPLY", "*", expressionID, argument1, argument2, result);
+
+        // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
+        int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
+        int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
+
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
     }
 
     /**
@@ -44,7 +58,7 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateExpression(int index) throws MatrixException {
         if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        result.setMatrix(index, argument1.getMatrix(index).multiply(argument2.getMatrix(index)));
+        multiplyMatrixOperation.apply(argument1.getMatrix(index), argument2.getMatrix(index), result.getNewMatrix(index));
     }
 
     /**
@@ -62,8 +76,9 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, result.getGradient(index).multiply(argument2.getMatrix(index)), false);
-        argument2.cumulateGradient(index, argument1.getMatrix(index).multiply(result.getGradient(index)), false);
+        argument1.cumulateGradient(index, multiplyMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        argument2.cumulateGradient(index, multiplyMatrixOperation.apply(argument1.getMatrix(index), result.getGradient(index), argument2.getEmptyMatrix()), false);
+
     }
 
     /**
