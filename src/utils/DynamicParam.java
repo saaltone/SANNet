@@ -21,18 +21,53 @@ public class DynamicParam implements Serializable {
     private static final long serialVersionUID = -5783783860424243849L;
 
     /**
-     * Enum for defining parameter type<br>
-     * Supports integer (INT), long (LONG), float (FLOAT), double (DOUBLE), char (CHAR), string (String) and boolean (BOOLEAN) types.<br>
+     * Enum for defining parameter type.
      *
      */
     public enum ParamType {
+
+        /**
+         * Integer
+         *
+         */
         INT,
+
+        /**
+         * Long
+         *
+         */
         LONG,
+
+        /**
+         * Float
+         *
+         */
         FLOAT,
+
+        /**
+         * Double
+         *
+         */
         DOUBLE,
+
+        /**
+         * Character
+         *
+         */
         CHAR,
+
+        /**
+         * String
+         *
+         */
         STRING,
+
+        /**
+         * Boolean
+         *
+         */
         BOOLEAN
+
     }
 
     /**
