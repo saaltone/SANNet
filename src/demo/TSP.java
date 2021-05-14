@@ -413,8 +413,10 @@ public class TSP implements Environment {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws IOException throws exception if cloning of neural network fails.
+     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public TSP(int cityAmount) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         tour = new Tour(cityAmount);
         agent = compactState ? createAgent(2 * tour.size(), tour.size() - 1) : createAgent(4 * tour.size(), tour.size() - 1);
     }
@@ -680,7 +682,8 @@ public class TSP implements Environment {
             int lastCityIndex = -1;
             int previousLastCityIndex = -2;
             g2.setStroke(new BasicStroke(1));
-            for (int index = 0; index < drawCities.size() - 1; index++) {
+            int size = drawCities.size() - 1;
+            for (int index = 0; index < size; index++) {
                 City city1 = tour.cities.get(drawCities.get(index));
                 City city2 = tour.cities.get(drawCities.get(index + 1));
                 lastCity = city2;
@@ -706,7 +709,8 @@ public class TSP implements Environment {
             g2.setStroke(new BasicStroke(2));
             g2.setColor(Color.RED);
             lastCity = null;
-            for (int index = 0; index < shortestDrawCities.size() - 1; index++) {
+            int shortestDrawCitiesSize = shortestDrawCities.size() - 1;
+            for (int index = 0; index < shortestDrawCitiesSize; index++) {
                 City city1 = tour.cities.get(shortestDrawCities.get(index));
                 City city2 = tour.cities.get(shortestDrawCities.get(index + 1));
                 lastCity = city2;
@@ -801,12 +805,16 @@ public class TSP implements Environment {
     /**
      * Creates agent (player).
      *
+     * @param inputAmount number of inputs for agent.
+     * @param outputAmount number of outputs for agent.
      * @return agent
+     * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws IOException throws exception if cloning of neural network fails.
+     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
-    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException {
+    private Agent createAgent(int inputAmount, int outputAmount) throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean nnPolicyEstimator = true;
         boolean nnValueEstimator = true;
         boolean policyGradient = true;
@@ -845,7 +853,7 @@ public class TSP implements Environment {
         }
         Agent agent;
         if (!policyGradient) {
-//            agent = new DDQNLearning(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 150, targetFunctionTau = 0.01"));
+//            agent = new DDQNLearning(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01"));
             agent = new DQNLearning(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "agentUpdateCycle = 100"));
 //            agent = new Sarsa(this, executablePolicyType, valueEstimator, ((!params.isEmpty() ? params + ", " : "") + "agentUpdateCycle = 100"));
         }
@@ -874,12 +882,10 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (4 * inputSize);
-//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
-//        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         if (!policyFunction) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + (stateValue ? 1 : outputSize));
+            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + (stateValue ? 1 : outputSize));
             neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
             neuralNetwork.build();
             neuralNetwork.verboseTraining(10);
@@ -907,7 +913,6 @@ public class TSP implements Environment {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         String width = "width = " + (inputSize + 20);
-//        neuralNetwork.addHiddenLayer(LayerType.GRU, width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize));
