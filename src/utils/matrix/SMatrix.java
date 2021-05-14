@@ -72,7 +72,7 @@ public class SMatrix extends ComputableMatrix {
         super(true);
         this.rows = 1;
         this.columns = 1;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        updateSliceDimensions(0, 0, 0, 0);
     }
 
     /**
