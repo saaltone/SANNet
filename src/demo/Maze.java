@@ -105,7 +105,7 @@ public class Maze implements Environment, ActionListener {
          * @return if true cells can be connected.
          */
         public boolean canConnectTo(Cell from) {
-            return !connected && !getTo(from).visited;
+            return !connected && !Objects.requireNonNull(getTo(from)).visited;
         }
 
         /**
@@ -117,7 +117,7 @@ public class Maze implements Environment, ActionListener {
         public Cell passTo(Cell from) {
             if (canConnectTo(from)) {
                 setConnected();
-                getTo(from).setVisited();
+                Objects.requireNonNull(getTo(from)).setVisited();
                 return getTo(from);
             }
             else return null;
@@ -318,39 +318,11 @@ public class Maze implements Environment, ActionListener {
     /**
      * Class that defines maze agent.
      *
+     * @param x x position of maze agent.
+     * @param y y position of maze agent.
+     * @param action action taken by maze agent.
      */
-    static class MazeAgent {
-
-        /**
-         * X position of maze agent.
-         *
-         */
-        final int x;
-
-        /**
-         * Y position of maze agent.
-         *
-         */
-        final int y;
-
-        /**
-         * Action taken by maze agent.
-         *
-         */
-        final int action;
-
-        /**
-         * Constructor for maze agent.
-         *
-         * @param x x position of maze agent.
-         * @param y y position of maze agent.
-         * @param action action taken by maze agent.
-         */
-        MazeAgent(int x, int y, int action) {
-            this.x = x;
-            this.y = y;
-            this.action = action;
-        }
+    record MazeAgent(int x, int y, int action) {
     }
 
     /**
