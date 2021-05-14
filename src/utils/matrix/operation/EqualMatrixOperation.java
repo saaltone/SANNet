@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines equal matrix operation.
@@ -9,10 +15,16 @@ import utils.matrix.Matrix;
 public class EqualMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Other matrix.
+     * First matrix.
      *
      */
-    private Matrix other;
+    private Matrix first;
+
+    /**
+     * Result matrix.
+     *
+     */
+    private Matrix result;
 
     /**
      * Constructor for equal matrix operation.
@@ -25,6 +37,28 @@ public class EqualMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
+     * Applies matrix operation.
+     *
+     * @param first first matrix.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix first, Matrix result) throws MatrixException {
+        this.first = first;
+        this.result = result;
+        applyMatrixOperation();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return first;
+    }
+
+    /**
      * Returns another matrix used in operation.
      *
      * @return another matrix used in operation.
@@ -34,32 +68,15 @@ public class EqualMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Sets other matrix.
-     *
-     * @param other other matrix.
-     */
-    public void setOther(Matrix other) {
-        this.other = other;
-    }
-
-    /**
-     * Returns other matrix.
-     *
-     * @return other matrix.
-     */
-    public Matrix getOther() {
-        return other;
-    }
-
-    /**
-     * Applies operation.
+     * Applies operation.<br>
+     * Ignores masking of other matrix.<br>
      *
      * @param row current row.
      * @param column current column.
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        other.setValue(row, column, value);
+        result.setValue(row, column, value);
     }
 
 }

@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashMap;
 
@@ -9,6 +15,12 @@ import java.util.HashMap;
  *
  */
 public class MaxPoolGradientMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Output gradient.
+     *
+     */
+    private Matrix outputGradient;
 
     /**
      * Input gradient.
@@ -34,10 +46,38 @@ public class MaxPoolGradientMatrixOperation extends AbstractMatrixOperation {
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
      * @param inputColumnSize number of input columns.
+     * @param stride stride step
      */
-    public MaxPoolGradientMatrixOperation(int rows, int columns, int inputColumnSize) {
-        super(rows, columns, true);
+    public MaxPoolGradientMatrixOperation(int rows, int columns, int inputColumnSize, int stride) {
+        super(rows, columns, true, stride);
         this.inputColumnSize = inputColumnSize;
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param outputGradient output gradient.
+     * @param maxPos maximum positions.
+     * @param inputGradient input gradient.
+     * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+
+    public Matrix apply(Matrix outputGradient, HashMap<Integer, Integer> maxPos, Matrix inputGradient) throws MatrixException {
+        this.outputGradient = outputGradient;
+        this.maxPos = maxPos;
+        this.inputGradient = inputGradient;
+        applyMatrixOperation();
+        return inputGradient;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return outputGradient;
     }
 
     /**

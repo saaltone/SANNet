@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines variance matrix operation.
  *
  */
 public class VarianceMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Mean value for variance operation.
@@ -39,6 +51,41 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
+     * Applies variance operation.
+     *
+     * @param input input matrix.
+     * @return variance of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double applyVariance(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        return count > 0 ? value / (double)count : 0;
+    }
+
+    /**
+     * Applies standard deviation operation.
+     *
+     * @param input input matrix.
+     * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double applyStandardDeviation(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        return count > 1 ? Math.sqrt(value / (double)(count - 1)) : 0;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
+    }
+
+    /**
      * Returns another matrix used in operation.
      *
      * @return another matrix used in operation.
@@ -57,24 +104,6 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
     public void apply(int row, int column, double value) {
         this.value += Math.pow(value - mean, 2);
         count++;
-    }
-
-    /**
-     * Returns variance after operation is applied.
-     *
-     * @return variance.
-     */
-    public double getVariance() {
-        return count > 0 ? value / (double)count : 0;
-    }
-
-    /**
-     * Returns standard deviation after operation is applied.
-     *
-     * @return standard deviation.
-     */
-    public double getStandardDeviation() {
-        return count > 1 ? Math.sqrt(value / (double)(count - 1)) : 0;
     }
 
 }

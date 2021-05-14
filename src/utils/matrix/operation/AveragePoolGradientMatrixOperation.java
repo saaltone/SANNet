@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines average pooling gradient matrix operation.
@@ -9,28 +15,59 @@ import utils.matrix.Matrix;
 public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation {
 
     /**
+     * Output gradient.
+     *
+     */
+    private Matrix outputGradient;
+
+    /**
      * Input gradient.
      *
      */
     private Matrix inputGradient;
 
     /**
-     * Inverted size of pool 1 / (rows * columns)
+     * Inverted size of filter 1 / (filterRowSize * filterColumnSize)
      *
      */
-    private final double invertedPoolSize;
+    private final double invertedFilterSize;
 
     /**
      * Constructor for average pooling gradient matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
-     * @param poolRows pool size in rows.
-     * @param poolColumns pool size in columns.
+     * @param filterRowSize filter size in rows.
+     * @param filterColumnSize filter size in columns.
+     * @param stride stride step
      */
-    public AveragePoolGradientMatrixOperation(int rows, int columns, int poolRows, int poolColumns) {
-        super(rows, columns, false);
-        this.invertedPoolSize = 1 / (double)(poolRows * poolColumns);
+    public AveragePoolGradientMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int stride) {
+        super(rows, columns, false, stride);
+        this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param outputGradient output gradient.
+     * @param inputGradient input gradient.
+     * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix apply(Matrix outputGradient, Matrix inputGradient) throws MatrixException {
+        this.outputGradient = outputGradient;
+        this.inputGradient = inputGradient;
+        applyMatrixOperation();
+        return inputGradient;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return outputGradient;
     }
 
     /**
@@ -43,24 +80,6 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
     }
 
     /**
-     * Sets input gradient matrix.
-     *
-     * @param inputGradient input gradient matrix.
-     */
-    public void setInputGradient(Matrix inputGradient) {
-        this.inputGradient = inputGradient;
-    }
-
-    /**
-     * Returns input gradient matrix.
-     *
-     * @return input gradient matrix.
-     */
-    public Matrix getInputGradient() {
-        return inputGradient;
-    }
-
-    /**
      * Applies operation.
      *
      * @param row current row.
@@ -68,7 +87,7 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        inputGradient.setValue(row, column, value * invertedPoolSize);
+        inputGradient.setValue(row, column, value * invertedFilterSize);
     }
 
 }

@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines dot operation.
@@ -37,66 +43,38 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getAnother() {
-        return second;
-    }
-
-    /**
-     * Sets first matrix.
+     * Applies matrix operation.
      *
      * @param first first matrix.
+     * @param second second matrix.
+     * @param result result matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setFirst(Matrix first) {
+    public Matrix apply(Matrix first, Matrix second, Matrix result) throws MatrixException {
         this.first = first;
+        this.second = second;
+        this.result = result;
+        applyMatrixOperation();
+        return result;
     }
 
     /**
-     * Returns first matrix.
+     * Returns target matrix.
      *
-     * @return first matrix.
+     * @return target matrix.
      */
-    public Matrix getFirst() {
+    protected Matrix getTargetMatrix() {
         return first;
     }
 
     /**
-     * Sets second matrix.
+     * Returns another matrix used in operation.
      *
-     * @param second second matrix.
+     * @return another matrix used in operation.
      */
-    public void setSecond(Matrix second) {
-        this.second = second;
-    }
-
-    /**
-     * Returns second matrix.
-     *
-     * @return second matrix.
-     */
-    public Matrix getSecond() {
+    protected Matrix getAnother() {
         return second;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
     }
 
     /**
@@ -108,7 +86,7 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * @param second second matrix.
      * @return returns true if first or second matrix has mask at specific row and column.
      */
-    public boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
+    protected boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
         return false;
     }
 
@@ -120,7 +98,8 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        for (int x = 0; x < first.getColumns(); x++) {
+        int xSize = first.getColumns();
+        for (int x = 0; x < xSize; x++) {
             result.setValue(row, column, result.getValue(row, column) + first.getValue(row, x) * second.getValue(x, column));
         }
     }
@@ -133,11 +112,14 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void applyMask(int row, int column, double value) {
-        for (int x = 0; x < first.getColumns(); x++) {
+        int xSize = first.getColumns();
+        double sumValue = result.getValue(row, column);
+        for (int x = 0; x < xSize; x++) {
             if (!hasMaskAt(row, x, first) && !hasMaskAt(x, column, second)) {
-                result.setValue(row, column, result.getValue(row, column) + first.getValue(row, x) * second.getValue(x, column));
+                sumValue += first.getValue(row, x) * second.getValue(x, column);
             }
         }
+        result.setValue(row, column, sumValue);
     }
 
 }

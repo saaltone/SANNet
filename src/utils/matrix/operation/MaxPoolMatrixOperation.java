@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
@@ -55,12 +60,37 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      * @param inputColumnSize number of input columns.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param stride stride step
      */
-    public MaxPoolMatrixOperation(int rows, int columns, int inputColumnSize, int filterRowSize, int filterColumnSize) {
-        super(rows, columns, false);
+    public MaxPoolMatrixOperation(int rows, int columns, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
+        super(rows, columns, false, stride);
         this.inputColumnSize = inputColumnSize;
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param input input matrix.
+     * @param maxPos maximum positions.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix input, HashMap<Integer, Integer> maxPos, Matrix result) throws MatrixException {
+        this.input = input;
+        this.maxPos = maxPos;
+        this.result = result;
+        applyMatrixOperation();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**
@@ -70,60 +100,6 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix getAnother() {
         return null;
-    }
-
-    /**
-     * Sets input matrix.
-     *
-     * @param input input matrix.
-     */
-    public void setInput(Matrix input) {
-        this.input = input;
-    }
-
-    /**
-     * Returns input matrix.
-     *
-     * @return input matrix.
-     */
-    public Matrix getInput() {
-        return input;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
-    }
-
-    /**
-     * Sets maximum positions.
-     *
-     * @param maxPos maximum positions.
-     */
-    public void setMaxPos(HashMap<Integer, Integer> maxPos) {
-        this.maxPos = maxPos;
-    }
-
-    /**
-     * Returns maximum positions.
-     *
-     * @return maximum positions.
-     */
-    public HashMap<Integer, Integer> getMaxPos() {
-        return maxPos;
     }
 
     /**

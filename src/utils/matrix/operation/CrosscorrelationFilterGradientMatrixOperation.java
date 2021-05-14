@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.MatrixException;
@@ -16,9 +21,10 @@ public class CrosscorrelationFilterGradientMatrixOperation extends AbstractConvo
      * @param filterRowSize filter row size
      * @param filterColumnSize filter column size.
      * @param dilation dilation step
+     * @param stride stride step
      */
-    public CrosscorrelationFilterGradientMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation) {
-        super(rows, columns, filterRowSize, filterColumnSize, dilation);
+    public CrosscorrelationFilterGradientMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, filterRowSize, filterColumnSize, dilation, stride);
     }
 
     /**

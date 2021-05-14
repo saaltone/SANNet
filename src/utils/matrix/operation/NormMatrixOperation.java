@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines norm matrix operation.
  *
  */
 public class NormMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Power for norm operation.
@@ -33,6 +45,28 @@ public class NormMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
+     * Applies operation.
+     *
+     * @param input input matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double apply(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        return Math.pow(value, 1 / (double)p);
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
+    }
+
+    /**
      * Returns another matrix used in operation.
      *
      * @return another matrix used in operation.
@@ -50,15 +84,6 @@ public class NormMatrixOperation extends AbstractMatrixOperation {
      */
     public void apply(int row, int column, double value) {
         this.value += Math.pow(Math.abs(value), p);
-    }
-
-    /**
-     * Returns norm after operation is applied.
-     *
-     * @return norm.
-     */
-    public double getNorm() {
-        return Math.pow(value, 1 / (double)p);
     }
 
 }

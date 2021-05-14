@@ -1,6 +1,11 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
-import utils.matrix.Matrix;
+import utils.matrix.*;
 
 /**
  * Defines matrix binary operation.
@@ -9,10 +14,16 @@ import utils.matrix.Matrix;
 public class BinaryMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Other matrix.
+     * First matrix.
      *
      */
-    private Matrix other;
+    private Matrix first;
+
+    /**
+     * Second matrix.
+     *
+     */
+    private Matrix second;
 
     /**
      * Result matrix.
@@ -21,13 +32,31 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
     private Matrix result;
 
     /**
-     * Matrix binary operation.
+     * Matrix binary function.
+     *
+     */
+    private final BinaryFunction binaryFunction;
+
+    /**
+     * Matrix binary function type
+     *
+     */
+    private final BinaryFunctionType binaryFunctionType;
+
+    /**
+     * Matrix binary function type
      *
      */
     private final Matrix.MatrixBinaryOperation matrixBinaryOperation;
 
     /**
-     * Constructor for matrix binary operation.
+     * Matrix binary function type
+     *
+     */
+    private final Matrix.MatrixBinaryOperation matrixGradientBinaryOperation;
+
+    /**
+     * Constructor for matrix unary operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
@@ -35,7 +64,77 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      */
     public BinaryMatrixOperation(int rows, int columns, Matrix.MatrixBinaryOperation matrixBinaryOperation) {
         super(rows, columns, true);
+        this.binaryFunction = null;
+        this.binaryFunctionType = null;
         this.matrixBinaryOperation = matrixBinaryOperation;
+        this.matrixGradientBinaryOperation = null;
+    }
+
+    /**
+     * Constructor for matrix binary operation.
+     *
+     * @param rows number of rows for operation.
+     * @param columns number of columns for operation.
+     * @param binaryFunction binary function.
+     */
+    public BinaryMatrixOperation(int rows, int columns, BinaryFunction binaryFunction) {
+        super(rows, columns, true);
+        this.binaryFunction = binaryFunction;
+        this.binaryFunctionType = binaryFunction.getType();
+        this.matrixBinaryOperation = binaryFunction.getFunction();
+        this.matrixGradientBinaryOperation = binaryFunction.getDerivative();
+    }
+
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param first first matrix.
+     * @param second second matrix.
+     * @param result result matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix apply(Matrix first, Matrix second, Matrix result) throws MatrixException {
+        this.first = first;
+        this.second = second;
+        this.result = result;
+        applyMatrixOperation();
+        return result;
+    }
+
+    /**
+     * Applies function to first and second matrix.
+     *
+     * @param first first matrix.
+     * @param second second matrix.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void applyFunction(Matrix first, Matrix second, Matrix result) throws MatrixException {
+        first.applyBi(second, result, matrixBinaryOperation);
+    }
+
+    /**
+     * Calculates gradient.
+     *
+     * @param first first matrix.
+     * @param second second matrix.
+     * @param outputGradient output gradient.
+     * @return input gradient
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix applyGradient(Matrix first, Matrix second, Matrix outputGradient) throws MatrixException {
+        return outputGradient.multiply(first.applyBi(second, matrixGradientBinaryOperation));
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return first;
     }
 
     /**
@@ -44,43 +143,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @return another matrix used in operation.
      */
     public Matrix getAnother() {
-        return other;
-    }
-
-    /**
-     * Sets other matrix.
-     *
-     * @param other other matrix.
-     */
-    public void setOther(Matrix other) {
-        this.other = other;
-    }
-
-    /**
-     * Returns other matrix.
-     *
-     * @return other matrix.
-     */
-    public Matrix getOther() {
-        return other;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
+        return second;
     }
 
     /**
@@ -91,7 +154,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        result.setValue(row, column, matrixBinaryOperation.execute(value, other.getValue(row, column)));
+        result.setValue(row, column, matrixBinaryOperation.execute(value, second.getValue(row, column)));
     }
 
 }

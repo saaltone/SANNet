@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines Softmax gradient matrix operation.
@@ -28,6 +34,30 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
      */
     public SoftmaxGradientMatrixOperation(int rows, int columns) {
         super(rows, columns, false);
+    }
+
+    /**
+     * Applies operation.
+     *
+     * @param first first matrix.
+     * @param result result matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix apply(Matrix first, Matrix result) throws MatrixException {
+        this.first = first;
+        this.result = result;
+        applyMatrixOperation();
+        return result;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return first;
     }
 
     /**

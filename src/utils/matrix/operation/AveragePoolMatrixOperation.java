@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
@@ -46,12 +51,35 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      * @param columns number of columns for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param stride stride step
      */
-    public AveragePoolMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize) {
-        super(rows, columns, false);
+    public AveragePoolMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int stride) {
+        super(rows, columns, false, stride);
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param input input matrix.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix input, Matrix result) throws MatrixException {
+        this.input = input;
+        this.result = result;
+        applyMatrixOperation();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**
@@ -61,42 +89,6 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix getAnother() {
         return null;
-    }
-
-    /**
-     * Sets input matrix.
-     *
-     * @param input input matrix.
-     */
-    public void setInput(Matrix input) {
-        this.input = input;
-    }
-
-    /**
-     * Returns input matrix.
-     *
-     * @return input matrix.
-     */
-    public Matrix getInput() {
-        return input;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
     }
 
     /**

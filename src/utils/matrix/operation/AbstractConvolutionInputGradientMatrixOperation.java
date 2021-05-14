@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines abstract convolution input gradient matrix operation.
  *
  */
 public abstract class AbstractConvolutionInputGradientMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Output gradient.
+     *
+     */
+    protected Matrix outputGradient;
 
     /**
      * Filter matrix.
@@ -46,12 +58,39 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @param filterRowSize filter row size
      * @param filterColumnSize filter column size.
      * @param dilation dilation step
+     * @param stride stride step
      */
-    public AbstractConvolutionInputGradientMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation) {
-        super(rows, columns, true);
+    public AbstractConvolutionInputGradientMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, true, stride);
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.dilation = dilation;
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param outputGradient output gradient.
+     * @param filter filter matrix.
+     * @param inputGradient input gradient.
+     * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix apply(Matrix outputGradient, Matrix filter, Matrix inputGradient) throws MatrixException {
+        this.outputGradient = outputGradient;
+        this.filter = filter;
+        this.inputGradient = inputGradient;
+        applyMatrixOperation();
+        return inputGradient;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return outputGradient;
     }
 
     /**
@@ -61,42 +100,6 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      */
     public Matrix getAnother() {
         return null;
-    }
-
-    /**
-     * Sets filter matrix.
-     *
-     * @param filter filter matrix.
-     */
-    public void setFilter(Matrix filter) {
-        this.filter = filter;
-    }
-
-    /**
-     * Returns filter matrix.
-     *
-     * @return filter matrix.
-     */
-    public Matrix getFilter() {
-        return filter;
-    }
-
-    /**
-     * Sets input gradient matrix.
-     *
-     * @param inputGradient input gradient matrix.
-     */
-    public void setInputGradient(Matrix inputGradient) {
-        this.inputGradient = inputGradient;
-    }
-
-    /**
-     * Returns input gradient matrix.
-     *
-     * @return input gradient matrix.
-     */
-    public Matrix getInputGradient() {
-        return inputGradient;
     }
 
 }

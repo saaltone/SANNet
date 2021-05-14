@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines sum matrix operation.
  *
  */
 public class SumMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Cumulated value.
@@ -52,21 +64,38 @@ public class SumMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns sum after operation is applied.
+     * Applies sum operation.
      *
-     * @return sum.
+     * @param input input matrix.
+     * @return sum of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getSum() {
+    public double applySum(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
         return value;
     }
 
     /**
-     * Returns mean after operation is applied.
+     * Applies mean operation.
      *
-     * @return mean.
+     * @param input input matrix.
+     * @return mean of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double getMean() {
+    public double applyMean(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
         return value / (double)count;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
 }

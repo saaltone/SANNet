@@ -1,6 +1,12 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines abstract convolution matrix operation.
@@ -52,12 +58,37 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
      * @param filterRowSize filter row size
      * @param filterColumnSize filter column size.
      * @param dilation dilation step
+     * @param stride stride step
      */
-    public AbstractConvolutionMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation) {
-        super(rows, columns, false);
+    public AbstractConvolutionMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, false, stride);
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.dilation = dilation;
+    }
+
+    /**
+     * Applies matrix operation.
+     *
+     * @param input input matrix.
+     * @param filter filter matrix.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix input, Matrix filter, Matrix result) throws MatrixException {
+        this.input = input;
+        this.filter = filter;
+        this.result = result;
+        applyMatrixOperation();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**
@@ -67,60 +98,6 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
      */
     public Matrix getAnother() {
         return null;
-    }
-
-    /**
-     * Sets input matrix.
-     *
-     * @param input input matrix.
-     */
-    public void setInput(Matrix input) {
-        this.input = input;
-    }
-
-    /**
-     * Returns input matrix.
-     *
-     * @return input matrix.
-     */
-    public Matrix getInput() {
-        return input;
-    }
-
-    /**
-     * Sets filter matrix.
-     *
-     * @param filter filter matrix.
-     */
-    public void setFilter(Matrix filter) {
-        this.filter = filter;
-    }
-
-    /**
-     * Returns filter matrix.
-     *
-     * @return filter matrix.
-     */
-    public Matrix getFilter() {
-        return filter;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
     }
 
 }

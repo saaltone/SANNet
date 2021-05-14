@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
@@ -34,6 +39,12 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
     private final boolean provideValue;
 
     /**
+     * Stride step for operation.
+     *
+     */
+    private final int stride;
+
+    /**
      * Constructor for abstract matrix operation.
      *
      * @param rows number of rows for operation.
@@ -44,6 +55,22 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
         this.rows = rows;
         this.columns = columns;
         this.provideValue = provideValue;
+        this.stride = 1;
+    }
+
+    /**
+     * Constructor for abstract matrix operation.
+     *
+     * @param rows number of rows for operation.
+     * @param columns number of columns for operation.
+     * @param provideValue if true operation provides value when applying operation otherwise false.
+     * @param stride stride step for operation.
+     */
+    public AbstractMatrixOperation(int rows, int columns, boolean provideValue, int stride) {
+        this.rows = rows;
+        this.columns = columns;
+        this.provideValue = provideValue;
+        this.stride = stride;
     }
 
     /**
@@ -51,7 +78,7 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
      *
      * @return number of rows for operation.
      */
-    public int getRows() {
+    protected int getRows() {
         return rows;
     }
 
@@ -60,7 +87,7 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
      *
      * @return number of columns for operation.
      */
-    public int getColumns() {
+    protected int getColumns() {
         return columns;
     }
 
@@ -69,8 +96,24 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
      *
      * @return if true operation provides value when applying operation otherwise false.
      */
-    public boolean getProvideValue() {
+    protected boolean getProvideValue() {
         return provideValue;
+    }
+
+    /**
+     * Returns another matrix used in operation.
+     *
+     * @return another matrix used in operation.
+     */
+    protected abstract Matrix getAnother();
+
+    /**
+     * Returns stride step for operation.
+     *
+     * @return stride step for operation.
+     */
+    protected int getStride() {
+        return stride;
     }
 
     /**
@@ -86,13 +129,51 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
     }
 
     /**
+     * Applies matrix operation.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void applyMatrixOperation() throws MatrixException {
+        final int rows = getRows();
+        final int columns = getColumns();
+        final Matrix other = getAnother();
+        final boolean provideValue = getProvideValue();
+        final int rowStride = getStride();
+        final int columnStride = getStride();
+        final Matrix targetMatrix = getTargetMatrix();
+        if (!hasMask(targetMatrix, other)) {
+            for (int row = 0; row < rows; row += rowStride) {
+                for (int column = 0; column < columns; column += columnStride) {
+                    apply(row, column, provideValue ? targetMatrix.getValue(row, column) : 0);
+                }
+            }
+        }
+        else {
+            for (int row = 0; row < rows; row += rowStride) {
+                for (int column = 0; column < columns; column += columnStride) {
+                    if (!hasMaskAt(row, column, targetMatrix, other)) {
+                        apply(row, column, provideValue ? targetMatrix.getValue(row, column) : 0);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected abstract Matrix getTargetMatrix();
+
+    /**
      * Check if first matrix and optionally second matrix has mask.
      *
      * @param first first matrix.
      * @param second second matrix.
      * @return returns true if first or second matrix has mask.
      */
-    public boolean hasMask(Matrix first, Matrix second) {
+    protected boolean hasMask(Matrix first, Matrix second) {
         return first.getMask() != null || (second != null && second.getMask() != null);
     }
 
@@ -105,7 +186,7 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
      * @param second second matrix.
      * @return returns true if first or second matrix has mask at specific row and column.
      */
-    public boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
+    protected boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
         return first.hasMaskAt(row, column) || (second != null && second.hasMaskAt(row, column));
     }
 

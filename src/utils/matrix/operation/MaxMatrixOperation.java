@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines maximum matrix operation.
  *
  */
 public class MaxMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Maximum value.
@@ -34,6 +46,44 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      */
     public MaxMatrixOperation(int rows, int columns) {
         super(rows, columns, true);
+    }
+
+    /**
+     * Applies argmax operation.
+     *
+     * @param input input matrix.
+     * @return maximum arguments (row and column)
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public int[] applyArgMax(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        int[] result = new int[2];
+        result[0] = getRow();
+        result[1] = getColumn();
+        return result;
+    }
+
+    /**
+     * Applies maximum operation.
+     *
+     * @param input input matrix.
+     * @return maximum value
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double applyMax(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        return getValue();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**

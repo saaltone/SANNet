@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines minimum matrix operation.
  *
  */
 public class MinMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Minimum value.
@@ -34,6 +46,44 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      */
     public MinMatrixOperation(int rows, int columns) {
         super(rows, columns, true);
+    }
+
+    /**
+     * Applies argmin operation.
+     *
+     * @param input input matrix.
+     * @return minimum arguments (row and column)
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public int[] applyArgMin(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        int[] result = new int[2];
+        result[0] = getRow();
+        result[1] = getColumn();
+        return result;
+    }
+
+    /**
+     * Applies minimum operation.
+     *
+     * @param input input matrix.
+     * @return minimum value
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double applyMin(Matrix input) throws MatrixException {
+        this.input = input;
+        applyMatrixOperation();
+        return getValue();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**

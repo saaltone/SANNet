@@ -1,12 +1,24 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Defines normalize matrix operation.
  *
  */
 public class NormalizeMatrixOperation extends AbstractMatrixOperation {
+
+    /**
+     * Input matrix.
+     *
+     */
+    private Matrix input;
 
     /**
      * Mean for normalize operation.
@@ -38,6 +50,30 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
         super(rows, columns, true);
         this.mean = mean;
         this.variance = variance;
+    }
+
+    /**
+     * Applies operation.
+     *
+     * @param input input matrix.
+     * @param result result matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix apply(Matrix input, Matrix result) throws MatrixException {
+        this.input = input;
+        this.result = result;
+        applyMatrixOperation();
+        return result;
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
     }
 
     /**

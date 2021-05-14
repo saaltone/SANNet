@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.DMatrix;
@@ -73,7 +78,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @param columns columns
      */
     public WinogradConvolutionMatrixOperation(int rows, int columns) {
-        super(rows, columns, false);
+        super(rows, columns, false, 2);
         AT = new DMatrix(2, 4);
         AT.setValue(0, 0, 1);
         AT.setValue(0, 1, 1);
@@ -136,7 +141,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @param GT G transposed matrix
      */
     public WinogradConvolutionMatrixOperation(int rows, int columns, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) {
-        super(rows, columns, false);
+        super(rows, columns, false, 2);
         this.A = A;
         this.AT = AT;
         this.C = C;
@@ -156,7 +161,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @param CT C transposed matrix
      */
     public WinogradConvolutionMatrixOperation(int rows, int columns, Matrix A, Matrix AT, Matrix C, Matrix CT) {
-        super(rows, columns, false);
+        super(rows, columns, false, 2);
         this.A = A;
         this.AT = AT;
         this.C = C;
@@ -180,66 +185,36 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
     }
 
     /**
+     * Applies operation.
+     *
+     * @param input input matrix.
+     * @param filter filter matrix.
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void apply(Matrix input, Matrix filter, Matrix result) throws MatrixException {
+        this.input = input;
+        this.filter = filter;
+        this.result = result;
+        applyMatrixOperation();
+    }
+
+    /**
+     * Returns target matrix.
+     *
+     * @return target matrix.
+     */
+    protected Matrix getTargetMatrix() {
+        return input;
+    }
+
+    /**
      * Returns another matrix used in operation.
      *
      * @return another matrix used in operation.
      */
     public Matrix getAnother() {
         return null;
-    }
-
-    /**
-     * Sets input matrix.
-     *
-     * @param input input matrix.
-     */
-    public void setInput(Matrix input) {
-        this.input = input;
-    }
-
-    /**
-     * Returns input matrix.
-     *
-     * @return input matrix.
-     */
-    public Matrix getInput() {
-        return input;
-    }
-
-    /**
-     * Sets filter matrix.
-     *
-     * @param filter filter matrix.
-     */
-    public void setFilter(Matrix filter) {
-        this.filter = filter;
-    }
-
-    /**
-     * Returns filter matrix.
-     *
-     * @return filter matrix.
-     */
-    public Matrix getFilter() {
-        return filter;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
     }
 
     /**
@@ -251,12 +226,24 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
+        final Matrix G1 = new DMatrix(4, 3);
+        Matrix Gprime = new DMatrix(4, 4);
+        final Matrix C1 = new DMatrix(4, 4);
+        final Matrix Crime = new DMatrix(4, 4);
+        final Matrix GCprime = new DMatrix(4, 4);
+        final Matrix AT1 = new DMatrix(2, 4);
         input.sliceAt(row, column, row + 3, column + 3);
-        Matrix Gprime = G != null ? G.dot(filter).dot(GT) : filter;
-        Matrix Cprime = CT.dot(input).dot(C);
-        Matrix GCprime = Gprime.multiply(Cprime);
+        if (G != null) {
+            G.dot(filter, G1);
+            G1.dot(GT, Gprime);
+        }
+        else Gprime = filter;
+        CT.dot(input, C1);
+        C1.dot(C, Crime);
+        Gprime.dot(Crime, GCprime);
+        AT.dot(GCprime, AT1);
         result.sliceAt(row, column, row + 1, column + 1);
-        AT.dot(GCprime).dot(A, result);
+        AT1.dot(A, result);
         input.unslice();
         result.unslice();
     }
