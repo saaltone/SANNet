@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix;
 
 import utils.DynamicParamException;
@@ -277,8 +282,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param unaryFunction unaryFunction to be applied.
      * @param result result matrix.
+     * @param unaryFunction unaryFunction to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(Matrix result, UnaryFunction unaryFunction) throws MatrixException {
@@ -286,10 +291,21 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         else {
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            apply(result, unaryFunction.getFunction());
+            applyFunction(result, unaryFunction);
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
     }
+
+    /**
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param result result matrix.
+     * @param unaryFunction unaryFunction to be applied.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract void applyFunction(Matrix result, UnaryFunction unaryFunction) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -311,8 +327,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param unaryFunctionType unaryFunction type to be applied.
      * @param result result matrix.
+     * @param unaryFunctionType unaryFunction type to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -396,8 +412,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
+    public Matrix applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
         applyBi(other, result, new BinaryFunction(binaryFunctionType));
+        return result;
     }
 
     /**
