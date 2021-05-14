@@ -353,30 +353,27 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Applies function to matrix (value)
+     * Return Gumbel softmax tau.
      *
-     * @param value matrix
-     * @return resulted matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return Gumbel softmax tau.
      */
-    public Matrix applyFunction(Matrix value) throws MatrixException {
-        return applyFunction(value, false);
+    public double getGumbelSoftmaxTau() {
+        return gumbelSoftmaxTau;
     }
 
     /**
-     * Applies function to matrix (input)
+     * Applies function to matrix (value)
      *
-     * @param input matrix
-     * @param inplace if true function is applied in place.
+     * @param first first matrix
      * @return resulted matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyFunction(Matrix input, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? input : input.getNewMatrix();
+    public Matrix applyFunction(Matrix first) throws MatrixException {
+        Matrix result = first.getNewMatrix();
         switch (unaryFunctionType) {
-            case SOFTMAX -> input.softmax(result);
-            case GUMBEL_SOFTMAX -> input.gumbelSoftmax(result, gumbelSoftmaxTau);
-            default -> input.apply(result, this);
+            case SOFTMAX -> first.softmax(result);
+            case GUMBEL_SOFTMAX -> first.gumbelSoftmax(result, gumbelSoftmaxTau);
+            default -> first.apply(result, this);
         }
         return result;
     }
@@ -384,15 +381,15 @@ public class UnaryFunction implements Serializable {
     /**
      * Calculates inner gradient.
      *
-     * @param result result for gradient calculation.
-     * @param gradient outer gradient.
-     * @return inner gradient
+     * @param first first matrix.
+     * @param outputGradient output gradient.
+     * @return input gradient
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyGradient(Matrix result, Matrix gradient) throws MatrixException {
+    public Matrix applyGradient(Matrix first, Matrix outputGradient) throws MatrixException {
         return switch (unaryFunctionType) {
-            case SOFTMAX, GUMBEL_SOFTMAX -> result.softmaxGrad().dot(gradient);
-            default -> gradient.multiply(result.apply(derivative));
+            case SOFTMAX, GUMBEL_SOFTMAX -> first.softmaxGrad().dot(outputGradient);
+            default -> outputGradient.multiply(first.apply(derivative));
         };
     }
 
