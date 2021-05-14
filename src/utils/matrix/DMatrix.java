@@ -57,7 +57,7 @@ public class DMatrix extends ComputableMatrix {
         super(true);
         matrix = new double[1][1];
         matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, 0, matrix[0].length - 1);
     }
 
     /**
@@ -70,7 +70,7 @@ public class DMatrix extends ComputableMatrix {
         super(true, name);
         matrix = new double[1][1];
         matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, 0, matrix[0].length - 1);
     }
 
     /**
@@ -341,8 +341,10 @@ public class DMatrix extends ComputableMatrix {
      */
     public void copyMatrixData(Matrix newMatrix) {
         matrix = new double[newMatrix.getRows()][newMatrix.getColumns()];
-        for (int row = 0; row < newMatrix.getRows(); row++) {
-            for (int column = 0; column < newMatrix.getColumns(); column++) {
+        int rows = newMatrix.getRows();
+        int columns = newMatrix.getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 setValue(row, column, newMatrix.getValue(row, column));
             }
         }
