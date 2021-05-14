@@ -6,44 +6,107 @@
 package utils.matrix;
 
 /**
- * Defines initialization for matrix:<br>
- * - ZERO: initialized with zero values.<br>
- * - ONE: initialized with one values.<br>
- * - RANDOM: initialized with random values between zero and one.<br>
- * - IDENTITY: initialized as identity matrix i.e. ones in diagonal and zero elsewhere.<br>
- * - NORMAL_XAVIER: initialized with normal (Gaussian) XAVIER initialization.<br>
- * - UNIFORM_XAVIER: initialized with uniform XAVIER initialization.<br>
- * - NORMAL_HE: initialized with normal (Gaussian) HE initialization.<br>
- * - UNIFORM_HE: initialized with uniform HE initialization.<br>
- * - NORMAL_LECUN: initialized with normal (Gaussian) LECUN initialization.<br>
- * - UNIFORM_LECUN: initialized with uniform LECUN initialization.<br>
- * - NORMAL_XAVIER_CONV: initialized with normal (Gaussian) XAVIER initialization for convolutional layer.<br>
- * - UNIFORM_XAVIER_CONV: initialized with uniform XAVIER initialization for convolutional layer.<br>
- * - NORMAL_HE_CONV: initialized with normal (Gaussian) HE initialization for convolutional layer.<br>
- * - UNIFORM_HE_CONV: initialized with uniform HE initialization for convolutional layer.<br>
- * - NORMAL_LECUN_CONV: initialized with normal (Gaussian) LECUN initialization for convolutional layer.<br>
- * - UNIFORM_LECUN_CONV: initialized with uniform LECUN initialization for convolutional layer.<br>
+ * Defines initialization for matrix.<br>
  * <br>
  * Reference: https://stats.stackexchange.com/questions/373136/softmax-weights-initialization<br>
  *
  */
 public enum Initialization {
 
+    /**
+     * Initialized with zero values.
+     *
+     */
     ZERO,
+
+    /**
+     * Initialized with one values.
+     *
+     */
     ONE,
+
+    /**
+     * Initialized with uniform random values between zero and one.
+     *
+     */
     RANDOM,
+
+    /**
+     * Initialized as identity matrix i.e. ones in diagonal and zeros elsewhere.
+     *
+     */
     IDENTITY,
+
+    /**
+     * Initialized with normal (Gaussian) Xavier initialization.
+     *
+     */
     NORMAL_XAVIER,
+
+    /**
+     * Initialized with uniform Xavier initialization.
+     *
+     */
     UNIFORM_XAVIER,
+
+    /**
+     * Initialized with normal (Gaussian) He initialization.
+     *
+     */
     NORMAL_HE,
+
+    /**
+     * Initialized with uniform He initialization.
+     *
+     */
     UNIFORM_HE,
+
+    /**
+     * Initialized with normal (Gaussian) Lecun initialization.
+     *
+     */
     NORMAL_LECUN,
+
+    /**
+     * Initialized with uniform Lecun initialization.
+     *
+     */
     UNIFORM_LECUN,
+
+    /**
+     * Initialized with normal (Gaussian) Xavier initialization for convolutional layer.
+     *
+     */
     NORMAL_XAVIER_CONV,
+
+    /**
+     * Initialized with uniform Xavier initialization for convolutional layer.
+     *
+     */
     UNIFORM_XAVIER_CONV,
+
+    /**
+     * Initialized with normal (Gaussian) He initialization for convolutional layer.
+     *
+     */
     NORMAL_HE_CONV,
+
+    /**
+     * Initialized with uniform He initialization for convolutional layer.
+     *
+     */
     UNIFORM_HE_CONV,
+
+    /**
+     * Initialized with normal (Gaussian) Lecun initialization for convolutional layer.
+     *
+     */
     NORMAL_LECUN_CONV,
+
+    /**
+     * Initialized with uniform Lecun initialization for convolutional layer.
+     *
+     */
     UNIFORM_LECUN_CONV
 
 }
