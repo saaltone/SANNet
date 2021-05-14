@@ -148,8 +148,10 @@ public class WeightNoising implements Regularization, Serializable {
      *
      */
     public void backward(Matrix weight, Matrix weightGradientSum) {
-        for (int row = 0; row < weight.getRows(); row++) {
-            for (int column = 0; column < weight.getColumns(); column++) {
+        int rows = weight.getRows();
+        int columns = weight.getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 weight.setValue(row, column, weight.getValue(row, column) + currentNoise * (1 - 2 * random.nextDouble()));
             }
         }
