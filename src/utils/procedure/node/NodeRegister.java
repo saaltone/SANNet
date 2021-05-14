@@ -24,34 +24,12 @@ public class NodeRegister implements Serializable {
     private static final long serialVersionUID = 1317148695277485847L;
 
     /**
-     * Class structure for node entry.
+     * Record that defines node entry.
      *
+     * @param node reference to node instance.
+     * @param expressionID expression ID where node was created in.
      */
-    private static class NodeEntry implements Serializable {
-
-        /**
-         * Reference to node instance.
-         *
-         */
-        final Node node;
-
-        /**
-         * Expression ID where node was created in.
-         *
-         */
-        final int expressionID;
-
-        /**
-         * Constructor for node entry.
-         *
-         * @param node reference to node instance.
-         * @param expressionID expression ID where node was created in.
-         */
-        NodeEntry(Node node, int expressionID) {
-            this.node = node;
-            this.expressionID = expressionID;
-        }
-
+    private record NodeEntry(Node node, int expressionID) {
     }
 
     /**
