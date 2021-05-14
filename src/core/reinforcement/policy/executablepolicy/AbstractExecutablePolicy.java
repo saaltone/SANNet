@@ -24,34 +24,12 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     private static final long serialVersionUID = -3999341188546094490L;
 
     /**
-     * ActionValueTuple for policy.
+     * Record that defines ActionValueTuple for policy.
      *
+     * @param action action value.
+     * @param value value for action.
      */
-    protected static class ActionValueTuple {
-
-        /**
-         * Action.
-         *
-         */
-        final int action;
-
-        /**
-         * Value for action.
-         *
-         */
-        final double value;
-
-        /**
-         * Constructor for ActionValueTuple.
-         *
-         * @param action action value.
-         * @param value value for action.
-         */
-        ActionValueTuple(int action, double value) {
-            this.action = action;
-            this.value = value;
-        }
-
+    protected record ActionValueTuple(int action, double value) {
     }
 
     /**
