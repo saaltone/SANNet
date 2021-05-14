@@ -381,6 +381,15 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
+     * Returns true if matrix has procedure factory otherwise false.
+     *
+     * @return true if matrix has procedure factory otherwise false.
+     */
+    public boolean hasProcedureFactory() {
+        return procedureFactory != null;
+    }
+
+    /**
      * Synchronizes this and other MMatrix procedure factories.
      *
      * @param other other MMatrix
@@ -452,11 +461,13 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(MMatrix result, UnaryFunction unaryFunction) throws MatrixException {
-        double expressionLock = 0;
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).apply(unaryFunction));
-        if (procedureFactory != null) procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).apply(unaryFunction));
+        else {
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).apply(unaryFunction));
+            procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
+        }
     }
 
     /**
@@ -485,12 +496,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(MMatrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
-        if (procedureFactory != null) procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
+            procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+        }
     }
 
     /**
@@ -520,12 +533,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(Matrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other, binaryFunction));
-        if (procedureFactory != null) procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other, binaryFunction));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other, binaryFunction));
+            procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+        }
     }
 
     /**
@@ -553,12 +568,14 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void add(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
-        if (procedureFactory != null) procedureFactory.createAddExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
+            procedureFactory.createAddExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -582,12 +599,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void add(Matrix other, MMatrix result) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
-        if (procedureFactory != null) procedureFactory.createAddExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
+            procedureFactory.createAddExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -612,12 +631,14 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void subtract(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
-        if (procedureFactory != null) procedureFactory.createSubtractExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
+            procedureFactory.createSubtractExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -641,12 +662,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void subtract(Matrix other, MMatrix result) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
-        if (procedureFactory != null) procedureFactory.createSubtractExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
+            procedureFactory.createSubtractExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -671,12 +694,14 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void multiply(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
-        if (procedureFactory != null) procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
+            procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -700,12 +725,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void multiply(Matrix other, MMatrix result) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
-        if (procedureFactory != null) procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
+            procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -730,12 +757,14 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void dot(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
-        if (procedureFactory != null) procedureFactory.createDotExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
+            procedureFactory.createDotExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -759,12 +788,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void dot(Matrix other, MMatrix result) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
-        if (procedureFactory != null) procedureFactory.createDotExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
+            procedureFactory.createDotExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -789,12 +820,14 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void divide(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
-        if (procedureFactory != null) procedureFactory.createDivideExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
+            procedureFactory.createDivideExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -818,12 +851,14 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void divide(Matrix other, MMatrix result) throws MatrixException {
-        double expressionLock = 0;
-        synchronizeProcedureFactory(other);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
-        if (procedureFactory != null) procedureFactory.createDivideExpression(expressionLock, this, other, result);
+        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
+        else {
+            synchronizeProcedureFactory(other);
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
+            procedureFactory.createDivideExpression(expressionLock, this, other, result);
+        }
     }
 
     /**
@@ -847,9 +882,20 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean) throws MatrixException {
-        Matrix sumMatrix = new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns());
-        for (Integer index : keySet()) sumMatrix.add(get(index), sumMatrix);
-        return asMean ? sumMatrix.divide(size()) : sumMatrix;
+        return count(asMean, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+    }
+
+    /**
+     * Calculates sum or mean.
+     *
+     * @param asMean if true returns mean otherwise sum.
+     * @param result result matrix.
+     * @return result of sum or mean
+     * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
+     */
+    public Matrix count(boolean asMean, Matrix result) throws MatrixException {
+        for (Integer index : keySet()) result.add(get(index), result);
+        return asMean ? result.divide(size()) : result;
     }
 
     /**
@@ -859,12 +905,25 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix sum() throws MatrixException {
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = count(false);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createSumExpression(expressionLock, this, result);
-        return result;
+        return sum(new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+    }
+
+    /**
+     * Calculates sum.
+     *
+     * @param result result matrix.
+     * @return resulting sum
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public Matrix sum(Matrix result) throws MatrixException {
+        if (!hasProcedureFactory()) return count(false, result);
+        else {
+            double expressionLock = procedureFactory.startExpression(this);
+            count(false, result);
+            result.setProcedureFactory(procedureFactory);
+            procedureFactory.createSumExpression(expressionLock, this, result);
+            return result;
+        }
     }
 
     /**
@@ -874,12 +933,25 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix mean() throws MatrixException {
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = count(true);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createMeanExpression(expressionLock, this, result);
-        return result;
+        return mean(new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+    }
+
+    /**
+     * Calculates mean.
+     *
+     * @param result result matrix.
+     * @return resulting mean
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public Matrix mean(Matrix result) throws MatrixException {
+        if (!hasProcedureFactory()) return count(true, result);
+        else {
+            double expressionLock = procedureFactory.startExpression(this);
+            count(true, result);
+            result.setProcedureFactory(procedureFactory);
+            procedureFactory.createMeanExpression(expressionLock, this, result);
+            return result;
+        }
     }
 
     /**
@@ -890,12 +962,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance() throws MatrixException, DynamicParamException {
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = variance(mean());
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createVarianceExpression(expressionLock, this, result);
-        return result;
+        return variance(mean(), new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
     }
 
     /**
@@ -907,31 +974,31 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix varianceMatrix = new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns());
-        for (Integer index : matrices.keySet()) varianceMatrix.add(matrices.get(index).subtract(meanMatrix).power(2), varianceMatrix);
-        Matrix result = varianceMatrix.divide(size());
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createVarianceExpression(expressionLock, this, result);
-        return result;
+        return variance(meanMatrix, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
     }
 
     /**
-     * Calculates standard deviation.
+     * Calculates variance.
      *
      * @param meanMatrix matrix containing mean values for variance calculation.
+     * @param result result matrix.
      * @return resulting variance
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
+    public Matrix variance(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
+        if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
+        if (!hasProcedureFactory()) {
+            for (Integer index : matrices.keySet()) result.add(matrices.get(index).subtract(meanMatrix).power(2), result);
+            result.divide(size(), result);
+        }
+        else {
+            double expressionLock = procedureFactory.startExpression(this);
+            for (Integer index : matrices.keySet()) result.add(matrices.get(index).subtract(meanMatrix).power(2), result);
+            result.divide(size(), result);
+            result.setProcedureFactory(procedureFactory);
+            procedureFactory.createVarianceExpression(expressionLock, this, result);
+        }
         return result;
     }
 
@@ -943,11 +1010,38 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation() throws MatrixException, DynamicParamException {
-        double expressionLock = 0;
-        if (procedureFactory != null) expressionLock = procedureFactory.startExpression(this);
-        Matrix result = variance().multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
-        result.setProcedureFactory(procedureFactory);
-        if (procedureFactory != null) procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
+        return standardDeviation(mean(), new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+    }
+
+    /**
+     * Calculates standard deviation.
+     *
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        return standardDeviation(meanMatrix, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+    }
+
+    /**
+     * Calculates standard deviation.
+     *
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @param result result matrix.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Matrix standardDeviation(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
+        if (!hasProcedureFactory()) variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(result, UnaryFunctionType.SQRT);
+        else {
+            double expressionLock = procedureFactory.startExpression(this);
+            variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(result, UnaryFunctionType.SQRT);
+            result.setProcedureFactory(procedureFactory);
+            procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
+        }
         return result;
     }
 
