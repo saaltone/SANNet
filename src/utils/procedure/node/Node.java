@@ -153,6 +153,33 @@ public class Node implements Serializable {
     }
 
     /**
+     * Returns true is reference matrix is of scalar type otherwise false.
+     *
+     * @return true is reference matrix is of scalar type otherwise false.
+     */
+    public boolean isScalar() {
+        return referenceMatrix.isScalar();
+    }
+
+    /**
+     * Returns number of rows in reference matrix.
+     *
+     * @return number of rows in reference matrix.
+     */
+    public int getRows() {
+        return referenceMatrix.getRows();
+    }
+
+    /**
+     * Returns number of columns in reference matrix.
+     *
+     * @return number of columns in reference matrix.
+     */
+    public int getColumns() {
+        return referenceMatrix.getColumns();
+    }
+
+    /**
      * Set dependency node backward.
      *
      * @param fromNode from node.
@@ -342,8 +369,7 @@ public class Node implements Serializable {
      */
     public void resetNode(boolean resetDependentNodes) {
         if (isMultiIndex()) {
-            if (toNode == null) matrices = new MMatrix();
-            else if (resetDependentNodes) matrices = new MMatrix();
+            if (toNode == null || resetDependentNodes) matrices = new MMatrix();
         }
         else if (!isConstantNode()) constantMatrix = getEmptyMatrix();
         gradients = new MMatrix();
@@ -407,6 +433,19 @@ public class Node implements Serializable {
      */
     public Matrix getMatrix(int index) {
         return isMultiIndex() ? matrices.get(index) : constantMatrix;
+    }
+
+    /**
+     * Returns new matrix of node.
+     *
+     * @param index data index for matrix.
+     * @return matrix of node.
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
+     */
+    public Matrix getNewMatrix(int index) throws MatrixException {
+        Matrix newMatrix = getEmptyMatrix();
+        setMatrix(index, newMatrix);
+        return newMatrix;
     }
 
     /**
