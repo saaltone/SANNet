@@ -59,7 +59,8 @@ public class TextSeqDemo {
                 System.out.println("Validating...");
                 Matrix input = data.get(0).get(1).get(0);
                 ArrayDeque<Integer> letters = new ArrayDeque<>(numOfInputs);
-                for (int row = 0; row < ReadTextFile.charSize() * numOfInputs; row++) {
+                int rows = ReadTextFile.charSize() * numOfInputs;
+                for (int row = 0; row < rows; row++) {
                     if (input.getValue(row, 0) == 1) {
                         letters.addLast(row - letters.size() * ReadTextFile.charSize());
                     }
