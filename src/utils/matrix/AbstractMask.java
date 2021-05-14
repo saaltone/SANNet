@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix;
 
 import java.io.Serial;
