@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
+ */
+
 package utils.matrix;
 
 import utils.matrix.operation.*;
@@ -212,8 +217,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param initializer initializer operation.
      */
     public void initialize(Matrix.Initializer initializer) {
-        for (int row = 0; row < getRows(); row++) {
-            for (int col = 0; col < getColumns(); col++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < columns; col++) {
                 setValue(row, col, initializer.value(row, col));
             }
         }
@@ -307,11 +314,23 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
         }
 
-        EqualMatrixOperation equalMatrixOperation = new EqualMatrixOperation(getRows(), getColumns());
-        equalMatrixOperation.setOther(other);
-        // Ignores masking of other matrix.
-        applyMatrixOperation(equalMatrixOperation);
+        new EqualMatrixOperation(getRows(), getColumns()).apply(this, other);
+    }
 
+    /**
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param matrixUnaryOperation single variable operation defined as lambda operator.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix apply(Matrix result, Matrix.MatrixUnaryOperation matrixUnaryOperation) throws MatrixException {
+        if (result.getRows() != getRows() || result.getColumns() != getColumns()) {
+            throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
+        }
+        return new UnaryMatrixOperation(getRows(), getColumns(), matrixUnaryOperation).apply(this, result);
     }
 
     /**
@@ -319,20 +338,14 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking if matrix is masked.<br>
      *
      * @param result matrix which stores operation result.
-     * @param matrixUnaryOperation single variable operation defined as matrix unary operation.
-     * @return matrix which stores operation result.
+     * @param unaryFunction unary function.
      * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
      */
-    public Matrix apply(Matrix result, Matrix.MatrixUnaryOperation matrixUnaryOperation) throws MatrixException {
+    protected void applyFunction(Matrix result, UnaryFunction unaryFunction) throws MatrixException {
         if (result.getRows() != getRows() || result.getColumns() != getColumns()) {
             throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
         }
-
-        UnaryMatrixOperation unaryMatrixOperation = new UnaryMatrixOperation(getRows(), getColumns(), matrixUnaryOperation);
-        unaryMatrixOperation.setResult(result);
-        applyMatrixOperation(unaryMatrixOperation);
-
-        return result;
+        new UnaryMatrixOperation(getRows(), getColumns(), unaryFunction).applyFunction(this, result);
     }
 
     /**
@@ -354,17 +367,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (!isScalar() && !result.isScalar() && (getRows() != result.getRows() || getColumns() != result.getColumns())) {
             throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
         }
-
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !isScalar() ? getRows() : other.getRows();
         int columns = !isScalar() ? getColumns() : other.getColumns();
-
-        BinaryMatrixOperation binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, matrixBinaryOperation);
-        binaryMatrixOperation.setOther(other);
-        binaryMatrixOperation.setResult(result);
-        applyMatrixOperation(binaryMatrixOperation);
-
-        return result;
+        return new BinaryMatrixOperation(rows, columns, matrixBinaryOperation).apply(this, other, result);
     }
 
     /**
@@ -382,44 +388,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getRows() != result.getRows() || other.getColumns() != result.getColumns()) {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
         }
-
-        DotMatrixOperation dotMatrixOperation = new DotMatrixOperation(getRows(), other.getColumns());
-        dotMatrixOperation.setFirst(this);
-        dotMatrixOperation.setSecond(other);
-        dotMatrixOperation.setResult(result);
-        applyMatrixOperation(dotMatrixOperation);
-
-    }
-
-    /**
-     * Applies matrix operation.
-     *
-     * @param matrixOperation matrix operation.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void applyMatrixOperation(MatrixOperation matrixOperation) throws MatrixException {
-        final int rows = matrixOperation.getRows();
-        final int columns = matrixOperation.getColumns();
-        final Matrix other = matrixOperation.getAnother();
-        final boolean provideValue = matrixOperation.getProvideValue();
-        final int rowStride = stride;
-        final int columnStride = stride;
-        if (!matrixOperation.hasMask(this, other)) {
-            for (int row = 0; row < rows; row += rowStride) {
-                for (int column = 0; column < columns; column += columnStride) {
-                    matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
-                }
-            }
-        }
-        else {
-            for (int row = 0; row < rows; row += rowStride) {
-                for (int column = 0; column < columns; column += columnStride) {
-                    if (!matrixOperation.hasMaskAt(row, column, this, other)) {
-                        matrixOperation.apply(row, column, provideValue ? getValue(row, column) : 0);
-                    }
-                }
-            }
-        }
+        new DotMatrixOperation(getRows(), other.getColumns()).apply(this, other, result);
     }
 
     /**
@@ -430,9 +399,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return sum of matrix.
      */
     public double sum() throws MatrixException {
-        SumMatrixOperation sumMatrixOperation = new SumMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(sumMatrixOperation);
-        return sumMatrixOperation.getSum();
+        return new SumMatrixOperation(getRows(), getColumns()).applySum(this);
     }
 
     /**
@@ -443,9 +410,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return mean of matrix.
      */
     public double mean() throws MatrixException {
-        SumMatrixOperation sumMatrixOperation = new SumMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(sumMatrixOperation);
-        return sumMatrixOperation.getMean();
+        return new SumMatrixOperation(getRows(), getColumns()).applyMean(this);
     }
 
     /**
@@ -457,9 +422,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return variance of matrix.
      */
     public double variance(double mean) throws MatrixException {
-        VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(getRows(), getColumns(), mean);
-        applyMatrixOperation(varianceMatrixOperation);
-        return varianceMatrixOperation.getVariance();
+        return new VarianceMatrixOperation(getRows(), getColumns(), mean).applyVariance(this);
     }
 
     /**
@@ -471,9 +434,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return standard deviation of matrix.
      */
     public double standardDeviation(double mean) throws MatrixException {
-        VarianceMatrixOperation varianceMatrixOperation = new VarianceMatrixOperation(getRows(), getColumns(), mean);
-        applyMatrixOperation(varianceMatrixOperation);
-        return varianceMatrixOperation.getStandardDeviation();
+        return new VarianceMatrixOperation(getRows(), getColumns(), mean).applyStandardDeviation(this);
     }
 
     /**
@@ -485,9 +446,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return norm of matrix.
      */
     public double norm(int p) throws MatrixException {
-        NormMatrixOperation normMatrixOperation = new NormMatrixOperation(getRows(), getColumns(), p);
-        applyMatrixOperation(normMatrixOperation);
-        return normMatrixOperation.getNorm();
+        return new NormMatrixOperation(getRows(), getColumns(), p).apply(this);
     }
 
     /**
@@ -500,10 +459,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public Matrix normalize(boolean inplace) throws MatrixException {
         Matrix result = inplace ? this : getNewMatrix();
-        NormalizeMatrixOperation normalizeMatrixOperation = new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance());
-        normalizeMatrixOperation.setResult(result);
-        applyMatrixOperation(normalizeMatrixOperation);
-        return result;
+        return new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance()).apply(this, result);
     }
 
     /**
@@ -514,9 +470,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return minimum value of matrix.
      */
     public double min() throws MatrixException {
-        MinMatrixOperation minMatrixOperation = new MinMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(minMatrixOperation);
-        return minMatrixOperation.getValue();
+        return new MinMatrixOperation(getRows(), getColumns()).applyMin(this);
     }
 
     /**
@@ -527,12 +481,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return array containing row and column in this order that points to minimum value of matrix.
      */
     public int[] argmin() throws MatrixException {
-        MinMatrixOperation minMatrixOperation = new MinMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(minMatrixOperation);
-        int[] result = new int[2];
-        result[0] = minMatrixOperation.getRow();
-        result[1] = minMatrixOperation.getColumn();
-        return result;
+        return new MinMatrixOperation(getRows(), getColumns()).applyArgMin(this);
     }
 
     /**
@@ -543,9 +492,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return maximum value of matrix.
      */
     public double max() throws MatrixException {
-        MaxMatrixOperation maxMatrixOperation = new MaxMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(maxMatrixOperation);
-        return maxMatrixOperation.getValue();
+        return new MaxMatrixOperation(getRows(), getColumns()).applyMax(this);
     }
 
     /**
@@ -556,12 +503,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return array containing row and column in this order that points to maximum value of matrix.
      */
     public int[] argmax() throws MatrixException {
-        MaxMatrixOperation maxMatrixOperation = new MaxMatrixOperation(getRows(), getColumns());
-        applyMatrixOperation(maxMatrixOperation);
-        int[] result = new int[2];
-        result[0] = maxMatrixOperation.getRow();
-        result[1] = maxMatrixOperation.getColumn();
-        return result;
+        return new MaxMatrixOperation(getRows(), getColumns()).applyArgMax(this);
     }
 
     /**
@@ -635,12 +577,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
         }
 
-        SoftmaxGradientMatrixOperation softmaxGradientMatrixOperation = new SoftmaxGradientMatrixOperation(getRows(), getRows());
-        softmaxGradientMatrixOperation.setFirst(this);
-        softmaxGradientMatrixOperation.setResult(result);
-        applyMatrixOperation(softmaxGradientMatrixOperation);
-
-        return result;
+        return new SoftmaxGradientMatrixOperation(getRows(), getRows()).apply(this, result);
     }
 
     /**
@@ -723,11 +660,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param result calculated result of convolution.
      */
     protected void applyConvolve(Matrix filter, Matrix result) throws MatrixException {
-        ConvolutionMatrixOperation convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), dilation);
-        convolutionMatrixOperation.setInput(this);
-        convolutionMatrixOperation.setFilter(filter);
-        convolutionMatrixOperation.setResult(result);
-        applyMatrixOperation(convolutionMatrixOperation);
+        new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, result);
     }
 
     /**
@@ -738,11 +671,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param result calculated result of convolution.
      */
     protected void applyCrosscorrelate(Matrix filter, Matrix result) throws MatrixException {
-        CrosscorrelationMatrixOperation crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), dilation);
-        crosscorrelationMatrixOperation.setInput(this);
-        crosscorrelationMatrixOperation.setFilter(filter);
-        crosscorrelationMatrixOperation.setResult(result);
-        applyMatrixOperation(crosscorrelationMatrixOperation);
+        new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, result);
     }
 
     /**
@@ -753,11 +682,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param result calculated result of convolution.
      */
     protected void applyWinogradConvolve(Matrix filter, Matrix result) throws MatrixException {
-        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns());
-        winogradConvolutionMatrixOperation.setInput(this);
-        winogradConvolutionMatrixOperation.setFilter(filter);
-        winogradConvolutionMatrixOperation.setResult(result);
-        applyMatrixOperation(winogradConvolutionMatrixOperation);
+        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns()).apply(this, filter, result);
     }
 
     /**
@@ -774,11 +699,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void applyWinogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT, G, GT);
-        winogradConvolutionMatrixOperation.setInput(this);
-        winogradConvolutionMatrixOperation.setFilter(filter);
-        winogradConvolutionMatrixOperation.setResult(result);
-        applyMatrixOperation(winogradConvolutionMatrixOperation);
+        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT, G, GT).apply(this, filter, result);
     }
 
     /**
@@ -793,11 +714,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void applyWinogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        WinogradConvolutionMatrixOperation winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT);
-        winogradConvolutionMatrixOperation.setInput(this);
-        winogradConvolutionMatrixOperation.setFilter(preprocessedFilter);
-        winogradConvolutionMatrixOperation.setResult(result);
-        applyMatrixOperation(winogradConvolutionMatrixOperation);
+        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT).apply(this, preprocessedFilter, result);
     }
 
     /**
@@ -808,10 +725,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param inputGradient input gradient.
      */
     public void convolveInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
-        ConvolutionInputGradientMatrixOperation convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), dilation);
-        convolutionInputGradientMatrixOperation.setFilter(filter);
-        convolutionInputGradientMatrixOperation.setInputGradient(inputGradient);
-        applyMatrixOperation(convolutionInputGradientMatrixOperation);
+        new ConvolutionInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, inputGradient);
     }
 
     /**
@@ -822,10 +736,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param inputGradient input gradient.
      */
     public void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
-        CrosscorrelationInputGradientMatrixOperation crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), dilation);
-        crosscorrelationInputGradientMatrixOperation.setFilter(filter);
-        crosscorrelationInputGradientMatrixOperation.setInputGradient(inputGradient);
-        applyMatrixOperation(crosscorrelationInputGradientMatrixOperation);
+        new CrosscorrelationInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, inputGradient);
     }
 
     /**
@@ -836,10 +747,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param filterGradient filter gradient.
      */
     public void convolveFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
-        ConvolutionFilterGradientMatrixOperation convolutionFilterGradientMatrixOperation = new ConvolutionFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), dilation);
-        convolutionFilterGradientMatrixOperation.setInput(input);
-        convolutionFilterGradientMatrixOperation.setFilterGradient(filterGradient);
-        applyMatrixOperation(convolutionFilterGradientMatrixOperation);
+        new ConvolutionFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), getDilation(), getStride()).apply(this, input, filterGradient);
     }
 
     /**
@@ -850,10 +758,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param filterGradient filter gradient.
      */
     public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
-        CrosscorrelationFilterGradientMatrixOperation crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), dilation);
-        crosscorrelationFilterGradientMatrixOperation.setInput(input);
-        crosscorrelationFilterGradientMatrixOperation.setFilterGradient(filterGradient);
-        applyMatrixOperation(crosscorrelationFilterGradientMatrixOperation);
+        new CrosscorrelationFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), getDilation(), getStride()).apply(this, input, filterGradient);
     }
 
     /**
@@ -864,11 +769,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param maxPos maximum position for each result row and column value.
      */
     protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException {
-        MaxPoolMatrixOperation maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize());
-        maxPoolMatrixOperation.setInput(this);
-        maxPoolMatrixOperation.setResult(result);
-        maxPoolMatrixOperation.setMaxPos(maxPos);
-        applyMatrixOperation(maxPoolMatrixOperation);
+        new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos, result);
     }
 
     /**
@@ -879,10 +780,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param maxPos maximum position for each result row and column value.
      */
     public void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) throws MatrixException {
-        MaxPoolGradientMatrixOperation maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns());
-        maxPoolGradientMatrixOperation.setInputGradient(inputGradient);
-        maxPoolGradientMatrixOperation.setMaxPos(maxPos);
-        applyMatrixOperation(maxPoolGradientMatrixOperation);
+        new MaxPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, maxPos, inputGradient);
     }
 
     /**
@@ -892,10 +790,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void applyAveragePool(Matrix result) throws MatrixException {
-        AveragePoolMatrixOperation averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), getFilterRowSize(), getFilterColumnSize());
-        averagePoolMatrixOperation.setInput(this);
-        averagePoolMatrixOperation.setResult(result);
-        applyMatrixOperation(averagePoolMatrixOperation);
+        new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, result);
     }
 
     /**
@@ -905,9 +800,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void averagePoolGradient(Matrix inputGradient) throws MatrixException {
-        AveragePoolGradientMatrixOperation averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize());
-        averagePoolGradientMatrixOperation.setInputGradient(inputGradient);
-        applyMatrixOperation(averagePoolGradientMatrixOperation);
+        new AveragePoolGradientMatrixOperation(getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputGradient);
     }
 
 }
