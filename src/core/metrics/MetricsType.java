@@ -6,16 +6,21 @@
 package core.metrics;
 
 /**
- * Defines supported metrics types.<br>
- * <br>
- * Currently supported types are:
- *     REGRESSION,
- *     CLASSIFICATION
+ * Defines supported metrics types.
  *
  */
 public enum MetricsType {
 
+    /**
+     * Applies regression metrics
+     *
+     */
     REGRESSION,
+
+    /**
+     * Applies classification metrics
+     *
+     */
     CLASSIFICATION
 
 }

@@ -26,12 +26,23 @@ import java.util.TreeMap;
 public class Metrics {
 
     /**
-     * Averaging type for classification as micro or macro.
+     * Averaging type for classification.
      *
      */
     public enum AverageType {
+
+        /**
+         * Micro average
+         *
+         */
         MICRO,
+
+        /**
+         * Macro average
+         *
+         */
         MACRO
+
     }
 
     /**
@@ -99,10 +110,11 @@ public class Metrics {
          */
         public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
             double error = 0;
-            for (int sample = 0; sample < actual.size(); sample++) {
+            int size = actual.size();
+            for (int sample = 0; sample < size; sample++) {
                 error += getRegressionAccuracy(predicted.get(sample), actual.get(sample));
             }
-            update(1- error / actual.size());
+            update(1- error / size);
         }
 
         /**
