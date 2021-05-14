@@ -215,43 +215,30 @@ public class BinaryFunction implements Serializable {
     }
 
     /**
-     * Applies function to value and constant.
+     * Applies function to first and second matrix.
      *
-     * @param value value
-     * @param constant constant
-     * @return applied function.
+     * @param first first matrix.
+     * @param second second matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyFunction(Matrix value, Matrix constant) throws MatrixException {
-        return applyFunction(value, constant, false);
-    }
-
-    /**
-     * Applies function to value and constant.
-     *
-     * @param value value
-     * @param constant constant
-     * @param inplace if true function is applied inplace.
-     * @return result of applied function.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix applyFunction(Matrix value, Matrix constant, boolean inplace) throws MatrixException {
-        Matrix result = inplace ? value : value.getNewMatrix();
-        value.applyBi(constant, result, this);
+    public Matrix applyFunction(Matrix first, Matrix second) throws MatrixException {
+        Matrix result = first.getNewMatrix();
+        first.applyBi(second, result, this);
         return result;
     }
 
     /**
      * Calculates gradient.
      *
-     * @param value value for gradient calculation.
-     * @param constant constant for gradient calculation.
-     * @param gradient incoming gradient for gradient calculation.
-     * @return resulting gradient
+     * @param first first matrix.
+     * @param second second matrix.
+     * @param outputGradient output gradient.
+     * @return input gradient
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix applyGradient(Matrix value, Matrix constant, Matrix gradient) throws MatrixException {
-        return gradient.multiply(value.applyBi(constant, this));
+    public Matrix applyGradient(Matrix first, Matrix second, Matrix outputGradient) throws MatrixException {
+        return outputGradient.multiply(first.applyBi(second, getDerivative()));
     }
 
     /**
