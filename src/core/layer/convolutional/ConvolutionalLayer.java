@@ -325,7 +325,7 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
                 }
             }
             output.setNormalize(true);
-            output = activationFunction.applyFunction(output);
+            output = output.apply(activationFunction);
             output.setName("Output" + filterIndex);
             outputs.put(filterIndex, output);
         }

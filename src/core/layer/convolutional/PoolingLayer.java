@@ -210,7 +210,8 @@ public class PoolingLayer extends AbstractExecutionLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(previousLayerDepth, "Outputs");
 
-        for (int channelIndex = 0; channelIndex < inputs.size(); channelIndex++) {
+        int size = inputs.size();
+        for (int channelIndex = 0; channelIndex < size; channelIndex++) {
             Matrix input = inputs.get(channelIndex);
             input.setStride(stride);
             input.setFilterRowSize(filterRowSize);
