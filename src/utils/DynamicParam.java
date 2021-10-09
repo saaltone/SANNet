@@ -97,61 +97,63 @@ public class DynamicParam implements Serializable {
          * @throws DynamicParamException throws exception if parameter creation fails.
          */
         TypeValue(String param, ParamType type, String newValue) throws DynamicParamException {
-            if (type == ParamType.INT) {
-                try {
-                    int val = Integer.parseInt(newValue);
+            switch (type) {
+                case INT:
+                    try {
+                        int val = Integer.parseInt(newValue);
+                        this.type = type;
+                        this.value = val;
+                    }
+                    catch (NumberFormatException exception) {
+                        throw new IllegalArgumentException("Parameter: " + param + ": Cannot convert value to Integer");
+                    }
+                    break;
+                case LONG:
+                    try {
+                        long val = Long.parseLong(newValue);
+                        this.type = type;
+                        this.value = val;
+                    }
+                    catch (NumberFormatException exception) {
+                        throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Long");
+                    }
+                    break;
+                case FLOAT:
+                    try {
+                        float val = Float.parseFloat(newValue);
+                        this.type = type;
+                        this.value = val;
+                    }
+                    catch (NumberFormatException exception) {
+                        throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Float");
+                    }
+                    break;
+                case DOUBLE:
+                    try {
+                        double val = Double.parseDouble(newValue);
+                        this.type = type;
+                        this.value = val;
+                    }
+                    catch (NumberFormatException exception) {
+                        throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Double");
+                    }
+                    break;
+                case CHAR:
+                    if (newValue.length() != 1) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Character");
+                    char val = newValue.charAt(0);
                     this.type = type;
                     this.value = val;
-                }
-                catch (NumberFormatException exception) {
-                    throw new IllegalArgumentException("Parameter: " + param + ": Cannot convert value to Integer");
-                }
-            }
-            if (type == ParamType.LONG) {
-                try {
-                    long val = Long.parseLong(newValue);
+                    break;
+                case STRING:
                     this.type = type;
-                    this.value = val;
-                }
-                catch (NumberFormatException exception) {
-                    throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Long");
-                }
-            }
-            if (type == ParamType.FLOAT) {
-                try {
-                    float val = Float.parseFloat(newValue);
+                    this.value = newValue;
+                    break;
+                case BOOLEAN:
+                    if (newValue.equalsIgnoreCase("TRUE")) this.value = true;
+                    else if (newValue.equalsIgnoreCase("FALSE")) this.value = false;
+                    else throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Boolean");
                     this.type = type;
-                    this.value = val;
-                }
-                catch (NumberFormatException exception) {
-                    throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Float");
-                }
-            }
-            if (type == ParamType.DOUBLE) {
-                try {
-                    double val = Double.parseDouble(newValue);
-                    this.type = type;
-                    this.value = val;
-                }
-                catch (NumberFormatException exception) {
-                    throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Double");
-                }
-            }
-            if (type == ParamType.CHAR) {
-                if (newValue.length() != 1) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Character");
-                char val = newValue.charAt(0);
-                this.type = type;
-                this.value = val;
-            }
-            if (type == ParamType.STRING) {
-                this.type = type;
-                this.value = newValue;
-            }
-            if (type == ParamType.BOOLEAN) {
-                if (newValue.equalsIgnoreCase("TRUE")) this.value = true;
-                else if (newValue.equalsIgnoreCase("FALSE")) this.value = false;
-                else throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Boolean");
-                this.type = type;
+                    break;
             }
         }
 
@@ -286,6 +288,93 @@ public class DynamicParam implements Serializable {
     private final HashMap<String, TypeValue> paramList = new HashMap<>();
 
     /**
+     * Name type pairs of parameters as hashmap.
+     *
+     */
+    private final HashMap<String, ParamType> nameTypes = new HashMap<>();
+
+
+    /**
+     * Constructor to build dynamic parameter list.
+     *
+     * @param params parameter name value pairs separated by comma.
+     * @param nameTypes name type pairs of parameters as string representation.
+     * @throws DynamicParamException throws exception if parameters are not provided or parameter is properly defined.
+     */
+    public DynamicParam(String params, String nameTypes) throws DynamicParamException {
+        this(nameTypes);
+        setParamsByVal(params);
+    }
+
+    /**
+     * Constructor for DynamicParam.
+     * Name type value pairs are described in format (name:type), (name:type)...
+     *
+     * @param nameTypes name type pairs of parameters as string representation.
+     * @throws DynamicParamException throws exception if name types are not defined.
+     */
+    public DynamicParam(String nameTypes) throws DynamicParamException {
+        parseNameTypes(nameTypes);
+    }
+
+    /**
+     * Parses name types from string representation.
+     * Name type value pairs are described in format (name:type), (name:type)...
+     *
+     * @param nameTypes name type string representation.
+     * @throws DynamicParamException throws exception if parsing fails.
+     */
+    private void parseNameTypes(String nameTypes) throws DynamicParamException {
+        if (nameTypes == null) throw new DynamicParamException("No name types defined.");
+        String[] nameTypesList = nameTypes.split(",");
+        if (nameTypesList.length == 0) throw new DynamicParamException("No name types found.");
+        for (String nameTypeString : nameTypesList) {
+            String nameTypeStringEntry = nameTypeString.trim();
+            if (nameTypeStringEntry.isEmpty()) continue;
+            if (!nameTypeStringEntry.startsWith("(")) throw new DynamicParamException("Invalid entry for type pair: " + nameTypeStringEntry);
+            if (!nameTypeStringEntry.endsWith(")")) throw new DynamicParamException("Invalid entry for type pair: " + nameTypeStringEntry);
+            if (!nameTypeStringEntry.contains(":")) throw new DynamicParamException("Invalid entry for type pair: " + nameTypeStringEntry);
+            nameTypeStringEntry = nameTypeStringEntry.replace("(","");
+            nameTypeStringEntry = nameTypeStringEntry.replace(")","");
+            String[] nameTypePair = nameTypeStringEntry.split(":");
+            ParamType paramType = switch (nameTypePair[1].trim().toUpperCase()) {
+                case "INT" -> ParamType.INT;
+                case "LONG" -> ParamType.LONG;
+                case "FLOAT" -> ParamType.FLOAT;
+                case "DOUBLE" -> ParamType.DOUBLE;
+                case "CHAR" -> ParamType.CHAR;
+                case "STRING" -> ParamType.STRING;
+                case "BOOLEAN" -> ParamType.BOOLEAN;
+                default -> throw new DynamicParamException("Illegal type for name type pair: " + nameTypeString);
+            };
+            this.nameTypes.put(nameTypePair[0].trim(), paramType);
+        }
+    }
+
+    /**
+     * Constructor for DynamicParam.
+     *
+     * @param nameTypes name type pairs of parameters as hashmap.
+     * @throws DynamicParamException throws exception if name types are not defined.
+     */
+    public DynamicParam(HashMap<String, ParamType> nameTypes) throws DynamicParamException {
+        if (nameTypes == null || nameTypes.isEmpty()) throw new DynamicParamException("No name types defined.");
+        this.nameTypes.putAll(nameTypes);
+    }
+
+    /**
+     * Constructor for DynamicParam.
+     *
+     * @param nameTypes name type pairs of parameters as hashmap.
+     * @throws DynamicParamException throws exception if name types are not defined.
+     */
+    public DynamicParam(HashMap<String, ParamType>[] nameTypes) throws DynamicParamException {
+        if (nameTypes == null) throw new DynamicParamException("No name types defined.");
+        for (HashMap<String, ParamType> nameTypeEntry : nameTypes) this.nameTypes.putAll(nameTypeEntry);
+        if (this.nameTypes.isEmpty()) throw new DynamicParamException("No name types defined.");
+    }
+
+    /**
      * Constructor to build dynamic parameter list.
      *
      * @param params parameter name value pairs separated by comma.
@@ -293,20 +382,30 @@ public class DynamicParam implements Serializable {
      * @throws DynamicParamException throws exception if parameters are not provided or parameter is properly defined.
      */
     public DynamicParam(String params, HashMap<String, ParamType> nameTypes) throws DynamicParamException {
-        if (params.isEmpty()) return;
-        String[] paramsList = params.split(",");
+        this(nameTypes);
+        setParamsByVal(params);
+    }
+
+    /**
+     * Defines parameter based on given name value and name type pairs.
+     *
+     * @param params parameters to be set as name value pair separated by equal sign.
+     * @throws DynamicParamException throws exception if parameter is not properly defined or parameter is cannot be casted into defined parameter type.
+     */
+    public void setParamsByVal(String params) throws DynamicParamException {
+        if (params.trim().isEmpty()) return;
+        String[] paramsList = params.trim().split(",");
         if (paramsList.length == 0) throw new DynamicParamException("No parameters found.");
-        for (String s : paramsList) setParamByVal(s, nameTypes);
+        for (String param : paramsList) setParamByVal(param);
     }
 
     /**
      * Defines parameter based on given name value and name type pairs.
      *
      * @param param parameter to be set as name value pair separated by equal sign.
-     * @param nameTypes name type list of parameters.
      * @throws DynamicParamException throws exception if parameter is not properly defined or parameter is cannot be casted into defined parameter type.
      */
-    public void setParamByVal(String param, HashMap<String, ParamType> nameTypes) throws DynamicParamException {
+    public void setParamByVal(String param) throws DynamicParamException {
         String[] typeValue = param.split("=");
         if (typeValue.length != 2) throw new DynamicParamException("Invalid parameter definition: " + param);
         typeValue[0] = typeValue[0].trim();
