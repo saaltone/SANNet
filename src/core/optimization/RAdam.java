@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.optimization;
@@ -20,10 +20,27 @@ import java.util.HashMap;
  * Reference: https://arxiv.org/abs/1908.03265 <br>
  *
  */
-public class RAdam implements Optimizer, Serializable {
+public class RAdam implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = -2717951798872633802L;
+
+    /**
+     * Parameter name types for RAdam.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - beta1: beta1 value for optimizer. Default value 0.9.<br>
+     *     - beta2: beta2 value for optimizer. Default value 0.999.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(beta1:DOUBLE), " +
+            "(beta2:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -35,19 +52,19 @@ public class RAdam implements Optimizer, Serializable {
      * Learning rate for RAdam. Default value 0.010.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Beta1 term for RAdam. Default value 0.9.
      *
      */
-    private double beta1 = 0.9;
+    private double beta1;
 
     /**
      * Beta2 term for RAdam. Default value 0.999.
      *
      */
-    private double beta2 = 0.999;
+    private double beta2;
 
     /**
      * Hash map to store iteration counts.
@@ -59,7 +76,7 @@ public class RAdam implements Optimizer, Serializable {
      * Maximum length of approximated SMA.
      *
      */
-    private double pinf = 2 / (1 - beta2) - 1;
+    private double pinf;
 
     /**
      * Hash map to store first moments (means).
@@ -78,6 +95,8 @@ public class RAdam implements Optimizer, Serializable {
      *
      */
     public RAdam() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -87,7 +106,29 @@ public class RAdam implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public RAdam(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+        beta1 = 0.9;
+        beta2 = 0.999;
+        pinf = 2 / (1 - beta2) - 1;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -95,12 +136,8 @@ public class RAdam implements Optimizer, Serializable {
      *
      * @return parameters used for RAdam.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("beta1", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("beta2", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return RAdam.paramNameTypes;
     }
 
     /**

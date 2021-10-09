@@ -21,10 +21,25 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class RMSProp implements Optimizer, Serializable {
+public class RMSProp implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 3251200097077919746L;
+
+    /**
+     * Parameter name types for RMSProp.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - gamma: gamma value for optimizer. Default value 0.9.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(gamma:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -36,13 +51,13 @@ public class RMSProp implements Optimizer, Serializable {
      * Learning rate for RMSProp. Default value 0.001.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Gamma term for RMSProp. Default value 0.9.
      *
      */
-    private double gamma = 0.9;
+    private double gamma;
 
     /**
      * Hash map to store gradients from previous steps.
@@ -55,6 +70,8 @@ public class RMSProp implements Optimizer, Serializable {
      *
      */
     public RMSProp() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -64,7 +81,27 @@ public class RMSProp implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public RMSProp(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+        gamma = 0.9;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -72,11 +109,8 @@ public class RMSProp implements Optimizer, Serializable {
      *
      * @return parameters used for RMSProp.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return RMSProp.paramNameTypes;
     }
 
     /**

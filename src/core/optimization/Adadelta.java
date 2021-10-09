@@ -21,10 +21,25 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class Adadelta implements Optimizer, Serializable {
+public class Adadelta implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1620048040058081811L;
+
+    /**
+     * Parameter name types for Adadelta.
+     *     - learningRate: learning rate for optimizer. Default value 1.<br>
+     *     - gamma: gamma value for optimizer. Default value 0.95.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(gamma:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -36,13 +51,13 @@ public class Adadelta implements Optimizer, Serializable {
      * Learning rate for Adadelta. Default value 1.
      *
      */
-    private double learningRate = 1;
+    private double learningRate;
 
     /**
      * Gamma term for Adadelta. Default value 0.95.
      *
      */
-    private double gamma = 0.95;
+    private double gamma;
 
     /**
      * Hash map to store gradients from previous steps.
@@ -61,6 +76,8 @@ public class Adadelta implements Optimizer, Serializable {
      *
      */
     public Adadelta() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -70,7 +87,27 @@ public class Adadelta implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Adadelta(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 1;
+        gamma = 0.95;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -78,11 +115,8 @@ public class Adadelta implements Optimizer, Serializable {
      *
      * @return parameters used for Adadelta.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return Adadelta.paramNameTypes;
     }
 
     /**

@@ -5,6 +5,7 @@
 
 package core.optimization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
@@ -12,7 +13,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Class that implements vanilla Gradient Descent optimizer.<br>
@@ -20,10 +20,23 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class GradientDescent implements Optimizer, Serializable {
+public class GradientDescent implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 954492995414169438L;
+
+    /**
+     * Parameter name types for GradientDescent.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -35,13 +48,15 @@ public class GradientDescent implements Optimizer, Serializable {
      * Learning rate for Gradient Descent. Default value 0.001.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Default constructor for Gradient Descent.
      *
      */
     public GradientDescent() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -51,7 +66,26 @@ public class GradientDescent implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public GradientDescent(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -59,10 +93,8 @@ public class GradientDescent implements Optimizer, Serializable {
      *
      * @return parameters used for Gradient Descent.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return GradientDescent.paramNameTypes;
     }
 
     /**

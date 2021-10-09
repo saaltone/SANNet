@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.optimization;
@@ -21,10 +21,27 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class NAdam implements Optimizer, Serializable {
+public class NAdam implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 6575858816658305979L;
+
+    /**
+     * Parameter name types for NAdam.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - beta1: beta1 value for optimizer. Default value 0.9.<br>
+     *     - beta2: beta2 value for optimizer. Default value 0.999.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(beta1:DOUBLE), " +
+            "(beta2:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -36,19 +53,19 @@ public class NAdam implements Optimizer, Serializable {
      * Learning rate for Nadam. Default value 0.001.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Beta1 term for Nadam. Default value 0.9.
      *
      */
-    private double beta1 = 0.9;
+    private double beta1;
 
     /**
      * Beta2 term for Nadam. Default value 0.999.
      *
      */
-    private double beta2 = 0.999;
+    private double beta2;
 
     /**
      * Hash map to store iteration counts.
@@ -73,6 +90,8 @@ public class NAdam implements Optimizer, Serializable {
      *
      */
     public NAdam() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -82,7 +101,28 @@ public class NAdam implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NAdam(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+        beta1 = 0.9;
+        beta2 = 0.999;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -90,12 +130,8 @@ public class NAdam implements Optimizer, Serializable {
      *
      * @return parameters used for Nadam.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("beta1", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("beta2", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return NAdam.paramNameTypes;
     }
 
     /**

@@ -20,10 +20,25 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class MomentumGradientDescent implements Optimizer, Serializable {
+public class MomentumGradientDescent implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = -983868918422365256L;
+
+    /**
+     * Parameter name types for MomentumGradientDescent.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - mu: mu (momentum) value for optimizer. Default value 0.0001.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(mu:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -35,13 +50,13 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      * Learning rate for Momentum Gradient Descent. Default value 0.001.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Momentum term for Momentum Gradient Descent. Default value 0.0001.
      *
      */
-    private double mu = 0.0001;
+    private double mu;
 
     /**
      * Hash map to store previous gradients.
@@ -54,6 +69,8 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      *
      */
     public MomentumGradientDescent() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -63,7 +80,27 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MomentumGradientDescent(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+        mu = 0.0001;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -71,11 +108,8 @@ public class MomentumGradientDescent implements Optimizer, Serializable {
      *
      * @return parameters used for Momentum Gradient Descent.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("mu", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return MomentumGradientDescent.paramNameTypes;
     }
 
     /**

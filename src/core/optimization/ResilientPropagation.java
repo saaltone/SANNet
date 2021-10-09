@@ -53,6 +53,15 @@ public class ResilientPropagation implements Optimizer, Serializable {
     }
 
     /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return null;
+    }
+
+    /**
      * Resets optimizer state.
      *
      */

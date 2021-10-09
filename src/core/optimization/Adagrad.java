@@ -21,10 +21,23 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class Adagrad implements Optimizer, Serializable {
+public class Adagrad implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = -8831643329108200212L;
+
+    /**
+     * Parameter name types for Adagrad.
+     *     - learningRate: learning rate for optimizer. Default value 1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -36,7 +49,7 @@ public class Adagrad implements Optimizer, Serializable {
      * Learning rate for Adagrad. Default value 0.01.
      *
      */
-    private double learningRate = 0.01;
+    private double learningRate;
 
     /**
      * Hash map to store gradients from previous steps.
@@ -49,6 +62,8 @@ public class Adagrad implements Optimizer, Serializable {
      *
      */
     public Adagrad() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -58,7 +73,26 @@ public class Adagrad implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Adagrad(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.01;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -66,10 +100,8 @@ public class Adagrad implements Optimizer, Serializable {
      *
      * @return parameters used for Adagrad.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return Adagrad.paramNameTypes;
     }
 
     /**

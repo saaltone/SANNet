@@ -5,6 +5,7 @@
 
 package core.optimization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -21,10 +22,25 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class NesterovAcceleratedGradient implements Optimizer, Serializable {
+public class NesterovAcceleratedGradient implements Configurable, Optimizer, Serializable {
 
     @Serial
     private static final long serialVersionUID = -783588127072068825L;
+
+    /**
+     * Parameter name types for NesterovAcceleratedGradient.
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - mu: mu (momentum) value for optimizer. Default value 0.0001.<br>
+     *
+     */
+    private final static String paramNameTypes = "(learningRate:DOUBLE), " +
+            "(mu:DOUBLE)";
+
+    /**
+     * Parameters of optimizer.
+     *
+     */
+    private final String params;
 
     /**
      * Optimization type.
@@ -36,13 +52,13 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      * Learning rate for Nesterov Accelerated Gradient. Default value 0.001.
      *
      */
-    private double learningRate = 0.001;
+    private double learningRate;
 
     /**
      * Momentum term for Nesterov Accelerated Gradient. Default value 0.0001.
      *
      */
-    private double mu = 0.0001;
+    private double mu;
 
     /**
      * Hash map to store previous gradients.
@@ -61,6 +77,8 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      *
      */
     public NesterovAcceleratedGradient() {
+        initializeDefaultParams();
+        params = null;
     }
 
     /**
@@ -70,7 +88,27 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NesterovAcceleratedGradient(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        learningRate = 0.001;
+        mu = 0.0001;
+    }
+
+    /**
+     * Returns parameters of optimizer.
+     *
+     * @return parameters for optimizer.
+     */
+    public String getParams() {
+        return params;
     }
 
     /**
@@ -78,11 +116,8 @@ public class NesterovAcceleratedGradient implements Optimizer, Serializable {
      *
      * @return parameters used for Nesterov Accelerated Descent.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("learningRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("mu", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return NesterovAcceleratedGradient.paramNameTypes;
     }
 
     /**
