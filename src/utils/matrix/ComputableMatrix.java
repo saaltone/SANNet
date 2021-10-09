@@ -61,20 +61,25 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     /**
      * Constructor for matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      */
-    protected ComputableMatrix(boolean isScalar) {
+    protected ComputableMatrix(int rows, int columns, boolean isScalar) {
+        super(rows, columns);
         this.isScalar = isScalar;
     }
 
     /**
      * Constructor for matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param name name if matrix.
      */
-    protected ComputableMatrix(boolean isScalar, String name) {
-        super(name);
+    protected ComputableMatrix(int rows, int columns, boolean isScalar, String name) {
+        super(rows, columns, name);
         this.isScalar = isScalar;
     }
 
@@ -134,71 +139,69 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public void initialize(Initialization initialization, int inputs, int outputs) {
         switch (initialization) {
-            case ZERO:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> 0;
-                break;
-            case ONE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> 1;
+            case ZERO -> initializer = (Initializer & Serializable) (row, col) -> 0;
+            case ONE -> {
+                initializer = (Initializer & Serializable) (row, col) -> 1;
                 initialize(initializer);
-                break;
-            case RANDOM:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> random.nextDouble();
+            }
+            case RANDOM -> {
+                initializer = (Initializer & Serializable) (row, col) -> random.nextDouble();
                 initialize(initializer);
-                break;
-            case IDENTITY:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0;
+            }
+            case IDENTITY -> {
+                initializer = (Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0;
                 initialize(initializer);
-                break;
-            case NORMAL_XAVIER:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(getRows() + getColumns())));
+            }
+            case NORMAL_XAVIER -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (getRows() + getColumns())));
                 initialize(initializer);
-                break;
-            case UNIFORM_XAVIER:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows() + getColumns())));
+            }
+            case UNIFORM_XAVIER -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows() + getColumns())));
                 initialize(initializer);
-                break;
-            case NORMAL_HE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double)getRows())));
+            }
+            case NORMAL_HE -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double) getRows())));
                 initialize(initializer);
-                break;
-            case UNIFORM_HE:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(getRows())));
+            }
+            case UNIFORM_HE -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows())));
                 initialize(initializer);
-                break;
-            case NORMAL_LECUN:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(getRows())));
+            }
+            case NORMAL_LECUN -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (getRows())));
                 initialize(initializer);
-                break;
-            case UNIFORM_LECUN:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(getRows())));
+            }
+            case UNIFORM_LECUN -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (getRows())));
                 initialize(initializer);
-                break;
-            case NORMAL_XAVIER_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs + inputs)));
+            }
+            case NORMAL_XAVIER_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs + inputs)));
                 initialize(initializer);
-                break;
-            case UNIFORM_XAVIER_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs + inputs)));
+            }
+            case UNIFORM_XAVIER_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs + inputs)));
                 initialize(initializer);
-                break;
-            case NORMAL_HE_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double)(outputs)));
+            }
+            case NORMAL_HE_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs)));
                 initialize(initializer);
-                break;
-            case UNIFORM_HE_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double)(outputs)));
+            }
+            case UNIFORM_HE_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs)));
                 initialize(initializer);
-                break;
-            case NORMAL_LECUN_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double)(outputs)));
+            }
+            case NORMAL_LECUN_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (outputs)));
                 initialize(initializer);
-                break;
-            case UNIFORM_LECUN_CONV:
-                initializer = (Matrix.Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double)(outputs)));
+            }
+            case UNIFORM_LECUN_CONV -> {
+                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (outputs)));
                 initialize(initializer);
-                break;
-            default:
-                break;
+            }
+            default -> {
+            }
         }
     }
 
@@ -504,6 +507,17 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public int[] argmax() throws MatrixException {
         return new MaxMatrixOperation(getRows(), getColumns()).applyArgMax(this);
+    }
+
+    /**
+     * Calculates entropy of matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return sum of matrix.
+     */
+    public double entropy() throws MatrixException {
+        return new EntropyMatrixOperation(getRows(), getColumns()).applyEntropy(this);
     }
 
     /**
