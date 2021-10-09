@@ -5,7 +5,7 @@
 
 package utils;
 
-import core.NeuralNetwork;
+import core.network.NeuralNetwork;
 
 import java.io.*;
 
