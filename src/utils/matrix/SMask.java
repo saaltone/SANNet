@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -12,18 +12,6 @@ import java.util.HashMap;
  *
  */
 public class SMask extends AbstractMask {
-
-    /**
-     * Defines number of rows in mask.
-     *
-     */
-    private final int rows;
-
-    /**
-     * Defines number of columns in mask.
-     *
-     */
-    private final int columns;
 
     /**
      * Hash map to store mask information.
@@ -38,8 +26,7 @@ public class SMask extends AbstractMask {
      * @param columns defines number of columns in mask.
      */
     public SMask(int rows, int columns) {
-        this.rows = rows;
-        this.columns = columns;
+        super(rows, columns);
     }
 
     /**
@@ -51,10 +38,8 @@ public class SMask extends AbstractMask {
      * @param probability probability of masking.
      */
     protected SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability) {
-        this.rows = rows;
-        this.columns = columns;
+        super(rows, columns, probability);
         mask.putAll(data);
-        this.probability = probability;
     }
 
     /**
@@ -82,34 +67,7 @@ public class SMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new SMask(rows, columns, mask, probability);
-    }
-
-    /**
-     * Returns size (rows * columns) of mask
-     *
-     * @return size of mask.
-     */
-    public int size() {
-        return rows * columns;
-    }
-
-    /**
-     * Returns number of rows in mask.
-     *
-     * @return number of rows in mask.
-     */
-    public int getRows() {
-        return rows;
-    }
-
-    /**
-     * Returns number of columns in mask.
-     *
-     * @return number of columns in mask.
-     */
-    public int getColumns() {
-        return columns;
+        return new SMask(getRows(), getColumns(), mask, getProbability());
     }
 
     /**
@@ -120,7 +78,7 @@ public class SMask extends AbstractMask {
      * @param value defines if specific row and column is masked (true) or not (false).
      */
     public void setMask(int row, int column, boolean value) {
-        mask.put(row * columns + column, value);
+        mask.put(row * getColumns() + column, value);
     }
 
     /**
@@ -132,7 +90,7 @@ public class SMask extends AbstractMask {
      */
     public boolean getMask(int row, int column) {
         if (mask == null) return false;
-        return mask.getOrDefault(row * columns + column, false);
+        return mask.getOrDefault(row * getColumns() + column, false);
     }
 
     /**
@@ -141,26 +99,6 @@ public class SMask extends AbstractMask {
      */
     public void clear() {
         mask = new HashMap<>();
-    }
-
-    /**
-     * Sets mask value for row mask.
-     *
-     * @param row row of mask to be set.
-     * @param value if true sets row mask otherwise unsets mask.
-     */
-    public void setRowMask(int row, boolean value) {
-        for (int column = 0; column < columns; column++) mask.put(row * columns + column, value);
-    }
-
-    /**
-     * Sets mask value for column mask.
-     *
-     * @param column column of mask to be set.
-     * @param value if true sets row mask otherwise unsets mask.
-     */
-    public void setColumnMask(int column, boolean value) {
-        for (int row = 0; row < rows; row++) mask.put(row * columns + column, value);
     }
 
 }
