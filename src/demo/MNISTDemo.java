@@ -1,12 +1,12 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package demo;
 
-import core.NeuralNetwork;
-import core.NeuralNetworkException;
+import core.network.NeuralNetwork;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.Metrics;
