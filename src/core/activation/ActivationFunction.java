@@ -1,11 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.activation;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import utils.*;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
