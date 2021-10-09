@@ -5,21 +5,64 @@
 
 package core.reinforcement.policy;
 
-import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
-import core.reinforcement.Environment;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
+import core.reinforcement.agent.Environment;
+import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
+import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.value.ValueFunction;
 import utils.Configurable;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
+
+import java.io.IOException;
 
 /**
  * Interface for Policy.
  *
  */
 public interface Policy extends Configurable {
+
+    /**
+     * Return true if policy is updateable otherwise false.
+     *
+     * @return true if policy is updateable otherwise false.
+     */
+    boolean isUpdateablePolicy();
+
+    /**
+     * Returns reference to policy.
+     *
+     * @return reference to policy.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    Policy reference() throws DynamicParamException, IOException, ClassNotFoundException, AgentException;
+
+    /**
+     * Returns reference to policy.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param sharedMemory if true policy will use shared memory otherwise dedicated memory.
+     * @return reference to policy.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, NeuralNetworkException, AgentException;
+
+    /**
+     * Return true is function is state action value function.
+     *
+     * @return true is function is state action value function.
+     */
+    boolean isStateActionValueFunction();
 
     /**
      * Starts Policy.
@@ -56,6 +99,13 @@ public interface Policy extends Configurable {
      * @return reference to environment.
      */
     Environment getEnvironment();
+
+    /**
+     * Returns executable policy.
+     *
+     * @return executable policy.
+     */
+    ExecutablePolicy getExecutablePolicy();
 
     /**
      * Sets value function for policy.
@@ -122,6 +172,13 @@ public interface Policy extends Configurable {
      *
      */
     void resetFunctionEstimator();
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @return reference to function estimator.
+     */
+    FunctionEstimator getFunctionEstimator();
 
     /**
      * Notifies that agent is ready to update.
