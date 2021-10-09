@@ -247,7 +247,7 @@ public class ReadMIDI {
                 firstEntry = false;
             }
             ShortMessage shortMessage = new ShortMessage();
-            shortMessage.setMessage((maxData1Value >0 && maxData2Value > 0) ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF, maxData1Pos, maxData2Pos);
+            shortMessage.setMessage((maxData1Value >0 && maxData2Value > 0) ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF, Math.max(0, maxData1Pos), Math.max(0, maxData2Pos));
             currentTick += (long)(record3.getValue(0, 0) * (double)scalingFactor);
             MidiEvent midiEvent = new MidiEvent(shortMessage, currentTick);
             track.add(midiEvent);
