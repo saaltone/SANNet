@@ -5,7 +5,7 @@
 
 package core.layer;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
 import core.regularization.RegularizationType;
@@ -256,8 +256,9 @@ public interface NeuralNetworkLayer {
     /**
      * Resets normalizers and optimizer of layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reset();
+    void reset() throws MatrixException;
 
     /**
      * Adds regularization method for layer.
@@ -330,28 +331,32 @@ public interface NeuralNetworkLayer {
      *
      * @param normalizationType normalization method to be reset.
      * @throws NeuralNetworkException throws exception if reset of normalizer fails.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException;
+    void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException;
 
     /**
      * Resets all normalization for layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void resetNormalization();
+    void resetNormalization() throws MatrixException;
 
     /**
      * Reinitializes specific normalization for layer.
      *
      * @param normalizationType normalization method to be reinitialized.
      * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException;
+    void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException;
 
     /**
      * Resets all normalization for layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reinitializeNormalization();
+    void reinitializeNormalization() throws MatrixException;
 
     /**
      * Sets optimizer for layer.<br>
