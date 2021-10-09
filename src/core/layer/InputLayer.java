@@ -5,7 +5,7 @@
 
 package core.layer;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
 import core.regularization.RegularizationType;
