@@ -1,11 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.metrics;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MMatrix;
@@ -594,18 +594,18 @@ public class Metrics {
     private AverageType averageType = AverageType.MACRO;
 
     /**
-     * If true assumes multi class classification otherwise assumes single class classification.<br>
-     * Single class assumes that only one class is true (1) and others false (0). Assumes that max output value takes true value.<br>
-     * Multi class assumes that any value above 0.5 is true (1) otherwise false (0).<br>
+     * If true assumes multi label classification otherwise assumes single label classification.<br>
+     * Single label assumes that only one label is true (1) and others false (0). Assumes that max output value takes true value.<br>
+     * Multi label assumes that any value above threshold is true (1) otherwise false (0).<br>
      *
      */
-    private boolean multiClass;
+    private boolean multiLabel;
 
     /**
-     * Defines threshold value for multiclass classification. If value of class is below threshold it is classified as negative (1) otherwise classified as positive (1).
+     * Defines threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
      *
      */
-    private double multiClassThreshold = 0.5;
+    private double multiLabelThreshold = 0.5;
 
     /**
      * Reference to regression statistics.
@@ -648,27 +648,27 @@ public class Metrics {
      * Constructor for metrics class.
      *
      * @param metricsType metrics type as classification or regression.
-     * @param multiClass if true assumes multi class classification otherwise assumes single class.
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
      * @throws NeuralNetworkException throws neural network exception if metrics type is not defined.
      */
-    public Metrics(MetricsType metricsType, boolean multiClass) throws NeuralNetworkException {
+    public Metrics(MetricsType metricsType, boolean multiLabel) throws NeuralNetworkException {
         this(metricsType);
-        this.multiClass = multiClass;
+        this.multiLabel = multiLabel;
     }
 
     /**
      * Constructor for metrics class.
      *
      * @param metricsType metrics type as classification or regression.
-     * @param multiClass if true assumes multi class classification otherwise assumes single class.
-     * @param multiClassThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     * @param multiLabel if true assumes multi label classification otherwise assumes single class.
+     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
      * @throws NeuralNetworkException throws neural network exception if metrics type is not defined.
      */
-    public Metrics(MetricsType metricsType, boolean multiClass, double multiClassThreshold) throws NeuralNetworkException {
+    public Metrics(MetricsType metricsType, boolean multiLabel, double multiLabelThreshold) throws NeuralNetworkException {
         this(metricsType);
-        this.multiClass = multiClass;
-        if (multiClassThreshold < 0 || multiClassThreshold > 1) throw new NeuralNetworkException("Multiclass threshold must be between 0 ad 1.");
-        this.multiClassThreshold = multiClassThreshold;
+        this.multiLabel = multiLabel;
+        if (multiLabelThreshold < 0 || multiLabelThreshold > 1) throw new NeuralNetworkException("Multi label threshold must be between 0 ad 1.");
+        this.multiLabelThreshold = multiLabelThreshold;
     }
 
     /**
@@ -953,27 +953,27 @@ public class Metrics {
 
     /**
      * Returns classification for (predicted) sample.<br>
-     * Takes into consideration if single class or multi class classification for metrics is defined.<br>
+     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
      *
      * @param predicted predicted sample.
      * @return classification for predicted sample.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Matrix getClassification(Matrix predicted) throws MatrixException {
-        if (!multiClass) {
+        if (!multiLabel) {
             double maxValue = predicted.max();
             Matrix.MatrixUnaryOperation classification = (value) -> value != maxValue ? 0 : 1;
             return predicted.apply(classification);
         }
         else {
-            Matrix.MatrixUnaryOperation classification = (value) -> value < multiClassThreshold ? 0 : 1;
+            Matrix.MatrixUnaryOperation classification = (value) -> value < multiLabelThreshold ? 0 : 1;
             return predicted.apply(classification);
         }
     }
 
     /**
      * Returns classification for (predicted) multiple samples.<br>
-     * Takes into consideration if single class or multi class classification for metrics is defined.<br>
+     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
@@ -988,7 +988,7 @@ public class Metrics {
 
     /**
      * Returns classification for (predicted) multiple samples.<br>
-     * Takes into consideration if single class or multi class classification for metrics is defined.<br>
+     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
@@ -1003,7 +1003,7 @@ public class Metrics {
 
     /**
      * Returns classification for (predicted) multiple samples.<br>
-     * Takes into consideration if single class or multi class classification for metrics is defined.<br>
+     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
      *
      * @param predicted predicted samples.
      * @return classification for predicted samples.
