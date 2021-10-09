@@ -1,15 +1,15 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package demo;
 
-import core.NeuralNetwork;
-import core.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.MetricsType;
+import core.network.NeuralNetwork;
+import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.DataSplitter;
@@ -118,7 +118,7 @@ public class SimpleDemo {
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
         neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
-        return neuralNetwork;
+         return neuralNetwork;
     }
 
     /**
