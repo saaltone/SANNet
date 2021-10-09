@@ -1,9 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
+
+import java.util.ArrayList;
 
 /**
  * Matrix class that implements dense matrix.<br>
@@ -19,45 +21,15 @@ public class DMatrix extends ComputableMatrix {
     private double[][] matrix;
 
     /**
-     * Slice start row.
-     *
-     */
-    private int sliceStartRow;
-
-    /**
-     * Slice start column.
-     *
-     */
-    private int sliceStartColumn;
-
-    /**
-     * Number of rows in slice.
-     *
-     */
-    private int sliceRows;
-
-    /**
-     * Number of columns in slice.
-     *
-     */
-    private int sliceColumns;
-
-    /**
-     * Size of slice (sliceRows * sliceColumns)
-     *
-     */
-    private int sliceSize;
-
-    /**
      * Constructor for scalar matrix (size 1x1).
      *
      * @param scalarValue value for matrix.
      */
     public DMatrix(double scalarValue) {
-        super(true);
-        matrix = new double[1][1];
+        super(1, 1,true);
+        matrix = new double[getTotalRows()][getTotalColumns()];
         matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, 0, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, 0, 0);
     }
 
     /**
@@ -67,10 +39,10 @@ public class DMatrix extends ComputableMatrix {
      * @param name name of matrix.
      */
     public DMatrix(double scalarValue, String name) {
-        super(true, name);
-        matrix = new double[1][1];
-        matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, 0, matrix[0].length - 1);
+        super(1, 1,true, name);
+        matrix = new double[getTotalRows()][getTotalColumns()];
+        matrix[getTotalRows() - 1][getTotalColumns() - 1] = scalarValue;
+        updateSliceDimensions(0, 0, 0, 0);
     }
 
     /**
@@ -80,9 +52,9 @@ public class DMatrix extends ComputableMatrix {
      * @param columns defines number of columns in matrix.
      */
     public DMatrix(int rows, int columns) {
-        super(false);
+        super(rows, columns, false);
         matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -93,9 +65,9 @@ public class DMatrix extends ComputableMatrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, String name) {
-        super(false, name);
+        super(rows, columns, false, name);
         matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -108,9 +80,7 @@ public class DMatrix extends ComputableMatrix {
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
     public DMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs) {
-        super(false);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns);
         initialize(initialization, inputs, outputs);
     }
 
@@ -125,9 +95,7 @@ public class DMatrix extends ComputableMatrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs, String name) {
-        super(false, name);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns, name);
         initialize(initialization, inputs, outputs);
     }
 
@@ -139,9 +107,7 @@ public class DMatrix extends ComputableMatrix {
      * @param initialization type of initialization defined in class Init.
      */
     public DMatrix(int rows, int columns, Initialization initialization) {
-        super(false);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns);
         initialize(initialization);
     }
 
@@ -154,9 +120,7 @@ public class DMatrix extends ComputableMatrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, Initialization initialization, String name) {
-        super(false, name);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns, name);
         initialize(initialization);
     }
 
@@ -169,9 +133,7 @@ public class DMatrix extends ComputableMatrix {
      * @param name name of matrix.
      */
     public DMatrix(int rows, int columns, Matrix.Initializer initializer, String name) {
-        super(false, name);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns, name);
         initialize(initializer);
     }
 
@@ -183,9 +145,7 @@ public class DMatrix extends ComputableMatrix {
      * @param initializer initializer.
      */
     public DMatrix(int rows, int columns, Matrix.Initializer initializer) {
-        super(false);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        this(rows, columns);
         initialize(initializer);
     }
 
@@ -195,9 +155,9 @@ public class DMatrix extends ComputableMatrix {
      * @param data clones matrix data from given matrix data.
      */
     public DMatrix(double[][] data) {
-        super(false);
+        super(data.length, data[0].length, false);
         matrix = data.clone();
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
     }
 
     /**
@@ -207,46 +167,20 @@ public class DMatrix extends ComputableMatrix {
      * @param referTo if true creates matrix with reference to given matrix data otherwise clones the data.
      */
     public DMatrix(double[][] data, boolean referTo) {
-        super(false);
-        if (referTo) matrix = data;
-        else matrix = data.clone();
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+        super(data.length, data[0].length, false);
+        matrix = referTo ? data : data.clone();
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
     }
 
     /**
-     * Updates slice dimensions.
+     * Returns sub-matrices within Matrix.
      *
+     * @return sub-matrices within Matrix.
      */
-    private void updateSliceDimensions(int startRow, int startColumn, int endRow, int endColumn) {
-        sliceStartRow = startRow;
-        sliceStartColumn = startColumn;
-        sliceRows = endRow - sliceStartRow + 1;
-        sliceColumns = endColumn - sliceStartColumn + 1;
-        sliceSize = sliceRows * sliceColumns;
-    }
-
-    /**
-     * Slices matrix.
-     *
-     * @param startRow start row of slice.
-     * @param startColumn start column of slice.
-     * @param endRow  end row of slice.
-     * @param endColumn  end column of slice.
-     * @throws MatrixException throws exception if slicing fails.
-     */
-    public void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
-        if (startRow < 0 || startColumn < 0 || endRow > matrix.length -1 || endColumn > matrix[0].length - 1) {
-            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + matrix.length + "x" + matrix[0].length);
-        }
-        else updateSliceDimensions(startRow, startColumn, endRow, endColumn);
-    }
-
-    /**
-     * Removes slicing of matrix.
-     *
-     */
-    public void unslice() {
-        updateSliceDimensions(0, 0, matrix.length - 1, matrix[0].length - 1);
+    public ArrayList<Matrix> getSubMatrices() {
+        ArrayList<Matrix> matrices = new ArrayList<>();
+        matrices.add(this);
+        return matrices;
     }
 
     /**
@@ -254,7 +188,7 @@ public class DMatrix extends ComputableMatrix {
      *
      */
     public void resetMatrix() {
-        matrix = new double[matrix.length][matrix[0].length];
+        matrix = new double[getTotalRows()][getTotalColumns()];
     }
 
     /**
@@ -263,7 +197,7 @@ public class DMatrix extends ComputableMatrix {
      * @return mask of this matrix.
      */
     protected Mask getNewMask() {
-        return new DMask(matrix.length, matrix[0].length);
+        return new DMask(getTotalRows(), getTotalColumns());
     }
 
     /**
@@ -274,7 +208,7 @@ public class DMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        matrix[isScalar() ? 0 : sliceStartRow + row][isScalar() ? 0 : sliceStartColumn + column] = value;
+        matrix[isScalar() ? 0 : getSliceStartRow() + row][isScalar() ? 0 : getSliceStartColumn() + column] = value;
     }
 
     /**
@@ -285,34 +219,18 @@ public class DMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix[isScalar() ? 0 : sliceStartRow + row][isScalar() ? 0 : sliceStartColumn + column];
+        return matrix[isScalar() ? 0 : getSliceStartRow() + row][isScalar() ? 0 : getSliceStartColumn() + column];
     }
 
     /**
-     * Returns size (rows * columns) of matrix
+     * Returns matrix of given size (rows x columns)
      *
-     * @return size of matrix.
+     * @param rows rows
+     * @param columns columns
+     * @return new matrix
      */
-    public int size() {
-        return sliceSize;
-    }
-
-    /**
-     * Returns number of rows in matrix.
-     *
-     * @return number of rows in matrix.
-     */
-    public int getRows() {
-        return sliceRows;
-    }
-
-    /**
-     * Returns number of columns in matrix.
-     *
-     * @return number of columns in matrix.
-     */
-    public int getColumns() {
-        return sliceColumns;
+    protected Matrix getNewMatrix(int rows, int columns) {
+        return new DMatrix(rows, columns);
     }
 
     /**
@@ -332,22 +250,6 @@ public class DMatrix extends ComputableMatrix {
      */
     public Matrix getNewMatrix(boolean asTransposed) {
         return isScalar() ? new DMatrix(0) : !asTransposed ? new DMatrix(getRows(), getColumns()) :  new DMatrix(getColumns(), getRows());
-    }
-
-    /**
-     * Copies new matrix data into this matrix. Assumes equal dimensions for both matrices.
-     *
-     * @param newMatrix new matrix to be copied inside this matrix.
-     */
-    public void copyMatrixData(Matrix newMatrix) {
-        matrix = new double[newMatrix.getRows()][newMatrix.getColumns()];
-        int rows = newMatrix.getRows();
-        int columns = newMatrix.getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                setValue(row, column, newMatrix.getValue(row, column));
-            }
-        }
     }
 
 }
