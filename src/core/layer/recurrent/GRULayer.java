@@ -5,12 +5,12 @@
 
 package core.layer.recurrent;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.*;
 import utils.matrix.*;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements gated recurrent unit (GRU) layer.<br>
@@ -25,6 +25,15 @@ import java.util.HashMap;
  *
  */
 public class GRULayer extends AbstractRecurrentLayer {
+
+    /**
+     * Parameter name types for GRU layer.
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *
+     */
+    private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
+            "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
      * Weights for update gate
@@ -108,13 +117,13 @@ public class GRULayer extends AbstractRecurrentLayer {
      * Flag if direct (non-recurrent) weights are regulated.
      *
      */
-    private boolean regulateDirectWeights = true;
+    private boolean regulateDirectWeights;
 
     /**
      * Flag if recurrent weights are regulated.
      *
      */
-    private boolean regulateRecurrentWeights = false;
+    private boolean regulateRecurrentWeights;
 
     /**
      * Input matrix for procedure construction.
@@ -134,9 +143,18 @@ public class GRULayer extends AbstractRecurrentLayer {
      */
     public GRULayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        regulateDirectWeights = true;
+        regulateRecurrentWeights = false;
     }
 
     /**
@@ -144,11 +162,8 @@ public class GRULayer extends AbstractRecurrentLayer {
      *
      * @return parameters used for GRU layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("regulateRecurrentWeights", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + GRULayer.paramNameTypes;
     }
 
     /**
@@ -277,6 +292,17 @@ public class GRULayer extends AbstractRecurrentLayer {
         outputs.put(0, s);
         return outputs;
 
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        HashSet<Matrix> stopGradients = new HashSet<>();
+        stopGradients.add(ones);
+        return stopGradients;
     }
 
     /**

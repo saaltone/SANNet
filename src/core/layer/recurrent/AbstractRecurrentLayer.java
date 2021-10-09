@@ -5,15 +5,13 @@
 
 package core.layer.recurrent;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
-
-import java.util.HashMap;
 
 /**
  * Implements functions specific and common for all recurrent layers.<br>
@@ -22,28 +20,43 @@ import java.util.HashMap;
 public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
 
     /**
+     * Parameter name types for abstract recurrent layer.
+     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value true).<br>
+     *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value false).<br>
+     *     - restoreStateTraining: true if output is restored prior training phase otherwise false (default value false).<br>
+     *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
+     *     - truncateSteps: number of sequence steps taken in backpropagation phase (default -1 i.e. not used).<br>
+     *
+     */
+    private final static String paramNameTypes = "(resetStateTraining:BOOLEAN), " +
+            "(resetStateTesting:BOOLEAN), " +
+            "(restoreStateTraining:BOOLEAN), " +
+            "(restoreStateTesting:BOOLEAN), " +
+            "(truncateSteps:INT)";
+
+    /**
      * Flag if state is reset prior start of next training sequence.
      *
      */
-    protected boolean resetStateTraining = true;
+    protected boolean resetStateTraining;
 
     /**
      * Flag if state is reset prior start of next test (validate, predict) sequence.
      *
      */
-    protected boolean resetStateTesting = false;
+    protected boolean resetStateTesting;
 
     /**
      * Flag if state is restored prior start of next training phase.
      *
      */
-    protected boolean restoreStateTraining = false;
+    protected boolean restoreStateTraining;
 
     /**
      * Flag if state is restored prior start of next test (validate, predict) phase.
      *
      */
-    protected boolean restoreStateTesting = false;
+    protected boolean restoreStateTesting;
 
     /**
      * Previous state;
@@ -55,7 +68,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Limits number of backward propagation sequence steps.
      *
      */
-    protected int truncateSteps = -1;
+    protected int truncateSteps;
 
     /**
      * Constructor for AbstractRecurrentLayer.
@@ -68,7 +81,19 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      */
     protected AbstractRecurrentLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        resetStateTraining = true;
+        resetStateTesting = false;
+        restoreStateTraining = false;
+        restoreStateTesting = false;
+        truncateSteps = -1;
     }
 
     /**
@@ -76,14 +101,8 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *
      * @return parameters used for AbstractRecurrentLayer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("resetStateTraining", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("resetStateTesting", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("restoreStateTraining", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("restoreStateTesting", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("truncateSteps", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + AbstractRecurrentLayer.paramNameTypes;
     }
 
     /**

@@ -5,12 +5,12 @@
 
 package core.layer.recurrent;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.*;
 import utils.matrix.*;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements Long Short Term Memory (LSTM)<br>
@@ -27,6 +27,17 @@ import java.util.HashMap;
  *
  */
 public class LSTMLayer extends AbstractRecurrentLayer {
+
+    /**
+     * Parameter name types for LSTM layer.
+     *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *
+     */
+    private final static String paramNameTypes = "(doubleTanh:BOOLEAN), " +
+            "(regulateDirectWeights:BOOLEAN), " +
+            "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
      * Weights for input gate
@@ -128,19 +139,19 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * Flag if tanh operation is performed also for last output function.
      *
      */
-    private boolean doubleTanh = true;
+    private boolean doubleTanh;
 
     /**
      * Flag if direct (non-recurrent) weights are regulated.
      *
      */
-    private boolean regulateDirectWeights = true;
+    private boolean regulateDirectWeights;
 
     /**
      * Flag if recurrent weights are regulated.
      *
      */
-    private boolean regulateRecurrentWeights = false;
+    private boolean regulateRecurrentWeights;
 
     /**
      * Input matrix for procedure construction.
@@ -160,9 +171,19 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      */
     public LSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        doubleTanh = true;
+        regulateDirectWeights = true;
+        regulateRecurrentWeights = false;
     }
 
     /**
@@ -170,12 +191,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      * @return parameters used for LSTM layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("doubleTanh", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("regulateRecurrentWeights", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + LSTMLayer.paramNameTypes;
     }
 
     /**
@@ -327,6 +344,15 @@ public class LSTMLayer extends AbstractRecurrentLayer {
         outputs.put(0, h);
         return outputs;
 
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
     }
 
     /**

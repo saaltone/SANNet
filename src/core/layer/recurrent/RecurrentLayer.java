@@ -5,12 +5,12 @@
 
 package core.layer.recurrent;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.*;
 import utils.matrix.*;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements basic simple recurrent layer.<br>
@@ -18,6 +18,15 @@ import java.util.HashMap;
  *
  */
 public class RecurrentLayer extends AbstractRecurrentLayer {
+
+    /**
+     * Parameter name types for recurrent layer.
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *
+     */
+    private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
+            "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
      * Weight matrix.
@@ -53,13 +62,13 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * If true regulates direct feedforward weights (W).
      *
      */
-    private boolean regulateDirectWeights = true;
+    private boolean regulateDirectWeights;
 
     /**
      * If true regulates recurrent input weights (Wl).
      *
      */
-    private boolean regulateRecurrentWeights = false;
+    private boolean regulateRecurrentWeights;
 
     /**
      * Input matrix for procedure construction.
@@ -80,9 +89,17 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      */
     public RecurrentLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        if (activationFunction != null) this.activationFunction = activationFunction;
-        else this.activationFunction = new ActivationFunction(UnaryFunctionType.ELU);
-        setParams(new DynamicParam(params, getParamDefs()));
+        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        regulateDirectWeights = true;
+        regulateRecurrentWeights = false;
     }
 
     /**
@@ -90,11 +107,8 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      * @return return parameters used for recurrent layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("regulateRecurrentWeights", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + RecurrentLayer.paramNameTypes;
     }
 
     /**
@@ -186,6 +200,15 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
         outputs.put(0, output);
         return outputs;
 
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
     }
 
     /**
