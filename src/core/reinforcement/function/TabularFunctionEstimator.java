@@ -1,14 +1,16 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.function;
 
+import core.network.NeuralNetworkException;
 import core.optimization.*;
-import core.reinforcement.AgentException;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
+import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Initialization;
@@ -25,6 +27,15 @@ import java.util.HashMap;
 public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
+     * Parameter name types for TabularFunctionEstimator.
+     *     - optimizerName: name of optimizer for TabularFunctionEstimator. Default value "Adam".<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *
+     */
+    private final static String paramNameTypes = "(optimizerName:String), " +
+            "(learningRate:DOUBLE)";
+
+    /**
      * Hash map to store state values pairs.
      *
      */
@@ -34,7 +45,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Optimizer for TabularFunctionEstimator.
      *
      */
-    private Optimizer optimizer = new RAdam();
+    private Optimizer optimizer;
 
     /**
      * Intermediate map for state transition value pairs for function update.
@@ -46,21 +57,25 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Constructor for TabularFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for TabularFunctionEstimator
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfActions) {
-        super (memory, numberOfActions, false);
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
+        super (memory, numberOfStates, numberOfActions, false);
+        optimizer = getOptimizer();
     }
 
     /**
      * Constructor for TabularFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for TabularFunctionEstimator
      * @param optimizer optimizer
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfActions, Optimizer optimizer) {
-        super (memory, numberOfActions, false);
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, Optimizer optimizer) {
+        super (memory, numberOfStates, numberOfActions, false);
         this.optimizer = optimizer;
     }
 
@@ -68,25 +83,121 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Constructor for TabularFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
+     * @param numberOfActions number of actions for TabularFunctionEstimator
+     * @param params params for TabularFunctionEstimator
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, String params) throws DynamicParamException {
+        super (memory, numberOfStates, numberOfActions, false);
+        optimizer = getOptimizer();
+    }
+
+    /**
+     * Constructor for TabularFunctionEstimator.
+     *
+     * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for TabularFunctionEstimator
      * @param stateValues state values inherited for TabularFunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfActions, HashMap<Matrix, Matrix> stateValues) {
-        this(memory, numberOfActions);
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues) throws DynamicParamException {
+        super (memory, numberOfStates, numberOfActions, false);
         this.stateValues = stateValues;
+        optimizer = getOptimizer();
     }
 
     /**
      * Constructor for TabularFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for TabularFunctionEstimator
      * @param stateValues state values inherited for TabularFunctionEstimator.
      * @param optimizer optimizer
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfActions, HashMap<Matrix, Matrix> stateValues, Optimizer optimizer) {
-        this(memory, numberOfActions, stateValues);
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues, Optimizer optimizer) {
+        super (memory, numberOfStates, numberOfActions, false);
+        this.stateValues = stateValues;
         this.optimizer = optimizer;
+    }
+
+    /**
+     * Constructor for TabularFunctionEstimator.
+     *
+     * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
+     * @param numberOfActions number of actions for TabularFunctionEstimator
+     * @param stateValues state values inherited for TabularFunctionEstimator.
+     * @param params params for TabularFunctionEstimator
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues, String params) throws DynamicParamException {
+        super (memory, numberOfStates, numberOfActions, false);
+        this.stateValues = stateValues;
+        optimizer = getOptimizer();
+    }
+
+    /**
+     * Returns optimizer.
+     *
+     * @return optimizer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private Optimizer getOptimizer() throws DynamicParamException {
+        return new Adam("learningRate = 0.01");
+    }
+
+    /**
+     * Returns parameters used for TabularFunctionEstimator.
+     *
+     * @return parameters used for TabularFunctionEstimator.
+     */
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + TabularFunctionEstimator.paramNameTypes;
+    }
+
+    /**
+     * Sets parameters used for TabularFunctionEstimator.<br>
+     * <br>
+     * Supported parameters are:<br>
+     *     - optimizerName: name of optimizer for TabularFunctionEstimator. Default value "Adam".<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *
+     * @param params parameters used for NNFunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
+        if (params.hasParam("optimizerName")) {
+            String optimizerName = params.getValueAsString("optimizerName");
+            double learningRate = 0.01;
+            if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
+            optimizer = OptimizerFactory.create(optimizerName, "learningRate = " + learningRate);
+        }
+    }
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     */
+    public FunctionEstimator reference() throws DynamicParamException, NeuralNetworkException {
+        return new TabularFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions(), OptimizerFactory.create(optimizer));
+    }
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, NeuralNetworkException {
+        return new TabularFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions(), OptimizerFactory.create(optimizer, optimizer.getParams()));
     }
 
     /**
@@ -120,7 +231,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @return shallow copy of TabularFunctionEstimator.
      */
     public FunctionEstimator copy() {
-        return new TabularFunctionEstimator(memory, getNumberOfActions(), stateValues, optimizer);
+        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), stateValues, optimizer);
     }
 
     /**
