@@ -97,14 +97,14 @@ public interface Mask {
      * @param probability masking probability between 0 (0%) and 1 (100%).
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    void setMaskProbability(double probability) throws MatrixException;
+    void setProbability(double probability) throws MatrixException;
 
     /**
      * Returns current bernoulli masking probability.
      *
      * @return masking probability.
      */
-    double getMaskProbability();
+    double getProbability();
 
     /**
      * Sets mask at specific row and column.
