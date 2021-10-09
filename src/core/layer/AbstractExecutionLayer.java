@@ -5,7 +5,7 @@
 
 package core.layer;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.normalization.Normalization;
 import core.normalization.NormalizationFactory;
 import core.normalization.NormalizationType;
@@ -152,7 +152,15 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         procedure.setNormalizers(getNormalization());
         procedure.setRegularizers(getRegularization());
         procedure.initialize();
+        procedure.setStopGradient(getStopGradients(), true);
     }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected abstract HashSet<Matrix> getStopGradients();
 
     /**
      * Prepares forward process step.
@@ -457,8 +465,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @param normalizationType normalization method to be reset.
      * @throws NeuralNetworkException throws exception if reset of normalizer fails.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
+    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException {
         Normalization resetNormalization = null;
         for (Normalization normalization : normalizers) {
             if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
@@ -473,8 +482,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @param normalizationType normalization method to be reinitialized.
      * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
+    public void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException {
         Normalization reinitializeNormalization = null;
         for (Normalization normalization : normalizers) {
             if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
@@ -487,16 +497,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Resets all normalization for layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNormalization() {
+    public void resetNormalization() throws MatrixException {
         for (Normalization normalizer : normalizers) normalizer.reset();
     }
 
     /**
      * Reinitializes all normalization for layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reinitializeNormalization() {
+    public void reinitializeNormalization() throws MatrixException {
         for (Normalization normalizer : normalizers) normalizer.reinitialize();
     }
 
@@ -542,8 +554,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Resets normalizers and optimizer of layer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset() {
+    public void reset() throws MatrixException {
         resetNormalization();
         resetOptimizer();
     }
