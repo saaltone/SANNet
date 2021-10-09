@@ -5,9 +5,9 @@
 
 package core.reinforcement.value;
 
-import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParam;
@@ -15,7 +15,6 @@ import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
@@ -31,6 +30,12 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     protected final FunctionEstimator functionEstimator;
 
     /**
+     * If true function estimator is state action value function.
+     *
+     */
+    private final boolean isStateActionValueFunction;
+
+    /**
      * Constructor for AbstractValueFunctionEstimator
      *
      * @param numberOfActions number of actions for AbstractValueFunctionEstimator.
@@ -39,6 +44,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     public AbstractValueFunctionEstimator(int numberOfActions, FunctionEstimator functionEstimator) {
         super(numberOfActions);
         this.functionEstimator = functionEstimator;
+        this.isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
     }
 
     /**
@@ -50,8 +56,10 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractValueFunctionEstimator(int numberOfActions, FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        this(numberOfActions, functionEstimator);
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(numberOfActions, params);
+        this.functionEstimator = functionEstimator;
+        this.isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -59,10 +67,8 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      *
      * @return parameters used for AbstractValueFunctionEstimator.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.putAll(functionEstimator.getParamDefs());
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + functionEstimator.getParamDefs();
     }
 
     /**
@@ -110,18 +116,16 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @return true is function is state action value function.
      */
     public boolean isStateActionValueFunction() {
-        return functionEstimator.isStateActionValueFunction();
+        return isStateActionValueFunction;
     }
 
     /**
-     * Returns action with potential state action value offset.
+     * Returns function index applying potential state action value offset.
      *
-     * @param action action.
-     * @return updated action.
+     * @param stateTransition state transition.
+     * @return function index.
      */
-    protected int getAction(int action) {
-        return (isStateActionValueFunction() ? 1 : 0) + action;
-    }
+    protected abstract int getFunctionIndex(StateTransition stateTransition);
 
     /**
      * Returns values for state.
@@ -132,7 +136,20 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Matrix getValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return functionEstimator.predict(stateTransition.environmentState.state());
+        return getValues(functionEstimator, stateTransition.environmentState.state());
+    }
+
+    /**
+     * Returns values for state.
+     *
+     * @param functionEstimator function estimator.
+     * @param state state.
+     * @return values for state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix getValues(FunctionEstimator functionEstimator, Matrix state) throws MatrixException, NeuralNetworkException {
+        return isStateActionValueFunction() ? functionEstimator.predict(state).getSubMatrices().get(0) : functionEstimator.predict(state);
     }
 
     /**
@@ -143,7 +160,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        stateTransition.value = getValues(stateTransition).getValue(getAction(stateTransition.action), 0);
+        stateTransition.value = getValues(stateTransition).getValue(getFunctionIndex(stateTransition), 0);
     }
 
     /**
@@ -200,6 +217,15 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
+     * Returns FunctionEstimator.
+     *
+     * @return FunctionEstimator.
+     */
+    public FunctionEstimator getFunctionEstimator() {
+        return functionEstimator;
+    }
+
+    /**
      * Updates FunctionEstimator.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
@@ -229,7 +255,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      */
     private Matrix getTargetValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetValues = getValues(stateTransition).copy();
-        targetValues.setValue(getAction(stateTransition.action), 0, stateTransition.tdTarget);
+        targetValues.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
         return targetValues;
     }
 

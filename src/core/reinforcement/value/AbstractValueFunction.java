@@ -5,7 +5,7 @@
 
 package core.reinforcement.value;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.reinforcement.memory.StateTransition;
 import utils.Configurable;
 import utils.DynamicParam;
@@ -14,7 +14,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
@@ -27,22 +26,39 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     private static final long serialVersionUID = -7436000520645598105L;
 
     /**
+     * Parameter name types for AbstractValueFunction.
+     *     - gamma: discount value for value function. Default value 0.99.<br>
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
+     *     - tdErrorPrintCycle: TD error print cycle. Default value 1000.
+     *
+     */
+    private final static String paramNameTypes = "(gamma:DOUBLE), " +
+            "(lambda:DOUBLE), " +
+            "(tdErrorPrintCycle:INT)";
+
+    /**
      * Number of actions for value function.
      *
      */
     private final int numberOfActions;
 
     /**
+     * Parameters for value function.
+     *
+     */
+    private final String params;
+
+    /**
      * Discount rate for temporal difference (TD) target calculation.
      *
      */
-    private double gamma = 0.99;
+    private double gamma;
 
     /**
      * Lambda value controlling balance between bootstrapped value and future reward of next state.
      *
      */
-    protected double lambda = 1;
+    protected double lambda;
 
     /**
      * Moving average TDError.
@@ -54,7 +70,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Print cycle for average TDError verbosing.
      *
      */
-    private int tdErrorPrintCycle = 1000;
+    private int tdErrorPrintCycle;
 
     /**
      * Count for average TDError verbosing.
@@ -65,9 +81,22 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     /**
      * Constructor for AbstractValueFunction.
      *
+     * @param numberOfActions number of actions for AbstractValueFunction.
+     */
+    AbstractValueFunction(int numberOfActions) {
+        initializeDefaultParams();
+        this.numberOfActions = numberOfActions;
+        this.params = null;
+    }
+
+    /**
+     * Constructor for AbstractValueFunction.
+     *
      */
     AbstractValueFunction() {
-        this(1);
+        initializeDefaultParams();
+        this.numberOfActions = 1;
+        this.params = null;
     }
 
     /**
@@ -77,17 +106,10 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     AbstractValueFunction(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
-    }
-
-    /**
-     * Constructor for AbstractValueFunction.
-     *
-     * @param numberOfActions number of actions for AbstractValueFunction.
-     */
-    AbstractValueFunction(int numberOfActions) {
-        this.numberOfActions = numberOfActions;
+        initializeDefaultParams();
+        this.numberOfActions = 1;
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -98,8 +120,29 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     AbstractValueFunction(int numberOfActions, String params) throws DynamicParamException {
-        this(numberOfActions);
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.numberOfActions = numberOfActions;
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        gamma = 0.99;
+        lambda = 0;
+        tdErrorPrintCycle = 1000;
+    }
+
+    /**
+     * Returns parameters of value function.
+     *
+     * @return parameters for value function.
+     */
+    protected String getParams() {
+        return params;
     }
 
     /**
@@ -107,12 +150,8 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      *
      * @return parameters used for AbstractValueFunction.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("gamma", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("tdErrorPrintCycle", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return AbstractValueFunction.paramNameTypes;
     }
 
     /**
@@ -120,7 +159,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * <br>
      * Supported parameters are:<br>
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
      *     - tdErrorPrintCycle: TD error print cycle. Default value 1000.
      *
      * @param params parameters used for AbstractValueFunction.
@@ -147,7 +186,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @param stateTransition state transition.
      * @return value for state.
      */
-    public double getValue(StateTransition stateTransition) {
+    public double getValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         return stateTransition.value;
     }
 

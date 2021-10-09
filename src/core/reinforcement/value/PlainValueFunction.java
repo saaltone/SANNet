@@ -5,15 +5,14 @@
 
 package core.reinforcement.value;
 
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
-import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
@@ -21,6 +20,15 @@ import java.util.TreeSet;
  *
  */
 public class PlainValueFunction extends AbstractValueFunction {
+
+    /**
+     * Parameter name types for PlainValueFunction.
+     *     - useBaseline: if true uses baseline for value function. Default value true.<br>
+     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.9.<br>
+     *
+     */
+    private final static String paramNameTypes = "(useBaseline:BOOLEAN), " +
+            "(tau:DOUBLE)";
 
     /**
      * Reference to direct function estimator.
@@ -32,13 +40,13 @@ public class PlainValueFunction extends AbstractValueFunction {
      * If true uses baseline for target value update.
      *
      */
-    private boolean useBaseline = true;
+    private boolean useBaseline;
 
     /**
      * Tau value for baseline (mean and standard deviation) averaging.
      *
      */
-    private double tau = 0.9;
+    private double tau;
 
     /**
      * Average mean.
@@ -64,12 +72,47 @@ public class PlainValueFunction extends AbstractValueFunction {
     /**
      * Constructor for PlainValueFunction.
      *
+     * @param functionEstimator reference to DirectFunctionEstimator.
+     * @param params parameters for value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public PlainValueFunction(DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
+        this(1, functionEstimator);
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Constructor for PlainValueFunction.
+     *
      * @param numberOfActions number of actions for PlainValueFunction.
      * @param functionEstimator reference to DirectFunctionEstimator.
      */
     public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator) {
         super(numberOfActions);
         this.functionEstimator = functionEstimator;
+    }
+
+    /**
+     * Constructor for PlainValueFunction.
+     *
+     * @param numberOfActions number of actions for PlainValueFunction.
+     * @param functionEstimator reference to DirectFunctionEstimator.
+     * @param params parameters for value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
+        super(numberOfActions, params);
+        this.functionEstimator = functionEstimator;
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        useBaseline = true;
+        tau = 0.9;
         lambda = 1;
     }
 
@@ -78,11 +121,8 @@ public class PlainValueFunction extends AbstractValueFunction {
      *
      * @return parameters used for PlainValueFunction.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("useBaseline", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + PlainValueFunction.paramNameTypes;
     }
 
     /**
@@ -99,6 +139,28 @@ public class PlainValueFunction extends AbstractValueFunction {
         super.setParams(params);
         if (params.hasParam("useBaseline")) useBaseline = params.getValueAsBoolean("useBaseline");
         if (params.hasParam("tau")) tau = params.getValueAsDouble("tau");
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public ValueFunction reference() throws DynamicParamException {
+        return new PlainValueFunction(getNumberOfActions(), functionEstimator, getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException {
+        return new PlainValueFunction(getNumberOfActions(), functionEstimator, getParams());
     }
 
     /**

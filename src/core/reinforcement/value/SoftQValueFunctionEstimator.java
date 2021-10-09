@@ -5,8 +5,8 @@
 
 package core.reinforcement.value;
 
-import core.NeuralNetworkException;
-import core.reinforcement.AgentException;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import utils.DynamicParamException;
@@ -20,7 +20,7 @@ import java.util.TreeSet;
  * Class that defines SoftQValueFunctionEstimator (Soft Q value function with target function estimator).<br>
  *
  */
-public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator {
+public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEstimator {
 
     /**
      * Reference to second function estimator.
@@ -51,15 +51,17 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
      */
-    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator);
+    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException, AgentException {
+        super(functionEstimator);
         this.policyFunctionEstimator = policyFunctionEstimator;
         functionEstimator.setTargetFunctionEstimator();
         functionEstimator2 = functionEstimator.copy();
         functionEstimator2.reinitialize();
         functionEstimator2.setTargetFunctionEstimator();
         this.softQAlphaMatrix = softQAlphaMatrix;
+        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
     }
 
     /**
@@ -74,15 +76,48 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
      */
-    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
+    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException, AgentException {
+        super(functionEstimator, params);
         this.policyFunctionEstimator = policyFunctionEstimator;
         functionEstimator.setTargetFunctionEstimator();
         functionEstimator2 = functionEstimator.copy();
         functionEstimator2.reinitialize();
         functionEstimator2.setTargetFunctionEstimator();
         this.softQAlphaMatrix = softQAlphaMatrix;
+        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     */
+    public ValueFunction reference() throws DynamicParamException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException, AgentException {
+        return new SoftQValueFunctionEstimator(policyFunctionEstimator, functionEstimator, softQAlphaMatrix, getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     */
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException, AgentException {
+        return new SoftQValueFunctionEstimator(policyFunctionEstimator, sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), softQAlphaMatrix, getParams());
     }
 
     /**
@@ -107,6 +142,19 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
     }
 
     /**
+     * Returns value for state.
+     *
+     * @param stateTransition state transition.
+     * @return value for state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double getValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        updateValue(stateTransition);
+        return stateTransition.value;
+    }
+
+    /**
      * Updates state value.
      *
      * @param stateTransition state transition.
@@ -114,8 +162,8 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        double value1 = functionEstimator.predict(stateTransition.environmentState.state()).getValue(getAction(stateTransition.action), 0);
-        double value2 = functionEstimator2.predict(stateTransition.environmentState.state()).getValue(getAction(stateTransition.action), 0);
+        double value1 = getValues(functionEstimator, stateTransition.environmentState.state()).getValue(getFunctionIndex(stateTransition), 0);
+        double value2 = getValues(functionEstimator2, stateTransition.environmentState.state()).getValue(getFunctionIndex(stateTransition), 0);
         stateTransition.value = Math.min(value1, value2);
     }
 
@@ -145,10 +193,11 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
         if (!isStateActionValueFunction()) {
             for (StateTransition stateTransition : sampledStateTransitions) {
                 Matrix targetValues1 = functionEstimator.predict(stateTransition.environmentState.state()).copy();
-                targetValues1.setValue(getAction(stateTransition.action), 0, stateTransition.tdTarget);
+                targetValues1.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
                 functionEstimator.store(stateTransition, targetValues1);
+
                 Matrix targetValues2 = functionEstimator2.predict(stateTransition.environmentState.state()).copy();
-                targetValues2.setValue(getAction(stateTransition.action), 0, stateTransition.tdTarget);
+                targetValues2.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
                 functionEstimator2.store(stateTransition, targetValues2);
             }
             functionEstimator.update();
@@ -168,8 +217,8 @@ public class SoftQValueFunctionEstimator extends AbstractValueFunctionEstimator 
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetPolicyValues = policyFunctionEstimator.predict(nextStateTransition.environmentState.state());
         int targetAction = policyFunctionEstimator.argmax(targetPolicyValues, nextStateTransition.environmentState.availableActions());
-        double value1 = functionEstimator.getTargetFunctionEstimator().predict(nextStateTransition.environmentState.state()).getValue(targetAction, 0);
-        double value2 = functionEstimator2.getTargetFunctionEstimator().predict(nextStateTransition.environmentState.state()).getValue(targetAction, 0);
+        double value1 = getValues(functionEstimator.getTargetFunctionEstimator(), nextStateTransition.environmentState.state()).getValue(targetAction, 0);
+        double value2 = getValues(functionEstimator2.getTargetFunctionEstimator(), nextStateTransition.environmentState.state()).getValue(targetAction, 0);
         return Math.min(value1, value2) - softQAlphaMatrix.getValue(0, 0) * Math.log(targetPolicyValues.getValue(targetAction, 0));
     }
 
