@@ -1,13 +1,13 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.function;
 
-import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import utils.Configurable;
@@ -24,6 +24,32 @@ import java.util.TreeSet;
  *
  */
 public interface FunctionEstimator extends Configurable {
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     */
+    FunctionEstimator reference() throws DynamicParamException, NeuralNetworkException;
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     */
+    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, NeuralNetworkException;
+
+    /**
+     * Returns number of states for FunctionEstimator.
+     *
+     * @return number of states for FunctionEstimator.
+     */
+    int getNumberOfStates();
 
     /**
      * Returns number of actions for FunctionEstimator.
@@ -132,9 +158,8 @@ public interface FunctionEstimator extends Configurable {
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
+    FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException;
 
     /**
      * Predicts state values corresponding to a state.
@@ -175,6 +200,39 @@ public interface FunctionEstimator extends Configurable {
     void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException, AgentException;
 
     /**
+     * Returns min value of state.
+     *
+     * @param stateValues state values.
+     * @return min value of state.
+     */
+    double min(Matrix stateValues);
+
+    /**
+     * Returns min value of state given available actions.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return min value of state.
+     */
+    double min(Matrix stateValues, HashSet<Integer> availableActions);
+
+    /**
+     * Returns action with minimum state value.
+     *
+     * @param stateValues state values.
+     * @return action with minimum state value.
+     */
+    int argmin(Matrix stateValues);
+    /**
+     * Returns action with minimum state value given available actions.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return action with minimum state value.
+     */
+    int argmin(Matrix stateValues, HashSet<Integer> availableActions);
+
+    /**
      * Returns max value of state.
      *
      * @param stateValues state values.
@@ -213,9 +271,8 @@ public interface FunctionEstimator extends Configurable {
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void setTargetFunctionEstimator() throws ClassNotFoundException, MatrixException, DynamicParamException, IOException;
+    void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException;
 
     /**
      * Returns target function estimator.
