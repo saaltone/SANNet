@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -114,6 +114,12 @@ public class Node implements Serializable {
     private int cumulatedGradientEntryCount = 0;
 
     /**
+     * Is true gradient is not updated for this node.
+     *
+     */
+    private boolean stopGradient = false;
+
+    /**
      * Constructor for node.
      *
      * @param id id.
@@ -150,6 +156,16 @@ public class Node implements Serializable {
         this(id, referenceMatrix.get(referenceMatrix.firstKey()), isConstantNode);
         matrices = new MMatrix();
         for (Integer index : referenceMatrix.keySet()) matrices.put(index, referenceMatrix.get(index));
+    }
+
+    /**
+     * Returns true if given matrix is reference matrix of this node.
+     *
+     * @param matrix given matrix
+     * @return true if given matrix is reference matrix of this node.
+     */
+    public boolean isReferenceOf(Matrix matrix) {
+        return referenceMatrix == matrix;
     }
 
     /**
@@ -308,6 +324,24 @@ public class Node implements Serializable {
     }
 
     /**
+     * Sets if gradient is updated for this node. If true gradient is not updated otherwise it is updated.
+     *
+     * @param stopGradient if true gradient is not updated otherwise it is updated.
+     */
+    public void setStopGradient(boolean stopGradient) {
+        this.stopGradient = stopGradient;
+    }
+
+    /**
+     * Returns if gradient is updated for this node. If true gradient is not updated otherwise it is updated.
+     *
+     * @return if true gradient is not updated otherwise it is updated.
+     */
+    public boolean isStopGradient() {
+        return stopGradient;
+    }
+
+    /**
      * Returns size of node.
      *
      * @return size of node.
@@ -357,8 +391,9 @@ public class Node implements Serializable {
      * Returns empty matrix with dimensions of reference matrix.
      *
      * @return empty matrix with dimensions of reference matrix.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public Matrix getEmptyMatrix() {
+    public Matrix getEmptyMatrix() throws MatrixException {
         return referenceMatrix.getNewMatrix();
     }
 
@@ -366,8 +401,9 @@ public class Node implements Serializable {
      * Resets node and removes other data than constant data.
      *
      * @param resetDependentNodes if true resets also dependent nodes.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNode(boolean resetDependentNodes) {
+    public void resetNode(boolean resetDependentNodes) throws MatrixException {
         if (isMultiIndex()) {
             if (toNode == null || resetDependentNodes) matrices = new MMatrix();
         }
