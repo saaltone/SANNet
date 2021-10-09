@@ -10,7 +10,6 @@ import utils.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Defines single (unary) argument function class.<br>
@@ -246,12 +245,9 @@ public class UnaryFunction implements Serializable {
             }
             case RELU -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
-                    paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) RELUThreshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) RELUAlpha = dParams.getValueAsDouble("alpha");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(threshold:DOUBLE), (alpha:DOUBLE)");
+                    if (dynamicParam.hasParam("threshold")) RELUThreshold = dynamicParam.getValueAsDouble("threshold");
+                    if (dynamicParam.hasParam("alpha")) RELUAlpha = dynamicParam.getValueAsDouble("alpha");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
@@ -266,26 +262,19 @@ public class UnaryFunction implements Serializable {
             }
             case ELU -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
-                    paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) ELUThreshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) ELUAlpha = dParams.getValueAsDouble("alpha");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(threshold:DOUBLE), (alpha:DOUBLE)");
+                    if (dynamicParam.hasParam("threshold")) ELUThreshold = dynamicParam.getValueAsDouble("threshold");
+                    if (dynamicParam.hasParam("alpha")) ELUAlpha = dynamicParam.getValueAsDouble("alpha");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * (Math.exp(value) - 1) : value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < ELUThreshold ? ELUAlpha * Math.exp(value) : 1;
             }
             case SELU -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
-                    paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
-                    paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("threshold")) SELUThreshold = dParams.getValueAsDouble("threshold");
-                    if (dParams.hasParam("alpha")) SELUAlpha = dParams.getValueAsDouble("alpha");
-                    if (dParams.hasParam("lambda")) SELULambda = dParams.getValueAsDouble("lambda");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(threshold:DOUBLE), (alpha:DOUBLE), (lambda:DOUBLE)");
+                    if (dynamicParam.hasParam("threshold")) SELUThreshold = dynamicParam.getValueAsDouble("threshold");
+                    if (dynamicParam.hasParam("alpha")) SELUAlpha = dynamicParam.getValueAsDouble("alpha");
+                    if (dynamicParam.hasParam("lambda")) SELULambda = dynamicParam.getValueAsDouble("lambda");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * (Math.exp(value) - 1) : SELULambda * value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < SELUThreshold ? SELULambda * SELUAlpha * Math.exp(value) : SELULambda;
@@ -300,10 +289,8 @@ public class UnaryFunction implements Serializable {
             }
             case GUMBEL_SOFTMAX -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("tau")) gumbelSoftmaxTau = dParams.getValueAsDouble("tau");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(tau:DOUBLE)");
+                    if (dynamicParam.hasParam("tau")) gumbelSoftmaxTau = dynamicParam.getValueAsDouble("tau");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
@@ -359,38 +346,6 @@ public class UnaryFunction implements Serializable {
      */
     public double getGumbelSoftmaxTau() {
         return gumbelSoftmaxTau;
-    }
-
-    /**
-     * Applies function to matrix (value)
-     *
-     * @param first first matrix
-     * @return resulted matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix applyFunction(Matrix first) throws MatrixException {
-        Matrix result = first.getNewMatrix();
-        switch (unaryFunctionType) {
-            case SOFTMAX -> first.softmax(result);
-            case GUMBEL_SOFTMAX -> first.gumbelSoftmax(result, gumbelSoftmaxTau);
-            default -> first.apply(result, this);
-        }
-        return result;
-    }
-
-    /**
-     * Calculates inner gradient.
-     *
-     * @param first first matrix.
-     * @param outputGradient output gradient.
-     * @return input gradient
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix applyGradient(Matrix first, Matrix outputGradient) throws MatrixException {
-        return switch (unaryFunctionType) {
-            case SOFTMAX, GUMBEL_SOFTMAX -> first.softmaxGrad().dot(outputGradient);
-            default -> outputGradient.multiply(first.apply(derivative));
-        };
     }
 
     /**
