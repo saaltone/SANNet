@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -10,18 +10,6 @@ package utils.matrix;
  *
  */
 public class DMask extends AbstractMask {
-
-    /**
-     * Defines number of rows in mask.
-     *
-     */
-    private final int rows;
-
-    /**
-     * Defines number of columns in mask.
-     *
-     */
-    private final int columns;
 
     /**
      * Mask data structure as two dimensional row column array.
@@ -36,8 +24,7 @@ public class DMask extends AbstractMask {
      * @param columns defines number of columns in mask.
      */
     public DMask(int rows, int columns) {
-        this.rows = rows;
-        this.columns = columns;
+        super(rows, columns);
         mask = new boolean[rows][columns];
     }
 
@@ -48,10 +35,8 @@ public class DMask extends AbstractMask {
      * @param probability probability of masking.
      */
     protected DMask(boolean[][] data, double probability) {
-        rows = data.length;
-        columns = data[0].length;
+        super(data.length, data[0].length, probability);
         mask = data.clone();
-        this.probability = probability;
     }
 
     /**
@@ -79,34 +64,7 @@ public class DMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new DMask(mask, probability);
-    }
-
-    /**
-     * Returns size (rows * columns) of mask
-     *
-     * @return size of mask.
-     */
-    public int size() {
-        return rows * columns;
-    }
-
-    /**
-     * Returns number of rows in mask.
-     *
-     * @return number of rows in mask.
-     */
-    public int getRows() {
-        return rows;
-    }
-
-    /**
-     * Returns number of columns in mask.
-     *
-     * @return number of columns in mask.
-     */
-    public int getColumns() {
-        return columns;
+        return new DMask(mask, getProbability());
     }
 
     /**
@@ -136,27 +94,7 @@ public class DMask extends AbstractMask {
      *
      */
     public void clear() {
-        mask = new boolean[rows][columns];
-    }
-
-    /**
-     * Sets mask value for row mask.
-     *
-     * @param row row of mask to be set.
-     * @param value if true sets row mask otherwise unsets mask.
-     */
-    public void setRowMask(int row, boolean value) {
-        for (int column = 0; column < mask[0].length; column++) mask[row][column] = value;
-    }
-
-    /**
-     * Sets mask value for column mask.
-     *
-     * @param column column of mask to be set.
-     * @param value if true sets row mask otherwise unsets mask.
-     */
-    public void setColumnMask(int column, boolean value) {
-        for (int row = 0; row < mask.length; row++) mask[row][column] = value;
+        mask = new boolean[getRows()][getColumns()];
     }
 
 }
