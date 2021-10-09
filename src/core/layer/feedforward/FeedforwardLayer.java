@@ -5,19 +5,30 @@
 
 package core.layer.feedforward;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import utils.*;
 import utils.matrix.*;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements non-recurrent feedforward layer.<br>
  *
  */
 public class FeedforwardLayer extends AbstractExecutionLayer {
+
+    /**
+     * Parameter name types for feedforward layer.
+     *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
+     *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity. Default value false.<br>
+     *     - splitOutputAtPosition: splits output at specific position.<br>
+     *
+     */
+    private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
+            "(normalizeAtInput:BOOLEAN), " +
+            "(splitOutputAtPosition:INT)";
 
     /**
      * Weight matrix.
@@ -41,13 +52,19 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * True if weights are regulated otherwise weights are not regulated.
      *
      */
-    private boolean regulateDirectWeights = true;
+    private boolean regulateDirectWeights;
 
     /**
      * If true normalizes at input otherwise normalizes prior non-linearity.
      *
      */
-    private boolean normalizeAtInput = false;
+    private boolean normalizeAtInput;
+
+    /**
+     * Splits output at given position.
+     *
+     */
+    private int splitOutputAtPosition;
 
     /**
      * Input matrix for procedure construction.
@@ -68,9 +85,18 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      */
     public FeedforwardLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
-        if (activationFunction != null) this.activationFunction = activationFunction;
-        else this.activationFunction = new ActivationFunction(UnaryFunctionType.ELU);
+        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        regulateDirectWeights = true;
+        normalizeAtInput = false;
+        splitOutputAtPosition = -1;
     }
 
     /**
@@ -78,11 +104,8 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      * @return parameters used for feedforward layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("regulateDirectWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("normalizeAtInput", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + FeedforwardLayer.paramNameTypes;
     }
 
     /**
@@ -91,6 +114,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * Supported parameters are:<br>
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity. Default value false.<br>
+     *     - splitOutputAtPosition: splits output at specific position.<br>
      *
      * @param params parameters used for feedforward layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -100,6 +124,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         super.setParams(params);
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
         if (params.hasParam("normalizeAtInput")) normalizeAtInput = params.getValueAsBoolean("normalizeAtInput");
+        if (params.hasParam("splitOutputAtPosition")) splitOutputAtPosition = params.getValueAsInteger("splitOutputAtPosition");
     }
 
     /**
@@ -175,13 +200,27 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
 
         output = output.add(bias);
 
-        output = output.apply(activationFunction);
+        if (splitOutputAtPosition == -1) output = output.apply(activationFunction);
+        else {
+            Matrix result = output.split(splitOutputAtPosition, true);
+            output.apply(result, activationFunction);
+            output = result;
+        }
 
         output.setName("Output");
         MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, output);
         return outputs;
 
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
     }
 
     /**
