@@ -1,15 +1,16 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.function;
 
-import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
@@ -18,7 +19,6 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeSet;
 
@@ -26,10 +26,23 @@ import java.util.TreeSet;
  * Class that implements AbstractFunctionEstimator containing memory management operations and agent handling.<br>
  *
  */
-public abstract class AbstractFunctionEstimator implements FunctionEstimator, Serializable {
+public abstract class AbstractFunctionEstimator implements Configurable, FunctionEstimator, Serializable {
 
     @Serial
     private static final long serialVersionUID = -557430597852291426L;
+
+    /**
+     * Parameter name types for AbstractFunctionEstimator.
+     *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
+     *
+     */
+    private final static String paramNameTypes = "(targetFunctionUpdateCycle:INT)";
+
+    /**
+     * Parameters for function estimator.
+     *
+     */
+    private final String params;
 
     /**
      * Agents registered for function estimator.
@@ -56,6 +69,12 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
     protected final boolean isStateActionValueFunction;
 
     /**
+     * Number of states for function estimator.
+     *
+     */
+    protected final int numberOfStates;
+
+    /**
      * Number of actions for function estimator.
      *
      */
@@ -71,7 +90,7 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
      * Update cycle (in episodes) for target FunctionEstimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
      *
      */
-    private int targetFunctionUpdateCycle = 0;
+    private int targetFunctionUpdateCycle;
 
     /**
      * Update count for update cycle.
@@ -83,27 +102,54 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
      * Constructor for AbstractFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states.
      * @param numberOfActions number of actions.
      * @param isStateActionValueFunction if true function is combined state action value function.
      */
-    public AbstractFunctionEstimator(Memory memory, int numberOfActions, boolean isStateActionValueFunction) {
+    public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction) {
+        initializeDefaultParams();
         this.memory = memory;
+        this.numberOfStates = numberOfStates;
         this.numberOfActions = numberOfActions;
         this.isStateActionValueFunction = isStateActionValueFunction;
+        this.params = null;
     }
 
     /**
      * Constructor for AbstractFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states.
      * @param numberOfActions number of actions.
      * @param isStateActionValueFunction if true function is combined state action value function.
      * @param params parameters for function
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractFunctionEstimator(Memory memory, int numberOfActions, boolean isStateActionValueFunction, String params) throws DynamicParamException {
-        this(memory, numberOfActions, isStateActionValueFunction);
-        setParams(new DynamicParam(params, getParamDefs()));
+    public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction, String params) throws DynamicParamException {
+        initializeDefaultParams();
+        this.memory = memory;
+        this.numberOfStates = numberOfStates;
+        this.numberOfActions = numberOfActions;
+        this.isStateActionValueFunction = isStateActionValueFunction;
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        targetFunctionUpdateCycle = 0;
+    }
+
+    /**
+     * Returns parameters of function estimator.
+     *
+     * @return parameters for function estimator.
+     */
+    protected String getParams() {
+        return params;
     }
 
     /**
@@ -111,10 +157,8 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
      *
      * @return parameters used for AbstractFunctionEstimator.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(memory.getParamDefs());
-        paramDefs.put("targetFunctionUpdateCycle", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return AbstractFunctionEstimator.paramNameTypes + ", " + memory.getParamDefs();
     }
 
     /**
@@ -148,6 +192,15 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
      */
     public void stop() {
         if (targetFunctionEstimator != null) targetFunctionEstimator.stop();
+    }
+
+    /**
+     * Returns number of states for AbstractFunctionEstimator.
+     *
+     * @return number of states for AbstractFunctionEstimator.
+     */
+    public int getNumberOfStates() {
+        return numberOfStates;
     }
 
     /**
@@ -281,6 +334,66 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
     }
 
     /**
+     * Returns min value of state.
+     *
+     * @param stateValues state values.
+     * @return max value of state.
+     */
+    public double min(Matrix stateValues) {
+        return stateValues.getValue(getAction(argmin(stateValues)), 0);
+    }
+
+    /**
+     * Returns min value of state given available actions.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return min value of state.
+     */
+    public double min(Matrix stateValues, HashSet<Integer> availableActions) {
+        return stateValues.getValue(getAction(argmin(stateValues, availableActions)), 0);
+    }
+
+    /**
+     * Returns action with minimum state value.
+     *
+     * @param stateValues state values.
+     * @return action with minimum state value.
+     */
+    public int argmin(Matrix stateValues) {
+        int minAction = -1;
+        double minValue = Double.POSITIVE_INFINITY;
+        for (int action = 0; action < getNumberOfActions(); action++) {
+            double actionValue = stateValues.getValue(getAction(action), 0);
+            if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
+                minValue = actionValue;
+                minAction = action;
+            }
+        }
+        return minAction;
+    }
+
+    /**
+     * Returns action with minimum state value given available actions.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return action with minimum state value.
+     */
+    public int argmin(Matrix stateValues, HashSet<Integer> availableActions) {
+        int minAction = -1;
+        double minValue = Double.POSITIVE_INFINITY;
+        for (int action : availableActions) {
+            double actionValue = stateValues.getValue(getAction(action), 0);
+            if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
+                minValue = actionValue;
+                minAction = action;
+            }
+        }
+        return minAction;
+    }
+
+    /**
      * Returns max value of state.
      *
      * @param stateValues state values.
@@ -356,9 +469,8 @@ public abstract class AbstractFunctionEstimator implements FunctionEstimator, Se
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setTargetFunctionEstimator() throws ClassNotFoundException, MatrixException, DynamicParamException, IOException {
+    public void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException {
         targetFunctionEstimator = copy();
     }
 
