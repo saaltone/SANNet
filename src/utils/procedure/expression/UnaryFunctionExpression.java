@@ -1,12 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
 
 import utils.matrix.*;
-import utils.matrix.operation.BinaryMatrixOperation;
 import utils.matrix.operation.UnaryMatrixOperation;
 import utils.procedure.node.Node;
 
@@ -104,7 +103,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, unaryMatrixOperation.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, unaryMatrixOperation.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -76,8 +76,8 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, multiplyMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
-        argument2.cumulateGradient(index, multiplyMatrixOperation.apply(argument1.getMatrix(index), result.getGradient(index), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, multiplyMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(index, multiplyMatrixOperation.apply(argument1.getMatrix(index), result.getGradient(index), argument2.getEmptyMatrix()), false);
 
     }
 

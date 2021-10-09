@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -80,8 +80,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, averagePoolGradientMatrixOperation.apply(result.getGradient(index), argument1.getEmptyMatrix()), false);
-
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, averagePoolGradientMatrixOperation.apply(result.getGradient(index), argument1.getEmptyMatrix()), false);
     }
 
     /**

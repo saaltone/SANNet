@@ -1,13 +1,12 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
 
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.matrix.operation.SumMatrixOperation;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -83,7 +82,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, result.getGradient(index), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, result.getGradient(index), false);
     }
 
     /**

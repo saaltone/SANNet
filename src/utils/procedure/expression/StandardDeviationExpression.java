@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -123,8 +123,10 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
     public void calculateGradient(int index) throws MatrixException {
         if (asMultiMatrix) return;
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(means.get(index)).multiply(2 / (double)(result.getGradient(index).size() - 1)).apply(sqrtFunction.getDerivative());
-        argument1.cumulateGradient(index, result.getGradient(index).multiply(standardDeviationGradient), false);
+        if (!argument1.isStopGradient()) {
+            Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(means.get(index)).multiply(2 / (double)(result.getGradient(index).size() - 1)).apply(sqrtFunction.getDerivative());
+            argument1.cumulateGradient(index, result.getGradient(index).multiply(standardDeviationGradient), false);
+        }
     }
 
     /**

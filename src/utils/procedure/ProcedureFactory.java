@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure;
@@ -629,7 +629,7 @@ public class ProcedureFactory implements Serializable {
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
         Node resultNode = defineNode(result, true);
-        ConvolveExpression expression = new ConvolveExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
+        ConvolveExpression expression = new ConvolveExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation);
         storeExpression(expression, resultNode);
     }
 
@@ -651,7 +651,7 @@ public class ProcedureFactory implements Serializable {
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
         Node resultNode = defineNode(result, true);
-        CrosscorrelateExpression expression = new CrosscorrelateExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
+        CrosscorrelateExpression expression = new CrosscorrelateExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation);
         storeExpression(expression, resultNode);
     }
 
@@ -673,7 +673,7 @@ public class ProcedureFactory implements Serializable {
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
         Node resultNode = defineNode(result, true);
-        WinogradConvolutionExpression expression = new WinogradConvolutionExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation, filterRowSize, filterColumnSize);
+        WinogradConvolutionExpression expression = new WinogradConvolutionExpression(currentExpressionID++, node1, node2, resultNode, stride, dilation);
         storeExpression(expression, resultNode);
     }
 

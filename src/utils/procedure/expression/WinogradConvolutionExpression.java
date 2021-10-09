@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -66,11 +66,9 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      * @param result result of expression.
      * @param stride stride of crosscorrelation operation.
      * @param dilation dilation step size for crosscorrelation operation.
-     * @param filterRowSize filter row size.
-     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("WINOGRAD_CONVOLUTION", "WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
 
         Matrix AT = new DMatrix(2, 4);
@@ -174,8 +172,8 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
-        argument2.cumulateGradient(index, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(index, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
         preprocessedFilter = null;
     }
 

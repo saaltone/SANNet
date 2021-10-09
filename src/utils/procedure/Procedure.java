@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure;
@@ -104,8 +104,9 @@ public class Procedure implements Serializable {
     /**
      * Resets data for every index in nodes of procedure.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset() {
+    public void reset() throws MatrixException {
         reset(true);
     }
 
@@ -113,8 +114,9 @@ public class Procedure implements Serializable {
      * Resets data for every index in nodes of procedure.
      *
      * @param resetDependentNodes if true resets also dependent nodes.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset(boolean resetDependentNodes) {
+    public void reset(boolean resetDependentNodes) throws MatrixException {
         for (Node node : nodes) node.resetNode(resetDependentNodes);
         expressionChain.reset();
     }
@@ -453,6 +455,28 @@ public class Procedure implements Serializable {
         Node node = getNode(constantMatrix);
         if (node == null) throw new MatrixException("No such reference matrix registered.");
         return node.getGradientMean();
+    }
+
+    /**
+     * Sets if gradient is updated for nodes of this expression. If true gradient is not updated otherwise it is updated.
+     *
+     * @param referenceMatrices reference matrices of nodes.
+     * @param stopGradient if true gradient is not updated otherwise it is updated.
+     */
+    public void setStopGradient(HashSet<Matrix> referenceMatrices, boolean stopGradient) {
+        for (Matrix referenceMatrix : referenceMatrices) setStopGradient(referenceMatrix, stopGradient);
+    }
+
+    /**
+     * Sets if gradient is updated for nodes of this expression. If true gradient is not updated otherwise it is updated.
+     *
+     * @param referenceMatrix reference matrix of node.
+     * @param stopGradient if true gradient is not updated otherwise it is updated.
+     */
+    public void setStopGradient(Matrix referenceMatrix, boolean stopGradient) {
+        for (Node node : nodes) {
+            if (node.isReferenceOf(referenceMatrix)) node.setStopGradient(stopGradient);
+        }
     }
 
     /**

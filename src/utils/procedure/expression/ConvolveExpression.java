@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -44,11 +44,9 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      * @param result result of expression.
      * @param stride stride of convolution operation.
      * @param dilation dilation step size for convolution operation.
-     * @param filterRowSize filter row size.
-     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("CONVOLVE", "CONVOLVE", expressionID, argument1, argument2, result);
         convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
         convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
@@ -88,8 +86,8 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        argument1.cumulateGradient(index, convolutionInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
-        argument2.cumulateGradient(index, convolutionFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, convolutionInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(index, convolutionFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
     }
 
     /**

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -99,8 +99,10 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
         if (!asMultiMatrix) return;
         if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) {
-            Matrix varianceGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size());
-            argument1.cumulateGradient(index, result.getGradient().multiply(varianceGradient), false);
+            if (!argument1.isStopGradient()) {
+                Matrix varianceGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size());
+                argument1.cumulateGradient(index, result.getGradient().multiply(varianceGradient), false);
+            }
         }
     }
 

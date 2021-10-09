@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -97,7 +97,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     public void calculateGradient(int index) throws MatrixException {
         if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         if (!maxPos.containsKey(index)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
-        argument1.cumulateGradient(index, maxPoolGradientMatrixOperation.apply(result.getGradient(index), maxPos.get(index), argument1.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, maxPoolGradientMatrixOperation.apply(result.getGradient(index), maxPos.get(index), argument1.getEmptyMatrix()), false);
         maxPosCache.push(maxPos.remove(index));
     }
 
