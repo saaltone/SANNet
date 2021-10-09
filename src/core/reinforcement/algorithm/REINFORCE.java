@@ -1,11 +1,13 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.Environment;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.AgentException;
+import core.reinforcement.agent.Environment;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.OnlineMemory;
@@ -14,7 +16,6 @@ import core.reinforcement.policy.updateablepolicy.UpdateableBasicPolicy;
 import core.reinforcement.policy.updateablepolicy.UpdateableProximalPolicy;
 import core.reinforcement.value.PlainValueFunction;
 import utils.DynamicParamException;
-import utils.matrix.MatrixException;
 
 import java.io.IOException;
 
@@ -31,9 +32,10 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @param executablePolicyType executable policy type.
      * @param policyFunctionEstimator reference to policy function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator) throws DynamicParamException {
-        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfActions())));
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator) throws DynamicParamException, AgentException {
+        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())));
     }
 
     /**
@@ -44,9 +46,10 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @param policyFunctionEstimator reference to policy function estimator.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params) throws DynamicParamException {
-        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfActions())), params);
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params) throws DynamicParamException, AgentException {
+        super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())), params);
     }
 
     /**
@@ -59,10 +62,10 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, boolean asProximalPolicy) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException {
-        super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfActions())));
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, boolean asProximalPolicy) throws ClassNotFoundException, DynamicParamException, IOException, AgentException {
+        super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())));
     }
 
     /**
@@ -76,10 +79,40 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params, boolean asProximalPolicy) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfActions())), params);
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params, boolean asProximalPolicy) throws DynamicParamException, IOException, ClassNotFoundException, AgentException {
+        super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(new OnlineMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())), params);
+    }
+
+    /**
+     * Returns reference to algorithm.
+     *
+     * @return reference to algorithm.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public REINFORCE reference() throws IOException, DynamicParamException, ClassNotFoundException, AgentException {
+        return new REINFORCE(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference().getFunctionEstimator(), getParams());
+    }
+
+    /**
+     * Returns reference to algorithm.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to algorithm.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+        return new REINFORCE(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
     }
 
 }

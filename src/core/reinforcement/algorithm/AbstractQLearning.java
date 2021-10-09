@@ -1,16 +1,20 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.algorithm;
 
-import core.NeuralNetworkException;
-import core.reinforcement.*;
-import core.reinforcement.policy.Policy;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.AgentException;
+import core.reinforcement.agent.DeepAgent;
+import core.reinforcement.agent.Environment;
+import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.value.ValueFunction;
 import utils.DynamicParamException;
 import utils.matrix.MatrixException;
+
+import java.io.IOException;
 
 /**
  * Class that defines Q Learning algorithms.<br>
@@ -22,24 +26,24 @@ public abstract class AbstractQLearning extends DeepAgent {
      * Constructor for AbstractQLearning.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
+     * @param actionablePolicy reference to actionablePolicy.
      * @param valueFunction reference to value function.
      */
-    public AbstractQLearning(Environment environment, Policy policy, ValueFunction valueFunction) {
-        initialize(environment, policy, valueFunction);
+    public AbstractQLearning(Environment environment, ActionablePolicy actionablePolicy, ValueFunction valueFunction) {
+        super(environment, actionablePolicy, valueFunction);
     }
 
     /**
      * Constructor for AbstractQLearning.
      *
      * @param environment reference to environment.
-     * @param policy reference to policy.
+     * @param actionablePolicy reference to actionablePolicy.
      * @param valueFunction reference to value function.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractQLearning(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
-        initialize(environment, policy, valueFunction, params);
+    public AbstractQLearning(Environment environment, ActionablePolicy actionablePolicy, ValueFunction valueFunction, String params) throws DynamicParamException {
+        super(environment, actionablePolicy, valueFunction, params);
     }
 
     /**
@@ -58,5 +62,20 @@ public abstract class AbstractQLearning extends DeepAgent {
             valueFunction.resetFunctionEstimator();
         }
     }
+
+    /**
+     * Returns reference to AbstractQLearning algorithm.
+     *
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to algorithm.
+     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }
