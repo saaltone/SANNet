@@ -5,7 +5,7 @@
 
 package core.optimization;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import utils.DynamicParamException;
 
 /**
@@ -40,6 +40,32 @@ public class OptimizerFactory {
     }
 
     /**
+     * Constructs optimizer.
+     *
+     * @param optimizationName optimizer name.
+     * @param params parameters for specific optimizer.
+     * @return constructed optimizer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Optimizer create(String optimizationName, String params) throws DynamicParamException {
+        return switch (optimizationName) {
+            case "GradientDescent" -> (params == null) ? new GradientDescent() : new GradientDescent(params);
+            case "MomentumGradientDescent" -> (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
+            case "NesterovAcceleratedGradient" -> (params == null) ? new NesterovAcceleratedGradient() : new NesterovAcceleratedGradient(params);
+            case "Adagrad" -> (params == null) ? new Adagrad() : new Adagrad(params);
+            case "Adadelta" -> (params == null) ? new Adadelta() : new Adadelta(params);
+            case "RMSProp" -> (params == null) ? new RMSProp() : new RMSProp(params);
+            case "Adam" -> (params == null) ? new Adam() : new Adam(params);
+            case "Adamax" -> (params == null) ? new Adamax() : new Adamax(params);
+            case "NAdam" -> (params == null) ? new NAdam() : new NAdam(params);
+            case "RAdam" -> (params == null) ? new RAdam() : new RAdam(params);
+            case "AMSGrad" -> (params == null) ? new AMSGrad() : new AMSGrad(params);
+            case "ResilientPropagation" -> new ResilientPropagation();
+            default -> throw new DynamicParamException("Unknown optimizer name.");
+        };
+    }
+
+    /**
      * Constructs optimizer with default parameters.
      *
      * @param optimization optimizer type.
@@ -48,6 +74,31 @@ public class OptimizerFactory {
      */
     public static Optimizer create(OptimizationType optimization) throws DynamicParamException {
         return create(optimization, null);
+    }
+
+    /**
+     * Constructs optimizer with default parameters.
+     *
+     * @param optimizer optimizer of specific type.
+     * @return constructed optimizer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     */
+    public static Optimizer create(Optimizer optimizer) throws DynamicParamException, NeuralNetworkException {
+        return create(getOptimizationType(optimizer), null);
+    }
+
+    /**
+     * Constructs optimizer with default parameters.
+     *
+     * @param optimizer optimizer of specific type.
+     * @param params parameters of optimizer.
+     * @return constructed optimizer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     */
+    public static Optimizer create(Optimizer optimizer, String params) throws DynamicParamException, NeuralNetworkException {
+        return create(getOptimizationType(optimizer), params);
     }
 
     /**
