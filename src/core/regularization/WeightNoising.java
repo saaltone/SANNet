@@ -5,25 +5,37 @@
 
 package core.regularization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Random;
 
 /**
  * Class that adds noise to the weights during training (backward) phase.<br>
  *
  */
-public class WeightNoising implements Regularization, Serializable {
+public class WeightNoising implements Configurable, Regularization, Serializable {
 
     @Serial
     private static final long serialVersionUID = -6830727265041914868L;
+
+    /**
+     * Parameter name types for WeightNoising.
+     *     - initialNoise: initial noise level. Default value 0.02.<br>
+     *     - minNoise: minimum noise level. Default value 0.<br>
+     *     - noiseDecay: noise decay factor. Default value 0.999.<br>
+     *
+     */
+    private final static String paramNameTypes = "(initialNoise:DOUBLE), " +
+            "(minNoise:DOUBLE), " +
+            "(noiseDecay:DOUBLE)";
 
     /**
      * Random function for weight noising.
@@ -47,26 +59,26 @@ public class WeightNoising implements Regularization, Serializable {
      * Initial noise.
      *
      */
-    private double initialNoise = 0.02;
+    private double initialNoise;
 
     /**
      * Initial noise.
      *
      */
-    private double minNoise = 0;
+    private double minNoise;
 
     /**
      * Initial noise.
      *
      */
-    private double noiseDecay = 0.999;
+    private double noiseDecay;
 
     /**
      * Constructor for weight noising class.
      *
      */
     public WeightNoising() {
-        currentNoise = initialNoise;
+        initializeDefaultParams();
     }
 
     /**
@@ -77,7 +89,18 @@ public class WeightNoising implements Regularization, Serializable {
      */
     public WeightNoising(String params) throws DynamicParamException {
         this();
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        initialNoise = 0.02;
+        minNoise = 0;
+        noiseDecay = 0.999;
+        currentNoise = initialNoise;
     }
 
     /**
@@ -85,12 +108,8 @@ public class WeightNoising implements Regularization, Serializable {
      *
      * @return parameters used for weight noising.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("initialNoise", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("minNoise", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("noiseDecay", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return WeightNoising.paramNameTypes;
     }
 
     /**
@@ -146,15 +165,12 @@ public class WeightNoising implements Regularization, Serializable {
     /**
      * Executes weight noising prior weight update step for neural network.<br>
      *
+     * @param weight weight matrix.
+     * @param weightGradientSum gradient sum of weight.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backward(Matrix weight, Matrix weightGradientSum) {
-        int rows = weight.getRows();
-        int columns = weight.getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                weight.setValue(row, column, weight.getValue(row, column) + currentNoise * (1 - 2 * random.nextDouble()));
-            }
-        }
+    public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
+        weight.apply(value -> value + currentNoise * (1 - 2 * random.nextDouble()), true);
         if (currentNoise > minNoise) currentNoise *= noiseDecay;
     }
 

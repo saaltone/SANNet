@@ -5,6 +5,7 @@
 
 package core.regularization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
@@ -14,7 +15,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Implements drop out regularization method for layer weights (parameters).<br>
@@ -24,11 +24,17 @@ import java.util.HashMap;
  * Reference: https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf<br>
  *
  */
-
-public class DropOut implements Regularization, Serializable {
+public class DropOut implements Configurable, Regularization, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1335548498128292515L;
+
+    /**
+     * Parameter name types for DropOut.
+     *     - probability: probability of masking out a layer node. Default value 0.5.<br>
+     *
+     */
+    private final static String paramNameTypes = "(probability:DOUBLE)";
 
     /**
      * Type of regularization.
@@ -46,13 +52,14 @@ public class DropOut implements Regularization, Serializable {
      * Drop out probability of node.
      *
      */
-    private double probability = 0.5;
+    private double probability;
 
     /**
      * Constructor for drop out class.
      *
      */
     public DropOut() {
+        initializeDefaultParams();
     }
 
     /**
@@ -62,7 +69,16 @@ public class DropOut implements Regularization, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public DropOut(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        probability = 0.5;
     }
 
     /**
@@ -70,10 +86,8 @@ public class DropOut implements Regularization, Serializable {
      *
      * @return parameters used for drop out.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("probability", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return DropOut.paramNameTypes;
     }
 
     /**
@@ -138,7 +152,7 @@ public class DropOut implements Regularization, Serializable {
         if (isTraining) {
             matrix.multiply(1 / probability, matrix);
             matrix.setMask();
-            matrix.getMask().setMaskProbability(probability);
+            matrix.getMask().setProbability(probability);
             matrix.getMask().maskRowByProbability();
         }
     }

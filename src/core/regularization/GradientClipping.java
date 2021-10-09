@@ -1,10 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.regularization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
@@ -14,7 +15,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Implements gradient clipping class.<br>
@@ -23,10 +23,17 @@ import java.util.HashMap;
  * Reference: https://hackernoon.com/gradient-clipping-57f04f0adae<br>
  *
  */
-public class GradientClipping implements Regularization, Serializable {
+public class GradientClipping implements Configurable, Regularization, Serializable {
 
     @Serial
     private static final long serialVersionUID = -2462517110247269075L;
+
+    /**
+     * Parameter name types for GradientClipping.
+     *     - threshold: threshold for clipping gradients. Default value 0.1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(threshold:DOUBLE)";
 
     /**
      * Type of regularization.
@@ -38,13 +45,14 @@ public class GradientClipping implements Regularization, Serializable {
      * Threshold for gradient clipping.
      *
      */
-    private double threshold = 0.1;
+    private double threshold;
 
     /**
      * Constructor for gradient clipping class.
      *
      */
     public GradientClipping() {
+        initializeDefaultParams();
     }
 
     /**
@@ -54,7 +62,16 @@ public class GradientClipping implements Regularization, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public GradientClipping(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        threshold = 0.1;
     }
 
     /**
@@ -62,10 +79,8 @@ public class GradientClipping implements Regularization, Serializable {
      *
      * @return parameters used for gradient clipping.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("threshold", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return GradientClipping.paramNameTypes;
     }
 
     /**

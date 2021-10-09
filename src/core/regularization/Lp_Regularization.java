@@ -5,6 +5,7 @@
 
 package core.regularization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
@@ -14,7 +15,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Implements Lp regularization (experimental). P here is any norm higher or equal to 1.<br>
@@ -23,10 +23,19 @@ import java.util.HashMap;
  * This is experimental regularization method.<br>
  *
  */
-public class Lp_Regularization implements Regularization, Serializable {
+public class Lp_Regularization implements Configurable, Regularization, Serializable {
 
     @Serial
     private static final long serialVersionUID = -7833984930510523396L;
+
+    /**
+     * Parameter name types for Lp_Regularization.
+     *     - lambda: lambda value for regularization. Default value: 0.01.<br>
+     *     - p: p norm of normalizer. Default 3.<br>
+     *
+     */
+    private final static String paramNameTypes = "(lambda:DOUBLE), " +
+            "(p:INT)";
 
     /**
      * Type of regularization.
@@ -38,19 +47,20 @@ public class Lp_Regularization implements Regularization, Serializable {
      * Regularization rate.
      *
      */
-    private double lambda = 0.01;
+    private double lambda;
 
     /**
      * Order of norm.
      *
      */
-    private int p = 3;
+    private int p;
 
     /**
      * Constructor for Lp regularization class.
      *
      */
     public Lp_Regularization() {
+        initializeDefaultParams();
     }
 
     /**
@@ -60,7 +70,17 @@ public class Lp_Regularization implements Regularization, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Lp_Regularization(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        lambda = 0.01;
+        p = 3;
     }
 
     /**
@@ -68,11 +88,8 @@ public class Lp_Regularization implements Regularization, Serializable {
      *
      * @return parameters used for Lp regularization.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("p", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return Lp_Regularization.paramNameTypes;
     }
 
     /**

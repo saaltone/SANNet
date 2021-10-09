@@ -1,10 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.regularization;
 
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
@@ -15,7 +16,6 @@ import utils.matrix.UnaryFunctionType;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Implements L1 (lasso) regularization.<br>
@@ -23,10 +23,17 @@ import java.util.HashMap;
  * Reference: https://towardsdatascience.com/l1-and-l2-regularization-methods-ce25e7fc831c<br>
  *
  */
-public class L1_Regularization implements Regularization, Serializable {
+public class L1_Regularization implements Configurable, Regularization, Serializable {
 
     @Serial
     private static final long serialVersionUID = -7323953827581797724L;
+
+    /**
+     * Parameter name types for L1_Regularization.
+     *     - lambda: lambda value for regularization. Default value: 0.01.<br>
+     *
+     */
+    private final static String paramNameTypes = "(lambda:DOUBLE)";
 
     /**
      * Type of regularization.
@@ -38,13 +45,14 @@ public class L1_Regularization implements Regularization, Serializable {
      * Regularization rate.
      *
      */
-    private double lambda = 0.01;
+    private double lambda;
 
     /**
      * Constructor for L1 regularization class.
      *
      */
     public L1_Regularization() {
+        initializeDefaultParams();
     }
 
     /**
@@ -54,7 +62,16 @@ public class L1_Regularization implements Regularization, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public L1_Regularization(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        lambda = 0.01;
     }
 
     /**
@@ -62,10 +79,8 @@ public class L1_Regularization implements Regularization, Serializable {
      *
      * @return parameters used for L1 regularization.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("lambda", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return L1_Regularization.paramNameTypes;
     }
 
     /**

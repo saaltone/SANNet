@@ -6,12 +6,12 @@
 package core.regularization;
 
 import core.metrics.Metrics;
+import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Implements early stopping method for neural network.<br>
@@ -20,22 +20,35 @@ import java.util.HashMap;
  * Reference: https://www.researchgate.net/publication/2874749_Early_Stopping_-_But_When<br>
  *
  */
-public class EarlyStopping implements Serializable {
+public class EarlyStopping implements Configurable, Serializable {
 
     @Serial
     private static final long serialVersionUID = -8362385201353383426L;
 
     /**
+     * Parameter name types for EarlyStopping.
+     *     - trainingAverageSize: size for training error rolling average. Default value 100 (iterations).<br>
+     *     - trainingStopThreshold: stop threshold for training error condition. Default 20 (consequent iterations where condition is met).<br>
+     *     - validationAverageSize: size for validation error rolling average. Default value 100 (iterations).<br>
+     *     - validationStopThreshold: stop threshold for validation error condition. Default 20 (consequent iterations where condition is met).<br>
+     *
+     */
+    private final static String paramNameTypes = "(trainingAverageSize:INT, )" +
+            "(trainingStopThreshold:INT, )" +
+            "(validationAverageSize:INT, )" +
+            "(validationStopThreshold:INT)";
+
+    /**
      * Size for training error rolling average.
      *
      */
-    private int trainingAverageSize = 100;
+    private int trainingAverageSize;
 
     /**
      * Sets stop threshold for training error condition.
      *
      */
-    private int trainingStopThreshold = 20;
+    private int trainingStopThreshold;
 
     /**
      * Stores previous training error average.
@@ -47,13 +60,13 @@ public class EarlyStopping implements Serializable {
      * Size for validation error rolling average.
      *
      */
-    private int validationAverageSize = 100;
+    private int validationAverageSize;
 
     /**
      * Sets stop threshold for validation error condition.
      *
      */
-    private int validationStopThreshold = 20;
+    private int validationStopThreshold;
 
     /**
      * Stores previous validation error average.
@@ -102,6 +115,7 @@ public class EarlyStopping implements Serializable {
      *
      */
     public EarlyStopping() {
+        initializeDefaultParams();
     }
 
     /**
@@ -111,7 +125,19 @@ public class EarlyStopping implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public EarlyStopping(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        trainingAverageSize = 100;
+        trainingStopThreshold = 20;
+        validationAverageSize = 100;
+        validationStopThreshold = 20;
     }
 
     /**
@@ -119,13 +145,8 @@ public class EarlyStopping implements Serializable {
      *
      * @return parameters used for early stopping.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("trainingAverageSize", DynamicParam.ParamType.INT);
-        paramDefs.put("trainingStopThreshold", DynamicParam.ParamType.INT);
-        paramDefs.put("validationAverageSize", DynamicParam.ParamType.INT);
-        paramDefs.put("validationStopThreshold", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return EarlyStopping.paramNameTypes;
     }
 
     /**
