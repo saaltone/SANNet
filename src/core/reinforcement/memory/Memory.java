@@ -1,11 +1,12 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.memory;
 
 import utils.Configurable;
+import utils.DynamicParamException;
 
 import java.util.TreeSet;
 
@@ -14,6 +15,14 @@ import java.util.TreeSet;
  *
  */
 public interface Memory extends Configurable {
+
+    /**
+     * Returns reference to memory.
+     *
+     * @return reference to memory.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Memory reference() throws DynamicParamException;
 
     /**
      * Returns size of memory.

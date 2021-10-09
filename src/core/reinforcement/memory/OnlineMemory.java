@@ -22,6 +22,21 @@ public class OnlineMemory implements Memory, Serializable {
     private static final long serialVersionUID = 8600974850562595903L;
 
     /**
+     * Parameter name types for OnlineMemory.
+     *     - capacity: Capacity of OnlineMemory. Default value 0 (unlimited).<br>
+     *     - batchSize: Batch size sampled from OnlineMemory. Default value -1 (whole memory is sampled).<br>
+     *
+     */
+    private final static String paramNameTypes = "(capacity:INT), " +
+            "(batchSize:INT)";
+
+    /**
+     * Parameters for memory.
+     *
+     */
+    private final String params;
+
+    /**
      * Random number generator.
      *
      */
@@ -31,13 +46,13 @@ public class OnlineMemory implements Memory, Serializable {
      * Capacity of OnlineMemory.
      *
      */
-    private int capacity = 0;
+    private int capacity;
 
     /**
      * Batch size sampled from OnlineMemory. If batch size is -1 whole memory is sampled.
      *
      */
-    private int batchSize = -1;
+    private int batchSize;
 
     /**
      * Tree set of state transitions in OnlineMemory.
@@ -56,6 +71,38 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     public OnlineMemory() {
+        initializeDefaultParams();
+        params = null;
+    }
+
+    /**
+     * Default constructor for OnlineMemory.
+     *
+     * @param params parameters for memory
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public OnlineMemory(String params) throws DynamicParamException {
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        capacity = 0;
+        batchSize = -1;
+    }
+
+    /**
+     * Returns parameters of memory.
+     *
+     * @return parameters for memory.
+     */
+    protected String getParams() {
+        return params;
     }
 
     /**
@@ -63,11 +110,8 @@ public class OnlineMemory implements Memory, Serializable {
      *
      * @return parameters used for OnlineMemory.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("capacity", DynamicParam.ParamType.INT);
-        paramDefs.put("batchSize", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return OnlineMemory.paramNameTypes;
     }
 
     /**
@@ -83,6 +127,16 @@ public class OnlineMemory implements Memory, Serializable {
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("capacity")) capacity = params.getValueAsInteger("capacity");
         if (params.hasParam("batchSize")) batchSize = params.getValueAsInteger("batchSize");
+    }
+
+    /**
+     * Returns reference to memory.
+     *
+     * @return reference to memory.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Memory reference() throws DynamicParamException {
+        return new OnlineMemory(getParams());
     }
 
     /**

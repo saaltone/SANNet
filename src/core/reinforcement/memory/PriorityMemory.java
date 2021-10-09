@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.memory;
@@ -10,7 +10,6 @@ import utils.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -26,6 +25,33 @@ public class PriorityMemory implements Memory, Serializable {
     private static final long serialVersionUID = -160305763452683523L;
 
     /**
+     * Parameter name types for PriorityMemory.
+     *     - capacity: capacity of PriorityMemory. Default value 20000.<br>
+     *     - batchSize: batch size sampled from PriorityMemory. Default value 32.<br>
+     *     - alpha: proportional prioritization factor for samples in PriorityMemory. Default value 0.6.<br>
+     *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
+     *     - betaStepSize: step-size (schedule) which is used to anneal beta value towards 1 (final value). Default value 0.001.<br>
+     *     - proportionalPrioritization: if true sampling is done proportionally other purely based on priority. Default value true.<br>
+     *     - applyImportanceSamplingWeights: if true importance sampling weights are to be applied during training. Default value false.<br>
+     *     - applyUniformSampling: if true applies random uniform sampling otherwise applies prioritized sampling. Default value false.<br>
+     *
+     */
+    private final static String paramNameTypes = "(capacity:INT), " +
+            "(batchSize:INT), " +
+            "(alpha:DOUBLE), " +
+            "(beta:DOUBLE), " +
+            "(betaStepSize:INT), " +
+            "(proportionalPrioritization:BOOLEAN), " +
+            "(applyImportanceSamplingWeights:BOOLEAN), " +
+            "(applyUniformSampling:BOOLEAN)";
+
+    /**
+     * Parameters for memory.
+     *
+     */
+    private final String params;
+
+    /**
      * Random number generator.
      *
      */
@@ -35,31 +61,31 @@ public class PriorityMemory implements Memory, Serializable {
      * Capacity of PriorityMemory.
      *
      */
-    private int capacity = 20000;
+    private int capacity;
 
     /**
      * Batch size sampled from PriorityMemory.
      *
      */
-    private int batchSize = 32;
+    private int batchSize;
 
     /**
      * Term which controls shape of sample priority distribution.
      *
      */
-    private double alpha = 0.6;
+    private double alpha;
 
     /**
      * Term that controls how much prioritization is applied.
      *
      */
-    private double beta = 0.4;
+    private double beta;
 
     /**
      * Step-size (schedule) which is used to anneal beta value towards 1 (final value).
      *
      */
-    private double betaStepSize = 0.001;
+    private double betaStepSize;
 
     /**
      * Reference to sum tree.
@@ -71,19 +97,19 @@ public class PriorityMemory implements Memory, Serializable {
      * If true sampling is done proportionally based on sample priority otherwise purely based on priority.
      *
      */
-    private boolean proportionalPrioritization = true;
+    private boolean proportionalPrioritization;
 
     /**
      * If true importance sampling weights are to be applied.
      *
      */
-    private boolean applyImportanceSamplingWeights = true;
+    private boolean applyImportanceSamplingWeights;
 
     /**
      * If true importance sampling weights are to be applied.
      *
      */
-    private boolean applyUniformSampling = false;
+    private boolean applyUniformSampling;
 
     /**
      * Sampled state transitions.
@@ -96,7 +122,46 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public PriorityMemory() {
+        initializeDefaultParams();
+        this.params = null;
         sumTree = new SumTree(capacity);
+    }
+
+    /**
+     * Default constructor for PriorityMemory.
+     *
+     * @param params parameters for memory
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public PriorityMemory(String params) throws DynamicParamException {
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        sumTree = new SumTree(capacity);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        capacity = 20000;
+        batchSize = 32;
+        alpha = 0.6;
+        beta = 0.4;
+        betaStepSize = 0.001;
+        proportionalPrioritization = true;
+        applyImportanceSamplingWeights = true;
+        applyUniformSampling = false;
+    }
+
+    /**
+     * Returns parameters of memory.
+     *
+     * @return parameters for memory.
+     */
+    protected String getParams() {
+        return params;
     }
 
     /**
@@ -104,24 +169,15 @@ public class PriorityMemory implements Memory, Serializable {
      *
      * @return parameters used for PriorityMemory.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("capacity", DynamicParam.ParamType.INT);
-        paramDefs.put("batchSize", DynamicParam.ParamType.INT);
-        paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("beta", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("betaStepSize", DynamicParam.ParamType.INT);
-        paramDefs.put("proportionalPrioritization", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("applyImportanceSamplingWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("applyUniformSampling", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return PriorityMemory.paramNameTypes;
     }
 
     /**
      * Sets parameters used for PriorityMemory.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - Capacity: capacity of PriorityMemory. Default value 20000.<br>
+     *     - capacity: capacity of PriorityMemory. Default value 20000.<br>
      *     - batchSize: batch size sampled from PriorityMemory. Default value 32.<br>
      *     - alpha: proportional prioritization factor for samples in PriorityMemory. Default value 0.6.<br>
      *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
@@ -143,6 +199,16 @@ public class PriorityMemory implements Memory, Serializable {
         if (params.hasParam("applyImportanceSamplingWeights")) applyImportanceSamplingWeights = params.getValueAsBoolean("applyImportanceSamplingWeights");
         if (params.hasParam("applyUniformSampling")) applyUniformSampling = params.getValueAsBoolean("applyUniformSampling");
         if (applyUniformSampling) applyImportanceSamplingWeights = false;
+    }
+
+    /**
+     * Returns reference to memory.
+     *
+     * @return reference to memory.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Memory reference() throws DynamicParamException {
+        return new PriorityMemory(getParams());
     }
 
     /**

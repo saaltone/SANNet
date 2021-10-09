@@ -1,11 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.memory;
 
-import core.reinforcement.EnvironmentState;
+import core.reinforcement.agent.EnvironmentState;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
