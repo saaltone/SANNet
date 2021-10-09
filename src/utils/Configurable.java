@@ -5,8 +5,6 @@
 
 package utils;
 
-import java.util.HashMap;
-
 /**
  * Interface that defines configurable entity.<br>
  *
@@ -14,11 +12,17 @@ import java.util.HashMap;
 public interface Configurable {
 
     /**
+     * Initializes default params.
+     *
+     */
+    void initializeDefaultParams();
+
+    /**
      * Returns parameters used for configurable entity.
      *
      * @return parameters used for configurable entity.
      */
-    HashMap<String, DynamicParam.ParamType> getParamDefs();
+    String getParamDefs();
 
     /**
      * Sets parameters used for configurable entity.<br>
