@@ -1,10 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -22,56 +23,12 @@ public class SMatrix extends ComputableMatrix {
     private HashMap<Integer, Double> matrix = new HashMap<>();
 
     /**
-     * Defines number of rows in matrix.
-     *
-     */
-    private int rows;
-
-    /**
-     * Defines number of columns in matrix.
-     *
-     */
-    private int columns;
-
-    /**
-     * Slice start row.
-     *
-     */
-    private int sliceStartRow;
-
-    /**
-     * Slice start column.
-     *
-     */
-    private int sliceStartColumn;
-
-    /**
-     * Number of rows in slice.
-     *
-     */
-    private int sliceRows;
-
-    /**
-     * Number of columns in slice.
-     *
-     */
-    private int sliceColumns;
-
-    /**
-     * Size of slice (sliceRows * sliceColumns)
-     *
-     */
-    private int sliceSize;
-
-    /**
      * Constructor for scalar matrix (size 1x1).
      *
      * @param scalarValue value for matrix.
      */
     public SMatrix(double scalarValue) {
-        super(true);
-        this.rows = 1;
-        this.columns = 1;
+        super(1, 1, true);
         updateSliceDimensions(0, 0, 0, 0);
     }
 
@@ -82,10 +39,8 @@ public class SMatrix extends ComputableMatrix {
      * @param columns defines number of columns in matrix.
      */
     public SMatrix(int rows, int columns) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        super(rows, columns, false);
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
     }
 
     /**
@@ -98,10 +53,7 @@ public class SMatrix extends ComputableMatrix {
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
     public SMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        this(rows, columns);
         initialize(initialization, inputs, outputs);
     }
 
@@ -113,10 +65,7 @@ public class SMatrix extends ComputableMatrix {
      * @param initialization type of initialization defined in class Init.
      */
     public SMatrix(int rows, int columns, Initialization initialization) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        this(rows, columns);
         initialize(initialization);
     }
 
@@ -128,10 +77,7 @@ public class SMatrix extends ComputableMatrix {
      * @param initializer initializer.
      */
     public SMatrix(int rows, int columns, Matrix.Initializer initializer) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        this(rows, columns);
         initialize(initializer);
     }
 
@@ -143,10 +89,7 @@ public class SMatrix extends ComputableMatrix {
      * @param data clones matrix data from given matrix data.
      */
     public SMatrix(int rows, int columns, HashMap<Integer, Double> data) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        this(rows, columns);
         for (Integer index : data.keySet()) matrix.put(index, data.get(index));
     }
 
@@ -159,48 +102,20 @@ public class SMatrix extends ComputableMatrix {
      * @param referTo if true creates matrix with reference to given matrix data otherwise clones the data.
      */
     public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean referTo) {
-        super(false);
-        this.rows = rows;
-        this.columns = columns;
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        this(rows, columns);
         if (referTo) matrix.putAll(data);
         else for (Integer index : data.keySet()) matrix.put(index, data.get(index));
     }
 
     /**
-     * Updates slice dimensions.
+     * Returns sub-matrices within Matrix.
      *
+     * @return sub-matrices within Matrix.
      */
-    private void updateSliceDimensions(int startRow, int startColumn, int endRow, int endColumn) {
-        sliceStartRow = startRow;
-        sliceStartColumn = startColumn;
-        sliceRows = endRow - sliceStartRow + 1;
-        sliceColumns = endColumn - sliceStartColumn + 1;
-        sliceSize = sliceRows * sliceColumns;
-    }
-
-    /**
-     * Slices matrix.
-     *
-     * @param startRow start row of slice.
-     * @param startColumn start column of slice.
-     * @param endRow  end row of slice.
-     * @param endColumn  end column of slice.
-     * @throws MatrixException throws exception if slicing fails.
-     */
-    public void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
-        if (startRow < 0 || startColumn < 0 || endRow > rows -1 || endColumn > columns - 1) {
-            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + rows + "x" + columns);
-        }
-        else updateSliceDimensions(startRow, startColumn, endRow, endColumn);
-    }
-
-    /**
-     * Removes slicing of matrix.
-     *
-     */
-    public void unslice() {
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    public ArrayList<Matrix> getSubMatrices() {
+        ArrayList<Matrix> matrices = new ArrayList<>();
+        matrices.add(this);
+        return matrices;
     }
 
     /**
@@ -217,7 +132,7 @@ public class SMatrix extends ComputableMatrix {
      * @return mask of this matrix.
      */
     protected Mask getNewMask() {
-        return new SMask(rows, columns);
+        return new SMask(getTotalRows(), getTotalColumns());
     }
 
     /**
@@ -228,7 +143,7 @@ public class SMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put(isScalar() ? 0 : (sliceStartRow + row) * columns + (sliceStartColumn + column), value);
+        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + row) * getTotalColumns() + (getSliceStartColumn() + column), value);
     }
 
     /**
@@ -239,34 +154,18 @@ public class SMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix.getOrDefault(isScalar() ? 0 : (sliceStartRow + row) * columns + (sliceStartColumn + column), (double)0);
+        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + row) * getTotalColumns() + (getSliceStartColumn() + column), (double)0);
     }
 
     /**
-     * Returns size (rows * columns) of matrix
+     * Returns matrix of given size (rows x columns)
      *
-     * @return size of matrix.
+     * @param rows rows
+     * @param columns columns
+     * @return new matrix
      */
-    public int size() {
-        return sliceSize;
-    }
-
-    /**
-     * Returns number of rows in matrix.
-     *
-     * @return number of rows in matrix.
-     */
-    public int getRows() {
-        return sliceRows;
-    }
-
-    /**
-     * Returns number of columns in matrix.
-     *
-     * @return number of columns in matrix.
-     */
-    public int getColumns() {
-        return sliceColumns;
+    protected Matrix getNewMatrix(int rows, int columns) {
+        return new SMatrix(rows, columns);
     }
 
     /**
@@ -286,22 +185,6 @@ public class SMatrix extends ComputableMatrix {
      */
     public Matrix getNewMatrix(boolean asTransposed) {
         return isScalar() ? new SMatrix(0) : !asTransposed ? new SMatrix(getRows(), getColumns()) :  new SMatrix(getColumns(), getRows());
-    }
-
-    /**
-     * Copies new matrix data into this matrix. Assumes equal dimensions for both matrices.
-     *
-     * @param newMatrix new matrix to be copied inside this matrix.
-     */
-    public void copyMatrixData(Matrix newMatrix) {
-        rows = newMatrix.getRows();
-        columns = newMatrix.getColumns();
-        matrix = new HashMap<>();
-        for (int row = 0; row < newMatrix.getRows(); row++) {
-            for (int column = 0; column < newMatrix.getColumns(); column++) {
-                setValue(row, column, newMatrix.getValue(row, column));
-            }
-        }
     }
 
 }
