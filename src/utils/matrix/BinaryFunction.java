@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -10,7 +10,6 @@ import utils.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 
 /**
  * Defines two (binary) argument function class.<br>
@@ -106,6 +105,18 @@ public class BinaryFunction implements Serializable {
     private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         this.binaryFunctionType = binaryFunctionType;
         switch (binaryFunctionType) {
+            case POW -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
+            }
+            case MAX -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::max;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
+            }
+            case MIN -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) Math::min;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
+            }
             case MEAN_SQUARED_ERROR -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.5 * Math.pow(value - constant, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (value - constant);
@@ -140,10 +151,8 @@ public class BinaryFunction implements Serializable {
             }
             case HINGE -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("margin", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("margin")) hingeMargin = dParams.getValueAsDouble("margin");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(margin:DOUBLE)");
+                    if (dynamicParam.hasParam("margin")) hingeMargin = dynamicParam.getValueAsDouble("margin");
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : hingeMargin - constant * value;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : -constant;
@@ -154,10 +163,8 @@ public class BinaryFunction implements Serializable {
             }
             case HUBER -> {
                 if (params != null) {
-                    HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-                    paramDefs.put("delta", DynamicParam.ParamType.DOUBLE);
-                    DynamicParam dParams = new DynamicParam(params, paramDefs);
-                    if (dParams.hasParam("delta")) huberDelta = dParams.getValueAsDouble("delta");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(delta:DOUBLE)");
+                    if (dynamicParam.hasParam("delta")) huberDelta = dynamicParam.getValueAsDouble("delta");
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * Math.abs(value - constant) - 0.5 * Math.pow(huberDelta, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? value - constant : huberDelta * Math.signum(value - constant);
@@ -170,17 +177,9 @@ public class BinaryFunction implements Serializable {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -Math.log(value) * constant;
             }
-            case POW -> {
-                function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> constant * Math.pow(value, constant - 1);
-            }
-            case MAX -> {
-                function = (Matrix.MatrixBinaryOperation & Serializable) Math::max;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
-            }
-            case MIN -> {
-                function = (Matrix.MatrixBinaryOperation & Serializable) Math::min;
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 1;
+            case DQN_REG_LOSS -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.1 * value + Math.pow(value - constant, 2);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.1 + 2 * (value - constant);
             }
             case CUSTOM -> throw new MatrixException("Custom function cannot defined with this constructor.");
             default -> throw new MatrixException("Unknown binary function.");
@@ -212,33 +211,6 @@ public class BinaryFunction implements Serializable {
      */
     public BinaryFunctionType getType() {
         return binaryFunctionType;
-    }
-
-    /**
-     * Applies function to first and second matrix.
-     *
-     * @param first first matrix.
-     * @param second second matrix.
-     * @return result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix applyFunction(Matrix first, Matrix second) throws MatrixException {
-        Matrix result = first.getNewMatrix();
-        first.applyBi(second, result, this);
-        return result;
-    }
-
-    /**
-     * Calculates gradient.
-     *
-     * @param first first matrix.
-     * @param second second matrix.
-     * @param outputGradient output gradient.
-     * @return input gradient
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix applyGradient(Matrix first, Matrix second, Matrix outputGradient) throws MatrixException {
-        return outputGradient.multiply(first.applyBi(second, getDerivative()));
     }
 
     /**

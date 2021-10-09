@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -10,6 +10,24 @@ package utils.matrix;
  *
  */
 public enum BinaryFunctionType {
+
+    /**
+     * Power function with definable power value
+     *
+     */
+    POW,
+
+    /**
+     * Maximum between two entries
+     *
+     */
+    MAX,
+
+    /**
+     * Minimum between two entries
+     *
+     */
+    MIN,
 
     /**
      * Mean squared error
@@ -96,22 +114,10 @@ public enum BinaryFunctionType {
     POLICY_VALUE,
 
     /**
-     * Power function with definable power value
+     * DQNReg loss
      *
      */
-    POW,
-
-    /**
-     * Maximum between two entries
-     *
-     */
-    MAX,
-
-    /**
-     * Minimum between two entries
-     *
-     */
-    MIN,
+    DQN_REG_LOSS,
 
     /**
      * Customer (user definable) function
