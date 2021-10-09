@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.normalization;
@@ -23,10 +23,19 @@ import java.util.*;
  * Reference: http://proceedings.mlr.press/v37/ioffe15.pdf <br>
  *
  */
-public class BatchNormalization implements Normalization, ForwardProcedure, Serializable {
+public class BatchNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
 
     @Serial
     private static final long serialVersionUID = 3466341546851269706L;
+
+    /**
+     * Parameter name types for batch normalization.
+     *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
+     *     - beta: degree of weighting decrease for exponential moving average. Default value 0.9.<br>
+     *
+     */
+    private final static String paramNameTypes = "(meanOnly:BOOLEAN), " +
+            "(beta:INT)";
 
     /**
      * Type of normalization.
@@ -38,7 +47,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * Degree of weighting decrease for exponential moving average. Default value 0.9.
      *
      */
-    private double betaValue = 0.9;
+    private double betaValue;
 
     /**
      * If true neural network is in state otherwise false.
@@ -136,7 +145,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * True if batch normalization is used calculation only with mean and variance excluded.
      *
      */
-    private boolean meanOnly = false;
+    private boolean meanOnly;
 
     /**
      * Optimizer for batch normalization;
@@ -168,6 +177,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      */
     public BatchNormalization() {
+        initializeDefaultParams();
     }
 
     /**
@@ -177,7 +187,17 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public BatchNormalization(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        betaValue = 0.9;
+        meanOnly = false;
     }
 
     /**
@@ -185,11 +205,8 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @return parameters used for batch normalization.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("meanOnly", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("beta", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return BatchNormalization.paramNameTypes;
     }
 
     /**
@@ -263,6 +280,7 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
         weights.add(beta);
 
         procedure = new ProcedureFactory().getProcedure(this, weights);
+        procedure.setStopGradient(epsilonMatrix, true);
 
         meanNode = procedure.getNode(mean);
         varianceNode = procedure.getNode(variance);
@@ -271,8 +289,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Resets batch normalizer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset() {
+    public void reset() throws MatrixException {
         weightGradients = new HashMap<>();
         if (procedure != null) procedure.reset();
     }
@@ -280,8 +299,9 @@ public class BatchNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Reinitializes normalizer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reinitialize() {
+    public void reinitialize() throws MatrixException {
         if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
         if (beta != null) beta.reset();
         reset();

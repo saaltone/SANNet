@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.normalization;
@@ -29,14 +29,16 @@ public interface Normalization {
     /**
      * Resets normalizer state.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reset();
+    void reset() throws MatrixException;
 
     /**
      * Reinitializes normalizer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reinitialize();
+    void reinitialize() throws MatrixException;
 
     /**
      * Indicates to normalizer if neural network is in training mode.

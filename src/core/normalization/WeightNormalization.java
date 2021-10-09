@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.normalization;
@@ -23,10 +23,17 @@ import java.util.HashMap;
  * Reference: https://arxiv.org/pdf/1602.07868.pdf <br>
  *
  */
-public class WeightNormalization implements Normalization, ForwardProcedure, Serializable {
+public class WeightNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1741544680542755148L;
+
+    /**
+     * Parameter name types for weight normalization.
+     *     - g: g multiplier value for normalization. Default value 1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(g:INT)";
 
     /**
      * Type of normalization.
@@ -50,7 +57,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      * Weight normalization scalar.
      *
      */
-    private double g = 1;
+    private double g;
 
     /**
      * Matrix for g value.
@@ -75,6 +82,7 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      */
     public WeightNormalization() {
+        initializeDefaultParams();
         gMatrix = new DMatrix(g, "g");
     }
 
@@ -86,7 +94,15 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      */
     public WeightNormalization(String params) throws DynamicParamException {
         this();
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        g = 1;
     }
 
     /**
@@ -94,10 +110,8 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
      *
      * @return parameters used for weight normalization.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("g", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return WeightNormalization.paramNameTypes;
     }
 
     /**
@@ -200,7 +214,9 @@ public class WeightNormalization implements Normalization, ForwardProcedure, Ser
         if (procedures == null) procedures = new HashMap<>();
         if (!procedures.containsKey(weight)) {
             input = weight;
-            procedures.put(weight, new ProcedureFactory().getProcedure(this, null));
+            Procedure procedure = new ProcedureFactory().getProcedure(this, null);
+            procedure.setStopGradient(gMatrix, true);
+            procedures.put(weight, procedure);
         }
     }
 

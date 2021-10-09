@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.normalization;
@@ -26,7 +26,7 @@ import java.util.Random;
  * Reference: https://www.cs.toronto.edu/~hinton/absps/LayerNormalization.pdf <br>
  *
  */
-public class LayerNormalization implements Normalization, ForwardProcedure, Serializable {
+public class LayerNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
 
     @Serial
     private static final long serialVersionUID = 3466341546851269706L;
@@ -38,10 +38,17 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     private final NormalizationType normalizationType = NormalizationType.LAYER_NORMALIZATION;
 
     /**
+     * Parameter name types for layer normalization.
+     *     - meanOnly: true if normalization is done only by using mean otherwise false (default value false).<br>
+     *
+     */
+    private final static String paramNameTypes = "(meanOnly:BOOLEAN)";
+
+    /**
      * True if layer normalization is used calculation only with mean and variance excluded.
      *
      */
-    private boolean meanOnly = false;
+    private boolean meanOnly;
 
     /**
      * Optimizer for layer normalization;
@@ -96,6 +103,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      *
      */
     public LayerNormalization() {
+        initializeDefaultParams();
     }
 
     /**
@@ -105,7 +113,16 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public LayerNormalization(String params) throws DynamicParamException {
-        this.setParams(new DynamicParam(params, getParamDefs()));
+        this();
+        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        meanOnly = false;
     }
 
     /**
@@ -113,10 +130,8 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
      *
      * @return parameters used for layer normalization.
      */
-    private HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("meanOnly", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return LayerNormalization.paramNameTypes;
     }
 
     /**
@@ -168,8 +183,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Resets layer normalizer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset() {
+    public void reset() throws MatrixException {
         weightGradients = new HashMap<>();
         if (procedure != null) procedure.reset();
     }
@@ -177,8 +193,9 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
     /**
      * Reinitializes normalizer.
      *
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reinitialize() {
+    public void reinitialize() throws MatrixException {
         if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
         if (beta != null) beta.reset();
         reset();
@@ -242,6 +259,7 @@ public class LayerNormalization implements Normalization, ForwardProcedure, Seri
         weights.add(beta);
 
         procedure = new ProcedureFactory().getProcedure(this, weights);
+        procedure.setStopGradient(epsilonMatrix, true);
     }
 
     /**
