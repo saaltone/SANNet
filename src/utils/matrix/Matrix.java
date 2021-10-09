@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -8,6 +8,7 @@ package utils.matrix;
 import utils.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -81,6 +82,13 @@ public interface Matrix {
     void reset();
 
     /**
+     * Returns sub-matrices within Matrix.
+     *
+     * @return sub-matrices within Matrix.
+     */
+    ArrayList<Matrix> getSubMatrices();
+
+    /**
      * Sets initializer of matrix.
      *
      * @param initializer initializer.
@@ -150,23 +158,37 @@ public interface Matrix {
     double getValue(int row, int column);
 
     /**
-     * Returns size (rows * columns) of matrix.<br>
+     * Returns total number of rows defined for matrix.
      *
-     * @return size of matrix.
+     * @return total number of rows defined for matrix.
+     */
+    int getTotalRows();
+
+    /**
+     * Returns total number of columns defined for matrix.
+     *
+     * @return total number of columns defined for matrix.
+     */
+    int getTotalColumns();
+
+    /**
+     * Returns size (rows * columns) of matrix effectively with slicing considered.<br>
+     *
+     * @return size (rows * columns) of matrix effectively with slicing considered.
      */
     int size();
 
     /**
-     * Returns number of rows in matrix.<br>
+     * Returns number of rows in matrix effectively with slicing considered.<br>
      *
-     * @return number of rows in matrix.
+     * @return number of rows in matrix effectively with slicing considered.
      */
     int getRows();
 
     /**
-     * Returns number of columns in matrix.<br>
+     * Returns number of columns in matrix effectively with slicing considered.<br>
      *
-     * @return number of columns in matrix.
+     * @return number of columns in matrix effectively with slicing considered.
      */
     int getColumns();
 
@@ -210,8 +232,9 @@ public interface Matrix {
      * Returns new matrix of same dimensions.
      *
      * @return new matrix of same dimensions.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    Matrix getNewMatrix();
+    Matrix getNewMatrix() throws MatrixException;
 
     /**
      * Returns new matrix of same dimensions optionally as transposed.
@@ -225,8 +248,9 @@ public interface Matrix {
      * Copies new matrix data inside this matrix same dimensions.<br>
      *
      * @param newMatrix new matrix to be copied inside this matrix.
+     * @throws MatrixException throws exception if this and new matrix dimensions are not matching.
      */
-    void copyMatrixData(Matrix newMatrix);
+    void copyMatrixData(Matrix newMatrix) throws MatrixException;
 
     /**
      * Creates new matrix with object reference to the matrix data of this matrix.
@@ -375,6 +399,18 @@ public interface Matrix {
      * @throws MatrixException not thrown in any situation.
      */
     Matrix apply(MatrixUnaryOperation matrixUnaryOperation) throws MatrixException;
+
+    /**
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param matrixUnaryOperation single variable operation defined as lambda operator.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    Matrix apply(MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -1012,6 +1048,23 @@ public interface Matrix {
     int[] argmax() throws MatrixException;
 
     /**
+     * Returns entropy of matrix.
+     *
+     * @return entropy of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    double entropy() throws MatrixException;
+
+    /**
+     * Returns entropy of matrix.
+     *
+     * @param asDistribution if true matrix is forced into distribution prior calculating entropy.
+     * @return entropy of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    double entropy(boolean asDistribution) throws MatrixException;
+
+    /**
      * Returns softmax of this matrix.
      *
      * @param result result matrix.
@@ -1400,20 +1453,95 @@ public interface Matrix {
     Matrix transpose();
 
     /**
+     * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
+     *
+     * @param position position of split
+     * @param splitVertically if true splits vertically otherwise horizontally.
+     * @return splitted matrix as JMatrix.
+     * @throws MatrixException throws matrix exception if splitting fails.
+     *
+     */
+    Matrix split(int position, boolean splitVertically) throws MatrixException;
+
+    /**
+     * Concatenates this and other matrix vertically (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateVertical(Matrix other) throws MatrixException;
+
+    /**
+     * Concatenates this matrix and other value vertically (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateVertical(double other) throws MatrixException;
+
+    /**
      * Concatenates this and other matrix vertically.
      *
      * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
      * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
      */
-    void concatenateVertical(Matrix other) throws MatrixException;
+    Matrix concatenateVertical(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException;
+
+    /**
+     * Concatenates this matrix and other value vertically.
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateVertical(double other, boolean inplace, boolean concatenateAfter) throws MatrixException;
+
+    /**
+     * Concatenates this and other matrix horizontally (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateHorizontal(Matrix other) throws MatrixException;
+
+    /**
+     * Concatenates this matrix and other value horizontally (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateHorizontal(double other) throws MatrixException;
 
     /**
      * Concatenates this and other matrix horizontally.
      *
      * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
      * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
      */
-    void concatenateHorizontal(Matrix other) throws MatrixException;
+    Matrix concatenateHorizontal(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException;
+
+    /**
+     * Concatenates this matrix and other value horizontally.
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    Matrix concatenateHorizontal(double other, boolean inplace, boolean concatenateAfter) throws MatrixException;
 
     /**
      * Prints matrix in row and column format.
