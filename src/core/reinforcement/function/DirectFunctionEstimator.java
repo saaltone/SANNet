@@ -1,18 +1,17 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.function;
 
-import core.reinforcement.AgentException;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import utils.DynamicParam;
+import utils.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.util.HashMap;
 
 /**
  * Defines DirectFunctionEstimator (proxy for memory) to be used with PlainValueFunction.<br>
@@ -24,10 +23,31 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Constructor for DirectFunctionEstimator.
      *
      * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for DirectFunctionEstimator
      */
-    public DirectFunctionEstimator(Memory memory, int numberOfActions) {
-        super (memory, numberOfActions, false);
+    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) {
+        super (memory, numberOfStates, numberOfActions, false);
+    }
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @return reference to value function.
+     */
+    public FunctionEstimator reference() {
+        return new DirectFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions());
+    }
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
+        return new DirectFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions());
     }
 
     /**
@@ -50,7 +70,7 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @return shallow copy of DirectFunctionEstimator.
      */
     public FunctionEstimator copy() {
-        return new DirectFunctionEstimator(memory, getNumberOfActions());
+        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions());
     }
 
     /**
@@ -89,15 +109,6 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param fullUpdate if true full update is done.
      */
     public void append(FunctionEstimator functionEstimator, boolean fullUpdate) {
-    }
-
-    /**
-     * Returns parameters used for DirectFunctionEstimator.
-     *
-     * @return parameters used for DirectFunctionEstimator.
-     */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        return null;
     }
 
     /**
