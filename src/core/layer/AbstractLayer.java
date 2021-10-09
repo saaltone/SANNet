@@ -5,7 +5,7 @@
 
 package core.layer;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.Sequence;
@@ -13,7 +13,6 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,6 +47,17 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         EXECUTING,
         TERMINATED
     }
+
+    /**
+     * Parameter name types for abstract layer.
+     *     - width: width of layer. Default 1.<br>
+     *     - height: height of layer. Default 1.<br>
+     *     - depth: depth of layer. Default 1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(width:INT), " +
+            "(height:INT), " +
+            "(depth:INT)";
 
     /**
      * Index of layer.
@@ -129,11 +139,14 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     /**
      * Default constructor for abstract layer.
      *
+     * @param layerIndex layer index
+     * @param params parameters
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
     AbstractLayer(int layerIndex, String params) throws DynamicParamException, NeuralNetworkException {
         this.layerIndex = layerIndex;
+        initializeDefaultParams();
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
@@ -142,12 +155,18 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      * @return parameters used for abstract layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("width", DynamicParam.ParamType.INT);
-        paramDefs.put("height", DynamicParam.ParamType.INT);
-        paramDefs.put("depth", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return AbstractLayer.paramNameTypes;
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        layerWidth = 1;
+        layerHeight = 1;
+        layerDepth = 1;
     }
 
     /**
