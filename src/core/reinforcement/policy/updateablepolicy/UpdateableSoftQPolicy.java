@@ -1,20 +1,18 @@
 package core.reinforcement.policy.updateablepolicy;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.optimization.Adam;
 import core.optimization.Optimizer;
-import core.reinforcement.AgentException;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import core.reinforcement.policy.AbstractUpdateablePolicy;
+import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.util.HashMap;
 
 /**
  * Class that defines UpdateableSoftQPolicy.<br>
@@ -23,10 +21,17 @@ import java.util.HashMap;
 public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
 
     /**
+     * Parameter name types for UpdateableSoftQPolicy.
+     *     - softQAlpha; entropy regularization coefficient. Default value 1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(softQAlpha:DOUBLE)";
+
+    /**
      * Alpha parameter for soft Q value function.
      *
      */
-    private double softQAlpha = 1;
+    private double softQAlpha;
 
     /**
      * Alpha parameter for soft Q value function in matrix form.
@@ -38,19 +43,19 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * Gradient matrix for alpha soft Q value.
      *
      */
-    private final Matrix softQAlphaMatrixGradient = new DMatrix(1,1 );
+    private final Matrix softQAlphaMatrixGradient = new DMatrix(0);
 
     /**
      * Cumulative alpha loss.
      *
      */
-    private double cumulativeAlphaLoss = 0;
+    private transient double cumulativeAlphaLoss = 0;
 
     /**
      * Update count for alpha loss.
      *
      */
-    private int alphaLossCount = 0;
+    private transient int alphaLossCount = 0;
 
     /**
      * Optimizer for alpha loss.
@@ -65,10 +70,36 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @param functionEstimator reference to FunctionEstimator.
      * @param softQAlphaMatrix reference to softQAlphaMatrix.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException {
+    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException, AgentException {
         super(executablePolicyType, functionEstimator);
         this.softQAlphaMatrix = softQAlphaMatrix;
+        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
+    }
+
+    /**
+     * Constructor for UpdateableSoftQPolicy.
+     *
+     * @param executablePolicyType executable policy type.
+     * @param functionEstimator reference to FunctionEstimator.
+     * @param softQAlphaMatrix reference to softQAlphaMatrix.
+     * @param params parameters for UpdateableSoftQPolicy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws DynamicParamException, AgentException {
+        super(executablePolicyType, functionEstimator, params);
+        this.softQAlphaMatrix = softQAlphaMatrix;
+        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        softQAlpha = 1;
     }
 
     /**
@@ -76,10 +107,8 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      *
      * @return parameters used for UpdateableSoftQPolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("softQAlpha", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + UpdateableSoftQPolicy.paramNameTypes;
     }
 
     /**
@@ -98,6 +127,31 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
+     * Returns reference to policy.
+     *
+     * @return reference to policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public Policy reference() throws DynamicParamException, AgentException {
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator, new DMatrix(0), params);
+    }
+
+    /**
+     * Returns reference to policy.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, NeuralNetworkException, AgentException {
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), new DMatrix(0), params);
+    }
+
+    /**
      * Returns policy gradient value for update.
      *
      * @param stateTransition state transition.
@@ -105,10 +159,11 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         Matrix policyValues = functionEstimator.predict(stateTransition.environmentState.state());
-        double target_entropy = -(double)stateTransition.environmentState.availableActions().size();
-        cumulativeAlphaLoss += -softQAlpha * (policyValues.getValue(getAction(stateTransition.action), 0) + target_entropy) / target_entropy;
+        double policyValue = policyValues.getValue(stateTransition.action, 0);
+        double entropyValue = policyValues.entropy(true);
+        cumulativeAlphaLoss += policyValue + entropyValue;
         alphaLossCount++;
-        return -(valueFunction.getValue(stateTransition) - softQAlpha * Math.log(policyValues.getValue(getAction(stateTransition.action), 0)));
+        return -(valueFunction.getValue(stateTransition) - softQAlpha * Math.log(policyValue));
     }
 
 
@@ -125,9 +180,10 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
         // https://raw.githubusercontent.com/BY571/Deep-Reinforcement-Learning-Algorithm-Collection/master/ContinousControl/SAC.ipynb
         // self.target_entropy = -action_size  # -dim(A)
         // alpha_loss = - (self.log_alpha * (log_pis + self.target_entropy).detach()).mean()
-        softQAlphaMatrixGradient.setValue(0, 0, -cumulativeAlphaLoss / alphaLossCount);
+        softQAlphaMatrixGradient.setValue(0, 0, softQAlpha * cumulativeAlphaLoss / (double)alphaLossCount);
         optimizer.optimize(softQAlphaMatrix, softQAlphaMatrixGradient);
         softQAlpha = softQAlphaMatrix.getValue(0, 0);
+        System.out.println(softQAlpha);
         cumulativeAlphaLoss = 0;
         alphaLossCount = 0;
     }
