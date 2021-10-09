@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -19,16 +19,79 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     private static final long serialVersionUID = -4902569287054022460L;
 
     /**
+     * Defines number of rows in mask.
+     *
+     */
+    private final int rows;
+
+    /**
+     * Defines number of columns in mask.
+     *
+     */
+    private final int columns;
+
+    /**
      * Bernoulli probability for selecting if entry (row, column) is masked or not.
      *
      */
-    protected double probability = 0;
+    private double probability = 0;
 
     /**
      * Random function for mask class.
      *
      */
     private final Random random = new Random();
+
+    /**
+     * Constructor for abstract mask.
+     *
+     * @param rows number of rows in mask.
+     * @param columns number of columns in mask.
+     */
+    public AbstractMask(int rows, int columns) {
+        this.rows = rows;
+        this.columns = columns;
+    }
+
+    /**
+     * Constructor for abstract mask.
+     *
+     * @param rows number of rows in mask.
+     * @param columns number of columns in mask.
+     * @param probability probability of masking.
+     */
+    public AbstractMask(int rows, int columns, double probability) {
+        this.rows = rows;
+        this.columns = columns;
+        this.probability = probability;
+    }
+
+    /**
+     * Returns size (rows * columns) of mask
+     *
+     * @return size of mask.
+     */
+    public int size() {
+        return rows * columns;
+    }
+
+    /**
+     * Returns number of rows in mask.
+     *
+     * @return number of rows in mask.
+     */
+    public int getRows() {
+        return rows;
+    }
+
+    /**
+     * Returns number of columns in mask.
+     *
+     * @return number of columns in mask.
+     */
+    public int getColumns() {
+        return columns;
+    }
 
     /**
      * Creates new mask with object reference to the mask data of this mask.
@@ -88,7 +151,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @param probability masking probability between 0 (0%) and 1 (100%).
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public void setMaskProbability(double probability) throws MatrixException {
+    public void setProbability(double probability) throws MatrixException {
         if (probability < 0 || probability > 1) throw new MatrixException("Masking probability must be between 0 and 1.");
         this.probability = probability;
     }
@@ -98,7 +161,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      * @return masking probability.
      */
-    public double getMaskProbability() {
+    public double getProbability() {
         return probability;
     }
 
@@ -141,6 +204,26 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
         for (int column = 0; column < getColumns(); column++) {
             setColumnMask(column, isMaskedByProbability());
         }
+    }
+
+    /**
+     * Sets mask value for row mask.
+     *
+     * @param row row of mask to be set.
+     * @param value if true sets row mask otherwise unsets mask.
+     */
+    public void setRowMask(int row, boolean value) {
+        for (int column = 0; column < getColumns(); column++) setMask(row, column, value);
+    }
+
+    /**
+     * Sets mask value for column mask.
+     *
+     * @param column column of mask to be set.
+     * @param value if true sets row mask otherwise unsets mask.
+     */
+    public void setColumnMask(int column, boolean value) {
+        for (int row = 0; row < getRows(); row++)  setMask(row, column, value);
     }
 
     /**
