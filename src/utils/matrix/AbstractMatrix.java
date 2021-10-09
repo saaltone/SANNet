@@ -10,6 +10,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -20,6 +21,54 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
 
     @Serial
     private static final long serialVersionUID = 4372639167186260605L;
+
+    /**
+     * Number of rows in matrix.
+     *
+     */
+    private final int rows;
+
+    /**
+     * Number of columns in matrix.
+     *
+     */
+    private final int columns;
+
+    /**
+     * Slice start row.
+     *
+     */
+    private int sliceStartRow;
+
+    /**
+     * Slice start column.
+     *
+     */
+    private int sliceStartColumn;
+
+    /**
+     * Number of rows in slice.
+     *
+     */
+    private int sliceRows;
+
+    /**
+     * Number of columns in slice.
+     *
+     */
+    private int sliceColumns;
+
+    /**
+     * Size of slice (sliceRows * sliceColumns)
+     *
+     */
+    private int sliceSize;
+
+    /**
+     * Name of matrix.
+     *
+     */
+    private String name;
 
     /**
      * Reference to mask of matrix. If null mask is not used.
@@ -47,25 +96,165 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private boolean regularize = false;
 
     /**
-     * Name of matrix.
-     *
-     */
-    private String name;
-
-    /**
      * Constructor for matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      */
-    protected AbstractMatrix() {
+    protected AbstractMatrix(int rows, int columns) {
+        this.rows = rows;
+        this.columns = columns;
     }
 
     /**
      * Constructor for matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param name name if matrix.
      */
-    protected AbstractMatrix(String name) {
+    protected AbstractMatrix(int rows, int columns, String name) {
+        this(rows, columns);
         this.name = name;
+    }
+
+    /**
+     * Returns total number of rows defined for matrix.
+     *
+     * @return total number of rows defined for matrix.
+     */
+    public int getTotalRows() {
+        return rows;
+    }
+
+    /**
+     * Returns total number of columns defined for matrix.
+     *
+     * @return total number of columns defined for matrix.
+     */
+    public int getTotalColumns() {
+        return columns;
+    }
+
+    /**
+     * Returns total number of columns defined for matrix.
+     *
+     * @return total number of columns defined for matrix.
+     */
+    protected int getTotalSize() {
+        return rows * columns;
+    }
+
+    /**
+     * Updates slice dimensions.
+     *
+     * @param startRow slice start row
+     * @param startColumn slice start columns
+     * @param endRow slice end row
+     * @param endColumn slide end column
+     */
+    protected void updateSliceDimensions(int startRow, int startColumn, int endRow, int endColumn) {
+        sliceStartRow = startRow;
+        sliceStartColumn = startColumn;
+        sliceRows = endRow - sliceStartRow + 1;
+        sliceColumns = endColumn - sliceStartColumn + 1;
+        sliceSize = sliceRows * sliceColumns;
+    }
+
+    /**
+     * Returns slice start row.
+     *
+     * @return slice start row.
+     */
+    protected int getSliceStartRow() {
+        return sliceStartRow;
+    }
+
+    /**
+     * Returns slice start column.
+     *
+     * @return slice start column.
+     */
+    protected int getSliceStartColumn() {
+        return sliceStartColumn;
+    }
+
+    /**
+     * Returns number of rows in slice.
+     *
+     * @return number of rows in slice.
+     */
+    protected int getSliceRows() {
+        return sliceRows;
+    }
+
+    /**
+     * Returns number of columns in slice.
+     *
+     * @return number of columns in slice.
+     */
+    protected int getSliceColumns() {
+        return sliceColumns;
+    }
+
+    /**
+     * Returns size of slice.
+     *
+     * @return size of slice.
+     */
+    protected int sliceSize() {
+        return sliceSize;
+    }
+
+    /**
+     * Slices matrix.
+     *
+     * @param startRow start row of slice.
+     * @param startColumn start column of slice.
+     * @param endRow  end row of slice.
+     * @param endColumn  end column of slice.
+     * @throws MatrixException throws exception if slicing fails.
+     */
+    public void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
+        if (startRow < 0 || startColumn < 0 || endRow > getTotalRows() -1 || endColumn > getTotalColumns() - 1) {
+            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + getTotalRows() + "x" + getTotalColumns());
+        }
+        else updateSliceDimensions(startRow, startColumn, endRow, endColumn);
+    }
+
+    /**
+     * Removes slicing of matrix.
+     *
+     */
+    public void unslice() {
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
+    }
+
+    /**
+     * Returns size (rows * columns) of matrix
+     *
+     * @return size of matrix.
+     */
+    public int size() {
+        return sliceSize;
+    }
+
+    /**
+     * Returns number of rows in matrix.
+     *
+     * @return number of rows in matrix.
+     */
+    public int getRows() {
+        return sliceRows;
+    }
+
+    /**
+     * Returns number of columns in matrix.
+     *
+     * @return number of columns in matrix.
+     */
+    public int getColumns() {
+        return sliceColumns;
     }
 
     /**
@@ -138,6 +327,24 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             throw new MatrixException("Cloning of matrix failed.");
         }
         return newMatrix;
+    }
+
+    /**
+     * Copies new matrix data into this matrix. Assumes equal dimensions for both matrices.
+     *
+     * @param newMatrix new matrix to be copied inside this matrix.
+     * @throws MatrixException throws exception if this and new matrix dimensions are not matching.
+     */
+    public void copyMatrixData(Matrix newMatrix) throws MatrixException {
+        if (getTotalRows() != newMatrix.getRows() || getTotalColumns() != newMatrix.getColumns()) throw new MatrixException("Size of this matrix " + getTotalRows() + "x" + getTotalColumns() + " is not matching with dimensions of new matrix + " + newMatrix.getRows() + " x " + newMatrix.getColumns());
+        resetMatrix();
+        int rows = getTotalRows();
+        int columns = getTotalColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                setValue(row, column, newMatrix.getValue(row, column));
+            }
+        }
     }
 
     /**
@@ -255,12 +462,22 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns matrix of given size (rows x columns)
+     *
+     * @param rows rows
+     * @param columns columns
+     * @return new matrix
+     */
+    protected abstract Matrix getNewMatrix(int rows, int columns);
+
+    /**
      * Returns placeholder for result matrix.
      *
      * @param other other matrix.
      * @return result matrix placeholder.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    private Matrix getResultMatrix(Matrix other) {
+    private Matrix getResultMatrix(Matrix other) throws MatrixException {
         return !isScalar() ? getNewMatrix() : other.getNewMatrix();
     }
 
@@ -275,6 +492,20 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix apply(Matrix.MatrixUnaryOperation matrixUnaryOperation) throws MatrixException {
         return apply(getNewMatrix(), matrixUnaryOperation);
+    }
+
+    /**
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param matrixUnaryOperation single variable operation defined as lambda operator.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException not thrown in any situation.
+     */
+    public Matrix apply(Matrix.MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException {
+        return apply(inplace ? this : getNewMatrix(), matrixUnaryOperation);
     }
 
     /**
@@ -1064,6 +1295,17 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns entropy of matrix.
+     *
+     * @param asDistribution if true matrix is forced into distribution prior calculating entropy.
+     * @return entropy of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double entropy(boolean asDistribution) throws MatrixException {
+        return divide(sum()).entropy();
+    }
+
+    /**
      * Returns softmax of this matrix.
      *
      * @return softmax of matrix.
@@ -1520,47 +1762,194 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Concatenates this and other matrix vertically.
+     * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
+     *
+     * @param position position of split
+     * @param splitVertically if true splits vertically otherwise horizontally.
+     * @return splitted matrix as JMatrix.
+     * @throws MatrixException throws matrix exception if splitting fails.
+     *
+     */
+    public Matrix split(int position, boolean splitVertically) throws MatrixException {
+        if (!((this instanceof DMatrix) || (this instanceof SMatrix))) throw new MatrixException("Matrix must be of type DMatrix or SMatrix");
+        Matrix matrix1;
+        Matrix matrix2;
+        if (splitVertically) {
+            if (position < 1 || position > getTotalRows() - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(position, getTotalColumns());
+            matrix2 = getNewMatrix(getTotalRows() - matrix1.getTotalRows(), getTotalColumns());
+            for (int row = 0; row < getTotalRows(); row++) {
+                for (int column = 0; column < getTotalColumns(); column++) {
+                    if (row < position) matrix1.setValue(row, column, getValue(row, column));
+                    else matrix2.setValue(row - position, column, getValue(row, column));
+                }
+            }
+        }
+        else {
+            if (position < 1 || position > getTotalColumns() - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(getTotalRows(), position);
+            matrix2 = getNewMatrix(getTotalRows(), getTotalColumns() - matrix1.getTotalColumns());
+            for (int row = 0; row < getTotalRows(); row++) {
+                for (int column = 0; column < getTotalColumns(); column++) {
+                    if (column < position) matrix1.setValue(row, column, getValue(row, column));
+                    else matrix2.setValue(row, column - position, getValue(row, column));
+                }
+            }
+        }
+        ArrayList<Matrix> matrices = new ArrayList<>();
+        matrices.add(matrix1);
+        matrices.add(matrix2);
+        Matrix result = new JMatrix(getTotalRows(), getTotalColumns(), matrices, splitVertically);
+        if (hasProcedureFactory()) result.setProcedureFactory(procedureFactory);
+        return result;
+    }
+
+    /**
+     * Concatenates this and other matrix vertically (not in place and not after).
      *
      * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @return concatenated matrix.
      * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
      */
-    public void concatenateVertical(Matrix other) throws MatrixException {
+    public Matrix concatenateVertical(Matrix other) throws MatrixException {
+        return concatenateVertical(other, false, false);
+    }
+
+    /**
+     * Concatenates this matrix and other value vertically (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateVertical(double other) throws MatrixException {
+        return concatenateVertical(other, false, false);
+    }
+
+    /**
+     * Concatenates this and other matrix vertically in place.
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateVertical(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException {
         if (getColumns() != other.getColumns()) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        Matrix newMatrix = ((this instanceof SMatrix) && (other instanceof SMatrix)) ? new SMatrix (getRows() + other.getRows(), getColumns()) : new DMatrix (getRows() + other.getRows(), getColumns());
-        for (int row = 0; row < getRows(); row++) {
-            for (int column = 0; column < getColumns(); column++) {
-                newMatrix.setValue(row, column, getValue(row, column));
+        Matrix newMatrix = getNewMatrix(getRows() + other.getRows(), getColumns());
+        int columns = getColumns();
+        int thisOffsetRow = concatenateAfter ? 0 : other.getRows();
+        int otherOffsetRow = concatenateAfter ? getRows() : 0;
+        for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < getRows(); row++) {
+                newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
+            }
+            for (int row = 0; row < other.getRows(); row++) {
+                newMatrix.setValue(otherOffsetRow + row, column, other.getValue(row, column));
             }
         }
-        for (int row = 0; row < other.getRows(); row++) {
-            for (int column = 0; column < other.getColumns(); column++) {
-                newMatrix.setValue(getRows() + row, column, other.getValue(row, column));
+        if (inplace) copyMatrixData(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Concatenates this matrix and other value vertically in place.
+     *
+     * @param other matrix to be concatenated to the end of this matrix vertically.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateVertical(double other, boolean inplace, boolean concatenateAfter) throws MatrixException {
+        if (getColumns() != 1) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
+        Matrix newMatrix = getNewMatrix(getRows() + 1, getColumns());
+        int columns = getColumns();
+        int thisOffsetRow = concatenateAfter ? 0 : 1;
+        int otherOffsetRow = concatenateAfter ? getRows() : 0;
+        for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < getRows(); row++) {
+                newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
             }
+            newMatrix.setValue(otherOffsetRow, column, other);
         }
-        copyMatrixData(newMatrix);
+        if (inplace) copyMatrixData(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Concatenates this and other matrix horizontally (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateHorizontal(Matrix other) throws MatrixException {
+        return concatenateHorizontal(other, false, false);
+    }
+
+    /**
+     * Concatenates this matrix and other value horizontally (not in place and not after).
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateHorizontal(double other) throws MatrixException {
+        return concatenateHorizontal(other, false, false);
     }
 
     /**
      * Concatenates this and other matrix horizontally.
      *
      * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
      * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
      */
-    public void concatenateHorizontal(Matrix other) throws MatrixException {
+    public Matrix concatenateHorizontal(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException {
         if (getRows() != other.getRows()) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        Matrix newMatrix = ((this instanceof SMatrix) && (other instanceof SMatrix)) ? new SMatrix(getRows(), getColumns() + other.getColumns()) : new DMatrix(getRows(), getColumns() + other.getColumns());
-        for (int row = 0; row < getRows(); row++) {
+        Matrix newMatrix = getNewMatrix(getRows(), getColumns() + other.getColumns());
+        int rows = getRows();
+        int thisOffsetColumn = concatenateAfter ? 0 : other.getColumns();
+        int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
+        for (int row = 0; row < rows; row++) {
             for (int column = 0; column < getColumns(); column++) {
-                newMatrix.setValue(row, column, getValue(row, column));
+                newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
             }
-        }
-        for (int row = 0; row < other.getRows(); row++) {
             for (int column = 0; column < other.getColumns(); column++) {
-                newMatrix.setValue(row, getColumns() + column, other.getValue(row, column));
+                newMatrix.setValue(row, otherOffsetColumn + column, other.getValue(row, column));
             }
         }
-        copyMatrixData(newMatrix);
+        if (inplace) copyMatrixData(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Concatenates this matrix and other value horizontally.
+     *
+     * @param other matrix to be concatenated to the end of this matrix horizontally.
+     * @param inplace if true other matrix is concatenated to this matrix in place.
+     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
+     * @return concatenated matrix.
+     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     */
+    public Matrix concatenateHorizontal(double other, boolean inplace, boolean concatenateAfter) throws MatrixException {
+        if (getRows() != 1) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
+        Matrix newMatrix = getNewMatrix(getRows(), getColumns() + 1);
+        int rows = getRows();
+        int thisOffsetColumn = concatenateAfter ? 0 : 1;
+        int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < getColumns(); column++) {
+                newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
+            }
+            newMatrix.setValue(row, otherOffsetColumn, other);
+        }
+        if (inplace) copyMatrixData(newMatrix);
+        return newMatrix;
     }
 
     /**
