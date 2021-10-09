@@ -5,7 +5,7 @@
 
 package core.layer.convolutional;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import utils.*;
@@ -13,6 +13,7 @@ import utils.matrix.*;
 
 import java.io.Serial;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements convolutional layer.<br>
@@ -24,6 +25,29 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
 
     @Serial
     private static final long serialVersionUID = -7210767738512077627L;
+
+    /**
+     * Parameter name types for convolutional layer.
+     *     - filters: number of filters.<br>
+     *     - filterSize size of filter. Default value 3.<br>
+     *     - filterRowSize size of filter in terms of rows. Overrides filterSize parameter. Default value 3.<br>
+     *     - filterColumnSize size of filter in terms of columns. Overrides filterSize parameter. Default value 3.<br>
+     *     - stride: size of stride. Default size 1.<br>
+     *     - dilation: dilation step for filter. Default step 1.<br>
+     *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
+     *     - asConvolution: true if convolutional layer applies convolution operation otherwise applies crosscorrelation (default false).<br>
+     *     - asWinogradConvolution: true if convolutional layer applies Winograd convolution operation otherwise applies normal convolution or crosscorrelation (default false).<br>
+     *
+     */
+    private final static String paramNameTypes = "(filters:INT), " +
+            "(filterSize:INT), " +
+            "(filterRowSize:INT), " +
+            "(filterColumnSize:INT), " +
+            "(stride:INT), " +
+            "(dilation:INT), " +
+            "(regulateWeights:BOOLEAN), " +
+            "(asConvolution:BOOLEAN), " +
+            "(asWinogradConvolution:BOOLEAN)";
 
     /**
      * Defines width of incoming image.
@@ -53,31 +77,31 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * Defines filter dimension in terms of rows.
      *
      */
-    private int filterRowSize = 3;
+    private int filterRowSize;
 
     /**
      * Defines filter dimension in terms of columns.
      *
      */
-    private int filterColumnSize = 3;
+    private int filterColumnSize;
 
     /**
      * Defines stride i.e. size of step when moving filter over image.
      *
      */
-    private int stride = 1;
+    private int stride;
 
     /**
      * Defines dilation step for filter.
      *
      */
-    private int dilation = 1;
+    private int dilation;
 
     /**
      * True is filter weights are regulated otherwise weights are not regulated.
      *
      */
-    private boolean regulateWeights = false;
+    private boolean regulateWeights;
 
     /**
      * Tree map for filter maps (weights).
@@ -101,13 +125,13 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * If true convolution operation and gradient is calculated as convolution (flipped filter) otherwise as crosscorrelation.
      *
      */
-    private boolean asConvolution = false;
+    private boolean asConvolution;
 
     /**
      * If true applies Winograd convolution operation otherwise applies normal convolution or crosscorrelation (default false).
      *
      */
-    private boolean asWinogradConvolution = false;
+    private boolean asWinogradConvolution;
 
     /**
      * Input matrices for procedure construction.
@@ -128,9 +152,23 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      */
     public ConvolutionalLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
         if (activationFunction != null) this.activationFunction = activationFunction;
         else this.activationFunction = new ActivationFunction(UnaryFunctionType.ELU);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        filterRowSize = 3;
+        filterColumnSize = 3;
+        stride = 1;
+        dilation = 1;
+        regulateWeights = false;
+        asConvolution = false;
+        asWinogradConvolution = false;
     }
 
     /**
@@ -138,18 +176,8 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      *
      * @return parameters used for convolutional layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("filters", DynamicParam.ParamType.INT);
-        paramDefs.put("filterSize", DynamicParam.ParamType.INT);
-        paramDefs.put("filterRowSize", DynamicParam.ParamType.INT);
-        paramDefs.put("filterColumnSize", DynamicParam.ParamType.INT);
-        paramDefs.put("stride", DynamicParam.ParamType.INT);
-        paramDefs.put("dilation", DynamicParam.ParamType.INT);
-        paramDefs.put("regulateWeights", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("asConvolution", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("asWinogradConvolution", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + ConvolutionalLayer.paramNameTypes;
     }
 
     /**
@@ -223,7 +251,6 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initialize() throws NeuralNetworkException {
-
         previousLayerWidth = getPreviousLayerWidth();
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
@@ -330,6 +357,15 @@ public class ConvolutionalLayer extends AbstractExecutionLayer {
             outputs.put(filterIndex, output);
         }
         return outputs;
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
     }
 
     /**

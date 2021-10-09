@@ -5,13 +5,14 @@
 
 package core.layer.convolutional;
 
-import core.NeuralNetworkException;
+import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
 import utils.*;
 import utils.matrix.*;
 
 import java.io.Serial;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Implements pooling layer that executes either average or max pooling.<br>
@@ -23,6 +24,22 @@ public class PoolingLayer extends AbstractExecutionLayer {
 
     @Serial
     private static final long serialVersionUID = 4806254935177730053L;
+
+    /**
+     * Parameter name types for pooling layer.
+     *     - filterSize size of filter. Default size 2.<br>
+     *     - filterRowSize row size of filter. Default size 2.<br>
+     *     - filterColumnSize column size of filter. Default size 2.<br>
+     *     - stride: size of stride. Default size 1.<br>
+     *     - avgPool: if true does average pooling otherwise does max pooling.<br>
+     *
+     */
+    private final static String paramNameTypes = "(filters:INT), " +
+            "(filterSize:INT), " +
+            "(filterRowSize:INT), " +
+            "(filterColumnSize:INT), " +
+            "(stride:INT), " +
+            "(avgPool:BOOLEAN)";
 
     /**
      * Defines width of incoming image.
@@ -58,25 +75,25 @@ public class PoolingLayer extends AbstractExecutionLayer {
      * Row size for filter.
      *
      */
-    private int filterRowSize = 2;
+    private int filterRowSize;
 
     /**
      * Column size for filter.
      *
      */
-    private int filterColumnSize = 2;
+    private int filterColumnSize;
 
     /**
      * Defines stride i.e. size of step when moving over image.
      *
      */
-    private int stride = 1;
+    private int stride;
 
     /**
      * If true executes average pooling otherwise executes max pooling.
      *
      */
-    private boolean averagePool = false;
+    private boolean averagePool;
 
     /**
      * Input matrices for procedure construction.
@@ -95,7 +112,18 @@ public class PoolingLayer extends AbstractExecutionLayer {
      */
     public PoolingLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
-        setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        filterRowSize = 2;
+        filterColumnSize = 2;
+        stride = 1;
+        averagePool = false;
     }
 
     /**
@@ -103,14 +131,8 @@ public class PoolingLayer extends AbstractExecutionLayer {
      *
      * @return parameters used for pooling layer.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("filterSize", DynamicParam.ParamType.INT);
-        paramDefs.put("filterRowSize", DynamicParam.ParamType.INT);
-        paramDefs.put("filterColumnSize", DynamicParam.ParamType.INT);
-        paramDefs.put("stride", DynamicParam.ParamType.INT);
-        paramDefs.put("avgPool", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + PoolingLayer.paramNameTypes;
     }
 
     /**
@@ -225,6 +247,15 @@ public class PoolingLayer extends AbstractExecutionLayer {
         }
 
         return outputs;
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    protected HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
     }
 
     /**
