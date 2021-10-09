@@ -1,19 +1,21 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
-package core.reinforcement.policy;
+package core.reinforcement.policy.updateablepolicy;
 
-import core.NeuralNetworkException;
-import core.reinforcement.Agent;
-import core.reinforcement.AgentException;
+import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.policy.AbstractPolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.DynamicParamException;
 import utils.matrix.DMatrix;
+import utils.matrix.JMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -32,8 +34,9 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException {
+    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
         super(executablePolicyType, functionEstimator);
     }
 
@@ -42,9 +45,45 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      *
      * @param executablePolicy executable policy.
      * @param functionEstimator reference to FunctionEstimator.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) {
+    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException {
         super(executablePolicy, functionEstimator);
+    }
+
+    /**
+     * Constructor for AbstractUpdateablePolicy.
+     *
+     * @param executablePolicyType executable policy type.
+     * @param functionEstimator reference to FunctionEstimator.
+     * @param params parameters for AbstractUpdateablePolicy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws DynamicParamException, AgentException {
+        super(executablePolicyType, functionEstimator, params);
+    }
+
+    /**
+     * Constructor for AbstractUpdateablePolicy.
+     *
+     * @param executablePolicy executable policy.
+     * @param functionEstimator reference to FunctionEstimator.
+     * @param params parameters for AbstractExecutablePolicy.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, String params) throws AgentException, DynamicParamException {
+        super(executablePolicy, functionEstimator, params);
+    }
+
+    /**
+     * Return true if policy is updateable otherwise false.
+     *
+     * @return true if policy is updateable otherwise false.
+     */
+    public boolean isUpdateablePolicy() {
+        return true;
     }
 
     /**
@@ -115,10 +154,18 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     private Matrix getPolicyValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions() + isStateActionValueFunction(), 1);
-        if (isStateActionValueFunction) policyValues.setValue(0, 0, stateTransition.tdTarget);
-        policyValues.setValue(getAction(stateTransition.action), 0, getPolicyValue(stateTransition));
-        return policyValues;
+        if (isStateActionValueFunction()) {
+            Matrix stateValue = new DMatrix(1, 1);
+            stateValue.setValue(0, 0, stateTransition.tdTarget);
+            Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
+            policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
+            return new JMatrix(stateValue.getTotalRows() + policyValues.getTotalRows(), 1, new Matrix[] {stateValue, policyValues}, true);
+        }
+        else {
+            Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
+            policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
+            return policyValues;
+        }
     }
 
     /**
