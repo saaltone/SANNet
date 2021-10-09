@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
@@ -17,6 +17,12 @@ import java.util.TreeSet;
 public class GreedyPolicy extends AbstractExecutablePolicy {
 
     /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.GREEDY;
+
+    /**
      * Constructor for GreedyPolicy.
      *
      */
@@ -27,10 +33,11 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * Constructor for GreedyPolicy.
      *
      * @param params parameters for Policy.
+     * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GreedyPolicy(String params) throws DynamicParamException {
-        super(params);
+    public GreedyPolicy(String params, String paramNameTypes) throws DynamicParamException {
+        super(params, paramNameTypes);
     }
 
     /**
@@ -48,6 +55,15 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
+    }
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
@@ -24,6 +24,13 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     private static final long serialVersionUID = -3999341188546094490L;
 
     /**
+     * Parameter name types for AbstractExecutablePolicy.
+     *     - asSoftMax: true if action values are recorded as softmax values (e^x).<br>
+     *
+     */
+    private final static String paramNameTypes = "(asSoftMax:BOOLEAN)";
+
+    /**
      * Record that defines ActionValueTuple for policy.
      *
      * @param action action value.
@@ -36,23 +43,34 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * True if values are recorded as softmax values (e^x).
      *
      */
-    protected boolean asSoftMax = false;
+    protected boolean asSoftMax;
 
     /**
      * Default constructor for AbstractExecutablePolicy.
      *
      */
     AbstractExecutablePolicy() {
+        initializeDefaultParams();
     }
 
     /**
      * Default constructor for AbstractExecutablePolicy.
      *
      * @param params parameters for AbstractExecutablePolicy.
+     * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    AbstractExecutablePolicy(String params) throws DynamicParamException {
-        setParams(new DynamicParam(params, getParamDefs()));
+    AbstractExecutablePolicy(String params, String paramNameTypes) throws DynamicParamException {
+        this();
+        if (params != null) setParams(new DynamicParam(params, AbstractExecutablePolicy.paramNameTypes + (paramNameTypes != null ? ", " + paramNameTypes : "")));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        asSoftMax = false;
     }
 
     /**
@@ -60,10 +78,8 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      *
      * @return parameters used for AbstractExecutablePolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("asSoftMax", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return AbstractExecutablePolicy.paramNameTypes;
     }
 
     /**
@@ -90,27 +106,25 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     /**
      * Takes action decided by external agent.
      *
-     * @param stateValueMatrix current state value matrix.
+     * @param policyValueMatrix current state value matrix.
      * @param availableActions available actions in current state
-     * @param stateValueOffset state value offset
      * @param action action.
      */
-    public void action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, int action) {
+    public void action(Matrix policyValueMatrix, HashSet<Integer> availableActions, int action) {
     }
 
     /**
      * Takes action based on policy.
      *
-     * @param stateValueMatrix current state value matrix.
+     * @param policyValueMatrix current state value matrix.
      * @param availableActions available actions in current state
-     * @param stateValueOffset state value offset
      * @param alwaysGreedy if true greedy action is always taken.
      * @return action taken.
      */
-    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         TreeSet<ActionValueTuple> stateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
         for (Integer action : availableActions) {
-            stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? stateValueMatrix.getValue(action + stateValueOffset, 0) : Math.exp(stateValueMatrix.getValue(action + stateValueOffset, 0))));
+            stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? policyValueMatrix.getValue(action, 0) : Math.exp(policyValueMatrix.getValue(action, 0))));
         }
         return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
     }

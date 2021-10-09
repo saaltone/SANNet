@@ -1,11 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.AgentException;
+import core.reinforcement.agent.AgentException;
 import utils.DynamicParamException;
 
 import java.io.Serial;
@@ -34,6 +34,7 @@ public class ExecutablePolicyFactory implements Serializable {
             case EPSILON_GREEDY -> params == null ? new EpsilonGreedyPolicy() : new EpsilonGreedyPolicy(params);
             case NOISY_NEXT_BEST -> params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
             case SAMPLED -> params == null ? new SampledPolicy() : new SampledPolicy(params);
+            case MCTS -> params == null ? new MCTSPolicy() : new MCTSPolicy(params);
         };
     }
 
@@ -60,6 +61,7 @@ public class ExecutablePolicyFactory implements Serializable {
         if (executablePolicy instanceof GreedyPolicy) return ExecutablePolicyType.GREEDY;
         if (executablePolicy instanceof NoisyNextBestPolicy) return ExecutablePolicyType.NOISY_NEXT_BEST;
         if (executablePolicy instanceof SampledPolicy) return ExecutablePolicyType.SAMPLED;
+        if (executablePolicy instanceof MCTSPolicy) return ExecutablePolicyType.MCTS;
         throw new AgentException("Unknown executable policy type");
     }
 

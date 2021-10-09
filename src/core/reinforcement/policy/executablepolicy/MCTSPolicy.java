@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
@@ -27,6 +27,27 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
 
     @Serial
     private static final long serialVersionUID = -6567362723286339425L;
+
+    /**
+     * Parameter name types for MCTSPolicy.
+     *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.75.<br>
+     *     - alpha: Shape value for Dirichlet sampling. Default value 0.6.<br>
+     *     - epsilon: Weighting for Dirichlet distribution at action selection. Default value 0.8.<br>
+     *     - tau: Temperature value for node visit count. Default value 1.1.<br>
+     *     - resetCycle: Reset cycle counted as number of increments if cycle is 0 then reset is never applied. Default value 0.<br>
+     *
+     */
+    private final static String paramNameTypes = "(cPUCT:DOUBLE), " +
+            "(alpha:DOUBLE), " +
+            "(epsilon:DOUBLE), " +
+            "(tau:DOUBLE), " +
+            "(resetCycle:INT)";
+
+    /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.MCTS;
 
     /**
      * Class that defines action for state.
@@ -302,25 +323,23 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @param stateValueMatrix current state value matrix.
          * @param availableActions available actions in current state
-         * @param stateValueOffset state value offset
          * @param action action.
          */
-        void act(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, int action) {
-            updateActionProbabilities(stateValueMatrix, availableActions, stateValueOffset);
+        void act(Matrix stateValueMatrix, HashSet<Integer> availableActions, int action) {
+            updateActionProbabilities(stateValueMatrix, availableActions);
             maxAction = actions.get(action);
         }
 
         /**
          * Takes action based on heuristic value. Adds noise to UCB value from Dirichlet distribution.
          *
-         * @param stateValueMatrix current state value matrix.
+         * @param policyValueMatrix current policy value matrix.
          * @param availableActions available actions in current state
-         * @param stateValueOffset state value offset
          * @param alwaysGreedy if true greedy action is always taken.
          * @return action taken.
          */
-        public int act(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
-            updateActionProbabilities(stateValueMatrix, availableActions, stateValueOffset);
+        public int act(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
+            updateActionProbabilities(policyValueMatrix, availableActions);
             maxAction = null;
             double maxValue = Double.NEGATIVE_INFINITY;
             if (alwaysGreedy) {
@@ -395,13 +414,12 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         /**
          * Updates action probabilities for state.
          *
-         * @param stateValueMatrix current state value matrix.
+         * @param policyValueMatrix current state value matrix.
          * @param availableActions available actions in current state
-         * @param stateValueOffset state value offset
          */
-        private void updateActionProbabilities(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset) {
+        private void updateActionProbabilities(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
             for (Integer action : availableActions) {
-                double actionValue = stateValueMatrix.getValue(action + stateValueOffset, 0);
+                double actionValue = policyValueMatrix.getValue(action, 0);
                 if (actions.containsKey(action)) actions.get(action).setActionProbability(actionValue);
                 else actions.put(action, new Action(this, action, actionValue));
             }
@@ -428,25 +446,25 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree.
      *
      */
-    private double cPUCT = 2.75;
+    private double cPUCT;
 
     /**
      * Shape value for Dirichlet sampling.
      *
      */
-    private double alpha = 0.6;
+    private double alpha;
 
     /**
      * Weighting for Dirichlet distribution at action selection.
      *
      */
-    private double epsilon = 0.8;
+    private double epsilon;
 
     /**
      * Temperature value for node visit count.
      *
      */
-    private double tau = 1.1;
+    private double tau;
 
     /**
      * Reference to root state.
@@ -482,13 +500,14 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Reset cycle. If value is zero there are no resets applied.
      *
      */
-    private int resetCycle = 0;
+    private int resetCycle;
 
     /**
      * Constructor for MCTSPolicy
      *
      */
     public MCTSPolicy() {
+        initializeDefaultParams();
     }
 
     /**
@@ -498,7 +517,20 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MCTSPolicy(String params) throws DynamicParamException {
+        this();
         setParams(new DynamicParam(params, getParamDefs()));
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        cPUCT = 2.75;
+        alpha = 0.6;
+        epsilon = 0.8;
+        tau = 1.1;
+        resetCycle = 0;
     }
 
     /**
@@ -506,14 +538,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      * @return parameters used for MCTSPolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("cPUCT", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("alpha", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilon", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("tau", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("resetCycle", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return paramNameTypes;
     }
 
     /**
@@ -568,28 +594,26 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     /**
      * Takes action decided by external agent.
      *
-     * @param stateValueMatrix current state value matrix.
+     * @param policyValueMatrix current state value matrix.
      * @param availableActions available actions in current state
-     * @param stateValueOffset state value offset
      * @param action action.
      */
-   public void action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, int action) {
+   public void action(Matrix policyValueMatrix, HashSet<Integer> availableActions, int action) {
         updateState();
-        currentState.act(stateValueMatrix, availableActions, stateValueOffset, action);
+        currentState.act(policyValueMatrix, availableActions, action);
     }
 
     /**
      * Takes action based on policy.
      *
-     * @param stateValueMatrix current state value matrix.
+     * @param policyValueMatrix current state value matrix.
      * @param availableActions available actions in current state
-     * @param stateValueOffset state value offset
      * @param alwaysGreedy if true greedy action is always taken.
      * @return action taken.
      */
-    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         updateState();
-        return currentState.act(stateValueMatrix, availableActions, stateValueOffset, alwaysGreedy);
+        return currentState.act(policyValueMatrix, availableActions, alwaysGreedy);
     }
 
     /**
@@ -613,6 +637,15 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
         stateTransitionStack = new Stack<>();
         currentState = null;
+    }
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
     }
 
 }

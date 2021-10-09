@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
@@ -9,7 +9,6 @@ import utils.DynamicParam;
 import utils.DynamicParamException;
 import utils.matrix.Matrix;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -18,6 +17,25 @@ import java.util.Random;
  *
  */
 public class EpsilonGreedyPolicy extends GreedyPolicy {
+
+    /**
+     * Parameter name types for EpsilonGreedyPolicy.
+     *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
+     *     - epsilonMin: Lowest value for epsilon. Default value 0.2.<br>
+     *     - epsilonDecayRate: Decay rate of epsilon. Default value 0.999.<br>
+     *     - epsilonDecayByUpdateCount: If true epsilon decays along policy update count otherwise decays by epsilon decay rate. Default value false.<br>
+     *
+     */
+    private final static String paramNameTypes = "(epsilonInitial:DOUBLE), " +
+            "(epsilonMin:DOUBLE), " +
+            "(epsilonDecayRate:DOUBLE), " +
+            "(epsilonDecayByUpdateCount:BOOLEAN)";
+
+    /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
 
     /**
      * Random function for EpsilonGreedyPolicy.
@@ -35,25 +53,25 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * Initial epsilon value.
      *
      */
-    private double epsilonInitial = 1;
+    private double epsilonInitial;
 
     /**
      * Minimum value for epsilon.
      *
      */
-    private double epsilonMin = 0.2;
+    private double epsilonMin;
 
     /**
      * Decay rate for epsilon if number of episodes is not used for epsilon decay.
      *
      */
-    private double epsilonDecayRate = 0.999;
+    private double epsilonDecayRate;
 
     /**
      * If true epsilon decays along update count otherwise decays by epsilon decay rate.
      *
      */
-    private boolean epsilonDecayByUpdateCount = false;
+    private boolean epsilonDecayByUpdateCount;
 
     /**
      * Count for policy updates.
@@ -76,8 +94,19 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public EpsilonGreedyPolicy(String params) throws DynamicParamException {
-        super(params);
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(params, EpsilonGreedyPolicy.paramNameTypes);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        epsilonInitial = 1;
+        epsilonMin = 0.2;
+        epsilonDecayRate = 0.999;
+        epsilonDecayByUpdateCount = false;
     }
 
     /**
@@ -85,13 +114,8 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      * @return parameters used for EpsilonGreedyPolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("epsilonInitial", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonMin", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecayRate", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("epsilonDecayByUpdateCount", DynamicParam.ParamType.BOOLEAN);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + EpsilonGreedyPolicy.paramNameTypes;
     }
 
     /**
@@ -129,18 +153,26 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     /**
      * Takes epsilon greedy action.
      *
-     * @param stateValueMatrix current state value matrix.
+     * @param policyValueMatrix current state value matrix.
      * @param availableActions available actions in current state
-     * @param stateValueOffset state value offset
      * @param alwaysGreedy if true greedy action is always taken.
      * @return action taken.
      */
-    public int action(Matrix stateValueMatrix, HashSet<Integer> availableActions, int stateValueOffset, boolean alwaysGreedy) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         if (Math.random() < epsilon) {
             Object[] availableActionsArray = availableActions.toArray();
             return (int)availableActionsArray[random.nextInt(availableActionsArray.length)];
         }
-        else return super.action(stateValueMatrix, availableActions, stateValueOffset, alwaysGreedy);
+        else return super.action(policyValueMatrix, availableActions, alwaysGreedy);
+    }
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
     }
 
 }

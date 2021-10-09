@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2020 Simo Aaltonen
  */
 
 package core.reinforcement.policy.executablepolicy;
@@ -8,7 +8,6 @@ package core.reinforcement.policy.executablepolicy;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.TreeSet;
@@ -18,6 +17,23 @@ import java.util.TreeSet;
  *
  */
 public class SampledPolicy extends AbstractExecutablePolicy {
+
+    /**
+     * Parameter name types for SampledPolicy.
+     *     - thresholdInitial: initial threshold value for sampling randomness. Default value 1.<br>
+     *     - thresholdMin: lowest value for threshold. Default value 0.2.<br>
+     *     - thresholdDecay: decay rate of threshold. Default value 0.999.<br>
+     *
+     */
+    private final static String paramNameTypes = "(thresholdInitial:DOUBLE), " +
+            "(thresholdMin:DOUBLE), " +
+            "(thresholdDecay:DOUBLE)";
+
+    /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.SAMPLED;
 
     /**
      * Random function for SampledPolicy.
@@ -64,8 +80,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public SampledPolicy(String params) throws DynamicParamException {
-        super(params);
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(params, SampledPolicy.paramNameTypes);
     }
 
     /**
@@ -73,12 +88,8 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      * @return parameters used for SampledPolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("thresholdInitial", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("thresholdMin", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("thresholdDecay", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + SampledPolicy.paramNameTypes;
     }
 
     /**
@@ -123,6 +134,15 @@ public class SampledPolicy extends AbstractExecutablePolicy {
             if (Objects.requireNonNull(actionValueTuple).value() >= thresholdValue) return actionValueTuple.action();
         }
         return stateValueSet.first().action();
+    }
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
     }
 
 }

@@ -8,7 +8,6 @@ package core.reinforcement.policy.executablepolicy;
 import utils.DynamicParam;
 import utils.DynamicParamException;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.TreeSet;
@@ -19,6 +18,23 @@ import java.util.TreeSet;
  *
  */
 public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
+
+    /**
+     * Parameter name types for NoisyNextBestPolicy.
+     *     - initialExplorationNoise: initial exploration noise for NoisyNextBestPolicy. Default value 1.<br>
+     *     - minExplorationNoise: minimum exploration noise for NoisyNextBestPolicy. Default value 0.2.<br>
+     *     - explorationNoiseDecay: decay factor for exploration noise. Default value 0.999.<br>
+     *
+     */
+    private final static String paramNameTypes = "(initialExplorationNoise:DOUBLE), " +
+            "(minExplorationNoise:DOUBLE), " +
+            "(explorationNoiseDecay:DOUBLE)";
+
+    /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
 
     /**
      * Random function for NoisyNextBestPolicy.
@@ -65,8 +81,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NoisyNextBestPolicy(String params) throws DynamicParamException {
-        super(params);
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(params, NoisyNextBestPolicy.paramNameTypes);
     }
 
     /**
@@ -74,12 +89,8 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      *
      * @return parameters used for NoisyNextBestPolicy.
      */
-    public HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>(super.getParamDefs());
-        paramDefs.put("initialExplorationNoise", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("minExplorationNoise", DynamicParam.ParamType.DOUBLE);
-        paramDefs.put("explorationNoiseDecay", DynamicParam.ParamType.DOUBLE);
-        return paramDefs;
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + NoisyNextBestPolicy.paramNameTypes;
     }
 
     /**
@@ -118,6 +129,15 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         if (stateValueSet.size() > 1 && explorationNoise > random.nextDouble()) stateValueSet.pollLast();
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
+    }
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
     }
 
 }
