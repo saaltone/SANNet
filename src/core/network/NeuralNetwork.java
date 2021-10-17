@@ -133,19 +133,13 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Reference to training error metric.
      *
      */
-    private transient Metrics trainingMetrics;
+    private transient SingleRegressionMetric trainingMetric;
 
     /**
-     * Reference to validation error metric.
+     * Reference to validation error metric. Default Regression.
      *
      */
-    private transient Metrics validationMetrics;
-
-    /**
-     * Validation error metric type. Default REGRESSION.
-     *
-     */
-    private MetricsType validationMetricsType = MetricsType.REGRESSION;
+    private Metric validationMetric = new RegressionMetric();
 
     /**
      * Structure containing prediction input sequence.
@@ -775,7 +769,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void addOutputLayer(ArrayList<BinaryFunctionType> lossFunctionTypes, ArrayList<String> params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
         ArrayList<LossFunction> lossFunctions = new ArrayList<>();
-        for (int index = 0; index < lossFunctionTypes.size(); index++) {
+        int lossFunctionTypesSize = lossFunctionTypes.size();
+        for (int index = 0; index < lossFunctionTypesSize; index++) {
             lossFunctions.add(params != null ? new LossFunction(lossFunctionTypes.get(index), params.get(index)) : new LossFunction(lossFunctionTypes.get(index)));
         }
         outputLayer = new OutputLayer(-1, lossFunctions);
@@ -805,7 +800,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void addOutputLayer(BinaryFunctionType[] lossFunctionTypes, String[] params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
         ArrayList<LossFunction> lossFunctions = new ArrayList<>();
-        for (int index = 0; index < lossFunctionTypes.length; index++) {
+        int lossFunctionTypesLength = lossFunctionTypes.length;
+        for (int index = 0; index < lossFunctionTypesLength; index++) {
             lossFunctions.add(params != null ? new LossFunction(lossFunctionTypes[index], params[index]) : new LossFunction(lossFunctionTypes[index]));
         }
         outputLayer = new OutputLayer(-1, lossFunctions);
@@ -843,7 +839,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         neuralNetworkLayers.addAll(hiddenLayers);
         neuralNetworkLayers.add(outputLayer);
 
-        for (int layerIndex = 0; layerIndex < neuralNetworkLayers.size() - 1; layerIndex++) {
+        int neuralNetworkLayersSize = neuralNetworkLayers.size();
+        for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
             neuralNetworkLayers.get(layerIndex).setNextLayer(neuralNetworkLayers.get(layerIndex + 1));
             neuralNetworkLayers.get(layerIndex + 1).setPreviousLayer(neuralNetworkLayers.get(layerIndex));
         }
@@ -892,12 +889,12 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
         checkStarted();
 
-        trainingMetrics = new Metrics(MetricsType.REGRESSION);
-        if (validationMetrics == null) validationMetrics = new Metrics(validationMetricsType);
+        trainingMetric = new SingleRegressionMetric();
+        validationMetric = validationMetric.reference();
 
         if (earlyStopping != null) {
-            earlyStopping.setTrainingError(trainingMetrics);
-            earlyStopping.setValidationError(validationMetrics);
+            earlyStopping.setTrainingMetric(trainingMetric);
+            earlyStopping.setValidationMetric(validationMetric);
         }
 
         executeLock = new ReentrantLock();
@@ -1113,8 +1110,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         waitToComplete();
         if (earlyStopping == null) throw new NeuralNetworkException("Early stopping is not defined.");
         this.earlyStopping = earlyStopping;
-        earlyStopping.setTrainingError(trainingMetrics);
-        earlyStopping.setValidationError(validationMetrics);
+        earlyStopping.setTrainingMetric(trainingMetric);
+        earlyStopping.setValidationMetric(validationMetric);
     }
 
     /**
@@ -1473,14 +1470,15 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void trainIterations() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
-        trainingMetrics.resetError();
+//        trainingMetric.reset();
         trainingSampler.reset();
-        for (int iteration = 0; iteration < trainingSampler.getNumberOfIterations(); iteration++) {
+        int numberOfIterations = trainingSampler.getNumberOfIterations();
+        for (int iteration = 0; iteration < numberOfIterations; iteration++) {
             trainIteration();
             if (stoppedExecution()) break;
             if (earlyStopping != null) if (earlyStopping.stopTraining()) break;
         }
-        trainingMetrics.store(totalIterations);
+//        trainingMetric.store(totalIterations);
         stateCompleted();
     }
 
@@ -1495,6 +1493,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
         long startTime = System.nanoTime();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.reset();
+        trainingMetric.reset();
         Sequence inputSequence = new Sequence(trainingSampler.getDepth());
         Sequence outputSequence = new Sequence(trainingSampler.getDepth());
         trainingSampler.getSamples(inputSequence, outputSequence);
@@ -1504,8 +1503,7 @@ public class NeuralNetwork implements Runnable, Serializable {
         getInputLayer().update();
         long endTime = System.nanoTime();
         trainingTime += endTime - startTime;
-        trainingMetrics.report(getOutputLayer().getTotalError());
-        trainingMetrics.store(totalIterations, true);
+        trainingMetric.report(getOutputLayer().getTotalError());
         totalIterations++;
         if (autoValidationCycle > 0) {
             autoValidationCount++;
@@ -1526,7 +1524,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     private void verboseTrainingStatus() {
-        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + String.format("%.4f", trainingMetrics.getAbsolute()) + ", Training time in seconds: " + (trainingTime / 1000000000));
+        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + String.format("%.4f", trainingMetric.getMeanSquaredError()) + ", Training time in seconds: " + (trainingTime / 1000000000));
     }
 
     /**
@@ -1547,16 +1545,16 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException, DynamicParamException {
-        validationMetrics.resetError();
+        validationMetric.reset();
         validationSampler.reset();
-        for (int sampleIndex = 0; sampleIndex < validationSampler.getNumberOfIterations(); sampleIndex++) {
+        int numberOfIterations = validationSampler.getNumberOfIterations();
+        for (int sampleIndex = 0; sampleIndex < numberOfIterations; sampleIndex++) {
             Sequence inputSequence = new Sequence(validationSampler.getDepth());
             Sequence outputSequence = new Sequence(validationSampler.getDepth());
             validationSampler.getSamples(inputSequence, outputSequence);
-            validationMetrics.report(getInputLayer().predict(inputSequence), outputSequence);
+            validationMetric.report(getInputLayer().predict(inputSequence), outputSequence);
         }
         if (verboseValidation && (totalIterations % verboseCycle == 0)) verboseValidationStatus();
-        validationMetrics.store(totalIterations, true);
         if (stateCompleted) stateCompleted();
     }
 
@@ -1565,9 +1563,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return training metrics instance.
      */
-    public Metrics getTrainingMetrics() {
+    public SingleRegressionMetric getTrainingMetrics() {
         waitToComplete();
-        return trainingMetrics;
+        return trainingMetric;
     }
 
     /**
@@ -1593,28 +1591,37 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets neural network task (metrics) type (CLASSIFICATION or REGRESSION).
+     * Sets regression as validation metric.
      *
-     * @param metricsType neural network metrics type.
-     * @param multiClass if true metrics assumes multi class classification otherwise single class classification.
-     * @throws NeuralNetworkException throws exception if task type setting fails.
      */
-    public void setTaskType(MetricsType metricsType, boolean multiClass) throws NeuralNetworkException {
-        waitToComplete();
-        validationMetricsType = metricsType;
-        validationMetrics = new Metrics(metricsType, multiClass);
+    public void setAsRegression() {
+        validationMetric = new RegressionMetric();
     }
 
     /**
-     * Sets neural network task (metrics) type (CLASSIFICATION or REGRESSION).
+     * Sets regression as validation metric.
      *
-     * @param metricsType neural network metrics type.
-     * @throws NeuralNetworkException throws exception if task type setting fails.
+     * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
      */
-    public void setTaskType(MetricsType metricsType) throws NeuralNetworkException {
-        waitToComplete();
-        validationMetricsType = metricsType;
-        validationMetrics = new Metrics(metricsType);
+    public void setAsRegression(boolean useR2AsLastError) {
+        validationMetric = new RegressionMetric(useR2AsLastError);
+    }
+
+    /**
+     * Sets classification as validation metric.
+     *
+     */
+    public void setAsClassification() {
+        validationMetric = new ClassificationMetric();
+    }
+
+    /**
+     * Sets regression as validation metric.
+     *
+     * @param multiClass if true metrics assumes multi class classification otherwise single class classification.
+     */
+    public void setAsClassification(boolean multiClass) {
+        validationMetric = new ClassificationMetric(multiClass);
     }
 
     /**
@@ -1622,19 +1629,20 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @return validation metrics instance.
      */
-    public Metrics getValidationMetrics() {
+    public Metric getValidationMetrics() {
         waitToComplete();
-        return validationMetrics;
+        return validationMetric;
     }
 
     /**
      * Verboses validation metrics.
      *
-     * @throws NeuralNetworkException throws exception of printing of validation error fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void verboseValidationStatus() throws NeuralNetworkException {
+    private void verboseValidationStatus() throws MatrixException, DynamicParamException {
         System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Validating...");
-        validationMetrics.printReport();
+        validationMetric.printReport();
     }
 
     /**
@@ -1678,7 +1686,8 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void append(NeuralNetwork otherNeuralNetwork, double tau) throws MatrixException {
         waitToComplete();
-        for (int index = 0; index < neuralNetworkLayers.size(); index++) {
+        int neuralNetworkLayersSize = neuralNetworkLayers.size();
+        for (int index = 0; index < neuralNetworkLayersSize; index++) {
             neuralNetworkLayers.get(index).append(otherNeuralNetwork.getNeuralNetworkLayers().get(index), tau);
         }
     }
