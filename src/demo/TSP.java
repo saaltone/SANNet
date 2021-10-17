@@ -816,7 +816,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.2, epsilonDecayRate = 0.999, epsilonMin = 0";
+                policyTypeParams = "epsilonInitial = 0.4, epsilonDecayRate = 0.999, epsilonMin = 0";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -834,7 +834,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case QN -> "agentUpdateCycle = 100, lambda = 0.5, optimizerName = AMSGrad, learningRate = 0.01";
             case DDQN -> "lambda = 0.5, applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case Sarsa, ActorCritic, PPO, REINFORCE -> "lambda = 1";
-            case SACDiscrete -> "lambda = 0, applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
+            case SACDiscrete -> "lambda = 0.5, applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 2000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
             case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };

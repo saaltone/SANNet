@@ -9,7 +9,6 @@ import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.metrics.MetricsType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadMIDI;
 import utils.DynamicParamException;
@@ -87,9 +86,9 @@ public class Music {
                 neuralNetworkTick = Persistence.restoreNeuralNetwork(persistenceNameTick);
             }
 
-            neuralNetworkKey.setTaskType(MetricsType.CLASSIFICATION);
-            neuralNetworkVelocity.setTaskType(MetricsType.CLASSIFICATION);
-            neuralNetworkTick.setTaskType(MetricsType.REGRESSION);
+            neuralNetworkKey.setAsClassification();
+            neuralNetworkVelocity.setAsClassification();
+            neuralNetworkTick.setAsClassification();
 
             Persistence persistenceKey = new Persistence(true, 100, neuralNetworkKey, persistenceNameKey, true);
             Persistence persistenceVelocity = new Persistence(true, 100, neuralNetworkVelocity, persistenceNameVelocity, true);

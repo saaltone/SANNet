@@ -7,7 +7,6 @@ package demo;
 
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.metrics.MetricsType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
@@ -46,7 +45,7 @@ public class TextSeqDemo {
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
-            neuralNetwork.setTaskType(MetricsType.CLASSIFICATION);
+            neuralNetwork.setAsClassification();
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
