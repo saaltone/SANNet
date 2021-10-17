@@ -94,10 +94,10 @@ public class SMask extends AbstractMask {
     }
 
     /**
-     * Clears and removes mask.
+     * Resets mask.
      *
      */
-    public void clear() {
+    public void reset() {
         mask = new HashMap<>();
     }
 
