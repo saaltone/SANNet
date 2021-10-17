@@ -6,6 +6,7 @@
 package utils.matrix.operation;
 
 import utils.matrix.DMatrix;
+import utils.matrix.Mask;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -76,8 +77,9 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param rows rows
      * @param columns columns
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public WinogradConvolutionMatrixOperation(int rows, int columns) {
+    public WinogradConvolutionMatrixOperation(int rows, int columns) throws MatrixException {
         super(rows, columns, false, 2);
         AT = new DMatrix(2, 4);
         AT.setValue(0, 0, 1);
@@ -177,9 +179,12 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      */
     private void maskZeros(Matrix matrix) {
         matrix.setMask();
-        for (int row = 0; row < matrix.getRows(); row++) {
-            for (int column = 0; column < matrix.getColumns(); column++) {
-                if (matrix.getValue(row, column) == 0) matrix.getMask().setMask(row, column, true);
+        int matrixRows = matrix.getRows();
+        int matrixColumns = matrix.getColumns();
+        Mask matrixMask = matrix.getMask();
+        for (int row = 0; row < matrixRows; row++) {
+            for (int column = 0; column < matrixColumns; column++) {
+                if (matrix.getValue(row, column) == 0) matrixMask.setMask(row, column, true);
             }
         }
     }
