@@ -235,8 +235,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param value initialization value.
      */
     public void initializeToValue(double value) {
-        for (int row = 0; row < getRows(); row++) {
-            for (int col = 0; col < getColumns(); col++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < columns; col++) {
                 setValue(row, col, value);
             }
         }
@@ -294,12 +296,16 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public boolean equals(Matrix other) throws MatrixException {
-        if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
-            throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
+        int rows = getRows();
+        int columns = getColumns();
+        int otherRows = other.getRows();
+        int otherColumns = other.getColumns();
+        if (otherRows != rows || other.getColumns() != columns) {
+            throw new MatrixException("Incompatible target matrix size: " + otherRows + "x" + otherColumns);
         }
 
-        for (int row = 0; row < other.getRows(); row++) {
-            for (int column = 0; column < other.getColumns(); column++) {
+        for (int row = 0; row < otherRows; row++) {
+            for (int column = 0; column < otherColumns; column++) {
                 if (getValue(row, column) != other.getValue(row, column)) return false;
             }
         }
@@ -815,6 +821,16 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public void averagePoolGradient(Matrix inputGradient) throws MatrixException {
         new AveragePoolGradientMatrixOperation(getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputGradient);
+    }
+
+    /**
+     * Transposes matrix.
+     *
+     * @return new matrix but as transposed with flipped rows and columns.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix transpose() throws MatrixException {
+        return new TransposeMatrixOperation(getRows(), getColumns()).apply(this, getNewMatrix(true));
     }
 
 }
