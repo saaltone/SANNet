@@ -126,8 +126,10 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      */
     public Mask transpose() {
         Mask transposedMask = getNewMask(true);
-        for (int row = 0; row < getRows(); row++) {
-            for (int column = 0; column < getColumns(); column++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 if (getMask(row, column)) transposedMask.setMask(column, row, getMask(row, column));
             }
         }
@@ -179,8 +181,10 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      */
     public void maskByProbability() {
-        for (int row = 0; row < getRows(); row++) {
-            for (int column = 0; column < getColumns(); column++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 setMask(row, column, isMaskedByProbability());
             }
         }
@@ -191,7 +195,8 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      */
     public void maskRowByProbability() {
-        for (int row = 0; row < getRows(); row++) {
+        int rows = getRows();
+        for (int row = 0; row < rows; row++) {
             setRowMask(row, isMaskedByProbability());
         }
     }
@@ -201,7 +206,8 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      */
     public void maskColumnByProbability() {
-        for (int column = 0; column < getColumns(); column++) {
+        int columns = getColumns();
+        for (int column = 0; column < columns; column++) {
             setColumnMask(column, isMaskedByProbability());
         }
     }
@@ -213,7 +219,8 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setRowMask(int row, boolean value) {
-        for (int column = 0; column < getColumns(); column++) setMask(row, column, value);
+        int columns = getColumns();
+        for (int column = 0; column < columns; column++) setMask(row, column, value);
     }
 
     /**
@@ -223,7 +230,8 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @param value if true sets row mask otherwise unsets mask.
      */
     public void setColumnMask(int column, boolean value) {
-        for (int row = 0; row < getRows(); row++)  setMask(row, column, value);
+        int rows = getRows();
+        for (int row = 0; row < rows; row++)  setMask(row, column, value);
     }
 
     /**
@@ -231,11 +239,13 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      */
     public void print() {
-        for (int row = 0; row < getRows(); row++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
             System.out.print("[");
-            for (int column = 0; column < getColumns(); column++) {
+            for (int column = 0; column < columns; column++) {
                 System.out.print((isMasked(row, column) ? 1 : 0));
-                if (column < getColumns() - 1) System.out.print(" ");
+                if (column < columns - 1) System.out.print(" ");
             }
             System.out.println("]");
         }
