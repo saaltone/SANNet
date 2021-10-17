@@ -7,7 +7,6 @@ package demo;
 
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.metrics.MetricsType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
@@ -18,6 +17,7 @@ import utils.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -38,37 +38,18 @@ public class SimpleDemo {
     public static void main(String [] args) {
 
         try {
+            int numberOfNeuralNetworks = 2;
+
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTestData();
-            NeuralNetwork neuralNetwork1 = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
-            neuralNetwork1.setNeuralNetworkName("Neural Network 1");
-            neuralNetwork1.setTaskType(MetricsType.REGRESSION);
-            neuralNetwork1.verboseTraining(10);
-            neuralNetwork1.setAutoValidate(5);
-            neuralNetwork1.verboseValidation();
-            neuralNetwork1.setTrainingEarlyStopping(new EarlyStopping());
-            neuralNetwork1.start();
-            neuralNetwork1.print();
-            neuralNetwork1.printExpressions();
-            neuralNetwork1.printGradients();
-            neuralNetwork1.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
-            neuralNetwork1.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
+            ArrayList<NeuralNetwork> neuralNetworks = new ArrayList<>();
+            for (int index = 0; index < numberOfNeuralNetworks; index++) {
+                NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
+                neuralNetworks.add(neuralNetwork);
+                initializeNeuralNetwork(neuralNetwork, index + 1, data, index == 0);
+            }
 
-            NeuralNetwork neuralNetwork2 = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
-            neuralNetwork2.setNeuralNetworkName("Neural Network 2");
-            neuralNetwork2.setTaskType(MetricsType.REGRESSION);
-            neuralNetwork2.verboseTraining(10);
-            neuralNetwork2.setAutoValidate(5);
-            neuralNetwork2.verboseValidation();
-            neuralNetwork2.setTrainingEarlyStopping(new EarlyStopping());
-            neuralNetwork2.start();
-            neuralNetwork2.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
-            neuralNetwork2.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
-
-            neuralNetwork1.train(false, false);
-            neuralNetwork2.train(false, false);
-
-            neuralNetwork1.waitToComplete();
-            neuralNetwork2.waitToComplete();
+            for (NeuralNetwork neuralNetwork : neuralNetworks) neuralNetwork.train(false, false);
+            for (NeuralNetwork neuralNetwork : neuralNetworks) neuralNetwork.waitToComplete();
 
             Random random = new Random();
             for (int index = 0; index < 10; index++) {
@@ -80,23 +61,38 @@ public class SimpleDemo {
                 inputData.setValue(0, 0, (double)input1 / 100);
                 inputData.setValue(1, 0, (double)input2 / 100);
 
-                Matrix outputData = neuralNetwork1.predict(inputData);
-                int predictedOutput = (int)(outputData.getValue(0, 0) * 100);
-                System.out.println("Neural network 1: " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
-
-                outputData = neuralNetwork2.predict(inputData);
-                predictedOutput = (int)(outputData.getValue(0, 0) * 100);
-                System.out.println("Neural network 2: " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
+                for (NeuralNetwork neuralNetwork : neuralNetworks) {
+                    Matrix outputData = neuralNetwork.predict(inputData);
+                    int predictedOutput = (int)(outputData.getValue(0, 0) * 100);
+                    System.out.println(neuralNetwork.getNeuralNetworkName() + ": " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
+                }
             }
 
-            neuralNetwork1.stop();
-            neuralNetwork2.stop();
+            for (NeuralNetwork neuralNetwork : neuralNetworks) neuralNetwork.stop();
 
         }
         catch (Exception exception) {
             exception.printStackTrace();
             System.exit(-1);
         }
+    }
+
+    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        neuralNetwork.setNeuralNetworkName("Neural Network " + id);
+        neuralNetwork.setAsRegression();
+        neuralNetwork.verboseTraining(10);
+        neuralNetwork.setAutoValidate(5);
+        neuralNetwork.verboseValidation();
+        neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
+        neuralNetwork.start();
+        if (print) {
+            neuralNetwork.print();
+            neuralNetwork.printExpressions();
+            neuralNetwork.printGradients();
+        }
+        neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
+        neuralNetwork.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
+
     }
 
     /**
