@@ -1449,8 +1449,9 @@ public interface Matrix {
      * Transposes matrix.
      *
      * @return new matrix but as transposed that is with flipped rows and columns.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix transpose();
+    Matrix transpose() throws MatrixException;
 
     /**
      * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
