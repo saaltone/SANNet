@@ -5,12 +5,11 @@
 
 package demo;
 
+import core.metrics.ClassificationMetric;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.metrics.Metrics;
-import core.metrics.MetricsType;
 import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
@@ -54,7 +53,7 @@ public class MNISTDemo {
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
 
-            neuralNetwork.setTaskType(MetricsType.CLASSIFICATION, false);
+            neuralNetwork.setAsClassification();
             neuralNetwork.verboseTraining(10);
             neuralNetwork.setAutoValidate(100);
             neuralNetwork.verboseValidation();
@@ -74,7 +73,7 @@ public class MNISTDemo {
 
             System.out.println("Predicting...");
 
-            Metrics predictionMetrics = new Metrics(MetricsType.CLASSIFICATION);
+            ClassificationMetric predictionAbstractMetric = new ClassificationMetric();
             for (int index = 0; index < 100; index++) {
                 Sequence input = new Sequence(1);
                 Sequence output = new Sequence(1);
@@ -91,10 +90,9 @@ public class MNISTDemo {
                         System.out.println("True label: " + trueIndex[0] + ", Predicted label: " + predictIndex[0]);
                     }
                 }
-                predictionMetrics.report(predict, output);
-                predictionMetrics.store(index, false);
+                predictionAbstractMetric.report(predict, output);
             }
-            predictionMetrics.printReport();
+            predictionAbstractMetric.printReport();
 
             Persistence.saveNeuralNetwork(persistenceName, neuralNetwork);
 
