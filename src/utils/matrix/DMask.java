@@ -90,10 +90,10 @@ public class DMask extends AbstractMask {
     }
 
     /**
-     * Clears mask.
+     * Resets mask.
      *
      */
-    public void clear() {
+    public void reset() {
         mask = new boolean[getRows()][getColumns()];
     }
 
