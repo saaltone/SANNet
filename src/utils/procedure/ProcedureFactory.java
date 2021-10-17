@@ -35,20 +35,20 @@ public class ProcedureFactory implements Serializable {
          * List of expressions for forward calculation.
          *
          */
-        private final LinkedList<AbstractExpression> expressions = new LinkedList<>();
+        private final LinkedList<Expression> expressions = new LinkedList<>();
 
         /**
          * List of expressions for backward gradient calculation.
          *
          */
-        private final LinkedList<AbstractExpression> gradientExpressions = new LinkedList<>();
+        private final LinkedList<Expression> gradients = new LinkedList<>();
 
         /**
          * Map for expressions for backward (gradient) calculation.<br>
          * This temporary map is used to build list of backward gradient expressions.<br>
          *
          */
-        private final HashMap<Node, AbstractExpression> reverseExpressionMap = new HashMap<>();
+        private final HashMap<Node, Expression> reverseExpressionMap = new HashMap<>();
 
         /**
          * if true procedure has dependent nodes.
@@ -57,10 +57,10 @@ public class ProcedureFactory implements Serializable {
         private boolean hasDependentNodes = false;
 
         /**
-         * Input sample.
+         * Input matrices.
          *
          */
-        private MMatrix inputSample;
+        private MMatrix inputMatrices;
 
         /**
          * Input nodes.
@@ -129,13 +129,13 @@ public class ProcedureFactory implements Serializable {
      * Returns procedure
      *
      * @param forwardProcedure reference to class that defines forward procedure.
-     * @param weights weights to be registered.
+     * @param constantMatrices constant matrices to be registered.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @return resulting procedure.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> weights) throws MatrixException, DynamicParamException {
-        registerConstantMatrices(weights);
+    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> constantMatrices) throws MatrixException, DynamicParamException {
+        registerConstantMatrices(constantMatrices);
 
         ProcedureData previousProcedureData = new ProcedureData();
         newProcedure(previousProcedureData, forwardProcedure.getInputMatrices(true));
@@ -149,39 +149,39 @@ public class ProcedureFactory implements Serializable {
 
         nodeRegister.removeProcedureFactory();
 
-        AbstractExpression previousExpression = null;
-        for (AbstractExpression expression : nextProcedureData.expressions) {
+        Expression previousExpression = null;
+        for (Expression expression : nextProcedureData.expressions) {
             if (previousExpression != null) previousExpression.setNextExpression(expression);
             previousExpression = expression;
         }
         previousExpression = null;
-        for (AbstractExpression expression : nextProcedureData.gradientExpressions) {
+        for (Expression expression : nextProcedureData.gradients) {
             if (previousExpression != null) previousExpression.setPreviousExpression(expression);
             previousExpression = expression;
         }
 
-        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradientExpressions.get(0), nextProcedureData.hasDependentNodes);
+        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes);
     }
 
     /**
      * Registers set of constant matrices.
      *
-     * @param matrices matrices to be registered.
+     * @param constantMatrices constant matrices to be registered.
      */
-    private void registerConstantMatrices(Set<Matrix> matrices) {
-        if (matrices == null) return;
-        for (Matrix matrix : matrices) matrix.setProcedureFactory(this);
+    private void registerConstantMatrices(Set<Matrix> constantMatrices) {
+        if (constantMatrices == null) return;
+        for (Matrix matrix : constantMatrices) matrix.setProcedureFactory(this);
     }
 
     /**
      * Starts building new procedure.
      *
-     * @param inputSample input sample.
+     * @param inputMatrices input matrices.
      */
-    private void newProcedure(ProcedureData procedureData, MMatrix inputSample) {
-        procedureData.inputSample = inputSample;
-        inputSample.setProcedureFactory(this);
-        for (Matrix matrix : inputSample.get().values()) matrix.setProcedureFactory(this);
+    private void newProcedure(ProcedureData procedureData, MMatrix inputMatrices) {
+        procedureData.inputMatrices = inputMatrices;
+        inputMatrices.setProcedureFactory(this);
+        for (Matrix matrix : inputMatrices.get().values()) matrix.setProcedureFactory(this);
         currentExpressionID = 0;
         currentProcedureData = procedureData;
     }
@@ -212,9 +212,9 @@ public class ProcedureFactory implements Serializable {
         Stack<Node> resultNodes = new Stack<>();
         for (Node outputNode : procedureData.outputNodes.values()) resultNodes.push(outputNode);
         while (!resultNodes.empty()) {
-            AbstractExpression expression = procedureData.reverseExpressionMap.get(resultNodes.pop());
-            if (expression != null && !procedureData.gradientExpressions.contains(expression)) {
-                procedureData.gradientExpressions.add(expression);
+            Expression expression = procedureData.reverseExpressionMap.get(resultNodes.pop());
+            if (expression != null && !procedureData.gradients.contains(expression)) {
+                procedureData.gradients.add(expression);
                 Node argument1 = expression.getArgument1();
                 if (argument1 != null) resultNodes.push(argument1);
                 Node argument2 = expression.getArgument2();
@@ -228,7 +228,8 @@ public class ProcedureFactory implements Serializable {
      *
      */
     private void updateDependencies(ProcedureData previousProcedureData, ProcedureData nextProcedureData) {
-        for (int expressionID = 0; expressionID < nextProcedureData.expressions.size() - 1; expressionID++) {
+        int expressionIDSize = nextProcedureData.expressions.size() - 1;
+        for (int expressionID = 0; expressionID < expressionIDSize; expressionID++) {
             updateNodeLink(previousProcedureData, nextProcedureData, previousProcedureData.expressions.get(expressionID).getArgument1(), nextProcedureData.expressions.get(expressionID).getArgument1());
             updateNodeLink(previousProcedureData, nextProcedureData, previousProcedureData.expressions.get(expressionID).getArgument2(), nextProcedureData.expressions.get(expressionID).getArgument2());
         }
@@ -261,10 +262,10 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Node defineNode(MMatrix matrix, boolean resultNode) throws MatrixException {
-        boolean isConstantNode = !(currentProcedureData.inputSample == matrix || resultNode);
+        boolean isConstantNode = !(currentProcedureData.inputMatrices == matrix || resultNode);
         Node node = nodeRegister.defineNode(matrix, isConstantNode, currentExpressionID);
-        for (Integer index : currentProcedureData.inputSample.keySet()) {
-            if (currentProcedureData.inputSample == matrix) currentProcedureData.inputNodes.put(index, node);
+        for (Integer index : currentProcedureData.inputMatrices.keySet()) {
+            if (currentProcedureData.inputMatrices == matrix) currentProcedureData.inputNodes.put(index, node);
         }
         currentProcedureData.nodes.add(node);
         return node;
@@ -279,10 +280,10 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Node defineNode(Matrix matrix, boolean resultNode) throws MatrixException {
-        boolean isConstantNode = !(currentProcedureData.inputSample.contains(matrix) || resultNode);
+        boolean isConstantNode = !(currentProcedureData.inputMatrices.contains(matrix) || resultNode);
         Node node = nodeRegister.defineNode(matrix, isConstantNode, currentExpressionID);
-        for (Integer index : currentProcedureData.inputSample.keySet()) {
-            if (currentProcedureData.inputSample.get(index) == matrix) currentProcedureData.inputNodes.put(index, node);
+        for (Integer index : currentProcedureData.inputMatrices.keySet()) {
+            if (currentProcedureData.inputMatrices.get(index) == matrix) currentProcedureData.inputNodes.put(index, node);
         }
         currentProcedureData.nodes.add(node);
         return node;
@@ -959,7 +960,7 @@ public class ProcedureFactory implements Serializable {
      * @param expression expression.
      * @param resultNode result node
      */
-    private void storeExpression(AbstractExpression expression, Node resultNode) {
+    private void storeExpression(Expression expression, Node resultNode) {
         currentProcedureData.expressions.add(expression);
         currentProcedureData.reverseExpressionMap.put(resultNode, expression);
         finishExpression();
