@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
@@ -54,7 +59,7 @@ public class EntropyMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        this.value += value * Math.log(value);
+        this.value += value * Math.log10(value) / Math.log10(2);
         count++;
     }
 
