@@ -11,8 +11,8 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Record that defines state of environment.<br>
- * <br>
+ * Record that defines state of environment.
+ *
  * @param episodeID episode ID.
  * @param timeStep time step.
  * @param state state of environment.
