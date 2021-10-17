@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package utils.matrix;
 
 import java.util.ArrayList;
@@ -5,7 +10,7 @@ import java.util.Arrays;
 import java.util.TreeMap;
 
 /**
- * Implements joined matrix which consists of horizontally or vertically concatenated DMatrix
+ * Implements joined matrix which consists of horizontally or vertically concatenated matrices
  *
  */
 public class JMatrix extends ComputableMatrix {
@@ -73,8 +78,9 @@ public class JMatrix extends ComputableMatrix {
         if (joinedVertically) {
             int columns = -1;
             for (Matrix matrix : matrices) {
-                if (columns == -1) columns = matrix.getTotalColumns();
-                else if (columns != matrix.getTotalColumns()) throw new MatrixException("Number of columns in matrices are not matching.");
+                int matrixTotalColumns = matrix.getTotalColumns();
+                if (columns == -1) columns = matrixTotalColumns;
+                else if (columns != matrixTotalColumns) throw new MatrixException("Number of columns in matrices are not matching.");
                 matrixPositionOffsets.put(totalRows, matrix);
                 totalRows += matrix.getTotalRows();
             }
@@ -93,8 +99,9 @@ public class JMatrix extends ComputableMatrix {
         if (!joinedVertically) {
             int rows = -1;
             for (Matrix matrix : matrices) {
-                if (rows == -1) rows = matrix.getTotalRows();
-                else if (rows != matrix.getTotalRows()) throw new MatrixException("Number of rows in matrices are not matching.");
+                int matrixTotalRows = matrix.getTotalRows();
+                if (rows == -1) rows = matrixTotalRows;
+                else if (rows != matrixTotalRows) throw new MatrixException("Number of rows in matrices are not matching.");
                 matrixPositionOffsets.put(totalColumns, matrix);
                 totalColumns += matrix.getTotalColumns();
             }
@@ -184,6 +191,16 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
+     * Returns constant matrix
+     *
+     * @param constant constant
+     * @return new matrix
+     */
+    protected Matrix getNewMatrix(double constant) {
+        return new DMatrix(constant);
+    }
+
+    /**
      * Returns new matrix of same dimensions.
      *
      * @return new matrix of same dimensions.
@@ -194,16 +211,6 @@ public class JMatrix extends ComputableMatrix {
         ArrayList<Matrix> newMatrices = new ArrayList<>();
         for (Matrix matrix : matrices) newMatrices.add(matrix.getNewMatrix());
         return new JMatrix(getTotalRows(), getTotalColumns(), newMatrices, joinedVertically);
-    }
-
-    /**
-     * Returns new matrix of same dimensions optionally as transposed.
-     *
-     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
-     * @return new matrix of same dimensions.
-     */
-    public Matrix getNewMatrix(boolean asTransposed) {
-        return isScalar() ? new DMatrix(0) : !asTransposed ? new DMatrix(getRows(), getColumns()) :  new DMatrix(getColumns(), getRows());
     }
 
 
