@@ -28,8 +28,8 @@ public class DMatrix extends ComputableMatrix {
     public DMatrix(double scalarValue) {
         super(1, 1,true);
         matrix = new double[getTotalRows()][getTotalColumns()];
-        matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, 0, 0);
+        matrix[getTotalRows() - 1][getTotalColumns() - 1] = scalarValue;
+        initializeSliceDimensions();
     }
 
     /**
@@ -42,7 +42,7 @@ public class DMatrix extends ComputableMatrix {
         super(1, 1,true, name);
         matrix = new double[getTotalRows()][getTotalColumns()];
         matrix[getTotalRows() - 1][getTotalColumns() - 1] = scalarValue;
-        updateSliceDimensions(0, 0, 0, 0);
+        initializeSliceDimensions();
     }
 
     /**
@@ -53,8 +53,8 @@ public class DMatrix extends ComputableMatrix {
      */
     public DMatrix(int rows, int columns) {
         super(rows, columns, false);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        matrix = new double[getTotalRows()][columns];
+        initializeSliceDimensions();
     }
 
     /**
@@ -66,8 +66,16 @@ public class DMatrix extends ComputableMatrix {
      */
     public DMatrix(int rows, int columns, String name) {
         super(rows, columns, false, name);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+        matrix = new double[getTotalRows()][columns];
+        initializeSliceDimensions();
+    }
+
+    /**
+     * Initializes slice dimensions.
+     *
+     */
+    private void initializeSliceDimensions() {
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
     }
 
     /**
@@ -234,22 +242,13 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns new matrix of same dimensions.
+     * Returns constant matrix
      *
-     * @return new matrix of same dimensions.
+     * @param constant constant
+     * @return new matrix
      */
-    public Matrix getNewMatrix() {
-        return isScalar() ? new DMatrix(0) : new DMatrix(getRows(), getColumns());
-    }
-
-    /**
-     * Returns new matrix of same dimensions optionally as transposed.
-     *
-     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
-     * @return new matrix of same dimensions.
-     */
-    public Matrix getNewMatrix(boolean asTransposed) {
-        return isScalar() ? new DMatrix(0) : !asTransposed ? new DMatrix(getRows(), getColumns()) :  new DMatrix(getColumns(), getRows());
+    protected Matrix getNewMatrix(double constant) {
+        return new DMatrix(constant);
     }
 
 }
