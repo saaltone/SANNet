@@ -77,10 +77,10 @@ public interface Mask {
     int getColumns();
 
     /**
-     * Clears mask.<br>
+     * Resets mask.
      *
      */
-    void clear();
+    void reset();
 
     /**
      * Checks if mask is set at specific row and column
