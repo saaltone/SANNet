@@ -247,7 +247,8 @@ public class OutputLayer extends AbstractLayer {
                 if (multiOutput) {
                     if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");
                     ArrayList<Matrix> totalError = new ArrayList<>();
-                    for (int index = 0; index < lossFunctions.size(); index++) {
+                    int lossFunctionsSize = lossFunctions.size();
+                    for (int index = 0; index < lossFunctionsSize; index++) {
                         LossFunction lossFunction = lossFunctions.get(index);
                         Matrix subOutputs = currentOutputs.getSubMatrices().get(index);
                         Matrix subTargets = currentTargets.getSubMatrices().get(index);
@@ -280,7 +281,8 @@ public class OutputLayer extends AbstractLayer {
                 if (multiOutput) {
                     if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");
                     ArrayList<Matrix> totalGradient = new ArrayList<>();
-                    for (int index = 0; index < lossFunctions.size(); index++) {
+                    int lossFunctionsSize = lossFunctions.size();
+                    for (int index = 0; index < lossFunctionsSize; index++) {
                         LossFunction lossFunction = lossFunctions.get(index);
                         Matrix subOutputs = currentOutputs.getSubMatrices().get(index);
                         Matrix subTargets = currentTargets.getSubMatrices().get(index);
