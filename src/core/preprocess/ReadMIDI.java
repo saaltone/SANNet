@@ -57,7 +57,8 @@ public class ReadMIDI {
             Track[] tracks = sequence.getTracks();
             for (Track track : tracks) {
                 long previousTick = 0;
-                for (int trackIndex = 0; trackIndex < track.size(); trackIndex++) {
+                int trackSize = track.size();
+                for (int trackIndex = 0; trackIndex < trackSize; trackIndex++) {
                     MidiEvent midiEvent = track.get(trackIndex);
                     MidiMessage midiMessage = midiEvent.getMessage();
                     if (midiMessage instanceof ShortMessage shortMessage) {
@@ -201,7 +202,8 @@ public class ReadMIDI {
             Matrix record3 = dataTick.get(index).get(0);
             int maxData1Pos = -1;
             double maxData1Value = Double.NEGATIVE_INFINITY;
-            for (int pos = 0; pos < record1.getRows(); pos++) {
+            int record1Rows = record1.getRows();
+            for (int pos = 0; pos < record1Rows; pos++) {
                 double currentValue = record1.getValue(pos, 0);
                 if (maxData1Value < currentValue) {
                     maxData1Value = currentValue;
@@ -210,7 +212,8 @@ public class ReadMIDI {
             }
             int maxData2Pos = -1;
             double maxData2Value = Double.NEGATIVE_INFINITY;
-            for (int pos = 0; pos < record2.getRows(); pos++) {
+            int record2Rows = record2.getRows();
+            for (int pos = 0; pos < record2Rows; pos++) {
                 double currentValue = record2.getValue(pos, 0);
                 if (maxData2Value < currentValue) {
                     maxData2Value = currentValue;
