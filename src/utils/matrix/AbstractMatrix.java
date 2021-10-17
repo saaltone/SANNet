@@ -23,6 +23,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private static final long serialVersionUID = 4372639167186260605L;
 
     /**
+     * If true forces creation of DMatrix when new matrix is created out of current matrix.
+     *
+     */
+    protected final static boolean forceDMatrix = true;
+
+    /**
      * Number of rows in matrix.
      *
      */
@@ -281,7 +287,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public void reset() {
         resetMatrix();
-        if (mask != null) mask.clear();
+        if (mask != null) mask.reset();
     }
 
     /**
@@ -469,6 +475,34 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return new matrix
      */
     protected abstract Matrix getNewMatrix(int rows, int columns);
+
+    /**
+     * Returns constant matrix
+     *
+     * @param constant constant
+     * @return new matrix
+     */
+    protected abstract Matrix getNewMatrix(double constant);
+
+    /**
+     * Returns new matrix of same dimensions.
+     *
+     * @return new matrix of same dimensions.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
+     */
+    public Matrix getNewMatrix() throws MatrixException {
+        return isScalar() ? getNewMatrix(0) : getNewMatrix(getRows(), getColumns());
+    }
+
+    /**
+     * Returns new matrix of same dimensions optionally as transposed.
+     *
+     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
+     * @return new matrix of same dimensions.
+     */
+    public Matrix getNewMatrix(boolean asTransposed) {
+        return isScalar() ? getNewMatrix(0) : !asTransposed ? getNewMatrix(getRows(), getColumns()) :  getNewMatrix(getColumns(), getRows());
+    }
 
     /**
      * Returns placeholder for result matrix.
@@ -705,7 +739,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public void add(double constant, Matrix result) throws MatrixException {
-        Matrix other = new DMatrix(constant);
+        Matrix other = getNewMatrix(constant);
         if (!hasProcedureFactory()) add(other, result);
         else {
             synchronizeProcedureFactory(other);
@@ -772,7 +806,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public void subtract(double constant, Matrix result) throws MatrixException {
-        Matrix other = new DMatrix(constant);
+        Matrix other = getNewMatrix(constant);
         if (!hasProcedureFactory()) subtract(other, result);
         else {
             synchronizeProcedureFactory(other);
@@ -839,7 +873,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public void multiply(double constant, Matrix result) throws MatrixException {
-        Matrix other = new DMatrix(constant);
+        Matrix other = getNewMatrix(constant);
         if (!hasProcedureFactory()) multiply(other, result);
         else {
             synchronizeProcedureFactory(other);
@@ -909,7 +943,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
      */
     public void divide(double constant, Matrix result) throws MatrixException {
-        Matrix other = new DMatrix(constant);
+        Matrix other = getNewMatrix(constant);
         if (!hasProcedureFactory()) divide(other, result);
         else {
             synchronizeProcedureFactory(other);
@@ -1082,7 +1116,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching are not matching.
      */
     public Matrix dot(Matrix other) throws MatrixException {
-        return dot(other, new DMatrix(getRows(), other.getColumns()));
+        return dot(other, getNewMatrix(getRows(), other.getColumns()));
     }
 
     /**
@@ -1092,7 +1126,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return constant matrix.
      */
     public Matrix constantAsMatrix(double constant) {
-        Matrix constantMatrix = new DMatrix(constant);
+        Matrix constantMatrix = getNewMatrix(constant);
         constantMatrix.setValue(0, 0, constant);
         return constantMatrix;
     }
@@ -1312,7 +1346,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmax() throws MatrixException {
-        return softmax(new DMatrix(getRows(), getColumns()));
+        return softmax(getNewMatrix());
     }
 
     /**
@@ -1335,7 +1369,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax() throws MatrixException {
-        return gumbelSoftmax(new DMatrix(getRows(), getColumns()), 1);
+        return gumbelSoftmax(getNewMatrix(), 1);
     }
 
     /**
@@ -1347,7 +1381,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
-        return gumbelSoftmax(new DMatrix(getRows(), getColumns()), gumbelSoftmaxTau);
+        return gumbelSoftmax(getNewMatrix(), gumbelSoftmaxTau);
     }
 
     /**
@@ -1357,7 +1391,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmaxGrad() throws MatrixException {
-        return softmaxGrad(new DMatrix(getRows(), getRows()));
+        return softmaxGrad(getNewMatrix(getRows(), getRows()));
     }
 
     /**
@@ -1368,7 +1402,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix convolve(Matrix filter) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         convolve(filter, result);
         return result;
     }
@@ -1381,7 +1415,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix crosscorrelate(Matrix filter) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         crosscorrelate(filter, result);
         return result;
     }
@@ -1448,7 +1482,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix filter) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         winogradConvolve(filter, result);
         return result;
     }
@@ -1485,7 +1519,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         winogradConvolve(filter, result, A, AT, C, CT, G, GT);
         return result;
     }
@@ -1526,7 +1560,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         winogradConvolve(preprocessedFilter, result, A, AT, C, CT);
         return result;
     }
@@ -1597,7 +1631,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return input gradient.
      */
     public Matrix convolveInputGradient(Matrix filter) throws MatrixException {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
+        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         convolveInputGradient(filter, inputGradient);
         return inputGradient;
     }
@@ -1609,7 +1643,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return input gradient.
      */
     public Matrix crosscorrelateInputGradient(Matrix filter) throws MatrixException {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
+        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         crosscorrelateInputGradient(filter, inputGradient);
         return inputGradient;
     }
@@ -1621,7 +1655,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return filter gradient.
      */
     public Matrix convolveFilterGradient(Matrix input) throws MatrixException {
-        Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
+        Matrix filterGradient = getNewMatrix(getFilterRowSize(), getFilterColumnSize());
         convolveFilterGradient(input, filterGradient);
         return filterGradient;
     }
@@ -1633,7 +1667,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return filter gradient.
      */
     public Matrix crosscorrelateFilterGradient(Matrix input) throws MatrixException {
-        Matrix filterGradient = new DMatrix(getFilterRowSize(), getFilterColumnSize());
+        Matrix filterGradient = getNewMatrix(getFilterRowSize(), getFilterColumnSize());
         crosscorrelateFilterGradient(input, filterGradient);
         return filterGradient;
     }
@@ -1646,7 +1680,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         maxPool(result, maxPos);
         return result;
     }
@@ -1685,7 +1719,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
+        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         maxPoolGradient(inputGradient, maxPos);
         return inputGradient;
     }
@@ -1697,7 +1731,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix averagePool() throws MatrixException {
-        Matrix result = new DMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
         averagePool(result);
         return result;
     }
@@ -1732,33 +1766,9 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return input gradient.
      */
     public Matrix averagePoolGradient() throws MatrixException {
-        Matrix inputGradient = new DMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
+        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
         averagePoolGradient(inputGradient);
         return inputGradient;
-    }
-
-    /**
-     * Transposes matrix.
-     *
-     * @return new matrix but as transposed with flipped rows and columns.
-     */
-    public Matrix transpose() {
-        Matrix transposedMatrix = getNewMatrix(true);
-        for (int row = 0; row < getRows(); row++) {
-            for (int column = 0; column < getColumns(); column++) {
-                transposedMatrix.setValue(column, row, getValue(row, column));
-            }
-        }
-        if (getMask() != null) {
-            transposedMatrix.setMask();
-            Mask transposedMask = transposedMatrix.getMask();
-            for (int row = 0; row < getRows(); row++) {
-                for (int column = 0; column < getColumns(); column++) {
-                    if (hasMaskAt(row, column)) transposedMask.setMask(column, row, true);
-                }
-            }
-        }
-        return transposedMatrix;
     }
 
     /**
@@ -1774,23 +1784,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!((this instanceof DMatrix) || (this instanceof SMatrix))) throw new MatrixException("Matrix must be of type DMatrix or SMatrix");
         Matrix matrix1;
         Matrix matrix2;
+        int totalRows = getTotalRows();
+        int totalColumns = getTotalColumns();
         if (splitVertically) {
-            if (position < 1 || position > getTotalRows() - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(position, getTotalColumns());
-            matrix2 = getNewMatrix(getTotalRows() - matrix1.getTotalRows(), getTotalColumns());
-            for (int row = 0; row < getTotalRows(); row++) {
-                for (int column = 0; column < getTotalColumns(); column++) {
+            if (position < 1 || position > totalRows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(position,totalColumns);
+            matrix2 = getNewMatrix(totalRows - matrix1.getTotalRows(), totalColumns);
+            for (int row = 0; row < totalRows; row++) {
+                for (int column = 0; column < totalColumns; column++) {
                     if (row < position) matrix1.setValue(row, column, getValue(row, column));
                     else matrix2.setValue(row - position, column, getValue(row, column));
                 }
             }
         }
         else {
-            if (position < 1 || position > getTotalColumns() - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(getTotalRows(), position);
-            matrix2 = getNewMatrix(getTotalRows(), getTotalColumns() - matrix1.getTotalColumns());
-            for (int row = 0; row < getTotalRows(); row++) {
-                for (int column = 0; column < getTotalColumns(); column++) {
+            if (position < 1 || position > totalColumns - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(totalRows, position);
+            matrix2 = getNewMatrix(totalRows, totalColumns - matrix1.getTotalColumns());
+            for (int row = 0; row < totalRows; row++) {
+                for (int column = 0; column < totalColumns; column++) {
                     if (column < position) matrix1.setValue(row, column, getValue(row, column));
                     else matrix2.setValue(row, column - position, getValue(row, column));
                 }
@@ -1799,7 +1811,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         ArrayList<Matrix> matrices = new ArrayList<>();
         matrices.add(matrix1);
         matrices.add(matrix2);
-        Matrix result = new JMatrix(getTotalRows(), getTotalColumns(), matrices, splitVertically);
+        Matrix result = new JMatrix(totalRows, totalColumns, matrices, splitVertically);
         if (hasProcedureFactory()) result.setProcedureFactory(procedureFactory);
         return result;
     }
@@ -1836,16 +1848,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
      */
     public Matrix concatenateVertical(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        if (getColumns() != other.getColumns()) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        Matrix newMatrix = getNewMatrix(getRows() + other.getRows(), getColumns());
         int columns = getColumns();
-        int thisOffsetRow = concatenateAfter ? 0 : other.getRows();
-        int otherOffsetRow = concatenateAfter ? getRows() : 0;
+        int otherColumns = other.getColumns();
+        if (columns != otherColumns) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
+        int rows = getRows();
+        int otherRows = other.getRows();
+        Matrix newMatrix = getNewMatrix(rows + otherRows, columns);
+        int thisOffsetRow = concatenateAfter ? 0 : otherRows;
+        int otherOffsetRow = concatenateAfter ? rows : 0;
         for (int column = 0; column < columns; column++) {
-            for (int row = 0; row < getRows(); row++) {
+            for (int row = 0; row < rows; row++) {
                 newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
             }
-            for (int row = 0; row < other.getRows(); row++) {
+            for (int row = 0; row < otherRows; row++) {
                 newMatrix.setValue(otherOffsetRow + row, column, other.getValue(row, column));
             }
         }
@@ -1863,13 +1878,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
      */
     public Matrix concatenateVertical(double other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        if (getColumns() != 1) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
-        Matrix newMatrix = getNewMatrix(getRows() + 1, getColumns());
         int columns = getColumns();
+        if (columns != 1) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
+        int rows = getRows();
+        Matrix newMatrix = getNewMatrix(rows + 1, columns);
         int thisOffsetRow = concatenateAfter ? 0 : 1;
-        int otherOffsetRow = concatenateAfter ? getRows() : 0;
+        int otherOffsetRow = concatenateAfter ? rows : 0;
         for (int column = 0; column < columns; column++) {
-            for (int row = 0; row < getRows(); row++) {
+            for (int row = 0; row < rows; row++) {
                 newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
             }
             newMatrix.setValue(otherOffsetRow, column, other);
@@ -1913,13 +1929,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (getRows() != other.getRows()) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
         Matrix newMatrix = getNewMatrix(getRows(), getColumns() + other.getColumns());
         int rows = getRows();
+        int columns = getColumns();
+        int otherColumns = other.getColumns();
         int thisOffsetColumn = concatenateAfter ? 0 : other.getColumns();
         int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
         for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < getColumns(); column++) {
+            for (int column = 0; column < columns; column++) {
                 newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
             }
-            for (int column = 0; column < other.getColumns(); column++) {
+            for (int column = 0; column < otherColumns; column++) {
                 newMatrix.setValue(row, otherOffsetColumn + column, other.getValue(row, column));
             }
         }
@@ -1940,10 +1958,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (getRows() != 1) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
         Matrix newMatrix = getNewMatrix(getRows(), getColumns() + 1);
         int rows = getRows();
+        int columns = getColumns();
         int thisOffsetColumn = concatenateAfter ? 0 : 1;
         int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
         for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < getColumns(); column++) {
+            for (int column = 0; column < columns; column++) {
                 newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
             }
             newMatrix.setValue(row, otherOffsetColumn, other);
@@ -1957,11 +1976,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     public void print() {
-        for (int row = 0; row < getRows(); row++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
             System.out.print("[");
-            for (int column = 0; column < getColumns(); column++) {
+            for (int column = 0; column < columns; column++) {
                 System.out.print(getValue(row, column));
-                if (column < getColumns() - 1) System.out.print(" ");
+                if (column < columns - 1) System.out.print(" ");
             }
             System.out.println("]");
         }
