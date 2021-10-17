@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
