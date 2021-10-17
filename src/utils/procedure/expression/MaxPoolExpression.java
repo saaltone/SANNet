@@ -62,6 +62,15 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     }
 
     /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -71,14 +80,14 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        if (!maxPosCache.empty()) maxPos.put(index, maxPosCache.pop());
-        else maxPos.put(index, new HashMap<>());
-        maxPoolMatrixOperation.apply(argument1.getMatrix(index), maxPos.get(index), result.getNewMatrix(index));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        if (!maxPosCache.empty()) maxPos.put(sampleIndex, maxPosCache.pop());
+        else maxPos.put(sampleIndex, new HashMap<>());
+        maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -91,14 +100,14 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!maxPos.containsKey(index)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, maxPoolGradientMatrixOperation.apply(result.getGradient(index), maxPos.get(index), argument1.getEmptyMatrix()), false);
-        maxPosCache.push(maxPos.remove(index));
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!maxPos.containsKey(sampleIndex)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, maxPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), maxPos.get(sampleIndex), argument1.getEmptyMatrix()), false);
+        maxPosCache.push(maxPos.remove(sampleIndex));
     }
 
     /**

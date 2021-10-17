@@ -48,6 +48,15 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
     }
 
     /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -57,12 +66,12 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        averagePoolMatrixOperation.apply(argument1.getMatrix(index), result.getNewMatrix(index));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        averagePoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -75,12 +84,12 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, averagePoolGradientMatrixOperation.apply(result.getGradient(index), argument1.getEmptyMatrix()), false);
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getEmptyMatrix()), false);
     }
 
     /**

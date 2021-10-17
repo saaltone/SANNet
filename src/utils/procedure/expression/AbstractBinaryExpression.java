@@ -50,12 +50,12 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     /**
      * Updates expression forward direction dependency.
      *
-     * @param index index
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    protected void updateExpressionDependency(int index) throws MatrixException {
-        super.updateExpressionDependency(index);
-        argument2.updateMatrixDependency(index);
+    protected void updateExpressionDependency(int sampleIndex) throws MatrixException {
+        super.updateExpressionDependency(sampleIndex);
+        argument2.updateMatrixDependency(sampleIndex);
     }
 
     /**

@@ -18,7 +18,7 @@ import java.util.Set;
  * Assumes underlying class that implements specific expression.<br>
  *
  */
-public abstract class AbstractExpression implements Serializable {
+public abstract class AbstractExpression implements Expression, Serializable {
 
     @Serial
     private static final long serialVersionUID = -3692842009210981254L;
@@ -57,13 +57,13 @@ public abstract class AbstractExpression implements Serializable {
      * Next expression for expression calculation.
      *
      */
-    private AbstractExpression nextExpression;
+    private Expression nextExpression;
 
     /**
      * Previous expression for gradient calculation.
      *
      */
-    private AbstractExpression previousExpression;
+    private Expression previousExpression;
 
     /**
      * Constructor for abstract expression.
@@ -143,7 +143,7 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param nextExpression next expression.
      */
-    public void setNextExpression(AbstractExpression nextExpression) {
+    public void setNextExpression(Expression nextExpression) {
         this.nextExpression = nextExpression;
     }
 
@@ -152,9 +152,16 @@ public abstract class AbstractExpression implements Serializable {
      *
      * @param previousExpression previous expression.
      */
-    public void setPreviousExpression(AbstractExpression previousExpression) {
+    public void setPreviousExpression (Expression previousExpression) {
         this.previousExpression = previousExpression;
     }
+
+    /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected abstract boolean executeAsSingleStep();
 
     /**
      * Resets expression.
@@ -167,60 +174,62 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Calculates entire expression chain including normalization and regulation.
      *
-     * @param index index
-     * @param firstKey first key of inputs
-     * @param lastKey last key of inputs
+     * @param sampleIndex sample index
+     * @param firstSampleIndex first sample index
+     * @param lastSampleIndex last key of inputs
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(int index, int firstKey, int lastKey) throws MatrixException, DynamicParamException {
-        calculateExpressionStep(index == firstKey, index == lastKey, index);
-        if (nextExpression != null) nextExpression.calculateExpressionStep(index, firstKey, lastKey);
+    public void calculateExpressionStep(int sampleIndex, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
+        calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex, sampleIndex == lastSampleIndex);
+        if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndex, firstSampleIndex, lastSampleIndex);
     }
 
     /**
      * Calculates entire expression chain including normalization and regulation.
      *
-     * @param indices indices
-     * @param firstKey first key of inputs
-     * @param lastKey last key of inputs
+     * @param sampleIndices sample indices
+     * @param firstSampleIndex first sample index
+     * @param lastSampleIndex last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(Set<Integer> indices, int firstKey, int lastKey) throws MatrixException, DynamicParamException {
-        for (Integer index : indices) {
-            calculateExpressionStep(index == firstKey, index == lastKey, index);
+    public void calculateExpressionStep(Set<Integer> sampleIndices, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
+        for (Integer sampleIndex : sampleIndices) {
+            calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex, sampleIndex == lastSampleIndex);
         }
-        if (nextExpression != null) nextExpression.calculateExpressionStep(indices, firstKey, lastKey);
+        if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndices, firstSampleIndex, lastSampleIndex);
     }
 
     /**
      * Calculates entire expression step including normalization and regulation.
      *
-     * @param firstStep true if this is first calculation step for expression
-     * @param lastStep true if this is last calculation step for expression
-     * @param index index
+     * @param sampleIndex sample index
+     * @param isFirstSampleIndex true if this is first sample index
+     * @param isLastSampleIndex true if this is last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(boolean firstStep, boolean lastStep, int index) throws MatrixException, DynamicParamException {
-        updateExpressionDependency(index);
-        if (firstStep) forwardRegularize();
-        if (firstStep) forwardNormalize();
-        forwardNormalize(index);
-        if (firstStep) calculateExpression();
-        calculateExpression(index);
-        if (lastStep) forwardNormalizeFinalize();
+    public void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
+        updateExpressionDependency(sampleIndex);
+        if (isFirstSampleIndex) forwardRegularize();
+        if (isFirstSampleIndex) forwardNormalize();
+        forwardNormalize(sampleIndex);
+        if (executeAsSingleStep()) {
+            if (isFirstSampleIndex) calculateExpression();
+        }
+        else calculateExpression(sampleIndex);
+        if (isLastSampleIndex) forwardNormalizeFinalize();
     }
 
     /**
      * Updates expression forward direction dependency.
      *
-     * @param index index
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    protected void updateExpressionDependency(int index) throws MatrixException {
-        argument1.updateMatrixDependency(index);
+    protected void updateExpressionDependency(int sampleIndex) throws MatrixException {
+        argument1.updateMatrixDependency(sampleIndex);
     }
 
     /**
@@ -234,68 +243,70 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index.
      * @throws MatrixException throws exception if calculation fails.
      */
-    protected abstract void calculateExpression(int index) throws MatrixException;
+    protected abstract void calculateExpression(int sampleIndex) throws MatrixException;
 
     /**
      * Calculates entire gradient expression chain including normalization and regulation.
      *
-     * @param index index
-     * @param lastKey last key of inputs
+     * @param sampleIndex sample index
+     * @param lastSampleIndex last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientStep(int index, int lastKey) throws MatrixException, DynamicParamException {
-        calculateGradientStep (index == lastKey, index);
-        if (previousExpression != null) previousExpression.calculateGradientStep(index, lastKey);
+    public void calculateGradientStep(int sampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
+        calculateGradientStep (sampleIndex, sampleIndex == lastSampleIndex);
+        if (previousExpression != null) previousExpression.calculateGradientStep(sampleIndex, lastSampleIndex);
     }
 
     /**
      * Calculates entire gradient expression chain including normalization and regulation.
      *
-     * @param indices indices
-     * @param lastKey last key of inputs
-     * @param steps number of gradient steps taken
+     * @param sampleIndices sample indices
+     * @param lastSampleIndex last sample index
+     * @param numberOfGradientSteps number of gradient steps taken
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientStep(Set<Integer> indices, int lastKey, int steps) throws MatrixException, DynamicParamException {
-        int step = 0;
-        for (Integer index : indices) {
-            boolean stopAtStep = steps > 0 && ++step >= steps;
-            calculateGradientStep (index == lastKey || stopAtStep, index);
-            if (stopAtStep) break;
+    public void calculateGradientStep(Set<Integer> sampleIndices, int lastSampleIndex, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+        int gradientStepCount = 0;
+        for (Integer sampleIndex : sampleIndices) {
+            boolean stopAtGradientStep = numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps;
+            calculateGradientStep (sampleIndex, sampleIndex == lastSampleIndex || stopAtGradientStep);
+            if (stopAtGradientStep) break;
         }
-        if (previousExpression != null) previousExpression.calculateGradientStep(indices, lastKey, steps);
+        if (previousExpression != null) previousExpression.calculateGradientStep(sampleIndices, lastSampleIndex, numberOfGradientSteps);
     }
 
     /**
      * Calculates gradient step including normalization and regulation.
      *
-     * @param lastStep true if this is last gradient step for expression
-     * @param index index
+     * @param sampleIndex sample index
+     * @param isLastSampleIndex true if this is last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientStep(boolean lastStep, int index) throws MatrixException, DynamicParamException {
-        updateGradientDependency(index);
-        if (lastStep) calculateGradient();
-        calculateGradient(index);
-        backwardNormalize(index);
-        if (lastStep) backwardNormalize();
-        if (lastStep) backwardRegularize();
+    private void calculateGradientStep(int sampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
+        updateGradientDependency(sampleIndex);
+        if (executeAsSingleStep()) {
+            if (isLastSampleIndex) calculateGradient();
+        }
+        else calculateGradient(sampleIndex);
+        backwardNormalize(sampleIndex);
+        if (isLastSampleIndex) backwardNormalize();
+        if (isLastSampleIndex) backwardRegularize();
     }
 
     /**
      * Updates gradient dependency to backward direction.
      *
-     * @param index index
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    protected void updateGradientDependency(int index) throws MatrixException {
-        result.updateGradientDependency(index);
+    protected void updateGradientDependency(int sampleIndex) throws MatrixException {
+        result.updateGradientDependency(sampleIndex);
     }
 
     /**
@@ -308,10 +319,10 @@ public abstract class AbstractExpression implements Serializable {
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    protected abstract void calculateGradient(int index) throws MatrixException;
+    protected abstract void calculateGradient(int sampleIndex) throws MatrixException;
 
     /**
      * Execute forward normalization to constant node.
@@ -406,7 +417,7 @@ public abstract class AbstractExpression implements Serializable {
      * Prints expression chain.
      *
      */
-    private void invokePrintExpressionChain() {
+    public void invokePrintExpressionChain() {
         printExpression();
         if (nextExpression != null) nextExpression.invokePrintExpressionChain();
     }
@@ -424,7 +435,7 @@ public abstract class AbstractExpression implements Serializable {
      * Prints gradient chain.
      *
      */
-    private void invokePrintGradientChain() {
+    public void invokePrintGradientChain() {
         printGradient();
         if (previousExpression != null) previousExpression.invokePrintGradientChain();
     }

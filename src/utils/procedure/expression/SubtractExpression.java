@@ -44,6 +44,15 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
     }
 
     /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -53,12 +62,12 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        subtractMatrixOperation.apply(argument1.getMatrix(index), argument2.getMatrix(index), result.getNewMatrix(index));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null || argument2.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        subtractMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -71,13 +80,13 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, result.getGradient(index), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(index, result.getGradient(index), true);
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), true);
     }
 
     /**

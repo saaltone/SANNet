@@ -53,6 +53,15 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     }
 
     /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
+    }
+
+    /**
      * Returns unary function type.
      *
      * @return unary function type.
@@ -80,12 +89,12 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Argument for operation not defined");
-        unaryMatrixOperation.applyFunction(argument1.getMatrix(index), result.getNewMatrix(index));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Argument for operation not defined");
+        unaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -98,12 +107,12 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, unaryMatrixOperation.applyGradient(result.getMatrix(index), result.getGradient(index)), false);
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, unaryMatrixOperation.applyGradient(result.getMatrix(sampleIndex), result.getGradient(sampleIndex)), false);
     }
 
     /**

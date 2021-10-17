@@ -18,10 +18,10 @@ import java.io.Serializable;
 public class SumExpression extends AbstractUnaryExpression implements Serializable {
 
     /**
-     * True if calculation is done as multi matrix.
+     * True if calculation is done as single step otherwise false.
      *
      */
-    private final boolean asMultiMatrix;
+    private final boolean executeAsSingleStep;
 
     /**
      * Constructor for sum operation.
@@ -29,12 +29,21 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param result result of expression.
-     * @param asMultiMatrix true if calculation is done per index otherwise over all indices.
+     * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public SumExpression(int expressionID, Node argument1, Node result, boolean asMultiMatrix) throws MatrixException {
+    public SumExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
         super("SUM", "SUM", expressionID, argument1, result);
-        this.asMultiMatrix = asMultiMatrix;
+        this.executeAsSingleStep = executeAsSingleStep;
+    }
+
+    /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return executeAsSingleStep;
     }
 
     /**
@@ -43,7 +52,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression() throws MatrixException {
-        if (!asMultiMatrix) return;
+        if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         Matrix sum = argument1.getMatrices().sum();
         result.setMultiIndex(false);
@@ -53,13 +62,13 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (asMultiMatrix) return;
-        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        result.setMatrix(index, argument1.getMatrix(index).sumAsMatrix());
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (executeAsSingleStep()) return;
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).sumAsMatrix());
     }
 
     /**
@@ -68,7 +77,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateGradient() throws MatrixException {
-        if (!asMultiMatrix) return;
+        if (!executeAsSingleStep()) return;
         if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, result.getGradient(), false);
     }
@@ -76,13 +85,13 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (asMultiMatrix) return;
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, result.getGradient(index), false);
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (executeAsSingleStep()) return;
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
     }
 
     /**

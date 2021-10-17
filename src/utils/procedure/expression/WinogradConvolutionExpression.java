@@ -131,11 +131,22 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     private void maskZeros(Matrix matrix) {
         matrix.setMask();
-        for (int row = 0; row < matrix.getRows(); row++) {
-            for (int column = 0; column < matrix.getColumns(); column++) {
+        int rows = matrix.getRows();
+        int columns = matrix.getColumns();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 if (matrix.getValue(row, column) == 0) matrix.getMask().setMask(row, column, true);
             }
         }
+    }
+
+    /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
     }
 
     /**
@@ -148,13 +159,13 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null || argument2.getMatrix(index) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        if (preprocessedFilter == null) preprocessedFilter = G.dot(argument2.getMatrix(index)).dot(GT);
-        winogradConvolutionMatrixOperation.apply(argument1.getMatrix(index), preprocessedFilter, result.getNewMatrix(index));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null || argument2.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        if (preprocessedFilter == null) preprocessedFilter = G.dot(argument2.getMatrix(sampleIndex)).dot(GT);
+        winogradConvolutionMatrixOperation.apply(argument1.getMatrix(sampleIndex), preprocessedFilter, result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -167,13 +178,13 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(index, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(index), argument2.getMatrix(index), argument1.getEmptyMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(index, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(index), argument1.getMatrix(index), argument2.getEmptyMatrix()), false);
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getEmptyMatrix()), false);
         preprocessedFilter = null;
     }
 

@@ -62,6 +62,15 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     }
 
     /**
+     * Returns true is expression is executed as single step otherwise false.
+     *
+     * @return true is expression is executed as single step otherwise false.
+     */
+    protected boolean executeAsSingleStep() {
+        return false;
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -71,12 +80,12 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     /**
      * Calculates expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int index) throws MatrixException {
-        if (argument1.getMatrix(index) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
-        result.setMatrix(index, argument1.getMatrix(index).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(index))));
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
     }
 
     /**
@@ -89,16 +98,16 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
     /**
      * Calculates gradient of expression.
      *
-     * @param index data index.
+     * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
-    public void calculateGradient(int index) throws MatrixException {
-        if (result.getGradient(index) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
-            Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(index), result.getMatrix(index), argument1.getEmptyMatrix());
-            Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(index), normGradientMatrix, argument1.getEmptyMatrix());
-            argument1.cumulateGradient(index, resultMatrix, false);
+            Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getEmptyMatrix());
+            Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), normGradientMatrix, argument1.getEmptyMatrix());
+            argument1.cumulateGradient(sampleIndex, resultMatrix, false);
         }
     }
 
