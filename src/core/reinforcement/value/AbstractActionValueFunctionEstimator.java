@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package core.reinforcement.value;
 
 import core.reinforcement.function.FunctionEstimator;
