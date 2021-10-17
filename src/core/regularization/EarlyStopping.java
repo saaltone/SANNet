@@ -5,13 +5,17 @@
 
 package core.regularization;
 
-import core.metrics.Metrics;
+import core.metrics.Metric;
+import core.metrics.SingleRegressionMetric;
 import utils.Configurable;
 import utils.DynamicParam;
 import utils.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * Implements early stopping method for neural network.<br>
@@ -45,6 +49,12 @@ public class EarlyStopping implements Configurable, Serializable {
     private int trainingAverageSize;
 
     /**
+     * Training averages.
+     *
+     */
+    private final Deque<Double> trainingAverages = new ArrayDeque<>();
+
+    /**
      * Sets stop threshold for training error condition.
      *
      */
@@ -63,6 +73,12 @@ public class EarlyStopping implements Configurable, Serializable {
     private int validationAverageSize;
 
     /**
+     * Validation averages.
+     *
+     */
+    private final Deque<Double> validationAverages = new ArrayDeque<>();
+
+    /**
      * Sets stop threshold for validation error condition.
      *
      */
@@ -78,13 +94,13 @@ public class EarlyStopping implements Configurable, Serializable {
      * Reference to training error instance.
      *
      */
-    private transient Metrics trainingError;
+    private transient SingleRegressionMetric trainingMetric;
 
     /**
      * Reference to validation error instance.
      *
      */
-    private transient Metrics validationError;
+    private transient Metric validationMetric;
 
     /**
      * Flag if training stop condition has been achieved.
@@ -171,19 +187,19 @@ public class EarlyStopping implements Configurable, Serializable {
     /**
      * Sets training error reference.
      *
-     * @param trainingError training error reference.
+     * @param trainingMetric training error reference.
      */
-    public void setTrainingError(Metrics trainingError) {
-        this.trainingError = trainingError;
+    public void setTrainingMetric(SingleRegressionMetric trainingMetric) {
+        this.trainingMetric = trainingMetric;
     }
 
     /**
      * Sets validation error reference.
      *
-     * @param validationError validation error reference.
+     * @param validationMetric validation error reference.
      */
-    public void setValidationError(Metrics validationError) {
-        this.validationError = validationError;
+    public void setValidationMetric(Metric validationMetric) {
+        this.validationMetric = validationMetric;
     }
 
     /**
@@ -196,7 +212,7 @@ public class EarlyStopping implements Configurable, Serializable {
      */
     public void evaluateTrainingCondition(int iteration) {
         if (!trainingStopCondition && iteration >= trainingAverageSize) {
-            double lastAverage = trainingError.getAverage(trainingAverageSize);
+            double lastAverage = getAverageError(trainingAverages, trainingAverageSize, trainingMetric.getLastError());
             if (previousTrainingAverage <= lastAverage && previousTrainingAverage != Double.NEGATIVE_INFINITY) trainingStopCount++;
             else {
                 previousTrainingAverage = lastAverage;
@@ -213,10 +229,12 @@ public class EarlyStopping implements Configurable, Serializable {
      * If yes validation condition count is increased otherwise it is reset to zero.<br>
      *
      * @param iteration current neural network training iteration.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void evaluateValidationCondition(int iteration) {
+    public void evaluateValidationCondition(int iteration) throws MatrixException, DynamicParamException {
         if (!validationStopCondition && iteration >= validationAverageSize) {
-            double lastAverage = validationError.getAverage(validationAverageSize);
+            double lastAverage = getAverageError(validationAverages, validationAverageSize, validationMetric.getLastError());
             if (previousValidationAverage <= lastAverage && previousValidationAverage != Double.NEGATIVE_INFINITY) validationStopCount++;
             else {
                 previousValidationAverage = lastAverage;
@@ -224,6 +242,22 @@ public class EarlyStopping implements Configurable, Serializable {
             }
             if (validationStopCount >= validationStopThreshold) validationStopCondition = true;
         }
+    }
+
+    /**
+     * Returns cumulative error.
+     *
+     * @param errors errors.
+     * @param maxSize max size of error queue.
+     * @param lastError latest error.
+     * @return average error.
+     */
+    private double getAverageError(Deque<Double> errors, int maxSize, double lastError) {
+        double cumulativeError = 0;
+        if (errors.size() == maxSize) errors.pollLast();
+        errors.addFirst(lastError);
+        for (Double error : errors) cumulativeError += error;
+        return cumulativeError / (double)errors.size();
     }
 
     /**
