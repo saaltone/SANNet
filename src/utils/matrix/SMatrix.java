@@ -165,26 +165,17 @@ public class SMatrix extends ComputableMatrix {
      * @return new matrix
      */
     protected Matrix getNewMatrix(int rows, int columns) {
-        return new SMatrix(rows, columns);
+        return forceDMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
     }
 
     /**
-     * Returns new matrix of same dimensions.
+     * Returns constant matrix
      *
-     * @return new matrix of same dimensions.
+     * @param constant constant
+     * @return new matrix
      */
-    public Matrix getNewMatrix() {
-        return isScalar() ? new SMatrix(0) : new SMatrix(getRows(), getColumns());
-    }
-
-    /**
-     * Returns new matrix of same dimensions optionally as transposed.
-     *
-     * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
-     * @return new matrix of same dimensions.
-     */
-    public Matrix getNewMatrix(boolean asTransposed) {
-        return isScalar() ? new SMatrix(0) : !asTransposed ? new SMatrix(getRows(), getColumns()) :  new SMatrix(getColumns(), getRows());
+    protected Matrix getNewMatrix(double constant) {
+        return forceDMatrix ? new DMatrix(constant) : new SMatrix(constant);
     }
 
 }
