@@ -208,7 +208,8 @@ public class OnlineMemory implements Memory, Serializable {
     public TreeSet<StateTransition> getRandomStateTransitions() {
         TreeSet<StateTransition> result = new TreeSet<>();
         StateTransition[] sampleArray = (StateTransition[]) stateTransitionSet.toArray();
-        for (int sampleIndex = 0; sampleIndex < (batchSize < 0 ? stateTransitionSet.size() : batchSize); sampleIndex++) result.add(sampleArray[random.nextInt(sampleArray.length)]);
+        int maxIndex = (batchSize < 0 ? stateTransitionSet.size() : batchSize);
+        for (int sampleIndex = 0; sampleIndex < maxIndex; sampleIndex++) result.add(sampleArray[random.nextInt(sampleArray.length)]);
         return result;
     }
 
