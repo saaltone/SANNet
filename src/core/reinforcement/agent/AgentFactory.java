@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package core.reinforcement.agent;
 
 import core.network.NeuralNetwork;
@@ -80,6 +85,77 @@ public class AgentFactory {
          *
          */
         MCTS
+    }
+
+    /**
+     * Creates agent.
+     *
+     * @param agentFunctionEstimator agent estimator for creation of NN function estimators
+     * @param agentAlgorithmType agent algorithm.
+     * @param environment reference to environment
+     * @param inputSize number of inputs for estimator.
+     * @param outputSize number of output for estimator.
+     * @param singleFunctionEstimator is true single function estimator for policy and value function is assumed otherwise separated estimators.
+     * @param executablePolicyType executable policy type.
+     * @param params parameters for agent.
+     * @return agent.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
+     * @throws IOException throws exception if cloning of neural network fails.
+     * @throws ClassNotFoundException throws exception if cloning of neural network fails.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     */
+    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean singleFunctionEstimator, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
+        Memory estimatorMemory = usesOnlineMemory(agentAlgorithmType) ? new OnlineMemory() : new PriorityMemory();
+        FunctionEstimator policyEstimator;
+        FunctionEstimator valueEstimator;
+        boolean nnEstimator = switch (agentAlgorithmType) {
+            case QN -> false;
+            case DQN, DDQN, Sarsa, ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+        };
+        boolean policyGradient = switch (agentAlgorithmType) {
+            case QN, DQN, DDQN, Sarsa -> false;
+            case ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+        };
+        boolean stateValue = switch (agentAlgorithmType) {
+            case QN, DQN, DDQN, Sarsa, SACDiscrete, REINFORCE -> false;
+            case ActorCritic, PPO, MCTS -> true;
+        };
+        if (singleFunctionEstimator) {
+            // Uses single neural network estimator for both policy and value functions (works for policy gradients).
+            NeuralNetwork stateActionValueNN = agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize);
+            policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+            valueEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+        }
+        else {
+            // Uses separate estimators for value and policy functions.
+            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+        }
+        return switch (agentAlgorithmType) {
+            case QN, DQN -> new DQNLearning(environment, executablePolicyType, valueEstimator, params);
+            case DDQN -> new DDQNLearning(environment, executablePolicyType, valueEstimator, params);
+            case Sarsa -> new Sarsa(environment, executablePolicyType, valueEstimator, params);
+            case ActorCritic -> new ActorCritic(environment, executablePolicyType, policyEstimator, valueEstimator, params);
+            case PPO -> new PPO(environment, executablePolicyType, policyEstimator, valueEstimator, params);
+            case SACDiscrete -> new SoftActorCriticDiscrete(environment, executablePolicyType, policyEstimator, valueEstimator, new DMatrix(0), params);
+            case REINFORCE -> new REINFORCE(environment, executablePolicyType, policyEstimator, params);
+            case MCTS -> new MCTSLearning(environment, policyEstimator, valueEstimator, params);
+        };
+    }
+
+    /**
+     * Returns default assumption for memory type.
+     *
+     * @param agentAlgorithmType agent algorithm type.
+     * @return assumption for memory type.
+     */
+    private static boolean usesOnlineMemory(AgentAlgorithmType agentAlgorithmType) {
+        return switch (agentAlgorithmType) {
+            case QN, DQN, Sarsa, REINFORCE, ActorCritic, PPO, MCTS -> true;
+            case DDQN, SACDiscrete -> false;
+        };
     }
 
     /**
