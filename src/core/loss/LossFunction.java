@@ -111,8 +111,9 @@ public class LossFunction extends BinaryFunction {
                 return target;
             }
             case POLICY_VALUE -> {
-                Matrix error = new DMatrix(target.getRows(), 1);
-                for (int row = 0; row < target.getRows(); row++) {
+                int targetRows = target.getRows();
+                Matrix error = new DMatrix(targetRows, 1);
+                for (int row = 0; row < targetRows; row++) {
                     error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(target.getValue(0, 0) - output.getValue(0, 0), 2)) : target.getValue(row, 0));
                 }
                 return error;
@@ -149,8 +150,9 @@ public class LossFunction extends BinaryFunction {
                 return target;
             }
             case POLICY_VALUE -> {
-                Matrix gradient = new DMatrix(target.getRows(), 1);
-                for (int row = 0; row < target.getRows(); row++) {
+                int targetRows = target.getRows();
+                Matrix gradient = new DMatrix(targetRows, 1);
+                for (int row = 0; row < targetRows; row++) {
                     gradient.setValue(row, 0 , row == 0 ? (output.getValue(0, 0) - target.getValue(0, 0)) : target.getValue(row, 0));
                 }
                 return gradient;
