@@ -5,10 +5,10 @@
 
 package core.regularization;
 
-import utils.Configurable;
-import utils.DynamicParam;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;

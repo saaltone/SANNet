@@ -7,9 +7,9 @@ package core.regularization;
 
 import core.metrics.Metric;
 import core.metrics.SingleRegressionMetric;
-import utils.Configurable;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
