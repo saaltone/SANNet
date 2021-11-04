@@ -14,9 +14,9 @@ import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
 import core.regularization.EarlyStopping;
-import utils.DynamicParamException;
-import utils.Persistence;
-import utils.Sequence;
+import utils.configurable.DynamicParamException;
+import core.network.Persistence;
+import utils.sampling.Sequence;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
