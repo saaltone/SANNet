@@ -5,15 +5,11 @@
 
 package core.preprocess;
 
-import utils.matrix.MMatrix;
-import utils.matrix.Matrix;
-import utils.matrix.SMatrix;
+import utils.matrix.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Defines class for reading text file.<br>
@@ -36,24 +32,10 @@ public class ReadTextFile {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
-        File file = new File(fileName);
-
-        Scanner scanner = new Scanner(file);
+        StringBuilder text = readText(fileName, skipRowsFromStart);
 
         LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> inputData = new LinkedHashMap<>();
         LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> outputData = new LinkedHashMap<>();
-        int countSkipRows = 0;
-        StringBuilder text = new StringBuilder();
-        while (scanner.hasNextLine()) {
-            while (countSkipRows < skipRowsFromStart) {
-                scanner.nextLine();
-                countSkipRows++;
-            }
-            String line = scanner.nextLine();
-            text.append(line);
-        }
-        text = new StringBuilder(text.toString().toLowerCase());
-
         int length = Math.min(text.length() - numberOfInputCharacters, text.length() - numberOfOutputCharacters - inputOutputDelta) + 1;
         for (int pos = 0; pos < length; pos++) {
             LinkedHashMap<Integer, Integer> inValues = new LinkedHashMap<>();
@@ -146,6 +128,109 @@ public class ReadTextFile {
      */
     public static int charSize() {
         return 44;
+    }
+
+    /**
+     * Reads text file and maps each word as separate binary encoded input and one-hot encoded output.<br>
+     *
+     * @param fileName name of file to be read.
+     * @param numberOfInputWords number of words per input column.
+     * @param skipRowsFromStart skips specified number of rows from start.
+     * @param dictionaryIndexMapping dictionary index mapping.
+     * @return structure containing input and output matrices.
+     * @throws FileNotFoundException throws exception if file is not found.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+        StringBuilder readText = readText(fileName, skipRowsFromStart);
+        String[] words = readText.toString().split(" ");
+        Arrays.setAll(words, index -> words[index].trim());
+        Arrays.setAll(words, index -> words[index].replaceAll("[^a-zäöåA-ZÄÖÅ]", "").toLowerCase());
+        TreeSet<String> dictionary = new TreeSet<>();
+        Collections.addAll(dictionary, words);
+
+        int maxBits = ComputableMatrix.numberOfBits(dictionary.size());
+        HashMap<Matrix, Integer> dictionaryBinaryIndexMapping = new HashMap<>();
+        ArrayList<Matrix> encodedWords = new ArrayList<>();
+        int index = 0;
+        for (String word : dictionary) {
+            if (!word.equals("")) {
+                Matrix binaryMatrix = ComputableMatrix.encodeToBitColumnVector(index++, maxBits);
+                encodedWords.add(binaryMatrix);
+                dictionaryIndexMapping.put(index - 1, word);
+                dictionaryBinaryIndexMapping.put(binaryMatrix, index - 1);
+            }
+        }
+
+        LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
+        LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
+        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
+        result.put(0, inputs);
+        result.put(1, outputs);
+
+        ArrayDeque<Matrix> encodedWordQueue = new ArrayDeque<>();
+        int dictionarySize = encodedWords.size();
+        int pos = 0;
+        for (Matrix encodedWord : encodedWords) {
+            encodedWordQueue.addLast(encodedWord);
+            if (encodedWordQueue.size() >= numberOfInputWords + 1) {
+                Matrix[] inputMatrices = new Matrix[numberOfInputWords];
+                Matrix[] outputMatrices = new Matrix[1];
+                Iterator<Matrix> iterator = encodedWordQueue.iterator();
+                int wordIndex = 0;
+                while (iterator.hasNext()) {
+                    Matrix currentWordMatrix = iterator.next();
+                    if (wordIndex < numberOfInputWords) inputMatrices[wordIndex] = currentWordMatrix;
+                    else {
+                        Matrix outputMatrix = new DMatrix(dictionarySize, 1);
+                        int currentIndex = -1;
+                        for (Matrix matrix : dictionaryBinaryIndexMapping.keySet()) {
+                            if (matrix.equals(currentWordMatrix)) {
+                                currentIndex = dictionaryBinaryIndexMapping.get(matrix);
+                                break;
+                            }
+                        }
+                        outputMatrix.setValue(currentIndex, 0, 1);
+                        outputMatrices[wordIndex - numberOfInputWords] = outputMatrix;
+                    }
+                    wordIndex++;
+                }
+
+                JMatrix joinedInputMatrix = new JMatrix(numberOfInputWords * maxBits,1, inputMatrices, true);
+                JMatrix joinedOutputMatrix = new JMatrix(dictionarySize,1, outputMatrices, true);
+                inputs.put(pos, new MMatrix(joinedInputMatrix));
+                outputs.put(pos, new MMatrix(joinedOutputMatrix));
+                pos++;
+
+                encodedWordQueue.removeFirst();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Read and returns text from file. Converts text to lower case.
+     *
+     * @param fileName file name
+     * @param skipRowsFromStart number of rows skipped from start.
+     * @return text from file.
+     * @throws FileNotFoundException throws exception if file is not found.
+     */
+    public static StringBuilder readText(String fileName, int skipRowsFromStart) throws FileNotFoundException {
+        File file = new File(fileName);
+        Scanner scanner = new Scanner(file);
+        int countSkipRows = 0;
+        StringBuilder text = new StringBuilder();
+        while (scanner.hasNextLine()) {
+            while (countSkipRows < skipRowsFromStart) {
+                scanner.nextLine();
+                countSkipRows++;
+            }
+            String line = scanner.nextLine();
+            text.append(line).append(" ");
+        }
+        text = new StringBuilder(text.toString().toLowerCase());
+        return text;
     }
 
 }
