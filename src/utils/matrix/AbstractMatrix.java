@@ -5,7 +5,7 @@
 
 package utils.matrix;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
@@ -1434,7 +1434,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
             applyConvolve(filter, result);
-            procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+            procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
     }
 
@@ -1461,7 +1461,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
             applyCrosscorrelate(filter, result);
-            procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+            procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
     }
 
@@ -1501,7 +1501,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(filter, result);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
     }
 
@@ -1544,7 +1544,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
     }
 
@@ -1583,7 +1583,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation(), getFilterRowSize(), getFilterColumnSize());
+            procedureFactory.createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation());
         }
     }
 
