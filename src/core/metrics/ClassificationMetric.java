@@ -6,7 +6,7 @@
 package core.metrics;
 
 import core.network.NeuralNetworkException;
-import utils.Sequence;
+import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -124,7 +124,13 @@ public class ClassificationMetric implements Metric, Serializable {
      * Confusion matrix.
      *
      */
-    HashMap<Integer, HashMap<Integer, Integer>> confusion;
+    private HashMap<Integer, HashMap<Integer, Integer>> confusion;
+
+    /**
+     * If true print confusion matrix along other classification metrics.
+     *
+     */
+    private boolean printConfusionMatrix = true;
 
     /**
      * Default constructor for classification class.
@@ -167,10 +173,41 @@ public class ClassificationMetric implements Metric, Serializable {
     /**
      * Constructor for Classification.
      *
+     * @param averageType average type.
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
+     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     * @param printConfusionMatrix if true verbosing prints confusion matrix otherwise not.
+     */
+    public ClassificationMetric(AverageType averageType, boolean multiLabel, double multiLabelThreshold, boolean printConfusionMatrix) {
+        this(averageType, multiLabel, multiLabelThreshold);
+        this.printConfusionMatrix = printConfusionMatrix;
+    }
+
+    /**
+     * Constructor for Classification.
+     *
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
      */
     public ClassificationMetric(boolean multiLabel) {
         this.multiLabel = multiLabel;
+    }
+
+    /**
+     * Sets if confusion matrix is printed along other classification metrics.
+     *
+     * @param printConfusionMatrix if true confusion matrix is printed along other classification metrics.
+     */
+    public void setPrintConfusionMatrix(boolean printConfusionMatrix) {
+        this.printConfusionMatrix = printConfusionMatrix;
+    }
+
+    /**
+     * Returns if confusion matrix is printed along other classification metrics.
+     *
+     * @return if true confusion matrix is printed along other classification metrics.
+     */
+    public boolean getPrintConfusionMatrix() {
+        return printConfusionMatrix;
     }
 
     /**
@@ -179,7 +216,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @return reference metric.
      */
     public Metric reference() {
-        return new ClassificationMetric(averageType, multiLabel, multiLabelThreshold);
+        return new ClassificationMetric(averageType, multiLabel, multiLabelThreshold, getPrintConfusionMatrix());
     }
 
     /**
@@ -820,7 +857,7 @@ public class ClassificationMetric implements Metric, Serializable {
         System.out.println("  Recall: " + classificationRecall());
         System.out.println("  Specificity: " + classificationSpecificity());
         System.out.println("  F1 Score: " + classificationF1Score());
-        printConfusionMatrix();
+        if (printConfusionMatrix) printConfusionMatrix();
     }
 
     /**
