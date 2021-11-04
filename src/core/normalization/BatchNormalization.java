@@ -6,7 +6,9 @@
 package core.normalization;
 
 import core.optimization.Optimizer;
-import utils.*;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.node.Node;
@@ -355,9 +357,8 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forward(Node node) throws MatrixException, DynamicParamException {
-        if (node.size() < 2) return;
-
         if (isTraining) {
+            if (node.size() < 2) return;
             batchSize = node.size();
 
             node.setMatrices(procedure.calculateExpression(node.getMatrices()));
@@ -389,7 +390,7 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backward(Node node) throws MatrixException, DynamicParamException {
-        if (node.size() < 2) return;
+        if (node.size() < 2 || !isTraining) return;
 
         node.setGradients(procedure.calculateGradient(node.getGradients()));
 
