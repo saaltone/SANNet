@@ -6,7 +6,7 @@
 package core.activation;
 
 import core.network.NeuralNetworkException;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
 import utils.matrix.UnaryFunctionType;
