@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for convolution operation.<br>
+ * Class that defines expression for convolution operation.<br>
  *
  */
 public class ConvolveExpression extends AbstractBinaryExpression implements Serializable {

@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for subtraction operation.<br>
+ * Class that defines expression for subtraction operation.<br>
  *
  */
 public class SubtractExpression extends AbstractBinaryExpression implements Serializable {

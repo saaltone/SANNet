@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for add operation.<br>
+ * Class that defines expression for add operation.<br>
  *
  */
 public class AddExpression extends AbstractBinaryExpression implements Serializable {

@@ -14,7 +14,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for binary function.<br>
+ * Class that defines expression for binary function.<br>
  *
  */
 public class BinaryFunctionExpression extends AbstractBinaryExpression implements Serializable {

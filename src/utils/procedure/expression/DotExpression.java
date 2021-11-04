@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for dot operation.<br>
+ * Class that defines expression for dot operation.<br>
  *
  */
 public class DotExpression extends AbstractBinaryExpression implements Serializable {

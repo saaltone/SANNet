@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for division operation.<br>
+ * Class that defines expression for division operation.<br>
  *
  */
 public class DivideExpression extends AbstractBinaryExpression implements Serializable {

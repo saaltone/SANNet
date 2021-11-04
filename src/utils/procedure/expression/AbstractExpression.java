@@ -5,7 +5,7 @@
 
 package utils.procedure.expression;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
- * Abstract class that describes single computable expression including gradient expression.<br>
+ * Abstract class that defines single computable expression including gradient expression.<br>
  * Assumes underlying class that implements specific expression.<br>
  *
  */
@@ -210,7 +210,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
+    private void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
         updateExpressionDependency(sampleIndex);
         if (isFirstSampleIndex) forwardRegularize();
         if (isFirstSampleIndex) forwardNormalize();

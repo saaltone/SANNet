@@ -5,7 +5,7 @@
 
 package utils.procedure.expression;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 

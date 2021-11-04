@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for multiply operation.<br>
+ * Class that defines expression for multiply operation.<br>
  *
  */
 public class MultiplyExpression extends AbstractBinaryExpression implements Serializable {

@@ -5,7 +5,7 @@
 
 package utils.procedure.expression;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that describes expression for standard deviation operation.<br>
+ * Class that defines expression for standard deviation operation.<br>
  *
  */
 public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {

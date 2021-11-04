@@ -1,6 +1,6 @@
 package utils.procedure.expression;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
@@ -95,17 +95,6 @@ public interface Expression {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     void calculateExpressionStep(Set<Integer> sampleIndices, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
-
-    /**
-     * Calculates entire expression step including normalization and regulation.
-     *
-     * @param sampleIndex sample index
-     * @param isFirstSampleIndex true if this is first sample index
-     * @param isLastSampleIndex true if this is last sample index
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates entire gradient expression chain including normalization and regulation.

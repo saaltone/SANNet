@@ -14,7 +14,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that describes expression for crosscorrelation operation.<br>
+ * Class that defines expression for crosscorrelation operation.<br>
  *
  */
 public class CrosscorrelateExpression extends AbstractBinaryExpression implements Serializable {
