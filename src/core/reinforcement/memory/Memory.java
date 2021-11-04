@@ -5,8 +5,8 @@
 
 package core.reinforcement.memory;
 
-import utils.Configurable;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParamException;
 
 import java.util.TreeSet;
 

@@ -5,8 +5,8 @@
 
 package core.reinforcement.memory;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -206,10 +206,11 @@ public class OnlineMemory implements Memory, Serializable {
      * @return retrieved state transitions.
      */
     public TreeSet<StateTransition> getRandomStateTransitions() {
+        if (stateTransitionSet.isEmpty()) return new TreeSet<>();
         TreeSet<StateTransition> result = new TreeSet<>();
-        StateTransition[] sampleArray = (StateTransition[]) stateTransitionSet.toArray();
+        Object[] sampleArray = stateTransitionSet.toArray();
         int maxIndex = (batchSize < 0 ? stateTransitionSet.size() : batchSize);
-        for (int sampleIndex = 0; sampleIndex < maxIndex; sampleIndex++) result.add(sampleArray[random.nextInt(sampleArray.length)]);
+        for (int sampleIndex = 0; sampleIndex < maxIndex; sampleIndex++) result.add((StateTransition)sampleArray[random.nextInt(sampleArray.length)]);
         return result;
     }
 

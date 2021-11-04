@@ -5,8 +5,8 @@
 
 package core.reinforcement.memory;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
