@@ -12,7 +12,7 @@ import core.layer.LayerType;
 import core.optimization.OptimizationType;
 import core.reinforcement.agent.*;
 import core.reinforcement.policy.executablepolicy.*;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import javax.swing.*;
@@ -834,7 +834,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case QN -> "agentUpdateCycle = 100, lambda = 0.5, optimizerName = AMSGrad, learningRate = 0.01";
             case DDQN -> "lambda = 0.5, applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case Sarsa, ActorCritic, PPO, REINFORCE -> "lambda = 1";
-            case SACDiscrete -> "lambda = 0.5, applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 2000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
+            case SACDiscrete -> "lambda = 0, applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 2000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
             case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
