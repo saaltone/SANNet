@@ -6,9 +6,9 @@
 package utils.sampling;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParam;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -19,10 +19,28 @@ import java.util.*;
  * Class that defines SequenceSampler for neural network.<br>
  *
  */
-public class SequenceSampler implements Sampler, Serializable {
+public class SequenceSampler implements Sampler, Configurable, Serializable {
 
     @Serial
     private static final long serialVersionUID = 4295889925849740870L;
+
+    /**
+     * Sets parameters used for SequenceSampler.<br>
+     * <br>
+     * Supported parameters are:<br>
+     *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
+     *     - fullSet: if true sets number of validation of cycles are equal to number of sequences in samples and does not use random sampling. Default value false.<br>
+     *     - randomOrder: if true samples in random order. Default value true.<br>
+     *     - stepForward: if true samples sampling steps in forward order (not valid for randomOrder sampling). Default value true.<br>
+     *     - stepSize: number of steps taken forward or backward when sampling (not valid for randomOrder sampling). Default value 1.<br>
+     *
+     */
+    private final static String paramNameTypes = "(numberOfIterations:iNT), " +
+            "(perEpoch:BOOLEAN), " +
+            "(fullSet:BOOLEAN), " +
+            "(randomOrder:BOOLEAN), " +
+            "(stepForward:BOOLEAN), " +
+            "(stepSize:INT)";
 
     /**
      * Input sample set for sampling.
@@ -40,31 +58,31 @@ public class SequenceSampler implements Sampler, Serializable {
      * Number of iterations for training or validation phase.
      *
      */
-    private int numberOfIterations = 1;
+    private int numberOfIterations;
 
     /**
      * If true sets number of validation of cycles are equal to number of sequences in samples and does not use random sampling.
      *
      */
-    private boolean fullSet = false;
+    private boolean fullSet;
 
     /**
      * If true samples in random order. Default value true.
      *
      */
-    private boolean randomOrder = true;
+    private boolean randomOrder;
 
     /**
      * If true sample steps in forward order (no valid for randomOrder sampling). Default value true.
      *
      */
-    private boolean stepForward = true;
+    private boolean stepForward;
 
     /**
      * Number of steps taken forward or backward when sampling (no valid for randomOrder sampling). Default value 1.
      *
      */
-    private int stepSize = 1;
+    private int stepSize;
 
     /**
      * Depth of sample.
@@ -76,7 +94,7 @@ public class SequenceSampler implements Sampler, Serializable {
      * Current sampling position assuming no random sampling.
      *
      */
-    private transient int sampleAt = 0;
+    private transient int sampleAt;
 
     /**
      * Random function.
@@ -92,10 +110,12 @@ public class SequenceSampler implements Sampler, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
     public SequenceSampler(LinkedHashMap<Integer, Sequence> inputs, LinkedHashMap<Integer, Sequence> outputs) throws NeuralNetworkException {
+        initializeDefaultParams();
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
         if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
         for (Integer index : inputs.keySet()) addSample(inputs.get(index), outputs.get(index));
+        sampleAt = 0;
     }
 
     /**
@@ -113,18 +133,24 @@ public class SequenceSampler implements Sampler, Serializable {
     }
 
     /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        numberOfIterations = 1;
+        fullSet = false;
+        randomOrder = true;
+        stepForward = true;
+        stepSize = 1;
+    }
+
+    /**
      * Returns parameters used for SequenceSampler.
      *
      * @return parameters used for SequenceSampler.
      */
-    protected HashMap<String, DynamicParam.ParamType> getParamDefs() {
-        HashMap<String, DynamicParam.ParamType> paramDefs = new HashMap<>();
-        paramDefs.put("numberOfIterations", DynamicParam.ParamType.INT);
-        paramDefs.put("fullSet", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("randomOrder", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("stepForward", DynamicParam.ParamType.BOOLEAN);
-        paramDefs.put("stepSize", DynamicParam.ParamType.INT);
-        return paramDefs;
+    public String getParamDefs() {
+        return SequenceSampler.paramNameTypes;
     }
 
     /**
