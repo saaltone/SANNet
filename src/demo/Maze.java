@@ -12,7 +12,7 @@ import core.layer.LayerType;
 import core.optimization.OptimizationType;
 import core.reinforcement.agent.*;
 import core.reinforcement.policy.executablepolicy.*;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import javax.swing.*;
@@ -370,10 +370,10 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
                     if (maze[x][y].neighbors[3] != null) if (!maze[x][y].neighbors[3].connected) g.drawLine((x) * 10, (y + 1) * 10, (x + 1) * 10, (y + 1) * 10);
                 }
             }
-            Iterator iterator = mazeAgentHistory.iterator();
+            Iterator<Maze.MazeAgent> iterator = mazeAgentHistory.iterator();
             Graphics2D g2d = (Graphics2D)g;
             while (iterator.hasNext()) {
-                MazeAgent mazeAgent = (MazeAgent)iterator.next();
+                MazeAgent mazeAgent = iterator.next();
                 if (!iterator.hasNext()) g.setColor(Color.RED);
                 else g.setColor(Color.BLUE);
                 Ellipse2D.Double circle = new Ellipse2D.Double(mazeAgent.x * 10 + 1, mazeAgent.y * 10 + 1, 7, 7);
@@ -673,10 +673,10 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     private void updateState() {
         Matrix state = new DMatrix(stateSize, 1);
-        Iterator iterator = mazeAgentHistory.iterator();
+        Iterator<Maze.MazeAgent> iterator = mazeAgentHistory.iterator();
         int index = 0;
         while (iterator.hasNext()) {
-            MazeAgent mazeAgent = (MazeAgent)iterator.next();
+            MazeAgent mazeAgent = iterator.next();
             if (mazeAgent.action != -1) {
                 state.setValue(index + mazeAgent.action, 0, -1);
             }
