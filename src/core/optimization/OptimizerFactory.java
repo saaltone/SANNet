@@ -6,7 +6,7 @@
 package core.optimization;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 /**
  * Defines factory class to construct optimizers.<br>

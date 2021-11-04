@@ -5,7 +5,9 @@
 
 package core.optimization;
 
-import utils.*;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
