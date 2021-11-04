@@ -5,8 +5,8 @@
 
 package utils.matrix;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -136,6 +136,10 @@ public class BinaryFunction implements Serializable {
             case CROSS_ENTROPY -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value));
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value);
+            }
+            case BINARY_CROSS_ENTROPY -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value) + (1 - constant) * Math.log(1 - value));
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant / value - (1 - constant) / (1 - value));
             }
             case KULLBACK_LEIBLER -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (constant * Math.log(constant) - constant * Math.log((value)));

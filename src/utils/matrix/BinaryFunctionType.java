@@ -60,6 +60,12 @@ public enum BinaryFunctionType {
     CROSS_ENTROPY,
 
     /**
+     * Binary cross-entropy
+     *
+     */
+    BINARY_CROSS_ENTROPY,
+
+    /**
      * Kullback-Leibler error
      *
      */
