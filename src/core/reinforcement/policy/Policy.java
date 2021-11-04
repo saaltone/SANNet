@@ -13,8 +13,8 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.value.ValueFunction;
-import utils.Configurable;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -52,10 +52,9 @@ public interface Policy extends Configurable {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, NeuralNetworkException, AgentException;
+    Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException;
 
     /**
      * Return true is function is state action value function.

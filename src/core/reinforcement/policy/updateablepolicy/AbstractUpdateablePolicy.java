@@ -15,8 +15,8 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.AbstractPolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.JMatrix;
 import utils.matrix.Matrix;
@@ -115,8 +115,9 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @param executablePolicy executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException {
+    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException, DynamicParamException {
         super(executablePolicy, functionEstimator);
         this.softQAlphaMatrix = new DMatrix(0);
     }
@@ -344,7 +345,6 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
         softQAlphaMatrixGradient.setValue(0, 0, softQAlpha * cumulativeAlphaLoss / (double) alphaLossCount);
         optimizer.optimize(softQAlphaMatrix, softQAlphaMatrixGradient);
         softQAlpha = softQAlphaMatrix.getValue(0, 0);
-        System.out.println(softQAlpha);
         cumulativeAlphaLoss = 0;
         alphaLossCount = 0;
     }

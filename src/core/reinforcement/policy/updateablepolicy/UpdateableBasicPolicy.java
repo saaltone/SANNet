@@ -11,8 +11,8 @@ import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -120,10 +120,9 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, NeuralNetworkException, AgentException {
+    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException {
         return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
     }
 

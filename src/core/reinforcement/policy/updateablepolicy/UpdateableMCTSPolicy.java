@@ -11,7 +11,7 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.MCTSPolicy;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
@@ -25,8 +25,9 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      *
      * @param functionEstimator reference to FunctionEstimator.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UpdateableMCTSPolicy(FunctionEstimator functionEstimator) throws AgentException {
+    public UpdateableMCTSPolicy(FunctionEstimator functionEstimator) throws AgentException, DynamicParamException {
         super (new MCTSPolicy(), functionEstimator);
     }
 
@@ -36,8 +37,9 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @param functionEstimator reference to FunctionEstimator.
      * @param mctsPolicy reference to MCTS policy.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public UpdateableMCTSPolicy(FunctionEstimator functionEstimator, MCTSPolicy mctsPolicy) throws AgentException {
+    public UpdateableMCTSPolicy(FunctionEstimator functionEstimator, MCTSPolicy mctsPolicy) throws AgentException, DynamicParamException {
         super (mctsPolicy, functionEstimator);
     }
 
@@ -90,11 +92,10 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to policy.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws NeuralNetworkException, DynamicParamException, AgentException {
+    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException {
         return new UpdateableMCTSPolicy(sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), sharedPolicyFunctionEstimator ? (MCTSPolicy)executablePolicy : new MCTSPolicy(), params);
     }
 

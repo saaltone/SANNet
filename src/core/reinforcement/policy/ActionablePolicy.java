@@ -9,7 +9,7 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 /**
  * Class that defines ActionablePolicy.<br>

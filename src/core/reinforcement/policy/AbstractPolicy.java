@@ -15,9 +15,9 @@ import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyFactory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.ValueFunction;
-import utils.Configurable;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -97,8 +97,9 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @param executablePolicy executable policy.
      * @param functionEstimator reference to FunctionEstimator.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException {
+    public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException, DynamicParamException {
         initializeDefaultParams();
         this.executablePolicy = executablePolicy;
         this.functionEstimator = functionEstimator;
