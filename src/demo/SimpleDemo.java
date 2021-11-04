@@ -13,7 +13,7 @@ import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.DataSplitter;
 import core.regularization.EarlyStopping;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
@@ -39,7 +39,6 @@ public class SimpleDemo {
 
         try {
             int numberOfNeuralNetworks = 2;
-
             HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTestData();
             ArrayList<NeuralNetwork> neuralNetworks = new ArrayList<>();
             for (int index = 0; index < numberOfNeuralNetworks; index++) {
