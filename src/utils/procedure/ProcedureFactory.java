@@ -5,7 +5,7 @@
 
 package utils.procedure;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.expression.*;
 import utils.procedure.node.Node;
@@ -621,11 +621,9 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride of convolution operation.
      * @param dilation dilation step size.
-     * @param filterRowSize filter row size.
-     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
@@ -643,11 +641,9 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride for operation.
      * @param dilation dilation step size.
-     * @param filterRowSize filter row size.
-     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);
@@ -665,11 +661,9 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride for operation.
      * @param dilation dilation step size.
-     * @param filterRowSize filter row size.
-     * @param filterColumnSize filter column size.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createWinogradConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createWinogradConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         Node node1 = defineNode(argument1, false);
         Node node2 = defineNode(argument2, false);

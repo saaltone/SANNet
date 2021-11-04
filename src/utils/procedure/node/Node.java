@@ -7,7 +7,7 @@ package utils.procedure.node;
 
 import core.normalization.Normalization;
 import core.regularization.Regularization;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
