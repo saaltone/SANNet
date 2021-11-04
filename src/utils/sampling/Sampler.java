@@ -6,7 +6,6 @@
 package utils.sampling;
 
 import core.network.NeuralNetworkException;
-import utils.Sequence;
 import utils.matrix.MatrixException;
 
 /**
