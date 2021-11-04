@@ -5,7 +5,7 @@
 
 package utils.matrix;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
@@ -882,7 +882,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean) throws MatrixException {
-        return count(asMean, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return count(asMean, get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -905,7 +905,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix sum() throws MatrixException {
-        return sum(new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return sum(get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -933,7 +933,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix mean() throws MatrixException {
-        return mean(new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return mean(get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -962,7 +962,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance() throws MatrixException, DynamicParamException {
-        return variance(mean(), new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return variance(mean(), get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -974,7 +974,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return variance(meanMatrix, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return variance(meanMatrix, get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -1010,7 +1010,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation() throws MatrixException, DynamicParamException {
-        return standardDeviation(mean(), new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return standardDeviation(mean(), get(firstKey()).getNewMatrix());
     }
 
     /**
@@ -1022,7 +1022,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return standardDeviation(meanMatrix, new DMatrix(get(firstKey()).getRows(), get(firstKey()).getColumns()));
+        return standardDeviation(meanMatrix, get(firstKey()).getNewMatrix());
     }
 
     /**
