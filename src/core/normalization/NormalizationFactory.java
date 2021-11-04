@@ -6,7 +6,7 @@
 package core.normalization;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serializable;
 

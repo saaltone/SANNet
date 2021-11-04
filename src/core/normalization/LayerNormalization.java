@@ -6,7 +6,9 @@
 package core.normalization;
 
 import core.optimization.Optimizer;
-import utils.*;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.node.Node;

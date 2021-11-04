@@ -6,8 +6,8 @@
 package core.normalization;
 
 import core.optimization.Optimizer;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
