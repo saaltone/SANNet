@@ -6,7 +6,7 @@
 package core.reinforcement.agent;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -16,13 +16,6 @@ import java.io.IOException;
  *
  */
 public interface Agent {
-
-    /**
-     * Returns reference to environment.
-     *
-     * @return reference to environment.
-     */
-    Environment getEnvironment();
 
     /**
      * Starts agent.

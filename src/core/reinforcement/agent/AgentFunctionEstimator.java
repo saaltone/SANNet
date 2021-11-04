@@ -7,7 +7,7 @@ package core.reinforcement.agent;
 
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**

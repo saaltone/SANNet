@@ -15,7 +15,7 @@ import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.MatrixException;
 
