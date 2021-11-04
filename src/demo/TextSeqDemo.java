@@ -9,18 +9,17 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
+import core.network.Persistence;
 import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
 import core.regularization.RegularizationType;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  * Creates recurrent neural network (RNN) that learns sequences of text.<br>
@@ -37,15 +36,15 @@ public class TextSeqDemo {
      */
     public static void main(String [] args) {
 
-        int numOfInputs = 6;
+        int numOfInputs = 5;
 
         NeuralNetwork neuralNetwork;
         try {
             String persistenceName = "<PATH>/TextSeqNN";
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs);
+            HashMap<Integer, String> dictionaryIndexMapping = new HashMap<>();
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
-            neuralNetwork.setAsClassification();
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
@@ -53,32 +52,32 @@ public class TextSeqDemo {
             neuralNetwork.print();
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
-            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = true, stepSize = 64, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
+            neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1),"randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
             while (neuralNetwork.getTotalIterations() < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
                 Matrix input = data.get(0).get(1).get(0);
-                ArrayDeque<Integer> letters = new ArrayDeque<>(numOfInputs);
-                int rows = ReadTextFile.charSize() * numOfInputs;
-                for (int row = 0; row < rows; row++) {
-                    if (input.getValue(row, 0) == 1) {
-                        letters.addLast(row - letters.size() * ReadTextFile.charSize());
-                    }
-                }
+                ArrayList<Matrix> encodedWords = input.getSubMatrices();
+                int inputSize = encodedWords.get(0).size();
                 for (int pos = 0; pos < 1000; pos++) {
-                    int nextLetter = neuralNetwork.predict(input).argmax()[0];
-                    System.out.print(ReadTextFile.intToChar(nextLetter));
-                    letters.pollFirst();
-                    letters.addLast(nextLetter);
-                    input = new DMatrix(ReadTextFile.charSize() * numOfInputs, 1);
-                    int offset = 0;
-                    for (Integer letter : letters) {
-                        input.setValue(offset + letter, 0, 1);
-                        offset += ReadTextFile.charSize();
+                    Matrix nextEncodedWord = neuralNetwork.predict(input);
+                    int wordIndex = nextEncodedWord.argmax()[0];
+                    String currentWord = dictionaryIndexMapping.getOrDefault(wordIndex, "???");
+                    System.out.print(currentWord + " ");
+                    nextEncodedWord = ComputableMatrix.encodeToBitColumnVector(wordIndex, inputSize);
+                    int rows = 0;
+                    for (int index = 0; index < encodedWords.size() - 1; index++) {
+                        rows += encodedWords.get(index + 1).getTotalRows();
+                        encodedWords.set(index, encodedWords.get(index + 1));
                     }
+                    rows += encodedWords.get(encodedWords.size() - 1).getTotalRows();
+                    encodedWords.set(encodedWords.size() - 1, nextEncodedWord);
+                    input = new JMatrix(rows, 1, encodedWords, true);
+                    encodedWords = input.getSubMatrices();
                 }
                 System.out.println();
             }
+
             neuralNetwork.stop();
         }
         catch (Exception exception) {
@@ -100,7 +99,7 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 128");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
@@ -116,9 +115,10 @@ public class TextSeqDemo {
      *
      * @return encoded inputs and outputs.
      * @throws FileNotFoundException throws exception if file is not found.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs) throws FileNotFoundException {
-        return ReadTextFile.readFile("<PATH>/lorem_ipsum.txt", numOfInputs, 1, numOfInputs, 0);
+    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+        return ReadTextFile.readFileAsBinaryEncoded("<PATH>/lorem_ipsum.txt", numOfInputs, 0, dictionaryIndexMapping);
     }
 
 }
