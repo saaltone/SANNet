@@ -7,7 +7,8 @@ package core.layer.recurrent;
 
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import utils.*;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.util.HashSet;
@@ -124,6 +125,12 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     private final ActivationFunction sigmoid;
 
     /**
+     * Sigmoid activation function for output
+     *
+     */
+    private final ActivationFunction activationFunction;
+
+    /**
      * Flag if tanh operation is performed also for last output function.
      *
      */
@@ -161,6 +168,25 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
         super (layerIndex, initialization, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        activationFunction = tanh;
+    }
+
+    /**
+     * Constructor for Peephole LSTM layer.
+     *
+     * @param layerIndex layer Index.
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
+     * @param params parameters for Peephole LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public PeepholeLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, params);
+        tanh = new ActivationFunction(UnaryFunctionType.TANH);
+        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        this.activationFunction = activationFunction == null ? tanh : activationFunction;
     }
 
     /**
@@ -315,8 +341,8 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
 
         previousCellState = c;
 
-        // h = tanh(c) x o or h = c x o → Output
-        Matrix h = (doubleTanh ? c.apply(tanh) : c).multiply(o);
+        // h = activationFunction(c) x o or h = c x o → Output
+        Matrix h = (doubleTanh ? c.apply(activationFunction) : c).multiply(o);
         h.setName("Output");
 
         MMatrix outputs = new MMatrix(1, "Output");

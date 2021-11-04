@@ -7,7 +7,8 @@ package core.layer.recurrent;
 
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import utils.*;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.util.HashSet;
@@ -156,6 +157,12 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
     private final ActivationFunction sigmoid;
 
     /**
+     * Sigmoid activation function for output
+     *
+     */
+    private final ActivationFunction activationFunction;
+
+    /**
      * Flag if tanh operation is performed also for last output function.
      *
      */
@@ -204,6 +211,30 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         super (layerIndex, initialization, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        activationFunction = tanh;
+    }
+
+    /**
+     * Constructor for Graves LSTM layer.<br>
+     * Supported parameters are:<br>
+     *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *     - regulateStateWeights: true if recurrent state weights are regulated otherwise false (default value false).<br>
+     *
+     * @param layerIndex layer Index.
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
+     * @param params parameters for Graves LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public GravesLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, params);
+        tanh = new ActivationFunction(UnaryFunctionType.TANH);
+        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        this.activationFunction = activationFunction == null ? tanh : activationFunction;
     }
 
     /**
@@ -380,8 +411,8 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         o = o.apply(sigmoid);
         o.setName("o");
 
-        // h = tanh(c) x o or h = c x o → Output
-        Matrix h = (doubleTanh ? c.apply(tanh) : c).multiply(o);
+        // h = activationFunction(c) x o or h = c x o → Output
+        Matrix h = (doubleTanh ? c.apply(activationFunction) : c).multiply(o);
         h.setName("Output");
 
         previousOutput = h;
