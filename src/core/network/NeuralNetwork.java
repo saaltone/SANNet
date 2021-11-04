@@ -19,9 +19,10 @@ import core.optimization.OptimizationType;
 import core.optimization.OptimizerFactory;
 import core.regularization.*;
 import core.metrics.*;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.Sampler;
+import utils.sampling.Sequence;
 
 /**
  * Defines main class for neural network.<br>
@@ -1470,7 +1471,6 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void trainIterations() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
-//        trainingMetric.reset();
         trainingSampler.reset();
         int numberOfIterations = trainingSampler.getNumberOfIterations();
         for (int iteration = 0; iteration < numberOfIterations; iteration++) {
@@ -1478,7 +1478,6 @@ public class NeuralNetwork implements Runnable, Serializable {
             if (stoppedExecution()) break;
             if (earlyStopping != null) if (earlyStopping.stopTraining()) break;
         }
-//        trainingMetric.store(totalIterations);
         stateCompleted();
     }
 
@@ -1595,6 +1594,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     public void setAsRegression() {
+        waitToComplete();
         validationMetric = new RegressionMetric();
     }
 
@@ -1604,6 +1604,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
      */
     public void setAsRegression(boolean useR2AsLastError) {
+        waitToComplete();
         validationMetric = new RegressionMetric(useR2AsLastError);
     }
 
@@ -1612,6 +1613,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     public void setAsClassification() {
+        waitToComplete();
         validationMetric = new ClassificationMetric();
     }
 
@@ -1621,7 +1623,18 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param multiClass if true metrics assumes multi class classification otherwise single class classification.
      */
     public void setAsClassification(boolean multiClass) {
+        waitToComplete();
         validationMetric = new ClassificationMetric(multiClass);
+    }
+
+    /**
+     * Sets if confusion matrix is printed along other classification metrics.
+     *
+     * @param printConfusionMatrix if true confusion matrix is printed along other classification metrics.
+     */
+    public void printConfusionMatrix(boolean printConfusionMatrix) {
+        waitToComplete();
+        if (validationMetric instanceof  ClassificationMetric) ((ClassificationMetric)validationMetric).setPrintConfusionMatrix(printConfusionMatrix);
     }
 
     /**
