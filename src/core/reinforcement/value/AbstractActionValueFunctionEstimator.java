@@ -7,7 +7,7 @@ package core.reinforcement.value;
 
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 /**
  * Class that defines AbstractActionValueFunctionEstimator (action value function with function estimator).<br>

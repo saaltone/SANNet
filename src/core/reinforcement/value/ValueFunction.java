@@ -10,8 +10,8 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import utils.Configurable;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;

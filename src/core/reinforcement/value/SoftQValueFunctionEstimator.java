@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 

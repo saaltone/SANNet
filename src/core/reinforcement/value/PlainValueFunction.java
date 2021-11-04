@@ -10,8 +10,8 @@ import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.util.TreeSet;
 
@@ -77,8 +77,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public PlainValueFunction(DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        this(1, functionEstimator);
-        setParams(new DynamicParam(params, getParamDefs()));
+        this(1, functionEstimator, params);
     }
 
     /**

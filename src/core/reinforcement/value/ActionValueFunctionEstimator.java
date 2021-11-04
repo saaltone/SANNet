@@ -5,10 +5,9 @@
 
 package core.reinforcement.value;
 
-import core.network.NeuralNetworkException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 /**
  * Class that defines ActionValueFunctionEstimator (action value function with function estimator).<br>
@@ -53,9 +52,8 @@ public class ActionValueFunctionEstimator extends AbstractActionValueFunctionEst
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, NeuralNetworkException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException {
         return new ActionValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
     }
 

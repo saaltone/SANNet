@@ -8,7 +8,7 @@ package core.reinforcement.value;
 import core.network.NeuralNetworkException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -67,9 +67,8 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, NeuralNetworkException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException {
         return new QTargetValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
     }
 

@@ -8,7 +8,7 @@ package core.reinforcement.value;
 import core.network.NeuralNetworkException;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 /**
@@ -54,9 +54,8 @@ public class QValueFunctionEstimator extends AbstractActionValueFunctionEstimato
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, NeuralNetworkException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException {
         return new QValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
     }
 

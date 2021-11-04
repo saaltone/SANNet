@@ -7,9 +7,9 @@ package core.reinforcement.value;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.memory.StateTransition;
-import utils.Configurable;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
