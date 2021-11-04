@@ -9,17 +9,10 @@ import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.optimization.Adam;
 import core.optimization.OptimizationType;
 import core.reinforcement.agent.*;
-import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.function.NNFunctionEstimator;
-import core.reinforcement.function.TabularFunctionEstimator;
-import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.OnlineMemory;
-import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.executablepolicy.*;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import javax.swing.*;
@@ -755,7 +748,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             }
             case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
-                policyTypeParams += "thresholdInitial = 0.2, thresholdMin = 0.2";
+                policyTypeParams += "thresholdInitial = 1, thresholdMin = 0.3";
             }
         }
 
