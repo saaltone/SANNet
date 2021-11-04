@@ -142,17 +142,37 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
         final int columnStride = getStride();
         final Matrix targetMatrix = getTargetMatrix();
         if (!hasMask(targetMatrix, other)) {
-            for (int row = 0; row < rows; row += rowStride) {
-                for (int column = 0; column < columns; column += columnStride) {
-                    apply(row, column, provideValue ? targetMatrix.getValue(row, column) : 0);
+            if (provideValue) {
+                for (int row = 0; row < rows; row += rowStride) {
+                    for (int column = 0; column < columns; column += columnStride) {
+                        apply(row, column, targetMatrix.getValue(row, column));
+                    }
+                }
+            }
+            else {
+                for (int row = 0; row < rows; row += rowStride) {
+                    for (int column = 0; column < columns; column += columnStride) {
+                        apply(row, column, 0);
+                    }
                 }
             }
         }
         else {
-            for (int row = 0; row < rows; row += rowStride) {
-                for (int column = 0; column < columns; column += columnStride) {
-                    if (!hasMaskAt(row, column, targetMatrix, other)) {
-                        apply(row, column, provideValue ? targetMatrix.getValue(row, column) : 0);
+            if (provideValue) {
+                for (int row = 0; row < rows; row += rowStride) {
+                    for (int column = 0; column < columns; column += columnStride) {
+                        if (!hasMaskAt(row, column, targetMatrix, other)) {
+                            apply(row, column, targetMatrix.getValue(row, column));
+                        }
+                    }
+                }
+            }
+            else {
+                for (int row = 0; row < rows; row += rowStride) {
+                    for (int column = 0; column < columns; column += columnStride) {
+                        if (!hasMaskAt(row, column, targetMatrix, other)) {
+                            apply(row, column, 0);
+                        }
                     }
                 }
             }
