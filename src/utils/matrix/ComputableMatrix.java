@@ -565,8 +565,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
         }
 
-        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp((Math.log(Math.exp(value) / (1 + Math.exp(value))) + getGumbelNoise()) / gumbelSoftmaxTau));
+        // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
+        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value + getGumbelNoise()) / gumbelSoftmaxTau);
+        final double maxValue = max();
+        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value - maxValue));
         result.divide(result.sum(), result);
+
 
         return result;
     }
@@ -577,7 +581,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return Gumbel noise.
      */
     private double getGumbelNoise() {
-        double epsilon = 10E-8;
+        double epsilon = 10E-20;
         return -Math.log(-Math.log(random.nextDouble() + epsilon) + epsilon);
     }
 
@@ -831,6 +835,81 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public Matrix transpose() throws MatrixException {
         return new TransposeMatrixOperation(getRows(), getColumns()).apply(this, getNewMatrix(true));
+    }
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix classify() throws MatrixException {
+        return new ClassifyMatrixOperation(getRows(), getColumns()).apply(this, getNewMatrix());
+    }
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix classify(double multiLabelThreshold) throws MatrixException {
+        return new ClassifyMatrixOperation(getRows(), getColumns(), multiLabelThreshold).apply(this, getNewMatrix());
+    }
+
+    /**
+     * Encodes to value to column row vector.
+     *
+     * @param value value
+     * @return bit column vector.
+     */
+    public static Matrix encodeToBitColumnVector(int value) {
+        return ComputableMatrix.encodeToBitColumnVector(value, value);
+    }
+
+    /**
+     * Encodes to value to bit column vector.
+     *
+     * @param value value
+     * @param maxBits max number of bits.
+     * @return bit column vector.
+     */
+    public static Matrix encodeToBitColumnVector(int value, int maxBits) {
+        String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
+        Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
+        for (int charIndex = 0; charIndex < binaryCode.length(); charIndex++) {
+            char charAt = binaryCode.charAt(charIndex);
+            if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 1);
+        }
+        return encodedMatrix;
+    }
+
+    /**
+     * Encodes bit column vector value
+     *
+     * @return value
+     * @throws MatrixException throws exception if matrix is not bit column vector.
+     */
+    public int encodeToValue() throws MatrixException {
+        if (getColumns() != 1) throw new MatrixException("Matrix must be column vector.");
+        int rows = getRows();
+        int result = 0;
+        for (int row = 0; row < getRows(); row++) {
+            double value = getValue(row, 0);
+            if (!(value == 0 || value == 1)) throw new MatrixException("Bit column vector must contains values of 0 or 1.");
+            result += value * Math.pow(2, (rows - 1) - row);
+        }
+        return result;
+    }
+
+    /**
+     * Returns number of bits needed to represent value.
+     *
+     * @param value value.
+     * @return number of bits needed to represent value.
+     */
+    public static int numberOfBits(int value) {
+        return (int)Math.floor((Math.log10(value) / Math.log10(2) + 1));
     }
 
 }
