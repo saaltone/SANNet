@@ -11,16 +11,14 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadMIDI;
-import utils.DynamicParamException;
-import utils.Persistence;
+import utils.configurable.DynamicParamException;
+import core.network.Persistence;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
 
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  * Demo that synthesizes music by learning musical patterns from MIDI file.<br>
@@ -51,33 +49,35 @@ public class Music {
      */
     private void execute() {
         try {
-            NeuralNetwork neuralNetworkKey;
-            NeuralNetwork neuralNetworkVelocity;
-            NeuralNetwork neuralNetworkTick;
 
+            int numOfInputs = 5;
+            boolean encodeNoteOffs = false;
+            boolean excludeZeroValuedEntries = true;
             String path = "<PATH>/";
-            HashSet<String> fileNames = new HashSet<>();
-            fileNames.add(path + "canon4.mid");
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadMIDI.readFile(fileNames);
-            long scalingFactor = ReadMIDI.scaleTickData(data.get(4), data.get(5), 250);
+            ArrayList<String> fileNames = new ArrayList<>();
+            fileNames.add(path + "howdsolo.mid");
 
-            float divisionType = Sequence.PPQ;
-            int resolution = 320;
+            ReadMIDI readMIDI = new ReadMIDI();
+            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numOfInputs, encodeNoteOffs, excludeZeroValuedEntries, 8);
+            ReadMIDI.Metadata metadata = readMIDI.getMetadata();
 
-            Sequence sequence = ReadMIDI.getSequence(data.get(0), data.get(2), data.get(4), divisionType, resolution, scalingFactor);
-            ReadMIDI.play(sequence, 10, true);
+            Sequence sequence = readMIDI.getSequence(data.get(1), data.get(3), data.get(5), metadata.resolution, false, encodeNoteOffs, metadata);
+            readMIDI.play(sequence, 10, true);
 
             String persistenceNameKey = "<PATH>/MusicNNKey";
             String persistenceNameVelocity = "<PATH>/MusicNNVelocity";
             String persistenceNameTick = "<PATH>/MusicNNTick";
 
             boolean restore = false;
+            NeuralNetwork neuralNetworkKey;
+            NeuralNetwork neuralNetworkVelocity;
+            NeuralNetwork neuralNetworkTick;
             if (!restore) {
-                neuralNetworkKey = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows(), data.get(0).get(0).get(0).getRows(), 0);
+                neuralNetworkKey = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows(), data.get(0).get(0).get(0).getRows() * 5, 0);
                 neuralNetworkKey.setNeuralNetworkName("MIDI_key NN");
-                neuralNetworkVelocity = buildNeuralNetwork(data.get(2).get(0).get(0).getRows(), data.get(3).get(0).get(0).getRows(), data.get(2).get(0).get(0).getRows(), 1);
+                neuralNetworkVelocity = buildNeuralNetwork(data.get(2).get(0).get(0).getRows(), data.get(3).get(0).get(0).getRows(), data.get(2).get(0).get(0).getRows() * 4, 1);
                 neuralNetworkVelocity.setNeuralNetworkName("MIDI_velocity NN");
-                neuralNetworkTick = buildNeuralNetwork(data.get(4).get(0).get(0).getRows(), data.get(5).get(0).get(0).getRows(), 50, 2);
+                neuralNetworkTick = buildNeuralNetwork(data.get(4).get(0).get(0).getRows(), data.get(5).get(0).get(0).getRows(), data.get(4).get(0).get(0).getRows() * 3, 2);
                 neuralNetworkTick.setNeuralNetworkName("MIDI_tick NN");
             }
             else {
@@ -106,10 +106,16 @@ public class Music {
             neuralNetworkVelocity.start();
             neuralNetworkTick.start();
 
-            String params = "randomOrder = false, randomStart = true, stepSize = 1, shuffleSamples = false, sampleSize = 32, numberOfIterations = 100";
-            neuralNetworkKey.setTrainingData(new BasicSampler(data.get(0), data.get(1),params));
-            neuralNetworkVelocity.setTrainingData(new BasicSampler(data.get(2), data.get(3),params));
-            neuralNetworkTick.setTrainingData(new BasicSampler(data.get(4), data.get(5),params));
+            neuralNetworkKey.print();
+            neuralNetworkVelocity.print();
+            neuralNetworkTick.print();
+
+            String keyParams = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 48, numberOfIterations = 100";
+            neuralNetworkKey.setTrainingData(new BasicSampler(data.get(0), data.get(1),keyParams));
+            String velocityParams = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 48, numberOfIterations = 100";
+            neuralNetworkVelocity.setTrainingData(new BasicSampler(data.get(2), data.get(3),velocityParams));
+            String tickParams = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 48, numberOfIterations = 100";
+            neuralNetworkTick.setTrainingData(new BasicSampler(data.get(4), data.get(5),tickParams));
 
             int totalIterations = neuralNetworkKey.getTotalIterations();
             int fileVersion = 0;
@@ -136,30 +142,40 @@ public class Music {
                 Matrix currentSampleVelocity = data.get(2).get(0).get(0);
                 Matrix currentSampleTick = data.get(4).get(0).get(0);
 
-                for (int sample = 0; sample < 1000; sample++) {
-                    currentSampleKey = neuralNetworkKeyForPrediction.predict(currentSampleKey);
-                    resultKey.put(sample, new MMatrix(currentSampleKey));
-                    currentSampleVelocity = neuralNetworkVelocityForPrediction.predict(currentSampleVelocity);
-                    resultVelocity.put(sample, new MMatrix(currentSampleVelocity));
-                    currentSampleTick = neuralNetworkTickForPrediction.predict(currentSampleTick);
-                    resultTick.put(sample, new MMatrix(currentSampleTick));
+                for (int sampleIndex = 0; sampleIndex < 300; sampleIndex++) {
+                    Matrix targetKeyMatrix = predictNextSample(sampleIndex, neuralNetworkKeyForPrediction, currentSampleKey, resultKey);
+                    int targetKey = targetKeyMatrix.argmax()[0];
+                    System.out.print("Key: " + (metadata.minKeyValue + targetKey) + ", ");
+
+                    Matrix targetVelocityMatrix = predictNextSample(sampleIndex, neuralNetworkVelocityForPrediction, currentSampleVelocity, resultVelocity);
+                    int targetVelocity = targetVelocityMatrix.argmax()[0];
+                    System.out.print("Velocity: " + (metadata.minVelocityValue + targetVelocity) + ", ");
+
+                    Matrix targetTickMatrix = predictNextSample(sampleIndex, neuralNetworkTickForPrediction, currentSampleTick, resultTick);
+                    int targetTick = targetTickMatrix.argmax()[0];
+                    System.out.println("Tick: " + metadata.tickValueReverseMapping.get(targetTick));
+
+                    currentSampleKey = getNextSample(currentSampleKey, metadata.keyBitVectorSize, ComputableMatrix.encodeToBitColumnVector(targetKey, metadata.keyBitVectorSize));
+                    currentSampleVelocity = getNextSample(currentSampleVelocity, metadata.velocityBitVectorSize, ComputableMatrix.encodeToBitColumnVector(targetVelocity, metadata.velocityBitVectorSize));
+                    currentSampleTick = getNextSample(currentSampleTick, metadata.numberOfEncodedTicks, targetTickMatrix);
+
                 }
                 neuralNetworkKeyForPrediction.stop();
                 neuralNetworkVelocityForPrediction.stop();
                 neuralNetworkTickForPrediction.stop();
 
                 System.out.println("Get MIDI sequence...");
-                Sequence resultSequence = ReadMIDI.getSequence(resultKey, resultVelocity, resultTick, divisionType, resolution, scalingFactor);
-                ReadMIDI.writeMIDI(resultSequence, path + "Result", ++fileVersion);
+                Sequence resultSequence = readMIDI.getSequence(resultKey, resultVelocity, resultTick, metadata.resolution, false, encodeNoteOffs, metadata);
+                readMIDI.writeMIDI(resultSequence, path + "Result", ++fileVersion);
                 System.out.println("Play MIDI...");
-                Sequencer sequencer = ReadMIDI.play(resultSequence, 30, false);
+                Sequencer sequencer = readMIDI.play(resultSequence, 30, false);
 
                 neuralNetworkKey.waitToComplete();
                 neuralNetworkVelocity.waitToComplete();
                 neuralNetworkTick.waitToComplete();
 
                 System.out.println("Play MIDI complete...");
-                ReadMIDI.stopPlaying(sequencer);
+                readMIDI.stopPlaying(sequencer);
             }
             neuralNetworkKey.stop();
             neuralNetworkVelocity.stop();
@@ -172,26 +188,74 @@ public class Music {
     }
 
     /**
+     * Predicts next sample
+     *
+     * @param sampleIndex sample index
+     * @param neuralNetwork neural network
+     * @param currentSample current sample
+     * @param result result
+     * @return next value
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     */
+    private Matrix predictNextSample(int sampleIndex, NeuralNetwork neuralNetwork, Matrix currentSample, LinkedHashMap<Integer, MMatrix> result) throws MatrixException, NeuralNetworkException {
+        Matrix targetSample = neuralNetwork.predict(currentSample);
+        result.put(sampleIndex, new MMatrix(targetSample));
+        return targetSample;
+    }
+
+    /**
+     * Returns next sample
+     *
+     * @param currentSample current sample
+     * @param recordSize record size
+     * @param targetMatrix target matrix
+     * @return next sample
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private Matrix getNextSample(Matrix currentSample, int recordSize, Matrix targetMatrix) throws MatrixException {
+        ArrayList<Matrix> currentSamples = currentSample.getSubMatrices();
+        int maxSampleIndex = currentSamples.size() - 1;
+        for (int sampleIndex = 0; sampleIndex < maxSampleIndex; sampleIndex++) currentSamples.set(sampleIndex, currentSamples.get(sampleIndex + 1));
+        currentSamples.set(maxSampleIndex, targetMatrix);
+        return new JMatrix(recordSize * currentSamples.size(), 1, currentSamples, true);
+    }
+
+    /**
      * Builds recurrent neural network (GRU) instance.
      *
      * @param inputSize input size of neural network (digits as one hot encoded in sequence).
      * @param outputSize output size of neural network (digits as one hot encoded in sequence).
      * @param hiddenSize hidden layer size of neural network.
+     * @param neuralNetworkType neural network type (key, velocity or tick neural network).
      * @return neural network instance.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int hiddenSize, int lossType) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int hiddenSize, int neuralNetworkType) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        if (lossType > 1) {
-            neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, "width = " + (hiddenSize / 2));
-            neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + (hiddenSize / 2));
+        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
+        switch (neuralNetworkType) {
+            case 0 -> {
+                neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+            }
+            case 1 -> {
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+            }
+            case 2 -> {
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+            }
+            default -> {
+                System.out.println("Unknown loss type.");
+                System.exit(-1);
+            }
         }
-        else neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(lossType == 0 ? UnaryFunctionType.GUMBEL_SOFTMAX : lossType == 1 ? UnaryFunctionType.GUMBEL_SOFTMAX : UnaryFunctionType.RELU_SIN), "width = " + outputSize);
-        neuralNetwork.addOutputLayer(lossType < 2 ? BinaryFunctionType.CROSS_ENTROPY : BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         return neuralNetwork;
