@@ -10,7 +10,7 @@ import core.activation.ActivationFunction;
 import core.layer.convolutional.*;
 import core.layer.feedforward.*;
 import core.layer.recurrent.*;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
 
@@ -37,9 +37,9 @@ public class LayerFactory {
         return switch (layerType) {
             case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
             case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
-            case LSTM -> new LSTMLayer(layerIndex, initialization, params);
-            case PEEPHOLELSTM -> new PeepholeLSTMLayer(layerIndex, initialization, params);
-            case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, initialization, params);
+            case LSTM -> new LSTMLayer(layerIndex, activationFunction, initialization, params);
+            case PEEPHOLELSTM -> new PeepholeLSTMLayer(layerIndex, activationFunction, initialization, params);
+            case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, activationFunction, initialization, params);
             case GRU -> new GRULayer(layerIndex, initialization, params);
             case MINGRU -> new MinGRULayer(layerIndex, initialization, params);
             case CONVOLUTIONAL -> new ConvolutionalLayer(layerIndex, activationFunction, initialization, params);
