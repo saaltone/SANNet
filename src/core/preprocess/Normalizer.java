@@ -6,7 +6,7 @@
 package core.preprocess;
 
 import core.network.NeuralNetworkException;
-import utils.Sequence;
+import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 
