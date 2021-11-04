@@ -7,9 +7,9 @@ package core.layer.recurrent;
 
 import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
-import utils.DynamicParam;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
 

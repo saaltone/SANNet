@@ -7,7 +7,8 @@ package core.layer.recurrent;
 
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
-import utils.*;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.util.HashSet;
