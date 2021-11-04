@@ -5,7 +5,7 @@
 
 package utils.matrix;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.procedure.ProcedureFactory;
 
 import java.util.ArrayList;
@@ -1452,6 +1452,31 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix transpose() throws MatrixException;
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix classify() throws MatrixException;
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @param multiLabelThreshold threshold value for multi label classification
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix classify(double multiLabelThreshold) throws MatrixException;
+
+    /**
+     * Encodes bit column vector value
+     *
+     * @return value
+     * @throws MatrixException throws exception if matrix is not bit column vector.
+     */
+    int encodeToValue() throws MatrixException;
 
     /**
      * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
