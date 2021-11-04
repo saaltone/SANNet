@@ -6,7 +6,7 @@
 package core.loss;
 
 import core.network.NeuralNetworkException;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.io.Serial;
@@ -21,6 +21,7 @@ import java.io.Serial;
  *     MEAN_ABSOLUTE_ERROR,
  *     MEAN_ABSOLUTE_PERCENTAGE_ERROR,
  *     CROSS_ENTROPY,
+ *     BINARY_CROSS_ENTROPY,
  *     KULLBACK_LEIBLER,
  *     NEGATIVE_LOG_LIKELIHOOD,
  *     POISSON,
@@ -48,6 +49,7 @@ public class LossFunction extends BinaryFunction {
             BinaryFunctionType.MEAN_ABSOLUTE_ERROR,
             BinaryFunctionType.MEAN_ABSOLUTE_PERCENTAGE_ERROR,
             BinaryFunctionType.CROSS_ENTROPY,
+            BinaryFunctionType.BINARY_CROSS_ENTROPY,
             BinaryFunctionType.KULLBACK_LEIBLER,
             BinaryFunctionType.NEGATIVE_LOG_LIKELIHOOD,
             BinaryFunctionType.POISSON,
@@ -111,8 +113,8 @@ public class LossFunction extends BinaryFunction {
                 return target;
             }
             case POLICY_VALUE -> {
+                Matrix error = target.getNewMatrix();
                 int targetRows = target.getRows();
-                Matrix error = new DMatrix(targetRows, 1);
                 for (int row = 0; row < targetRows; row++) {
                     error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(target.getValue(0, 0) - output.getValue(0, 0), 2)) : target.getValue(row, 0));
                 }
@@ -150,8 +152,8 @@ public class LossFunction extends BinaryFunction {
                 return target;
             }
             case POLICY_VALUE -> {
+                Matrix gradient = target.getNewMatrix();
                 int targetRows = target.getRows();
-                Matrix gradient = new DMatrix(targetRows, 1);
                 for (int row = 0; row < targetRows; row++) {
                     gradient.setValue(row, 0 , row == 0 ? (output.getValue(0, 0) - target.getValue(0, 0)) : target.getValue(row, 0));
                 }
