@@ -5,8 +5,8 @@
 
 package utils.matrix;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -86,7 +86,7 @@ public class UnaryFunction implements Serializable {
      * Stores tau value for Gumbel Softmax.
      *
      */
-    private double gumbelSoftmaxTau = 2.75;
+    private double gumbelSoftmaxTau = 1.5;
 
     /**
      * Constructor for UnaryFunction to create custom function.
@@ -118,7 +118,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for Gumbel Softmax 2.65.<br>
+     *     - tau: default value for Gumbel Softmax 1.5.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters used for function.
