@@ -8,8 +8,8 @@ package core.reinforcement.function;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -25,18 +25,33 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param memory memory reference.
      * @param numberOfStates number of states for TabularFunctionEstimator
      * @param numberOfActions number of actions for DirectFunctionEstimator
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) {
+    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
         super (memory, numberOfStates, numberOfActions, false);
+    }
+
+    /**
+     * Constructor for DirectFunctionEstimator.
+     *
+     * @param memory memory reference.
+     * @param numberOfStates number of states for TabularFunctionEstimator
+     * @param numberOfActions number of actions for DirectFunctionEstimator
+     * @param params parameters for function
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, String params) throws DynamicParamException {
+        super (memory, numberOfStates, numberOfActions, false, params);
     }
 
     /**
      * Returns reference to function estimator.
      *
      * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FunctionEstimator reference() {
-        return new DirectFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions());
+    public FunctionEstimator reference() throws DynamicParamException {
+        return new DirectFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
@@ -47,7 +62,7 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
-        return new DirectFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions());
+        return new DirectFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
@@ -68,9 +83,10 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Returns shallow copy of DirectFunctionEstimator.
      *
      * @return shallow copy of DirectFunctionEstimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FunctionEstimator copy() {
-        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions());
+    public FunctionEstimator copy() throws DynamicParamException {
+        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**

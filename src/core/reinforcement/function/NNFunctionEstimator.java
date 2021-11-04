@@ -10,8 +10,8 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -74,18 +74,13 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
 
     /**
-     * Parameters for NNFunctionEstimator.
-     *
-     */
-    private String params;
-
-    /**
      * Constructor for NNFunctionEstimator.
      *
      * @param memory memory reference.
      * @param neuralNetwork neural network reference.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork) {
+    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork) throws DynamicParamException {
         super (memory, neuralNetwork.getInputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput() ? neuralNetwork.getOutputLayer().getLayerWidth() - 1 : neuralNetwork.getOutputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput());
         this.neuralNetwork = neuralNetwork;
         applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
@@ -100,16 +95,17 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, String params) throws DynamicParamException {
-        this(memory, neuralNetwork);
-        this.params = params;
-        setParams(new DynamicParam(params, getParamDefs()));
+        super (memory, neuralNetwork.getInputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput() ? neuralNetwork.getOutputLayer().getLayerWidth() - 1 : neuralNetwork.getOutputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput(), params);
+        this.neuralNetwork = neuralNetwork;
+        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
 
     /**
      * Initializes default params.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws DynamicParamException {
         super.initializeDefaultParams();
         targetFunctionTau = 0.01;
     }
@@ -147,9 +143,10 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Returns reference to function estimator.
      *
      * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FunctionEstimator reference() {
-        return new NNFunctionEstimator(getMemory(), getNeuralNetwork());
+    public FunctionEstimator reference() throws DynamicParamException {
+        return new NNFunctionEstimator(getMemory(), getNeuralNetwork(), getParams());
     }
 
     /**
@@ -160,7 +157,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
-        return new NNFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNeuralNetwork());
+        return new NNFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNeuralNetwork(), getParams());
     }
 
     /**
@@ -202,7 +199,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException {
-        return params == null ? new NNFunctionEstimator(memory, neuralNetwork.copy()) : new NNFunctionEstimator(memory, neuralNetwork.copy(), params);
+        return new NNFunctionEstimator(memory, neuralNetwork.copy(), getParams());
     }
 
     /**
@@ -269,7 +266,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
             index++;
         }
         if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(importanceSamplingWeights);
-        neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true, numberOfIterations = " + numberOfIterations));
+        neuralNetwork.train(new BasicSampler(states, stateValues, "fullSet = true, randomOrder = false, numberOfIterations = " + numberOfIterations));
 
         updateComplete();
     }

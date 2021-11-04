@@ -10,9 +10,9 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
-import utils.Configurable;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -105,8 +105,9 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @param numberOfStates number of states.
      * @param numberOfActions number of actions.
      * @param isStateActionValueFunction if true function is combined state action value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction) {
+    public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction) throws DynamicParamException {
         initializeDefaultParams();
         this.memory = memory;
         this.numberOfStates = numberOfStates;
@@ -139,7 +140,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * Initializes default params.
      *
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws DynamicParamException {
         targetFunctionUpdateCycle = 0;
     }
 

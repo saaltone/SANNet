@@ -10,8 +10,8 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
-import utils.Configurable;
-import utils.DynamicParamException;
+import utils.configurable.Configurable;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -30,9 +30,8 @@ public interface FunctionEstimator extends Configurable {
      *
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      */
-    FunctionEstimator reference() throws DynamicParamException, NeuralNetworkException;
+    FunctionEstimator reference() throws DynamicParamException;
 
     /**
      * Returns reference to function estimator.
@@ -40,9 +39,8 @@ public interface FunctionEstimator extends Configurable {
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      */
-    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, NeuralNetworkException;
+    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException;
 
     /**
      * Returns number of states for FunctionEstimator.
