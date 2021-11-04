@@ -5,8 +5,8 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.util.Objects;
 import java.util.Random;
@@ -52,26 +52,26 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      * Exploration noise for NoisyNextBestPolicy.
      *
      */
-    private double initialExplorationNoise = 1;
+    private double initialExplorationNoise;
 
     /**
      * Minimum exploration noise for NoisyNextBestPolicy.
      *
      */
-    private double minExplorationNoise = 0.2;
+    private double minExplorationNoise;
 
     /**
      * Decay for exploration noise for NoisyNextBestPolicy.
      *
      */
-    private double explorationNoiseDecay = 0.999;
+    private double explorationNoiseDecay;
 
     /**
      * Constructor for NoisyNextBestPolicy.
      *
      */
     public NoisyNextBestPolicy() {
-        explorationNoise = initialExplorationNoise;
+        super();
     }
 
     /**
@@ -82,6 +82,18 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      */
     public NoisyNextBestPolicy(String params) throws DynamicParamException {
         super(params, NoisyNextBestPolicy.paramNameTypes);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        initialExplorationNoise = 1;
+        minExplorationNoise = 0.2;
+        explorationNoiseDecay = 0.999;
+        explorationNoise = initialExplorationNoise;
     }
 
     /**

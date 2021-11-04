@@ -6,7 +6,7 @@
 package core.reinforcement.policy.executablepolicy;
 
 import core.reinforcement.agent.AgentException;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 import java.io.Serial;
 import java.io.Serializable;

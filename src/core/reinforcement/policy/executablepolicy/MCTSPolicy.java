@@ -6,8 +6,8 @@
 package core.reinforcement.policy.executablepolicy;
 
 import core.reinforcement.memory.StateTransition;
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 
 import java.io.Serial;

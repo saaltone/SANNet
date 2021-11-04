@@ -5,8 +5,8 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 
 import java.util.HashSet;
@@ -84,7 +84,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      */
     public EpsilonGreedyPolicy() {
-        epsilon = epsilonInitial;
+        super();
     }
 
     /**
@@ -107,6 +107,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
         epsilonMin = 0.2;
         epsilonDecayRate = 0.999;
         epsilonDecayByUpdateCount = false;
+        epsilon = epsilonInitial;
     }
 
     /**

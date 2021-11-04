@@ -6,7 +6,7 @@
 package core.reinforcement.policy.executablepolicy;
 
 import core.reinforcement.memory.StateTransition;
-import utils.Configurable;
+import utils.configurable.Configurable;
 import utils.matrix.Matrix;
 
 import java.util.HashSet;

@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 import java.util.Objects;
 import java.util.TreeSet;

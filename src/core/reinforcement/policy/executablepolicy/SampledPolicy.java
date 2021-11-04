@@ -5,8 +5,8 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import utils.DynamicParam;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 
 import java.util.Objects;
 import java.util.Random;
@@ -70,7 +70,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      */
     public SampledPolicy() {
-        thresholdCurrent = thresholdInitial;
+        super();
     }
 
     /**
@@ -81,6 +81,18 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      */
     public SampledPolicy(String params) throws DynamicParamException {
         super(params, SampledPolicy.paramNameTypes);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        thresholdInitial = 1;
+        thresholdMin = 0.2;
+        thresholdDecay = 0.999;
+        thresholdCurrent = thresholdInitial;
     }
 
     /**
@@ -133,7 +145,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
             ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
             if (Objects.requireNonNull(actionValueTuple).value() >= thresholdValue) return actionValueTuple.action();
         }
-        return stateValueSet.first().action();
+        return -1;
     }
 
     /**
