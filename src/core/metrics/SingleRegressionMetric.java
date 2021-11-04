@@ -5,7 +5,7 @@
 
 package core.metrics;
 
-import utils.Sequence;
+import utils.sampling.Sequence;
 import utils.matrix.*;
 
 import java.io.Serial;

@@ -1,8 +1,8 @@
 package core.metrics;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;

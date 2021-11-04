@@ -5,8 +5,8 @@
 
 package core.metrics;
 
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.*;
 
 import java.io.Serial;
@@ -336,7 +336,7 @@ public class RegressionMetric implements Metric, Serializable {
         }
         Matrix ones = new DMatrix(meanActualValue.getRows(), meanActualValue.getColumns());
         ones.initializeToValue(1);
-        return ones.subtract(SSRes.divide(SSTot));
+        return SSTot == null || SSRes == null ? null : ones.subtract(SSRes.divide(SSTot));
     }
 
     /**
