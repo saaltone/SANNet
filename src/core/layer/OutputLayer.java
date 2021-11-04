@@ -10,8 +10,9 @@ import core.loss.LossFunction;
 import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
 import core.regularization.RegularizationType;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.sampling.Sequence;
 
 import java.util.ArrayList;
 import java.util.HashMap;

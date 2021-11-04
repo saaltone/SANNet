@@ -6,9 +6,9 @@
 package core.layer;
 
 import core.network.NeuralNetworkException;
-import utils.DynamicParam;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;

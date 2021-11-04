@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
 import core.regularization.RegularizationType;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 
 import java.util.HashMap;

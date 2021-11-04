@@ -15,11 +15,12 @@ import core.optimization.OptimizerFactory;
 import core.regularization.Regularization;
 import core.regularization.RegularizationFactory;
 import core.regularization.RegularizationType;
-import utils.*;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
+import utils.sampling.Sequence;
 
 import java.util.*;
 

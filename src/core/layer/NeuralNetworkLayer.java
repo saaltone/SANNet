@@ -9,8 +9,8 @@ import core.network.NeuralNetworkException;
 import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
 import core.regularization.RegularizationType;
-import utils.DynamicParamException;
-import utils.Sequence;
+import utils.configurable.DynamicParamException;
+import utils.sampling.Sequence;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 

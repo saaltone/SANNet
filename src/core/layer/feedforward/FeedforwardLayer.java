@@ -8,7 +8,8 @@ package core.layer.feedforward;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
-import utils.*;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.util.HashSet;

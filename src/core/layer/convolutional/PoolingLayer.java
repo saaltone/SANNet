@@ -7,7 +7,8 @@ package core.layer.convolutional;
 
 import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
-import utils.*;
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.io.Serial;
