@@ -12,7 +12,7 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.policy.updateablepolicy.UpdateableSoftQPolicy;
 import core.reinforcement.value.SoftQValueFunctionEstimator;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;

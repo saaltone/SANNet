@@ -10,7 +10,7 @@ import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ValueFunction;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;

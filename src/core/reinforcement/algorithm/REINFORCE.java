@@ -5,7 +5,6 @@
 
 package core.reinforcement.algorithm;
 
-import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.function.DirectFunctionEstimator;
@@ -15,7 +14,7 @@ import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.policy.updateablepolicy.UpdateableBasicPolicy;
 import core.reinforcement.policy.updateablepolicy.UpdateableProximalPolicy;
 import core.reinforcement.value.PlainValueFunction;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 
 import java.io.IOException;
 
@@ -108,10 +107,9 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws IOException, DynamicParamException, ClassNotFoundException, AgentException {
         return new REINFORCE(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
     }
 

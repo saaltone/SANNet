@@ -12,7 +12,7 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.executablepolicy.MCTSPolicy;
 import core.reinforcement.policy.updateablepolicy.UpdateableMCTSPolicy;
 import core.reinforcement.value.StateValueFunctionEstimator;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;

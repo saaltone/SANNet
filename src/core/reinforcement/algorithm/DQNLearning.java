@@ -12,7 +12,7 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.QValueFunctionEstimator;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;

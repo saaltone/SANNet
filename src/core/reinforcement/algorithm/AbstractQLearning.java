@@ -11,7 +11,7 @@ import core.reinforcement.agent.DeepAgent;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.value.ValueFunction;
-import utils.DynamicParamException;
+import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
