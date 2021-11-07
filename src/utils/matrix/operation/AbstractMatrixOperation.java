@@ -162,7 +162,7 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
                 for (int row = 0; row < rows; row += rowStride) {
                     for (int column = 0; column < columns; column += columnStride) {
                         if (!hasMaskAt(row, column, targetMatrix, other)) {
-                            apply(row, column, targetMatrix.getValue(row, column));
+                            applyMask(row, column, targetMatrix.getValue(row, column));
                         }
                     }
                 }
@@ -171,7 +171,7 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
                 for (int row = 0; row < rows; row += rowStride) {
                     for (int column = 0; column < columns; column += columnStride) {
                         if (!hasMaskAt(row, column, targetMatrix, other)) {
-                            apply(row, column, 0);
+                            applyMask(row, column, 0);
                         }
                     }
                 }
