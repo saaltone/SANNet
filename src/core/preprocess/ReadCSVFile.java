@@ -44,52 +44,55 @@ public class ReadCSVFile {
      * @throws FileNotFoundException throws exception if file is not found.
      */
     public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName, String separator, HashSet<Integer> inputColumns, HashSet<Integer> outputColumns, int skipRowsFromStart, boolean asSparseMatrix, boolean inAs2D, int inRows, int inCols, boolean outAs2D, int outRows, int outCols) throws FileNotFoundException {
-        LinkedHashMap<Integer, Integer> inMap = new LinkedHashMap<>();
-        LinkedHashMap<Integer, Integer> outMap = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Integer> inputColumnMap = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Integer> outputColumnMap = new LinkedHashMap<>();
         int index;
         index = 0;
-        for (Integer pos : inputColumns) inMap.put(pos, index++);
+
+        for (Integer pos : inputColumns) inputColumnMap.put(pos, index++);
+
         index = 0;
-        for (Integer pos : outputColumns) outMap.put(pos, index++);
-        inRows = inAs2D ? inRows : inMap.size();
+        for (Integer pos : outputColumns) outputColumnMap.put(pos, index++);
+
+        inRows = inAs2D ? inRows : inputColumnMap.size();
         inCols = inAs2D ? inCols : 1;
-        outRows = outAs2D ? outRows : outMap.size();
+
+        outRows = outAs2D ? outRows : outputColumnMap.size();
         outCols = outAs2D ? outCols : 1;
 
         File file = new File(fileName);
         Scanner scanner = new Scanner(file);
 
+        int countSkipRows = 0;
+        while (countSkipRows++ < skipRowsFromStart && scanner.hasNextLine()) scanner.nextLine();
+
         LinkedHashMap<Integer, MMatrix> inputData = new LinkedHashMap<>();
         LinkedHashMap<Integer, MMatrix> outputData = new LinkedHashMap<>();
-        int countSkipRows = 0;
+
         int row = 0;
         while (scanner.hasNextLine()) {
-            while (countSkipRows < skipRowsFromStart && scanner.hasNextLine()) {
-                scanner.nextLine();
-                countSkipRows++;
-            }
-            if (!scanner.hasNextLine()) break;
             String[] items = scanner.nextLine().split(separator);
-            Matrix inItem = !asSparseMatrix ? new DMatrix(inRows, inCols) : new SMatrix(inRows, inCols);
-            for (Integer pos : inMap.keySet()) {
-                if (items[pos].compareTo("0") != 0) {
-                    inItem.setValue(getRow(inAs2D, inMap.get(pos), inCols), getCol(inAs2D, inMap.get(pos), inCols), convertToDouble(items[pos]));
-                }
-            }
-            inputData.put(row, new MMatrix(inItem));
-            Matrix outItem = !asSparseMatrix ? new DMatrix(outRows, outCols) : new SMatrix(outRows, outCols);
-            for (Integer pos : outMap.keySet()) {
-                if (items[pos].compareTo("0") != 0) {
-                    outItem.setValue(getRow(outAs2D, outMap.get(pos), outCols), getCol(outAs2D, outMap.get(pos), outCols), convertToDouble(items[pos]));
-                }
-            }
-            outputData.put(row, new MMatrix(outItem));
+
+            addItem(items, inputColumnMap, row, inAs2D, inRows, inCols, asSparseMatrix, inputData);
+
+            addItem(items, outputColumnMap, row, outAs2D, outRows, outCols, asSparseMatrix, outputData);
+
             row++;
         }
         HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
         result.put(0, inputData);
         result.put(1, outputData);
         return result;
+    }
+
+    private static void addItem(String[] items, LinkedHashMap<Integer, Integer> columnMap, int row, boolean as2D, int rows, int columns, boolean asSparseMatrix, LinkedHashMap<Integer, MMatrix> data) {
+        Matrix inItem = !asSparseMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
+        for (Integer pos : columnMap.keySet()) {
+            if (items[pos].compareTo("0") != 0) {
+                inItem.setValue(getRow(as2D, columnMap.get(pos), columns), getCol(as2D, columnMap.get(pos), columns), convertToDouble(items[pos]));
+            }
+        }
+        data.put(row, new MMatrix(inItem));
     }
 
     /**
