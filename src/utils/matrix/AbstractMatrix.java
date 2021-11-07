@@ -1725,6 +1725,58 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Calculates random pooling operation for this matrix.
+     *
+     * @param inputPos input positions for each row and col value.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix randomPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
+        randomPool(result, inputPos);
+        return result;
+    }
+
+    /**
+     * Calculates random pooling operation for this matrix and returns max arguments.
+     *
+     * @param result result matrix.
+     * @param inputPos input positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void randomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        if (!hasProcedureFactory()) applyMaxPool(result, inputPos);
+        else {
+            result.setProcedureFactory(procedureFactory);
+            double expressionLock = procedureFactory.startExpression(this);
+            applyRandomPool(result, inputPos);
+            procedureFactory.createRandomPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+        }
+    }
+
+    /**
+     * Calculates random pooling operation for this matrix and returns max arguments.
+     *
+     * @param result result matrix.
+     * @param inputPos input positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract void applyRandomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
+
+    /**
+     * Calculates gradient of random pooling operation for this matrix.
+     *
+     * @param inputPos input positions for each row and col value.
+     * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix randomPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException {
+        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
+        randomPoolGradient(inputGradient, inputPos);
+        return inputGradient;
+    }
+
+    /**
      * Calculates average pooling operation for this matrix.
      *
      * @return result matrix.

@@ -808,6 +808,28 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Calculates random pooling operation for matrix and returns max arguments.
+     *
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @param inputPos input position for each result row and column value.
+     */
+    protected void applyRandomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        new RandomPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos, result);
+    }
+
+    /**
+     * Calculates gradient for random pool operation.
+     *
+     * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @param inputPos input position for each result row and column value.
+     */
+    public void randomPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        new RandomPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, inputPos, inputGradient);
+    }
+
+    /**
      * Calculates average pooling operation for matrix.
      *
      * @param result result matrix.
