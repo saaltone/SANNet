@@ -54,15 +54,39 @@ public enum LayerType {
     MINGRU,
 
     /**
-     * Convolutional layer implemented as convolution, crosscorrelation or minimal Winograd convolution
+     * Convolution layer.
      *
      */
-    CONVOLUTIONAL,
+    CONVOLUTION,
 
     /**
-     * Max or average pooling layer
+     * Cross-correlation layer.
      *
      */
-    POOLING
+    CROSSCORRELATION,
+
+    /**
+     * Winograd convolution layer.
+     *
+     */
+    WINOGRAD_CONVOLUTION,
+
+    /**
+     * Max pooling layer
+     *
+     */
+    MAX_POOLING,
+
+    /**
+     * Random pooling layer
+     *
+     */
+    RANDOM_POOLING,
+
+    /**
+     * Max pooling layer
+     *
+     */
+    AVERAGE_POOLING
 
 }

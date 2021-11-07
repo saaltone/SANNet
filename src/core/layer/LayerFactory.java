@@ -42,8 +42,12 @@ public class LayerFactory {
             case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, activationFunction, initialization, params);
             case GRU -> new GRULayer(layerIndex, initialization, params);
             case MINGRU -> new MinGRULayer(layerIndex, initialization, params);
-            case CONVOLUTIONAL -> new ConvolutionalLayer(layerIndex, activationFunction, initialization, params);
-            case POOLING -> new PoolingLayer(layerIndex, initialization, params);
+            case CONVOLUTION -> new ConvolutionLayer(layerIndex, activationFunction, initialization, params);
+            case CROSSCORRELATION -> new CrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
+            case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
+            case MAX_POOLING -> new MaxPoolingLayer(layerIndex, initialization, params);
+            case RANDOM_POOLING -> new RandomPoolingLayer(layerIndex, initialization, params);
+            case AVERAGE_POOLING -> new AveragePoolingLayer(layerIndex, initialization, params);
         };
     }
 
@@ -62,8 +66,12 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof GravesLSTMLayer) return LayerType.GRAVESLSTM;
         if (neuralNetworkLayer instanceof GRULayer) return LayerType.GRU;
         if (neuralNetworkLayer instanceof MinGRULayer) return LayerType.MINGRU;
-        if (neuralNetworkLayer instanceof ConvolutionalLayer) return LayerType.CONVOLUTIONAL;
-        if (neuralNetworkLayer instanceof PoolingLayer) return LayerType.POOLING;
+        if (neuralNetworkLayer instanceof ConvolutionLayer) return LayerType.CONVOLUTION;
+        if (neuralNetworkLayer instanceof CrosscorrelationLayer) return LayerType.CROSSCORRELATION;
+        if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return LayerType.WINOGRAD_CONVOLUTION;
+        if (neuralNetworkLayer instanceof MaxPoolingLayer) return LayerType.MAX_POOLING;
+        if (neuralNetworkLayer instanceof RandomPoolingLayer) return LayerType.RANDOM_POOLING;
+        if (neuralNetworkLayer instanceof AveragePoolingLayer) return LayerType.AVERAGE_POOLING;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -82,8 +90,12 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof GravesLSTMLayer) return "GRAVESLSTM";
         if (neuralNetworkLayer instanceof GRULayer) return "GRU";
         if (neuralNetworkLayer instanceof MinGRULayer) return "MINGRU";
-        if (neuralNetworkLayer instanceof ConvolutionalLayer) return "CONVOLUTIONAL";
-        if (neuralNetworkLayer instanceof PoolingLayer) return "POOLING";
+        if (neuralNetworkLayer instanceof ConvolutionLayer) return "CONVOLUTION";
+        if (neuralNetworkLayer instanceof CrosscorrelationLayer) return "CROSSCORRELATION";
+        if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return "WINOGRAD_CONVOLUTION";
+        if (neuralNetworkLayer instanceof MaxPoolingLayer) return "MAX_POOLING";
+        if (neuralNetworkLayer instanceof RandomPoolingLayer) return "RANDOM_POOLING";
+        if (neuralNetworkLayer instanceof AveragePoolingLayer) return "AVERAGE_POOLING";
         throw new NeuralNetworkException("Unknown layer type");
     }
 
