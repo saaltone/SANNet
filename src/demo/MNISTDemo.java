@@ -61,7 +61,7 @@ public class MNISTDemo {
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
+            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "perEpoch = true, randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
             neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
 
             neuralNetwork.print();
@@ -119,15 +119,16 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1, asConvolution = false, asWinogradConvolution = false");
-        neuralNetwork.addHiddenLayer(LayerType.CONVOLUTIONAL, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1, asConvolution = false, asWinogradConvolution = false");
-        neuralNetwork.addHiddenLayer(LayerType.POOLING, "filterSize = 2, stride = 1, avgPool = false");
+        neuralNetwork.addHiddenLayer(LayerType.CROSSCORRELATION, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.CROSSCORRELATION, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
-        neuralNetwork.addNormalizer(4, NormalizationType.BATCH_NORMALIZATION);
+        neuralNetwork.addNormalizer(5, NormalizationType.BATCH_NORMALIZATION);
         return neuralNetwork;
     }
 
