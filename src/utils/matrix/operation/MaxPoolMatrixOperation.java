@@ -137,26 +137,31 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      * @param row current row.
      * @param column current column.
      * @param value current value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyMask(int row, int column, double value) {
+    public void applyMask(int row, int column, double value) throws MatrixException {
+        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         int maxRow = -1;
         int maxColumn = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                int inputRow = row + filterRow;
-                int inputColumn = column + filterColumn;
-                double inputValue = input.getValue(inputRow, inputColumn);
-                if (maxValue < inputValue) {
-                    maxValue = inputValue;
-                    maxRow = inputRow;
-                    maxColumn = inputColumn;
+                if (!hasMaskAt(filterRow, filterColumn, input)) {
+                    int inputRow = row + filterRow;
+                    int inputColumn = column + filterColumn;
+                    double inputValue = input.getValue(inputRow, inputColumn);
+                    if (maxValue < inputValue) {
+                        maxValue = inputValue;
+                        maxRow = inputRow;
+                        maxColumn = inputColumn;
+                    }
                 }
             }
         }
         result.setValue(row, column, maxValue);
         maxPos.put(2 * (row * inputColumnSize + column), maxRow);
         maxPos.put(2 * (row * inputColumnSize + column) + 1, maxColumn);
+        input.unslice();
     }
 
 }
