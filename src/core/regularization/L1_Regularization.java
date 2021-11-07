@@ -5,17 +5,13 @@
 
 package core.regularization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
-
-import java.io.Serial;
-import java.io.Serializable;
+import utils.sampling.Sequence;
 
 /**
  * Implements L1 (lasso) regularization.<br>
@@ -23,10 +19,7 @@ import java.io.Serializable;
  * Reference: https://towardsdatascience.com/l1-and-l2-regularization-methods-ce25e7fc831c<br>
  *
  */
-public class L1_Regularization implements Configurable, Regularization, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -7323953827581797724L;
+public class L1_Regularization extends AbstractRegularization {
 
     /**
      * Parameter name types for L1_Regularization.
@@ -34,12 +27,6 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
      *
      */
     private final static String paramNameTypes = "(lambda:DOUBLE)";
-
-    /**
-     * Type of regularization.
-     *
-     */
-    private final RegularizationType regularizationType = RegularizationType.L1_REGULARIZATION;
 
     /**
      * Regularization rate.
@@ -50,9 +37,10 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
     /**
      * Constructor for L1 regularization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public L1_Regularization() {
-        initializeDefaultParams();
+    public L1_Regularization() throws DynamicParamException {
+        super(RegularizationType.L1_REGULARIZATION, L1_Regularization.paramNameTypes);
     }
 
     /**
@@ -62,8 +50,7 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public L1_Regularization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(RegularizationType.L1_REGULARIZATION, L1_Regularization.paramNameTypes, params);
     }
 
     /**
@@ -72,15 +59,6 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
      */
     public void initializeDefaultParams() {
         lambda = 0.01;
-    }
-
-    /**
-     * Returns parameters used for L1 regularization.
-     *
-     * @return parameters used for L1 regularization.
-     */
-    public String getParamDefs() {
-        return L1_Regularization.paramNameTypes;
     }
 
     /**
@@ -94,13 +72,6 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
-    }
-
-    /**
-     * Not used.
-     *
-     */
-    public void setTraining(boolean isTraining) {
     }
 
     /**
@@ -138,15 +109,6 @@ public class L1_Regularization implements Configurable, Regularization, Serializ
      */
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
         weightGradientSum.add(weight.apply((value) -> lambda * Math.signum(value)), weightGradientSum);
-    }
-
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return regularizationType.toString();
     }
 
 }

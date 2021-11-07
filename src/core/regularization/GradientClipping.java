@@ -5,16 +5,12 @@
 
 package core.regularization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.io.Serial;
-import java.io.Serializable;
+import utils.sampling.Sequence;
 
 /**
  * Implements gradient clipping class.<br>
@@ -23,10 +19,7 @@ import java.io.Serializable;
  * Reference: https://hackernoon.com/gradient-clipping-57f04f0adae<br>
  *
  */
-public class GradientClipping implements Configurable, Regularization, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -2462517110247269075L;
+public class GradientClipping extends AbstractRegularization {
 
     /**
      * Parameter name types for GradientClipping.
@@ -34,12 +27,6 @@ public class GradientClipping implements Configurable, Regularization, Serializa
      *
      */
     private final static String paramNameTypes = "(threshold:DOUBLE)";
-
-    /**
-     * Type of regularization.
-     *
-     */
-    private final RegularizationType regularizationType = RegularizationType.GRADIENT_CLIPPING;
 
     /**
      * Threshold for gradient clipping.
@@ -50,9 +37,10 @@ public class GradientClipping implements Configurable, Regularization, Serializa
     /**
      * Constructor for gradient clipping class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GradientClipping() {
-        initializeDefaultParams();
+    public GradientClipping() throws DynamicParamException {
+        super(RegularizationType.GRADIENT_CLIPPING, GradientClipping.paramNameTypes);
     }
 
     /**
@@ -62,8 +50,7 @@ public class GradientClipping implements Configurable, Regularization, Serializa
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public GradientClipping(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(RegularizationType.GRADIENT_CLIPPING, GradientClipping.paramNameTypes, params);
     }
 
     /**
@@ -72,15 +59,6 @@ public class GradientClipping implements Configurable, Regularization, Serializa
      */
     public void initializeDefaultParams() {
         threshold = 0.1;
-    }
-
-    /**
-     * Returns parameters used for gradient clipping.
-     *
-     * @return parameters used for gradient clipping.
-     */
-    public String getParamDefs() {
-        return GradientClipping.paramNameTypes;
     }
 
     /**
@@ -94,14 +72,6 @@ public class GradientClipping implements Configurable, Regularization, Serializa
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("threshold")) threshold = params.getValueAsDouble("threshold");
-    }
-
-    /**
-     * Not used.
-     *
-     * @param isTraining if true neural network is in state otherwise false.
-     */
-    public void setTraining(boolean isTraining) {
     }
 
     /**
@@ -137,15 +107,6 @@ public class GradientClipping implements Configurable, Regularization, Serializa
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
         double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
         if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
-    }
-
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return regularizationType.toString();
     }
 
 }

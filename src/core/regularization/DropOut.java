@@ -5,16 +5,12 @@
 
 package core.regularization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.io.Serial;
-import java.io.Serializable;
+import utils.sampling.Sequence;
 
 /**
  * Implements drop out regularization method for layer weights (parameters).<br>
@@ -24,10 +20,7 @@ import java.io.Serializable;
  * Reference: https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf<br>
  *
  */
-public class DropOut implements Configurable, Regularization, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1335548498128292515L;
+public class DropOut extends AbstractRegularization {
 
     /**
      * Parameter name types for DropOut.
@@ -35,18 +28,6 @@ public class DropOut implements Configurable, Regularization, Serializable {
      *
      */
     private final static String paramNameTypes = "(probability:DOUBLE)";
-
-    /**
-     * Type of regularization.
-     *
-     */
-    private final RegularizationType regularizationType = RegularizationType.DROPOUT;
-
-    /**
-     * If true neural network is in state otherwise false.
-     *
-     */
-    private transient boolean isTraining;
 
     /**
      * Drop out probability of node.
@@ -57,9 +38,10 @@ public class DropOut implements Configurable, Regularization, Serializable {
     /**
      * Constructor for drop out class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DropOut() {
-        initializeDefaultParams();
+    public DropOut() throws DynamicParamException {
+        super(RegularizationType.DROPOUT, DropOut.paramNameTypes);
     }
 
     /**
@@ -69,8 +51,7 @@ public class DropOut implements Configurable, Regularization, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public DropOut(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(RegularizationType.DROPOUT, DropOut.paramNameTypes, params);
     }
 
     /**
@@ -79,15 +60,6 @@ public class DropOut implements Configurable, Regularization, Serializable {
      */
     public void initializeDefaultParams() {
         probability = 0.5;
-    }
-
-    /**
-     * Returns parameters used for drop out.
-     *
-     * @return parameters used for drop out.
-     */
-    public String getParamDefs() {
-        return DropOut.paramNameTypes;
     }
 
     /**
@@ -101,15 +73,6 @@ public class DropOut implements Configurable, Regularization, Serializable {
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("probability")) probability = 1 - params.getValueAsDouble("probability");
-    }
-
-    /**
-     * Sets flag for drop out if neural network is in training state.
-     *
-     * @param isTraining if true neural network is in state otherwise false.
-     */
-    public void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
     }
 
     /**
@@ -149,7 +112,7 @@ public class DropOut implements Configurable, Regularization, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private void forward(Matrix matrix) throws MatrixException {
-        if (isTraining) {
+        if (isTraining()) {
             matrix.multiply(1 / probability, matrix);
             matrix.setMask();
             matrix.getMask().setProbability(probability);
@@ -174,15 +137,6 @@ public class DropOut implements Configurable, Regularization, Serializable {
      * @param weightGradientSum gradient sum of weight.
      */
     public void backward(Matrix weight, Matrix weightGradientSum) {
-    }
-
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return regularizationType.toString();
     }
 
 }

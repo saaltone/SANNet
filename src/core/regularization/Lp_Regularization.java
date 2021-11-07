@@ -5,16 +5,12 @@
 
 package core.regularization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.io.Serial;
-import java.io.Serializable;
+import utils.sampling.Sequence;
 
 /**
  * Implements Lp regularization (experimental). P here is any norm higher or equal to 1.<br>
@@ -23,10 +19,7 @@ import java.io.Serializable;
  * This is experimental regularization method.<br>
  *
  */
-public class Lp_Regularization implements Configurable, Regularization, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -7833984930510523396L;
+public class Lp_Regularization extends AbstractRegularization {
 
     /**
      * Parameter name types for Lp_Regularization.
@@ -36,12 +29,6 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
      */
     private final static String paramNameTypes = "(lambda:DOUBLE), " +
             "(p:INT)";
-
-    /**
-     * Type of regularization.
-     *
-     */
-    private final RegularizationType regularizationType = RegularizationType.LP_REGULARIZATION;
 
     /**
      * Regularization rate.
@@ -58,9 +45,10 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
     /**
      * Constructor for Lp regularization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Lp_Regularization() {
-        initializeDefaultParams();
+    public Lp_Regularization() throws DynamicParamException {
+        super(RegularizationType.LP_REGULARIZATION, Lp_Regularization.paramNameTypes);
     }
 
     /**
@@ -70,8 +58,7 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Lp_Regularization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(RegularizationType.LP_REGULARIZATION, Lp_Regularization.paramNameTypes, params);
     }
 
     /**
@@ -81,15 +68,6 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
     public void initializeDefaultParams() {
         lambda = 0.01;
         p = 3;
-    }
-
-    /**
-     * Returns parameters used for Lp regularization.
-     *
-     * @return parameters used for Lp regularization.
-     */
-    public String getParamDefs() {
-        return Lp_Regularization.paramNameTypes;
     }
 
     /**
@@ -105,13 +83,6 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
         if (params.hasParam("p")) p = params.getValueAsInteger("p");
-    }
-
-    /**
-     * Not used.
-     *
-     */
-    public void setTraining(boolean isTraining) {
     }
 
     /**
@@ -150,15 +121,6 @@ public class Lp_Regularization implements Configurable, Regularization, Serializ
      */
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
         weightGradientSum.add(weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0), weightGradientSum);
-    }
-
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return regularizationType.toString();
     }
 
 }

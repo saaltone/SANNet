@@ -5,16 +5,12 @@
 
 package core.regularization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.io.Serial;
-import java.io.Serializable;
+import utils.sampling.Sequence;
 
 /**
  * Implements L2 (ridge) regularization.<br>
@@ -22,10 +18,7 @@ import java.io.Serializable;
  * Reference: https://towardsdatascience.com/l1-and-l2-regularization-methods-ce25e7fc831c<br>
  *
  */
-public class L2_Regularization implements Configurable, Regularization, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 7179599386737519841L;
+public class L2_Regularization extends AbstractRegularization {
 
     /**
      * Parameter name types for L2_Regularization.
@@ -33,12 +26,6 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
      *
      */
     private final static String paramNameTypes = "(lambda:DOUBLE)";
-
-    /**
-     * Type of regularization.
-     *
-     */
-    private final RegularizationType regularizationType = RegularizationType.L2_REGULARIZATION;
 
     /**
      * Regularization rate.
@@ -49,9 +36,10 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
     /**
      * Constructor for L2 regularization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public L2_Regularization() {
-        initializeDefaultParams();
+    public L2_Regularization() throws DynamicParamException {
+        super(RegularizationType.L2_REGULARIZATION, L2_Regularization.paramNameTypes);
     }
 
     /**
@@ -61,8 +49,7 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public L2_Regularization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(RegularizationType.L2_REGULARIZATION, L2_Regularization.paramNameTypes, params);
     }
 
     /**
@@ -71,15 +58,6 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
      */
     public void initializeDefaultParams() {
         lambda = 0.01;
-    }
-
-    /**
-     * Returns parameters used for L2 regularization.
-     *
-     * @return parameters used for L2 regularization.
-     */
-    public String getParamDefs() {
-        return L2_Regularization.paramNameTypes;
     }
 
     /**
@@ -110,13 +88,6 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
     public void forward(MMatrix inputs) {}
 
     /**
-     * Not used.
-     *
-     */
-    public void setTraining(boolean isTraining) {
-    }
-
-    /**
      * Calculates and returns cumulated error from L2 regularization.<br>
      * This is added to the total output error of neural network.<br>
      *
@@ -138,15 +109,6 @@ public class L2_Regularization implements Configurable, Regularization, Serializ
      */
     public void backward(Matrix weight, Matrix weightGradientSum) throws MatrixException {
         weightGradientSum.add(weight.multiply(2 * lambda), weightGradientSum);
-    }
-
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return regularizationType.toString();
     }
 
 }
