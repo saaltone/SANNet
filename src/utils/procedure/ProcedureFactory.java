@@ -692,6 +692,25 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
+     * Records random pool expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @param stride stride for operation.
+     * @param filterRowSize filter row size for operation.
+     * @param filterColumnSize filter column size for operation.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createRandomPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        Node node1 = defineNode(argument1, false);
+        Node resultNode = defineNode(result, true);
+        RandomPoolExpression expression = new RandomPoolExpression(currentExpressionID++, node1, resultNode, stride, filterRowSize, filterColumnSize);
+        storeExpression(expression, resultNode);
+    }
+
+    /**
      * Records average pool expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
