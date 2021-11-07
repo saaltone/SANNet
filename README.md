@@ -8,9 +8,9 @@ Framework's primary components are neural network instance, input layer, variabl
 SANNet is written on Java and has been built from ground up starting from implementation of matrix library and functions. 
 
 ## Layers, activation and loss functions
-Framework provides vanilla feedforward layer, recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) and convolutional layers (convolutional layer, max / average pooling layer). All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
+Framework provides vanilla feedforward layer, recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) and convolutional layers (convolutional layer, max / average / random pooling layer). All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
 
-Framework supports multiple layer activation functions and loss functions for output layer. Additionally there are multiple initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations.
+Framework supports multiple layer activation functions and loss functions for output layer. Multiple parallel loss functions with single splitted output can be used at output layer. Additionally there are multiple initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations.
 
 ## Reinforcement learning
 Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards.
