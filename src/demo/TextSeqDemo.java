@@ -100,7 +100,7 @@ public class TextSeqDemo {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 128");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
