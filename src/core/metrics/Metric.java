@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2021 Simo Aaltonen
+ */
+
 package core.metrics;
 
 import core.network.NeuralNetworkException;
