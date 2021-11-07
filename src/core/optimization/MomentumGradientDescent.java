@@ -5,15 +5,12 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -22,10 +19,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class MomentumGradientDescent implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -983868918422365256L;
+public class MomentumGradientDescent extends AbstractOptimizer {
 
     /**
      * Parameter name types for MomentumGradientDescent.
@@ -35,18 +29,6 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(mu:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.MOMENTUM_GRADIENT_DESCENT;
 
     /**
      * Learning rate for Momentum Gradient Descent. Default value 0.001.
@@ -69,10 +51,10 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
     /**
      * Default constructor for Momentum Gradient Descent.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MomentumGradientDescent() {
-        initializeDefaultParams();
-        params = null;
+    public MomentumGradientDescent() throws DynamicParamException {
+        super(OptimizationType.MOMENTUM_GRADIENT_DESCENT, MomentumGradientDescent.paramNameTypes);
     }
 
     /**
@@ -82,9 +64,7 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MomentumGradientDescent(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.MOMENTUM_GRADIENT_DESCENT, MomentumGradientDescent.paramNameTypes, params);
     }
 
     /**
@@ -94,24 +74,6 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
     public void initializeDefaultParams() {
         learningRate = 0.001;
         mu = 0.0001;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Momentum Gradient Descent.
-     *
-     * @return parameters used for Momentum Gradient Descent.
-     */
-    public String getParamDefs() {
-        return MomentumGradientDescent.paramNameTypes;
     }
 
     /**
@@ -138,20 +100,6 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
     }
 
     /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
-    }
-
-    /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
@@ -173,15 +121,6 @@ public class MomentumGradientDescent implements Configurable, Optimizer, Seriali
         // vt+1=μtvt−εt∇f(θt)
         dPrev.put(matrix, dMDelta);
 
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

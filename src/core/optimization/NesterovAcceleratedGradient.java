@@ -5,15 +5,12 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -22,10 +19,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class NesterovAcceleratedGradient implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -783588127072068825L;
+public class NesterovAcceleratedGradient extends AbstractOptimizer {
 
     /**
      * Parameter name types for NesterovAcceleratedGradient.
@@ -35,18 +29,6 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(mu:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.NESTEROV_ACCELERATED_GRADIENT;
 
     /**
      * Learning rate for Nesterov Accelerated Gradient. Default value 0.001.
@@ -75,10 +57,10 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
     /**
      * Default constructor for Nesterov Accelerated Gradient.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NesterovAcceleratedGradient() {
-        initializeDefaultParams();
-        params = null;
+    public NesterovAcceleratedGradient() throws DynamicParamException {
+        super(OptimizationType.NESTEROV_ACCELERATED_GRADIENT, NesterovAcceleratedGradient.paramNameTypes);
     }
 
     /**
@@ -88,9 +70,7 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NesterovAcceleratedGradient(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.NESTEROV_ACCELERATED_GRADIENT, NesterovAcceleratedGradient.paramNameTypes, params);
     }
 
     /**
@@ -100,24 +80,6 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
     public void initializeDefaultParams() {
         learningRate = 0.001;
         mu = 0.0001;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Nesterov Accelerated Descent.
-     *
-     * @return parameters used for Nesterov Accelerated Descent.
-     */
-    public String getParamDefs() {
-        return NesterovAcceleratedGradient.paramNameTypes;
     }
 
     /**
@@ -142,20 +104,6 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
     public void reset() {
         dPrev = new HashMap<>();
         vPrev = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -185,15 +133,6 @@ public class NesterovAcceleratedGradient implements Configurable, Optimizer, Ser
         vPrev.put(matrix, vM);
         dPrev.put(matrix, matrixGradient);
 
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

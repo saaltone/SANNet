@@ -5,14 +5,13 @@
 
 package core.optimization;
 
+import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -22,16 +21,7 @@ import java.util.HashMap;
  * Reference: http://130.243.105.49/~lilien/ml/seminars/2007_03_12c-Markus_Ingvarsson-RPROP.pdf <br>
  *
  */
-public class ResilientPropagation implements Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -5041801098584596493L;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.RESILIENT_PROPAGATION;
+public class ResilientPropagation extends AbstractOptimizer {
 
     /**
      * Hash map to store previous gradients.
@@ -48,17 +38,25 @@ public class ResilientPropagation implements Optimizer, Serializable {
     /**
      * Default constructor for Resilient Propagation.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ResilientPropagation() {
+    public ResilientPropagation() throws DynamicParamException {
+        super(OptimizationType.RESILIENT_PROPAGATION, null);
     }
 
     /**
-     * Returns parameters of optimizer.
+     * Initializes default params.
      *
-     * @return parameters for optimizer.
      */
-    public String getParams() {
-        return null;
+    public void initializeDefaultParams() {
+    }
+
+    /**
+     * Sets parameters used for ResilientPropagation.<br>
+     *
+     * @param params parameters used for ResilientPropagation.
+     */
+    public void setParams(DynamicParam params) {
     }
 
     /**
@@ -68,21 +66,6 @@ public class ResilientPropagation implements Optimizer, Serializable {
     public void reset() {
         dPrev = new HashMap<>();
         wPrev = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -114,15 +97,6 @@ public class ResilientPropagation implements Optimizer, Serializable {
         matrix.subtract(matrixGradient.apply(UnaryFunctionType.SGN).multiply(WPrev), matrix);
 
         dPrev.put(matrix, dWDir.applyBi(matrixGradient, (value1, value2) -> value1 == -1 ? 0 : value2));
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

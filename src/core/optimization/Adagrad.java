@@ -5,7 +5,6 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -13,8 +12,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -23,10 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class Adagrad implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -8831643329108200212L;
+public class Adagrad extends AbstractOptimizer {
 
     /**
      * Parameter name types for Adagrad.
@@ -34,12 +28,6 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
      *
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
 
     /**
      * Optimization type.
@@ -62,10 +50,10 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for Adagrad.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adagrad() {
-        initializeDefaultParams();
-        params = null;
+    public Adagrad() throws DynamicParamException {
+        super(OptimizationType.ADAGRAD, Adagrad.paramNameTypes);
     }
 
     /**
@@ -75,9 +63,7 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Adagrad(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.ADAGRAD, Adagrad.paramNameTypes, params);
     }
 
     /**
@@ -86,24 +72,6 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
      */
     public void initializeDefaultParams() {
         learningRate = 0.01;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Adagrad.
-     *
-     * @return parameters used for Adagrad.
-     */
-    public String getParamDefs() {
-        return Adagrad.paramNameTypes;
     }
 
     /**
@@ -128,21 +96,6 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
     }
 
     /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
-    }
-
-    /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
@@ -162,15 +115,6 @@ public class Adagrad implements Configurable, Optimizer, Serializable {
 
         double epsilon = 10E-8;
         matrix.subtract(matrixGradient.divide(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

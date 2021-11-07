@@ -5,7 +5,6 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -13,7 +12,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -22,10 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-@SuppressWarnings("ALL")
-public class Adam implements Configurable, Optimizer, Serializable {
-
-    private static final long serialVersionUID = 2147864386790210492L;
+public class Adam extends AbstractOptimizer {
 
     /**
      * Parameter name types for Adam.
@@ -37,18 +32,6 @@ public class Adam implements Configurable, Optimizer, Serializable {
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(beta1:DOUBLE), " +
             "(beta2:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.ADAM;
 
     /**
      * Learning rate for Adam. Default value 0.001.
@@ -89,10 +72,10 @@ public class Adam implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for Adam.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adam() {
-        initializeDefaultParams();
-        params = null;
+    public Adam() throws DynamicParamException {
+        super(OptimizationType.ADAM, Adam.paramNameTypes);
     }
 
     /**
@@ -102,9 +85,7 @@ public class Adam implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Adam(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.ADAM, Adam.paramNameTypes, params);
     }
 
     /**
@@ -115,24 +96,6 @@ public class Adam implements Configurable, Optimizer, Serializable {
         learningRate = 0.001;
         beta1 = 0.9;
         beta2 = 0.999;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Adam.
-     *
-     * @return parameters used for Adam.
-     */
-    public String getParamDefs() {
-        return Adam.paramNameTypes;
     }
 
     /**
@@ -160,21 +123,6 @@ public class Adam implements Configurable, Optimizer, Serializable {
         iterations = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -218,15 +166,6 @@ public class Adam implements Configurable, Optimizer, Serializable {
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
         matrix.subtract(mM_hat.divide(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

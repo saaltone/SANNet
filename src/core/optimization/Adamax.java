@@ -5,7 +5,6 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -13,8 +12,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -23,10 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class Adamax implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 9136132997261066936L;
+public class Adamax extends AbstractOptimizer {
 
     /**
      * Parameter name types for Adamax.
@@ -38,18 +32,6 @@ public class Adamax implements Configurable, Optimizer, Serializable {
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(beta1:DOUBLE), " +
             "(beta2:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.ADAMAX;
 
     /**
      * Learning rate for Adamax. Default value 0.001.
@@ -90,10 +72,10 @@ public class Adamax implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for Adamax.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Adamax() {
-        initializeDefaultParams();
-        params = null;
+    public Adamax() throws DynamicParamException {
+        super(OptimizationType.ADAMAX, Adamax.paramNameTypes);
     }
 
     /**
@@ -103,9 +85,7 @@ public class Adamax implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Adamax(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.ADAMAX, Adamax.paramNameTypes, params);
     }
 
     /**
@@ -116,24 +96,6 @@ public class Adamax implements Configurable, Optimizer, Serializable {
         learningRate = 0.001;
         beta1 = 0.9;
         beta2 = 0.999;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Adamax.
-     *
-     * @return parameters used for Adamax.
-     */
-    public String getParamDefs() {
-        return Adamax.paramNameTypes;
     }
 
     /**
@@ -161,21 +123,6 @@ public class Adamax implements Configurable, Optimizer, Serializable {
         iterations = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -220,15 +167,6 @@ public class Adamax implements Configurable, Optimizer, Serializable {
 
         // θt+1 = θt − η / ut * mt
         matrix.subtract(mM_hat.divide(uM).multiply(learningRate), matrix);
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

@@ -5,7 +5,6 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -13,8 +12,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -23,10 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class NAdam implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 6575858816658305979L;
+public class NAdam extends AbstractOptimizer {
 
     /**
      * Parameter name types for NAdam.
@@ -38,18 +32,6 @@ public class NAdam implements Configurable, Optimizer, Serializable {
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(beta1:DOUBLE), " +
             "(beta2:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.NADAM;
 
     /**
      * Learning rate for Nadam. Default value 0.001.
@@ -90,10 +72,10 @@ public class NAdam implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for Nadam.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NAdam() {
-        initializeDefaultParams();
-        params = null;
+    public NAdam() throws DynamicParamException {
+        super(OptimizationType.NADAM, NAdam.paramNameTypes);
     }
 
     /**
@@ -103,9 +85,7 @@ public class NAdam implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NAdam(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.NADAM, NAdam.paramNameTypes, params);
     }
 
     /**
@@ -116,24 +96,6 @@ public class NAdam implements Configurable, Optimizer, Serializable {
         learningRate = 0.001;
         beta1 = 0.9;
         beta2 = 0.999;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for Nadam.
-     *
-     * @return parameters used for Nadam.
-     */
-    public String getParamDefs() {
-        return NAdam.paramNameTypes;
     }
 
     /**
@@ -161,21 +123,6 @@ public class NAdam implements Configurable, Optimizer, Serializable {
         iterations = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -219,15 +166,6 @@ public class NAdam implements Configurable, Optimizer, Serializable {
         // θt+1 = θt − η / (√^vt+ϵ) * (β1 * mt + (1 − β1) * gt / (1 − βt1))
         double epsilon = 10E-8;
         matrix.subtract(mM_hat.multiply(beta1).add(matrixGradient.multiply((1 - beta1) / (1 - Math.pow(beta1, iteration)))).divide(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

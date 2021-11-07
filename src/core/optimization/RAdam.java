@@ -5,15 +5,12 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -22,10 +19,7 @@ import java.util.HashMap;
  * Reference: https://arxiv.org/abs/1908.03265 <br>
  *
  */
-public class RAdam implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = -2717951798872633802L;
+public class RAdam extends AbstractOptimizer {
 
     /**
      * Parameter name types for RAdam.
@@ -37,18 +31,6 @@ public class RAdam implements Configurable, Optimizer, Serializable {
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(beta1:DOUBLE), " +
             "(beta2:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.RADAM;
 
     /**
      * Learning rate for RAdam. Default value 0.010.
@@ -95,10 +77,10 @@ public class RAdam implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for RAdam.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public RAdam() {
-        initializeDefaultParams();
-        params = null;
+    public RAdam() throws DynamicParamException {
+        super(OptimizationType.RADAM, RAdam.paramNameTypes);
     }
 
     /**
@@ -108,9 +90,7 @@ public class RAdam implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public RAdam(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.RADAM, RAdam.paramNameTypes, params);
     }
 
     /**
@@ -122,24 +102,6 @@ public class RAdam implements Configurable, Optimizer, Serializable {
         beta1 = 0.9;
         beta2 = 0.999;
         pinf = 2 / (1 - beta2) - 1;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for RAdam.
-     *
-     * @return parameters used for RAdam.
-     */
-    public String getParamDefs() {
-        return RAdam.paramNameTypes;
     }
 
     /**
@@ -168,21 +130,6 @@ public class RAdam implements Configurable, Optimizer, Serializable {
         iterations = new HashMap<>();
         m = new HashMap<>();
         v = new HashMap<>();
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
@@ -230,15 +177,6 @@ public class RAdam implements Configurable, Optimizer, Serializable {
         else {
             matrix.subtract(mMhat.multiply(stepSize), matrix);
         }
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }

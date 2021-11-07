@@ -5,7 +5,6 @@
 
 package core.optimization;
 
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -13,8 +12,6 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -23,10 +20,7 @@ import java.util.HashMap;
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
  */
-public class RMSProp implements Configurable, Optimizer, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 3251200097077919746L;
+public class RMSProp extends AbstractOptimizer {
 
     /**
      * Parameter name types for RMSProp.
@@ -36,18 +30,6 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(gamma:DOUBLE)";
-
-    /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.RMSPROP;
 
     /**
      * Learning rate for RMSProp. Default value 0.001.
@@ -70,10 +52,10 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
     /**
      * Default constructor for RMSProp.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public RMSProp() {
-        initializeDefaultParams();
-        params = null;
+    public RMSProp() throws DynamicParamException {
+        super(OptimizationType.RMSPROP, RMSProp.paramNameTypes);
     }
 
     /**
@@ -83,9 +65,7 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public RMSProp(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        super(OptimizationType.RMSPROP, RMSProp.paramNameTypes, params);
     }
 
     /**
@@ -95,24 +75,6 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
     public void initializeDefaultParams() {
         learningRate = 0.001;
         gamma = 0.9;
-    }
-
-    /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
-     * Returns parameters used for RMSProp.
-     *
-     * @return parameters used for RMSProp.
-     */
-    public String getParamDefs() {
-        return RMSProp.paramNameTypes;
     }
 
     /**
@@ -139,21 +101,6 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
     }
 
     /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
-    }
-
-    /**
      * Optimizes single matrix (M) using calculated matrix gradient (dM).<br>
      * Matrix can be for example weight or bias matrix with gradient.<br>
      *
@@ -173,15 +120,6 @@ public class RMSProp implements Configurable, Optimizer, Serializable {
 
         double epsilon = 10E-8;
         matrix.subtract(matrixGradient.divide(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
-    }
-
-    /**
-     * Returns name of optimizer.
-     *
-     * @return name of optimizer.
-     */
-    public String getName() {
-        return optimizationType.toString();
     }
 
 }
