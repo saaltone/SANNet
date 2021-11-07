@@ -5,18 +5,13 @@
 
 package core.normalization;
 
-import core.optimization.Optimizer;
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.ForwardProcedure;
-import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
+import utils.procedure.node.Node;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -28,16 +23,7 @@ import java.util.Random;
  * Reference: https://www.cs.toronto.edu/~hinton/absps/LayerNormalization.pdf <br>
  *
  */
-public class LayerNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 3466341546851269706L;
-
-    /**
-     * Type of normalization.
-     *
-     */
-    private final NormalizationType normalizationType = NormalizationType.LAYER_NORMALIZATION;
+public class LayerNormalization extends AbstractNormalization {
 
     /**
      * Parameter name types for layer normalization.
@@ -51,12 +37,6 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      *
      */
     private boolean meanOnly;
-
-    /**
-     * Optimizer for layer normalization;
-     *
-     */
-    private Optimizer optimizer;
 
     /**
      * Input matrix for procedure construction.
@@ -89,12 +69,6 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
     private HashMap<Matrix, Matrix> weightGradients = new HashMap<>();
 
     /**
-     * Procedure for layer normalization.
-     *
-     */
-    private Procedure procedure;
-
-    /**
      * Matrix for epsilon value.
      *
      */
@@ -103,9 +77,10 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
     /**
      * Constructor for layer normalization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public LayerNormalization() {
-        initializeDefaultParams();
+    public LayerNormalization() throws DynamicParamException {
+        super(NormalizationType.LAYER_NORMALIZATION, LayerNormalization.paramNameTypes);
     }
 
     /**
@@ -115,8 +90,7 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public LayerNormalization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(NormalizationType.LAYER_NORMALIZATION, LayerNormalization.paramNameTypes, params);
     }
 
     /**
@@ -125,15 +99,6 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      */
     public void initializeDefaultParams() {
         meanOnly = false;
-    }
-
-    /**
-     * Returns parameters used for layer normalization.
-     *
-     * @return parameters used for layer normalization.
-     */
-    public String getParamDefs() {
-        return LayerNormalization.paramNameTypes;
     }
 
     /**
@@ -189,7 +154,7 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      */
     public void reset() throws MatrixException {
         weightGradients = new HashMap<>();
-        if (procedure != null) procedure.reset();
+        if (getProcedure() != null) getProcedure().reset();
     }
 
     /**
@@ -201,23 +166,6 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
         if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
         if (beta != null) beta.reset();
         reset();
-    }
-
-    /**
-     * Sets flag for layer normalization if neural network is in training state.
-     *
-     * @param isTraining if true neural network is in state otherwise false.
-     */
-    public void setTraining(boolean isTraining) {
-    }
-
-    /**
-     * Sets optimizer for normalizer.
-     *
-     * @param optimizer optimizer
-     */
-    public void setOptimizer(Optimizer optimizer) {
-        this.optimizer = optimizer;
     }
 
     /**
@@ -260,8 +208,10 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
         beta = new DMatrix(rows, columns, "beta");
         weights.add(beta);
 
-        procedure = new ProcedureFactory().getProcedure(this, weights);
+        Procedure procedure = new ProcedureFactory().getProcedure(this, weights);
         procedure.setStopGradient(epsilonMatrix, true);
+
+        setProcedure(procedure);
     }
 
     /**
@@ -277,7 +227,7 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
     public void forward(Node node, int inputIndex) throws MatrixException, DynamicParamException {
         Matrix inputMatrix = node.getMatrix(inputIndex);
         if (inputMatrix.size() < 2) return;
-        node.setMatrix(inputIndex, procedure.calculateExpression(inputMatrix, inputIndex));
+        node.setMatrix(inputIndex, getProcedure().calculateExpression(inputMatrix, inputIndex));
     }
 
     /**
@@ -290,18 +240,14 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backward(Node node, int outputIndex) throws MatrixException, DynamicParamException {
-        Matrix outputGradient =node.getGradient(outputIndex);
+        Matrix outputGradient = node.getGradient(outputIndex);
         if (outputGradient.size() < 2) return;
 
-        node.setGradient(outputIndex, procedure.calculateGradient(outputGradient, outputIndex));
+        node.setGradient(outputIndex, getProcedure().calculateGradient(outputGradient, outputIndex));
 
-        Matrix gammaGradient = procedure.getGradient(gamma);
-        if (!weightGradients.containsKey(gamma)) weightGradients.put(gamma, gammaGradient);
-        else weightGradients.get(gamma).add(gammaGradient, weightGradients.get(gamma));
+        updateWeightGradient(gamma, weightGradients);
 
-        Matrix betaGradient = procedure.getGradient(beta);
-        if (!weightGradients.containsKey(beta)) weightGradients.put(beta, betaGradient);
-        else weightGradients.get(beta).add(betaGradient, weightGradients.get(beta));
+        updateWeightGradient(beta, weightGradients);
     }
 
     /**
@@ -350,39 +296,7 @@ public class LayerNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
-        weightGradients = new HashMap<>();
-    }
-
-    /**
-     * Returns name of normalization.
-     *
-     * @return name of normalization.
-     */
-    public String getName() {
-        return normalizationType.toString();
-    }
-
-    /**
-     * Prints expression chains of normalization.
-     *
-     */
-    public void printExpressions() {
-        if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ":");
-        procedure.printExpressionChain();
-        System.out.println();
-    }
-
-    /**
-     * Prints gradient chains of normalization.
-     *
-     */
-    public void printGradients() {
-        if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ":");
-        procedure.printGradientChain();
-        System.out.println();
+        weightGradients = optimize(weightGradients);
     }
 
 }

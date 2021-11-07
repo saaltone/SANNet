@@ -5,19 +5,16 @@
 
 package core.normalization;
 
-import core.optimization.Optimizer;
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.ForwardProcedure;
-import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
+import utils.procedure.node.Node;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
 
 /**
  * Class that implements batch normalization for neural network layer.<br>
@@ -25,10 +22,7 @@ import java.util.*;
  * Reference: http://proceedings.mlr.press/v37/ioffe15.pdf <br>
  *
  */
-public class BatchNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 3466341546851269706L;
+public class BatchNormalization extends AbstractNormalization {
 
     /**
      * Parameter name types for batch normalization.
@@ -40,22 +34,10 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
             "(beta:INT)";
 
     /**
-     * Type of normalization.
-     *
-     */
-    private final NormalizationType normalizationType = NormalizationType.BATCH_NORMALIZATION;
-
-    /**
      * Degree of weighting decrease for exponential moving average. Default value 0.9.
      *
      */
     private double betaValue;
-
-    /**
-     * If true neural network is in state otherwise false.
-     *
-     */
-    private transient boolean isTraining;
 
     /**
      * Learnable parameter gamma of batch normalization layer.
@@ -150,22 +132,10 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
     private boolean meanOnly;
 
     /**
-     * Optimizer for batch normalization;
-     *
-     */
-    private Optimizer optimizer;
-
-    /**
      * Input matrix for procedure construction.
      *
      */
     private MMatrix input;
-
-    /**
-     * Procedure for layer normalization.
-     *
-     */
-    private Procedure procedure;
 
     /**
      * Epsilon term for batch normalization. Default value 10E-8.<br>
@@ -177,9 +147,10 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
     /**
      * Default constructor for batch normalization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BatchNormalization() {
-        initializeDefaultParams();
+    public BatchNormalization() throws DynamicParamException {
+        super(NormalizationType.BATCH_NORMALIZATION, BatchNormalization.paramNameTypes);
     }
 
     /**
@@ -189,8 +160,7 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public BatchNormalization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(NormalizationType.BATCH_NORMALIZATION, BatchNormalization.paramNameTypes, params);
     }
 
     /**
@@ -200,15 +170,6 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
     public void initializeDefaultParams() {
         betaValue = 0.9;
         meanOnly = false;
-    }
-
-    /**
-     * Returns parameters used for batch normalization.
-     *
-     * @return parameters used for batch normalization.
-     */
-    public String getParamDefs() {
-        return BatchNormalization.paramNameTypes;
     }
 
     /**
@@ -281,11 +242,13 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
         beta = new DMatrix(inputRows, inputColumns, "beta");
         weights.add(beta);
 
-        procedure = new ProcedureFactory().getProcedure(this, weights);
+        Procedure procedure = new ProcedureFactory().getProcedure(this, weights);
         procedure.setStopGradient(epsilonMatrix, true);
 
         meanNode = procedure.getNode(mean);
         varianceNode = procedure.getNode(variance);
+
+        setProcedure(procedure);
     }
 
     /**
@@ -295,7 +258,7 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      */
     public void reset() throws MatrixException {
         weightGradients = new HashMap<>();
-        if (procedure != null) procedure.reset();
+        if (getProcedure() != null) getProcedure().reset();
     }
 
     /**
@@ -307,24 +270,6 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
         if (gamma != null) gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
         if (beta != null) beta.reset();
         reset();
-    }
-
-    /**
-     * Sets flag for batch normalization if neural network is in training state.
-     *
-     * @param isTraining if true neural network is in state otherwise false.
-     */
-    public void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
-    }
-
-    /**
-     * Sets optimizer for normalizer.
-     *
-     * @param optimizer optimizer
-     */
-    public void setOptimizer(Optimizer optimizer) {
-        this.optimizer = optimizer;
     }
 
     /**
@@ -357,11 +302,11 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forward(Node node) throws MatrixException, DynamicParamException {
-        if (isTraining) {
+        if (isTraining()) {
             if (node.size() < 2) return;
             batchSize = node.size();
 
-            node.setMatrices(procedure.calculateExpression(node.getMatrices()));
+            node.setMatrices(getProcedure().calculateExpression(node.getMatrices()));
 
             averageMean = meanNode.getMatrix().exponentialMovingAverage(averageMean, betaValue);
             if (!meanOnly) averageVariance = varianceNode.getMatrix().exponentialMovingAverage(averageVariance, betaValue);
@@ -390,17 +335,13 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backward(Node node) throws MatrixException, DynamicParamException {
-        if (node.size() < 2 || !isTraining) return;
+        if (node.size() < 2 || !isTraining()) return;
 
-        node.setGradients(procedure.calculateGradient(node.getGradients()));
+        node.setGradients(getProcedure().calculateGradient(node.getGradients()));
 
-        Matrix gammaGradient = procedure.getGradient(gamma);
-        if (!weightGradients.containsKey(gamma)) weightGradients.put(gamma, gammaGradient);
-        else weightGradients.get(gamma).add(gammaGradient, weightGradients.get(gamma));
+        updateWeightGradient(gamma, weightGradients);
 
-        Matrix betaGradient = procedure.getGradient(beta);
-        if (!weightGradients.containsKey(beta)) weightGradients.put(beta, betaGradient);
-        else weightGradients.get(beta).add(betaGradient, weightGradients.get(beta));
+        updateWeightGradient(beta, weightGradients);
     }
 
     /**
@@ -451,39 +392,7 @@ public class BatchNormalization implements Configurable, Normalization, ForwardP
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
-        weightGradients = new HashMap<>();
-    }
-
-    /**
-     * Returns name of normalization.
-     *
-     * @return name of normalization.
-     */
-    public String getName() {
-        return normalizationType.toString();
-    }
-
-    /**
-     * Prints expression chains of normalization.
-     *
-     */
-    public void printExpressions() {
-        if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ":");
-        procedure.printExpressionChain();
-        System.out.println();
-    }
-
-    /**
-     * Prints gradient chains of normalization.
-     *
-     */
-    public void printGradients() {
-        if (procedure == null) return;
-        System.out.println("Normalization: " + getName() + ":");
-        procedure.printGradientChain();
-        System.out.println();
+        weightGradients = optimize(weightGradients);
     }
 
 }

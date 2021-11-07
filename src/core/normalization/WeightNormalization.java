@@ -5,18 +5,13 @@
 
 package core.normalization;
 
-import core.optimization.Optimizer;
-import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.ForwardProcedure;
 import utils.procedure.node.Node;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -25,10 +20,7 @@ import java.util.HashMap;
  * Reference: https://arxiv.org/pdf/1602.07868.pdf <br>
  *
  */
-public class WeightNormalization implements Configurable, Normalization, ForwardProcedure, Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1741544680542755148L;
+public class WeightNormalization extends AbstractNormalization {
 
     /**
      * Parameter name types for weight normalization.
@@ -36,18 +28,6 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      *
      */
     private final static String paramNameTypes = "(g:INT)";
-
-    /**
-     * Type of normalization.
-     *
-     */
-    private final NormalizationType normalizationType = NormalizationType.WEIGHT_NORMALIZATION;
-
-    /**
-     * If true neural network is in state otherwise false.
-     *
-     */
-    private transient boolean isTraining = false;
 
     /**
      * Map for un-normalized weights.
@@ -65,7 +45,7 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      * Matrix for g value.
      *
      */
-    private final Matrix gMatrix;
+    private final Matrix gMatrix = new DMatrix(g, "g");
 
     /**
      * Input matrix for procedure construction.
@@ -82,10 +62,10 @@ public class WeightNormalization implements Configurable, Normalization, Forward
     /**
      * Constructor for weight normalization class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WeightNormalization() {
-        initializeDefaultParams();
-        gMatrix = new DMatrix(g, "g");
+    public WeightNormalization() throws DynamicParamException {
+        super(NormalizationType.WEIGHT_NORMALIZATION, WeightNormalization.paramNameTypes);
     }
 
     /**
@@ -95,8 +75,7 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public WeightNormalization(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        super(NormalizationType.WEIGHT_NORMALIZATION, WeightNormalization.paramNameTypes, params);
     }
 
     /**
@@ -105,15 +84,6 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      */
     public void initializeDefaultParams() {
         g = 1;
-    }
-
-    /**
-     * Returns parameters used for weight normalization.
-     *
-     * @return parameters used for weight normalization.
-     */
-    public String getParamDefs() {
-        return WeightNormalization.paramNameTypes;
     }
 
     /**
@@ -170,23 +140,6 @@ public class WeightNormalization implements Configurable, Normalization, Forward
     }
 
     /**
-     * Sets flag for weight normalization if neural network is in training state.
-     *
-     * @param isTraining if true neural network is in state otherwise false.
-     */
-    public void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
-    }
-
-    /**
-     * Sets optimizer for normalizer.
-     *
-     * @param optimizer optimizer
-     */
-    public void setOptimizer(Optimizer optimizer) {
-    }
-
-    /**
      * Initializes normalization.
      *
      * @param node node for normalization.
@@ -230,7 +183,7 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forward(Matrix weight) throws MatrixException, DynamicParamException {
-        if (isTraining) {
+        if (isTraining()) {
             weights.put(weight, weight.copy());
             procedures.get(weight).reset();
             weight.setEqualTo(procedures.get(weight).calculateExpression(weight, 0));
@@ -245,7 +198,7 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardFinalize(Matrix weight) throws MatrixException {
-        if (isTraining) weight.setEqualTo(weights.get(weight));
+        if (isTraining()) weight.setEqualTo(weights.get(weight));
     }
 
     /**
@@ -296,15 +249,6 @@ public class WeightNormalization implements Configurable, Normalization, Forward
      *
      */
     public void optimize() {}
-
-    /**
-     * Returns name of normalization.
-     *
-     * @return name of normalization.
-     */
-    public String getName() {
-        return normalizationType.toString();
-    }
 
     /**
      * Prints expression chains of normalization.
