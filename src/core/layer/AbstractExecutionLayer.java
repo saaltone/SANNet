@@ -149,11 +149,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException {
-        procedure = new ProcedureFactory().getProcedure(this, getWeights());
+        procedure = new ProcedureFactory().getProcedure(this, getAllConstantMatrices());
         procedure.setNormalizers(getNormalization());
         procedure.setRegularizers(getRegularization());
         procedure.initialize();
         procedure.setStopGradient(getStopGradients(), true);
+    }
+
+    private HashSet<Matrix> getAllConstantMatrices() {
+        HashSet<Matrix> allConstantMatrices = new HashSet<>();
+        allConstantMatrices.addAll(getWeights());
+        allConstantMatrices.addAll(getConstantMatrices());
+        return allConstantMatrices;
     }
 
     /**
@@ -162,6 +169,13 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @return matrices for which gradient is not calculated.
      */
     protected abstract HashSet<Matrix> getStopGradients();
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    protected abstract HashSet<Matrix> getConstantMatrices();
 
     /**
      * Prepares forward process step.
