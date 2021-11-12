@@ -84,7 +84,13 @@ public enum LayerType {
     RANDOM_POOLING,
 
     /**
-     * Max pooling layer
+     * Cyclic pooling layer
+     *
+     */
+    CYCLIC_POOLING,
+
+    /**
+     * Average pooling layer
      *
      */
     AVERAGE_POOLING

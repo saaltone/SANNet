@@ -47,6 +47,7 @@ public class LayerFactory {
             case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
             case MAX_POOLING -> new MaxPoolingLayer(layerIndex, initialization, params);
             case RANDOM_POOLING -> new RandomPoolingLayer(layerIndex, initialization, params);
+            case CYCLIC_POOLING -> new CyclicPoolingLayer(layerIndex, initialization, params);
             case AVERAGE_POOLING -> new AveragePoolingLayer(layerIndex, initialization, params);
         };
     }
@@ -71,6 +72,7 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return LayerType.WINOGRAD_CONVOLUTION;
         if (neuralNetworkLayer instanceof MaxPoolingLayer) return LayerType.MAX_POOLING;
         if (neuralNetworkLayer instanceof RandomPoolingLayer) return LayerType.RANDOM_POOLING;
+        if (neuralNetworkLayer instanceof CyclicPoolingLayer) return LayerType.CYCLIC_POOLING;
         if (neuralNetworkLayer instanceof AveragePoolingLayer) return LayerType.AVERAGE_POOLING;
         throw new NeuralNetworkException("Unknown layer type");
     }
@@ -95,6 +97,7 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return "WINOGRAD_CONVOLUTION";
         if (neuralNetworkLayer instanceof MaxPoolingLayer) return "MAX_POOLING";
         if (neuralNetworkLayer instanceof RandomPoolingLayer) return "RANDOM_POOLING";
+        if (neuralNetworkLayer instanceof CyclicPoolingLayer) return "CYCLIC_POOLING";
         if (neuralNetworkLayer instanceof AveragePoolingLayer) return "AVERAGE_POOLING";
         throw new NeuralNetworkException("Unknown layer type");
     }
