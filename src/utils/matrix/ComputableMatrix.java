@@ -808,7 +808,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Calculates random pooling operation for matrix and returns max arguments.
+     * Calculates random pooling operation for matrix and returns input positions.
      *
      * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -827,6 +827,28 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public void randomPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
         new RandomPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, inputPos, inputGradient);
+    }
+
+    /**
+     * Calculates cyclic pooling operation for matrix and returns input positions.
+     *
+     * @param result result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @param inputPos input position for each result row and column value.
+     */
+    protected void applyCyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos, result);
+    }
+
+    /**
+     * Calculates gradient for cyclic pool operation.
+     *
+     * @param inputGradient input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @param inputPos input position for each result row and column value.
+     */
+    public void cyclicPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        new CyclicPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, inputPos, inputGradient);
     }
 
     /**

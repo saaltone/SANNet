@@ -1450,6 +1450,42 @@ public interface Matrix {
     void randomPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException;
 
     /**
+     * Calculates cyclic pooling operation for this matrix.
+     *
+     * @param inputPos input positions for each row and col value.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix cyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException;
+
+    /**
+     * Calculates cyclic pooling operation for this matrix and returns max arguments.
+     *
+     * @param result result matrix.
+     * @param inputPos input positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void cyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
+
+    /**
+     * Calculates gradient of cyclic pooling operation for this matrix.
+     *
+     * @param inputPos input positions for each row and col value.
+     * @return input gradient.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix cyclicPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException;
+
+    /**
+     * Calculates gradient for cyclic pool operation.
+     *
+     * @param inputGradient input gradient.
+     * @param inputPos input positions for each row and col value.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void cyclicPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException;
+
+    /**
      * Calculates average pooling operation for this matrix.
      *
      * @return result matrix.
