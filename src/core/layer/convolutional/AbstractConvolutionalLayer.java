@@ -361,13 +361,22 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     }
 
     /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+   protected HashSet<Matrix> getConstantMatrices() {
+       return new HashSet<>();
+   }
+
+    /**
      * Returns layer details as string.
      *
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
         String layerDetailsByName = "";
-        layerDetailsByName += "Pooling type: " + getConvolutionType() + ", ";
+        layerDetailsByName += "Convolution type: " + getConvolutionType() + ", ";
         layerDetailsByName += "Number of filters: " + numberOfFilters + ", ";
         layerDetailsByName += "Filter row size: " + filterRowSize + ", ";
         layerDetailsByName += "Filter column size: " + filterColumnSize + ", ";
