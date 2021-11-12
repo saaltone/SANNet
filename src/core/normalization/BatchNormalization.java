@@ -225,16 +225,16 @@ public class BatchNormalization extends AbstractNormalization {
     /**
      * Initializes batch normalization procedure.
      *
-     * @param inputs input matrix for initialization.
+     * @param node node for initialization.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void initializeProcedure(MMatrix inputs) throws MatrixException, DynamicParamException {
+    private void initializeProcedure(Node node) throws MatrixException, DynamicParamException {
         if (input != null) return;
 
-        inputRows = inputs.get(inputs.firstKey()).getRows();
-        inputColumns = inputs.get(inputs.firstKey()).getColumns();
-        inputSize = inputs.size();
+        inputRows = node.getEmptyMatrix().getRows();
+        inputColumns = node.getEmptyMatrix().getColumns();
+        inputSize = node.size();
 
         gamma = new DMatrix(inputRows, inputColumns, (row, col) -> new Random().nextGaussian() * 0.1, "gamma");
         weights.add(gamma);
@@ -242,7 +242,9 @@ public class BatchNormalization extends AbstractNormalization {
         beta = new DMatrix(inputRows, inputColumns, "beta");
         weights.add(beta);
 
-        Procedure procedure = new ProcedureFactory().getProcedure(this, weights);
+        HashSet<Matrix> constantMatrices = new HashSet<>(weights);
+        constantMatrices.add(epsilonMatrix);
+        Procedure procedure = new ProcedureFactory().getProcedure(this, constantMatrices);
         procedure.setStopGradient(epsilonMatrix, true);
 
         meanNode = procedure.getNode(mean);
@@ -280,7 +282,7 @@ public class BatchNormalization extends AbstractNormalization {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void initialize(Node node) throws MatrixException, DynamicParamException {
-        initializeProcedure(node.getMatrices());
+        initializeProcedure(node);
     }
 
     /**

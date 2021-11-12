@@ -176,7 +176,8 @@ public class LayerNormalization extends AbstractNormalization {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void initialize(Node node) throws MatrixException, DynamicParamException {
-        initializeProcedure(node.getMatrix(node.firstKey()));
+        initializeProcedure(node.getEmptyMatrix());
+//        initializeProcedure(node.getMatrix(node.firstKey()));
     }
 
     /**
@@ -208,7 +209,9 @@ public class LayerNormalization extends AbstractNormalization {
         beta = new DMatrix(rows, columns, "beta");
         weights.add(beta);
 
-        Procedure procedure = new ProcedureFactory().getProcedure(this, weights);
+        HashSet<Matrix> constantMatrices = new HashSet<>(weights);
+        constantMatrices.add(epsilonMatrix);
+        Procedure procedure = new ProcedureFactory().getProcedure(this, constantMatrices);
         procedure.setStopGradient(epsilonMatrix, true);
 
         setProcedure(procedure);

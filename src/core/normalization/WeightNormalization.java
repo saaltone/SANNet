@@ -13,6 +13,7 @@ import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Class that implements weight normalization for neural network layer.<br>
@@ -169,7 +170,9 @@ public class WeightNormalization extends AbstractNormalization {
         if (procedures == null) procedures = new HashMap<>();
         if (!procedures.containsKey(weight)) {
             input = weight;
-            Procedure procedure = new ProcedureFactory().getProcedure(this, null);
+            HashSet<Matrix> constantMatrices = new HashSet<>();
+            constantMatrices.add(gMatrix);
+            Procedure procedure = new ProcedureFactory().getProcedure(this, constantMatrices);
             procedure.setStopGradient(gMatrix, true);
             procedures.put(weight, procedure);
         }
