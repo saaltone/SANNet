@@ -74,15 +74,15 @@ public class NodeRegister implements Serializable {
      * If node is not existing creates node with unique expression ID.<br>
      *
      * @param matrix reference to matrix
-     * @param isConstantNode if true node is marked as constant type
+     * @param isSingleNode if true node is marked as single type
      * @param expressionID expression ID where node was created in
      * @return node created or retrieved.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Node defineNode(Matrix matrix, boolean isConstantNode, int expressionID) throws MatrixException {
+    public Node defineNode(Matrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
         if (entriesByMatrix.containsKey(matrix)) return nodeMatrixMap.get(matrix);
         else {
-            Node node = new Node(getTotalSize() + 1, matrix, isConstantNode);
+            Node node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
@@ -96,15 +96,15 @@ public class NodeRegister implements Serializable {
      * If node is not existing creates node with unique expression ID.<br>
      *
      * @param matrix reference to matrix
-     * @param isConstantNode if true node is marked as constant type
+     * @param isSingleNode if true node is marked as single type
      * @param expressionID expression ID where node was created in
      * @return node created or retrieved.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Node defineNode(MMatrix matrix, boolean isConstantNode, int expressionID) throws MatrixException {
+    public Node defineNode(MMatrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
         if (entriesByMMatrix.containsKey(matrix)) return nodeMMatrixMap.get(matrix);
         else {
-            Node node = new Node(getTotalSize() + 1, matrix, isConstantNode);
+            Node node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
