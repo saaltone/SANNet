@@ -54,7 +54,6 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
     public void calculateExpression() throws MatrixException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        result.setMultiIndex(false);
         result.setMatrix(argument1.getMatrices().mean());
     }
 

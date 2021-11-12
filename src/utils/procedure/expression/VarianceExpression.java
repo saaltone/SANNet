@@ -80,7 +80,6 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         mean = argument1.getMatrices().mean();
-        result.setMultiIndex(false);
         result.setMatrix(argument1.getMatrices().variance(mean));
     }
 

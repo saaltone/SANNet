@@ -90,7 +90,6 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         mean = argument1.getMatrices().mean();
         Matrix standardDeviation = argument1.getMatrices().standardDeviation(mean);
-        result.setMultiIndex(false);
         result.setMatrix(standardDeviation);
     }
 

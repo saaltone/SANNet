@@ -55,7 +55,6 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         Matrix sum = argument1.getMatrices().sum();
-        result.setMultiIndex(false);
         result.setMatrix(sum);
     }
 
