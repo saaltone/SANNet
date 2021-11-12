@@ -252,7 +252,7 @@ public class Music {
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             default -> {
-                System.out.println("Unknown neural network type.");
+                System.out.println("Unknown loss type.");
                 System.exit(-1);
             }
         }
