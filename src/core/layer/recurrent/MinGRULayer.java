@@ -192,6 +192,9 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         registerWeight(bf, false, false);
         registerWeight(bh, false, false);
 
+        ones = new DMatrix(layerWidth, 1, Initialization.ONE);
+        ones.setName("1");
+
     }
 
     /**
@@ -248,9 +251,6 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         h.setName("h");
 
         // s = (1 - f) x h + f x out(t-1) → Internal state
-        ones = (ones == null) ? new DMatrix(f.getRows(), f.getColumns(), Initialization.ONE) : ones;
-        ones.setName("1");
-
         Matrix s = ones.subtract(f).multiply(h).add(f.multiply(previousOutput));
         s.setName("Output");
 
@@ -271,6 +271,17 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         HashSet<Matrix> stopGradients = new HashSet<>();
         stopGradients.add(ones);
         return stopGradients;
+    }
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    protected HashSet<Matrix> getConstantMatrices() {
+        HashSet<Matrix> constantMatrices = new HashSet<>();
+        constantMatrices.add(ones);
+        return constantMatrices;
     }
 
     /**

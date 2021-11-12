@@ -217,6 +217,9 @@ public class GRULayer extends AbstractRecurrentLayer {
         registerWeight(br, false, false);
         registerWeight(bh, false, false);
 
+        ones = new DMatrix(layerWidth, 1, Initialization.ONE);
+        ones.setName("1");
+
     }
 
     /**
@@ -281,9 +284,6 @@ public class GRULayer extends AbstractRecurrentLayer {
         h.setName("h");
 
         // s = (1 - z) x h + z x out(t-1) → Internal state
-        ones = (ones == null) ? new DMatrix(z.getRows(), z.getColumns(), Initialization.ONE) : ones;
-        ones.setName("1");
-
         Matrix s = ones.subtract(z).multiply(h).add(z.multiply(previousOutput));
         s.setName("Output");
 
@@ -304,6 +304,17 @@ public class GRULayer extends AbstractRecurrentLayer {
         HashSet<Matrix> stopGradients = new HashSet<>();
         stopGradients.add(ones);
         return stopGradients;
+    }
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    protected HashSet<Matrix> getConstantMatrices() {
+        HashSet<Matrix> constantMatrices = new HashSet<>();
+        constantMatrices.add(ones);
+        return constantMatrices;
     }
 
     /**

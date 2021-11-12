@@ -361,6 +361,15 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    protected HashSet<Matrix> getConstantMatrices() {
+        return new HashSet<>();
+    }
+
+    /**
      * Returns layer details as string.
      *
      * @return layer details as string.
