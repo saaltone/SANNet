@@ -29,13 +29,13 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      * Mean value as matrix for multi matrix case.
      *
      */
-    private Matrix mean;
+    private transient Matrix mean;
 
     /**
      * Mean values as matrix for non-multi matrix case.
      *
      */
-    private HashMap<Integer, Matrix> means = new HashMap<>();
+    private transient HashMap<Integer, Matrix> means = new HashMap<>();
 
     /**
      * Constructor for variance operation.
@@ -125,6 +125,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         Matrix varianceGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)argument1.getMatrix(sampleIndex).size());
         argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(varianceGradient), false);
+        means.remove(sampleIndex);
     }
 
     /**
