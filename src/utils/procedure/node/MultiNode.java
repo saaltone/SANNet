@@ -5,9 +5,6 @@
 
 package utils.procedure.node;
 
-import core.normalization.Normalization;
-import core.regularization.Regularization;
-import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -37,7 +34,7 @@ public class MultiNode extends AbstractNode {
      * Matrix backup for forward dependencies.
      *
      */
-    private HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
+    private transient HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
 
     /**
      * Constructor for node.
@@ -94,7 +91,7 @@ public class MultiNode extends AbstractNode {
      * @throws MatrixException throws exception if restoring of backup fails.
      */
     public void restoreMatrixDependency(int backupIndex) throws MatrixException {
-        if (getToNode() == null) return;
+        if (getToNode() == null || matrixBackup == null) return;
         if (matrixBackup.containsKey(backupIndex)) {
             MMatrix matricesBackup = matrixBackup.get(backupIndex);
             for (Integer index : matricesBackup.keySet()) getMatrices().put(index, matricesBackup.get(index));
@@ -287,114 +284,6 @@ public class MultiNode extends AbstractNode {
      */
     public MMatrix getGradients() {
         return gradients;
-    }
-
-    /**
-     * Initializes normalization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void initializeNormalization() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.initialize(this);
-            }
-        }
-    }
-
-    /**
-     * Executes forward normalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardNormalize() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.forward(this);
-            }
-        }
-    }
-
-    /**
-     * Executes forward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.forward(this, sampleIndex);
-            }
-        }
-    }
-
-    /**
-     * Executes forward normalization finalization to constant node.
-     *
-     */
-    public void forwardNormalizeFinalize() {
-    }
-
-    /**
-     * Executes backward normalization to constant entry of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardNormalize() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.backward(this);
-            }
-        }
-    }
-
-    /**
-     * Executes backward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.backward(this, sampleIndex);
-            }
-        }
-    }
-
-    /**
-     * Executes forward regularization step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardRegularize() throws MatrixException {
-        if (getReferenceMatrix().isRegularized() && getRegulalizers() != null) {
-            for (Regularization regularizer : getRegulalizers()) {
-                regularizer.forward(matrices);
-            }
-        }
-    }
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @return updated error value.
-     */
-    public double cumulateRegularizationError() {
-        return 0;
-    }
-
-    /**
-     * Executes backward regularization.
-     *
-     */
-    public void backwardRegularize() {
     }
 
 }

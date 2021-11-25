@@ -5,14 +5,10 @@
 
 package utils.procedure.node;
 
-import core.normalization.Normalization;
-import core.regularization.Regularization;
-import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -330,91 +326,5 @@ public interface Node {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException;
-
-    /**
-     * Sets normalizers for node.
-     *
-     * @param normalizers normalizers for node.
-     */
-    void setNormalizers(HashSet<Normalization> normalizers);
-
-    /**
-     * Sets regularizers for node.
-     *
-     * @param regularizers regularizers for node.
-     */
-    void setRegularizers(HashSet<Regularization> regularizers);
-
-    /**
-     * Initializes normalization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void initializeNormalization() throws MatrixException, DynamicParamException;
-
-    /**
-     * Executes forward normalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void forwardNormalize() throws MatrixException, DynamicParamException;
-
-    /**
-     * Executes forward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException;
-
-    /**
-     * Executes forward normalization finalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void forwardNormalizeFinalize() throws MatrixException;
-
-    /**
-     * Executes backward normalization to constant entry of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void backwardNormalize() throws MatrixException, DynamicParamException;
-
-    /**
-     * Executes backward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException;
-
-    /**
-     * Executes forward regularization step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void forwardRegularize() throws MatrixException;
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return updated error value.
-     */
-    double cumulateRegularizationError() throws DynamicParamException, MatrixException;
-
-    /**
-     * Executes backward regularization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void backwardRegularize() throws MatrixException;
 
 }

@@ -5,9 +5,6 @@
 
 package utils.procedure.node;
 
-import core.normalization.Normalization;
-import core.regularization.Regularization;
-import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -260,114 +257,6 @@ public class SingleNode extends AbstractNode {
      */
     public MMatrix getGradients() {
         return null;
-    }
-
-    /**
-     * Initializes normalization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void initializeNormalization() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.initialize(getMatrix());
-            }
-        }
-    }
-
-    /**
-     * Executes forward normalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardNormalize() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.forward(getMatrix());
-            }
-        }
-    }
-
-    /**
-     * Executes forward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     */
-    public void forwardNormalize(int sampleIndex) {
-    }
-
-    /**
-     * Executes forward normalization finalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardNormalizeFinalize() throws MatrixException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.forwardFinalize(getMatrix());
-            }
-        }
-    }
-
-    /**
-     * Executes backward normalization to constant entry of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardNormalize() throws MatrixException, DynamicParamException {
-        if (getReferenceMatrix().isNormalized() && getNormalizers() != null) {
-            for (Normalization normalizer : getNormalizers()) {
-                normalizer.backward(getMatrix(), getGradient());
-            }
-        }
-    }
-
-    /**
-     * Executes backward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     */
-    public void backwardNormalize(int sampleIndex) {
-    }
-
-    /**
-     * Executes forward regularization step.
-     *
-     */
-    public void forwardRegularize() {
-    }
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return updated error value.
-     */
-    public double cumulateRegularizationError() throws DynamicParamException, MatrixException {
-        double error = 0;
-        if (getReferenceMatrix().isRegularized() && getRegulalizers() != null) {
-            for (Regularization regularizer : getRegulalizers()) {
-                error += regularizer.error(getMatrix());
-            }
-        }
-        return error;
-    }
-
-    /**
-     * Executes backward regularization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardRegularize() throws MatrixException {
-        if (getReferenceMatrix().isRegularized() && getRegulalizers() != null) {
-            for (Regularization regularizer : getRegulalizers()) {
-                regularizer.backward(getMatrix(), getGradientMean());
-            }
-        }
     }
 
 }

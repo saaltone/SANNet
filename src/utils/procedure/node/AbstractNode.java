@@ -5,15 +5,12 @@
 
 package utils.procedure.node;
 
-import core.normalization.Normalization;
-import core.regularization.Regularization;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashSet;
 
 /**
  * Class that implements abstract node for expression calculation.<br>
@@ -48,18 +45,6 @@ public abstract class AbstractNode implements Node, Serializable {
      *
      */
     private Node toNode;
-
-    /**
-     * Normalizers for node.
-     *
-     */
-    private HashSet<Normalization> normalizers;
-
-    /**
-     * Regularizers for node.
-     *
-     */
-    private HashSet<Regularization> regularizers;
 
     /**
      * Number of cumulated gradient entries.
@@ -314,42 +299,6 @@ public abstract class AbstractNode implements Node, Serializable {
         else getGradient(index).subtract(outputGradient, getGradient(index));
 
         cumulatedGradientEntryCount++;
-    }
-
-    /**
-     * Sets normalizers for node.
-     *
-     * @param normalizers normalizers for node.
-     */
-    public void setNormalizers(HashSet<Normalization> normalizers) {
-        this.normalizers = normalizers;
-    }
-
-    /**
-     * Returns normalizers for node.
-     *
-     * @return normalizers for node.
-     */
-    protected HashSet<Normalization> getNormalizers() {
-        return normalizers;
-    }
-
-    /**
-     * Sets regularizers for node.
-     *
-     * @param regularizers regularizers for node.
-     */
-    public void setRegularizers(HashSet<Regularization> regularizers) {
-        this.regularizers = regularizers;
-    }
-
-    /**
-     * Returns regularizers for node.
-     *
-     * @return regularizers for node.
-     */
-    protected HashSet<Regularization> getRegulalizers() {
-        return regularizers;
     }
 
 }
