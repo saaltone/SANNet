@@ -135,6 +135,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
             Matrix standardDeviationGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)(result.getGradient(sampleIndex).size() - 1)).apply(sqrtFunction.getDerivative());
             argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(standardDeviationGradient), false);
         }
+        means.remove(sampleIndex);
     }
 
     /**
