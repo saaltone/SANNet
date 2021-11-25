@@ -5,8 +5,6 @@
 
 package utils.procedure;
 
-import core.normalization.Normalization;
-import core.regularization.Regularization;
 import utils.configurable.DynamicParamException;
 import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
@@ -84,24 +82,6 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Sets normalizers for node.
-     *
-     * @param normalizers normalizers for node.
-     */
-    public void setNormalizers(HashSet<Normalization> normalizers) {
-        for (Node node : nodes) node.setNormalizers(normalizers);
-    }
-
-    /**
-     * Sets regularizers for node.
-     *
-     * @param regularizers regularizers for node.
-     */
-    public void setRegularizers(HashSet<Regularization> regularizers) {
-        for (Node node : nodes) node.setRegularizers(regularizers);
-    }
-
-    /**
      * Resets data for every index in nodes of procedure.
      *
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
@@ -119,16 +99,6 @@ public class Procedure implements Serializable {
     public void reset(boolean resetDependentNodes) throws MatrixException {
         for (Node node : nodes) node.resetNode(resetDependentNodes);
         expressionChain.reset();
-    }
-
-    /**
-     * Initializes normalization for every node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void initialize() throws MatrixException, DynamicParamException {
-        for (Node node : nodes) node.initializeNormalization();
     }
 
     /**
@@ -302,17 +272,6 @@ public class Procedure implements Serializable {
         setInputSample(sampleIndex, new MMatrix(inputMatrix));
         expressionChain.calculateExpressionStep(sampleIndex, 0, 0);
         return getOutputNodes().get(0).getMatrix(sampleIndex);
-    }
-
-    /**
-     * Returns regularization error.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return regularization error.
-     */
-    public double getRegularizationError() throws MatrixException, DynamicParamException {
-        return expressionChain.cumulateRegularizationError();
     }
 
     /**
