@@ -9,10 +9,9 @@ import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.DataSplitter;
-import core.regularization.EarlyStopping;
+import core.network.EarlyStopping;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
@@ -107,12 +106,12 @@ public class SimpleDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 20");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-        neuralNetwork.addNormalizer(1, NormalizationType.WEIGHT_NORMALIZATION);
          return neuralNetwork;
     }
 
