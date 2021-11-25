@@ -333,34 +333,6 @@ public interface Matrix {
     boolean hasProcedureFactory();
 
     /**
-     * Sets flag if matrix is normalized.
-     *
-     * @param normalize if true matrix is normalized.
-     */
-    void setNormalize(boolean normalize);
-
-    /**
-     * Returns flag if matrix is normalized.
-     *
-     * @return if true matrix is normalized.
-     */
-    boolean isNormalized();
-
-    /**
-     * Sets flag if matrix is regularized.
-     *
-     * @param regularize if true matrix is regularized.
-     */
-    void setRegularize(boolean regularize);
-
-    /**
-     * Returns flag if matrix is regularized.
-     *
-     * @return if true matrix is regularized.
-     */
-    boolean isRegularized();
-
-    /**
      * Makes current matrix data equal to other matrix data.
      *
      * @param other other matrix to be copied as data of this matrix.
@@ -955,11 +927,21 @@ public interface Matrix {
      * Calculates exponential moving average.
      *
      * @param currentAverage current average value
-     * @param beta degree of weighting decrease for exponential moving average.
+     * @param momentum degree of weighting decrease for exponential moving average.
      * @return updated average with new average value included.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix exponentialMovingAverage(Matrix currentAverage, double beta) throws MatrixException;
+    Matrix exponentialMovingAverage(Matrix currentAverage, double momentum) throws MatrixException;
+
+    /**
+     * Calculates cumulative moving average CMAn = CMAn-1 + (currentAverage - CMAn-1) / sampleCount
+     *
+     * @param currentMovingAverage current cumulative moving average
+     * @param sampleCount current sample count
+     * @return updated cumulative moving average.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix cumulativeMovingAverage(Matrix currentMovingAverage, int sampleCount) throws MatrixException;
 
     /**
      * Normalizes matrix by removing mean and variance.<br>
@@ -969,7 +951,7 @@ public interface Matrix {
      * @return normalized matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-     Matrix normalize(boolean inplace) throws MatrixException;
+    Matrix normalize(boolean inplace) throws MatrixException;
 
     /**
      * Normalizes (scales) this matrix to new min and max values.<br>

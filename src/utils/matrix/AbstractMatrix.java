@@ -90,18 +90,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private transient ProcedureFactory procedureFactory = null;
 
     /**
-     * If true matrix is normalized otherwise false.
-     *
-     */
-    private boolean normalize = false;
-
-    /**
-     * If true matrix is regularized otherwise false.
-     *
-     */
-    private boolean regularize = false;
-
-    /**
      * Constructor for matrix.
      *
      * @param rows defines number of rows in matrix.
@@ -429,42 +417,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
                 else throw new MatrixException("This and other matrices have conflicting procedure factories.");
             }
         }
-    }
-
-    /**
-     * Sets flag if matrix is normalized.
-     *
-     * @param normalize if true matrix is normalized.
-     */
-    public void setNormalize(boolean normalize) {
-        this.normalize = normalize;
-    }
-
-    /**
-     * Returns flag if matrix is normalized.
-     *
-     * @return if true matrix is normalized.
-     */
-    public boolean isNormalized() {
-        return normalize;
-    }
-
-    /**
-     * Sets flag if matrix is regularized.
-     *
-     * @param regularize if true matrix is regularized.
-     */
-    public void setRegularize(boolean regularize) {
-        this.regularize = regularize;
-    }
-
-    /**
-     * Returns flag if matrix is regularized.
-     *
-     * @return if true matrix is regularized.
-     */
-    public boolean isRegularized() {
-        return regularize;
     }
 
     /**
@@ -1270,13 +1222,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Calculates exponential moving average.
      *
-     * @param currentAverage current average value
-     * @param beta degree of weighting decrease for exponential moving average.
+     * @param currentExponentialAverage current average value
+     * @param momentum degree of weighting decrease for exponential moving average.
      * @return updated average with new average value included.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix exponentialMovingAverage(Matrix currentAverage, double beta) throws MatrixException {
-        return currentAverage == null ? this : currentAverage.multiply(beta).add(multiply(1 - beta));
+    public Matrix exponentialMovingAverage(Matrix currentExponentialAverage, double momentum) throws MatrixException {
+        return currentExponentialAverage == null ? this : currentExponentialAverage.multiply(momentum).add(multiply(1 - momentum));
+    }
+
+    /**
+     * Calculates cumulative moving average CMAn = CMAn-1 + (currentAverage - CMAn-1) / sampleCount
+     *
+     * @param currentMovingAverage current cumulative moving average
+     * @param sampleCount current sample count
+     * @return updated cumulative moving average.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix cumulativeMovingAverage(Matrix currentMovingAverage, int sampleCount) throws MatrixException {
+        return currentMovingAverage == null ? this : this.subtract(currentMovingAverage).divide(sampleCount).add(currentMovingAverage);
     }
 
     /**
