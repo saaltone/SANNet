@@ -6,15 +6,14 @@
 package core.layer;
 
 import core.network.NeuralNetworkException;
-import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
-import core.regularization.RegularizationType;
 import utils.configurable.DynamicParamException;
 import utils.sampling.Sequence;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Interface for neural network layer.<br>
@@ -100,34 +99,6 @@ public interface NeuralNetworkLayer {
     boolean isConvolutionalLayer();
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.
-     *
-     * @param resetStateTraining if true allows reset.
-     */
-    void setResetStateTraining(boolean resetStateTraining);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during testing.
-     *
-     * @param resetStateTesting if true allows reset.
-     */
-    void setResetStateTesting(boolean resetStateTesting);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.
-     *
-     * @param restoreStateTraining if true allows restore.
-     */
-    void setRestoreStateTraining(boolean restoreStateTraining);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during testing.
-     *
-     * @param restoreStateTesting if true allows restore.
-     */
-    void setRestoreStateTesting(boolean restoreStateTesting);
-
-    /**
      * Returns output of neural network.
      *
      * @return output of neural network.
@@ -147,6 +118,27 @@ public interface NeuralNetworkLayer {
      * @return neural network layer gradients.
      */
     Sequence getLayerGradients();
+
+    /**
+     * Returns weights for normalization.
+     *
+     * @return weights for normalization.
+     */
+    HashSet<Matrix> getNormalizedWeights();
+
+    /**
+     * Returns weights for regularization.
+     *
+     * @return weights for regularization.
+     */
+    HashSet<Matrix> getRegularizedWeights();
+
+    /**
+     * Returns neural network weight gradients.
+     *
+     * @return neural network weight gradients.
+     */
+    HashMap<Matrix, Matrix> getLayerWeightGradients();
 
     /**
      * Starts neural network layer and it's execution thread.
@@ -225,9 +217,11 @@ public interface NeuralNetworkLayer {
     /**
      * Initializes neural network layer.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void initialize() throws NeuralNetworkException;
+    void initialize() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Reinitializes neural network layer.
@@ -254,109 +248,10 @@ public interface NeuralNetworkLayer {
     void backwardProcess() throws MatrixException, DynamicParamException;
 
     /**
-     * Resets normalizers and optimizer of layer.
-     *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    void reset() throws MatrixException;
-
-    /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void addRegularization(RegularizationType regularizationType) throws NeuralNetworkException, DynamicParamException;
-
-    /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     * @param params parameters for regularizer.
-     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void addRegularization(RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException;
-
-    /**
-     * Removes any regularization from layer.
+     * Resets optimizer of layer.
      *
      */
-    void removeRegularization();
-
-    /**
-     * Removes specific regularization from layer.
-     *
-     * @param regularizationType regularization method to be removed.
-     * @throws NeuralNetworkException throws exception if removal of regularizer fails.
-     */
-    void removeRegularization(RegularizationType regularizationType) throws NeuralNetworkException;
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void addNormalization(NormalizationType normalizationType) throws NeuralNetworkException, DynamicParamException;
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     * @param params parameters for normalizer.
-     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void addNormalization(NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException;
-
-    /**
-     * Removes any normalization from layer.
-     *
-     */
-    void removeNormalization();
-
-    /**
-     * Removes specific normalization from layer.
-     *
-     * @param normalizationType normalization method to be removed.
-     * @throws NeuralNetworkException throws exception if removal of normalizer fails.
-     */
-    void removeNormalization(NormalizationType normalizationType) throws NeuralNetworkException;
-
-    /**
-     * Resets specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reset.
-     * @throws NeuralNetworkException throws exception if reset of normalizer fails.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Resets all normalization for layer.
-     *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    void resetNormalization() throws MatrixException;
-
-    /**
-     * Reinitializes specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reinitialized.
-     * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Resets all normalization for layer.
-     *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    void reinitializeNormalization() throws MatrixException;
+    void reset();
 
     /**
      * Sets optimizer for layer.<br>

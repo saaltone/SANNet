@@ -6,15 +6,9 @@
 package core.layer;
 
 import core.network.NeuralNetworkException;
-import core.normalization.Normalization;
-import core.normalization.NormalizationFactory;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
-import core.regularization.Regularization;
-import core.regularization.RegularizationFactory;
-import core.regularization.RegularizationType;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
@@ -51,6 +45,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     private final HashSet<Matrix> weights = new HashSet<>();
 
     /**
+     * Weights to be normalized.
+     *
+     */
+    private final HashSet<Matrix> normalizedWeights = new HashSet<>();
+
+    /**
+     * Weights to be regularized.
+     *
+     */
+    private final HashSet<Matrix> regularizedWeights = new HashSet<>();
+
+    /**
      * Ordered map of weights.
      *
      */
@@ -61,18 +67,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      */
     private transient HashMap<Matrix, Matrix> weightGradientSums;
-
-    /**
-     * List of regularizers.
-     *
-     */
-    private final HashSet<Regularization> regularizers = new HashSet<>();
-
-    /**
-     * List of normalizers.
-     *
-     */
-    private final HashSet<Normalization> normalizers = new HashSet<>();
 
     /**
      * Optimizer for layer.
@@ -111,35 +105,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.
+     * Initializes layer.
      *
-     * @param resetStateTraining if true allows reset.
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void resetStateTraining(boolean resetStateTraining) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during testing.
-     *
-     * @param resetStateTesting if true allows reset.
-     */
-    public void resetStateTesting(boolean resetStateTesting) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.
-     *
-     * @param restoreStateTraining if true allows restore.
-     */
-    public void restoreStateTraining(boolean restoreStateTraining) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during testing.
-     *
-     * @param restoreStateTesting if true allows restore.
-     */
-    public void restoreStateTesting(boolean restoreStateTesting) {
+    public void initialize() throws NeuralNetworkException, MatrixException, DynamicParamException {
+        if (getLayerWidth() == -1) {
+            setLayerWidth(getPreviousLayerWidth());
+            setLayerHeight(getPreviousLayerHeight());
+            setLayerDepth(getPreviousLayerDepth());
+        }
     }
 
     /**
@@ -148,14 +125,16 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void defineProcedure() throws MatrixException, DynamicParamException {
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
         procedure = new ProcedureFactory().getProcedure(this, getAllConstantMatrices());
-        procedure.setNormalizers(getNormalization());
-        procedure.setRegularizers(getRegularization());
-        procedure.initialize();
         procedure.setStopGradient(getStopGradients(), true);
     }
 
+    /**
+     * Returns all constant matrices.
+     *
+     * @return all constant matrices.
+     */
     private HashSet<Matrix> getAllConstantMatrices() {
         HashSet<Matrix> allConstantMatrices = new HashSet<>();
         allConstantMatrices.addAll(getWeights());
@@ -178,25 +157,13 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract HashSet<Matrix> getConstantMatrices();
 
     /**
-     * Prepares forward process step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return previous outputs.
-     */
-    protected Sequence prepareForwardProcess() throws MatrixException {
-        resetLayer();
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
-    }
-
-    /**
      * Resets layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetLayer() throws MatrixException {
-        procedure.reset();
+        if (procedure != null) procedure.reset();
         resetLayerOutputs();
-        resetNormalization();
     }
 
     /**
@@ -208,35 +175,32 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     public void reinitialize() throws NeuralNetworkException, MatrixException {
         if (procedure != null) procedure.reset();
         resetLayerOutputs();
-        reinitializeNormalization();
+    }
+
+    /**
+     * Prepares forward process step.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return previous outputs.
+     */
+    protected Sequence prepareForwardProcess() throws MatrixException {
+        resetLayer();
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
     }
 
     /**
      * Takes single forward processing step to process layer input(s).<br>
-     * Additionally applies any normalization or regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        executeForwardProcess(prepareForwardProcess());
-    }
-
-    /**
-     * Executes forward process step.
-     *
-     * @param previousOutputs outputs of previous layer.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void executeForwardProcess(Sequence previousOutputs) throws MatrixException, DynamicParamException {
-        procedure.calculateExpression(previousOutputs, getLayerOutputs());
+        procedure.calculateExpression(prepareForwardProcess(), getLayerOutputs());
     }
 
     /**
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -255,7 +219,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException, DynamicParamException {
-        procedure.calculateGradient(nextLayerGradients, getLayerGradients(), -1);
+        if (procedure != null) procedure.calculateGradient(nextLayerGradients, getLayerGradients(), -1);
     }
 
     /**
@@ -268,8 +232,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     public void registerWeight(Matrix weight, boolean forRegularization, boolean forNormalization) {
         weights.add(weight);
         weightsMap.put(weightsMap.size(), weight);
-        weight.setRegularize(forRegularization);
-        weight.setNormalize(forNormalization);
+        if (forNormalization) normalizedWeights.add(weight);
+        if (forRegularization) regularizedWeights.add(weight);
     }
 
     /**
@@ -298,6 +262,33 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public HashMap<Integer, Matrix> getWeightsMap() {
         return weightsMap;
+    }
+
+    /**
+     * Returns weights for normalization.
+     *
+     * @return weights for normalization.
+     */
+    public HashSet<Matrix> getNormalizedWeights() {
+        return normalizedWeights;
+    }
+
+    /**
+     * Returns weights for regularization.
+     *
+     * @return weights for regularization.
+     */
+    public HashSet<Matrix> getRegularizedWeights() {
+        return regularizedWeights;
+    }
+
+    /**
+     * Returns neural network weight gradients.
+     *
+     * @return neural network weight gradients.
+     */
+    public HashMap<Matrix, Matrix> getLayerWeightGradients() {
+        return weightGradientSums;
     }
 
     /**
@@ -355,179 +346,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addRegularization(RegularizationType regularizationType) throws NeuralNetworkException, DynamicParamException {
-        addRegularization(regularizationType, null);
-    }
-
-    /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     * @param params parameters for regularizer.
-     * @throws NeuralNetworkException throws exception if adding of regularizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addRegularization(RegularizationType regularizationType, String params) throws NeuralNetworkException, DynamicParamException {
-        for (Regularization regularization : regularizers) {
-            if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) throw new NeuralNetworkException("Regularizer: " + regularizationType + " already exists");
-        }
-        Regularization regularizer = RegularizationFactory.create(regularizationType, params);
-        regularizers.add(regularizer);
-    }
-
-    /**
-     * Removes any regularization from layer.
-     *
-     */
-    public void removeRegularization() {
-        regularizers.clear();
-    }
-
-    /**
-     * Removes specific regularization from layer.
-     *
-     * @param regularizationType regularization method to be removed.
-     * @throws NeuralNetworkException throws exception if removal of regularizer fails.
-     */
-    public void removeRegularization(RegularizationType regularizationType) throws NeuralNetworkException {
-        Regularization removeRegularization = null;
-        for (Regularization regularization : regularizers) {
-            if (RegularizationFactory.getRegularizationType(regularization) == regularizationType) {
-                removeRegularization = regularization;
-            }
-        }
-        if (removeRegularization != null) regularizers.remove(removeRegularization);
-    }
-
-    /**
-     * Returns set of regularization methods applied to layer.
-     *
-     * @return set of regularization methods applied to layer.
-     */
-    public HashSet<Regularization> getRegularization() {
-        return regularizers;
-    }
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addNormalization(NormalizationType normalizationType) throws NeuralNetworkException, DynamicParamException {
-        addNormalization(normalizationType, null);
-    }
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     * @param params parameters for normalizer.
-     * @throws NeuralNetworkException throws exception if adding of normalizer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void addNormalization(NormalizationType normalizationType, String params) throws NeuralNetworkException, DynamicParamException {
-        for (Normalization normalization : normalizers) {
-            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) throw new NeuralNetworkException("Normalizer: " + normalizationType + " already exists");
-        }
-        Normalization normalizer = NormalizationFactory.create(normalizationType, params);
-        normalizers.add(normalizer);
-        if (optimizer != null) normalizer.setOptimizer(optimizer);
-    }
-
-    /**
-     * Removes any normalization from layer.
-     *
-     */
-    public void removeNormalization() {
-        normalizers.clear();
-    }
-
-    /**
-     * Removes specific normalization from layer.
-     *
-     * @param normalizationType normalization method to be removed.
-     * @throws NeuralNetworkException throws exception if removal of normalizer fails.
-     */
-    public void removeNormalization(NormalizationType normalizationType) throws NeuralNetworkException {
-        Normalization removeNormalization = null;
-        for (Normalization normalization : normalizers) {
-            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
-                removeNormalization = normalization;
-            }
-        }
-        if (removeNormalization != null) normalizers.remove(removeNormalization);
-    }
-
-    /**
-     * Returns set of normalization methods applied to layer.
-     *
-     * @return set of normalization methods applied to layer.
-     */
-    public HashSet<Normalization> getNormalization() {
-        return normalizers;
-    }
-
-    /**
-     * Resets specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reset.
-     * @throws NeuralNetworkException throws exception if reset of normalizer fails.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    public void resetNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException {
-        Normalization resetNormalization = null;
-        for (Normalization normalization : normalizers) {
-            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
-                resetNormalization = normalization;
-            }
-        }
-        if (resetNormalization != null) resetNormalization.reset();
-    }
-
-    /**
-     * Reinitializes specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reinitialized.
-     * @throws NeuralNetworkException throws exception if reinitialization of normalizer fails.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    public void reinitializeNormalization(NormalizationType normalizationType) throws NeuralNetworkException, MatrixException {
-        Normalization reinitializeNormalization = null;
-        for (Normalization normalization : normalizers) {
-            if (NormalizationFactory.getNormalizationType(normalization) == normalizationType) {
-                reinitializeNormalization = normalization;
-            }
-        }
-        if (reinitializeNormalization != null) reinitializeNormalization.reinitialize();
-    }
-
-    /**
-     * Resets all normalization for layer.
-     *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    public void resetNormalization() throws MatrixException {
-        for (Normalization normalizer : normalizers) normalizer.reset();
-    }
-
-    /**
-     * Reinitializes all normalization for layer.
-     *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    public void reinitializeNormalization() throws MatrixException {
-        for (Normalization normalizer : normalizers) normalizer.reinitialize();
-    }
-
-    /**
      * Sets optimizer for layer.<br>
      * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
      *
@@ -535,7 +353,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void setOptimizer(Optimizer optimizer) {
         this.optimizer = optimizer;
-        for (Normalization normalizer: normalizers) normalizer.setOptimizer(optimizer);
     }
 
     /**
@@ -562,17 +379,13 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     protected void setTraining(boolean isTraining) {
         this.isTraining = isTraining;
-        for (Regularization regularizer : regularizers) regularizer.setTraining(isTraining);
-        for (Normalization normalizer : normalizers) normalizer.setTraining(isTraining);
     }
 
     /**
-     * Resets normalizers and optimizer of layer.
+     * Resets optimizer of layer.
      *
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset() throws MatrixException {
-        resetNormalization();
+    public void reset() {
         resetOptimizer();
     }
 
@@ -584,7 +397,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void optimize() throws MatrixException, DynamicParamException {
         for (Matrix weight : weightGradientSums.keySet()) optimizer.optimize(weight, weightGradientSums.get(weight));
-        for (Normalization normalizer : normalizers) normalizer.optimize();
     }
 
     /**
@@ -595,9 +407,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @return cumulated error from regularization.
      */
     public double error() throws MatrixException, DynamicParamException {
-        double error = procedure.getRegularizationError();
-        if (getPreviousLayer() != null) error += getPreviousLayer().error();
-        return error;
+        return 0;
     }
 
     /**
@@ -628,36 +438,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns regularizers by name.
-     *
-     * @return regularizers by name.
-     */
-    protected String getRegularizersByName() {
-        StringBuilder regularizerNames = new StringBuilder("Regularizers: ");
-        int index = 1;
-        for (Regularization regularization : regularizers) {
-            regularizerNames.append(regularization.getName());
-            if (index < regularizers.size()) regularizerNames.append(", ");
-        }
-        return regularizerNames.toString();
-    }
-
-    /**
-     * Returns normalizers by name.
-     *
-     * @return normalizers by name.
-     */
-    protected String getNormalizersByName() {
-        StringBuilder normalizerNames = new StringBuilder("Normalizers: ");
-        int index = 1;
-        for (Normalization normalization : normalizers) {
-            normalizerNames.append(normalization.getName());
-            if (index < normalizers.size()) normalizerNames.append(", ");
-        }
-        return normalizerNames.toString();
-    }
-
-    /**
      * Returns optimizer by name.
      *
      * @return optimizer by name.
@@ -682,8 +462,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + " ]");
         System.out.println("Number of parameters: " + getNumberOfParameters());
         System.out.println(getOptimizerByName());
-        System.out.println(getNormalizersByName());
-        System.out.println(getRegularizersByName());
         String layerDetailsByName = getLayerDetailsByName();
         if (layerDetailsByName != null) System.out.println("Layer details [ " + layerDetailsByName + " ]");
     }
@@ -697,7 +475,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         System.out.println(getLayerName() + ": ");
         procedure.printExpressionChain();
         System.out.println();
-        for (Normalization normalization : normalizers) normalization.printExpressions();
     }
 
     /**
@@ -709,7 +486,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         System.out.println(getLayerName() + ": ");
         procedure.printGradientChain();
         System.out.println();
-        for (Normalization normalization : normalizers) normalization.printGradients();
     }
 
 }

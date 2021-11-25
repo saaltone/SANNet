@@ -97,6 +97,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
 
     /**
      * Reference to next layer
+     *
      */
     private NeuralNetworkLayer nextLayer;
 
@@ -164,7 +165,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void initializeDefaultParams() {
-        layerWidth = 1;
+        layerWidth = -1;
         layerHeight = 1;
         layerDepth = 1;
     }
@@ -182,12 +183,18 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
-        if (params.hasParam("width")) layerWidth = params.getValueAsInteger("width");
-        if (params.hasParam("height")) layerHeight = params.getValueAsInteger("height");
-        if (params.hasParam("depth")) layerDepth = params.getValueAsInteger("depth");
-        if (layerWidth < 1) throw new NeuralNetworkException("Width of layer must be at least 1.");
-        if (layerHeight < 1) throw new NeuralNetworkException("Height of layer must be at least 1.");
-        if (layerDepth < 1) throw new NeuralNetworkException("Depth of layer must be at least 1.");
+        if (params.hasParam("width")) {
+            layerWidth = params.getValueAsInteger("width");
+            if (layerWidth < 1) throw new NeuralNetworkException("Width of layer must be at least 1.");
+        }
+        if (params.hasParam("height")) {
+            layerHeight = params.getValueAsInteger("height");
+            if (layerHeight < 1) throw new NeuralNetworkException("Height of layer must be at least 1.");
+        }
+        if (params.hasParam("depth")) {
+            layerDepth = params.getValueAsInteger("depth");
+            if (layerDepth < 1) throw new NeuralNetworkException("Depth of layer must be at least 1.");
+        }
     }
 
     /**
@@ -331,80 +338,13 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public abstract boolean isConvolutionalLayer();
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.
-     *
-     * @param resetStateTraining if true allows reset of recurrent inputs.
-     */
-    public void setResetStateTraining(boolean resetStateTraining) {
-        resetStateTraining(resetStateTraining);
-        if (hasNextLayer()) getNextLayer().setResetStateTraining(resetStateTraining);
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during testing.
-     *
-     * @param resetStateTesting if true allows reset of recurrent inputs.
-     */
-    public void setResetStateTesting(boolean resetStateTesting) {
-        resetStateTesting(resetStateTesting);
-        if (hasNextLayer()) getNextLayer().setResetStateTesting(resetStateTesting);
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.
-     *
-     * @param restoreStateTraining if true allows restore of recurrent inputs.
-     */
-    public void setRestoreStateTraining(boolean restoreStateTraining) {
-        restoreStateTraining(restoreStateTraining);
-        if (hasNextLayer()) getNextLayer().setRestoreStateTraining(restoreStateTraining);
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during testing.
-     *
-     * @param restoreStateTesting if true allows restore of recurrent inputs.
-     */
-    public void setRestoreStateTesting(boolean restoreStateTesting) {
-        restoreStateTesting(restoreStateTesting);
-        if (hasNextLayer()) getNextLayer().setRestoreStateTesting(restoreStateTesting);
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset for this layer during training.
-     *
-     * @param resetStateTraining if true allows reset of recurrent inputs.
-     */
-    protected abstract void resetStateTraining(boolean resetStateTraining);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset for this layer during testing.
-     *
-     * @param resetStateTesting if true allows reset of recurrent inputs.
-     */
-    protected abstract void resetStateTesting(boolean resetStateTesting);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored for this layer during training.
-     *
-     * @param restoreStateTraining if true allows restore of recurrent inputs.
-     */
-    protected abstract void restoreStateTraining(boolean restoreStateTraining);
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored for this layer during testing.
-     *
-     * @param restoreStateTesting if true allows restore of recurrent inputs.
-     */
-    protected abstract void restoreStateTesting(boolean restoreStateTesting);
-
-    /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    protected abstract void defineProcedure() throws MatrixException, DynamicParamException;
+    protected abstract void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException;
 
     /**
      * Returns output of neural network.
