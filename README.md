@@ -21,10 +21,10 @@ Framework supports value based (Deep Q Learning, Double Deep Q Learning, SARSA),
 Framework implements most typically used optimization methods starting from basic vanilla gradient descent up to more sofisticated parameter optimization methods such as Adam and AMSGrad.
 
 ## Regularization
-Framework provides few regularization methods: weight noising, drop-out, gradient clipping, early stopping and L1 / L2 / Lp regularization. Lp regularization is an experimental method and mathematically direct extension of L1 / L2 methods.
+Framework provides following regularization layers: drop-out, gradient clipping, L1 / L2 / Lp regularization and weight noising. Lp regularization is an experimental method and mathematically direct extension of L1 / L2 methods. Early stopping is implemented as function on neural network level.
 
 ## Normalization
-Framework supports following normalization methods: batch normalization, layer normalization and weight normalization.
+Framework supports following normalization layers: batch normalization, layer normalization and weight normalization.
 
 ## Metrics
 Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed.
