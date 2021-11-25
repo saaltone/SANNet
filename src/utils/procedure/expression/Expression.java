@@ -75,7 +75,7 @@ public interface Expression {
     void reset();
 
     /**
-     * Calculates entire expression chain including normalization and regulation.
+     * Calculates entire expression chain including regulation.
      *
      * @param sampleIndex sample index
      * @param firstSampleIndex first sample index
@@ -86,7 +86,7 @@ public interface Expression {
     void calculateExpressionStep(int sampleIndex, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
 
     /**
-     * Calculates entire expression chain including normalization and regulation.
+     * Calculates entire expression chain including regulation.
      *
      * @param sampleIndices sample indices
      * @param firstSampleIndex first sample index
@@ -97,7 +97,7 @@ public interface Expression {
     void calculateExpressionStep(Set<Integer> sampleIndices, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
 
     /**
-     * Calculates entire gradient expression chain including normalization and regulation.
+     * Calculates entire gradient expression chain including regulation.
      *
      * @param sampleIndex sample index
      * @param lastSampleIndex last sample index
@@ -107,7 +107,7 @@ public interface Expression {
     void calculateGradientStep(int sampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
 
     /**
-     * Calculates entire gradient expression chain including normalization and regulation.
+     * Calculates entire gradient expression chain including regulation.
      *
      * @param sampleIndices sample indices
      * @param lastSampleIndex last sample index
@@ -116,15 +116,6 @@ public interface Expression {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     void calculateGradientStep(Set<Integer> sampleIndices, int lastSampleIndex, int numberOfGradientSteps) throws MatrixException, DynamicParamException;
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return updated error value.
-     */
-    double cumulateRegularizationError() throws MatrixException, DynamicParamException;
 
     /**
      * Prints expression chain.

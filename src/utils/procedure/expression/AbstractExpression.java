@@ -172,7 +172,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
-     * Calculates entire expression chain including normalization and regulation.
+     * Calculates entire expression chain including regulation.
      *
      * @param sampleIndex sample index
      * @param firstSampleIndex first sample index
@@ -181,12 +181,12 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpressionStep(int sampleIndex, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
-        calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex, sampleIndex == lastSampleIndex);
+        calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex);
         if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndex, firstSampleIndex, lastSampleIndex);
     }
 
     /**
-     * Calculates entire expression chain including normalization and regulation.
+     * Calculates entire expression chain including regulation.
      *
      * @param sampleIndices sample indices
      * @param firstSampleIndex first sample index
@@ -196,30 +196,25 @@ public abstract class AbstractExpression implements Expression, Serializable {
      */
     public void calculateExpressionStep(Set<Integer> sampleIndices, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : sampleIndices) {
-            calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex, sampleIndex == lastSampleIndex);
+            calculateExpressionStep(sampleIndex, sampleIndex == firstSampleIndex);
         }
         if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndices, firstSampleIndex, lastSampleIndex);
     }
 
     /**
-     * Calculates entire expression step including normalization and regulation.
+     * Calculates entire expression step including regulation.
      *
      * @param sampleIndex sample index
      * @param isFirstSampleIndex true if this is first sample index
-     * @param isLastSampleIndex true if this is last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
+    private void calculateExpressionStep(int sampleIndex, boolean isFirstSampleIndex) throws MatrixException, DynamicParamException {
         updateExpressionDependency(sampleIndex);
-        if (isFirstSampleIndex) forwardRegularize();
-        if (isFirstSampleIndex) forwardNormalize();
-        forwardNormalize(sampleIndex);
         if (executeAsSingleStep()) {
             if (isFirstSampleIndex) calculateExpression();
         }
         else calculateExpression(sampleIndex);
-        if (isLastSampleIndex) forwardNormalizeFinalize();
     }
 
     /**
@@ -249,7 +244,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
     protected abstract void calculateExpression(int sampleIndex) throws MatrixException;
 
     /**
-     * Calculates entire gradient expression chain including normalization and regulation.
+     * Calculates entire gradient expression chain including regulation.
      *
      * @param sampleIndex sample index
      * @param lastSampleIndex last sample index
@@ -262,7 +257,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
-     * Calculates entire gradient expression chain including normalization and regulation.
+     * Calculates entire gradient expression chain including regulation.
      *
      * @param sampleIndices sample indices
      * @param lastSampleIndex last sample index
@@ -281,22 +276,18 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
-     * Calculates gradient step including normalization and regulation.
+     * Calculates gradient step including regulation.
      *
      * @param sampleIndex sample index
      * @param isLastSampleIndex true if this is last sample index
      * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientStep(int sampleIndex, boolean isLastSampleIndex) throws MatrixException, DynamicParamException {
+    private void calculateGradientStep(int sampleIndex, boolean isLastSampleIndex) throws MatrixException {
         updateGradientDependency(sampleIndex);
         if (executeAsSingleStep()) {
             if (isLastSampleIndex) calculateGradient();
         }
         else calculateGradient(sampleIndex);
-        backwardNormalize(sampleIndex);
-        if (isLastSampleIndex) backwardNormalize();
-        if (isLastSampleIndex) backwardRegularize();
     }
 
     /**
@@ -323,86 +314,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     protected abstract void calculateGradient(int sampleIndex) throws MatrixException;
-
-    /**
-     * Execute forward normalization to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void forwardNormalize() throws MatrixException, DynamicParamException {
-        argument1.forwardNormalize();
-    }
-
-    /**
-     * Execute forward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        argument1.forwardNormalize(sampleIndex);
-    }
-
-    /**
-     * Execute forward normalization finalize callback to constant node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void forwardNormalizeFinalize() throws MatrixException {
-        argument1.forwardNormalizeFinalize();
-    }
-
-    /**
-     * Execute backward normalization to all entries of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void backwardNormalize() throws MatrixException, DynamicParamException {
-        argument1.backwardNormalize();
-    }
-
-    /**
-     * Execute backward normalization to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        argument1.backwardNormalize(sampleIndex);
-    }
-
-    /**
-     * Executes forward regularization step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void forwardRegularize() throws MatrixException {
-        argument1.forwardRegularize();
-    }
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return updated error value.
-     */
-    public double cumulateRegularizationError() throws MatrixException, DynamicParamException {
-        return argument1.cumulateRegularizationError() + (nextExpression != null ? nextExpression.cumulateRegularizationError() : 0);
-    }
-
-    /**
-     * Executes backward regularization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void backwardRegularize() throws MatrixException {
-        argument1.backwardRegularize();
-    }
 
     /**
      * Prints expression chain.

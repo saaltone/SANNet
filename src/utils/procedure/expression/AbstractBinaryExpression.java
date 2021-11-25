@@ -5,7 +5,6 @@
 
 package utils.procedure.expression;
 
-import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
@@ -56,83 +55,6 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     protected void updateExpressionDependency(int sampleIndex) throws MatrixException {
         super.updateExpressionDependency(sampleIndex);
         argument2.updateMatrixDependency(sampleIndex);
-    }
-
-    /**
-     * Make forward normalize callback to all entries of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardNormalize() throws MatrixException, DynamicParamException {
-        super.forwardNormalize();
-        argument2.forwardNormalize();
-    }
-
-    /**
-     * Make forward normalize callback to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        super.forwardNormalize(sampleIndex);
-        argument2.forwardNormalize(sampleIndex);
-    }
-
-    /**
-     * Make backward normalize callback to all entries of node.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardNormalize() throws MatrixException, DynamicParamException {
-        super.backwardNormalize();
-        argument2.backwardNormalize();
-    }
-
-    /**
-     * Make backward normalize callback to specific entry (sample)
-     *
-     * @param sampleIndex sample index of specific entry.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardNormalize(int sampleIndex) throws MatrixException, DynamicParamException {
-        super.backwardNormalize(sampleIndex);
-        argument2.backwardNormalize(sampleIndex);
-    }
-
-    /**
-     * Executes forward regularization step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardRegularize() throws MatrixException {
-        super.forwardRegularize();
-        argument2.forwardRegularize();
-    }
-
-    /**
-     * Cumulates error from regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return updated error value.
-     */
-    public double cumulateRegularizationError() throws MatrixException, DynamicParamException {
-        return super.cumulateRegularizationError() + argument2.cumulateRegularizationError();
-    }
-
-    /**
-     * Executes backward regularization.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardRegularize() throws MatrixException {
-        super.backwardRegularize();
-        argument2.backwardRegularize();
     }
 
     /**
