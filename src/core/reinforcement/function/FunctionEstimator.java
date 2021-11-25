@@ -221,6 +221,7 @@ public interface FunctionEstimator extends Configurable {
      * @return action with minimum state value.
      */
     int argmin(Matrix stateValues);
+
     /**
      * Returns action with minimum state value given available actions.
      *
@@ -254,6 +255,7 @@ public interface FunctionEstimator extends Configurable {
      * @return action with maximum state value.
      */
     int argmax(Matrix stateValues);
+
     /**
      * Returns action with maximum state value given available actions.
      *
