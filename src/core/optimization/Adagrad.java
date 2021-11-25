@@ -30,12 +30,6 @@ public class Adagrad extends AbstractOptimizer {
     private final static String paramNameTypes = "(learningRate:DOUBLE)";
 
     /**
-     * Optimization type.
-     *
-     */
-    private final OptimizationType optimizationType = OptimizationType.ADAGRAD;
-
-    /**
      * Learning rate for Adagrad. Default value 0.01.
      *
      */

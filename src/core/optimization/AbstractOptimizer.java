@@ -8,8 +8,6 @@ package core.optimization;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -87,21 +85,6 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
      */
     public String getParams() {
         return params;
-    }
-
-    /**
-     * Optimizes given weight (W) and bias (B) pair with given gradients respectively.
-     *
-     * @param weight weight matrix to be optimized.
-     * @param weightGradient weight gradients for optimization step.
-     * @param bias bias matrix to be optimized.
-     * @param biasGradient bias gradients for optimization step.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void optimize(Matrix weight, Matrix weightGradient, Matrix bias, Matrix biasGradient) throws MatrixException, DynamicParamException {
-        optimize(weight, weightGradient);
-        optimize(bias, biasGradient);
     }
 
     /**
