@@ -10,10 +10,8 @@ import core.layer.LayerType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.network.Persistence;
-import core.normalization.NormalizationType;
 import core.optimization.*;
 import core.preprocess.*;
-import core.regularization.RegularizationType;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
@@ -99,13 +97,13 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.DROPOUT, "probability = 0.1");
         neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 128");
+        neuralNetwork.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        neuralNetwork.addNormalizer(2, NormalizationType.LAYER_NORMALIZATION);
-        neuralNetwork.addRegularizer(1, RegularizationType.DROPOUT, "probability = 0.1");
         return neuralNetwork;
     }
 
