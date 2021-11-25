@@ -329,10 +329,8 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
                 input.setDilation(dilation);
                 input.setFilterRowSize(filterRowSize);
                 input.setFilterColumnSize(filterColumnSize);
-                input.setRegularize(true);
                 output = executeConvolutionalOperation(input, Wf, output);
             }
-            output.setNormalize(true);
             output = output.apply(activationFunction);
             output.setName("Output" + filterIndex);
             outputs.put(filterIndex, output);
