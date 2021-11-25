@@ -5,6 +5,10 @@
 
 package core.layer;
 
+import core.layer.normalization.BatchNormalization;
+import core.layer.normalization.LayerNormalization;
+import core.layer.normalization.WeightNormalization;
+import core.layer.regularization.*;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.convolutional.*;
@@ -49,6 +53,15 @@ public class LayerFactory {
             case RANDOM_POOLING -> new RandomPoolingLayer(layerIndex, initialization, params);
             case CYCLIC_POOLING -> new CyclicPoolingLayer(layerIndex, initialization, params);
             case AVERAGE_POOLING -> new AveragePoolingLayer(layerIndex, initialization, params);
+            case BATCH_NORMALIZATION -> new BatchNormalization(layerIndex, initialization, params);
+            case LAYER_NORMALIZATION -> new LayerNormalization(layerIndex, initialization, params);
+            case WEIGHT_NORMALIZATION -> new WeightNormalization(layerIndex, initialization, params);
+            case DROPOUT -> new Dropout(layerIndex, initialization, params);
+            case GRADIENT_CLIPPING -> new GradientClipping(layerIndex, initialization, params);
+            case L1_REGULARIZATION -> new L1_Regularization(layerIndex, initialization, params);
+            case L2_REGULARIZATION -> new L2_Regularization(layerIndex, initialization, params);
+            case Lp_REGULARIZATION -> new Lp_Regularization(layerIndex, initialization, params);
+            case WEIGHT_NOISING -> new WeightNoising(layerIndex, initialization, params);
         };
     }
 
@@ -74,6 +87,15 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof RandomPoolingLayer) return LayerType.RANDOM_POOLING;
         if (neuralNetworkLayer instanceof CyclicPoolingLayer) return LayerType.CYCLIC_POOLING;
         if (neuralNetworkLayer instanceof AveragePoolingLayer) return LayerType.AVERAGE_POOLING;
+        if (neuralNetworkLayer instanceof BatchNormalization) return LayerType.BATCH_NORMALIZATION;
+        if (neuralNetworkLayer instanceof LayerNormalization) return LayerType.LAYER_NORMALIZATION;
+        if (neuralNetworkLayer instanceof WeightNormalization) return LayerType.WEIGHT_NORMALIZATION;
+        if (neuralNetworkLayer instanceof Dropout) return LayerType.DROPOUT;
+        if (neuralNetworkLayer instanceof GradientClipping) return LayerType.GRADIENT_CLIPPING;
+        if (neuralNetworkLayer instanceof L1_Regularization) return LayerType.L1_REGULARIZATION;
+        if (neuralNetworkLayer instanceof L2_Regularization) return LayerType.L2_REGULARIZATION;
+        if (neuralNetworkLayer instanceof Lp_Regularization) return LayerType.Lp_REGULARIZATION;
+        if (neuralNetworkLayer instanceof WeightNoising) return LayerType.WEIGHT_NOISING;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -99,6 +121,15 @@ public class LayerFactory {
         if (neuralNetworkLayer instanceof RandomPoolingLayer) return "RANDOM_POOLING";
         if (neuralNetworkLayer instanceof CyclicPoolingLayer) return "CYCLIC_POOLING";
         if (neuralNetworkLayer instanceof AveragePoolingLayer) return "AVERAGE_POOLING";
+        if (neuralNetworkLayer instanceof BatchNormalization) return "BATCH_NORMALIZATION";
+        if (neuralNetworkLayer instanceof LayerNormalization) return "LAYER_NORMALIZATION";
+        if (neuralNetworkLayer instanceof WeightNormalization) return "WEIGHT_NORMALIZATION";
+        if (neuralNetworkLayer instanceof Dropout) return "DROPOUT";
+        if (neuralNetworkLayer instanceof GradientClipping) return "GRADIENT_CLIPPING";
+        if (neuralNetworkLayer instanceof L1_Regularization) return "L1_REGULARIZATION";
+        if (neuralNetworkLayer instanceof L2_Regularization) return "L2_REGULARIZATION";
+        if (neuralNetworkLayer instanceof Lp_Regularization) return "Lp_REGULARIZATION";
+        if (neuralNetworkLayer instanceof WeightNoising) return "WEIGHT_NOISING";
         throw new NeuralNetworkException("Unknown layer type");
     }
 

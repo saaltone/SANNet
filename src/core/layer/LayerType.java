@@ -93,6 +93,60 @@ public enum LayerType {
      * Average pooling layer
      *
      */
-    AVERAGE_POOLING
+    AVERAGE_POOLING,
+
+    /**
+     * Batch normalization layer
+     *
+     */
+    BATCH_NORMALIZATION,
+
+    /**
+     * Layer normalization layer
+     *
+     */
+    LAYER_NORMALIZATION,
+
+    /**
+     * Weight normalization layer
+     *
+     */
+    WEIGHT_NORMALIZATION,
+
+    /**
+     * Drop out layer
+     *
+     */
+    DROPOUT,
+
+    /**
+     * Gradient clipping layer.
+     *
+     */
+    GRADIENT_CLIPPING,
+
+    /**
+     * L1 regularization layer.
+     *
+     */
+    L1_REGULARIZATION,
+
+    /**
+     * L1 regularization layer.
+     *
+     */
+    L2_REGULARIZATION,
+
+    /**
+     * L1 regularization layer.
+     *
+     */
+    Lp_REGULARIZATION,
+
+    /**
+     * Weight noising layer.
+     *
+     */
+    WEIGHT_NOISING
 
 }
