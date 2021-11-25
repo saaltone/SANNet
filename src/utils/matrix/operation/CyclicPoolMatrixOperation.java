@@ -11,6 +11,7 @@ import java.util.HashMap;
  *
  */
 public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
+
     /**
      * Input matrix.
      *
