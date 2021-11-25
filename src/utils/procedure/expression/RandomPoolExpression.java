@@ -12,7 +12,6 @@ import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Stack;
 
 /**
  * Class that defines expression for random pooling operation.<br>
@@ -36,13 +35,7 @@ public class RandomPoolExpression extends AbstractUnaryExpression implements Ser
      * Input positions for random pool operation.
      *
      */
-    private final HashMap<Integer, HashMap<Integer, Integer>> inputPos = new HashMap<>();
-
-    /**
-     * Stack for caching input position instances.
-     *
-     */
-    private final Stack<HashMap<Integer, Integer>> inputPosCache = new Stack<>();
+    private transient HashMap<Integer, HashMap<Integer, Integer>> inputPos = new HashMap<>();
 
     /**
      * Constructor for random pooling operation.
@@ -85,8 +78,8 @@ public class RandomPoolExpression extends AbstractUnaryExpression implements Ser
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        if (!inputPosCache.empty()) inputPos.put(sampleIndex, inputPosCache.pop());
-        else inputPos.put(sampleIndex, new HashMap<>());
+        if (inputPos == null) inputPos = new HashMap<>();
+        inputPos.put(sampleIndex, new HashMap<>());
         randomPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
@@ -107,7 +100,7 @@ public class RandomPoolExpression extends AbstractUnaryExpression implements Ser
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         if (!inputPos.containsKey(sampleIndex)) throw new MatrixException("Input positions for gradient calculation are not defined.");
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, randomPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPos.get(sampleIndex), argument1.getEmptyMatrix()), false);
-        inputPosCache.push(inputPos.remove(sampleIndex));
+        inputPos.remove(sampleIndex);
     }
 
     /**
