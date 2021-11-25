@@ -364,38 +364,30 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
                 }
                 if (randomStartAfterSteps > 0 && randomStartAfterStepsCount > randomStartAfterSteps) randomStartAfterStepsCount = 0;
                 int maxSampleAmount = Math.min(sampleSize, inputSampleSet.size());
-                int sampleIndex = sampleAt;
                 for (int sampleCount = 0; sampleCount < maxSampleAmount; sampleCount++) {
-                    sampleIndices.add(sampleIndex);
-                    sampleIndex += stepForward ? -1 : 1;
-                    if (!stepForward) {
-                        if (sampleIndex > inputSampleSet.size() - 1) {
-                            if (!cyclical) break;
-                            sampleIndex = 0;
+                    sampleIndices.add(sampleAt);
+                    sampleAt += stepForward ? stepSize : -stepSize;
+                    if (cyclical) {
+                        if (stepForward) {
+                            if (sampleAt > inputSampleSet.size() - 1)  sampleAt = sampleAt - (inputSampleSet.size() - 1);
+                        }
+                        else {
+                            if (sampleAt < 0)  sampleAt = sampleAt + (inputSampleSet.size() - 1);
                         }
                     }
                     else {
-                        if (sampleIndex < 0) {
-                            if (!cyclical) break;
-                            sampleIndex = inputSampleSet.size() - 1;
+                        if (stepForward) {
+                            if (sampleAt > inputSampleSet.size() - 1)  {
+                                sampleAt = 0;
+                                break;
+                            }
                         }
-                    }
-                }
-                sampleAt += stepForward ? -stepSize : stepSize;
-                if (cyclical) {
-                    if (!stepForward) {
-                        if (sampleAt > inputSampleSet.size() - 1) sampleAt = 0;
-                    }
-                    else {
-                        if (sampleAt < 0) sampleAt = inputSampleSet.size() - 1;
-                    }
-                }
-                else {
-                    if (!stepForward) {
-                        if (sampleAt > inputSampleSet.size() - sampleSize) sampleAt = 0;
-                    }
-                    else {
-                        if (sampleAt < sampleSize) sampleAt = inputSampleSet.size() - 1;
+                        else {
+                            if (sampleAt < 0)  {
+                                sampleAt = inputSampleSet.size() - 1;
+                                break;
+                            }
+                        }
                     }
                 }
             }
