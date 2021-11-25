@@ -23,12 +23,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     /**
      * Parameter name types for feedforward layer.
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
-     *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity. Default value false.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
      *
      */
     private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
-            "(normalizeAtInput:BOOLEAN), " +
             "(splitOutputAtPosition:INT)";
 
     /**
@@ -54,12 +52,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      */
     private boolean regulateDirectWeights;
-
-    /**
-     * If true normalizes at input otherwise normalizes prior non-linearity.
-     *
-     */
-    private boolean normalizeAtInput;
 
     /**
      * Splits output at given position.
@@ -96,7 +88,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         regulateDirectWeights = true;
-        normalizeAtInput = false;
         splitOutputAtPosition = -1;
     }
 
@@ -114,7 +105,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
-     *     - normalizeAtInput: if true normalizes at input otherwise normalizes prior non-linearity. Default value false.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
      *
      * @param params parameters used for feedforward layer.
@@ -124,7 +114,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
-        if (params.hasParam("normalizeAtInput")) normalizeAtInput = params.getValueAsBoolean("normalizeAtInput");
         if (params.hasParam("splitOutputAtPosition")) splitOutputAtPosition = params.getValueAsInteger("splitOutputAtPosition");
     }
 
@@ -192,12 +181,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        if (normalizeAtInput) input.setNormalize(true);
-        input.setRegularize(true);
-
         Matrix output = weight.dot(input);
-
-        if (!normalizeAtInput) output.setNormalize(true);
 
         output = output.add(bias);
 
