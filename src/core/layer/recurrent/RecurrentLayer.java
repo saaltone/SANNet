@@ -185,9 +185,6 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        input.setNormalize(true);
-        input.setRegularize(true);
-
         previousOutput.setName("PrevOutput");
 
         Matrix output = weight.dot(input).add(bias).add(recurrentWeight.dot(previousOutput));

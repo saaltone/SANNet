@@ -192,7 +192,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         registerWeight(bf, false, false);
         registerWeight(bh, false, false);
 
-        ones = new DMatrix(layerWidth, 1, Initialization.ONE);
+        ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
         ones.setName("1");
 
     }
@@ -235,9 +235,6 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        input.setNormalize(true);
-        input.setRegularize(true);
-
         previousOutput.setName("PrevOutput");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate

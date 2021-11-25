@@ -328,9 +328,6 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        input.setNormalize(true);
-        input.setRegularize(true);
-
         previousOutput.setName("PrevOutput");
         previousCellState.setName("PrevC");
 

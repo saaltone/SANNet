@@ -21,7 +21,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
 
     /**
      * Parameter name types for abstract recurrent layer.
-     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value true).<br>
+     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value false).<br>
      *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value false).<br>
      *     - restoreStateTraining: true if output is restored prior training phase otherwise false (default value false).<br>
      *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
@@ -89,7 +89,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        resetStateTraining = true;
+        resetStateTraining = false;
         resetStateTesting = false;
         restoreStateTraining = false;
         restoreStateTesting = false;
@@ -109,7 +109,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * Sets parameters used for AbstractRecurrentLayer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value true).<br>
+     *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value false).<br>
      *     - resetStateTesting: true if output is reset prior test forward step start otherwise false (default value false).<br>
      *     - restoreStateTraining: true if output is restored prior training phase otherwise false (default value false).<br>
      *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
@@ -146,42 +146,6 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return false; }
 
     /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.
-     *
-     * @param resetStateTraining if true allows reset.
-     */
-    public void resetStateTraining(boolean resetStateTraining) {
-        this.resetStateTraining = resetStateTraining;
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during testing.
-     *
-     * @param resetStateTesting if true allows reset.
-     */
-    public void resetStateTesting(boolean resetStateTesting) {
-        this.resetStateTesting = resetStateTesting;
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.
-     *
-     * @param restoreStateTraining if true allows restore.
-     */
-    public void restoreStateTraining(boolean restoreStateTraining) {
-        this.restoreStateTraining = restoreStateTraining;
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during testing.
-     *
-     * @param restoreStateTesting if true allows restore.
-     */
-    public void restoreStateTesting(boolean restoreStateTesting) {
-        this.restoreStateTesting = restoreStateTesting;
-    }
-
-    /**
      * Resets layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -189,12 +153,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     protected void resetLayer() throws MatrixException {
         procedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
         resetLayerOutputs();
-        resetNormalization();
     }
 
     /**
      * Takes single forward processing step process layer input(s).<br>
-     * Additionally applies any normalization or regularization defined for layer.<br>
+     * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -212,7 +175,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
             }
         }
 
-        executeForwardProcess(previousOutputs);
+        procedure.calculateExpression(previousOutputs, getLayerOutputs());
 
         previousState = isTraining();
     }

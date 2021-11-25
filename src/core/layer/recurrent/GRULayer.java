@@ -217,7 +217,7 @@ public class GRULayer extends AbstractRecurrentLayer {
         registerWeight(br, false, false);
         registerWeight(bh, false, false);
 
-        ones = new DMatrix(layerWidth, 1, Initialization.ONE);
+        ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
         ones.setName("1");
 
     }
@@ -263,9 +263,6 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        input.setNormalize(true);
-        input.setRegularize(true);
-
         previousOutput.setName("PrevOutput");
 
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate

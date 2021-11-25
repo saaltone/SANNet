@@ -310,9 +310,6 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        input.setNormalize(true);
-        input.setRegularize(true);
-
         previousCellState.setName("PrevCellState");
 
         // i = sigmoid(Wi * x + Ui * c(t-1) + bi) → Input gate
