@@ -12,7 +12,6 @@ import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Stack;
 
 /**
  * Class that defines expression for max pooling operation.<br>
@@ -36,13 +35,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * Maximum positions for max pool operation.
      *
      */
-    private final HashMap<Integer, HashMap<Integer, Integer>> maxPos = new HashMap<>();
-
-    /**
-     * Stack for caching maximum position instances.
-     *
-     */
-    private final Stack<HashMap<Integer, Integer>> maxPosCache = new Stack<>();
+    private transient HashMap<Integer, HashMap<Integer, Integer>> maxPos = new HashMap<>();
 
     /**
      * Constructor for max pooling operation.
@@ -85,8 +78,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        if (!maxPosCache.empty()) maxPos.put(sampleIndex, maxPosCache.pop());
-        else maxPos.put(sampleIndex, new HashMap<>());
+        if (maxPos == null) maxPos = new HashMap<>();
+        maxPos.put(sampleIndex, new HashMap<>());
         maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
@@ -107,7 +100,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         if (!maxPos.containsKey(sampleIndex)) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, maxPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), maxPos.get(sampleIndex), argument1.getEmptyMatrix()), false);
-        maxPosCache.push(maxPos.remove(sampleIndex));
+        maxPos.remove(sampleIndex);
     }
 
     /**
