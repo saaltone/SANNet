@@ -10,10 +10,9 @@ import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
-import core.normalization.NormalizationType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
-import core.regularization.EarlyStopping;
+import core.network.EarlyStopping;
 import utils.configurable.DynamicParamException;
 import core.network.Persistence;
 import utils.sampling.Sequence;
@@ -123,12 +122,12 @@ public class MNISTDemo {
         neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
         neuralNetwork.addHiddenLayer(LayerType.CROSSCORRELATION, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
         neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
-        neuralNetwork.addNormalizer(5, NormalizationType.BATCH_NORMALIZATION);
         return neuralNetwork;
     }
 
