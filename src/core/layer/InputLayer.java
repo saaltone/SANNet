@@ -6,13 +6,12 @@
 package core.layer;
 
 import core.network.NeuralNetworkException;
-import core.normalization.NormalizationType;
 import core.optimization.Optimizer;
-import core.regularization.RegularizationType;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Defines class for input layer of neural network.<br>
@@ -48,38 +47,6 @@ public class InputLayer extends AbstractLayer {
      */
     protected String getTypeByName() {
         return "";
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during training.
-     *
-     * @param resetStateTraining if true allows reset.
-     */
-    public void resetStateTraining(boolean resetStateTraining) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be reset during testing.
-     *
-     * @param resetStateTesting if true allows reset.
-     */
-    public void resetStateTesting(boolean resetStateTesting) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during training.
-     *
-     * @param restoreStateTraining if true allows restore.
-     */
-    public void restoreStateTraining(boolean restoreStateTraining) {
-    }
-
-    /**
-     * Sets if recurrent inputs of layer are allowed to be restored during testing.
-     *
-     * @param restoreStateTesting if true allows restore.
-     */
-    public void restoreStateTesting(boolean restoreStateTesting) {
     }
 
     /**
@@ -144,7 +111,34 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Executes weight updates with regularizers and optimizer.
+     * Returns weights for normalization.
+     *
+     * @return weights for normalization.
+     */
+    public HashSet<Matrix> getNormalizedWeights() {
+        return null;
+    }
+
+    /**
+     * Returns weights for regularization.
+     *
+     * @return weights for regularization.
+     */
+    public HashSet<Matrix> getRegularizedWeights() {
+        return null;
+    }
+
+    /**
+     * Returns neural network weight gradients.
+     *
+     * @return neural network weight gradients.
+     */
+    public HashMap<Matrix, Matrix> getLayerWeightGradients() {
+        return null;
+    }
+
+    /**
+     * Executes weight updates with optimizer.
      *
      */
     public void optimize() {
@@ -160,104 +154,10 @@ public class InputLayer extends AbstractLayer {
     }
 
     /**
-     * Resets normalizers and optimizer of layer.
+     * Resets optimizer of layer.
      *
      */
     public void reset() {
-    }
-
-    /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     */
-    public void addRegularization(RegularizationType regularizationType) {
-    }
-
-    /**
-     * Adds regularization method for layer.
-     *
-     * @param regularizationType regularization method.
-     * @param params parameters for regularizer.
-     */
-    public void addRegularization(RegularizationType regularizationType, String params) {
-    }
-
-    /**
-     * Removes any regularization from layer.
-     *
-     */
-    public void removeRegularization() {
-    }
-
-    /**
-     * Removes specific regularization from layer.
-     *
-     * @param regularizationType regularization method to be removed.
-     */
-    public void removeRegularization(RegularizationType regularizationType) {
-    }
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     */
-    public void addNormalization(NormalizationType normalizationType) {
-    }
-
-    /**
-     * Adds normalization method for layer.
-     *
-     * @param normalizationType normalization method.
-     * @param params parameters for normalizer.
-     */
-    public void addNormalization(NormalizationType normalizationType, String params) {
-    }
-
-    /**
-     * Removes any normalization from layer.
-     *
-     */
-    public void removeNormalization() {
-    }
-
-    /**
-     * Removes specific normalization from layer.
-     *
-     * @param normalizationType normalization method to be removed.
-     */
-    public void removeNormalization(NormalizationType normalizationType) {
-    }
-
-    /**
-     * Resets specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reset.
-     */
-    public void resetNormalization(NormalizationType normalizationType) {
-    }
-
-    /**
-     * Resets all normalization for layer.
-     *
-     */
-    public void resetNormalization() {
-    }
-
-    /**
-     * Reinitializes specific normalization for layer.
-     *
-     * @param normalizationType normalization method to be reinitialized.
-     */
-    public void reinitializeNormalization(NormalizationType normalizationType) {
-    }
-
-    /**
-     * Resets all normalization for layer.
-     *
-     */
-    public void reinitializeNormalization() {
     }
 
     /**
