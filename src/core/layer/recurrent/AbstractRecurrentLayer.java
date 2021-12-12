@@ -139,6 +139,15 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return true; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always false.
@@ -163,7 +172,8 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        Sequence previousOutputs = prepareForwardProcess();
+        resetLayer();
+        Sequence previousOutputs = getPreviousLayerOutputs();
 
         if (previousState != isTraining()) {
             procedure.reset(true);
@@ -181,14 +191,12 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Executes backward process step.
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
      *
-     * @param nextLayerGradients next layer gradients.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return number of truncated steps.
      */
-    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException, DynamicParamException {
-        procedure.calculateGradient(nextLayerGradients, getLayerGradients(), truncateSteps);
+    protected int getTruncateSteps() {
+        return truncateSteps;
     }
 
 }

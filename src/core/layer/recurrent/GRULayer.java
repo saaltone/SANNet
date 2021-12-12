@@ -5,12 +5,15 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -37,64 +40,181 @@ public class GRULayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Weights for update gate
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix Wz;
+    protected class GRUWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = -2646665508373510779L;
+
+        /**
+         * Weights for update gate
+         *
+         */
+        private final Matrix Wz;
+
+        /**
+         * Weights for reset gate
+         *
+         */
+        private final Matrix Wr;
+
+        /**
+         * Weights for input activation
+         *
+         */
+        private final Matrix Wh;
+
+        /**
+         * Weights for recurrent update gate
+         *
+         */
+        private final Matrix Uz;
+
+        /**
+         * Weights for recurrent reset gate
+         *
+         */
+        private final Matrix Ur;
+
+        /**
+         * Weights for current input activation
+         *
+         */
+        private final Matrix Uh;
+
+        /**
+         * Bias for update gate
+         *
+         */
+        private final Matrix bz;
+
+        /**
+         * Bias for reset gate
+         *
+         */
+        private final Matrix br;
+
+        /**
+         * Bias for input activation
+         *
+         */
+        private final Matrix bh;
+
+        /**
+         * Ones matrix for calculation of z
+         *
+         */
+        private Matrix ones;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         * @param regulateRecurrentWeights if true recurrent weight are regulated.
+         */
+        GRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
+            Wz = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wz");
+            Wr = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wr");
+            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
+
+            Uz = new DMatrix(layerWidth, layerWidth, initialization, "Uz");
+            Ur = new DMatrix(layerWidth, layerWidth, initialization, "Ur");
+            Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
+
+            bz = new DMatrix(layerWidth, 1, "bz");
+            br = new DMatrix(layerWidth, 1, "br");
+            bh = new DMatrix(layerWidth, 1, "bh");
+
+            weights.add(Wz);
+            weights.add(Wr);
+            weights.add(Wh);
+
+            weights.add(Uz);
+            weights.add(Ur);
+            weights.add(Uh);
+
+            weights.add(bz);
+            weights.add(br);
+            weights.add(bh);
+
+            registerWeight(Wz, regulateDirectWeights, true);
+            registerWeight(Wr, regulateDirectWeights, true);
+            registerWeight(Wh, regulateDirectWeights, true);
+
+            registerWeight(Uz, regulateRecurrentWeights, true);
+            registerWeight(Ur, regulateRecurrentWeights, true);
+            registerWeight(Uh, regulateRecurrentWeights, true);
+
+            registerWeight(bz, false, false);
+            registerWeight(br, false, false);
+            registerWeight(bh, false, false);
+
+            ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
+            ones.setName("1");
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            Wz.initialize(initialization);
+            Wr.initialize(initialization);
+            Wh.initialize(initialization);
+
+            Uz.initialize(initialization);
+            Ur.initialize(initialization);
+            Uh.initialize(initialization);
+
+            bz.reset();
+            br.reset();
+            bh.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Weights for reset gate
+     * Weight set.
      *
      */
-    private Matrix Wr;
+    protected GRUWeightSet weightSet;
 
     /**
-     * Weights for input activation
+     * Current weight set.
      *
      */
-    private Matrix Wh;
-
-    /**
-     * Weights for recurrent update gate
-     *
-     */
-    private Matrix Uz;
-
-    /**
-     * Weights for recurrent reset gate
-     *
-     */
-    private Matrix Ur;
-
-    /**
-     * Weights for current input activation
-     *
-     */
-    private Matrix Uh;
-
-    /**
-     * Bias for update gate
-     *
-     */
-    private Matrix bz;
-
-    /**
-     * Bias for reset gate
-     *
-     */
-    private Matrix br;
-
-    /**
-     * Bias for input activation
-     *
-     */
-    private Matrix bh;
-
-    /**
-     * Ones matrix for calculation of z
-     *
-     */
-    private Matrix ones;
+    protected GRUWeightSet currentWeightSet;
 
     /**
      * Matrix to store previous output
@@ -185,63 +305,51 @@ public class GRULayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Returns if direct weights are regulated.
+     *
+     * @return true if direct weights are regulated otherwise false.
+     */
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
+    }
+
+    /**
+     * Returns if recurrent weights are regulated.
+     *
+     * @return true if recurrent weights are regulated otherwise false.
+     */
+    protected boolean getRegulateRecurrentWeights() {
+        return regulateRecurrentWeights;
+    }
+
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
+
+    /**
      * Initializes GRU layer.<br>
      * Initializes weights and bias and their gradients.<br>
      *
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        Wz = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wz");
-        Wr = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wr");
-        Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
-
-        Uz = new DMatrix(layerWidth, layerWidth, initialization, "Uz");
-        Ur = new DMatrix(layerWidth, layerWidth, initialization, "Ur");
-        Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
-
-        bz = new DMatrix(layerWidth, 1, "bz");
-        br = new DMatrix(layerWidth, 1, "br");
-        bh = new DMatrix(layerWidth, 1, "bh");
-
-        registerWeight(Wz, regulateDirectWeights, true);
-        registerWeight(Wr, regulateDirectWeights, true);
-        registerWeight(Wh, regulateDirectWeights, true);
-
-        registerWeight(Uz, regulateRecurrentWeights, true);
-        registerWeight(Ur, regulateRecurrentWeights, true);
-        registerWeight(Uh, regulateRecurrentWeights, true);
-
-        registerWeight(bz, false, false);
-        registerWeight(br, false, false);
-        registerWeight(bh, false, false);
-
-        ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
-        ones.setName("1");
-
+    public void initializeWeights() {
+        weightSet = new GRUWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet;
     }
 
     /**
-     * Reinitializes layer.
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        Wz.initialize(this.initialization);
-        Wr.initialize(this.initialization);
-        Wh.initialize(this.initialization);
-
-        Uz.initialize(this.initialization);
-        Ur.initialize(this.initialization);
-        Uh.initialize(this.initialization);
-
-        bz.reset();
-        br.reset();
-        bh.reset();
-
-        super.reinitialize();
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        currentWeightSet = weightSet;
+        super.defineProcedure();
     }
 
     /**
@@ -252,7 +360,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
-        if (resetPreviousInput) previousOutput = new DMatrix(getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
         return new MMatrix(input);
     }
 
@@ -266,22 +374,22 @@ public class GRULayer extends AbstractRecurrentLayer {
         previousOutput.setName("PrevOutput");
 
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
-        Matrix z = Wz.dot(input).add(Uz.dot(previousOutput)).add(bz);
+        Matrix z = currentWeightSet.Wz.dot(input).add(currentWeightSet.Uz.dot(previousOutput)).add(currentWeightSet.bz);
         z = z.apply(sigmoid);
         z.setName("z");
 
         // r = sigmoid(Wr * x + Ur * out(t-1) + br) → Reset gate
-        Matrix r = Wr.dot(input).add(Ur.dot(previousOutput)).add(br);
+        Matrix r = currentWeightSet.Wr.dot(input).add(currentWeightSet.Ur.dot(previousOutput)).add(currentWeightSet.br);
         r = r.apply(sigmoid);
         r.setName("r");
 
         // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
-        Matrix h = Wh.dot(input).add(Uh.dot(previousOutput).multiply(r)).add(bh);
+        Matrix h = currentWeightSet.Wh.dot(input).add(currentWeightSet.Uh.dot(previousOutput).multiply(r)).add(currentWeightSet.bh);
         h = h.apply(tanh);
         h.setName("h");
 
         // s = (1 - z) x h + z x out(t-1) → Internal state
-        Matrix s = ones.subtract(z).multiply(h).add(z.multiply(previousOutput));
+        Matrix s = currentWeightSet.ones.subtract(z).multiply(h).add(z.multiply(previousOutput));
         s.setName("Output");
 
         previousOutput = s;
@@ -299,7 +407,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      */
     protected HashSet<Matrix> getStopGradients() {
         HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(ones);
+        stopGradients.add(currentWeightSet.ones);
         return stopGradients;
     }
 
@@ -310,7 +418,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      */
     protected HashSet<Matrix> getConstantMatrices() {
         HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(ones);
+        constantMatrices.add(currentWeightSet.ones);
         return constantMatrices;
     }
 

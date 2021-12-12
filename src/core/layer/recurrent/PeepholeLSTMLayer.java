@@ -5,12 +5,15 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -41,70 +44,192 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Weights for input gate
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix Wi;
+    protected class PeepholeLSTMWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = -2306728084542274726L;
+
+        /**
+         * Weights for input gate
+         *
+         */
+        private final Matrix Wi;
+
+        /**
+         * Weights for forget gate
+         *
+         */
+        private final Matrix Wf;
+
+        /**
+         * Weights for output gate
+         *
+         */
+        private final Matrix Wo;
+
+        /**
+         * Weights for state
+         *
+         */
+        private final Matrix Ws;
+
+        /**
+         * Weights for recurrent input gate
+         *
+         */
+        private final Matrix Ui;
+
+        /**
+         * Weights for recurrent forget gate
+         *
+         */
+        private final Matrix Uf;
+
+        /**
+         * Weights for recurrent output gate
+         *
+         */
+        private final Matrix Uo;
+
+        /**
+         * Bias for input gate
+         *
+         */
+        private final Matrix bi;
+
+        /**
+         * Bias for forget gate
+         *
+         */
+        private final Matrix bf;
+
+        /**
+         * Bias for output gate
+         *
+         */
+        private final Matrix bo;
+
+        /**
+         * Bias for state
+         *
+         */
+        private final Matrix bs;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         * @param regulateRecurrentWeights if true recurrent weight are regulated.
+         */
+        PeepholeLSTMWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
+            Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
+            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
+            Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
+            Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
+
+            Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
+            Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
+            Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
+
+            bi = new DMatrix(layerWidth, 1, "bi");
+            bf = new DMatrix(layerWidth, 1, "bf");
+            bo = new DMatrix(layerWidth, 1, "bo");
+            bs = new DMatrix(layerWidth, 1, "bs");
+
+            weights.add(Wi);
+            weights.add(Wf);
+            weights.add(Wo);
+            weights.add(Ws);
+
+            weights.add(Ui);
+            weights.add(Uf);
+            weights.add(Uo);
+
+            weights.add(bi);
+            weights.add(bf);
+            weights.add(bo);
+            weights.add(bs);
+
+            registerWeight(Wi, regulateDirectWeights, true);
+            registerWeight(Wf, regulateDirectWeights, true);
+            registerWeight(Wo, regulateDirectWeights, true);
+            registerWeight(Ws, regulateDirectWeights, true);
+
+            registerWeight(Ui, regulateRecurrentWeights, true);
+            registerWeight(Uf, regulateRecurrentWeights, true);
+            registerWeight(Uo, regulateRecurrentWeights, true);
+
+            registerWeight(bi, false, false);
+            registerWeight(bf, false, false);
+            registerWeight(bo, false, false);
+            registerWeight(bs, false, false);
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            Wi.initialize(initialization);
+            Wf.initialize(initialization);
+            Wo.initialize(initialization);
+            Ws.initialize(initialization);
+
+            Ui.initialize(initialization);
+            Uf.initialize(initialization);
+            Uo.initialize(initialization);
+
+            bi.reset();
+            bf.reset();
+            bo.reset();
+            bs.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Weights for forget gate
+     * Weight set.
      *
      */
-    private Matrix Wf;
+    protected PeepholeLSTMWeightSet weightSet;
 
     /**
-     * Weights for output gate
+     * Current weight set.
      *
      */
-    private Matrix Wo;
-
-    /**
-     * Weights for state
-     *
-     */
-    private Matrix Ws;
-
-    /**
-     * Weights for recurrent input gate
-     *
-     */
-    private Matrix Ui;
-
-    /**
-     * Weights for recurrent forget gate
-     *
-     */
-    private Matrix Uf;
-
-    /**
-     * Weights for recurrent output gate
-     *
-     */
-    private Matrix Uo;
-
-    /**
-     * Bias for input gate
-     *
-     */
-    private Matrix bi;
-
-    /**
-     * Bias for forget gate
-     *
-     */
-    private Matrix bf;
-
-    /**
-     * Bias for output gate
-     *
-     */
-    private Matrix bo;
-
-    /**
-     * Bias for state
-     *
-     */
-    private Matrix bs;
+    protected PeepholeLSTMWeightSet currentWeightSet;
 
     /**
      * Matrix to store previous state.
@@ -125,7 +250,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     private final ActivationFunction sigmoid;
 
     /**
-     * Sigmoid activation function for output
+     * Activation function for output
      *
      */
     private final ActivationFunction activationFunction;
@@ -229,66 +354,50 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Initializes Peephole LSTM layer.<br>
-     * Initializes weights and bias and their gradients.<br>
+     * Returns if direct weights are regulated.
      *
+     * @return true if direct weights are regulated otherwise false.
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
-        Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
-        Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
-        Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
-
-        Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
-        Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
-        Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
-
-        bi = new DMatrix(layerWidth, 1, "bi");
-        bf = new DMatrix(layerWidth, 1, "bf");
-        bo = new DMatrix(layerWidth, 1, "bo");
-        bs = new DMatrix(layerWidth, 1, "bs");
-
-        registerWeight(Wi, regulateDirectWeights, true);
-        registerWeight(Wf, regulateDirectWeights, true);
-        registerWeight(Wo, regulateDirectWeights, true);
-        registerWeight(Ws, regulateDirectWeights, true);
-
-        registerWeight(Ui, regulateRecurrentWeights, true);
-        registerWeight(Uf, regulateRecurrentWeights, true);
-        registerWeight(Uo, regulateRecurrentWeights, true);
-
-        registerWeight(bi, false, false);
-        registerWeight(bf, false, false);
-        registerWeight(bo, false, false);
-        registerWeight(bs, false, false);
-
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
     }
 
     /**
-     * Reinitializes layer.
+     * Returns if recurrent weights are regulated.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return true if recurrent weights are regulated otherwise false.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        Wi.initialize(this.initialization);
-        Wf.initialize(this.initialization);
-        Wo.initialize(this.initialization);
-        Ws.initialize(this.initialization);
+    protected boolean getRegulateRecurrentWeights() {
+        return regulateRecurrentWeights;
+    }
 
-        Ui.initialize(this.initialization);
-        Uf.initialize(this.initialization);
-        Uo.initialize(this.initialization);
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
 
-        bi.reset();
-        bf.reset();
-        bo.reset();
-        bs.reset();
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new PeepholeLSTMWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet;
+    }
 
-        super.reinitialize();
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        currentWeightSet = weightSet;
+        super.defineProcedure();
     }
 
     /**
@@ -299,7 +408,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
-        if (resetPreviousInput) previousCellState = new DMatrix(getLayerWidth(), 1);
+        if (resetPreviousInput) previousCellState = new DMatrix(super.getLayerWidth(), 1);
         return new MMatrix(input);
     }
 
@@ -313,22 +422,22 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
         previousCellState.setName("PrevCellState");
 
         // i = sigmoid(Wi * x + Ui * c(t-1) + bi) → Input gate
-        Matrix i = Wi.dot(input).add(Ui.dot(previousCellState)).add(bi);
+        Matrix i = currentWeightSet.Wi.dot(input).add(currentWeightSet.Ui.dot(previousCellState)).add(currentWeightSet.bi);
         i = i.apply(sigmoid);
         i.setName("i");
 
         // f = sigmoid(Wf * x + Uf * c(t-1) + bf) → Forget gate
-        Matrix f = Wf.dot(input).add(Uf.dot(previousCellState)).add(bf);
+        Matrix f = currentWeightSet.Wf.dot(input).add(currentWeightSet.Uf.dot(previousCellState)).add(currentWeightSet.bf);
         f = f.apply(sigmoid);
         f.setName("f");
 
         // o = sigmoid(Wo * x + Uo * c(t-1) + bo) → Output gate
-        Matrix o = Wo.dot(input).add(Uo.dot(previousCellState)).add(bo);
+        Matrix o = currentWeightSet.Wo.dot(input).add(currentWeightSet.Uo.dot(previousCellState)).add(currentWeightSet.bo);
         o = o.apply(sigmoid);
         o.setName("o");
 
         // s = tanh(Ws * x + bs) → State update
-        Matrix s = Ws.dot(input).add(bs);
+        Matrix s = currentWeightSet.Ws.dot(input).add(currentWeightSet.bs);
         s = s.apply(tanh);
         s.setName("s");
 

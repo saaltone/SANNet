@@ -5,12 +5,15 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -36,46 +39,151 @@ public class MinGRULayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Weights for forget gate
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix Wf;
+    protected class MinGRUWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 5474685289943016274L;
+
+        /**
+         * Weights for forget gate
+         *
+         */
+        private final Matrix Wf;
+
+        /**
+         * Weights for input activation
+         *
+         */
+        private final Matrix Wh;
+
+        /**
+         * Weights for recurrent forget gate
+         *
+         */
+        private final Matrix Uf;
+
+        /**
+         * Weights for current input activation
+         *
+         */
+        private final Matrix Uh;
+
+        /**
+         * Bias for forget gate
+         *
+         */
+        private final Matrix bf;
+
+        /**
+         * Bias for input activation
+         *
+         */
+        private final Matrix bh;
+
+        /**
+         * Ones matrix for calculation of z
+         *
+         */
+        private Matrix ones;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         * @param regulateRecurrentWeights if true recurrent weight are regulated.
+         */
+        MinGRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
+            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
+            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
+
+            Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
+            Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
+
+            bf = new DMatrix(layerWidth, 1, "bf");
+            bh = new DMatrix(layerWidth, 1, "bh");
+
+            weights.add(Wf);
+            weights.add(Wh);
+
+            weights.add(Uf);
+            weights.add(Uh);
+
+            weights.add(bf);
+            weights.add(bh);
+
+            registerWeight(Wf, regulateDirectWeights, true);
+            registerWeight(Wh, regulateDirectWeights, true);
+
+            registerWeight(Uf, regulateRecurrentWeights, true);
+            registerWeight(Uh, regulateRecurrentWeights, true);
+
+            registerWeight(bf, false, false);
+            registerWeight(bh, false, false);
+
+            ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
+            ones.setName("1");
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            Wf.initialize(initialization);
+            Wh.initialize(initialization);
+
+            Uf.initialize(initialization);
+            Uh.initialize(initialization);
+
+            bf.reset();
+            bh.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Weights for input activation
+     * Weight set.
      *
      */
-    private Matrix Wh;
+    protected MinGRUWeightSet weightSet;
 
     /**
-     * Weights for recurrent forget gate
+     * Current weight set.
      *
      */
-    private Matrix Uf;
-
-    /**
-     * Weights for current input activation
-     *
-     */
-    private Matrix Uh;
-
-    /**
-     * Bias for forget gate
-     *
-     */
-    private Matrix bf;
-
-    /**
-     * Bias for input activation
-     *
-     */
-    private Matrix bh;
-
-    /**
-     * Ones matrix for calculation of z
-     *
-     */
-    private Matrix ones;
+    protected MinGRUWeightSet currentWeightSet;
 
     /**
      * Matrix to store previous output
@@ -166,54 +274,50 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Initializes Minimal GRU layer.<br>
-     * Initializes weights and bias and their gradients.<br>
+     * Returns if direct weights are regulated.
      *
+     * @return true if direct weights are regulated otherwise false.
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
-        Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
-
-        Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
-        Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
-
-        bf = new DMatrix(layerWidth, 1, "bf");
-        bh = new DMatrix(layerWidth, 1, "bh");
-
-        registerWeight(Wf, regulateDirectWeights, true);
-        registerWeight(Wh, regulateDirectWeights, true);
-
-        registerWeight(Uf, regulateRecurrentWeights, true);
-        registerWeight(Uh, regulateRecurrentWeights, true);
-
-        registerWeight(bf, false, false);
-        registerWeight(bh, false, false);
-
-        ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
-        ones.setName("1");
-
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
     }
 
     /**
-     * Reinitializes layer.
+     * Returns if recurrent weights are regulated.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return true if recurrent weights are regulated otherwise false.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        Wf.initialize(this.initialization);
-        Wh.initialize(this.initialization);
+    protected boolean getRegulateRecurrentWeights() {
+        return regulateRecurrentWeights;
+    }
 
-        Uf.initialize(this.initialization);
-        Uh.initialize(this.initialization);
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
 
-        bf.reset();
-        bh.reset();
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new MinGRUWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet;
+    }
 
-        super.reinitialize();
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        currentWeightSet = weightSet;
+        super.defineProcedure();
     }
 
     /**
@@ -224,7 +328,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
-        if (resetPreviousInput) previousOutput = new DMatrix(getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
         return new MMatrix(input);
     }
 
@@ -238,17 +342,17 @@ public class MinGRULayer extends AbstractRecurrentLayer {
         previousOutput.setName("PrevOutput");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
-        Matrix f = Wf.dot(input).add(Uf.dot(previousOutput)).add(bf);
+        Matrix f = currentWeightSet.Wf.dot(input).add(currentWeightSet.Uf.dot(previousOutput)).add(currentWeightSet.bf);
         f = f.apply(sigmoid);
         f.setName("f");
 
         // h = tanh(Wh * x + Uh * out(t-1) * r + bh) → Input activation
-        Matrix h = Wh.dot(input).add(Uh.dot(previousOutput).multiply(f)).add(bh);
+        Matrix h = currentWeightSet.Wh.dot(input).add(currentWeightSet.Uh.dot(previousOutput).multiply(f)).add(currentWeightSet.bh);
         h = h.apply(tanh);
         h.setName("h");
 
         // s = (1 - f) x h + f x out(t-1) → Internal state
-        Matrix s = ones.subtract(f).multiply(h).add(f.multiply(previousOutput));
+        Matrix s = currentWeightSet.ones.subtract(f).multiply(h).add(f.multiply(previousOutput));
         s.setName("Output");
 
         previousOutput = s;
@@ -266,7 +370,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      */
     protected HashSet<Matrix> getStopGradients() {
         HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(ones);
+        stopGradients.add(currentWeightSet.ones);
         return stopGradients;
     }
 
@@ -277,7 +381,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      */
     protected HashSet<Matrix> getConstantMatrices() {
         HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(ones);
+        constantMatrices.add(currentWeightSet.ones);
         return constantMatrices;
     }
 

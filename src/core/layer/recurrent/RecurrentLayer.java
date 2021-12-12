@@ -5,12 +5,15 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -30,22 +33,104 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Weight matrix.
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix weight;
+    protected class RecurrentWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = -6354547644237149706L;
+
+        /**
+         * Weight matrix.
+         *
+         */
+        private final Matrix weight;
+
+        /**
+         * Bias matrix.
+         *
+         */
+        private final Matrix bias;
+
+        /**
+         * Weight matrix for recurrent input.
+         *
+         */
+        private final Matrix recurrentWeight;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         * @param regulateRecurrentWeights if true recurrent weight are regulated.
+         */
+        RecurrentWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
+            weight = new DMatrix(layerWidth, previousLayerWidth, initialization, "Weight");
+            recurrentWeight = new DMatrix(layerWidth, layerWidth, initialization, "RecurrentWeight");
+            bias = new DMatrix(layerWidth, 1, "bias");
+
+            weights.add(weight);
+            weights.add(recurrentWeight);
+            weights.add(bias);
+
+            registerWeight(weight, regulateDirectWeights, true);
+            registerWeight(recurrentWeight, regulateRecurrentWeights, true);
+            registerWeight(bias, false, false);
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            weight.initialize(initialization);
+            recurrentWeight.initialize(initialization);
+            bias.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Bias matrix.
+     * Weight set.
      *
      */
-    private Matrix bias;
+    protected RecurrentWeightSet weightSet;
 
     /**
-     * Weight matrix for recurrent input.
+     * Current weight set.
      *
      */
-    private Matrix recurrentWeight;
+    protected RecurrentWeightSet currentWeightSet;
 
     /**
      * Activation function for neural network layer.
@@ -130,40 +215,50 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Initializes recurrent layer.<br>
-     * Initializes weights and bias and their gradients.<br>
+     * Returns if direct weights are regulated.
      *
+     * @return true if direct weights are regulated otherwise false.
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        weight = new DMatrix(layerWidth, previousLayerWidth, initialization, "Weight");
-
-        recurrentWeight = new DMatrix(layerWidth, layerWidth, initialization, "RecurrentWeight");
-
-        bias = new DMatrix(layerWidth, 1, "bias");
-
-        registerWeight(weight, regulateDirectWeights, true);
-
-        registerWeight(recurrentWeight, regulateRecurrentWeights, true);
-
-        registerWeight(bias, false, false);
-
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
     }
 
     /**
-     * Reinitializes layer.
+     * Returns if recurrent weights are regulated.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return true if recurrent weights are regulated otherwise false.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        weight.initialize(this.initialization);
-        recurrentWeight.initialize(this.initialization);
-        bias.reset();
+    protected boolean getRegulateRecurrentWeights() {
+        return regulateRecurrentWeights;
+    }
 
-        super.reinitialize();
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
+
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new RecurrentWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet;
+    }
+
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        currentWeightSet = weightSet;
+        super.defineProcedure();
     }
 
     /**
@@ -174,7 +269,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
-        if (resetPreviousInput) previousOutput = new DMatrix(getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
         return new MMatrix(input);
     }
 
@@ -187,7 +282,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PrevOutput");
 
-        Matrix output = weight.dot(input).add(bias).add(recurrentWeight.dot(previousOutput));
+        Matrix output = currentWeightSet.weight.dot(input).add(currentWeightSet.bias).add(currentWeightSet.recurrentWeight.dot(previousOutput));
 
         output = output.apply(activationFunction);
 

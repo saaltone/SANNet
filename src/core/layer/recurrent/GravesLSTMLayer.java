@@ -5,12 +5,15 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -43,94 +46,236 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
             "(regulateStateWeights:BOOLEAN)";
 
     /**
-     * Weights for input gate
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix Wi;
+    protected class GravesLSTMWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 5184512014825168522L;
+
+        /**
+         * Weights for input gate
+         *
+         */
+        private final Matrix Wi;
+
+        /**
+         * Weights for forget gate
+         *
+         */
+        private final Matrix Wf;
+
+        /**
+         * Weights for output gate
+         *
+         */
+        private final Matrix Wo;
+
+        /**
+         * Weights for state
+         *
+         */
+        private final Matrix Ws;
+
+        /**
+         * Weights for recurrent input gate
+         *
+         */
+        private final Matrix Ui;
+
+        /**
+         * Weights for recurrent forget gate
+         *
+         */
+        private final Matrix Uf;
+
+        /**
+         * Weights for recurrent output gate
+         *
+         */
+        private final Matrix Uo;
+
+        /**
+         * Weights for recurrent state
+         *
+         */
+        private final Matrix Us;
+
+        /**
+         * Weights for input cell state
+         *
+         */
+        private final Matrix Ci;
+
+        /**
+         * Weights for forget cell state
+         *
+         */
+        private final Matrix Cf;
+
+        /**
+         * Weights for output cell state
+         *
+         */
+        private final Matrix Co;
+
+        /**
+         * Bias for input gate
+         *
+         */
+        private final Matrix bi;
+
+        /**
+         * Bias for forget gate
+         *
+         */
+        private final Matrix bf;
+
+        /**
+         * Bias for output gate
+         *
+         */
+        private final Matrix bo;
+
+        /**
+         * Bias for state
+         *
+         */
+        private final Matrix bs;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         * @param regulateRecurrentWeights if true recurrent weight are regulated.
+         */
+        GravesLSTMWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
+            Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
+            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
+            Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
+            Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
+
+            Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
+            Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
+            Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
+            Us = new DMatrix(layerWidth, layerWidth, initialization, "Us");
+
+            Ci = new DMatrix(layerWidth, 1, initialization, "Ci");
+            Cf = new DMatrix(layerWidth, 1, initialization, "Cf");
+            Co = new DMatrix(layerWidth, 1, initialization, "Co");
+
+            bi = new DMatrix(layerWidth, 1, "bi");
+            bf = new DMatrix(layerWidth, 1, "bf");
+            bo = new DMatrix(layerWidth, 1, "bo");
+            bs = new DMatrix(layerWidth, 1, "bs");
+
+            weights.add(Wi);
+            weights.add(Wf);
+            weights.add(Wo);
+            weights.add(Ws);
+
+            weights.add(Ui);
+            weights.add(Uf);
+            weights.add(Uo);
+            weights.add(Us);
+
+            weights.add(Ci);
+            weights.add(Cf);
+            weights.add(Co);
+
+            weights.add(bi);
+            weights.add(bf);
+            weights.add(bo);
+            weights.add(bs);
+
+            registerWeight(Wi, regulateDirectWeights, true);
+            registerWeight(Wf, regulateDirectWeights, true);
+            registerWeight(Wo, regulateDirectWeights, true);
+            registerWeight(Ws, regulateDirectWeights, true);
+
+            registerWeight(Ui, regulateRecurrentWeights, true);
+            registerWeight(Uf, regulateRecurrentWeights, true);
+            registerWeight(Uo, regulateRecurrentWeights, true);
+            registerWeight(Us, regulateRecurrentWeights, true);
+
+            registerWeight(Ci, regulateStateWeights, true);
+            registerWeight(Cf, regulateStateWeights, true);
+            registerWeight(Co, regulateStateWeights, true);
+
+            registerWeight(bi, false, false);
+            registerWeight(bf, false, false);
+            registerWeight(bo, false, false);
+            registerWeight(bs, false, false);
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            Wi.initialize(initialization);
+            Wf.initialize(initialization);
+            Wo.initialize(initialization);
+            Ws.initialize(initialization);
+
+            Ui.initialize(initialization);
+            Uf.initialize(initialization);
+            Uo.initialize(initialization);
+            Us.initialize(initialization);
+
+            Ci.initialize(initialization);
+            Cf.initialize(initialization);
+            Co.initialize(initialization);
+
+            bi.reset();
+            bf.reset();
+            bo.reset();
+            bs.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Weights for forget gate
+     * Weight set.
      *
      */
-    private Matrix Wf;
+    protected GravesLSTMWeightSet weightSet;
 
     /**
-     * Weights for output gate
+     * Current weight set.
      *
      */
-    private Matrix Wo;
-
-    /**
-     * Weights for state
-     *
-     */
-    private Matrix Ws;
-
-    /**
-     * Weights for recurrent input gate
-     *
-     */
-    private Matrix Ui;
-
-    /**
-     * Weights for recurrent forget gate
-     *
-     */
-    private Matrix Uf;
-
-    /**
-     * Weights for recurrent output gate
-     *
-     */
-    private Matrix Uo;
-
-    /**
-     * Weights for recurrent state
-     *
-     */
-    private Matrix Us;
-
-    /**
-     * Weights for input cell state
-     *
-     */
-    private Matrix Ci;
-
-    /**
-     * Weights for forget cell state
-     *
-     */
-    private Matrix Cf;
-
-    /**
-     * Weights for output cell state
-     *
-     */
-    private Matrix Co;
-
-    /**
-     * Bias for input gate
-     *
-     */
-    private Matrix bi;
-
-    /**
-     * Bias for forget gate
-     *
-     */
-    private Matrix bf;
-
-    /**
-     * Bias for output gate
-     *
-     */
-    private Matrix bo;
-
-    /**
-     * Bias for state
-     *
-     */
-    private Matrix bs;
+    protected GravesLSTMWeightSet currentWeightSet;
 
     /**
      * Matrix to store previous output.
@@ -151,7 +296,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
     private final ActivationFunction tanh;
 
     /**
-     * Sigmoid activation function needed for Graves LSTM
+     * Activation function needed for Graves LSTM
      *
      */
     private final ActivationFunction sigmoid;
@@ -280,81 +425,50 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Initializes Graves LSTM layer.<br>
-     * Initializes weights and bias and their gradients.<br>
+     * Returns if direct weights are regulated.
      *
+     * @return true if direct weights are regulated otherwise false.
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
-        Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
-        Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
-        Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
-
-        Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
-        Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
-        Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
-        Us = new DMatrix(layerWidth, layerWidth, initialization, "Us");
-
-        Ci = new DMatrix(layerWidth, 1, initialization, "Ci");
-        Cf = new DMatrix(layerWidth, 1, initialization, "Cf");
-        Co = new DMatrix(layerWidth, 1, initialization, "Co");
-
-        bi = new DMatrix(layerWidth, 1, "bi");
-        bf = new DMatrix(layerWidth, 1, "bf");
-        bo = new DMatrix(layerWidth, 1, "bo");
-        bs = new DMatrix(layerWidth, 1, "bs");
-
-        registerWeight(Wi, regulateDirectWeights, true);
-        registerWeight(Wf, regulateDirectWeights, true);
-        registerWeight(Wo, regulateDirectWeights, true);
-        registerWeight(Ws, regulateDirectWeights, true);
-
-        registerWeight(Ui, regulateRecurrentWeights, true);
-        registerWeight(Uf, regulateRecurrentWeights, true);
-        registerWeight(Uo, regulateRecurrentWeights, true);
-        registerWeight(Us, regulateRecurrentWeights, true);
-
-        registerWeight(Ci, regulateStateWeights, true);
-        registerWeight(Cf, regulateStateWeights, true);
-        registerWeight(Co, regulateStateWeights, true);
-
-        registerWeight(bi, false, false);
-        registerWeight(bf, false, false);
-        registerWeight(bo, false, false);
-        registerWeight(bs, false, false);
-
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
     }
 
     /**
-     * Reinitializes layer.
+     * Returns if recurrent weights are regulated.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return true if recurrent weights are regulated otherwise false.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        Wi.initialize(this.initialization);
-        Wf.initialize(this.initialization);
-        Wo.initialize(this.initialization);
-        Ws.initialize(this.initialization);
+    protected boolean getRegulateRecurrentWeights() {
+        return regulateRecurrentWeights;
+    }
 
-        Ui.initialize(this.initialization);
-        Uf.initialize(this.initialization);
-        Uo.initialize(this.initialization);
-        Us.initialize(this.initialization);
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
 
-        Ci.initialize(this.initialization);
-        Cf.initialize(this.initialization);
-        Co.initialize(this.initialization);
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new GravesLSTMWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet;
+    }
 
-        bi.reset();
-        bf.reset();
-        bo.reset();
-        bs.reset();
-
-        super.reinitialize();
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        currentWeightSet = weightSet;
+        super.defineProcedure();
     }
 
     /**
@@ -366,8 +480,8 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1);
-            previousCellState = new DMatrix(getLayerWidth(), 1);
+            previousOutput = new DMatrix(super.getLayerWidth(), 1);
+            previousCellState = new DMatrix(super.getLayerWidth(), 1);
         }
         return new MMatrix(input);
     }
@@ -383,17 +497,17 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         previousCellState.setName("PrevC");
 
         // i = sigmoid(Wi * x + Ui * out(t-1) + Ci * c(t-1) + bi) → Input gate
-        Matrix i = Wi.dot(input).add(Ui.dot(previousOutput)).add(Ci.multiply(previousCellState)).add(bi);
+        Matrix i = currentWeightSet.Wi.dot(input).add(currentWeightSet.Ui.dot(previousOutput)).add(currentWeightSet.Ci.multiply(previousCellState)).add(currentWeightSet.bi);
         i = i.apply(sigmoid);
         i.setName("i");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + Cf * c(t-1) + bf) → Forget gate
-        Matrix f = Wf.dot(input).add(Uf.dot(previousOutput)).add(Cf.multiply(previousCellState)).add(bf);
+        Matrix f = currentWeightSet.Wf.dot(input).add(currentWeightSet.Uf.dot(previousOutput)).add(currentWeightSet.Cf.multiply(previousCellState)).add(currentWeightSet.bf);
         f = f.apply(sigmoid);
         f.setName("f");
 
         // s = tanh(Ws * x + Us * out(t-1) + bs) → State update
-        Matrix s = Ws.dot(input).add(Us.dot(previousOutput)).add(bs);
+        Matrix s = currentWeightSet.Ws.dot(input).add(currentWeightSet.Us.dot(previousOutput)).add(currentWeightSet.bs);
         s = s.apply(tanh);
         s.setName("s");
 
@@ -404,7 +518,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         previousCellState = c;
 
         // o = sigmoid(Wo * x + Uo * out(t-1) + Co * ct + bo) → Output gate
-        Matrix o = Wo.dot(input).add(Uo.dot(previousOutput)).add(Co.multiply(c)).add(bo);
+        Matrix o = currentWeightSet.Wo.dot(input).add(currentWeightSet.Uo.dot(previousOutput)).add(currentWeightSet.Co.multiply(c)).add(currentWeightSet.bo);
         o = o.apply(sigmoid);
         o.setName("o");
 
