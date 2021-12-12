@@ -7,12 +7,14 @@ package core.layer.convolutional;
 
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -22,9 +24,6 @@ import java.util.HashSet;
  */
 public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer {
 
-    @Serial
-    private static final long serialVersionUID = -5937040933415814069L;
-
     /**
      * Parameter name types for AbstractConvolutionalLayer.
      *     - filters: number of filters.<br>
@@ -33,6 +32,123 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      */
     private final static String paramNameTypes = "(filters:INT), " +
             "(regulateWeights:BOOLEAN)";
+
+    /**
+     * Class that defines weight set for layer.
+     *
+     */
+    protected class ConvolutionWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = -1987157248603388756L;
+
+        /**
+         * Filter row size.
+         *
+         */
+        private final int filterRowSize;
+
+        /**
+         * Filter column size.
+         *
+         */
+        private final int filterColumnSize;
+
+        /**
+         * Number of filters.
+         *
+         */
+        private final int numberOfFilters;
+
+        /**
+         * Previous layer depth.
+         *
+         */
+        private final int previousLayerDepth;
+
+        /**
+         * Tree map for filter maps (weights).
+         *
+         */
+        private final HashMap<Integer, Matrix> filterWeights = new HashMap<>();
+
+        /**
+         * Tree map for biases.
+         *
+         */
+        private final HashMap<Integer, Matrix> filterBiases = new HashMap<>();
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param filterRowSize filter row size.
+         * @param filterColumnSize filter column size.
+         * @param numberOfFilters number of filters.
+         * @param previousLayerDepth previous layer depth.
+         * @param regulateWeights if true weights are regulated.
+         */
+        ConvolutionWeightSet(Initialization initialization, int filterRowSize, int filterColumnSize, int numberOfFilters, int previousLayerDepth, boolean regulateWeights) {
+            this.filterRowSize = filterRowSize;
+            this.filterColumnSize = filterColumnSize;
+            this.numberOfFilters = numberOfFilters;
+            this.previousLayerDepth = previousLayerDepth;
+
+            for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
+                Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize, "Wf" + filterIndex);
+                filterWeights.put(filterIndex, filterWeight);
+                weights.add(filterWeight);
+                registerWeight(filterWeight, regulateWeights, true);
+
+                Matrix filterBias = new DMatrix(0, "Bf" + filterIndex);
+                filterBiases.put(filterIndex, filterBias);
+                weights.add(filterBias);
+                registerWeight(filterBias, false, false);
+            }
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            for (Matrix weight : filterWeights.values()) weight.initialize(initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize);
+            for (Matrix bias : filterBiases.values()) bias.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
+
+    /**
+     * Weight set.
+     *
+     */
+    protected ConvolutionWeightSet weightSet;
 
     /**
      * Defines width of incoming image.
@@ -87,18 +203,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      */
     private boolean regulateWeights;
-
-    /**
-     * Tree map for filter maps (weights).
-     *
-     */
-    private final HashMap<Integer, Matrix> filterWeights = new HashMap<>();
-
-    /**
-     * Tree map for biases.
-     *
-     */
-    private final HashMap<Integer, Matrix> filterBiases = new HashMap<>();
 
     /**
      * Activation function for convolutional layer.
@@ -179,6 +283,15 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     public boolean isRecurrentLayer() { return false; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always true.
@@ -222,13 +335,11 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     }
 
     /**
-     * Initializes convolutional layer.<br>
-     * Sets input and output dimensions.<br>
-     * Initializes weights and biases.<br>
+     * Initializes neural network layer dimensions.
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    public void initialize() throws NeuralNetworkException {
+    public void initializeDimensions() throws NeuralNetworkException {
         previousLayerWidth = getPreviousLayerWidth();
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
@@ -243,18 +354,23 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
         setLayerWidth(layerWidth);
         setLayerHeight(layerHeight);
         setLayerDepth(numberOfFilters);
+    }
 
-        for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
 
-            Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, this.initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize, "Wf" + filterIndex);
-            filterWeights.put(filterIndex, filterWeight);
-            registerWeight(filterWeight, regulateWeights, true);
-
-            Matrix filterBias = new DMatrix(0, "Bf" + filterIndex);
-            filterBiases.put(filterIndex, filterBias);
-            registerWeight(filterBias, false, false);
-
-        }
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new ConvolutionWeightSet(initialization, filterRowSize, filterColumnSize, numberOfFilters, previousLayerDepth, regulateWeights);
     }
 
     /**
@@ -288,18 +404,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     }
 
     /**
-     * Reinitializes layer.
-     *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        for (Matrix weight : filterWeights.values()) weight.initialize(this.initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize);
-        for (Matrix bias : filterBiases.values()) bias.reset();
-        super.reinitialize();
-    }
-
-    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets previous input.
@@ -321,9 +425,9 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(numberOfFilters, "Outputs");
         for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
-            Matrix output = filterBiases.get(filterIndex);
+            Matrix output = weightSet.filterBiases.get(filterIndex);
             for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                Matrix Wf = filterWeights.get(filterIndex);
+                Matrix Wf = weightSet.filterWeights.get(filterIndex);
                 Matrix input = inputs.get(channelIndex);
                 input.setStride(stride);
                 input.setDilation(dilation);
@@ -366,6 +470,15 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
    protected HashSet<Matrix> getConstantMatrices() {
        return new HashSet<>();
    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
+    }
 
     /**
      * Returns layer details as string.
