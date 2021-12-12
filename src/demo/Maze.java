@@ -768,7 +768,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        boolean onlineMemory = false;
+        boolean onlineMemory = true;
         boolean singleFunctionEstimator = false;
         int policyType = 1;
         ExecutablePolicyType executablePolicyType = null;
