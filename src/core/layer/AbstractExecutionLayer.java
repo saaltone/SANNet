@@ -6,17 +6,19 @@
 package core.layer;
 
 import core.network.NeuralNetworkException;
-import core.optimization.OptimizationType;
 import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
-import utils.matrix.*;
+import utils.matrix.Initialization;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 import utils.sampling.Sequence;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Abstract class that implements execution layer for actual neural network layers (feed forward layer, recurrent layer etc.)<br>
@@ -39,12 +41,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected Procedure procedure = null;
 
     /**
-     * Set of weights to be managed.
-     *
-     */
-    private final HashSet<Matrix> weights = new HashSet<>();
-
-    /**
      * Weights to be normalized.
      *
      */
@@ -63,16 +59,10 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     private final HashMap<Integer, Matrix> weightsMap = new HashMap<>();
 
     /**
-     * Gradient sum of weights.
-     *
-     */
-    private transient HashMap<Matrix, Matrix> weightGradientSums;
-
-    /**
      * Optimizer for layer.
      *
      */
-    private Optimizer optimizer = OptimizerFactory.create(OptimizationType.ADAM);
+    protected Optimizer optimizer = OptimizerFactory.createDefault();
 
     /**
      * If true neural network is in training mode otherwise false.
@@ -105,19 +95,35 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Initializes layer.
+     * Returns true if neural network is in training mode otherwise false.
      *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return true if neural network is in training mode otherwise false.
      */
-    public void initialize() throws NeuralNetworkException, MatrixException, DynamicParamException {
-        if (getLayerWidth() == -1) {
-            setLayerWidth(getPreviousLayerWidth());
-            setLayerHeight(getPreviousLayerHeight());
-            setLayerDepth(getPreviousLayerDepth());
-        }
+    public boolean isTraining() {
+        return isTraining;
     }
+
+    /**
+     * Sets training flag.
+     *
+     * @param isTraining if true layer is training otherwise false.
+     */
+    protected void setTraining(boolean isTraining) {
+        this.isTraining = isTraining;
+    }
+
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected abstract WeightSet getWeightSet();
+
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    protected abstract void initializeWeights();
 
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
@@ -126,20 +132,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        procedure = new ProcedureFactory().getProcedure(this, getAllConstantMatrices());
-        procedure.setStopGradient(getStopGradients(), true);
-    }
-
-    /**
-     * Returns all constant matrices.
-     *
-     * @return all constant matrices.
-     */
-    private HashSet<Matrix> getAllConstantMatrices() {
-        HashSet<Matrix> allConstantMatrices = new HashSet<>();
-        allConstantMatrices.addAll(getWeights());
-        allConstantMatrices.addAll(getConstantMatrices());
-        return allConstantMatrices;
+        if (procedure == null) initializeWeights();
+        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), false);
     }
 
     /**
@@ -169,23 +163,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Reinitializes neural network layer.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reinitialize() throws NeuralNetworkException, MatrixException {
-        if (procedure != null) procedure.reset();
-        resetLayerOutputs();
-    }
-
-    /**
-     * Prepares forward process step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return previous outputs.
-     */
-    protected Sequence prepareForwardProcess() throws MatrixException {
+    public void reinitialize() throws MatrixException {
+        getWeightSet().reinitialize();
         resetLayer();
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayerOutputs().flatten() : getPreviousLayerOutputs();
     }
 
     /**
@@ -195,7 +177,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        procedure.calculateExpression(prepareForwardProcess(), getLayerOutputs());
+        resetLayer();
+        procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
+    }
+
+    /**
+     * Returns scaled gradients from next layer.
+     *
+     * @return scaled gradients from next layer.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Sequence getNextLayerScaledGradients() throws MatrixException {
+        return isConvolutionalLayer() && hasNextLayer() && !getNextLayer().isConvolutionalLayer() ? getNextLayerGradients().unflatten(getLayerWidth(), getLayerHeight(), getLayerDepth()) : getNextLayerGradients();
     }
 
     /**
@@ -207,20 +200,15 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
         resetLayerGradients();
-        executeBackwardProcess(isConvolutionalLayer() && hasNextLayer() && !getNextLayer().isConvolutionalLayer() ? getNextLayerGradients().unflatten(getLayerWidth(), getLayerHeight(), getLayerDepth()) : getNextLayerGradients());
-        updateWeightGradients();
+        if (procedure != null) procedure.calculateGradient(getNextLayerScaledGradients(), getLayerGradients(), getTruncateSteps());
     }
 
     /**
-     * Executes backward process step.
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
      *
-     * @param nextLayerGradients next layer gradients.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return number of truncated steps.
      */
-    protected void executeBackwardProcess(Sequence nextLayerGradients) throws MatrixException, DynamicParamException {
-        if (procedure != null) procedure.calculateGradient(nextLayerGradients, getLayerGradients(), -1);
-    }
+    protected abstract int getTruncateSteps();
 
     /**
      * Registers weights of layer.
@@ -230,29 +218,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @param forNormalization true if weight is registered for normalization otherwise false.
      */
     public void registerWeight(Matrix weight, boolean forRegularization, boolean forNormalization) {
-        weights.add(weight);
         weightsMap.put(weightsMap.size(), weight);
         if (forNormalization) normalizedWeights.add(weight);
         if (forRegularization) regularizedWeights.add(weight);
-    }
-
-    /**
-     * Calculates gradient sum for wights after backward propagation step.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void updateWeightGradients() throws MatrixException {
-        weightGradientSums = new HashMap<>();
-        for (Matrix weight : weights) weightGradientSums.put(weight, procedure.getGradient(weight));
-    }
-
-    /**
-     * Returns set of weights.
-     *
-     * @return set of weights.
-     */
-    public HashSet<Matrix> getWeights() {
-        return weights;
     }
 
     /**
@@ -286,63 +254,10 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * Returns neural network weight gradients.
      *
      * @return neural network weight gradients.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public HashMap<Matrix, Matrix> getLayerWeightGradients() {
-        return weightGradientSums;
-    }
-
-    /**
-     * Returns width of previous layer.
-     *
-     * @return width of previous layer.
-     */
-    public int getPreviousLayerWidth() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerWidth() * getPreviousLayer().getLayerHeight() * getPreviousLayer().getLayerDepth() : getPreviousLayer().getLayerWidth();
-    }
-
-    /**
-     * Returns height of previous layer.
-     *
-     * @return height of previous layer.
-     */
-    public int getPreviousLayerHeight() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerHeight();
-    }
-
-    /**
-     * Returns depth of previous layer.
-     *
-     * @return depth of previous layer.
-     */
-    public int getPreviousLayerDepth() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerDepth();
-    }
-
-    /**
-     * Returns width of next layer.
-     *
-     * @return width of next layer.
-     */
-    public int getNextLayerWidth() {
-        return getNextLayer().getLayerWidth();
-    }
-
-    /**
-     * Returns height of next layer.
-     *
-     * @return height of next layer.
-     */
-    public int getNextLayerHeight() {
-        return getNextLayer().getLayerHeight();
-    }
-
-    /**
-     * Returns depth of next layer.
-     *
-     * @return depth of next layer.
-     */
-    public int getNextLayerDepth() {
-        return getNextLayer().getLayerDepth();
+    public HashMap<Matrix, Matrix> getLayerWeightGradients() throws MatrixException {
+        return procedure != null ? procedure.getGradients() : new HashMap<>();
     }
 
     /**
@@ -356,37 +271,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Resets optimizer for layer.
+     * Resets optimizer of layer.
      *
      */
     public void resetOptimizer() {
         optimizer.reset();
-    }
-
-    /**
-     * Returns true if neural network is in training mode otherwise false.
-     *
-     * @return true if neural network is in training mode otherwise false.
-     */
-    public boolean isTraining() {
-        return isTraining;
-    }
-
-    /**
-     * Sets training flag.
-     *
-     * @param isTraining if true layer is training otherwise false.
-     */
-    protected void setTraining(boolean isTraining) {
-        this.isTraining = isTraining;
-    }
-
-    /**
-     * Resets optimizer of layer.
-     *
-     */
-    public void reset() {
-        resetOptimizer();
     }
 
     /**
@@ -396,7 +285,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        for (Matrix weight : weightGradientSums.keySet()) optimizer.optimize(weight, weightGradientSums.get(weight));
+        HashMap<Matrix, Matrix> weightGradients = procedure.getGradients();
+        for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
     }
 
     /**
@@ -411,17 +301,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns number of layer parameters.
-     *
-     * @return number of layer parameters.
-     */
-    protected int getNumberOfParameters() {
-        int numberOfParameters = 0;
-        for (Matrix weight : weights) numberOfParameters += weight.size();
-        return numberOfParameters;
-    }
-
-    /**
      * Appends other neural network layer with equal weights to this layer by weighting factor tau.
      *
      * @param otherNeuralNetworkLayer other neural network layer.
@@ -429,12 +308,21 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException {
-        HashMap<Integer, Matrix> otherWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
+        HashMap<Integer, Matrix> otherNeuralNetworkWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
         for (Integer index : weightsMap.keySet()) {
             Matrix weight = weightsMap.get(index);
-            Matrix otherWeight = otherWeightsMap.get(index);
+            Matrix otherWeight = otherNeuralNetworkWeightsMap.get(index);
             weight.multiply(1 - tau).add(otherWeight.multiply(tau), weight);
         }
+    }
+
+    /**
+     * Returns number of layer parameters.
+     *
+     * @return number of layer parameters.
+     */
+    protected int getNumberOfParameters() {
+        return getWeightSet() != null ? getWeightSet().getNumberOfParameters() : 0;
     }
 
     /**
