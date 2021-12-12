@@ -36,47 +36,34 @@ public class JMatrix extends ComputableMatrix {
     /**
      * Constructor for JMatrix.
      *
-     * @param rows total number of rows.
-     * @param columns total number of columns.
      * @param matrices matrices contained by JMatrix.
      * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public JMatrix(int rows, int columns, Matrix[] matrices, boolean joinedVertically) throws MatrixException {
-        this(rows, columns, new ArrayList<>(Arrays.asList(matrices)), joinedVertically);
+    public JMatrix(Matrix[] matrices, boolean joinedVertically) throws MatrixException {
+        this(new ArrayList<>(Arrays.asList(matrices)), joinedVertically);
     }
 
     /**
      * Constructor for JMatrix.
      *
-     * @param rows total number of rows.
-     * @param columns total number of columns.
      * @param matrices matrices contained by JMatrix.
      * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public JMatrix(int rows, int columns, ArrayList<Matrix> matrices, boolean joinedVertically) throws MatrixException {
-        super(rows, columns, false);
-        this.matrices.addAll(matrices);
-        this.joinedVertically = joinedVertically;
-        if (rows != getRowsCount()) throw new MatrixException("Number of rows is not matching number of rows in assigned matrices.");
-        if (columns != getColumnsCount()) throw new MatrixException("Number of columns is not matching number of columns in assigned matrices.");
+    public JMatrix(ArrayList<Matrix> matrices, boolean joinedVertically) throws MatrixException {
+        super(joinedVertically ? matrices.stream().mapToInt(Matrix::getTotalRows).sum() : matrices.get(0).getTotalRows(), joinedVertically ? matrices.get(0).getTotalColumns() : matrices.stream().mapToInt(Matrix::getTotalColumns).sum(), false);
+
         for (Matrix matrix : matrices) {
             if (matrix.isScalar()) throw new MatrixException("All matrices need to be non-scalar.");
         }
-        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
-    }
 
-    /**
-     * Returns number of rows for JMatrix.
-     *
-     * @return number of rows for JMatrix.
-     * @throws MatrixException throws matrix exception if matrix dimensions are not matching.
-     */
-    private int getRowsCount() throws MatrixException {
-        int totalRows = 0;
+        this.matrices.addAll(matrices);
+        this.joinedVertically = joinedVertically;
+
         if (joinedVertically) {
             int columns = -1;
+            int totalRows = 0;
             for (Matrix matrix : matrices) {
                 int matrixTotalColumns = matrix.getTotalColumns();
                 if (columns == -1) columns = matrixTotalColumns;
@@ -84,20 +71,10 @@ public class JMatrix extends ComputableMatrix {
                 matrixPositionOffsets.put(totalRows, matrix);
                 totalRows += matrix.getTotalRows();
             }
-        } else totalRows = matrices.get(0).getTotalRows();
-        return totalRows;
-    }
-
-    /**
-     * Returns number of columns for JMatrix.
-     *
-     * @return number of columns for JMatrix.
-     * @throws MatrixException throws matrix exception if matrix dimensions are not matching.
-     */
-    private int getColumnsCount() throws MatrixException {
-        int totalColumns = 0;
-        if (!joinedVertically) {
+        }
+        else {
             int rows = -1;
+            int totalColumns = 0;
             for (Matrix matrix : matrices) {
                 int matrixTotalRows = matrix.getTotalRows();
                 if (rows == -1) rows = matrixTotalRows;
@@ -105,8 +82,9 @@ public class JMatrix extends ComputableMatrix {
                 matrixPositionOffsets.put(totalColumns, matrix);
                 totalColumns += matrix.getTotalColumns();
             }
-        } else totalColumns = matrices.get(0).getTotalColumns();
-        return totalColumns;
+        }
+
+        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
     }
 
     /**
@@ -210,7 +188,7 @@ public class JMatrix extends ComputableMatrix {
     public Matrix getNewMatrix() throws MatrixException {
         ArrayList<Matrix> newMatrices = new ArrayList<>();
         for (Matrix matrix : matrices) newMatrices.add(matrix.getNewMatrix());
-        return new JMatrix(getTotalRows(), getTotalColumns(), newMatrices, joinedVertically);
+        return new JMatrix(newMatrices, joinedVertically);
     }
 
 
