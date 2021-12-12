@@ -270,13 +270,4 @@ public class EarlyStopping implements Configurable, Serializable {
         return trainingStopCondition && validationStopCondition;
     }
 
-    /**
-     * Returns name of regularization.
-     *
-     * @return name of regularization.
-     */
-    public String getName() {
-        return "Early Stopping";
-    }
-
 }
