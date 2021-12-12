@@ -10,9 +10,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Defines multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
@@ -25,16 +23,34 @@ public class MMatrix implements Cloneable, Serializable {
     private static final long serialVersionUID = 2208329722377770337L;
 
     /**
-     * Capacity for MMatrix.
+     * Depth for MMatrix.
      *
      */
-    private final int capacity;
+    private final int depth;
 
     /**
      * Map for matrices.
      *
      */
-    private TreeMap<Integer, Matrix> matrices;
+    private HashMap<Integer, Matrix> matrices;
+
+    /**
+     * Reference entry for MMatrix.
+     *
+     */
+    private Matrix referenceMatrix;
+
+    /**
+     * Number of rows in each matrix.
+     *
+     */
+    private int rows = -1;
+
+    /**
+     * Number of columns in each matrix.
+     *
+     */
+    private int columns = -1;
 
     /**
      * Procedure factory reference for matrix.
@@ -50,81 +66,107 @@ public class MMatrix implements Cloneable, Serializable {
     private String name;
 
     /**
-     * Constructor for MMatrix without capacity limitation.
+     * Constructor for MMatrix without depth limitation.
      *
      */
     public MMatrix() {
-        matrices = new TreeMap<>();
-        capacity = -1;
+        matrices = new HashMap<>();
+        depth = -1;
     }
 
     /**
-     * Constructor for sample with capacity assumption of 1.
+     * Constructor for sample with depth assumption of 1.
      *
-     * @param entry single entry for sample with assumption of maxSize 1.
+     * @param matrix single entry for sample with assumption of maxSize 1.
      */
-    public MMatrix(Matrix entry) {
-        matrices = new TreeMap<>();
-        capacity = 1;
-        matrices.put(0, entry);
+    public MMatrix(Matrix matrix) {
+        rows = matrix.getTotalRows();
+        columns = matrix.getTotalColumns();
+        matrices = new HashMap<>();
+        depth = 1;
+        matrices.put(0, matrix);
+        referenceMatrix = matrix;
     }
 
     /**
-     * Constructor with capacity limitation.
+     * Constructor with depth limitation.
      *
-     * @param capacity capacity of MMatrix.
+     * @param depth depth of MMatrix.
      * @throws MatrixException throws exception if depth is less than 1.
      */
-    public MMatrix(int capacity) throws MatrixException {
-        if (capacity < 1) throw new MatrixException("Capacity must be at least 1.");
-        matrices = new TreeMap<>();
-        this.capacity = capacity;
+    public MMatrix(int depth) throws MatrixException {
+        if (depth < 1) throw new MatrixException("Depth must be at least 1.");
+        matrices = new HashMap<>();
+        this.depth = depth;
     }
 
     /**
-     * Constructor with capacity limitation.
+     * Constructor with depth limitation.
      *
-     * @param capacity capacity of MMatrix.
+     * @param depth depth of MMatrix.
      * @param name name of matrix.
      * @throws MatrixException throws exception if depth is less than 1.
      */
-    public MMatrix(int capacity, String name) throws MatrixException {
-        if (capacity < 1) throw new MatrixException("Capacity must be at least 1.");
-        matrices = new TreeMap<>();
-        this.capacity = capacity;
+    public MMatrix(int depth, String name) throws MatrixException {
+        if (depth < 1) throw new MatrixException("Depth must be at least 1.");
+        matrices = new HashMap<>();
+        this.depth = depth;
         this.name = name;
     }
 
     /**
-     * Constructor for sample with capacity limitation.
+     * Constructor for sample with depth limitation.
      *
-     * @param capacity capacity of MMatrix.
-     * @param entry single entry for sample.
+     * @param depth depth of MMatrix.
+     * @param matrix single entry for sample.
      * @throws MatrixException throws exception if depth is less than 1.
      */
-    public MMatrix(int capacity, Matrix entry) throws MatrixException {
-        this(capacity);
-        matrices.put(0, entry);
+    public MMatrix(int depth, Matrix matrix) throws MatrixException {
+        this(depth);
+        rows = matrix.getTotalRows();
+        columns = matrix.getTotalColumns();
+        matrices.put(0, matrix);
+        referenceMatrix = matrix;
     }
 
     /**
-     * Constructor for MMatrix without capacity limitation.
+     * Constructor for MMatrix without depth limitation.
      *
      * @param matrices matrices for MMatrix.
+     * @throws MatrixException throws exception if number of rows and columns are not matching for inserted matrices.
      */
-    public MMatrix(TreeMap<Integer, Matrix> matrices) {
-        capacity = -1;
-        this.matrices = matrices;
+    public MMatrix(HashMap<Integer, Matrix> matrices) throws MatrixException {
+        depth = -1;
+        for (Integer depthIndex : matrices.keySet()) {
+            Matrix matrix = matrices.get(depthIndex);
+            if (rows == -1 && columns == -1) {
+                rows = matrix.getTotalRows();
+                columns = matrix.getTotalColumns();
+                referenceMatrix = matrix;
+            }
+            else if (matrix.getTotalRows() != rows || matrix.getTotalColumns() != columns) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
+            matrices.put(depthIndex, matrix);
+        }
     }
 
     /**
-     * Constructor for MMatrix without capacity limitation.
+     * Constructor for MMatrix without depth limitation.
      *
      * @param matrices matrices for MMatrix.
+     * @throws MatrixException throws exception if number of rows and columns are not matching for inserted matrices.
      */
-    public MMatrix(MMatrix matrices) {
-        capacity = -1;
-        this.matrices = matrices.get();
+    public MMatrix(MMatrix matrices) throws MatrixException {
+        depth = -1;
+        for (Integer depthIndex : matrices.keySet()) {
+            Matrix matrix = matrices.get(depthIndex);
+            if (rows == -1 && columns == -1) {
+                rows = matrix.getTotalRows();
+                columns = matrix.getTotalColumns();
+                referenceMatrix = matrix;
+            }
+            else if (matrix.getTotalRows() != rows || matrix.getTotalColumns() != columns) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
+            this.matrices.put(depthIndex, matrix);
+        }
         this.name = matrices.getName();
     }
 
@@ -162,7 +204,7 @@ public class MMatrix implements Cloneable, Serializable {
      *
      */
     public void clear() {
-        matrices = new TreeMap<>();
+        matrices = new HashMap<>();
     }
 
     /**
@@ -180,7 +222,7 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @return matrices.
      */
-    public TreeMap<Integer, Matrix> get() {
+    public Map<Integer, Matrix> get() {
         return matrices;
     }
 
@@ -199,10 +241,16 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @param index index
      * @param matrix matrix
-     * @throws MatrixException throws exception if matrix is exceeding its capacity.
+     * @throws MatrixException throws exception if matrix is exceeding its depth.
      */
     public void put(int index, Matrix matrix) throws MatrixException {
-        if (!matrices.containsKey(index) && capacity > 0 && matrices.size() >= capacity) throw new MatrixException("MMatrix is exceeding defined capacity.");
+        if (!matrices.containsKey(index) && depth > 0 && matrices.size() >= depth) throw new MatrixException("MMatrix is exceeding defined depth.");
+        if (rows == -1 && columns == -1) {
+            rows = matrix.getTotalRows();
+            columns = matrix.getTotalColumns();
+            referenceMatrix = matrix;
+        }
+        else if (rows != matrix.getTotalRows() || columns != matrix.getTotalColumns()) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
         matrices.put(index, matrix);
     }
 
@@ -225,42 +273,6 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns first key of matrices.
-     *
-     * @return first key of matrices.
-     */
-    public int firstKey() {
-        return matrices.firstKey();
-    }
-
-    /**
-     * Returns last key of matrices.
-     *
-     * @return last key of matrices.
-     */
-    public int lastKey() {
-        return matrices.lastKey();
-    }
-
-    /**
-     * Returns first value of matrices.
-     *
-     * @return first value of matrices.
-     */
-    public Matrix firstValue() {
-        return matrices.get(matrices.firstKey());
-    }
-
-    /**
-     * Returns last value of matrices.
-     *
-     * @return last value of matrices.
-     */
-    public Matrix lastValue() {
-        return matrices.get(matrices.lastKey());
-    }
-
-    /**
      * Returns matrices as collection.
      *
      * @return matrices as collection.
@@ -280,12 +292,12 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns capacity of MMatrix.
+     * Returns depth of MMatrix.
      *
-     * @return capacity of MMatrix.
+     * @return depth of MMatrix.
      */
-    public int getCapacity() {
-        return capacity;
+    public int getDepth() {
+        return depth;
     }
 
     /**
@@ -295,6 +307,25 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public int size() {
         return matrices.size();
+    }
+
+    /**
+     * Returns reference matrix.
+     *
+     * @return reference matrix.
+     */
+    public Matrix getReferenceMatrix() {
+        return referenceMatrix;
+    }
+
+    /**
+     * Returns new matrix based on reference matrix.
+     *
+     * @return new matrix based on reference matrix.
+     * @throws MatrixException throws exception if creation of new matrix fails.
+     */
+    public Matrix getNewMatrix() throws MatrixException {
+        return referenceMatrix != null ? referenceMatrix.getNewMatrix() : null;
     }
 
     /**
@@ -882,7 +913,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean) throws MatrixException {
-        return count(asMean, get(firstKey()).getNewMatrix());
+        return count(asMean, getNewMatrix());
     }
 
     /**
@@ -905,7 +936,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix sum() throws MatrixException {
-        return sum(get(firstKey()).getNewMatrix());
+        return sum(getNewMatrix());
     }
 
     /**
@@ -933,7 +964,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public Matrix mean() throws MatrixException {
-        return mean(get(firstKey()).getNewMatrix());
+        return mean(getNewMatrix());
     }
 
     /**
@@ -962,7 +993,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance() throws MatrixException, DynamicParamException {
-        return variance(mean(), get(firstKey()).getNewMatrix());
+        return variance(mean(), getNewMatrix());
     }
 
     /**
@@ -974,7 +1005,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix variance(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return variance(meanMatrix, get(firstKey()).getNewMatrix());
+        return variance(meanMatrix, getNewMatrix());
     }
 
     /**
@@ -1010,7 +1041,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation() throws MatrixException, DynamicParamException {
-        return standardDeviation(mean(), get(firstKey()).getNewMatrix());
+        return standardDeviation(mean(), getNewMatrix());
     }
 
     /**
@@ -1022,7 +1053,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation(Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return standardDeviation(meanMatrix, get(firstKey()).getNewMatrix());
+        return standardDeviation(meanMatrix, getNewMatrix());
     }
 
     /**
@@ -1114,14 +1145,30 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
+     * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
+     *
+     * @param position position of split
+     * @param splitVertically if true splits vertically otherwise horizontally.
+     * @return splitted matrix as JMatrix.
+     * @throws MatrixException throws matrix exception if splitting fails.
+     */
+    public MMatrix split(int position, boolean splitVertically) throws MatrixException {
+        MMatrix splitMMatrix = new MMatrix(getDepth());
+        for (Integer index : matrices.keySet()) {
+            splitMMatrix.put(index, matrices.get(index).split(position, splitVertically));
+        }
+        return splitMMatrix;
+    }
+
+    /**
      * Flattens MMatrix into one dimensional column vector (matrix)
      *
      * @return flattened MMatrix
      * @throws MatrixException throws exception if creation of MMatrix fails.
      */
     public MMatrix flatten() throws MatrixException {
-        int rows = firstValue().getRows();
-        int cols = firstValue().getColumns();
+        int rows = this.rows;
+        int cols = this.columns;
         Matrix matrix = new DMatrix(rows * cols * size(), 1);
         MMatrix mmatrix = new MMatrix(1, matrix);
         for (Integer index : keySet()) {
@@ -1168,6 +1215,41 @@ public class MMatrix implements Cloneable, Serializable {
      */
     private int getPosition(int maxWidth, int maxHeight, int w, int h, int d) {
         return w + maxWidth * h + maxWidth * maxHeight * d;
+    }
+
+    /**
+     * Joins this MMatrix with other MMatrix.
+     *
+     * @param otherMMatrix other MMatrix.
+     * @param joinedVertically if true MMatrices are joint vertically otherwise horizontally.
+     * @return joined MMatrices.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public MMatrix join(MMatrix otherMMatrix, boolean joinedVertically) throws MatrixException {
+        if (getDepth() != otherMMatrix.getDepth()) throw new MatrixException("Depth of this MMatrix " + getDepth() + " and other MMatrix " + otherMMatrix.getDepth() + " do not match.");
+        MMatrix joinedMMatrix = new MMatrix(getDepth());
+        for (Integer entryIndex : keySet()) {
+            if (!otherMMatrix.containsKey(entryIndex)) throw new MatrixException("Other MMatrix does not contain entry index: " + entryIndex);
+            joinedMMatrix.put(entryIndex, new JMatrix(new Matrix[] { get(entryIndex), otherMMatrix.get(entryIndex) }, joinedVertically));
+        }
+        return joinedMMatrix;
+    }
+
+    /**
+     * Unjoins joined matrix by returning matrix corresponding given sub matrix index.
+     *
+     * @param subMatrixIndex sub matrix index.
+     * @return unjoined matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public MMatrix unjoin(int subMatrixIndex) throws MatrixException {
+        MMatrix unjoinedMMatrix = new MMatrix(getDepth());
+        for (Integer entryIndex : keySet()) {
+            ArrayList<Matrix> subMatrices = get(entryIndex).getSubMatrices();
+            if (subMatrixIndex < 0 || subMatrixIndex > subMatrices.size() - 1) throw new MatrixException("Joined matrix does not have sub matrix index: " + subMatrixIndex);
+            unjoinedMMatrix.put(entryIndex, subMatrices.get(subMatrixIndex));
+        }
+        return unjoinedMMatrix;
     }
 
 }
