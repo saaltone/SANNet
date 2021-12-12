@@ -54,6 +54,42 @@ public enum LayerType {
     MINGRU,
 
     /**
+     * Bidirectional Vanilla recurrent layer
+     *
+     */
+    BIRECURRENT,
+
+    /**
+     * Bidirectional Long Short Term Memory (LSTM) layer
+     *
+     */
+    BILSTM,
+
+    /**
+     * Bidirectional Peephole Long Short Term Memory (LSTM) layer
+     *
+     */
+    BIPEEPHOLELSTM,
+
+    /**
+     * Bidirectional Graves style Long Short Term Memory (LSTM) layer
+     *
+     */
+    BIGRAVESLSTM,
+
+    /**
+     * Bidirectional Gated Recurrent Unit (GRU) layer
+     *
+     */
+    BIGRU,
+
+    /**
+     * Bidirectional Minimal Gated Recurrent Unit (GRU) layer
+     *
+     */
+    BIMINGRU,
+
+    /**
      * Convolution layer.
      *
      */

@@ -46,6 +46,12 @@ public class LayerFactory {
             case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, activationFunction, initialization, params);
             case GRU -> new GRULayer(layerIndex, initialization, params);
             case MINGRU -> new MinGRULayer(layerIndex, initialization, params);
+            case BIRECURRENT -> new BiRecurrentLayer(layerIndex, activationFunction, initialization, params);
+            case BILSTM -> new BiLSTMLayer(layerIndex, activationFunction, initialization, params);
+            case BIPEEPHOLELSTM -> new BiPeepholeLSTMLayer(layerIndex, activationFunction, initialization, params);
+            case BIGRAVESLSTM -> new BiGravesLSTMLayer(layerIndex, activationFunction, initialization, params);
+            case BIGRU -> new BiGRULayer(layerIndex, initialization, params);
+            case BIMINGRU -> new BiMinGRULayer(layerIndex, initialization, params);
             case CONVOLUTION -> new ConvolutionLayer(layerIndex, activationFunction, initialization, params);
             case CROSSCORRELATION -> new CrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
             case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
@@ -73,29 +79,35 @@ public class LayerFactory {
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     public static LayerType getLayerType(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
-        if (neuralNetworkLayer instanceof FeedforwardLayer) return LayerType.FEEDFORWARD;
-        if (neuralNetworkLayer instanceof RecurrentLayer) return LayerType.RECURRENT;
-        if (neuralNetworkLayer instanceof LSTMLayer) return LayerType.LSTM;
-        if (neuralNetworkLayer instanceof PeepholeLSTMLayer) return LayerType.PEEPHOLELSTM;
-        if (neuralNetworkLayer instanceof GravesLSTMLayer) return LayerType.GRAVESLSTM;
-        if (neuralNetworkLayer instanceof GRULayer) return LayerType.GRU;
-        if (neuralNetworkLayer instanceof MinGRULayer) return LayerType.MINGRU;
-        if (neuralNetworkLayer instanceof ConvolutionLayer) return LayerType.CONVOLUTION;
-        if (neuralNetworkLayer instanceof CrosscorrelationLayer) return LayerType.CROSSCORRELATION;
-        if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return LayerType.WINOGRAD_CONVOLUTION;
-        if (neuralNetworkLayer instanceof MaxPoolingLayer) return LayerType.MAX_POOLING;
-        if (neuralNetworkLayer instanceof RandomPoolingLayer) return LayerType.RANDOM_POOLING;
-        if (neuralNetworkLayer instanceof CyclicPoolingLayer) return LayerType.CYCLIC_POOLING;
-        if (neuralNetworkLayer instanceof AveragePoolingLayer) return LayerType.AVERAGE_POOLING;
-        if (neuralNetworkLayer instanceof BatchNormalization) return LayerType.BATCH_NORMALIZATION;
-        if (neuralNetworkLayer instanceof LayerNormalization) return LayerType.LAYER_NORMALIZATION;
-        if (neuralNetworkLayer instanceof WeightNormalization) return LayerType.WEIGHT_NORMALIZATION;
-        if (neuralNetworkLayer instanceof Dropout) return LayerType.DROPOUT;
-        if (neuralNetworkLayer instanceof GradientClipping) return LayerType.GRADIENT_CLIPPING;
-        if (neuralNetworkLayer instanceof L1_Regularization) return LayerType.L1_REGULARIZATION;
-        if (neuralNetworkLayer instanceof L2_Regularization) return LayerType.L2_REGULARIZATION;
-        if (neuralNetworkLayer instanceof Lp_Regularization) return LayerType.Lp_REGULARIZATION;
-        if (neuralNetworkLayer instanceof WeightNoising) return LayerType.WEIGHT_NOISING;
+        if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return LayerType.FEEDFORWARD;
+        if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return LayerType.RECURRENT;
+        if (neuralNetworkLayer.getClass().equals(LSTMLayer.class)) return LayerType.LSTM;
+        if (neuralNetworkLayer.getClass().equals(PeepholeLSTMLayer.class)) return LayerType.PEEPHOLELSTM;
+        if (neuralNetworkLayer.getClass().equals(GravesLSTMLayer.class)) return LayerType.GRAVESLSTM;
+        if (neuralNetworkLayer.getClass().equals(GRULayer.class)) return LayerType.GRU;
+        if (neuralNetworkLayer.getClass().equals(MinGRULayer.class)) return LayerType.MINGRU;
+        if (neuralNetworkLayer.getClass().equals(BiRecurrentLayer.class)) return LayerType.BIRECURRENT;
+        if (neuralNetworkLayer.getClass().equals(BiLSTMLayer.class)) return LayerType.BILSTM;
+        if (neuralNetworkLayer.getClass().equals(BiPeepholeLSTMLayer.class)) return LayerType.BIPEEPHOLELSTM;
+        if (neuralNetworkLayer.getClass().equals(BiGravesLSTMLayer.class)) return LayerType.BIGRAVESLSTM;
+        if (neuralNetworkLayer.getClass().equals(BiGRULayer.class)) return LayerType.BIGRU;
+        if (neuralNetworkLayer.getClass().equals(BiMinGRULayer.class)) return LayerType.BIMINGRU;
+        if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return LayerType.CONVOLUTION;
+        if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return LayerType.CROSSCORRELATION;
+        if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return LayerType.WINOGRAD_CONVOLUTION;
+        if (neuralNetworkLayer.getClass().equals(MaxPoolingLayer.class)) return LayerType.MAX_POOLING;
+        if (neuralNetworkLayer.getClass().equals(RandomPoolingLayer.class)) return LayerType.RANDOM_POOLING;
+        if (neuralNetworkLayer.getClass().equals(CyclicPoolingLayer.class)) return LayerType.CYCLIC_POOLING;
+        if (neuralNetworkLayer.getClass().equals(AveragePoolingLayer.class)) return LayerType.AVERAGE_POOLING;
+        if (neuralNetworkLayer.getClass().equals(BatchNormalization.class)) return LayerType.BATCH_NORMALIZATION;
+        if (neuralNetworkLayer.getClass().equals(LayerNormalization.class)) return LayerType.LAYER_NORMALIZATION;
+        if (neuralNetworkLayer.getClass().equals(WeightNormalization.class)) return LayerType.WEIGHT_NORMALIZATION;
+        if (neuralNetworkLayer.getClass().equals(Dropout.class)) return LayerType.DROPOUT;
+        if (neuralNetworkLayer.getClass().equals(GradientClipping.class)) return LayerType.GRADIENT_CLIPPING;
+        if (neuralNetworkLayer.getClass().equals(L1_Regularization.class)) return LayerType.L1_REGULARIZATION;
+        if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return LayerType.L2_REGULARIZATION;
+        if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return LayerType.Lp_REGULARIZATION;
+        if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return LayerType.WEIGHT_NOISING;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -107,29 +119,35 @@ public class LayerFactory {
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     public static String getLayerTypeByName(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
-        if (neuralNetworkLayer instanceof FeedforwardLayer) return "FEEDFORWARD";
-        if (neuralNetworkLayer instanceof RecurrentLayer) return "RECURRENT";
-        if (neuralNetworkLayer instanceof LSTMLayer) return "LSTM";
-        if (neuralNetworkLayer instanceof PeepholeLSTMLayer) return "PEEPHOLELSTM";
-        if (neuralNetworkLayer instanceof GravesLSTMLayer) return "GRAVESLSTM";
-        if (neuralNetworkLayer instanceof GRULayer) return "GRU";
-        if (neuralNetworkLayer instanceof MinGRULayer) return "MINGRU";
-        if (neuralNetworkLayer instanceof ConvolutionLayer) return "CONVOLUTION";
-        if (neuralNetworkLayer instanceof CrosscorrelationLayer) return "CROSSCORRELATION";
-        if (neuralNetworkLayer instanceof WinogradConvolutionLayer) return "WINOGRAD_CONVOLUTION";
-        if (neuralNetworkLayer instanceof MaxPoolingLayer) return "MAX_POOLING";
-        if (neuralNetworkLayer instanceof RandomPoolingLayer) return "RANDOM_POOLING";
-        if (neuralNetworkLayer instanceof CyclicPoolingLayer) return "CYCLIC_POOLING";
-        if (neuralNetworkLayer instanceof AveragePoolingLayer) return "AVERAGE_POOLING";
-        if (neuralNetworkLayer instanceof BatchNormalization) return "BATCH_NORMALIZATION";
-        if (neuralNetworkLayer instanceof LayerNormalization) return "LAYER_NORMALIZATION";
-        if (neuralNetworkLayer instanceof WeightNormalization) return "WEIGHT_NORMALIZATION";
-        if (neuralNetworkLayer instanceof Dropout) return "DROPOUT";
-        if (neuralNetworkLayer instanceof GradientClipping) return "GRADIENT_CLIPPING";
-        if (neuralNetworkLayer instanceof L1_Regularization) return "L1_REGULARIZATION";
-        if (neuralNetworkLayer instanceof L2_Regularization) return "L2_REGULARIZATION";
-        if (neuralNetworkLayer instanceof Lp_Regularization) return "Lp_REGULARIZATION";
-        if (neuralNetworkLayer instanceof WeightNoising) return "WEIGHT_NOISING";
+        if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return "FEEDFORWARD";
+        if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return "RECURRENT";
+        if (neuralNetworkLayer.getClass().equals(LSTMLayer.class)) return "LSTM";
+        if (neuralNetworkLayer.getClass().equals(PeepholeLSTMLayer.class)) return "PEEPHOLELSTM";
+        if (neuralNetworkLayer.getClass().equals(GravesLSTMLayer.class)) return "GRAVESLSTM";
+        if (neuralNetworkLayer.getClass().equals(GRULayer.class)) return "GRU";
+        if (neuralNetworkLayer.getClass().equals(MinGRULayer.class)) return "MINGRU";
+        if (neuralNetworkLayer.getClass().equals(BiRecurrentLayer.class)) return "BIRECURRENT";
+        if (neuralNetworkLayer.getClass().equals(BiLSTMLayer.class)) return "BILSTM";
+        if (neuralNetworkLayer.getClass().equals(BiPeepholeLSTMLayer.class)) return "BIPEEPHOLELSTM";
+        if (neuralNetworkLayer.getClass().equals(BiGravesLSTMLayer.class)) return "BIGRAVESLSTM";
+        if (neuralNetworkLayer.getClass().equals(BiGRULayer.class)) return "BIGRU";
+        if (neuralNetworkLayer.getClass().equals(BiMinGRULayer.class)) return "BIMINGRU";
+        if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return "CONVOLUTION";
+        if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return "CROSSCORRELATION";
+        if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return "WINOGRAD_CONVOLUTION";
+        if (neuralNetworkLayer.getClass().equals(MaxPoolingLayer.class)) return "MAX_POOLING";
+        if (neuralNetworkLayer.getClass().equals(RandomPoolingLayer.class)) return "RANDOM_POOLING";
+        if (neuralNetworkLayer.getClass().equals(CyclicPoolingLayer.class)) return "CYCLIC_POOLING";
+        if (neuralNetworkLayer.getClass().equals(AveragePoolingLayer.class)) return "AVERAGE_POOLING";
+        if (neuralNetworkLayer.getClass().equals(BatchNormalization.class)) return "BATCH_NORMALIZATION";
+        if (neuralNetworkLayer.getClass().equals(LayerNormalization.class)) return "LAYER_NORMALIZATION";
+        if (neuralNetworkLayer.getClass().equals(WeightNormalization.class)) return "WEIGHT_NORMALIZATION";
+        if (neuralNetworkLayer.getClass().equals(Dropout.class)) return "DROPOUT";
+        if (neuralNetworkLayer.getClass().equals(GradientClipping.class)) return "GRADIENT_CLIPPING";
+        if (neuralNetworkLayer.getClass().equals(L1_Regularization.class)) return "L1_REGULARIZATION";
+        if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return "L2_REGULARIZATION";
+        if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return "Lp_REGULARIZATION";
+        if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return "WEIGHT_NOISING";
         throw new NeuralNetworkException("Unknown layer type");
     }
 
