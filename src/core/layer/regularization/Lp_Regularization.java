@@ -5,14 +5,12 @@
 
 package core.layer.regularization;
 
-import core.layer.AbstractExecutionLayer;
 import core.layer.NeuralNetworkLayer;
 import core.layer.OutputLayer;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -26,7 +24,7 @@ import java.util.HashSet;
  * This is experimental regularization method.<br>
  *
  */
-public class Lp_Regularization extends AbstractExecutionLayer {
+public class Lp_Regularization extends AbstractRegularizationLayer {
 
     /**
      * Parameter name types for Lp_Regularization.
@@ -104,30 +102,6 @@ public class Lp_Regularization extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always false.
-     */
-    public boolean isConvolutionalLayer() { return false; }
-
-    /**
-     * Returns input matrices for procedure construction.
-     *
-     * @param resetPreviousInput if true resets also previous input.
-     * @return input matrix for procedure construction.
-     */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
-        return null;
-    }
-
-    /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
@@ -141,33 +115,6 @@ public class Lp_Regularization extends AbstractExecutionLayer {
             if (regularizedWeights != null) layerRegularizedWeights.addAll(regularizedWeights);
             previousNeuralNetworkLayer = previousNeuralNetworkLayer.getPreviousLayer();
         }
-    }
-
-    /**
-     * Builds forward procedure and implicitly builds backward procedure.
-     *
-     * @return output of forward procedure.
-     */
-    public MMatrix getForwardProcedure() {
-        return null;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    protected HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    protected HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
     }
 
     /**
@@ -209,13 +156,6 @@ public class Lp_Regularization extends AbstractExecutionLayer {
     }
 
     /**
-     * Executes weight updates with regularizers and optimizer.
-     *
-     */
-    public void optimize() {
-    }
-
-    /**
      * Cumulates error from (L1 / L2 / Lp) regularization.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -237,26 +177,6 @@ public class Lp_Regularization extends AbstractExecutionLayer {
      */
     protected String getLayerDetailsByName() {
         return "Lambda: " + lambda;
-    }
-
-    /**
-     * Prints forward expression chains of layer.
-     *
-     * @throws NeuralNetworkException throws exception if printing of neural network fails.
-     */
-    public void printExpressions() throws NeuralNetworkException {
-        System.out.println(getLayerName() + ": ");
-        System.out.println();
-    }
-
-    /**
-     * Prints backward gradient chains of layer.
-     *
-     * @throws NeuralNetworkException throws exception if printing of neural network fails.
-     */
-    public void printGradients() throws NeuralNetworkException {
-        System.out.println(getLayerName() + ": ");
-        System.out.println();
     }
 
 }
