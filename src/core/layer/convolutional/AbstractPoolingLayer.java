@@ -6,12 +6,12 @@
 package core.layer.convolutional;
 
 import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
-import java.io.Serial;
 import java.util.HashSet;
 
 /**
@@ -19,9 +19,6 @@ import java.util.HashSet;
  *
  */
 public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
-
-    @Serial
-    private static final long serialVersionUID = -8711824454978626258L;
 
     /**
      * Parameter name types for pooling layer.
@@ -166,6 +163,15 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return false; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always true.
@@ -173,12 +179,11 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return true; }
 
     /**
-     * Initializes pooling layer.<br>
-     * Sets input and output dimensions.<br>
+     * Initializes neural network layer dimensions.
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    public void initialize() throws NeuralNetworkException {
+    public void initializeDimensions() throws NeuralNetworkException {
         previousLayerWidth = getPreviousLayerWidth();
         previousLayerHeight = getPreviousLayerHeight();
         previousLayerDepth = getPreviousLayerDepth();
@@ -196,6 +201,22 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
         setLayerWidth(layerWidth);
         setLayerHeight(layerHeight);
         setLayerDepth(previousLayerDepth);
+    }
+
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return null;
+    }
+
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
     }
 
     /**
@@ -261,6 +282,15 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      */
     protected HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
+    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
     }
 
     /**
