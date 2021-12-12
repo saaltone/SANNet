@@ -6,11 +6,9 @@
 package core.metrics;
 
 import utils.sampling.Sequence;
-import utils.matrix.*;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 /**
@@ -179,33 +177,6 @@ public class SingleRegressionMetric implements Metric, Serializable {
         squaredErrors.clear();
         cumulativeSquaredError = 0;
         errorCount = 0;
-    }
-
-    /**
-     * Reports error and handles it as either regression or classification error depending on metrics initialization.
-     *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
-     */
-    public void report(Matrix predicted, Matrix actual) {
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     */
-    public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) {
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     */
-    public void report(MMatrix predicted, MMatrix actual) {
     }
 
     /**

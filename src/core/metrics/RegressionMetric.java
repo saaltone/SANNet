@@ -6,12 +6,12 @@
 package core.metrics;
 
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.*;
+import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
@@ -33,7 +33,7 @@ public class RegressionMetric implements Metric, Serializable {
      * Absolute errors.
      *
      */
-    private final TreeMap<Integer, Matrix> absoluteErrors = new TreeMap<>();
+    private final HashMap<Integer, Matrix> absoluteErrors = new HashMap<>();
 
     /**
      * Cumulative absolute error.
@@ -152,7 +152,7 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
+    public void update(HashMap<Integer, Matrix> predicted, HashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
         for (Integer index : predicted.keySet()) update(predicted.get(index), actual.get(index));
     }
 
@@ -178,7 +178,7 @@ public class RegressionMetric implements Metric, Serializable {
      */
     public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.sampleKeySet()) {
+            for (Integer matrixIndex : predicted.entryKeySet()) {
                 update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
             }
         }
@@ -381,42 +381,6 @@ public class RegressionMetric implements Metric, Serializable {
     }
 
     /**
-     * Reports error and handles it as either regression or classification error depending on metrics initialization.
-     *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void report(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
-        update(predicted, actual);
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
-        update(predicted, actual);
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void report(MMatrix predicted, MMatrix actual) throws MatrixException, DynamicParamException {
-        update(predicted, actual);
-    }
-
-    /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
@@ -426,14 +390,6 @@ public class RegressionMetric implements Metric, Serializable {
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
         update(predicted, actual);
-    }
-
-    /**
-     * Reports single error value.
-     *
-     * @param error single error value to be reported.
-     */
-    public void report(double error) {
     }
 
     /**

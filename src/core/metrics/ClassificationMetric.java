@@ -6,16 +6,15 @@
 package core.metrics;
 
 import core.network.NeuralNetworkException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 
 /**
  * Class that handles calculation of classification error.
@@ -231,41 +230,6 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Reports error and handles it as either regression or classification error depending on metrics initialization.
-     *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void report(Matrix predicted, Matrix actual) throws MatrixException {
-        updateConfusion(predicted, actual);
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if reporting of errors fails.
-     */
-    public void report(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        updateConfusion(predicted, actual);
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if reporting of errors fails.
-     */
-    public void report(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException {
-        updateConfusion(predicted, actual);
-    }
-
-    /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
@@ -275,14 +239,6 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
         updateConfusion(predicted, actual);
-    }
-
-    /**
-     * Reports single error value.
-     *
-     * @param error single error value to be reported.
-     */
-    public void report(double error) {
     }
 
     /**
@@ -394,7 +350,7 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     public void update(Sequence predicted, Sequence actual) {
         for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.sampleKeySet()) {
+            for (Integer matrixIndex : predicted.entryKeySet()) {
                 update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
             }
         }
@@ -406,7 +362,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param predicted predicted samples.
      * @param actual actual (true) samples.
      */
-    public void update(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) {
+    public void update(HashMap<Integer, Matrix> predicted, HashMap<Integer, Matrix> actual) {
         int actualSize = actual.size();
         for (int sample = 0; sample < actualSize; sample++) {
             update(predicted.get(sample), actual.get(sample));
@@ -587,8 +543,8 @@ public class ClassificationMetric implements Metric, Serializable {
      * @return classification for predicted samples.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private LinkedHashMap<Integer, Matrix> getClassification(LinkedHashMap<Integer, Matrix> predicted) throws MatrixException {
-        LinkedHashMap<Integer, Matrix> classified = new LinkedHashMap<>();
+    private HashMap<Integer, Matrix> getClassification(HashMap<Integer, Matrix> predicted) throws MatrixException {
+        HashMap<Integer, Matrix> classified = new HashMap<>();
         int index = 0;
         for (Matrix sample: predicted.values()) classified.put(index++, getClassification(sample));
         return classified;
@@ -605,37 +561,11 @@ public class ClassificationMetric implements Metric, Serializable {
     private Sequence getClassification(Sequence predicted) throws MatrixException {
         Sequence classified = new Sequence(predicted.getDepth());
         for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.sampleKeySet()) {
+            for (Integer matrixIndex : predicted.entryKeySet()) {
                 classified.put(sampleIndex, matrixIndex, getClassification(predicted.get(sampleIndex, matrixIndex)));
             }
         }
         return classified;
-    }
-
-    /**
-     * Updates confusion and classification statistics by including new predicted / actual (true) sample pair.
-     *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private void updateConfusion(Matrix predicted, Matrix actual) throws MatrixException {
-        predicted = getClassification(predicted);
-        update(predicted, actual);
-    }
-
-    /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if classification statistics update fails.
-     */
-    private void updateConfusion(MMatrix predicted, MMatrix actual) throws MatrixException, NeuralNetworkException {
-        if (actual.size() == 0) throw new NeuralNetworkException("Nothing to classify");
-        predicted = getClassification(predicted);
-        update(predicted, actual);
     }
 
     /**
@@ -648,20 +578,6 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     private void updateConfusion(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
         if (actual.sampleSize() == 0) throw new NeuralNetworkException("Nothing to classify");
-        predicted = getClassification(predicted);
-        update(predicted, actual);
-    }
-
-    /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if classification statistics update fails.
-     */
-    private void updateConfusion(LinkedHashMap<Integer, Matrix> predicted, LinkedHashMap<Integer, Matrix> actual) throws MatrixException, NeuralNetworkException {
-        if (actual.size() == 0) throw new NeuralNetworkException("Nothing to classify");
         predicted = getClassification(predicted);
         update(predicted, actual);
     }
