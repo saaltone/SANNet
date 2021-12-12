@@ -18,7 +18,6 @@ import utils.sampling.BasicSampler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Random;
 
 /**
@@ -38,7 +37,7 @@ public class SimpleDemo {
 
         try {
             int numberOfNeuralNetworks = 2;
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTestData();
+            HashMap<Integer, HashMap<Integer, MMatrix>> data = getTestData();
             ArrayList<NeuralNetwork> neuralNetworks = new ArrayList<>();
             for (int index = 0; index < numberOfNeuralNetworks; index++) {
                 NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
@@ -75,7 +74,7 @@ public class SimpleDemo {
         }
     }
 
-    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, HashMap<Integer, MMatrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + id);
         neuralNetwork.setAsRegression();
         neuralNetwork.verboseTraining(10);
@@ -123,10 +122,10 @@ public class SimpleDemo {
      * @return created training and testing samples.
      * @throws NeuralNetworkException throws exception if creation of samples fail.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException {
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = new HashMap<>();
-        LinkedHashMap<Integer, MMatrix> input = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> output = new LinkedHashMap<>();
+    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException {
+        HashMap<Integer, HashMap<Integer, MMatrix>> data = new HashMap<>();
+        HashMap<Integer, MMatrix> input = new HashMap<>();
+        HashMap<Integer, MMatrix> output = new HashMap<>();
         data.put(0, input);
         data.put(1, output);
 
