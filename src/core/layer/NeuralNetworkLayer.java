@@ -29,20 +29,6 @@ public interface NeuralNetworkLayer {
     void setNextLayer(NeuralNetworkLayer nextLayer);
 
     /**
-     * Returns reference to next layer.
-     *
-     * @return reference to next layer.
-     */
-    NeuralNetworkLayer getNextLayer();
-
-    /**
-     * Returns if layer has next layer.
-     *
-     * @return true if layer has next layer otherwise false.
-     */
-    boolean hasNextLayer();
-
-    /**
      * Sets reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
@@ -55,13 +41,6 @@ public interface NeuralNetworkLayer {
      * @return reference to previous neural network layer.
      */
     NeuralNetworkLayer getPreviousLayer();
-
-    /**
-     * Returns if layer has previous layer.
-     *
-     * @return true if layer has previous layer otherwise false.
-     */
-    boolean hasPreviousLayer();
 
     /**
      * Returns width of neural network layer.
@@ -87,9 +66,23 @@ public interface NeuralNetworkLayer {
     /**
      * Checks if layer is recurrent layer type.
      *
-     * @return true if layer if recurrent layer otherwise false.
+     * @return true if layer is recurrent layer otherwise false.
      */
     boolean isRecurrentLayer();
+
+    /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    boolean worksWithRecurrentLayer();
+
+    /**
+     * Check if layer is bidirectional.
+     *
+     * @return true if layer is bidirectional otherwise returns false.
+     */
+    boolean isBidirectional();
 
     /**
      * Checks if layer is convolutional layer type.
@@ -97,6 +90,20 @@ public interface NeuralNetworkLayer {
      * @return true if layer if convolutional layer otherwise false.
      */
     boolean isConvolutionalLayer();
+
+    /**
+     * Initializes neural network layer dimensions.
+     *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     */
+    void initializeDimensions() throws NeuralNetworkException;
+
+    /**
+     * Reinitializes neural network layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void reinitialize() throws MatrixException;
 
     /**
      * Returns output of neural network.
@@ -137,8 +144,9 @@ public interface NeuralNetworkLayer {
      * Returns neural network weight gradients.
      *
      * @return neural network weight gradients.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    HashMap<Matrix, Matrix> getLayerWeightGradients();
+    HashMap<Matrix, Matrix> getLayerWeightGradients() throws MatrixException;
 
     /**
      * Starts neural network layer and it's execution thread.
@@ -215,23 +223,6 @@ public interface NeuralNetworkLayer {
     void stateCompleted(boolean forwardDirection);
 
     /**
-     * Initializes neural network layer.
-     *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void initialize() throws NeuralNetworkException, MatrixException, DynamicParamException;
-
-    /**
-     * Reinitializes neural network layer.
-     *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void reinitialize() throws NeuralNetworkException, MatrixException;
-
-    /**
      * Executes forward processing step of layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -248,12 +239,6 @@ public interface NeuralNetworkLayer {
     void backwardProcess() throws MatrixException, DynamicParamException;
 
     /**
-     * Resets optimizer of layer.
-     *
-     */
-    void reset();
-
-    /**
      * Sets optimizer for layer.<br>
      * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
      *
@@ -262,7 +247,7 @@ public interface NeuralNetworkLayer {
     void setOptimizer(Optimizer optimizer);
 
     /**
-     * Resets optimizer for layer.
+     * Resets optimizer of layer.
      *
      */
     void resetOptimizer();
