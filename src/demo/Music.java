@@ -58,7 +58,7 @@ public class Music {
             fileNames.add(path + "howdsolo.mid");
 
             ReadMIDI readMIDI = new ReadMIDI();
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numOfInputs, encodeNoteOffs, excludeZeroValuedEntries, 8);
+            HashMap<Integer, HashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numOfInputs, encodeNoteOffs, excludeZeroValuedEntries, 8);
             ReadMIDI.Metadata metadata = readMIDI.getMetadata();
 
             Sequence sequence = readMIDI.getSequence(data.get(1), data.get(3), data.get(5), metadata.resolution, false, encodeNoteOffs, metadata);
@@ -134,9 +134,9 @@ public class Music {
                 neuralNetworkVelocityForPrediction.start();
                 neuralNetworkTickForPrediction.start();
 
-                LinkedHashMap<Integer, MMatrix> resultKey = new LinkedHashMap<>();
-                LinkedHashMap<Integer, MMatrix> resultVelocity = new LinkedHashMap<>();
-                LinkedHashMap<Integer, MMatrix> resultTick = new LinkedHashMap<>();
+                HashMap<Integer, MMatrix> resultKey = new HashMap<>();
+                HashMap<Integer, MMatrix> resultVelocity = new HashMap<>();
+                HashMap<Integer, MMatrix> resultTick = new HashMap<>();
 
                 Matrix currentSampleKey = data.get(0).get(0).get(0);
                 Matrix currentSampleVelocity = data.get(2).get(0).get(0);
@@ -155,9 +155,9 @@ public class Music {
                     int targetTick = targetTickMatrix.argmax()[0];
                     System.out.println("Tick: " + metadata.tickValueReverseMapping.get(targetTick));
 
-                    currentSampleKey = getNextSample(currentSampleKey, metadata.keyBitVectorSize, ComputableMatrix.encodeToBitColumnVector(targetKey, metadata.keyBitVectorSize));
-                    currentSampleVelocity = getNextSample(currentSampleVelocity, metadata.velocityBitVectorSize, ComputableMatrix.encodeToBitColumnVector(targetVelocity, metadata.velocityBitVectorSize));
-                    currentSampleTick = getNextSample(currentSampleTick, metadata.numberOfEncodedTicks, targetTickMatrix);
+                    currentSampleKey = getNextSample(currentSampleKey, ComputableMatrix.encodeToBitColumnVector(targetKey, metadata.keyBitVectorSize));
+                    currentSampleVelocity = getNextSample(currentSampleVelocity, ComputableMatrix.encodeToBitColumnVector(targetVelocity, metadata.velocityBitVectorSize));
+                    currentSampleTick = getNextSample(currentSampleTick, targetTickMatrix);
 
                 }
                 neuralNetworkKeyForPrediction.stop();
@@ -198,7 +198,7 @@ public class Music {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private Matrix predictNextSample(int sampleIndex, NeuralNetwork neuralNetwork, Matrix currentSample, LinkedHashMap<Integer, MMatrix> result) throws MatrixException, NeuralNetworkException {
+    private Matrix predictNextSample(int sampleIndex, NeuralNetwork neuralNetwork, Matrix currentSample, HashMap<Integer, MMatrix> result) throws MatrixException, NeuralNetworkException {
         Matrix targetSample = neuralNetwork.predict(currentSample);
         result.put(sampleIndex, new MMatrix(targetSample));
         return targetSample;
@@ -208,17 +208,16 @@ public class Music {
      * Returns next sample
      *
      * @param currentSample current sample
-     * @param recordSize record size
      * @param targetMatrix target matrix
      * @return next sample
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private Matrix getNextSample(Matrix currentSample, int recordSize, Matrix targetMatrix) throws MatrixException {
+    private Matrix getNextSample(Matrix currentSample, Matrix targetMatrix) throws MatrixException {
         ArrayList<Matrix> currentSamples = currentSample.getSubMatrices();
         int maxSampleIndex = currentSamples.size() - 1;
         for (int sampleIndex = 0; sampleIndex < maxSampleIndex; sampleIndex++) currentSamples.set(sampleIndex, currentSamples.get(sampleIndex + 1));
         currentSamples.set(maxSampleIndex, targetMatrix);
-        return new JMatrix(recordSize * currentSamples.size(), 1, currentSamples, true);
+        return new JMatrix(currentSamples, true);
     }
 
     /**
@@ -236,10 +235,9 @@ public class Music {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int hiddenSize, int neuralNetworkType) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
+        neuralNetwork.addHiddenLayer(LayerType.BILSTM, "width = " + hiddenSize);
         switch (neuralNetworkType) {
             case 0 -> {
-                neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
