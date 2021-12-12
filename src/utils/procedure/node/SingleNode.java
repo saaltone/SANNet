@@ -49,7 +49,7 @@ public class SingleNode extends AbstractNode {
      * @throws MatrixException throws exception is matrix is not defined.
      */
     public SingleNode(int id, MMatrix referenceMatrix) throws MatrixException {
-        this(id, referenceMatrix.get(referenceMatrix.firstKey()));
+        this(id, referenceMatrix.getReferenceMatrix());
     }
 
     /**
@@ -78,19 +78,6 @@ public class SingleNode extends AbstractNode {
     }
 
     /**
-     * Creates copy of node.
-     *
-     * @param copyGradients if true copies also gradient information.
-     * @throws MatrixException throws exception is matrix is not defined.
-     * @return copy of node.
-     */
-    public Node copy(boolean copyGradients) throws MatrixException {
-        Node node = new SingleNode(getId(), getReferenceMatrix());
-        if (copyGradients) node.setGradient(getGradient());
-        return node;
-    }
-
-    /**
      * Returns size of node.
      *
      * @return size of node.
@@ -106,24 +93,6 @@ public class SingleNode extends AbstractNode {
      */
     public Set<Integer> keySet() {
         return null;
-    }
-
-    /**
-     * Returns first key of node.
-     *
-     * @return first key of node.
-     */
-    public int firstKey() {
-        return 0;
-    }
-
-    /**
-     * Returns last key of node.
-     *
-     * @return last key of node.
-     */
-    public int lastKey() {
-        return 0;
     }
 
     /**
@@ -145,14 +114,6 @@ public class SingleNode extends AbstractNode {
     public void resetNode(boolean resetDependentNodes) throws MatrixException {
         gradient = null;
         super.resetNode(resetDependentNodes);
-    }
-
-    /**
-     * Sets matrices for node.
-     *
-     * @param matrices matrices of node.
-     */
-    public void setMatrices(MMatrix matrices) {
     }
 
     /**
@@ -207,28 +168,11 @@ public class SingleNode extends AbstractNode {
     /**
      * Sets gradient matrix of node.
      *
-     * @param gradient gradient matrix of node.
-     */
-    public void setGradient(Matrix gradient) {
-        this.gradient = gradient;
-    }
-
-    /**
-     * Sets gradient matrix of node.
-     *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
      */
     public void setGradient(int index, Matrix gradient) {
         this.gradient = gradient;
-    }
-
-    /**
-     * Sets gradients for node.
-     *
-     * @param gradients gradients of node.
-     */
-    public void setGradients(MMatrix gradients) {
     }
 
     /**
@@ -248,15 +192,6 @@ public class SingleNode extends AbstractNode {
      */
     public Matrix getGradient(int index) {
         return gradient;
-    }
-
-    /**
-     * Returns gradients of node.
-     *
-     * @return gradients of node.
-     */
-    public MMatrix getGradients() {
-        return null;
     }
 
 }

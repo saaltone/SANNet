@@ -58,7 +58,7 @@ public class MultiNode extends AbstractNode {
      * @throws MatrixException throws exception is matrix is not defined.
      */
     public MultiNode(int id, MMatrix referenceMatrix) throws MatrixException {
-        this(id, referenceMatrix.get(referenceMatrix.firstKey()));
+        this(id, referenceMatrix.getReferenceMatrix());
         for (Integer index : referenceMatrix.keySet()) matrices.put(index, referenceMatrix.get(index));
     }
 
@@ -99,22 +99,6 @@ public class MultiNode extends AbstractNode {
     }
 
     /**
-     * Creates copy of node.
-     *
-     * @param copyGradients if true copies also gradient information.
-     * @throws MatrixException throws exception is matrix is not defined.
-     * @return copy of node.
-     */
-    public Node copy(boolean copyGradients) throws MatrixException {
-        Node node = new MultiNode(getId(), getReferenceMatrix());
-        for (Integer index : keySet()) {
-            node.setMatrix(index, getMatrix(index));
-            if (copyGradients) node.setGradient(index, getGradient(index));
-        }
-        return node;
-    }
-
-    /**
      * Returns size of node.
      *
      * @return size of node.
@@ -130,24 +114,6 @@ public class MultiNode extends AbstractNode {
      */
     public Set<Integer> keySet() {
         return matrices.keySet();
-    }
-
-    /**
-     * Returns first key of node.
-     *
-     * @return first key of node.
-     */
-    public int firstKey() {
-        return matrices.firstKey();
-    }
-
-    /**
-     * Returns last key of node.
-     *
-     * @return last key of node.
-     */
-    public int lastKey() {
-        return matrices.lastKey();
     }
 
     /**
@@ -171,15 +137,6 @@ public class MultiNode extends AbstractNode {
         gradients = new MMatrix();
         matrixBackup = new HashMap<>();
         super.resetNode(resetDependentNodes);
-    }
-
-    /**
-     * Sets matrices for node.
-     *
-     * @param matrices matrices of node.
-     */
-    public void setMatrices(MMatrix matrices) {
-        this.matrices = matrices;
     }
 
     /**
@@ -233,29 +190,12 @@ public class MultiNode extends AbstractNode {
     /**
      * Sets gradient matrix of node.
      *
-     * @param gradient gradient matrix of node.
-     */
-    public void setGradient(Matrix gradient) {
-    }
-
-    /**
-     * Sets gradient matrix of node.
-     *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
      * @throws MatrixException throws exception if putting of matrix fails.
      */
     public void setGradient(int index, Matrix gradient) throws MatrixException {
         gradients.put(index, gradient);
-    }
-
-    /**
-     * Sets gradients for node.
-     *
-     * @param gradients gradients of node.
-     */
-    public void setGradients(MMatrix gradients) {
-        this.gradients = gradients;
     }
 
     /**
@@ -275,15 +215,6 @@ public class MultiNode extends AbstractNode {
      */
     public Matrix getGradient(int index) {
         return gradients.get(index);
-    }
-
-    /**
-     * Returns gradients of node.
-     *
-     * @return gradients of node.
-     */
-    public MMatrix getGradients() {
-        return gradients;
     }
 
 }

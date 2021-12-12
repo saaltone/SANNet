@@ -18,20 +18,6 @@ import java.util.Set;
 public interface Node {
 
     /**
-     * Returns reference matrix.
-     *
-     * @return reference matrix.
-     */
-    Matrix getReferenceMatrix();
-
-    /**
-     * Returns id of node.
-     *
-     * @return id of node.
-     */
-    int getId();
-
-    /**
      * If true node is of type multi index.
      *
      * @return true node is of type multi index.
@@ -75,25 +61,11 @@ public interface Node {
     void setFromNode(Node fromNode);
 
     /**
-     * Returns from node.
-     *
-     * @return from node.
-     */
-    Node getFromNode();
-
-    /**
      * Set dependency node forward.
      *
      * @param toNode to node.
      */
     void setToNode(Node toNode);
-
-    /**
-     * Returns to node.
-     *
-     * @return to node.
-     */
-    Node getToNode();
 
     /**
      * Updates matrix dependency to forward direction.
@@ -126,15 +98,6 @@ public interface Node {
      * @throws MatrixException throws exception if restoring of backup fails.
      */
     void restoreMatrixDependency(int backupIndex) throws MatrixException;
-
-    /**
-     * Creates copy of node.
-     *
-     * @param copyGradients if true copies also gradient information.
-     * @throws MatrixException throws exception is matrix is not defined.
-     * @return copy of node.
-     */
-    Node copy(boolean copyGradients) throws MatrixException;
 
     /**
      * Return name of node
@@ -172,20 +135,6 @@ public interface Node {
     Set<Integer> keySet();
 
     /**
-     * Returns first key of node.
-     *
-     * @return first key of node.
-     */
-    int firstKey();
-
-    /**
-     * Returns last key of node.
-     *
-     * @return last key of node.
-     */
-    int lastKey();
-
-    /**
      * Checks if node contains specific matrix.
      *
      * @param matrix specific matrix.
@@ -208,13 +157,6 @@ public interface Node {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     void resetNode(boolean resetDependentNodes) throws MatrixException;
-
-    /**
-     * Sets matrices for node.
-     *
-     * @param matrices matrices of node.
-     */
-    void setMatrices(MMatrix matrices);
 
     /**
      * Sets matrix of this node.
@@ -267,25 +209,11 @@ public interface Node {
     /**
      * Sets gradient matrix of node.
      *
-     * @param gradient gradient matrix of node.
-     */
-    void setGradient(Matrix gradient);
-
-    /**
-     * Sets gradient matrix of node.
-     *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
      * @throws MatrixException throws exception if putting of matrix fails.
      */
     void setGradient(int index, Matrix gradient) throws MatrixException;
-
-    /**
-     * Sets gradients for node.
-     *
-     * @param gradients gradients of node.
-     */
-    void setGradients(MMatrix gradients);
 
     /**
      * Returns gradient matrix of node.
@@ -301,13 +229,6 @@ public interface Node {
      * @return gradient matrix of node.
      */
     Matrix getGradient(int index);
-
-    /**
-     * Returns gradients of node.
-     *
-     * @return gradients of node.
-     */
-    MMatrix getGradients();
 
     /**
      * Returns gradient mean (average).

@@ -5,7 +5,6 @@
 
 package utils.procedure.node;
 
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -72,26 +71,6 @@ public abstract class AbstractNode implements Node, Serializable {
     }
 
     /**
-     * Constructor for node.
-     *
-     * @param id id.
-     * @param referenceMatrix reference matrix.
-     * @throws MatrixException throws exception is matrix is not defined.
-     */
-    public AbstractNode(int id, MMatrix referenceMatrix) throws MatrixException {
-        this(id, referenceMatrix.get(referenceMatrix.firstKey()));
-    }
-
-    /**
-     * Returns reference matrix.
-     *
-     * @return reference matrix.
-     */
-    public Matrix getReferenceMatrix() {
-        return referenceMatrix;
-    }
-
-    /**
      * Returns true if given matrix is reference matrix of this node.
      *
      * @param matrix given matrix
@@ -135,15 +114,6 @@ public abstract class AbstractNode implements Node, Serializable {
      */
     public void setFromNode(Node fromNode) {
         this.fromNode = fromNode;
-    }
-
-    /**
-     * Returns from node.
-     *
-     * @return from node.
-     */
-    public Node getFromNode() {
-        return fromNode;
     }
 
     /**

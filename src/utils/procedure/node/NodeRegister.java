@@ -12,7 +12,6 @@ import utils.matrix.MatrixException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Set;
 
 /**
  * Class that provides node instances and keeps register of them.<br>
@@ -143,33 +142,6 @@ public class NodeRegister implements Serializable {
     }
 
     /**
-     * Returns node set contained by register.
-     *
-     * @return node set contained by register.
-     */
-    public Set<Node> getNodes() {
-        return entriesByNode.keySet();
-    }
-
-    /**
-     * Returns node map contained by register.
-     *
-     * @return node map contained by register.
-     */
-    public HashMap<Matrix, Node> getNodeMatrixMap() {
-        return nodeMatrixMap;
-    }
-
-    /**
-     * Returns node map contained by register.
-     *
-     * @return node map contained by register.
-     */
-    public HashMap<MMatrix, Node> getNodeMMatrixMap() {
-        return nodeMMatrixMap;
-    }
-
-    /**
      * Returns expression ID corresponding the node.
      *
      * @param node node in question.
@@ -178,16 +150,6 @@ public class NodeRegister implements Serializable {
     public int getExpressionID(Node node) {
         if (entriesByNode.containsKey(node)) return entriesByNode.get(node).expressionID;
         else return -1;
-    }
-
-    /**
-     * Checks if node register contains node.
-     *
-     * @param node node in question.
-     * @return true is node is contained by the node register otherwise false.
-     */
-    public boolean contains(Node node) {
-        return entriesByNode.containsKey(node);
     }
 
     /**
