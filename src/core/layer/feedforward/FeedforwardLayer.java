@@ -5,6 +5,7 @@
 
 package core.layer.feedforward;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
@@ -12,6 +13,8 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 
 /**
@@ -30,16 +33,87 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
             "(splitOutputAtPosition:INT)";
 
     /**
-     * Weight matrix.
+     * Class that defines weight set for layer.
      *
      */
-    private Matrix weight;
+    protected class FeedforwardWeightSet implements WeightSet, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 7859757124635021579L;
+
+        /**
+         * Weight matrix.
+         *
+         */
+        private final Matrix weight;
+
+        /**
+         * Bias matrix.
+         *
+         */
+        private final Matrix bias;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param layerWidth width of current layer.
+         * @param regulateDirectWeights if true direct weights are regulated.
+         */
+        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
+            weight = new DMatrix(layerWidth, previousLayerWidth, initialization, "Weight");
+            bias = new DMatrix(layerWidth, 1, "bias");
+
+            weights.add(weight);
+            weights.add(bias);
+
+            registerWeight(weight, regulateDirectWeights, true);
+            registerWeight(bias, false, false);
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            weight.initialize(initialization);
+            bias.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
 
     /**
-     * Bias matrix.
+     * Weight set.
      *
      */
-    private Matrix bias;
+    protected FeedforwardWeightSet weightSet;
 
     /**
      * Activation function for feedforward layer.
@@ -125,6 +199,15 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return false; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always false.
@@ -132,35 +215,29 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return false; }
 
     /**
-     * Initializes feedforward layer.<br>
-     * Initializes weight and bias and their gradients.<br>
+     * Returns if direct weights are regulated.
      *
+     * @return true if direct weights are regulated otherwise false.
      */
-    public void initialize() {
-        int previousLayerWidth = getPreviousLayerWidth();
-        int layerWidth = getLayerWidth();
-
-        weight = new DMatrix(layerWidth, previousLayerWidth, this.initialization, "Weight");
-
-        bias = new DMatrix(layerWidth, 1, "Bias");
-
-        registerWeight(weight, regulateDirectWeights, true);
-
-        registerWeight(bias, false, false);
-
+    protected boolean getRegulateDirectWeights() {
+        return regulateDirectWeights;
     }
 
     /**
-     * Reinitializes layer.
+     * Returns weight set.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return weight set.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
-        weight.initialize(this.initialization);
-        bias.reset();
+    protected WeightSet getWeightSet() {
+        return weightSet;
+    }
 
-        super.reinitialize();
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+        weightSet = new FeedforwardWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights);
     }
 
     /**
@@ -168,9 +245,11 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         return new MMatrix(input);
     }
 
@@ -181,9 +260,8 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        Matrix output = weight.dot(input);
-
-        output = output.add(bias);
+        Matrix output = weightSet.weight.dot(input);
+        output = output.add(weightSet.bias);
 
         if (splitOutputAtPosition == -1) output = output.apply(activationFunction);
         else {
@@ -215,6 +293,15 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      */
     protected HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
+    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
     }
 
     /**
