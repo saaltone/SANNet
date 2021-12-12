@@ -6,6 +6,7 @@
 package core.layer.normalization;
 
 import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -13,6 +14,7 @@ import utils.matrix.*;
 import utils.procedure.node.Node;
 import utils.sampling.Sequence;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -32,6 +34,85 @@ public class BatchNormalization extends AbstractExecutionLayer {
             "(momentum:DOUBLE)";
 
     /**
+     * Class that defines weight set for layer.
+     *
+     */
+    protected class BatchNormalizationWeightSet implements WeightSet, Serializable {
+
+        /**
+         * Learnable parameter gamma of batch normalization layer.
+         *
+         */
+        private final Matrix gamma;
+
+        /**
+         * Learnable parameter beta of batch normalization layer.
+         *
+         */
+        private final Matrix beta;
+
+        /**
+         * Set of weights.
+         *
+         */
+        private final HashSet<Matrix> weights = new HashSet<>();
+
+        /**
+         * Constructor for weight set
+         *
+         * @param initialization weight initialization function.
+         * @param previousLayerWidth width of previous layer.
+         * @param previousLayerHeight height of previous layer.
+         */
+        BatchNormalizationWeightSet(Initialization initialization, int previousLayerWidth, int previousLayerHeight) {
+            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
+            beta = new DMatrix(previousLayerWidth, previousLayerHeight, "Beta");
+
+            weights.add(gamma);
+            weights.add(beta);
+
+            registerWeight(gamma, false, false);
+            registerWeight(beta, false, false);
+        }
+
+        /**
+         * Returns set of weights.
+         *
+         * @return set of weights.
+         */
+        public HashSet<Matrix> getWeights() {
+            return weights;
+        }
+
+        /**
+         * Reinitializes weights.
+         *
+         */
+        public void reinitialize() {
+            gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
+            beta.reset();
+        }
+
+        /**
+         * Returns number of parameters.
+         *
+         * @return number of parameters.
+         */
+        public int getNumberOfParameters() {
+            int numberOfParameters = 0;
+            for (Matrix weight : weights) numberOfParameters += weight.size();
+            return numberOfParameters;
+        }
+
+    }
+
+    /**
+     * Weight set.
+     *
+     */
+    protected BatchNormalizationWeightSet weightSet;
+
+    /**
      * True if layer normalization is used calculation only with mean and variance excluded.
      *
      */
@@ -42,18 +123,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      */
     private MMatrix input;
-
-    /**
-     * Learnable parameter gamma of batch normalization layer.
-     *
-     */
-    private Matrix gamma;
-
-    /**
-     * Learnable parameter beta of batch normalization layer.
-     *
-     */
-    private Matrix beta;
 
     /**
      * Matrix for epsilon value.
@@ -170,6 +239,15 @@ public class BatchNormalization extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return false; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return false;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always false.
@@ -177,33 +255,20 @@ public class BatchNormalization extends AbstractExecutionLayer {
     public boolean isConvolutionalLayer() { return false; }
 
     /**
-     * Initializes batch normalization.<br>
-     * Initializes weight and bias and their gradients.<br>
+     * Returns weight set.
      *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return weight set.
      */
-    public void initialize() throws NeuralNetworkException, MatrixException, DynamicParamException {
-        super.initialize();
-
-        gamma = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), (
-row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
-
-        beta = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), "Beta");
-
-        registerWeight(gamma, false, false);
-
-        registerWeight(beta, false, false);
+    protected WeightSet getWeightSet() {
+        return weightSet;
     }
 
     /**
-     * Reinitializes layer.
+     * Initializes neural network layer weights.
      *
      */
-    public void reinitialize() {
-        gamma.initialize((row, col) -> new Random().nextGaussian() * 0.1);
-        beta.reset();
+    public void initializeWeights() {
+        weightSet = new BatchNormalizationWeightSet(initialization, getPreviousLayerWidth(), getPreviousLayerHeight());
     }
 
     /**
@@ -214,6 +279,7 @@ row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new MMatrix(1, "Inputs");
+        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         input.put(0, new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE, "Inputs"));
         return input;
     }
@@ -241,15 +307,14 @@ row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
      */
     public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
         mean = input.mean();
-        MMatrix meanNormalizedInput = input.subtract(mean);
 
         MMatrix outputs;
+        MMatrix meanNormalizedInput = input.subtract(mean);
         if (!meanOnly) {
             variance = input.variance(mean);
-            MMatrix normalizedOutput = meanNormalizedInput.divide(variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT));
-            outputs = normalizedOutput.multiply(gamma).add(beta);
+            outputs = meanNormalizedInput.divide(variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta);
         }
-        else outputs = meanNormalizedInput.multiply(gamma).add(beta);
+        else outputs = meanNormalizedInput.multiply(weightSet.gamma).add(weightSet.beta);
         outputs.setName("Outputs", true);
 
         return outputs;
@@ -278,13 +343,24 @@ row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
     }
 
     /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
+    }
+
+    /**
      * Takes single forward processing step to process layer input(s).<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        Sequence inputSequence = prepareForwardProcess();
+        resetLayer();
+        Sequence inputSequence = getPreviousLayerOutputs();
+
         if (isTraining()) {
             if (batchSize == -1) batchSize = inputSequence.sampleSize();
             if (inputSequence.sampleSize() < 2) throw new MatrixException("Batch normalization must have minimum batch size of 2 for training phase.");
@@ -299,14 +375,14 @@ row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
                 Matrix averageStandardDeviation = averageVariance.multiply(batchSize / (batchSize - 1)).add(epsilonMatrix).apply(UnaryFunctionType.SQRT);
                 for (Integer sampleIndex : inputSequence.keySet()) {
                     for (Integer entryIndex : inputSequence.get(sampleIndex).keySet()) {
-                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(gamma).add(beta));
+                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
             else {
                 for (Integer sampleIndex : inputSequence.keySet()) {
                     for (Integer entryIndex : inputSequence.get(sampleIndex).keySet()) {
-                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).multiply(gamma).add(beta));
+                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
