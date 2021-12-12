@@ -86,42 +86,6 @@ public class CyclicPoolGradientMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Sets input gradient matrix.
-     *
-     * @param inputGradient input gradient matrix.
-     */
-    public void setInputGradient(Matrix inputGradient) {
-        this.inputGradient = inputGradient;
-    }
-
-    /**
-     * Returns input gradient matrix.
-     *
-     * @return input gradient matrix.
-     */
-    public Matrix getInputGradient() {
-        return inputGradient;
-    }
-
-    /**
-     * Sets maximum positions.
-     *
-     * @param inputPos maximum positions.
-     */
-    public void setInputPos(HashMap<Integer, Integer> inputPos) {
-        this.inputPos = inputPos;
-    }
-
-    /**
-     * Returns maximum positions.
-     *
-     * @return maximum positions.
-     */
-    public HashMap<Integer, Integer> getInputPos() {
-        return inputPos;
-    }
-
-    /**
      * Applies operation.
      *
      * @param row current row.

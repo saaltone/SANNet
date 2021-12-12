@@ -90,42 +90,6 @@ public class MaxPoolGradientMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Sets input gradient matrix.
-     *
-     * @param inputGradient input gradient matrix.
-     */
-    public void setInputGradient(Matrix inputGradient) {
-        this.inputGradient = inputGradient;
-    }
-
-    /**
-     * Returns input gradient matrix.
-     *
-     * @return input gradient matrix.
-     */
-    public Matrix getInputGradient() {
-        return inputGradient;
-    }
-
-    /**
-     * Sets maximum positions.
-     *
-     * @param maxPos maximum positions.
-     */
-    public void setMaxPos(HashMap<Integer, Integer> maxPos) {
-        this.maxPos = maxPos;
-    }
-
-    /**
-     * Returns maximum positions.
-     *
-     * @return maximum positions.
-     */
-    public HashMap<Integer, Integer> getMaxPos() {
-        return maxPos;
-    }
-
-    /**
      * Applies operation.
      *
      * @param row current row.
