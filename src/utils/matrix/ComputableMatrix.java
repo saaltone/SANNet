@@ -906,8 +906,9 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param value value
      * @return bit column vector.
+     * @throws MatrixException throws exception if binary code size is exceeding number of maximum bits.
      */
-    public static Matrix encodeToBitColumnVector(int value) {
+    public static Matrix encodeToBitColumnVector(int value) throws MatrixException {
         return ComputableMatrix.encodeToBitColumnVector(value, value);
     }
 
@@ -917,10 +918,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param value value
      * @param maxBits max number of bits.
      * @return bit column vector.
+     * @throws MatrixException throws exception if binary code size is exceeding number of maximum bits.
      */
-    public static Matrix encodeToBitColumnVector(int value, int maxBits) {
+    public static Matrix encodeToBitColumnVector(int value, int maxBits) throws MatrixException {
         String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
-        Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
+        if (binaryCode.length() > maxBits) throw new MatrixException("Binary code length: " + binaryCode.length() + " is exceeding number of maximum bits: " + maxBits);
+        Matrix encodedMatrix = new DMatrix(binaryCode.length(), 1);
         for (int charIndex = 0; charIndex < binaryCode.length(); charIndex++) {
             char charAt = binaryCode.charAt(charIndex);
             if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 1);

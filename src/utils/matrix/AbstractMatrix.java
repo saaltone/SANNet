@@ -131,15 +131,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns total number of columns defined for matrix.
-     *
-     * @return total number of columns defined for matrix.
-     */
-    protected int getTotalSize() {
-        return rows * columns;
-    }
-
-    /**
      * Updates slice dimensions.
      *
      * @param startRow slice start row
@@ -171,33 +162,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     protected int getSliceStartColumn() {
         return sliceStartColumn;
-    }
-
-    /**
-     * Returns number of rows in slice.
-     *
-     * @return number of rows in slice.
-     */
-    protected int getSliceRows() {
-        return sliceRows;
-    }
-
-    /**
-     * Returns number of columns in slice.
-     *
-     * @return number of columns in slice.
-     */
-    protected int getSliceColumns() {
-        return sliceColumns;
-    }
-
-    /**
-     * Returns size of slice.
-     *
-     * @return size of slice.
-     */
-    protected int sliceSize() {
-        return sliceSize;
     }
 
     /**
@@ -487,11 +451,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param matrixUnaryOperation single variable operation defined as lambda operator.
      * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
-     * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
-    public Matrix apply(Matrix.MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException {
-        return apply(inplace ? this : getNewMatrix(), matrixUnaryOperation);
+    public void apply(MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException {
+        apply(inplace ? this : getNewMatrix(), matrixUnaryOperation);
     }
 
     /**
@@ -1879,7 +1842,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         ArrayList<Matrix> matrices = new ArrayList<>();
         matrices.add(matrix1);
         matrices.add(matrix2);
-        Matrix result = new JMatrix(totalRows, totalColumns, matrices, splitVertically);
+        Matrix result = new JMatrix(matrices, splitVertically);
         if (hasProcedureFactory()) result.setProcedureFactory(procedureFactory);
         return result;
     }
