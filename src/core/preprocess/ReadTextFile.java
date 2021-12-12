@@ -31,30 +31,30 @@ public class ReadTextFile {
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
+    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
         StringBuilder text = readText(fileName, skipRowsFromStart);
 
-        LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> inputData = new LinkedHashMap<>();
-        LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> outputData = new LinkedHashMap<>();
+        HashMap<Integer, HashMap<Integer, Integer>> inputData = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, Integer>> outputData = new HashMap<>();
         int length = Math.min(text.length() - numberOfInputCharacters, text.length() - numberOfOutputCharacters - inputOutputDelta) + 1;
         for (int pos = 0; pos < length; pos++) {
-            LinkedHashMap<Integer, Integer> inValues = new LinkedHashMap<>();
+            HashMap<Integer, Integer> inValues = new HashMap<>();
             for (int inCount = 0; inCount < numberOfInputCharacters; inCount++) {
                 int charAt = charToInt(text.charAt(pos + inCount));
                 inValues.put(inCount, charAt);
             }
             inputData.put(pos, inValues);
 
-            LinkedHashMap<Integer, Integer> outValues = new LinkedHashMap<>();
+            HashMap<Integer, Integer> outValues = new HashMap<>();
             for (int outCount = 0; outCount < numberOfOutputCharacters; outCount++) {
                 int charAt = charToInt(text.charAt(pos + outCount + inputOutputDelta));
                 outValues.put(outCount, charAt);
             }
             outputData.put(pos, outValues);
         }
-        LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
+        HashMap<Integer, MMatrix> inputs = new HashMap<>();
+        HashMap<Integer, MMatrix> outputs = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
@@ -141,70 +141,70 @@ public class ReadTextFile {
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
         StringBuilder readText = readText(fileName, skipRowsFromStart);
         String[] words = readText.toString().split(" ");
         Arrays.setAll(words, index -> words[index].trim());
         Arrays.setAll(words, index -> words[index].replaceAll("[^a-zäöåA-ZÄÖÅ]", "").toLowerCase());
         TreeSet<String> dictionary = new TreeSet<>();
         Collections.addAll(dictionary, words);
-
         int maxBits = ComputableMatrix.numberOfBits(dictionary.size());
         HashMap<Matrix, Integer> dictionaryBinaryIndexMapping = new HashMap<>();
-        ArrayList<Matrix> encodedWords = new ArrayList<>();
+        HashMap<String, Matrix> dictionaryStringBinaryIndexMapping = new HashMap<>();
         int index = 0;
+        int dictionarySize = dictionary.size();
         for (String word : dictionary) {
+            dictionaryIndexMapping.put(index, word);
+            Matrix binaryMatrix = ComputableMatrix.encodeToBitColumnVector(index, maxBits);
+            dictionaryBinaryIndexMapping.put(binaryMatrix, index);
+            dictionaryStringBinaryIndexMapping.put(word, binaryMatrix);
+            index++;
+        }
+
+        ArrayList<Matrix> encodedWords = new ArrayList<>();
+        for (String word : words) {
             if (!word.equals("")) {
-                Matrix binaryMatrix = ComputableMatrix.encodeToBitColumnVector(index++, maxBits);
-                encodedWords.add(binaryMatrix);
-                dictionaryIndexMapping.put(index - 1, word);
-                dictionaryBinaryIndexMapping.put(binaryMatrix, index - 1);
+                encodedWords.add(dictionaryStringBinaryIndexMapping.get(word));
             }
         }
 
-        LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
+        HashMap<Integer, MMatrix> inputs = new HashMap<>();
+        HashMap<Integer, MMatrix> outputs = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
         ArrayDeque<Matrix> encodedWordQueue = new ArrayDeque<>();
-        int dictionarySize = encodedWords.size();
+        LinkedList<Matrix> encodedWordList = new LinkedList<>();
         int pos = 0;
         for (Matrix encodedWord : encodedWords) {
             encodedWordQueue.addLast(encodedWord);
+            encodedWordList.addLast(encodedWord);
+
             if (encodedWordQueue.size() >= numberOfInputWords + 1) {
-                Matrix[] inputMatrices = new Matrix[numberOfInputWords];
-                Matrix[] outputMatrices = new Matrix[1];
-                Iterator<Matrix> iterator = encodedWordQueue.iterator();
+                ArrayList<Matrix> inputMatrices = new ArrayList<>();
+                ArrayList<Matrix> outputMatrices = new ArrayList<>();
                 int wordIndex = 0;
-                while (iterator.hasNext()) {
-                    Matrix currentWordMatrix = iterator.next();
-                    if (wordIndex < numberOfInputWords) inputMatrices[wordIndex] = currentWordMatrix;
+                for (Matrix matrix : encodedWordList) {
+                    if (wordIndex++ < encodedWordList.size() - 1) inputMatrices.add(matrix);
                     else {
                         Matrix outputMatrix = new DMatrix(dictionarySize, 1);
-                        int currentIndex = -1;
-                        for (Matrix matrix : dictionaryBinaryIndexMapping.keySet()) {
-                            if (matrix.equals(currentWordMatrix)) {
-                                currentIndex = dictionaryBinaryIndexMapping.get(matrix);
-                                break;
-                            }
-                        }
-                        outputMatrix.setValue(currentIndex, 0, 1);
-                        outputMatrices[wordIndex - numberOfInputWords] = outputMatrix;
+                        outputMatrix.setValue(dictionaryBinaryIndexMapping.get(matrix), 0, 1);
+                        outputMatrices.add(outputMatrix);
                     }
-                    wordIndex++;
                 }
 
-                JMatrix joinedInputMatrix = new JMatrix(numberOfInputWords * maxBits,1, inputMatrices, true);
-                JMatrix joinedOutputMatrix = new JMatrix(dictionarySize,1, outputMatrices, true);
+                JMatrix joinedInputMatrix = new JMatrix(inputMatrices, true);
+                JMatrix joinedOutputMatrix = new JMatrix(outputMatrices, true);
                 inputs.put(pos, new MMatrix(joinedInputMatrix));
                 outputs.put(pos, new MMatrix(joinedOutputMatrix));
                 pos++;
 
                 encodedWordQueue.removeFirst();
+                encodedWordList.removeFirst();
             }
         }
+
         return result;
     }
 
