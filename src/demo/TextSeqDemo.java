@@ -40,7 +40,7 @@ public class TextSeqDemo {
         try {
             String persistenceName = "<PATH>/TextSeqNN";
             HashMap<Integer, String> dictionaryIndexMapping = new HashMap<>();
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
+            HashMap<Integer, HashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
             neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
@@ -63,14 +63,11 @@ public class TextSeqDemo {
                     String currentWord = dictionaryIndexMapping.getOrDefault(wordIndex, "???");
                     System.out.print(currentWord + " ");
                     nextEncodedWord = ComputableMatrix.encodeToBitColumnVector(wordIndex, inputSize);
-                    int rows = 0;
                     for (int index = 0; index < encodedWords.size() - 1; index++) {
-                        rows += encodedWords.get(index + 1).getTotalRows();
                         encodedWords.set(index, encodedWords.get(index + 1));
                     }
-                    rows += encodedWords.get(encodedWords.size() - 1).getTotalRows();
                     encodedWords.set(encodedWords.size() - 1, nextEncodedWord);
-                    input = new JMatrix(rows, 1, encodedWords, true);
+                    input = new JMatrix(encodedWords, true);
                     encodedWords = input.getSubMatrices();
                 }
                 System.out.println();
@@ -97,8 +94,7 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.DROPOUT, "probability = 0.1");
-        neuralNetwork.addHiddenLayer(LayerType.LSTM, "width = 128");
+        neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 128");
         neuralNetwork.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
@@ -115,7 +111,7 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
         return ReadTextFile.readFileAsBinaryEncoded("<PATH>/lorem_ipsum.txt", numOfInputs, 0, dictionaryIndexMapping);
     }
 
