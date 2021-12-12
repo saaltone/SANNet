@@ -61,10 +61,10 @@ public class Sequence implements Serializable {
      * @param samples samples to be added into this sequence.
      * @throws MatrixException throws exception if depth of samples are not equal.
      */
-    public Sequence(LinkedHashMap<Integer, MMatrix> samples) throws MatrixException {
-        this.depth = samples.get(0).getCapacity();
+    public Sequence(HashMap<Integer, MMatrix> samples) throws MatrixException {
+        this.depth = samples.get(0).getDepth();
         for (Integer entry : samples.keySet()) {
-            if (samples.get(entry).getCapacity() != depth) throw new MatrixException("Depths of all samples are not equal.");
+            if (samples.get(entry).getDepth() != depth) throw new MatrixException("Depths of all samples are not equal.");
             entries.put(entry, samples.get(entry));
         }
     }
@@ -152,16 +152,6 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Replaces all samples in sequence.
-     *
-     * @param sequence sequence containing new samples for this sequence.
-     */
-    public void replaceAll(Sequence sequence) {
-        clear();
-        putAll(sequence);
-    }
-
-    /**
      * Puts all samples into sequence.
      *
      * @param sequence sequence containing new samples for this sequence.
@@ -199,6 +189,15 @@ public class Sequence implements Serializable {
     }
 
     /**
+     * Checks if sequence contains specific sample index.
+     *
+     * @param sampleIndex sample index
+     * @return returns true if sequence contains sample index otherwise false.
+     */
+    public boolean containsKey(int sampleIndex) {
+        return entries.containsKey(sampleIndex);
+    }
+    /**
      * Returns sample index key set in descending order.
      *
      * @return sample index key set in descending order.
@@ -208,20 +207,11 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Returns samples contained inside sequence as collection.
+     * Returns entry key set.
      *
-     * @return samples contained inside sequence as collection.
+     * @return entry key set.
      */
-    public Collection<MMatrix> values() {
-        return entries.values();
-    }
-
-    /**
-     * Returns sample key set.
-     *
-     * @return sample key set.
-     */
-    public Set<Integer> sampleKeySet() {
+    public Set<Integer> entryKeySet() {
         return entries.get(entries.firstKey()).keySet();
     }
 
@@ -235,30 +225,12 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Returns first sample of sequence.
-     *
-     * @return first sample of sequence.
-     */
-    public MMatrix firstValue() {
-        return entries.get(entries.firstKey());
-    }
-
-    /**
      * Returns last index of sequence.
      *
      * @return last index of sequence.
      */
     public Integer lastKey() {
         return entries.lastKey();
-    }
-
-    /**
-     * Returns last sample of sequence.
-     *
-     * @return last sample of sequence.
-     */
-    public MMatrix lastValue() {
-        return entries.get(entries.lastKey());
     }
 
     /**
@@ -286,6 +258,39 @@ public class Sequence implements Serializable {
         Sequence unflattenedSequence = new Sequence(depth);
         for (Integer sampleIndex : keySet()) unflattenedSequence.put(sampleIndex, get(sampleIndex).unflatten(width, height, depth));
         return unflattenedSequence;
+    }
+
+    /**
+     * Joins this and other sequence together by sample indices.
+     *
+     * @param otherSequence other sequence.
+     * @param joinedVertically if true sequences are joined together vertically otherwise horizontally.
+     * @return joined sequence.
+     * @throws MatrixException throws exception if joining of matrices fails.
+     */
+    public Sequence join(Sequence otherSequence, boolean joinedVertically) throws MatrixException {
+        if (getDepth() != otherSequence.getDepth()) throw new MatrixException("Depth of this sequence + " + getDepth() + " and other sequence " + otherSequence.getDepth() + " do not match.");
+        Sequence joinedSequence = new Sequence(getDepth());
+        for (Integer sampleIndex : keySet()) {
+            if (!otherSequence.containsKey(sampleIndex)) throw new MatrixException("Other sequence does not contain sample index: " + sampleIndex);
+            joinedSequence.put(sampleIndex, get(sampleIndex).join(otherSequence.get(sampleIndex), joinedVertically));
+        }
+        return joinedSequence;
+    }
+
+    /**
+     * Unjoins sequence by return specific submatrices of JMatrix.
+     *
+     * @param subMatrixIndex sub matrix index.
+     * @return unjoined sequence.
+     * @throws MatrixException throws exception if unjoining of matrices fails.
+     */
+    public Sequence unjoin(int subMatrixIndex) throws MatrixException {
+        Sequence unjoinedSequence = new Sequence(getDepth());
+        for (Integer sampleIndex : keySet()) {
+            unjoinedSequence.put(sampleIndex, get(sampleIndex).unjoin(subMatrixIndex));
+        }
+        return unjoinedSequence;
     }
 
 }
