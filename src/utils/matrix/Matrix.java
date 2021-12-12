@@ -379,10 +379,9 @@ public interface Matrix {
      *
      * @param matrixUnaryOperation single variable operation defined as lambda operator.
      * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
-     * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
-    Matrix apply(MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException;
+    void apply(MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
