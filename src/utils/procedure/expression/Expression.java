@@ -13,27 +13,6 @@ import java.util.Set;
 public interface Expression {
 
     /**
-     * Returns name of expression.
-     *
-     * @return name of expression.
-     */
-    String getExpressionName();
-
-    /**
-     * Returns signature of operation.
-     *
-     * @return signature of operation.
-     */
-    String getOperationSignature();
-
-    /**
-     * Returns expression ID
-     *
-     * @return expression ID
-     */
-    int getExpressionID();
-
-    /**
      * Returns first argument of expression.
      *
      * @return first argument of expression.
@@ -79,22 +58,19 @@ public interface Expression {
      *
      * @param sampleIndex sample index
      * @param firstSampleIndex first sample index
-     * @param lastSampleIndex last key of inputs
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void calculateExpressionStep(int sampleIndex, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
+    void calculateExpressionStep(int sampleIndex, int firstSampleIndex) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates entire expression chain including regulation.
      *
      * @param sampleIndices sample indices
-     * @param firstSampleIndex first sample index
-     * @param lastSampleIndex last sample index
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void calculateExpressionStep(Set<Integer> sampleIndices, int firstSampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException;
+    void calculateExpressionStep(Set<Integer> sampleIndices) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates entire gradient expression chain including regulation.
@@ -110,12 +86,11 @@ public interface Expression {
      * Calculates entire gradient expression chain including regulation.
      *
      * @param sampleIndices sample indices
-     * @param lastSampleIndex last sample index
      * @param numberOfGradientSteps number of gradient steps taken
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void calculateGradientStep(Set<Integer> sampleIndices, int lastSampleIndex, int numberOfGradientSteps) throws MatrixException, DynamicParamException;
+    void calculateGradientStep(Set<Integer> sampleIndices, int numberOfGradientSteps) throws MatrixException, DynamicParamException;
 
     /**
      * Prints expression chain.
