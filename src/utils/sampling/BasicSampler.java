@@ -59,19 +59,19 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * Input sample set for sampling.
      *
      */
-    private final LinkedHashMap<Integer, MMatrix> inputs = new LinkedHashMap<>();
+    private final HashMap<Integer, MMatrix> inputs = new HashMap<>();
 
     /**
      * Output sample set for sampling.
      *
      */
-    private final LinkedHashMap<Integer, MMatrix> outputs = new LinkedHashMap<>();
+    private final HashMap<Integer, MMatrix> outputs = new HashMap<>();
 
     /**
      * Input sample set for sampling.
      *
      */
-    private final HashSet<Integer> inputSampleSet = new HashSet<>();
+    private final TreeSet<Integer> inputSampleSet = new TreeSet<>();
 
     /**
      * Number of validation cycles.
@@ -176,7 +176,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * @param outputs output set for sampling.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
-    public BasicSampler(LinkedHashMap<Integer, MMatrix> inputs, LinkedHashMap<Integer, MMatrix> outputs) throws NeuralNetworkException {
+    public BasicSampler(HashMap<Integer, MMatrix> inputs, HashMap<Integer, MMatrix> outputs) throws NeuralNetworkException {
         initializeDefaultParams();
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
@@ -194,7 +194,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BasicSampler(LinkedHashMap<Integer, MMatrix> inputs, LinkedHashMap<Integer, MMatrix> outputs, String params) throws NeuralNetworkException, DynamicParamException {
+    public BasicSampler(HashMap<Integer, MMatrix> inputs, HashMap<Integer, MMatrix> outputs, String params) throws NeuralNetworkException, DynamicParamException {
         this(inputs, outputs);
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -283,9 +283,9 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
         if (output == null) throw new NeuralNetworkException("Output is not defined.");
         if (input.size() != output.size()) throw new NeuralNetworkException("Input and output must be same size.");
         if (input.size() == 0) throw new NeuralNetworkException("Input and output cannot be empty.");
-        if (input.getCapacity() != output.getCapacity()) throw new NeuralNetworkException("Sample depth of input and output must match.");
-        if (sampleDepth == -1) sampleDepth = input.getCapacity();
-        else if (sampleDepth != input.getCapacity()) throw new NeuralNetworkException("All input and output samples must have same depth.");
+        if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Sample depth of input and output must match.");
+        if (sampleDepth == -1) sampleDepth = input.getDepth();
+        else if (sampleDepth != input.getDepth()) throw new NeuralNetworkException("All input and output samples must have same depth.");
         inputs.put(inputs.size(), input);
         outputs.put(outputs.size(), output);
     }

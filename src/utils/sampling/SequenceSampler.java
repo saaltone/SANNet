@@ -46,13 +46,13 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * Input sample set for sampling.
      *
      */
-    private final LinkedHashMap<Integer, Sequence> inputs = new LinkedHashMap<>();
+    private final HashMap<Integer, Sequence> inputs = new HashMap<>();
 
     /**
      * Output sample set for sampling.
      *
      */
-    private final LinkedHashMap<Integer, Sequence> outputs = new LinkedHashMap<>();
+    private final HashMap<Integer, Sequence> outputs = new HashMap<>();
 
     /**
      * Number of iterations for training or validation phase.
@@ -109,7 +109,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * @param outputs output sequences for sampling.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
-    public SequenceSampler(LinkedHashMap<Integer, Sequence> inputs, LinkedHashMap<Integer, Sequence> outputs) throws NeuralNetworkException {
+    public SequenceSampler(HashMap<Integer, Sequence> inputs, HashMap<Integer, Sequence> outputs) throws NeuralNetworkException {
         initializeDefaultParams();
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
@@ -127,7 +127,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public SequenceSampler(LinkedHashMap<Integer, Sequence> inputs, LinkedHashMap<Integer, Sequence> outputs, String params) throws NeuralNetworkException, DynamicParamException {
+    public SequenceSampler(HashMap<Integer, Sequence> inputs, HashMap<Integer, Sequence> outputs, String params) throws NeuralNetworkException, DynamicParamException {
         this(inputs, outputs);
         setParams(new DynamicParam(params, getParamDefs()));
     }
