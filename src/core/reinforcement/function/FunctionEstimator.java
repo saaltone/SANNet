@@ -8,7 +8,6 @@ package core.reinforcement.function;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
@@ -79,13 +78,6 @@ public interface FunctionEstimator extends Configurable {
     void registerAgent(Agent agent);
 
     /**
-     * Returns memory of function estimator.
-     *
-     * @return memory of function estimator.
-     */
-    Memory getMemory();
-
-    /**
      * Resets FunctionEstimator.
      *
      */
@@ -94,10 +86,9 @@ public interface FunctionEstimator extends Configurable {
     /**
      * Reinitializes FunctionEstimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void reinitialize() throws NeuralNetworkException, MatrixException;
+    void reinitialize() throws MatrixException;
 
     /**
      * Samples memory of FunctionEstimator.
@@ -127,13 +118,6 @@ public interface FunctionEstimator extends Configurable {
      * @return true if all registered agents are ready to update.
      */
     boolean readyToUpdate(Agent agent) throws AgentException;
-
-    /**
-     * Updates state transition in memory of FunctionEstimator.
-     *
-     * @param stateTransition state transition
-     */
-    void update(StateTransition stateTransition);
 
     /**
      * Updates state transitions in memory of FunctionEstimator.

@@ -184,15 +184,6 @@ public class PlainValueFunction extends AbstractValueFunction {
     }
 
     /**
-     * Return true is function is state action value function.
-     *
-     * @return true is function is state action value function.
-     */
-    public boolean isStateActionValueFunction() {
-        return false;
-    }
-
-    /**
      * Returns state value.
      *
      * @param stateTransition state.
@@ -268,15 +259,6 @@ public class PlainValueFunction extends AbstractValueFunction {
      */
     public boolean readyToUpdate(Agent agent) throws AgentException {
         return getFunctionEstimator().readyToUpdate(agent);
-    }
-
-    /**
-     * Updates state transitions in memory of FunctionEstimator.
-     *
-     * @param stateTransitions state transitions
-     */
-    public void updateFunctionEstimatorMemory(TreeSet<StateTransition> stateTransitions) {
-        getFunctionEstimator().update(stateTransitions);
     }
 
     /**

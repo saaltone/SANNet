@@ -73,9 +73,8 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
+    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }

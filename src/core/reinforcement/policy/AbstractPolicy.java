@@ -213,15 +213,6 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     }
 
     /**
-     * Returns reference to environment.
-     *
-     * @return reference to environment.
-     */
-    public Environment getEnvironment() {
-        return environment;
-    }
-
-    /**
      * Returns executable policy.
      *
      * @return executable policy.

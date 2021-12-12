@@ -260,7 +260,6 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
         TreeSet<StateTransition> sampledStateTransitions = functionEstimator.getSampledStateTransitions();
         if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) return;
 
-        preProcess();
         for (StateTransition stateTransition : sampledStateTransitions) functionEstimator.store(stateTransition, getPolicyValues(stateTransition));
         postProcess();
 
@@ -283,20 +282,13 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
             stateValue.setValue(0, 0, stateTransition.tdTarget);
             Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
             policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
-            return new JMatrix(stateValue.getTotalRows() + policyValues.getTotalRows(), 1, new Matrix[] {stateValue, policyValues}, true);
+            return new JMatrix(new Matrix[] {stateValue, policyValues}, true);
         }
         else {
             Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
             policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
             return policyValues;
         }
-    }
-
-    /**
-     * Preprocesses policy gradient update.
-     *
-     */
-    protected void preProcess() {
     }
 
     /**

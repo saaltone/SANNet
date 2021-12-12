@@ -117,16 +117,6 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns optimizer.
-     *
-     * @return optimizer.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private Optimizer getOptimizer() throws DynamicParamException {
-        return new Adam("learningRate = 0.01");
-    }
-
-    /**
      * Returns parameters used for TabularFunctionEstimator.
      *
      * @return parameters used for TabularFunctionEstimator.

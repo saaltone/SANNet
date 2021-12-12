@@ -117,9 +117,8 @@ public interface Agent {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    Agent reference() throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
+    Agent reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }

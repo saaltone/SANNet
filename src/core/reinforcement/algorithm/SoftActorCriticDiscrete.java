@@ -5,7 +5,6 @@
 
 package core.reinforcement.algorithm;
 
-import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.function.FunctionEstimator;
@@ -37,10 +36,9 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, Matrix softQAlphaMatrix) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, NeuralNetworkException, AgentException {
+    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, Matrix softQAlphaMatrix) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException {
         super(environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, softQAlphaMatrix), new SoftQValueFunctionEstimator(policyFunctionEstimator, valueFunctionEstimator, softQAlphaMatrix));
     }
 
@@ -57,10 +55,9 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, Matrix softQAlphaMatrix, String params) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, NeuralNetworkException, AgentException {
+    public SoftActorCriticDiscrete(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, Matrix softQAlphaMatrix, String params) throws ClassNotFoundException, MatrixException, DynamicParamException, IOException, AgentException {
         super(environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, softQAlphaMatrix), new SoftQValueFunctionEstimator(policyFunctionEstimator, valueFunctionEstimator, softQAlphaMatrix), params);
     }
 
@@ -72,10 +69,9 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public SoftActorCriticDiscrete reference() throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public SoftActorCriticDiscrete reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
         return new SoftActorCriticDiscrete(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference().getFunctionEstimator(), valueFunction.reference().getFunctionEstimator(), new DMatrix(0), getParams());
     }
 
@@ -90,10 +86,9 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public SoftActorCriticDiscrete reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public SoftActorCriticDiscrete reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
         return new SoftActorCriticDiscrete(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), valueFunction.reference(sharedValueFunctionEstimator, sharedMemory).getFunctionEstimator(), new DMatrix(0), getParams());
     }
 

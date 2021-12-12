@@ -30,11 +30,10 @@ public interface ValueFunction extends Configurable {
      * @throws IOException throws exception if creation of target value FunctionEstimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
      */
-    ValueFunction reference() throws DynamicParamException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException, AgentException;
+    ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException;
 
     /**
      * Returns reference to value function.
@@ -46,10 +45,9 @@ public interface ValueFunction extends Configurable {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
      */
-    ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, NeuralNetworkException, IOException, ClassNotFoundException, AgentException;
+    ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException;
 
     /**
      * Starts FunctionEstimator
@@ -72,13 +70,6 @@ public interface ValueFunction extends Configurable {
      * @param agent agent.
      */
     void registerAgent(Agent agent);
-
-    /**
-     * Return true is function is state action value function.
-     *
-     * @return true is function is state action value function.
-     */
-    boolean isStateActionValueFunction();
 
     /**
      * Returns value for state.
@@ -138,13 +129,6 @@ public interface ValueFunction extends Configurable {
      * @return true if all registered agents are ready to update.
      */
     boolean readyToUpdate(Agent agent) throws AgentException;
-
-    /**
-     * Updates state transitions in memory of FunctionEstimator.
-     *
-     * @param stateTransitions state transitions
-     */
-    void updateFunctionEstimatorMemory(TreeSet<StateTransition> stateTransitions);
 
     /**
      * Samples memory of FunctionEstimator.

@@ -226,10 +226,9 @@ public class AgentFactory {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public static Agent createAgent(Agent agent) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+    public static Agent createAgent(Agent agent) throws MatrixException, AgentException, IOException, DynamicParamException, ClassNotFoundException {
         return agent.reference();
     }
 
@@ -245,10 +244,9 @@ public class AgentFactory {
      * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public static Agent createAgent(Agent agent, boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+    public static Agent createAgent(Agent agent, boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, AgentException, IOException, DynamicParamException, ClassNotFoundException {
         if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
         if (agent instanceof AbstractQLearning) return ((AbstractQLearning)agent).reference(sharedValueFunctionEstimator, sharedMemory);
         throw new AgentException("Unknown agent type. Unable to create reference for agent.");

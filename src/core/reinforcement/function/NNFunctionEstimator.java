@@ -19,8 +19,6 @@ import utils.sampling.BasicSampler;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.TreeMap;
 
 /**
  * Class that defines NNFunctionEstimator.<br>
@@ -215,10 +213,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Reinitializes NNFunctionEstimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reinitialize() throws NeuralNetworkException, MatrixException {
+    public void reinitialize() throws MatrixException {
         neuralNetwork.reinitialize();
     }
 
@@ -255,9 +252,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void update() throws NeuralNetworkException, DynamicParamException, AgentException, MatrixException {
-        LinkedHashMap<Integer, MMatrix> states = new LinkedHashMap<>();
-        LinkedHashMap<Integer, MMatrix> stateValues = new LinkedHashMap<>();
-        TreeMap<Integer, Double> importanceSamplingWeights = new TreeMap<>();
+        HashMap<Integer, MMatrix> states = new HashMap<>();
+        HashMap<Integer, MMatrix> stateValues = new HashMap<>();
+        HashMap<Integer, Double> importanceSamplingWeights = new HashMap<>();
         int index = 0;
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
             states.put(index, new MMatrix(stateTransition.environmentState.state()));

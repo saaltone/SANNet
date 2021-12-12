@@ -7,6 +7,7 @@ package core.reinforcement.agent;
 
 import utils.matrix.Matrix;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 
@@ -20,6 +21,9 @@ import java.util.HashSet;
  *
  */
 public record EnvironmentState(int episodeID, int timeStep, Matrix state, HashSet<Integer> availableActions) implements Serializable, Comparable<EnvironmentState> {
+
+    @Serial
+    private static final long serialVersionUID = -3840329155579749639L;
 
     /**
      * Compares this environment state to other environment state.<br>

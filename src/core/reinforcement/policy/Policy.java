@@ -57,13 +57,6 @@ public interface Policy extends Configurable {
     Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException;
 
     /**
-     * Return true is function is state action value function.
-     *
-     * @return true is function is state action value function.
-     */
-    boolean isStateActionValueFunction();
-
-    /**
      * Starts Policy.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
@@ -91,13 +84,6 @@ public interface Policy extends Configurable {
      * @param environment reference to environment.
      */
     void setEnvironment(Environment environment);
-
-    /**
-     * Returns reference to environment.
-     *
-     * @return reference to environment.
-     */
-    Environment getEnvironment();
 
     /**
      * Returns executable policy.

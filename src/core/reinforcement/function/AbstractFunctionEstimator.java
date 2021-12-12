@@ -242,10 +242,9 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     /**
      * Reinitializes FunctionEstimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reinitialize() throws NeuralNetworkException, MatrixException {
+    public void reinitialize() throws MatrixException {
     }
 
     /**
@@ -285,15 +284,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
         if (!registeredAgents.contains(agent)) throw new AgentException("Agent is not registered for function estimator.");
         completedAgents.add(agent);
         return completedAgents.containsAll(registeredAgents);
-    }
-
-    /**
-     * Updates state transition in memory of AbstractFunctionEstimator.
-     *
-     * @param stateTransition state transition
-     */
-    public void update(StateTransition stateTransition) {
-        memory.update(stateTransition);
     }
 
     /**

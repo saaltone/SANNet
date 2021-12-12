@@ -8,7 +8,6 @@ package core.reinforcement.policy.executablepolicy;
 import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParamException;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -16,9 +15,6 @@ import java.io.Serializable;
  *
  */
 public class ExecutablePolicyFactory implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 4044647047494437807L;
 
     /**
      * Creates executable policy instance of given type with defined parameters.
