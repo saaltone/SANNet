@@ -305,33 +305,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Resets optimizer of all neural network layers.
-     *
-     * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
-     */
-    public void resetOptimizer() throws NeuralNetworkException {
-        checkStarted();
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) {
-            if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.resetOptimizer();
-        }
-    }
-
-    /**
-     * Resets optimizer of specific neural network layer.
-     *
-     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
-     * @throws NeuralNetworkException throws neural network exception if resetting of optimizer fails.
-     */
-    public void resetOptimizer(int neuralNetworkLayerIndex) throws NeuralNetworkException {
-        checkStarted();
-        if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
-        NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
-        if (neuralNetworkLayer instanceof InputLayer) throw new NeuralNetworkException("Input layer cannot be optimized.");
-        if (neuralNetworkLayer instanceof OutputLayer) throw new NeuralNetworkException("Output layer cannot be optimized.");
-        neuralNetworkLayer.resetOptimizer();
-    }
-
-    /**
      * Adds input layer to neural network.
      *
      * @param params parameters for input layer.
@@ -545,11 +518,9 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Connects layers to each other.<br>
      * Initializes layers.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
-    public void build() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void build() throws NeuralNetworkException {
         if (!neuralNetworkLayers.isEmpty()) throw new NeuralNetworkException("Neural network is already built.");
 
         neuralNetworkLayers.add(inputLayer);
@@ -557,12 +528,28 @@ public class NeuralNetwork implements Runnable, Serializable {
         neuralNetworkLayers.add(outputLayer);
 
         int neuralNetworkLayersSize = neuralNetworkLayers.size();
+
+        boolean hasRecurrentLayers = false;
+        for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
+            if (neuralNetworkLayers.get(layerIndex).isRecurrentLayer()) {
+                hasRecurrentLayers = true;
+                break;
+            }
+        }
+        if (hasRecurrentLayers) {
+            for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
+                if (!neuralNetworkLayers.get(layerIndex).worksWithRecurrentLayer()) {
+                    throw new NeuralNetworkException(LayerFactory.getLayerTypeByName(neuralNetworkLayers.get(layerIndex)) + " layer does not work with recurrent layers.");
+                }
+            }
+        }
+
         for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
             neuralNetworkLayers.get(layerIndex).setNextLayer(neuralNetworkLayers.get(layerIndex + 1));
             neuralNetworkLayers.get(layerIndex + 1).setPreviousLayer(neuralNetworkLayers.get(layerIndex));
         }
 
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.initialize();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.initializeDimensions();
     }
 
     /**
@@ -949,7 +936,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public MMatrix predict(MMatrix input) throws NeuralNetworkException, MatrixException {
         if (input == null) throw new NeuralNetworkException("No prediction inputs set");
-        Sequence inputs = new Sequence(input.getCapacity());
+        Sequence inputs = new Sequence(input.getDepth());
         inputs.put(0, input);
         return predict(inputs, true).get(0);
     }
@@ -1157,7 +1144,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
         long startTime = System.nanoTime();
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.reset();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.resetOptimizer();
         trainingMetric.reset();
         Sequence inputSequence = new Sequence(trainingSampler.getDepth());
         Sequence outputSequence = new Sequence(trainingSampler.getDepth());
@@ -1348,10 +1335,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Reinitializes neural network.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reinitialize() throws MatrixException, NeuralNetworkException {
+    public void reinitialize() throws MatrixException {
         waitToComplete();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.reinitialize();
     }
@@ -1377,7 +1363,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param importanceSamplingWeights importance sampling weights
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    public void setImportanceSamplingWeights(TreeMap<Integer, Double> importanceSamplingWeights) throws NeuralNetworkException {
+    public void setImportanceSamplingWeights(HashMap<Integer, Double> importanceSamplingWeights) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
         executeLock.lock();
