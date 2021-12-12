@@ -171,6 +171,19 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
+     * Initializes neural network layer dimensions.
+     *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     */
+    public void initializeDimensions() throws NeuralNetworkException {
+        if (getLayerWidth() == -1) {
+            setLayerWidth(getPreviousLayerWidth());
+            setLayerHeight(getPreviousLayerHeight());
+            setLayerDepth(getPreviousLayerDepth());
+        }
+    }
+
+    /**
      * Sets parameters used for abstract layer.<br>
      * <br>
      * Supported parameters are:<br>
@@ -218,6 +231,15 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     protected abstract String getTypeByName() throws NeuralNetworkException;
+
+    /**
+     * Check if layer is bidirectional.
+     *
+     * @return true if layer is bidirectional otherwise returns false.
+     */
+    public boolean isBidirectional() {
+        return false;
+    }
 
     /**
      * Sets reference to next neural network layer.
@@ -288,7 +310,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return width of neural network layer.
      */
     public int getLayerWidth() {
-        return !(this instanceof OutputLayer) ? layerWidth : getPreviousLayer().getLayerWidth();
+        return layerWidth;
     }
 
     /**
@@ -304,7 +326,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return height of neural network layer.
      */
     public int getLayerHeight() {
-        return !(this instanceof OutputLayer) ? layerHeight : getPreviousLayer().getLayerHeight();
+        return layerHeight;
     }
 
     /**
@@ -320,22 +342,35 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return depth of neural network layer.
      */
     public int getLayerDepth() {
-        return !(this instanceof OutputLayer) ? layerDepth : getPreviousLayer().getLayerDepth();
+        return layerDepth;
     }
 
     /**
-     * Checks if execution layer is recurrent layer type.
+     * Returns width of previous layer.
      *
-     * @return true if execution layer is recurrent layer type otherwise false.
+     * @return width of previous layer.
      */
-    public abstract boolean isRecurrentLayer();
+    public int getPreviousLayerWidth() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerWidth() * getPreviousLayer().getLayerHeight() * getPreviousLayer().getLayerDepth() : getPreviousLayer().getLayerWidth();
+    }
 
     /**
-     * Checks if execution layer is convolutional layer type.
+     * Returns height of previous layer.
      *
-     * @return true if execution layer is convolutional layer type otherwise false.
+     * @return height of previous layer.
      */
-    public abstract boolean isConvolutionalLayer();
+    public int getPreviousLayerHeight() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerHeight();
+    }
+
+    /**
+     * Returns depth of previous layer.
+     *
+     * @return depth of previous layer.
+     */
+    public int getPreviousLayerDepth() {
+        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerDepth();
+    }
 
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
@@ -365,12 +400,22 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
+     * Sets layer outputs.
+     *
+     * @param layerOutputs layer outputs.
+     */
+    protected void setLayerOutputs(Sequence layerOutputs) {
+        this.layerOutputs = layerOutputs;
+    }
+
+    /**
      * Returns previous layer outputs.
      *
      * @return previous layer outputs.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sequence getPreviousLayerOutputs() {
-        return hasPreviousLayer() ? getPreviousLayer().getLayerOutputs() : getLayerOutputs();
+    public Sequence getPreviousLayerOutputs() throws MatrixException {
+        return hasPreviousLayer() ? getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerOutputs().flatten() : getPreviousLayer().getLayerOutputs() : getLayerOutputs();
     }
 
     /**
@@ -379,7 +424,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
     public void resetLayerOutputs() throws MatrixException {
-        layerOutputs = new Sequence(layerDepth);
+        layerOutputs = new Sequence(getLayerDepth());
     }
 
     /**
@@ -389,6 +434,15 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public Sequence getLayerGradients() {
         return layerGradients;
+    }
+
+    /**
+     * Sets layer gradients.
+     *
+     * @param layerGradients layer gradients.
+     */
+    protected void setLayerGradients(Sequence layerGradients) {
+        this.layerGradients = layerGradients;
     }
 
     /**
@@ -406,7 +460,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
     public void resetLayerGradients() throws MatrixException {
-        layerGradients = new Sequence(layerDepth);
+        layerGradients = new Sequence(getLayerDepth());
     }
 
     /**
