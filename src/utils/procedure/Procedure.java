@@ -63,22 +63,41 @@ public class Procedure implements Serializable {
     private final boolean hasDependentNodes;
 
     /**
-     * Constructor for procedure.
+     * If true input is reversed otherwise not.
      *
+     */
+    private final boolean reversedInput;
+
+    /**
+     * Parameter matrices.
+     *
+     */
+    private final HashSet<Matrix> parameterMatrices;
+
+    /**
+     * Constructor for procedure.
      * @param inputNodes input nodes for procedure.
      * @param outputNodes input nodes for procedure.
      * @param nodes all nodes for procedure.
      * @param expressionChain chain of expressions describing procedure.
      * @param gradientChain chain of gradients for procedure.
      * @param hasDependentNodes true if procedure has dependent nodes.
+     * @param parameterMatrices parameter matrices.
+     * @param stopGradientMatrices matrices for which gradient is not updated.
+     * @param reversedInput if true input is reversed other not.
+     * @throws MatrixException throws exception if node does not contain all constant and parameter matrices.
      */
-    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, boolean hasDependentNodes) {
+    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, boolean hasDependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput) throws MatrixException {
         this.inputNodes.putAll(inputNodes);
         this.outputNodes.putAll(outputNodes);
         this.nodes.addAll(nodes);
         this.expressionChain = expressionChain;
         this.gradientChain = gradientChain;
         this.hasDependentNodes = hasDependentNodes;
+        this.parameterMatrices = parameterMatrices;
+        if (parameterMatrices != null) checkParameterMatrices();
+        if (stopGradientMatrices != null) setStopGradient(stopGradientMatrices, true);
+        this.reversedInput = reversedInput;
     }
 
     /**
@@ -128,15 +147,6 @@ public class Procedure implements Serializable {
      */
     public HashMap<Integer, Node> getOutputNodes() {
         return outputNodes;
-    }
-
-    /**
-     * Returns nodes.
-     *
-     * @return nodes.
-     */
-    public HashSet<Node> getNodes() {
-        return nodes;
     }
 
     /**
@@ -190,10 +200,13 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        for (Integer sampleIndex : inputSequence.keySet()) {
+        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
+        int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
+
+        for (Integer sampleIndex : inputKeySet) {
             setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
-            expressionChain.calculateExpressionStep(sampleIndex, inputSequence.firstKey(), inputSequence.lastKey());
+            expressionChain.calculateExpressionStep(sampleIndex, firstKey);
 
             outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
         }
@@ -208,11 +221,13 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        for (Integer sampleIndex : inputSequence.keySet()) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
+        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
 
-        expressionChain.calculateExpressionStep(inputSequence.keySet(), inputSequence.firstKey(), inputSequence.lastKey());
+        for (Integer sampleIndex : inputKeySet) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
 
-        for (Integer sampleIndex : inputSequence.keySet()) outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+        expressionChain.calculateExpressionStep(inputKeySet);
+
+        for (Integer sampleIndex : inputKeySet) outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
     }
 
     /**
@@ -243,26 +258,6 @@ public class Procedure implements Serializable {
      * Calculates chain of forward expressions.
      *
      * @param inputMatrix input matrices.
-     * @return output matrix.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public MMatrix calculateExpression(MMatrix inputMatrix) throws MatrixException, DynamicParamException {
-        Sequence inputSequence = new Sequence(1);
-        for (Integer sampleIndex : inputMatrix.keySet()) inputSequence.put(sampleIndex, new MMatrix(inputMatrix.get(sampleIndex)));
-
-        Sequence outputSequence = new Sequence(1);
-        calculateExpressionPerStep(inputSequence, outputSequence);
-
-        MMatrix outputMatrix = new MMatrix();
-        for (Integer sampleIndex : outputSequence.keySet()) outputMatrix.put(sampleIndex, outputSequence.get(sampleIndex, 0));
-        return outputMatrix;
-    }
-
-    /**
-     * Calculates chain of forward expressions.
-     *
-     * @param inputMatrix input matrices.
      * @param sampleIndex sample index.
      * @return output matrix.
      * @throws MatrixException throws exception if calculation fails.
@@ -270,7 +265,7 @@ public class Procedure implements Serializable {
      */
     public Matrix calculateExpression(Matrix inputMatrix, int sampleIndex) throws MatrixException, DynamicParamException {
         setInputSample(sampleIndex, new MMatrix(inputMatrix));
-        expressionChain.calculateExpressionStep(sampleIndex, 0, 0);
+        expressionChain.calculateExpressionStep(sampleIndex, 0);
         return getOutputNodes().get(0).getMatrix(sampleIndex);
     }
 
@@ -298,11 +293,14 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+        Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
+        int lastKey = reversedInput ? outputGradientSequence.firstKey() : outputGradientSequence.lastKey();
+
         int gradientStepCount = 0;
-        for (Integer sampleIndex : outputGradientSequence.descendingKeySet()) {
+        for (Integer sampleIndex : inputKeySet) {
             setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
 
-            gradientChain.calculateGradientStep(sampleIndex, outputGradientSequence.firstKey());
+            gradientChain.calculateGradientStep(sampleIndex, lastKey);
 
             inputGradientSequence.put(sampleIndex, setInputSampleGradient(sampleIndex));
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
@@ -319,16 +317,18 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+        Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
+
         int gradientStepCount = 0;
-        for (Integer sampleIndex : outputGradientSequence.keySet()) {
+        for (Integer sampleIndex : inputKeySet) {
             setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
         }
 
-        gradientChain.calculateGradientStep(outputGradientSequence.keySet(), outputGradientSequence.lastKey(), numberOfGradientSteps);
+        gradientChain.calculateGradientStep(inputKeySet, numberOfGradientSteps);
 
         gradientStepCount = 0;
-        for (Integer sampleIndex : outputGradientSequence.keySet()) {
+        for (Integer sampleIndex : inputKeySet) {
             inputGradientSequence.put(sampleIndex, setInputSampleGradient(sampleIndex));
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
         }
@@ -362,26 +362,6 @@ public class Procedure implements Serializable {
      * Calculates backward chain of gradient expressions.
      *
      * @param outputGradient output gradient for procedure.
-     * @return input gradient.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public MMatrix calculateGradient(MMatrix outputGradient) throws MatrixException, DynamicParamException {
-        Sequence outputGradientSequence = new Sequence(1);
-        for (Integer sampleIndex : outputGradient.keySet()) outputGradientSequence.put(sampleIndex, new MMatrix(outputGradient.get(sampleIndex)));
-
-        Sequence inputGradientSequence = new Sequence(1);
-        calculateGradientPerStep(outputGradientSequence, inputGradientSequence, -1);
-
-        MMatrix inputGradient = new MMatrix();
-        for (Integer sampleIndex : inputGradientSequence.keySet()) inputGradient.put(sampleIndex, inputGradientSequence.get(sampleIndex, 0));
-        return inputGradient;
-    }
-
-    /**
-     * Calculates backward chain of gradient expressions.
-     *
-     * @param outputGradient output gradient for procedure.
      * @param sampleIndex sample index.
      * @return input gradient.
      * @throws MatrixException throws exception if calculation fails.
@@ -393,18 +373,51 @@ public class Procedure implements Serializable {
         return getInputNodes().get(0).getGradient(sampleIndex);
     }
 
+    /**
+     * Check that procedure contains all parameter matrices.
+     *
+     * @throws MatrixException throws exception if node does not contain all parameter matrices.
+     */
+    private void checkParameterMatrices() throws MatrixException {
+        for (Matrix parameterMatrix : parameterMatrices) {
+            boolean containsParameterMatrix = false;
+            for (Node node : nodes) {
+                if (node.isReferenceOf(parameterMatrix)) {
+                    containsParameterMatrix = true;
+                    break;
+                }
+            }
+            if (!containsParameterMatrix) {
+                System.out.println("Fail: " + this + " " + parameterMatrix + " " + parameterMatrix.getName());
+                throw new MatrixException("Procedure does not contain all parameter matrices.");
+            }
+        }
+    }
 
     /**
-     * Returns gradient for specific constant matrix.
+     * Gets gradients for parameter matrices
      *
-     * @param constantMatrix constant matrix.
-     * @return gradient corresponding specific constant matrix.
-     * @throws MatrixException throws exception is no node corresponding reference matrix is found.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return gradients
      */
-    public Matrix getGradient(Matrix constantMatrix) throws MatrixException {
-        Node node = getNode(constantMatrix);
-        if (node == null) throw new MatrixException("No such reference matrix registered.");
-        return node.getGradientMean();
+    public HashMap<Matrix, Matrix> getGradients() throws MatrixException {
+        HashMap<Matrix, Matrix> gradients = new HashMap<>();
+        getGradients(gradients);
+        return gradients;
+    }
+
+    /**
+     * Gets gradients for parameter matrices
+     *
+     * @param gradients gradients
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void getGradients(HashMap<Matrix, Matrix> gradients) throws MatrixException {
+        if (parameterMatrices == null) return;
+        for (Matrix parameterMatrix : parameterMatrices) {
+            Node node = getNode(parameterMatrix);
+            if (node != null) gradients.put(parameterMatrix, node.getGradientMean());
+        }
     }
 
     /**
@@ -412,8 +425,9 @@ public class Procedure implements Serializable {
      *
      * @param referenceMatrices reference matrices of nodes.
      * @param stopGradient if true gradient is not updated otherwise it is updated.
+     * @throws MatrixException throws exception if procedure does not contain reference matrix.
      */
-    public void setStopGradient(HashSet<Matrix> referenceMatrices, boolean stopGradient) {
+    public void setStopGradient(HashSet<Matrix> referenceMatrices, boolean stopGradient) throws MatrixException {
         for (Matrix referenceMatrix : referenceMatrices) setStopGradient(referenceMatrix, stopGradient);
     }
 
@@ -422,11 +436,17 @@ public class Procedure implements Serializable {
      *
      * @param referenceMatrix reference matrix of node.
      * @param stopGradient if true gradient is not updated otherwise it is updated.
+     * @throws MatrixException throws exception if procedure does not contain reference matrix.
      */
-    public void setStopGradient(Matrix referenceMatrix, boolean stopGradient) {
+    public void setStopGradient(Matrix referenceMatrix, boolean stopGradient) throws MatrixException {
+        boolean containsReferenceMatrix = false;
         for (Node node : nodes) {
-            if (node.isReferenceOf(referenceMatrix)) node.setStopGradient(stopGradient);
+            if (node.isReferenceOf(referenceMatrix)) {
+                node.setStopGradient(stopGradient);
+                containsReferenceMatrix = true;
+            }
         }
+        if (!containsReferenceMatrix) throw new MatrixException("Procedure does not contain reference matrix.");
     }
 
     /**
