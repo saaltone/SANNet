@@ -46,13 +46,13 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private HashMap<Matrix, Matrix> dPrev;
+    private transient HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Hash map to store previous velocities.
      *
      */
-    private HashMap<Matrix, Matrix> vPrev;
+    private transient HashMap<Matrix, Matrix> vPrev;
 
     /**
      * Default constructor for Nesterov Accelerated Gradient.

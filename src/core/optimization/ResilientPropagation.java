@@ -27,13 +27,13 @@ public class ResilientPropagation extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private HashMap<Matrix, Matrix> dPrev;
+    private transient HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Hash map to store previous directions.
      *
      */
-    private HashMap<Matrix, Matrix> wPrev;
+    private transient HashMap<Matrix, Matrix> wPrev;
 
     /**
      * Default constructor for Resilient Propagation.

@@ -79,15 +79,6 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
     }
 
     /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    public String getParams() {
-        return params;
-    }
-
-    /**
      * Returns name of optimizer.
      *
      * @return name of optimizer.

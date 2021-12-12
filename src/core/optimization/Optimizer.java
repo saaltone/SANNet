@@ -16,13 +16,6 @@ import utils.matrix.MatrixException;
 public interface Optimizer {
 
     /**
-     * Returns parameters of optimizer.
-     *
-     * @return parameters for optimizer.
-     */
-    String getParams();
-
-    /**
      * Resets optimizer state.
      *
      */

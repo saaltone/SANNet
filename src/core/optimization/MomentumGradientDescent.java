@@ -46,7 +46,7 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private HashMap<Matrix, Matrix> dPrev;
+    private transient HashMap<Matrix, Matrix> dPrev;
 
     /**
      * Default constructor for Momentum Gradient Descent.

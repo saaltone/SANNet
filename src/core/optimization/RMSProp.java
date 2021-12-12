@@ -47,7 +47,7 @@ public class RMSProp extends AbstractOptimizer {
      * Hash map to store gradients from previous steps.
      *
      */
-    private HashMap<Matrix, Matrix> eg2;
+    private transient HashMap<Matrix, Matrix> eg2;
 
     /**
      * Default constructor for RMSProp.

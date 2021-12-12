@@ -54,7 +54,7 @@ public class RAdam extends AbstractOptimizer {
      * Hash map to store iteration counts.
      *
      */
-    private HashMap<Matrix, Integer> iterations;
+    private transient HashMap<Matrix, Integer> iterations;
 
     /**
      * Maximum length of approximated SMA.
@@ -66,13 +66,13 @@ public class RAdam extends AbstractOptimizer {
      * Hash map to store first moments (means).
      *
      */
-    private HashMap<Matrix, Matrix> m;
+    private transient HashMap<Matrix, Matrix> m;
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private HashMap<Matrix, Matrix> v;
+    private transient HashMap<Matrix, Matrix> v;
 
     /**
      * Default constructor for RAdam.

@@ -102,6 +102,16 @@ public class OptimizerFactory {
     }
 
     /**
+     * Constructs default optimizer (ADAM).
+     *
+     * @return constructed optimizer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Optimizer createDefault() throws DynamicParamException {
+        return create(OptimizationType.ADAM);
+    }
+
+    /**
      * Returns type of optimizer.
      *
      * @param optimizer given optimizer.
