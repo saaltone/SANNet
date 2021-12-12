@@ -11,7 +11,6 @@ import utils.matrix.MatrixException;
 import utils.matrix.SMatrix;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 /**
  * Class for one hot encoding data.<br>
@@ -23,7 +22,7 @@ public class OneHotEncoder {
      * Mapping to store value index pairs for one hot encoding.
      *
      */
-    private HashMap<Integer, LinkedHashMap<Double, Integer>> mapping = new HashMap<>();
+    private HashMap<Integer, HashMap<Double, Integer>> mapping = new HashMap<>();
 
     /**
      * Default constructor for one hot encoder.
@@ -40,10 +39,10 @@ public class OneHotEncoder {
      * @return one hot encoded sample set.
      * @throws MatrixException throws matrix exception is creation of sample fails.
      */
-    public LinkedHashMap<Integer, MMatrix> encode(LinkedHashMap<Integer, MMatrix> input, boolean keepMapping) throws MatrixException {
-        if (input.size() == 0) return new LinkedHashMap<>();
-        LinkedHashMap<Integer, LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>>> itemsMap = new LinkedHashMap<>();
-        if (!keepMapping) mapping = new LinkedHashMap<>();
+    public HashMap<Integer, MMatrix> encode(HashMap<Integer, MMatrix> input, boolean keepMapping) throws MatrixException {
+        if (input.size() == 0) return new HashMap<>();
+        HashMap<Integer, HashMap<Integer, HashMap<Integer, Integer>>> itemsMap = new HashMap<>();
+        if (!keepMapping) mapping = new HashMap<>();
         int rows = -1;
         for (MMatrix sample : input.values()) {
             for (Matrix entry : sample.values()) {
@@ -55,26 +54,26 @@ public class OneHotEncoder {
         int curMaxKey;
         for (int row = 0; row < rows; row++) {
             curMaxKey = prevMaxKey;
-            LinkedHashMap<Double, Integer> rowMapping;
+            HashMap<Double, Integer> rowMapping;
             if (mapping.containsKey(row)) rowMapping = mapping.get(row);
-            else mapping.put(row, rowMapping = new LinkedHashMap<>());
+            else mapping.put(row, rowMapping = new HashMap<>());
             for (Integer entry : input.keySet()) {
                 MMatrix sample = input.get(entry);
-                LinkedHashMap<Integer, LinkedHashMap<Integer, Integer>> sampleMapping;
+                HashMap<Integer, HashMap<Integer, Integer>> sampleMapping;
                 if (itemsMap.containsKey(entry)) sampleMapping = itemsMap.get(entry);
-                else itemsMap.put(entry, sampleMapping = new LinkedHashMap<>());
+                else itemsMap.put(entry, sampleMapping = new HashMap<>());
                 for (Integer depth : sample.keySet()) {
                     Matrix item = sample.get(depth);
-                    LinkedHashMap<Integer, Integer> entryMapping;
+                    HashMap<Integer, Integer> entryMapping;
                     if (sampleMapping.containsKey(depth)) entryMapping = sampleMapping.get(depth);
-                    else sampleMapping.put(depth, entryMapping = new LinkedHashMap<>());
+                    else sampleMapping.put(depth, entryMapping = new HashMap<>());
                     int mappingKey = getMappingKey(rowMapping, item.getValue(row, 0));
                     entryMapping.put(row, curMaxKey + mappingKey);
                     prevMaxKey = Math.max(prevMaxKey, mappingKey + 1);
                 }
             }
         }
-        LinkedHashMap<Integer, MMatrix> output = new LinkedHashMap<>();
+        HashMap<Integer, MMatrix> output = new HashMap<>();
         for (Integer entry : itemsMap.keySet()) {
             MMatrix sample = new MMatrix(itemsMap.get(entry).size());
             for (Integer depth : itemsMap.get(entry).keySet()) {

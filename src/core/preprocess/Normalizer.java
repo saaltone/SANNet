@@ -6,13 +6,12 @@
 package core.preprocess;
 
 import core.network.NeuralNetworkException;
-import utils.sampling.Sequence;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
+import utils.sampling.Sequence;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 
 /**
  * Class for sample data normalization.<br>
@@ -93,7 +92,7 @@ public class Normalizer {
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
     public void minMaxSample(MMatrix data) throws NeuralNetworkException {
-        LinkedHashMap<Integer, MMatrix> inputData = new LinkedHashMap<>();
+        HashMap<Integer, MMatrix> inputData = new HashMap<>();
         inputData.put(0, data);
         minMaxSamples (inputData, 0, 1, false, null);
     }
@@ -104,7 +103,7 @@ public class Normalizer {
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSamples(LinkedHashMap<Integer, MMatrix> data) throws NeuralNetworkException {
+    public void minMaxSamples(HashMap<Integer, MMatrix> data) throws NeuralNetworkException {
         minMaxSamples (data, 0, 1, false, null);
     }
 
@@ -116,7 +115,7 @@ public class Normalizer {
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSamples(LinkedHashMap<Integer, MMatrix> data, boolean adjust) throws NeuralNetworkException {
+    public void minMaxSamples(HashMap<Integer, MMatrix> data, boolean adjust) throws NeuralNetworkException {
         minMaxSamples (data, 0, 1, adjust, null);
     }
 
@@ -131,7 +130,7 @@ public class Normalizer {
      * @param normalizableRows rows to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSamples(LinkedHashMap<Integer, MMatrix> data, double newMinimum, double newMaximum, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
+    public void minMaxSamples(HashMap<Integer, MMatrix> data, double newMinimum, double newMaximum, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
         if (data.size() == 0) return;
         if (!adjustedMinMax && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
         if (adjust) {
@@ -171,7 +170,7 @@ public class Normalizer {
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
     public void minMaxSequence(Sequence data) throws NeuralNetworkException {
-        LinkedHashMap<Integer, Sequence> inputData = new LinkedHashMap<>();
+        HashMap<Integer, Sequence> inputData = new HashMap<>();
         inputData.put(0, data);
         minMaxSequences (inputData, 0, 1, false, null);
     }
@@ -182,7 +181,7 @@ public class Normalizer {
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSequences(LinkedHashMap<Integer, Sequence> data) throws NeuralNetworkException {
+    public void minMaxSequences(HashMap<Integer, Sequence> data) throws NeuralNetworkException {
         minMaxSequences (data, 0, 1, false, null);
     }
 
@@ -194,7 +193,7 @@ public class Normalizer {
      * @param adjust true if normalizer is adjusted with current data otherwise earlier normalization setting is applied.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSequences(LinkedHashMap<Integer, Sequence> data, boolean adjust) throws NeuralNetworkException {
+    public void minMaxSequences(HashMap<Integer, Sequence> data, boolean adjust) throws NeuralNetworkException {
         minMaxSequences (data, 0, 1, adjust, null);
     }
 
@@ -209,7 +208,7 @@ public class Normalizer {
      * @param normalizableRows rows to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void minMaxSequences(LinkedHashMap<Integer, Sequence> data, double newMinimum, double newMaximum, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
+    public void minMaxSequences(HashMap<Integer, Sequence> data, double newMinimum, double newMaximum, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
         if (data.size() == 0) return;
         if (!adjustedMinMax && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
         if (adjust) {
@@ -301,7 +300,7 @@ public class Normalizer {
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
     public void zScoreSample(MMatrix data) throws NeuralNetworkException {
-        LinkedHashMap<Integer, MMatrix> inputData = new LinkedHashMap<>();
+        HashMap<Integer, MMatrix> inputData = new HashMap<>();
         inputData.put(0, data);
         zScoreSamples(inputData, false, null);
     }
@@ -312,7 +311,7 @@ public class Normalizer {
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void zScoreSamples(LinkedHashMap<Integer, MMatrix> data) throws NeuralNetworkException {
+    public void zScoreSamples(HashMap<Integer, MMatrix> data) throws NeuralNetworkException {
         zScoreSamples(data, false, null);
     }
 
@@ -325,7 +324,7 @@ public class Normalizer {
      * @param normalizableRows rows to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void zScoreSamples(LinkedHashMap<Integer, MMatrix> data, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
+    public void zScoreSamples(HashMap<Integer, MMatrix> data, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
         if (data.size() == 0) return;
         if (!adjustedZScore && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
         if (adjust) {
@@ -374,7 +373,7 @@ public class Normalizer {
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
     public void zScoreSequences(Sequence data) throws NeuralNetworkException {
-        LinkedHashMap<Integer, Sequence> inputData = new LinkedHashMap<>();
+        HashMap<Integer, Sequence> inputData = new HashMap<>();
         inputData.put(0, data);
         zScoreSequences(inputData, false, null);
     }
@@ -385,7 +384,7 @@ public class Normalizer {
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void zScoreSequences(LinkedHashMap<Integer, Sequence> data) throws NeuralNetworkException {
+    public void zScoreSequences(HashMap<Integer, Sequence> data) throws NeuralNetworkException {
         zScoreSequences(data, false, null);
     }
 
@@ -398,7 +397,7 @@ public class Normalizer {
      * @param normalizableRows rows to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
      */
-    public void zScoreSequences(LinkedHashMap<Integer, Sequence> data, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
+    public void zScoreSequences(HashMap<Integer, Sequence> data, boolean adjust, HashSet<Integer> normalizableRows) throws NeuralNetworkException {
         if (data.size() == 0) return;
         if (!adjustedZScore && !adjust) throw new NeuralNetworkException("Normalizer is not adjusted");
         if (adjust) {

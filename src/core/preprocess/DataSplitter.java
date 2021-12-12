@@ -11,7 +11,6 @@ import utils.matrix.MMatrix;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 /**
  * Class used to split sample set into training and test sample sets by given share.<br>
@@ -29,18 +28,18 @@ public class DataSplitter {
      * @return split training and test sample tests.
      * @throws NeuralNetworkException throws exception if invalid inputs are given.
      */
-    public static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> split(HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data, double testDataShare, boolean randomize) throws NeuralNetworkException {
+    public static HashMap<Integer, HashMap<Integer, MMatrix>> split(HashMap<Integer, HashMap<Integer, MMatrix>> data, double testDataShare, boolean randomize) throws NeuralNetworkException {
         if (testDataShare < 0 || testDataShare > 1) throw new NeuralNetworkException("Invalid test data share: " + testDataShare + ". demo.Test data share must be between 0 and 1");
         if (data.size() != 2) throw new NeuralNetworkException("Split must have input and output data.");
         if (data.get(0).size() != data.get(1).size()) {
             throw new NeuralNetworkException("Input data size: " + data.get(0).size() + " and output data size: " + data.get(1).size() + " are not matching: ");
         }
         int trainDataAmount = (int)((double)data.get(0).size() * (1 - testDataShare));
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new HashMap<>();
-        result.put(0, new LinkedHashMap<>());
-        result.put(1, new LinkedHashMap<>());
-        result.put(2, new LinkedHashMap<>());
-        result.put(3, new LinkedHashMap<>());
+        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
+        result.put(0, new HashMap<>());
+        result.put(1, new HashMap<>());
+        result.put(2, new HashMap<>());
+        result.put(3, new HashMap<>());
         ArrayList<Integer> itemList = new ArrayList<>();
         int rowAmount = data.get(0).size();
         for (int index = 0; index < rowAmount; index++) itemList.add(index);

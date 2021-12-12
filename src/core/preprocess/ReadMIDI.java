@@ -157,7 +157,7 @@ public class ReadMIDI {
      * @throws IOException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName) throws InvalidMidiDataException, IOException, MatrixException {
+    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName) throws InvalidMidiDataException, IOException, MatrixException {
         ArrayList<String> fileNames = new ArrayList<>();
         fileNames.add(fileName);
         return readFile(fileNames, 1, false, true, 25);
@@ -173,7 +173,7 @@ public class ReadMIDI {
      * @throws IOException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(String fileName, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
+    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
         metadata = new Metadata(maxEncodedTicks);
         ArrayList<String> fileNames = new ArrayList<>();
         fileNames.add(fileName);
@@ -193,17 +193,17 @@ public class ReadMIDI {
      * @throws IOException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public HashMap<Integer, LinkedHashMap<Integer, MMatrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, boolean excludeZeroValuedEntries, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
+    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, boolean excludeZeroValuedEntries, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
         metadata = new Metadata(maxEncodedTicks);
         int noteOffOffset = encodeNoteOffs ? 1 : 0;
 
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> result = new LinkedHashMap<>();
-        result.put(0, new LinkedHashMap<>());
-        result.put(1, new LinkedHashMap<>());
-        result.put(2, new LinkedHashMap<>());
-        result.put(3, new LinkedHashMap<>());
-        result.put(4, new LinkedHashMap<>());
-        result.put(5, new LinkedHashMap<>());
+        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
+        result.put(0, new HashMap<>());
+        result.put(1, new HashMap<>());
+        result.put(2, new HashMap<>());
+        result.put(3, new HashMap<>());
+        result.put(4, new HashMap<>());
+        result.put(5, new HashMap<>());
 
         ArrayList<Integer> keyDataAsInteger = new ArrayList<>();
         ArrayList<Matrix> keyDataAsMatrix = new ArrayList<>();
@@ -338,9 +338,9 @@ public class ReadMIDI {
                     inputIndex++;
                 }
 
-                JMatrix joinedKeyInputMatrix = new JMatrix(metadata.keyBitVectorSize * numberOfInputs, 1, keyInputMatrices, true);
-                JMatrix joinedVelocityInputMatrix = new JMatrix(metadata.velocityBitVectorSize * numberOfInputs, 1, velocityInputMatrices, true);
-                JMatrix joinedTickInputMatrix = new JMatrix(metadata.numberOfEncodedTicks * numberOfInputs, 1, tickInputMatrices, true);
+                JMatrix joinedKeyInputMatrix = new JMatrix(keyInputMatrices, true);
+                JMatrix joinedVelocityInputMatrix = new JMatrix(velocityInputMatrices, true);
+                JMatrix joinedTickInputMatrix = new JMatrix(tickInputMatrices, true);
 
                 result.get(0).put(pos, new MMatrix(joinedKeyInputMatrix));
                 result.get(1).put(pos, new MMatrix(keyOutputMatrix));
@@ -472,7 +472,7 @@ public class ReadMIDI {
      * @throws InvalidMidiDataException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sequence getSequence(LinkedHashMap<Integer, MMatrix> dataKey, LinkedHashMap<Integer, MMatrix> dataVelocity, LinkedHashMap<Integer, MMatrix> dataTick, int resolution, boolean asInput, boolean encodeNoteOffs, Metadata metadata) throws InvalidMidiDataException, MatrixException {
+    public Sequence getSequence(HashMap<Integer, MMatrix> dataKey, HashMap<Integer, MMatrix> dataVelocity, HashMap<Integer, MMatrix> dataTick, int resolution, boolean asInput, boolean encodeNoteOffs, Metadata metadata) throws InvalidMidiDataException, MatrixException {
         Sequence sequence = new Sequence(Sequence.PPQ, resolution);
         Track track = sequence.createTrack();
         long currentTick = 0;
