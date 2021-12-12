@@ -5,24 +5,23 @@
 
 package demo;
 
-import core.metrics.ClassificationMetric;
-import core.network.NeuralNetwork;
-import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.metrics.ClassificationMetric;
+import core.network.EarlyStopping;
+import core.network.NeuralNetwork;
+import core.network.NeuralNetworkException;
+import core.network.Persistence;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
-import core.network.EarlyStopping;
 import utils.configurable.DynamicParamException;
-import core.network.Persistence;
-import utils.sampling.Sequence;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
+import utils.sampling.Sequence;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 
 /**
  * Class that implements learning and prediction of MNIST digits by using Convolutional Neural Network (CNN).<br>
@@ -41,8 +40,8 @@ public class MNISTDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> trainMNIST = getMNISTData(true);
-            HashMap<Integer, LinkedHashMap<Integer, MMatrix>> testMNIST = getMNISTData(false);
+            HashMap<Integer, HashMap<Integer, MMatrix>> trainMNIST = getMNISTData(true);
+            HashMap<Integer, HashMap<Integer, MMatrix>> testMNIST = getMNISTData(false);
 
             neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).get(0).getRows(), trainMNIST.get(1).get(0).get(0).getRows());
 
@@ -142,27 +141,31 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws FileNotFoundException throws exception if matrix cannot be read.
      */
-    private static HashMap<Integer, LinkedHashMap<Integer, MMatrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
+    private static HashMap<Integer, HashMap<Integer, MMatrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
         System.out.print("Loading " + (trainSet ? "training" : "test") + " data... ");
         HashSet<Integer> inputCols = new HashSet<>();
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
         String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test.csv";
-        HashMap<Integer, LinkedHashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
+        HashMap<Integer, HashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
         for (MMatrix sample : data.get(0).values()) {
             for (Matrix entry : sample.values()) {
                 entry.divide(255, entry);
             }
         }
-        for (MMatrix sample : data.get(1).values()) {
+        for (Integer sampleIndex : data.get(1).keySet()) {
+            MMatrix sample = data.get(1).get(sampleIndex);
+            MMatrix encodedSample = new MMatrix(sample.getDepth());
             for (Integer entryIndex : sample.keySet()) {
                 int value = (int)sample.get(entryIndex).getValue(0,0);
                 Matrix output = new SMatrix(10, 1);
                 output.setValue(value, 0, 1);
-                sample.put(entryIndex, output);
+                encodedSample.put(entryIndex, output);
             }
+            data.get(1).put(sampleIndex, encodedSample);
         }
+
         System.out.println(" Done.");
         return data;
     }
