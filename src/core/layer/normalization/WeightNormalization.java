@@ -6,6 +6,7 @@
 package core.layer.normalization;
 
 import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -104,7 +105,10 @@ public class WeightNormalization extends AbstractExecutionLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("g")) g = params.getValueAsInteger("g");
+        if (params.hasParam("g")) {
+            g = params.getValueAsInteger("g");
+            gMatrix.setValue(0, 0, g);
+        }
     }
 
     /**
@@ -115,11 +119,36 @@ public class WeightNormalization extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return false; }
 
     /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
      * Checks if layer is convolutional layer type.
      *
      * @return always false.
      */
     public boolean isConvolutionalLayer() { return false; }
+
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return null;
+    }
+
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+    }
 
     /**
      * Returns input matrices for procedure construction.
@@ -145,8 +174,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
         HashSet<Matrix> nextLayerNormalizedWeights = getNextLayer().getNormalizedWeights();
         for (Matrix weight : nextLayerNormalizedWeights) {
             input = weight;
-            Procedure procedure = new ProcedureFactory().getProcedure(this, getConstantMatrices());
-            procedure.setStopGradient(getStopGradients(), true);
+            Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), false);
             procedures.put(weight, procedure);
         }
     }
@@ -186,6 +214,24 @@ public class WeightNormalization extends AbstractExecutionLayer {
         constantMatrices.add(input);
         constantMatrices.add(gMatrix);
         return constantMatrices;
+    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
+    }
+
+    /**
+     * Resets layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void resetLayer() throws MatrixException {
+        resetLayerOutputs();
     }
 
     /**
@@ -234,17 +280,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      */
     public void optimize() {
-    }
-
-    /**
-     * Cumulates error from (L1 / L2 / Lp) regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return cumulated error from regularization.
-     */
-    public double error() throws MatrixException, DynamicParamException {
-        return getPreviousLayer() != null ? getPreviousLayer().error() : 0;
     }
 
     /**
