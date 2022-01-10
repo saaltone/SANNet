@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -103,6 +103,16 @@ public class BiRecurrentLayer extends RecurrentLayer {
     }
 
     /**
+     * Resets layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected void resetLayer() throws MatrixException {
+        super.resetLayer();
+        reverseProcedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
+    }
+
+    /**
      * Resets outputs of neural network layer.
      *
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -150,7 +160,7 @@ public class BiRecurrentLayer extends RecurrentLayer {
         if (procedure != null) procedure.calculateGradient(directNextLayerGradients, getLayerGradients(), getTruncateSteps());
         if (reverseProcedure != null) reverseProcedure.calculateGradient(reverseNextLayerGradients, reverseLayerGradients, getTruncateSteps());
         Sequence layerGradients = new Sequence(directNextLayerGradients.getDepth());
-        for (Integer sampleIndex : layerGradients.keySet()) {
+        for (Integer sampleIndex : getLayerGradients().keySet()) {
             layerGradients.put(sampleIndex, getLayerGradients().get(sampleIndex).add(reverseLayerGradients.get(sampleIndex)));
         }
         setLayerGradients(layerGradients);

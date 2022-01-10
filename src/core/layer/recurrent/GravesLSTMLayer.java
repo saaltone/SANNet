@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -476,9 +476,11 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) {
             previousOutput = new DMatrix(super.getLayerWidth(), 1);
             previousCellState = new DMatrix(super.getLayerWidth(), 1);
