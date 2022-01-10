@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.normalization;
@@ -59,12 +59,10 @@ public class BatchNormalization extends AbstractExecutionLayer {
 
         /**
          * Constructor for weight set
-         *
-         * @param initialization weight initialization function.
-         * @param previousLayerWidth width of previous layer.
+         *  @param previousLayerWidth width of previous layer.
          * @param previousLayerHeight height of previous layer.
          */
-        BatchNormalizationWeightSet(Initialization initialization, int previousLayerWidth, int previousLayerHeight) {
+        BatchNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight) {
             gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
             beta = new DMatrix(previousLayerWidth, previousLayerHeight, "Beta");
 
@@ -248,13 +246,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always false.
-     */
-    public boolean isConvolutionalLayer() { return false; }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -268,7 +259,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new BatchNormalizationWeightSet(initialization, getPreviousLayerWidth(), getPreviousLayerHeight());
+        weightSet = new BatchNormalizationWeightSet(getPreviousLayerWidth(), getPreviousLayerHeight());
     }
 
     /**
