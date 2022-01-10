@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -923,7 +923,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public static Matrix encodeToBitColumnVector(int value, int maxBits) throws MatrixException {
         String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
         if (binaryCode.length() > maxBits) throw new MatrixException("Binary code length: " + binaryCode.length() + " is exceeding number of maximum bits: " + maxBits);
-        Matrix encodedMatrix = new DMatrix(binaryCode.length(), 1);
+        Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
         for (int charIndex = 0; charIndex < binaryCode.length(); charIndex++) {
             char charAt = binaryCode.charAt(charIndex);
             if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 1);
