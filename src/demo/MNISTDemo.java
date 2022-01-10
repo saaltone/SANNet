@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package demo;
@@ -116,14 +116,19 @@ public class MNISTDemo {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = 28, height = 28");
-        neuralNetwork.addHiddenLayer(LayerType.CROSSCORRELATION, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1");
+        neuralNetwork.addInputLayer("width = " + inputSize + ", height = " + inputSize);
+        neuralNetwork.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
         neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.CROSSCORRELATION, new ActivationFunction(UnaryFunctionType.RELU), Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
         neuralNetwork.addHiddenLayer(LayerType.RANDOM_POOLING, "filterSize = 2, stride = 1");
+        neuralNetwork.addHiddenLayer(LayerType.FLATTEN);
         neuralNetwork.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
