@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -83,13 +83,6 @@ public interface NeuralNetworkLayer {
      * @return true if layer is bidirectional otherwise returns false.
      */
     boolean isBidirectional();
-
-    /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return true if layer if convolutional layer otherwise false.
-     */
-    boolean isConvolutionalLayer();
 
     /**
      * Initializes neural network layer dimensions.
