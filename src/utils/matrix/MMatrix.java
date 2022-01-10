@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -307,6 +307,16 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public int size() {
         return matrices.size();
+    }
+
+    /**
+     * Returns new MMatrix.
+     *
+     * @return new MMatrix.
+     * @throws MatrixException throws exception if creation of new matrix fails.
+     */
+    public MMatrix getNewMMatrix() throws MatrixException {
+        return getDepth() == -1 ? new MMatrix() : new MMatrix(getDepth());
     }
 
     /**
@@ -1227,7 +1237,7 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix join(MMatrix otherMMatrix, boolean joinedVertically) throws MatrixException {
         if (getDepth() != otherMMatrix.getDepth()) throw new MatrixException("Depth of this MMatrix " + getDepth() + " and other MMatrix " + otherMMatrix.getDepth() + " do not match.");
-        MMatrix joinedMMatrix = new MMatrix(getDepth());
+        MMatrix joinedMMatrix = getNewMMatrix();
         for (Integer entryIndex : keySet()) {
             if (!otherMMatrix.containsKey(entryIndex)) throw new MatrixException("Other MMatrix does not contain entry index: " + entryIndex);
             joinedMMatrix.put(entryIndex, new JMatrix(new Matrix[] { get(entryIndex), otherMMatrix.get(entryIndex) }, joinedVertically));
@@ -1243,7 +1253,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix unjoin(int subMatrixIndex) throws MatrixException {
-        MMatrix unjoinedMMatrix = new MMatrix(getDepth());
+        MMatrix unjoinedMMatrix = getNewMMatrix();
         for (Integer entryIndex : keySet()) {
             ArrayList<Matrix> subMatrices = get(entryIndex).getSubMatrices();
             if (subMatrixIndex < 0 || subMatrixIndex > subMatrices.size() - 1) throw new MatrixException("Joined matrix does not have sub matrix index: " + subMatrixIndex);
