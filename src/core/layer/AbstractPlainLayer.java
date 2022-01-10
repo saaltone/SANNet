@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -56,15 +56,6 @@ public abstract class AbstractPlainLayer extends AbstractLayer {
      */
     public boolean worksWithRecurrentLayer() {
         return true;
-    }
-
-    /**
-     * Checks if execution layer is convolutional layer type.
-     *
-     * @return true if execution layer is convolutional layer type otherwise false.
-     */
-    public boolean isConvolutionalLayer() {
-        return false;
     }
 
     /**
