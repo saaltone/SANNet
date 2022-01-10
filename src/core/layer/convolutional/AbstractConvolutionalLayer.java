@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.convolutional;
@@ -225,12 +225,10 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @param params parameters for convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public AbstractConvolutionalLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public AbstractConvolutionalLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
-        if (activationFunction != null) this.activationFunction = activationFunction;
-        else this.activationFunction = new ActivationFunction(UnaryFunctionType.ELU);
+        this.activationFunction = activationFunction;
     }
 
     /**
@@ -290,13 +288,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     public boolean worksWithRecurrentLayer() {
         return true;
     }
-
-    /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always true.
-     */
-    public boolean isConvolutionalLayer() { return true; }
 
     /**
      * Sets filter row size.
@@ -435,7 +426,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
                 input.setFilterColumnSize(filterColumnSize);
                 output = executeConvolutionalOperation(input, Wf, output);
             }
-            output = output.apply(activationFunction);
+            if (activationFunction != null) output = output.apply(activationFunction);
             output.setName("Output" + filterIndex);
             outputs.put(filterIndex, output);
         }
@@ -493,7 +484,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
         layerDetailsByName += "Filter column size: " + filterColumnSize + ", ";
         layerDetailsByName += "Stride: " + stride + ", ";
         layerDetailsByName += "Dilation: " + dilation + ", ";
-        layerDetailsByName += "Activation function: " + activationFunction.getName();
+        if (activationFunction != null) layerDetailsByName += "Activation function: " + activationFunction.getName();
         return layerDetailsByName;
     }
 
