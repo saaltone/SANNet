@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.convolutional;
@@ -27,9 +27,8 @@ public class WinogradConvolutionLayer extends AbstractConvolutionalLayer {
      * @param params parameters for convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public WinogradConvolutionLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public WinogradConvolutionLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, activationFunction, initialization, params);
     }
 
