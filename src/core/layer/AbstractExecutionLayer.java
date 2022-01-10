@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -15,7 +15,6 @@ import utils.matrix.MatrixException;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
-import utils.sampling.Sequence;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -166,7 +165,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void reinitialize() throws MatrixException {
-        getWeightSet().reinitialize();
+        if (getWeightSet() != null) getWeightSet().reinitialize();
         resetLayer();
     }
 
@@ -178,17 +177,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         resetLayer();
-        procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
-    }
-
-    /**
-     * Returns scaled gradients from next layer.
-     *
-     * @return scaled gradients from next layer.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected Sequence getNextLayerScaledGradients() throws MatrixException {
-        return isConvolutionalLayer() && hasNextLayer() && !getNextLayer().isConvolutionalLayer() ? getNextLayerGradients().unflatten(getLayerWidth(), getLayerHeight(), getLayerDepth()) : getNextLayerGradients();
+        if (procedure != null) procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
     }
 
     /**
@@ -200,7 +189,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
         resetLayerGradients();
-        if (procedure != null) procedure.calculateGradient(getNextLayerScaledGradients(), getLayerGradients(), getTruncateSteps());
+        if (procedure != null) procedure.calculateGradient(getNextLayerGradients(), getLayerGradients(), getTruncateSteps());
     }
 
     /**
@@ -361,7 +350,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void printExpressions() throws NeuralNetworkException {
         System.out.println(getLayerName() + ": ");
-        procedure.printExpressionChain();
+        if (procedure != null) procedure.printExpressionChain();
+        else {
+            System.out.print("N/A");
+            System.out.println();
+        }
         System.out.println();
     }
 
@@ -372,7 +365,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void printGradients() throws NeuralNetworkException {
         System.out.println(getLayerName() + ": ");
-        procedure.printGradientChain();
+        if (procedure != null) procedure.printGradientChain();
+        else {
+            System.out.print("N/A");
+            System.out.println();
+        }
         System.out.println();
     }
 

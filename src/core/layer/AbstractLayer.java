@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -351,7 +351,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return width of previous layer.
      */
     public int getPreviousLayerWidth() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerWidth() * getPreviousLayer().getLayerHeight() * getPreviousLayer().getLayerDepth() : getPreviousLayer().getLayerWidth();
+        return getPreviousLayer().getLayerWidth();
     }
 
     /**
@@ -360,7 +360,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return height of previous layer.
      */
     public int getPreviousLayerHeight() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerHeight();
+        return getPreviousLayer().getLayerHeight();
     }
 
     /**
@@ -369,7 +369,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return depth of previous layer.
      */
     public int getPreviousLayerDepth() {
-        return getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? 1 : getPreviousLayer().getLayerDepth();
+        return getPreviousLayer().getLayerDepth();
     }
 
     /**
@@ -412,10 +412,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Returns previous layer outputs.
      *
      * @return previous layer outputs.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sequence getPreviousLayerOutputs() throws MatrixException {
-        return hasPreviousLayer() ? getPreviousLayer().isConvolutionalLayer() && !isConvolutionalLayer() ? getPreviousLayer().getLayerOutputs().flatten() : getPreviousLayer().getLayerOutputs() : getLayerOutputs();
+    public Sequence getPreviousLayerOutputs() {
+        return hasPreviousLayer() ? getPreviousLayer().getLayerOutputs() : getLayerOutputs();
     }
 
     /**
