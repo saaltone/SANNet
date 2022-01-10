@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -148,20 +148,13 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always false.
-     */
-    public boolean isConvolutionalLayer() { return false; }
-
-    /**
      * Resets layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetLayer() throws MatrixException {
-        procedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
         resetLayerOutputs();
+        procedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
     }
 
     /**
