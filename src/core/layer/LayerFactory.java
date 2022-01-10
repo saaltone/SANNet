@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -40,6 +40,9 @@ public class LayerFactory {
     public static AbstractExecutionLayer create(int layerIndex, LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
         return switch (layerType) {
             case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
+            case DENSE -> new DenseLayer(layerIndex, initialization, params);
+            case ACTIVATION -> new ActivationLayer(layerIndex, activationFunction, params);
+            case FLATTEN -> new FlattenLayer(layerIndex, params);
             case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
             case LSTM -> new LSTMLayer(layerIndex, activationFunction, initialization, params);
             case PEEPHOLELSTM -> new PeepholeLSTMLayer(layerIndex, activationFunction, initialization, params);
@@ -55,6 +58,8 @@ public class LayerFactory {
             case CONVOLUTION -> new ConvolutionLayer(layerIndex, activationFunction, initialization, params);
             case CROSSCORRELATION -> new CrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
             case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
+            case DSCONVOLUTION -> new DSConvolutionLayer(layerIndex, activationFunction, initialization, params);
+            case DSCROSSCORRELATION -> new DSCrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
             case MAX_POOLING -> new MaxPoolingLayer(layerIndex, initialization, params);
             case RANDOM_POOLING -> new RandomPoolingLayer(layerIndex, initialization, params);
             case CYCLIC_POOLING -> new CyclicPoolingLayer(layerIndex, initialization, params);
@@ -80,6 +85,9 @@ public class LayerFactory {
      */
     public static LayerType getLayerType(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
         if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return LayerType.FEEDFORWARD;
+        if (neuralNetworkLayer.getClass().equals(DenseLayer.class)) return LayerType.DENSE;
+        if (neuralNetworkLayer.getClass().equals(ActivationLayer.class)) return LayerType.ACTIVATION;
+        if (neuralNetworkLayer.getClass().equals(FlattenLayer.class)) return LayerType.FLATTEN;
         if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return LayerType.RECURRENT;
         if (neuralNetworkLayer.getClass().equals(LSTMLayer.class)) return LayerType.LSTM;
         if (neuralNetworkLayer.getClass().equals(PeepholeLSTMLayer.class)) return LayerType.PEEPHOLELSTM;
@@ -95,6 +103,8 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return LayerType.CONVOLUTION;
         if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return LayerType.CROSSCORRELATION;
         if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return LayerType.WINOGRAD_CONVOLUTION;
+        if (neuralNetworkLayer.getClass().equals(DSConvolutionLayer.class)) return LayerType.DSCONVOLUTION;
+        if (neuralNetworkLayer.getClass().equals(DSCrosscorrelationLayer.class)) return LayerType.DSCROSSCORRELATION;
         if (neuralNetworkLayer.getClass().equals(MaxPoolingLayer.class)) return LayerType.MAX_POOLING;
         if (neuralNetworkLayer.getClass().equals(RandomPoolingLayer.class)) return LayerType.RANDOM_POOLING;
         if (neuralNetworkLayer.getClass().equals(CyclicPoolingLayer.class)) return LayerType.CYCLIC_POOLING;
@@ -120,6 +130,9 @@ public class LayerFactory {
      */
     public static String getLayerTypeByName(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
         if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return "FEEDFORWARD";
+        if (neuralNetworkLayer.getClass().equals(DenseLayer.class)) return "DENSE";
+        if (neuralNetworkLayer.getClass().equals(ActivationLayer.class)) return "ACTIVATION";
+        if (neuralNetworkLayer.getClass().equals(FlattenLayer.class)) return "FLATTEN";
         if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return "RECURRENT";
         if (neuralNetworkLayer.getClass().equals(LSTMLayer.class)) return "LSTM";
         if (neuralNetworkLayer.getClass().equals(PeepholeLSTMLayer.class)) return "PEEPHOLELSTM";
@@ -135,6 +148,8 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return "CONVOLUTION";
         if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return "CROSSCORRELATION";
         if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return "WINOGRAD_CONVOLUTION";
+        if (neuralNetworkLayer.getClass().equals(DSConvolutionLayer.class)) return "DSCONVOLUTION";
+        if (neuralNetworkLayer.getClass().equals(DSCrosscorrelationLayer.class)) return "DSCROSSCORRELATION";
         if (neuralNetworkLayer.getClass().equals(MaxPoolingLayer.class)) return "MAX_POOLING";
         if (neuralNetworkLayer.getClass().equals(RandomPoolingLayer.class)) return "RANDOM_POOLING";
         if (neuralNetworkLayer.getClass().equals(CyclicPoolingLayer.class)) return "CYCLIC_POOLING";

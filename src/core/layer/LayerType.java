@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer;
@@ -16,6 +16,24 @@ public enum LayerType {
      *
      */
     FEEDFORWARD,
+
+    /**
+     * Dense layer
+     *
+     */
+    DENSE,
+
+    /**
+     * Activation layer
+     *
+     */
+    ACTIVATION,
+
+    /**
+     * Flatten layer.
+     *
+     */
+    FLATTEN,
 
     /**
      * Vanilla recurrent layer
@@ -106,6 +124,18 @@ public enum LayerType {
      *
      */
     WINOGRAD_CONVOLUTION,
+
+    /**
+     * Depth-wise separable Convolution layer.
+     *
+     */
+    DSCONVOLUTION,
+
+    /**
+     * Depth-wise separable Cross-correlation layer.
+     *
+     */
+    DSCROSSCORRELATION,
 
     /**
      * Max pooling layer
