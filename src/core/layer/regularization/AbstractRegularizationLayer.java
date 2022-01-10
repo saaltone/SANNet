@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.layer.regularization;
@@ -49,13 +49,6 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
     public boolean worksWithRecurrentLayer() {
         return true;
     }
-
-    /**
-     * Checks if layer is convolutional layer type.
-     *
-     * @return always false.
-     */
-    public boolean isConvolutionalLayer() { return false; }
 
     /**
      * Returns weight set.
