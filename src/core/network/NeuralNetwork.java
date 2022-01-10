@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package core.network;
@@ -395,6 +395,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public void addHiddenLayer(LayerType layerType, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        addHiddenLayer(layerType, initialization, null);
+    }
+
+    /**
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
+     *
+     * @param layerType type of layer.
      * @param activationFunction activation function for layer.
      * @param initialization layer parameter initialization function for layer.
      * @param params parameters for layer.
@@ -405,6 +418,21 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
         hiddenLayers.add(LayerFactory.create(hiddenLayers.size() + 1, layerType, activationFunction, initialization, params));
+    }
+
+    /**
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
+     *
+     * @param layerType type of layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @param params parameters for layer.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public void addHiddenLayer(LayerType layerType, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        checkStarted();
+        hiddenLayers.add(LayerFactory.create(hiddenLayers.size() + 1, layerType, null, initialization, params));
     }
 
     /**
