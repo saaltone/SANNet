@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package demo;
@@ -94,7 +94,8 @@ public class TextSeqDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 128");
+        neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
+        neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
         neuralNetwork.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
