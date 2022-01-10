@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2021 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package demo;
@@ -80,14 +80,14 @@ public class SimpleDemo {
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setAutoValidate(5);
         neuralNetwork.verboseValidation();
-        neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
+//        neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
         neuralNetwork.start();
         if (print) {
             neuralNetwork.print();
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
         }
-        neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 10000000"));
+        neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 2500"));
         neuralNetwork.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
 
     }
@@ -106,12 +106,14 @@ public class SimpleDemo {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 20");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + outputSize);
-        neuralNetwork.addOutputLayer(BinaryFunctionType.HUBER);
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 20");
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetwork.build();
-        neuralNetwork.setOptimizer(OptimizationType.AMSGRAD);
-         return neuralNetwork;
+        neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        return neuralNetwork;
     }
 
     /**
