@@ -36,7 +36,7 @@ public class CrosscorrelationMatrixOperation extends AbstractConvolutionMatrixOp
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         double resultValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
@@ -56,7 +56,7 @@ public class CrosscorrelationMatrixOperation extends AbstractConvolutionMatrixOp
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyMask(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         double resultValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {

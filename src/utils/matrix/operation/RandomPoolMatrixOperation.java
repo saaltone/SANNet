@@ -120,7 +120,7 @@ public class RandomPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         int filterRow = random.nextInt(filterRowSize);
         int filterColumn = random.nextInt(filterRowSize);
         double inputValue = input.getValue(filterRow, filterColumn);
@@ -139,7 +139,7 @@ public class RandomPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyMask(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         ArrayList<Integer> availableRows = new ArrayList<>();
         ArrayList<Integer> availableColumns = new ArrayList<>();
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {

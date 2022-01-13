@@ -237,7 +237,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
         final Matrix Crime = new DMatrix(4, 4);
         final Matrix GCprime = new DMatrix(4, 4);
         final Matrix AT1 = new DMatrix(2, 4);
-        input.sliceAt(row, column, row + 3, column + 3);
+        input.slice(row, column, row + 3, column + 3);
         if (G != null) {
             G.dot(filter, G1);
             G1.dot(GT, Gprime);
@@ -247,7 +247,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
         C1.dot(C, Crime);
         Gprime.dot(Crime, GCprime);
         AT.dot(GCprime, AT1);
-        result.sliceAt(row, column, row + 1, column + 1);
+        result.slice(row, column, row + 1, column + 1);
         AT1.dot(A, result);
         input.unslice();
         result.unslice();

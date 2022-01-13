@@ -36,7 +36,7 @@ public class CrosscorrelationFilterGradientMatrixOperation extends AbstractConvo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
                 filterGradient.incrementByValue(filterRow, filterColumn, input.getValue(filterRow, filterColumn) * value);
@@ -54,7 +54,7 @@ public class CrosscorrelationFilterGradientMatrixOperation extends AbstractConvo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyMask(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
                 if (!hasMaskAt(filterRow, filterColumn, input)) {

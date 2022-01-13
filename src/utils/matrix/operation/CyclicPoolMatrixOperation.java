@@ -119,7 +119,7 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         int filterRow = currentRow;
         int filterColumn = currentColumn;
         double inputValue = input.getValue(filterRow, filterColumn);
@@ -142,7 +142,7 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyMask(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         while (hasMaskAt(currentRow, currentColumn, input)) {
             if(++currentRow >= filterRowSize) {
                 currentRow = 0;

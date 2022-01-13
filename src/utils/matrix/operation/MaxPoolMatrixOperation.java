@@ -111,7 +111,7 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         int maxRow = -1;
         int maxColumn = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
@@ -140,7 +140,7 @@ public class MaxPoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyMask(int row, int column, double value) throws MatrixException {
-        input.sliceAt(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
         int maxRow = -1;
         int maxColumn = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
