@@ -6,7 +6,6 @@
 package utils.matrix.operation;
 
 import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
 
 /**
  * Defines dot operation.
@@ -49,9 +48,8 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * @param second second matrix.
      * @param result result matrix.
      * @return result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix first, Matrix second, Matrix result) throws MatrixException {
+    public Matrix apply(Matrix first, Matrix second, Matrix result) {
         this.first = first;
         this.second = second;
         this.result = result;
@@ -91,35 +89,63 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
+     * Applies matrix operation.
+     *
+     */
+
+    protected void applyMatrixOperation() {
+        final int rows1 = getRows();
+        final Matrix other = getAnother();
+        final int rows2 = other.getRows();
+        final int rowStride = getStride();
+        final int columnStride = getStride();
+        final Matrix targetMatrix = getTargetMatrix();
+        if (!hasMask(targetMatrix, other)) {
+            for (int row1 = 0; row1 < rows1; row1 += rowStride) {
+                for (int row2 = 0; row2 < rows2; row2 += rowStride) {
+                    apply(row1, row2, 0);
+                }
+            }
+        }
+        else {
+            for (int row1 = 0; row1 < rows1; row1 += rowStride) {
+                for (int row2 = 0; row2 < rows2; row2 += columnStride) {
+                    if (!hasMaskAt(row1, row2, targetMatrix, other)) {
+                        applyMask(row1, row2, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Applies operation.
      *
-     * @param row current row.
-     * @param column current column.
+     * @param row1 current row1.
+     * @param row2 current row2.
      * @param value current value.
      */
-    public void apply(int row, int column, double value) {
-        int xSize = first.getColumns();
-        for (int x = 0; x < xSize; x++) {
-            result.setValue(row, column, result.getValue(row, column) + first.getValue(row, x) * second.getValue(x, column));
+    public void apply(int row1, int row2, double value) {
+        int cols = second.getColumns();
+        for (int col = 0; col < cols; col++) {
+            result.setValue(row1, col, result.getValue(row1, col) + first.getValue(row1, row2) * second.getValue(row2, col));
         }
     }
 
     /**
      * Applies operation assuming masked matrices.
      *
-     * @param row current row.
-     * @param column current column.
+     * @param row1 current row1.
+     * @param row2 current row2.
      * @param value current value.
      */
-    public void applyMask(int row, int column, double value) {
-        int xSize = first.getColumns();
-        double sumValue = result.getValue(row, column);
-        for (int x = 0; x < xSize; x++) {
-            if (!hasMaskAt(row, x, first) && !hasMaskAt(x, column, second)) {
-                sumValue += first.getValue(row, x) * second.getValue(x, column);
+    public void applyMask(int row1, int row2, double value) {
+        int cols = second.getColumns();
+        for (int col = 0; col < cols; col++) {
+            if (!hasMaskAt(row1, row2, first) && !hasMaskAt(row2, col, second)) {
+                result.setValue(row1, col, result.getValue(row1, col) + first.getValue(row1, row2) * second.getValue(row2, col));
             }
         }
-        result.setValue(row, column, sumValue);
     }
 
 }
