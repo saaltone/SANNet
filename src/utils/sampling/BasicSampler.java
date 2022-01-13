@@ -140,7 +140,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     private boolean sampleReverse = false;
 
     /**
-     * Number of samples sampled.
+     * Sampling size.
      *
      */
     private int sampleSize = 1;
@@ -358,8 +358,8 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
                 if (randomStart || (randomStartAfterSteps > 0 && ++randomStartAfterSteps >= randomStartAfterStepsCount)) {
                     if (cyclical) sampleAt = random.nextInt(inputSampleSet.size());
                     else {
-                        if (!stepForward) sampleAt = Math.min(0, random.nextInt(inputSampleSet.size() - sampleSize + 1));
-                        else sampleAt = Math.max(0, random.nextInt(inputSampleSet.size()) - sampleSize);
+                        if (!stepForward) sampleAt = sampleSize + random.nextInt(inputSampleSet.size() - sampleSize);
+                        else sampleAt = random.nextInt(Math.max(1, inputSampleSet.size() - sampleSize));
                     }
                 }
                 if (randomStartAfterSteps > 0 && randomStartAfterStepsCount > randomStartAfterSteps) randomStartAfterStepsCount = 0;
