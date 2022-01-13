@@ -32,13 +32,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Number of rows in matrix.
      *
      */
-    private final int rows;
+    protected final int rows;
 
     /**
      * Number of columns in matrix.
      *
      */
-    private final int columns;
+    protected final int columns;
 
     /**
      * Slice start row.
@@ -77,6 +77,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private String name;
 
     /**
+     * If true matrix is transposed.
+     *
+     */
+    protected final boolean isTransposed;
+
+    /**
      * Reference to mask of matrix. If null mask is not used.
      *
      */
@@ -96,8 +102,20 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param columns defines number of columns in matrix.
      */
     protected AbstractMatrix(int rows, int columns) {
+        this(rows, columns, false);
+    }
+
+    /**
+     * Constructor for matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     */
+    protected AbstractMatrix(int rows, int columns, boolean isTransposed) {
         this.rows = rows;
         this.columns = columns;
+        this.isTransposed = isTransposed;
     }
 
     /**
@@ -108,8 +126,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param name name if matrix.
      */
     protected AbstractMatrix(int rows, int columns, String name) {
-        this(rows, columns);
+        this(rows, columns, false);
         this.name = name;
+    }
+
+    /**
+     * Sets parameters for matrix.
+     *
+     * @param matrix matrix.
+     * @throws MatrixException throws exception if cloning of mask fails.
+     */
+    protected void setParameters(Matrix matrix) throws MatrixException {
+        matrix.setName(name);
+        if (getMask() != null) matrix.setMask(!matrix.isTransposed() ? getMask().reference() : getMask().transpose());
     }
 
     /**
@@ -118,7 +147,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return total number of rows defined for matrix.
      */
     public int getTotalRows() {
-        return rows;
+        return !isTransposed ? rows : columns;
     }
 
     /**
@@ -127,7 +156,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return total number of columns defined for matrix.
      */
     public int getTotalColumns() {
-        return columns;
+        return !isTransposed ? columns : rows;
     }
 
     /**
@@ -173,11 +202,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param endColumn  end column of slice.
      * @throws MatrixException throws exception if slicing fails.
      */
-    public void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
-        if (startRow < 0 || startColumn < 0 || endRow > getTotalRows() -1 || endColumn > getTotalColumns() - 1) {
+    public void slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
+        if (startRow < 0 || startColumn < 0 || (!isTransposed ? endRow : endColumn) > rows -1 || (!isTransposed ? endColumn : endRow) > columns - 1) {
             throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + getTotalRows() + "x" + getTotalColumns());
         }
-        else updateSliceDimensions(startRow, startColumn, endRow, endColumn);
+        else updateSliceDimensions(startRow, startColumn, (!isTransposed ? endRow : endColumn), (!isTransposed ? endColumn : endRow));
     }
 
     /**
@@ -185,7 +214,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     public void unslice() {
-        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -203,7 +232,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return sliceRows;
+        return !isTransposed ? sliceRows : sliceColumns;
     }
 
     /**
@@ -212,7 +241,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of columns in matrix.
      */
     public int getColumns() {
-        return sliceColumns;
+        return !isTransposed ? sliceColumns : sliceRows;
     }
 
     /**
@@ -260,7 +289,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         try {
             newMatrix = (Matrix)super.clone();
             newMatrix.setInitializer(getInitializer());
-            if (getMask() != null) newMatrix.setMask(getMask());
+            if (getMask() != null) newMatrix.setMask(getMask().reference());
         } catch (CloneNotSupportedException exception) {
             throw new MatrixException("Cloning of matrix failed.");
         }
@@ -294,31 +323,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if this and new matrix dimensions are not matching.
      */
     public void copyMatrixData(Matrix newMatrix) throws MatrixException {
-        if (getTotalRows() != newMatrix.getRows() || getTotalColumns() != newMatrix.getColumns()) throw new MatrixException("Size of this matrix " + getTotalRows() + "x" + getTotalColumns() + " is not matching with dimensions of new matrix + " + newMatrix.getRows() + " x " + newMatrix.getColumns());
+        if (rows != newMatrix.getRows() || columns != newMatrix.getColumns()) throw new MatrixException("Size of this matrix " + rows + "x" + columns + " is not matching with dimensions of new matrix + " + newMatrix.getRows() + " x " + newMatrix.getColumns());
         resetMatrix();
-        int rows = getTotalRows();
-        int columns = getTotalColumns();
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) {
                 setValue(row, column, newMatrix.getValue(row, column));
             }
         }
-    }
-
-    /**
-     * Slices current matrix.
-     *
-     * @param startRow start row of slice.
-     * @param startColumn start column of slice.
-     * @param endRow  end row of slice.
-     * @param endColumn  end column of slice.
-     * @return sliced matrix.
-     * @throws MatrixException throws exception if slicing fails.
-     */
-    public Matrix slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
-        Matrix referenceMatrix = reference();
-        referenceMatrix.sliceAt(startRow, startColumn, endRow, endColumn);
-        return referenceMatrix;
     }
 
     /**
@@ -1803,6 +1814,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Checks if matrix is transposed.
+     *
+     * @return true is matrix is transposed otherwise false.
+     */
+    public boolean isTransposed() {
+        return isTransposed;
+    }
+
+    /**
      * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
      *
      * @param position position of split
@@ -1815,25 +1835,23 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!((this instanceof DMatrix) || (this instanceof SMatrix))) throw new MatrixException("Matrix must be of type DMatrix or SMatrix");
         Matrix matrix1;
         Matrix matrix2;
-        int totalRows = getTotalRows();
-        int totalColumns = getTotalColumns();
         if (splitVertically) {
-            if (position < 1 || position > totalRows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(position,totalColumns);
-            matrix2 = getNewMatrix(totalRows - matrix1.getTotalRows(), totalColumns);
-            for (int row = 0; row < totalRows; row++) {
-                for (int column = 0; column < totalColumns; column++) {
+            if (position < 1 || position > rows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(position, columns);
+            matrix2 = getNewMatrix(rows - matrix1.getTotalRows(), columns);
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
                     if (row < position) matrix1.setValue(row, column, getValue(row, column));
                     else matrix2.setValue(row - position, column, getValue(row, column));
                 }
             }
         }
         else {
-            if (position < 1 || position > totalColumns - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(totalRows, position);
-            matrix2 = getNewMatrix(totalRows, totalColumns - matrix1.getTotalColumns());
-            for (int row = 0; row < totalRows; row++) {
-                for (int column = 0; column < totalColumns; column++) {
+            if (position < 1 || position > columns - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
+            matrix1 = getNewMatrix(rows, position);
+            matrix2 = getNewMatrix(rows, columns - matrix1.getTotalColumns());
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
                     if (column < position) matrix1.setValue(row, column, getValue(row, column));
                     else matrix2.setValue(row, column - position, getValue(row, column));
                 }
@@ -2007,13 +2025,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     public void print() {
-        int rows = getRows();
-        int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
+        for (int row = sliceStartRow; row < sliceStartRow + sliceRows - 1; row++) {
             System.out.print("[");
-            for (int column = 0; column < columns; column++) {
+            for (int column = sliceStartColumn; column < sliceStartColumn + sliceColumns - 1; column++) {
                 System.out.print(getValue(row, column));
-                if (column < columns - 1) System.out.print(" ");
+                if (column < sliceColumns - 1) System.out.print(" ");
             }
             System.out.println("]");
         }

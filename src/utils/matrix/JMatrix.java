@@ -88,6 +88,19 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
+     * Transposes matrix.
+     *
+     * @return transposed matrix.
+     * @throws MatrixException throws exception if cloning of mask fails.
+     */
+    public Matrix transpose() throws MatrixException {
+        ArrayList<Matrix> transposedSubMatrices = new ArrayList<>();
+        ArrayList<Matrix> subMatrices = getSubMatrices();
+        for (Matrix matrix : subMatrices) transposedSubMatrices.add(matrix.transpose());
+        return new JMatrix(transposedSubMatrices, !joinedVertically);
+    }
+
+    /**
      * Returns sub-matrices within Matrix.
      *
      * @return sub-matrices within Matrix.

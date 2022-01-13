@@ -76,11 +76,39 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     */
+    protected ComputableMatrix(int rows, int columns, boolean isScalar, boolean isTransposed) {
+        super(rows, columns, isTransposed);
+        this.isScalar = isScalar;
+    }
+
+    /**
+     * Constructor for matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
      * @param name name if matrix.
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar, String name) {
         super(rows, columns, name);
         this.isScalar = isScalar;
+    }
+
+    /**
+     * Sets parameters for matrix.
+     *
+     * @param matrix matrix.
+     * @throws MatrixException throws exception if cloning of mask fails.
+     */
+    protected void setParameters(Matrix matrix) throws MatrixException {
+        super.setParameters(matrix);
+        matrix.setInitializer(initializer);
+        matrix.setStride(stride);
+        matrix.setDilation(dilation);
+        matrix.setFilterRowSize(filterRowSize);
+        matrix.setFilterColumnSize(filterColumnSize);
     }
 
     /**
@@ -872,16 +900,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Transposes matrix.
-     *
-     * @return new matrix but as transposed with flipped rows and columns.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix transpose() throws MatrixException {
-        return new TransposeMatrixOperation(getRows(), getColumns()).apply(this, getNewMatrix(true));
-    }
-
-    /**
      * Classifies matrix assuming multi-label classification.
      *
      * @return classified matrix.
@@ -924,7 +942,8 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
         if (binaryCode.length() > maxBits) throw new MatrixException("Binary code length: " + binaryCode.length() + " is exceeding number of maximum bits: " + maxBits);
         Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
-        for (int charIndex = 0; charIndex < binaryCode.length(); charIndex++) {
+        int binaryCodeLength = binaryCode.length();
+        for (int charIndex = 0; charIndex < binaryCodeLength; charIndex++) {
             char charAt = binaryCode.charAt(charIndex);
             if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 1);
         }
@@ -941,7 +960,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getColumns() != 1) throw new MatrixException("Matrix must be column vector.");
         int rows = getRows();
         int result = 0;
-        for (int row = 0; row < getRows(); row++) {
+        for (int row = 0; row < rows; row++) {
             double value = getValue(row, 0);
             if (!(value == 0 || value == 1)) throw new MatrixException("Bit column vector must contains values of 0 or 1.");
             result += value * Math.pow(2, (rows - 1) - row);

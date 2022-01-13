@@ -40,7 +40,7 @@ public class SMatrix extends ComputableMatrix {
      */
     public SMatrix(int rows, int columns) {
         super(rows, columns, false);
-        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -99,12 +99,24 @@ public class SMatrix extends ComputableMatrix {
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
      * @param data matrix data.
-     * @param referTo if true creates matrix with reference to given matrix data otherwise clones the data.
+     * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean referTo) {
-        this(rows, columns);
-        if (referTo) matrix.putAll(data);
-        else for (Integer index : data.keySet()) matrix.put(index, data.get(index));
+    public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean isTransposed) {
+        super(rows, columns, false, isTransposed);
+        matrix.putAll(data);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    }
+
+    /**
+     * Transposes matrix.
+     *
+     * @return transposed matrix.
+     * @throws MatrixException throws exception if cloning of mask fails.
+     */
+    public Matrix transpose() throws MatrixException {
+        Matrix newMatrix = new SMatrix(rows, columns, matrix, true);
+        super.setParameters(newMatrix);
+        return newMatrix;
     }
 
     /**
@@ -143,7 +155,7 @@ public class SMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + row) * getTotalColumns() + (getSliceStartColumn() + column), value);
+        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed ? row : column)) * columns + (getSliceStartColumn() + (!isTransposed ? column : row)), value);
     }
 
     /**
@@ -154,7 +166,7 @@ public class SMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + row) * getTotalColumns() + (getSliceStartColumn() + column), (double)0);
+        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed ? row : column)) * columns + (getSliceStartColumn() + (!isTransposed ? column : row)), (double)0);
     }
 
     /**

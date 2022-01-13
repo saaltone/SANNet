@@ -269,18 +269,6 @@ public interface Matrix {
     Matrix copy() throws MatrixException;
 
     /**
-     * Slices current matrix by creating reference to existing matrix.
-     *
-     * @param startRow start row of slice.
-     * @param startColumn start column of slice.
-     * @param endRow  end row of slice.
-     * @param endColumn  end column of slice.
-     * @return sliced matrix.
-     * @throws MatrixException throws exception if slicing fails.
-     */
-    Matrix slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
-
-    /**
      * Slices matrix.
      *
      * @param startRow start row of slice.
@@ -289,7 +277,7 @@ public interface Matrix {
      * @param endColumn  end column of slice.
      * @throws MatrixException throws exception if slicing fails.
      */
-    void sliceAt(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
+    void slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
 
     /**
      * Removes slicing of matrix.
@@ -1505,6 +1493,13 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix transpose() throws MatrixException;
+
+    /**
+     * Checks if matrix is transposed.
+     *
+     * @return true is matrix is transposed otherwise false.
+     */
+    boolean isTransposed();
 
     /**
      * Classifies matrix assuming multi-label classification.
