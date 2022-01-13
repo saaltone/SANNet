@@ -37,6 +37,12 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     private double probability = 0;
 
     /**
+     * If true mask is transposed.
+     *
+     */
+    protected boolean isTransposed = false;
+
+    /**
      * Random function for mask class.
      *
      */
@@ -67,6 +73,21 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
+     * Constructor for abstract mask.
+     *
+     * @param rows number of rows in mask.
+     * @param columns number of columns in mask.
+     * @param probability probability of masking.
+     * @param isTransposed is true mask is transposed otherwise false.
+     */
+    public AbstractMask(int rows, int columns, double probability, boolean isTransposed) {
+        this.rows = rows;
+        this.columns = columns;
+        this.probability = probability;
+        this.isTransposed = isTransposed;
+    }
+
+    /**
      * Returns size (rows * columns) of mask
      *
      * @return size of mask.
@@ -81,7 +102,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of rows in mask.
      */
     public int getRows() {
-        return rows;
+        return !isTransposed ? rows : columns;
     }
 
     /**
@@ -90,7 +111,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of columns in mask.
      */
     public int getColumns() {
-        return columns;
+        return !isTransposed ? columns : rows;
     }
 
     /**
@@ -124,16 +145,19 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      * @return reference to this mask but as transposed with flipped rows and columns.
      */
-    public Mask transpose() {
-        Mask transposedMask = getNewMask(true);
-        int rows = getRows();
-        int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                if (getMask(row, column)) transposedMask.setMask(column, row, getMask(row, column));
-            }
-        }
+    public Mask transpose() throws MatrixException {
+        Mask transposedMask = reference();
+        transposedMask.setTranspose(true);
         return transposedMask;
+    }
+
+    /**
+     * Sets if mask is transposed.
+     *
+     * @param isTransposed if true mask is transposed and if false not transposed.
+     */
+    public void setTranspose(boolean isTransposed) {
+        this.isTransposed = isTransposed;
     }
 
     /**

@@ -52,8 +52,16 @@ public interface Mask {
      * Transposes mask.
      *
      * @return reference to this mask but with transposed that is flipped rows and columns.
+     * @throws MatrixException throws exception if cloning of mask fails.
      */
-    Mask transpose();
+    Mask transpose() throws MatrixException;
+
+    /**
+     * Sets if mask is transposed.
+     *
+     * @param isTransposed if true mask is transposed and if false not transposed.
+     */
+    void setTranspose(boolean isTransposed);
 
     /**
      * Returns size (rows * columns) of mask.<br>

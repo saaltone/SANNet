@@ -36,9 +36,10 @@ public class SMask extends AbstractMask {
      * @param columns defines number of columns in mask.
      * @param data mask data.
      * @param probability probability of masking.
+     * @param isTransposed is true mask is transposed otherwise false.
      */
-    protected SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability) {
-        super(rows, columns, probability);
+    private SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability, boolean isTransposed) {
+        super(rows, columns, probability, isTransposed);
         mask.putAll(data);
     }
 
@@ -67,7 +68,7 @@ public class SMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new SMask(getRows(), getColumns(), mask, getProbability());
+        return new SMask(!isTransposed ? getRows() : getColumns(), !isTransposed ? getColumns() : getRows(), mask, getProbability(), isTransposed);
     }
 
     /**
@@ -78,7 +79,7 @@ public class SMask extends AbstractMask {
      * @param value defines if specific row and column is masked (true) or not (false).
      */
     public void setMask(int row, int column, boolean value) {
-        mask.put(row * getColumns() + column, value);
+        mask.put(row * (!isTransposed ? getColumns() : getRows()) + column, value);
     }
 
     /**
@@ -90,7 +91,7 @@ public class SMask extends AbstractMask {
      */
     public boolean getMask(int row, int column) {
         if (mask == null) return false;
-        return mask.getOrDefault(row * getColumns() + column, false);
+        return mask.getOrDefault(row * (!isTransposed ? getColumns() : getRows()) + column, false);
     }
 
     /**

@@ -33,9 +33,10 @@ public class DMask extends AbstractMask {
      *
      * @param data clones mask data from given mask data.
      * @param probability probability of masking.
+     * @param isTransposed is true mask is transposed otherwise false.
      */
-    protected DMask(boolean[][] data, double probability) {
-        super(data.length, data[0].length, probability);
+    private DMask(boolean[][] data, double probability, boolean isTransposed) {
+        super(data.length, data[0].length, probability, isTransposed);
         mask = data.clone();
     }
 
@@ -64,7 +65,7 @@ public class DMask extends AbstractMask {
      * @return copy of mask.
      */
     public Mask getCopy() {
-        return new DMask(mask, getProbability());
+        return new DMask(mask, getProbability(), isTransposed);
     }
 
     /**
@@ -75,7 +76,7 @@ public class DMask extends AbstractMask {
      * @param value defines if specific row and column is masked (true) or not (false).
      */
     public void setMask(int row, int column, boolean value) {
-        mask[row][column] = value;
+        mask[!isTransposed ? row : column][!isTransposed ? column : row] = value;
     }
 
     /**
@@ -86,7 +87,7 @@ public class DMask extends AbstractMask {
      * @return if specific row and column is masked (true) or not (false).
      */
     public boolean getMask(int row, int column) {
-        return mask[row][column];
+        return mask[!isTransposed ? row : column][!isTransposed ? column : row];
     }
 
     /**
@@ -94,7 +95,7 @@ public class DMask extends AbstractMask {
      *
      */
     public void reset() {
-        mask = new boolean[getRows()][getColumns()];
+        mask = new boolean[mask.length][mask[0].length];
     }
 
 }
