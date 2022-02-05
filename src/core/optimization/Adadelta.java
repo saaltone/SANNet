@@ -15,7 +15,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements Adadelta optimizer.<br>
+ * Implements Adadelta optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *

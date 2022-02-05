@@ -15,7 +15,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements AMSGrad optimizer.<br>
+ * Implements AMSGrad optimizer.<br>
  * <br>
  * Reference: https://towardsdatascience.com/10-gradient-descent-optimisation-algorithms-86989510b5e9 <br>
  *

@@ -15,7 +15,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements Adam optimizer.<br>
+ * Implements Adam optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *

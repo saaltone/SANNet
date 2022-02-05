@@ -14,7 +14,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Class that implements Nesterov's Accelerated Gradient Descent optimizer.<br>
+ * Implements Nesterov's Accelerated Gradient Descent optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *

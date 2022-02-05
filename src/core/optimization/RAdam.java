@@ -14,7 +14,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements Rectified Adam optimizer.<br>
+ * Implements Rectified Adam optimizer.<br>
  * <br>
  * Reference: https://arxiv.org/abs/1908.03265 <br>
  *

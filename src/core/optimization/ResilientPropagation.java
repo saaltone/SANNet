@@ -15,7 +15,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements Resilient Propagation optimizer.<br>
+ * Implements Resilient Propagation optimizer.<br>
  * Resilient Propagation is full batch algorithm.<br>
  * <br>
  * Reference: http://130.243.105.49/~lilien/ml/seminars/2007_03_12c-Markus_Ingvarsson-RPROP.pdf <br>

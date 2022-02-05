@@ -15,7 +15,7 @@ import utils.matrix.UnaryFunctionType;
 import java.util.HashMap;
 
 /**
- * Class that implements Adagrad optimizer.<br>
+ * Implements Adagrad optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *

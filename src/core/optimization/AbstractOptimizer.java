@@ -13,7 +13,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Class that defines AbstractOptimizer containing common functions for optimizers.
+ * Implements abstract optimizer containing common functions for optimizers.
  *
  */
 public abstract class AbstractOptimizer implements Configurable, Optimizer, Serializable {

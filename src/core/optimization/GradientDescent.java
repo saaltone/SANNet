@@ -11,7 +11,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Class that implements vanilla Gradient Descent optimizer.<br>
+ * Implements vanilla Gradient Descent optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *

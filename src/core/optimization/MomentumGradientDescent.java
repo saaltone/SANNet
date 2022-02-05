@@ -14,7 +14,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Class that implements Gradient Descent with Momentum optimizer.<br>
+ * Implements Gradient Descent with Momentum optimizer.<br>
  * <br>
  * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
  *
