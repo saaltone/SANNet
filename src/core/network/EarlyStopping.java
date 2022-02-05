@@ -30,7 +30,7 @@ public class EarlyStopping implements Configurable, Serializable {
     private static final long serialVersionUID = -8362385201353383426L;
 
     /**
-     * Parameter name types for EarlyStopping.
+     * Parameter name types for early stopping.
      *     - trainingAverageSize: size for training error rolling average. Default value 100 (iterations).<br>
      *     - trainingStopThreshold: stop threshold for training error condition. Default 20 (consequent iterations where condition is met).<br>
      *     - validationAverageSize: size for validation error rolling average. Default value 100 (iterations).<br>
@@ -41,6 +41,12 @@ public class EarlyStopping implements Configurable, Serializable {
             "(trainingStopThreshold:INT, )" +
             "(validationAverageSize:INT, )" +
             "(validationStopThreshold:INT)";
+
+    /**
+     * Params for early stopping.
+     *
+     */
+    private final String params;
 
     /**
      * Size for training error rolling average.
@@ -129,9 +135,10 @@ public class EarlyStopping implements Configurable, Serializable {
     /**
      * Default constructor for early stopping class.
      *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public EarlyStopping() {
-        initializeDefaultParams();
+    public EarlyStopping() throws DynamicParamException {
+        this(null);
     }
 
     /**
@@ -141,8 +148,9 @@ public class EarlyStopping implements Configurable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public EarlyStopping(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
+        initializeDefaultParams();
+        this.params = params;
+        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -182,6 +190,16 @@ public class EarlyStopping implements Configurable, Serializable {
         if (params.hasParam("trainingStopThreshold")) trainingStopThreshold = params.getValueAsInteger("trainingStopThreshold");
         if (params.hasParam("validationAverageSize")) validationAverageSize = params.getValueAsInteger("validationAverageSize");
         if (params.hasParam("validationStopThreshold")) validationStopThreshold = params.getValueAsInteger("validationStopThreshold");
+    }
+
+    /**
+     * Returns reference to early stopping.
+     *
+     * @return reference to early stopping.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public EarlyStopping reference() throws DynamicParamException {
+        return new EarlyStopping(params);
     }
 
     /**
