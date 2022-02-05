@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 /**
- * Class that handles calculation of regression error.
+ * Implements functionality for calculation of regression error.
  *
  */
 public class RegressionMetric implements Metric, Serializable {
@@ -72,7 +72,7 @@ public class RegressionMetric implements Metric, Serializable {
     private final boolean useR2AsLastError;
 
     /**
-     * Default constructor for RegressionMetric.
+     * Default constructor for regression metric.
      *
      */
     public RegressionMetric() {
@@ -80,7 +80,7 @@ public class RegressionMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Regression Metric.
+     * Constructor for regression metric.
      *
      * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
      */
@@ -178,8 +178,10 @@ public class RegressionMetric implements Metric, Serializable {
      */
     public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
         for (Integer sampleIndex : predicted.keySet()) {
+            MMatrix predictedSample = predicted.get(sampleIndex);
+            MMatrix actualSample = actual.get(sampleIndex);
             for (Integer matrixIndex : predicted.entryKeySet()) {
-                update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
+                update(predictedSample.get(matrixIndex), actualSample.get(matrixIndex));
             }
         }
     }

@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class that handles calculation of classification error.
+ * Implements functionality for calculation of classification error.
  *
  */
 public class ClassificationMetric implements Metric, Serializable {
@@ -138,7 +138,7 @@ public class ClassificationMetric implements Metric, Serializable {
     public ClassificationMetric() {}
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification.
      *
      * @param averageType average type.
      */
@@ -147,7 +147,7 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification metric.
      *
      * @param averageType average type.
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
@@ -158,7 +158,7 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification metric.
      *
      * @param averageType average type.
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
@@ -170,7 +170,7 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification metric.
      *
      * @param averageType average type.
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
@@ -183,7 +183,7 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification metric.
      *
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
      */
@@ -219,7 +219,7 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for Classification.
+     * Constructor for classification metric.
      *
      * @param multiLabel if true assumes multi label classification otherwise assumes single label.
      * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
@@ -330,19 +330,6 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Updates classification statistics and confusion matrix for multiple samples.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     */
-    public void update(MMatrix predicted, MMatrix actual) {
-        int actualSize = actual.size();
-        for (int sample = 0; sample < actualSize; sample++) {
-            update(predicted.get(sample), actual.get(sample));
-        }
-    }
-
-    /**
      * Updates classification statistics and confusion matrix for multiple samples.
      *
      * @param predicted predicted samples.
@@ -350,22 +337,11 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     public void update(Sequence predicted, Sequence actual) {
         for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.entryKeySet()) {
-                update(predicted.get(sampleIndex, matrixIndex), actual.get(sampleIndex, matrixIndex));
+            MMatrix predictedSample = predicted.get(sampleIndex);
+            MMatrix actualSample = actual.get(sampleIndex);
+            for (Integer depthIndex : predictedSample.keySet()) {
+                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
             }
-        }
-    }
-
-    /**
-     * Updates classification statistics and confusion matrix for multiple samples.
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     */
-    public void update(HashMap<Integer, Matrix> predicted, HashMap<Integer, Matrix> actual) {
-        int actualSize = actual.size();
-        for (int sample = 0; sample < actualSize; sample++) {
-            update(predicted.get(sample), actual.get(sample));
         }
     }
 
@@ -528,41 +504,14 @@ public class ClassificationMetric implements Metric, Serializable {
      * @return classification for predicted samples.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private MMatrix getClassification(MMatrix predicted) throws MatrixException {
-        MMatrix classified = new MMatrix();
-        int index = 0;
-        for (Matrix sample: predicted.values()) classified.put(index++, getClassification(sample));
-        return classified;
-    }
-
-    /**
-     * Returns classification for (predicted) multiple samples.<br>
-     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
-     *
-     * @param predicted predicted samples.
-     * @return classification for predicted samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private HashMap<Integer, Matrix> getClassification(HashMap<Integer, Matrix> predicted) throws MatrixException {
-        HashMap<Integer, Matrix> classified = new HashMap<>();
-        int index = 0;
-        for (Matrix sample: predicted.values()) classified.put(index++, getClassification(sample));
-        return classified;
-    }
-
-    /**
-     * Returns classification for (predicted) multiple samples.<br>
-     * Takes into consideration if single label or multi label classification for metrics is defined.<br>
-     *
-     * @param predicted predicted samples.
-     * @return classification for predicted samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
     private Sequence getClassification(Sequence predicted) throws MatrixException {
-        Sequence classified = new Sequence(predicted.getDepth());
+        Sequence classified = new Sequence();
         for (Integer sampleIndex : predicted.keySet()) {
-            for (Integer matrixIndex : predicted.entryKeySet()) {
-                classified.put(sampleIndex, matrixIndex, getClassification(predicted.get(sampleIndex, matrixIndex)));
+            MMatrix predictedSample = predicted.get(sampleIndex);
+            MMatrix classifiedSample = new MMatrix(predicted.get(sampleIndex).getDepth());
+            classified.put(sampleIndex, classifiedSample);
+            for (Integer depthIndex : predictedSample.keySet()) {
+                classifiedSample.put(depthIndex, getClassification(predictedSample.get(depthIndex)));
             }
         }
         return classified;
