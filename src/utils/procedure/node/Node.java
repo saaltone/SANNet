@@ -12,7 +12,7 @@ import utils.matrix.MatrixException;
 import java.util.Set;
 
 /**
- * Defines interface for Node.
+ * Defines interface for node.
  *
  */
 public interface Node {

@@ -37,7 +37,7 @@ public class MultiNode extends AbstractNode {
     private transient HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
 
     /**
-     * Constructor for node.
+     * Constructor for multi node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.
@@ -51,7 +51,7 @@ public class MultiNode extends AbstractNode {
     }
 
     /**
-     * Constructor for node.
+     * Constructor for multi node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.

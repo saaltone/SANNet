@@ -30,7 +30,7 @@ public class SingleNode extends AbstractNode {
     private transient Matrix gradient;
 
     /**
-     * Constructor for node.
+     * Constructor for single node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.
@@ -42,7 +42,7 @@ public class SingleNode extends AbstractNode {
     }
 
     /**
-     * Constructor for node.
+     * Constructor for single node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.

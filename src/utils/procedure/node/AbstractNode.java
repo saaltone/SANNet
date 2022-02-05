@@ -58,7 +58,7 @@ public abstract class AbstractNode implements Node, Serializable {
     private boolean stopGradient = false;
 
     /**
-     * Constructor for node.
+     * Constructor for abstract node.
      *
      * @param id id.
      * @param referenceMatrix reference matrix.
