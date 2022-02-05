@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.Random;
 
 /**
- * Abstract class that implements common operations for masking.<br>
+ * Implements abstract mask that implements common operations for masking.<br>
  *
  */
 public abstract class AbstractMask implements Cloneable, Serializable, Mask {
