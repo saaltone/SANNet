@@ -50,7 +50,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
     /**
      * Constructor for activation layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param params parameters for activation layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.

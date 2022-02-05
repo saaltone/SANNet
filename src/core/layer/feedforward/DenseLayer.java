@@ -23,7 +23,7 @@ import java.util.HashSet;
 public class DenseLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for feedforward layer.
+     * Parameter name types for dense layer.
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
      *
@@ -32,7 +32,7 @@ public class DenseLayer extends AbstractExecutionLayer {
             "(splitOutputAtPosition:INT)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class DenseWeightSet implements WeightSet, Serializable {
@@ -135,7 +135,7 @@ public class DenseLayer extends AbstractExecutionLayer {
     /**
      * Constructor for dense layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for dense layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -156,9 +156,9 @@ public class DenseLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns parameters used for feedforward layer.
+     * Returns parameters used for dense layer.
      *
-     * @return parameters used for feedforward layer.
+     * @return parameters used for dense layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + DenseLayer.paramNameTypes;

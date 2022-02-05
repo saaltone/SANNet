@@ -33,7 +33,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
             "(splitOutputAtPosition:INT)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class FeedforwardWeightSet implements WeightSet, Serializable {
@@ -142,7 +142,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     /**
      * Constructor for feedforward layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
@@ -294,7 +294,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "Activation function: " + activationFunction.getName();
+        return "Activation function: " + activationFunction.getName() + ", Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A");
     }
 
 }

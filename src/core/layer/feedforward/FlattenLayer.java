@@ -25,8 +25,8 @@ public class FlattenLayer extends AbstractExecutionLayer {
     /**
      * Constructor for flatten layer.
      *
-     * @param layerIndex layer Index.
-     * @param params parameters for activation layer.
+     * @param layerIndex layer index
+     * @param params parameters for flatten layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -93,15 +93,6 @@ public class FlattenLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Resets layer.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void resetLayer() throws MatrixException {
-        resetLayerOutputs();
-    }
-
-    /**
      * Reinitializes neural network layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -117,7 +108,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      */
     public void forwardProcess() throws MatrixException {
         resetLayer();
-        setLayerOutputs(getPreviousLayer().getLayerOutputs().flatten());
+        setLayerOutputs(getPreviousLayerOutputs().flatten());
     }
 
     /**
@@ -127,7 +118,6 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        resetLayerGradients();
         setLayerGradients(getNextLayerGradients().unflatten(getPreviousLayerWidth(), getPreviousLayerHeight(), getPreviousLayerDepth()));
     }
 
