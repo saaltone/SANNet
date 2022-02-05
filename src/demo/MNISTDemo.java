@@ -73,8 +73,8 @@ public class MNISTDemo {
 
             ClassificationMetric predictionAbstractMetric = new ClassificationMetric();
             for (int index = 0; index < 100; index++) {
-                Sequence input = new Sequence(1);
-                Sequence output = new Sequence(1);
+                Sequence input = new Sequence();
+                Sequence output = new Sequence();
                 for (int index1 = 0; index1 < 100; index1++) {
                     input.put(index1, testMNIST.get(0).get(index * 100 + index1));
                     output.put(index1, testMNIST.get(1).get(index * 100 + index1));
@@ -162,11 +162,11 @@ public class MNISTDemo {
         for (Integer sampleIndex : data.get(1).keySet()) {
             MMatrix sample = data.get(1).get(sampleIndex);
             MMatrix encodedSample = new MMatrix(sample.getDepth());
-            for (Integer entryIndex : sample.keySet()) {
-                int value = (int)sample.get(entryIndex).getValue(0,0);
+            for (Integer depthIndex : sample.keySet()) {
+                int value = (int)sample.get(depthIndex).getValue(0,0);
                 Matrix output = new SMatrix(10, 1);
                 output.setValue(value, 0, 1);
-                encodedSample.put(entryIndex, output);
+                encodedSample.put(depthIndex, output);
             }
             data.get(1).put(sampleIndex, encodedSample);
         }
