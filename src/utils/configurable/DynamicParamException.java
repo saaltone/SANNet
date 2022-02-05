@@ -6,7 +6,7 @@
 package utils.configurable;
 
 /**
- * Class defining dynamic parameter exception thrown in dynamic parameter handling error situations.<br>
+ * Implements dynamic parameter exception thrown in dynamic parameter handling error situations.<br>
  *
  */
 public class DynamicParamException extends Exception {
@@ -18,7 +18,7 @@ public class DynamicParamException extends Exception {
     final String cause;
 
     /**
-     * Default constructor for exception.
+     * Default constructor for dynamic parameter exception.
      *
      * @param cause verbal text of exception cause.
      */

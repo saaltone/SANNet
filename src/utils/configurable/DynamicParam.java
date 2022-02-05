@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class for dynamic parameter handling.<br>
+ * Implements dynamic parameter handling.<br>
  * Let's user to define parameters and their types.<br>
  * Stores parameter as name, type and value triplet.<br>
  *
@@ -307,7 +307,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Constructor for DynamicParam.
+     * Constructor for dynamic parameter.
      * Name type value pairs are described in format (name:type), (name:type)...
      *
      * @param nameTypes name type pairs of parameters as string representation.
@@ -352,7 +352,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Constructor for DynamicParam.
+     * Constructor for dynamic parameter.
      *
      * @param nameTypes name type pairs of parameters as hashmap.
      * @throws DynamicParamException throws exception if name types are not defined.
@@ -363,7 +363,7 @@ public class DynamicParam implements Serializable {
     }
 
     /**
-     * Constructor for DynamicParam.
+     * Constructor for dynamic parameter.
      *
      * @param nameTypes name type pairs of parameters as hashmap.
      * @throws DynamicParamException throws exception if name types are not defined.
