@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Abstract class that implements common operations for matrices.<br>
+ * Implements abstract matrix that implements common operations for matrices.<br>
  *
  */
 public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix {
@@ -106,7 +106,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Constructor for matrix.
+     * Constructor for abstract matrix.
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -119,7 +119,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Constructor for matrix.
+     * Constructor for abstract matrix.
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -290,26 +290,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             newMatrix = (Matrix)super.clone();
             newMatrix.setInitializer(getInitializer());
             if (getMask() != null) newMatrix.setMask(getMask().reference());
-        } catch (CloneNotSupportedException exception) {
-            throw new MatrixException("Cloning of matrix failed.");
-        }
-        return newMatrix;
-    }
-
-    /**
-     * Creates new matrix with object full copy of this matrix.
-     *
-     * @return newly created reference matrix.
-     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
-     */
-    public Matrix copy() throws MatrixException {
-        Matrix newMatrix;
-        // Make deep copy of matrix.
-        try {
-            newMatrix = (Matrix)super.clone();
-            newMatrix.setInitializer(getInitializer());
-            newMatrix.copyMatrixData(this); // Copy matrix data
-            if (getMask() != null) newMatrix.setMask(getMask().copy());
         } catch (CloneNotSupportedException exception) {
             throw new MatrixException("Cloning of matrix failed.");
         }
