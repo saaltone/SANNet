@@ -6,7 +6,6 @@
 package utils.sampling;
 
 import utils.matrix.MMatrix;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -14,7 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that implements sequence of samples.<br>
+ * Implements sequence for samples.<br>
  *
  */
 public class Sequence implements Serializable {
@@ -26,32 +25,29 @@ public class Sequence implements Serializable {
      * Sample depth.
      *
      */
-    private final int depth;
+    private int depth = -1;
 
     /**
      * Ordered map of samples.
      *
      */
-    private TreeMap<Integer, MMatrix> entries = new TreeMap<>();
+    private final TreeMap<Integer, MMatrix> samples = new TreeMap<>();
 
     /**
      * Constructor for sequence.
      *
-     * @param depth depth of samples.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Sequence(int depth) throws MatrixException {
-        if (depth < 1) throw new MatrixException("Depth of sequence must be at least 1.");
-        this.depth = depth;
+    public Sequence() {
     }
 
     /**
      * Constructor for sequence.
      *
      * @param sequence sequence to be applied into this sequence.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public Sequence(Sequence sequence) {
-        this.depth = sequence.getDepth();
+    public Sequence(Sequence sequence) throws MatrixException {
+        depth = sequence.getDepth();
         putAll(sequence);
     }
 
@@ -65,7 +61,7 @@ public class Sequence implements Serializable {
         this.depth = samples.get(0).getDepth();
         for (Integer entry : samples.keySet()) {
             if (samples.get(entry).getDepth() != depth) throw new MatrixException("Depths of all samples are not equal.");
-            entries.put(entry, samples.get(entry));
+            this.samples.put(entry, samples.get(entry));
         }
     }
 
@@ -75,7 +71,7 @@ public class Sequence implements Serializable {
      * @return returns true if sequence is empty otherwise returns false.
      */
     public boolean isEmpty() {
-        return entries.isEmpty();
+        return samples.isEmpty();
     }
 
     /**
@@ -84,7 +80,7 @@ public class Sequence implements Serializable {
      * @return number of samples in sequence.
      */
     public int sampleSize() {
-        return entries.size();
+        return samples.size();
     }
 
     /**
@@ -102,32 +98,7 @@ public class Sequence implements Serializable {
      * @return total size of sequence.
      */
     public int totalSize() {
-        return entries.size() * depth;
-    }
-
-    /**
-     * Clears sequence i.e. removes any existing samples.
-     *
-     */
-    public void clear() {
-        entries = new TreeMap<>();
-    }
-
-    /**
-     * Puts new sample into specific sample index and entry (sample depth) index.
-     *
-     * @param sampleIndex sample index.
-     * @param entryIndex entry (sample depth) index.
-     * @param entry entry to be inserted.
-     * @throws MatrixException throws exception if put operation fails.
-     */
-    public void put(int sampleIndex, int entryIndex, Matrix entry) throws MatrixException {
-        if (entries.containsKey(sampleIndex)) entries.get(sampleIndex).put(entryIndex, entry);
-        else {
-            MMatrix sample = new MMatrix(depth);
-            sample.put(entryIndex, entry);
-            entries.put(sampleIndex, sample);
-        }
+        return samples.size() * depth;
     }
 
     /**
@@ -135,29 +106,24 @@ public class Sequence implements Serializable {
      *
      * @param sampleIndex sample index.
      * @param sample sample to be inserted.
+     * @throws MatrixException throws exception if depth of sample is not matching depth of sequence.
      */
-    public void put(int sampleIndex, MMatrix sample) {
-        entries.put(sampleIndex, sample);
-    }
-
-    /**
-     * Returns entry at specific sample index and entry (sample depth) index.
-     *
-     * @param sampleIndex sample index.
-     * @param entryIndex entry (sample depth) index.
-     * @return requested entry.
-     */
-    public Matrix get(int sampleIndex, int entryIndex) {
-        return entries.get(sampleIndex).get(entryIndex);
+    public void put(int sampleIndex, MMatrix sample) throws MatrixException {
+        if (depth == -1) depth = sample.getDepth();
+        else if (depth != sample.getDepth()) throw new MatrixException("Depth of sample is not matching depth of sequence: " + getDepth());
+        samples.put(sampleIndex, sample);
     }
 
     /**
      * Puts all samples into sequence.
      *
      * @param sequence sequence containing new samples for this sequence.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public void putAll(Sequence sequence) {
-        entries.putAll(sequence.get());
+    public void putAll(Sequence sequence) throws MatrixException {
+        if (depth == -1) depth = sequence.getDepth();
+        else if (depth != sequence.getDepth()) throw new MatrixException("Depth of sequence is not matching depth of this sequence: " + getDepth());
+        samples.putAll(sequence.get());
     }
 
     /**
@@ -167,7 +133,7 @@ public class Sequence implements Serializable {
      * @return requested sample.
      */
     public MMatrix get(int sampleIndex) {
-        return entries.get(sampleIndex);
+        return samples.get(sampleIndex);
     }
 
     /**
@@ -176,7 +142,7 @@ public class Sequence implements Serializable {
      * @return all samples inside sequence as ordered map.
      */
     public TreeMap<Integer, MMatrix> get() {
-        return entries;
+        return samples;
     }
 
     /**
@@ -185,7 +151,7 @@ public class Sequence implements Serializable {
      * @return sample index key set.
      */
     public Set<Integer> keySet() {
-        return entries.keySet();
+        return samples.keySet();
     }
 
     /**
@@ -195,7 +161,7 @@ public class Sequence implements Serializable {
      * @return returns true if sequence contains sample index otherwise false.
      */
     public boolean containsKey(int sampleIndex) {
-        return entries.containsKey(sampleIndex);
+        return samples.containsKey(sampleIndex);
     }
     /**
      * Returns sample index key set in descending order.
@@ -203,7 +169,7 @@ public class Sequence implements Serializable {
      * @return sample index key set in descending order.
      */
     public Set<Integer> descendingKeySet() {
-        return entries.descendingKeySet();
+        return samples.descendingKeySet();
     }
 
     /**
@@ -212,7 +178,7 @@ public class Sequence implements Serializable {
      * @return entry key set.
      */
     public Set<Integer> entryKeySet() {
-        return entries.get(entries.firstKey()).keySet();
+        return samples.get(samples.firstKey()).keySet();
     }
 
     /**
@@ -221,7 +187,7 @@ public class Sequence implements Serializable {
      * @return first index of sequence.
      */
     public Integer firstKey() {
-        return entries.firstKey();
+        return samples.firstKey();
     }
 
     /**
@@ -230,7 +196,7 @@ public class Sequence implements Serializable {
      * @return last index of sequence.
      */
     public Integer lastKey() {
-        return entries.lastKey();
+        return samples.lastKey();
     }
 
     /**
@@ -240,7 +206,7 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Sequence flatten() throws MatrixException {
-        Sequence flattenedSequence = new Sequence(1);
+        Sequence flattenedSequence = new Sequence();
         for (Integer sampleIndex : keySet()) flattenedSequence.put(sampleIndex, get(sampleIndex).flatten());
         return flattenedSequence;
     }
@@ -255,7 +221,7 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Sequence unflatten(int width, int height, int depth) throws MatrixException {
-        Sequence unflattenedSequence = new Sequence(depth);
+        Sequence unflattenedSequence = new Sequence();
         for (Integer sampleIndex : keySet()) unflattenedSequence.put(sampleIndex, get(sampleIndex).unflatten(width, height, depth));
         return unflattenedSequence;
     }
@@ -270,7 +236,7 @@ public class Sequence implements Serializable {
      */
     public Sequence join(Sequence otherSequence, boolean joinedVertically) throws MatrixException {
         if (getDepth() != otherSequence.getDepth()) throw new MatrixException("Depth of this sequence + " + getDepth() + " and other sequence " + otherSequence.getDepth() + " do not match.");
-        Sequence joinedSequence = new Sequence(getDepth());
+        Sequence joinedSequence = new Sequence();
         for (Integer sampleIndex : keySet()) {
             if (!otherSequence.containsKey(sampleIndex)) throw new MatrixException("Other sequence does not contain sample index: " + sampleIndex);
             joinedSequence.put(sampleIndex, get(sampleIndex).join(otherSequence.get(sampleIndex), joinedVertically));
@@ -286,7 +252,7 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if unjoining of matrices fails.
      */
     public Sequence unjoin(int subMatrixIndex) throws MatrixException {
-        Sequence unjoinedSequence = new Sequence(getDepth());
+        Sequence unjoinedSequence = new Sequence();
         for (Integer sampleIndex : keySet()) {
             unjoinedSequence.put(sampleIndex, get(sampleIndex).unjoin(subMatrixIndex));
         }

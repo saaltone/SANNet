@@ -9,6 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MMatrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -16,7 +17,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines SequenceSampler for neural network.<br>
+ * Implements sequence sampler for neural network.<br>
  *
  */
 public class SequenceSampler implements Sampler, Configurable, Serializable {
@@ -25,7 +26,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     private static final long serialVersionUID = 4295889925849740870L;
 
     /**
-     * Sets parameters used for SequenceSampler.<br>
+     * Sets parameters used for sequence sampler.<br>
      * <br>
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
@@ -103,7 +104,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     private final Random random = new Random();
 
     /**
-     * Constructor for SequenceSampler.
+     * Constructor for sequence sampler.
      *
      * @param inputs input sequences for sampling.
      * @param outputs output sequences for sampling.
@@ -119,11 +120,11 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Constructor for SequenceSampler.
+     * Constructor for sequence sampler.
      *
      * @param inputs input sequences for sampling.
      * @param outputs output sequences for sampling.
-     * @param params parameters used for SequenceSampler.
+     * @param params parameters used for sequence sampler.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -145,16 +146,16 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Returns parameters used for SequenceSampler.
+     * Returns parameters used for sequence sampler.
      *
-     * @return parameters used for SequenceSampler.
+     * @return parameters used for sequence sampler.
      */
     public String getParamDefs() {
         return SequenceSampler.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for SequenceSampler.<br>
+     * Sets parameters used for sequence sampler.<br>
      * <br>
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
@@ -163,7 +164,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      *     - stepForward: if true samples sampling steps in forward order (not valid for randomOrder sampling). Default value true.<br>
      *     - stepSize: number of steps taken forward or backward when sampling (not valid for randomOrder sampling). Default value 1.<br>
      *
-     * @param params parameters used for SequenceSampler.
+     * @param params parameters used for sequence sampler.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -200,15 +201,6 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Returns depth of sample.
-     *
-     * @return depth of sample.
-     */
-    public int getDepth() {
-        return sampleDepth;
-    }
-
-    /**
      * Resets sampler.
      *
      */
@@ -239,9 +231,15 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
         if (!fullSet && randomOrder) sampleAt = random.nextInt(inputs.size() - 1);
 
         for (Integer sampleIndex : inputs.get(sampleAt).keySet()) {
-            for (Integer entryIndex : inputs.get(sampleAt).get(sampleIndex).keySet()) {
-                inputSequence.put(sampleIndex, entryIndex, inputs.get(sampleAt).get(sampleIndex).get(entryIndex));
-                outputSequence.put(sampleIndex, entryIndex, outputs.get(sampleAt).get(sampleIndex).get(entryIndex));
+            MMatrix input = inputs.get(sampleAt).get(sampleIndex);
+            MMatrix inputSample = new MMatrix(input.getDepth());
+            inputSequence.put(sampleIndex, inputSample);
+            MMatrix output = outputs.get(sampleAt).get(sampleIndex);
+            MMatrix outputSample = new MMatrix(output.getDepth());
+            outputSequence.put(sampleIndex, outputSample);
+            for (Integer depthIndex : input.keySet()) {
+                inputSample.put(depthIndex, input.get(depthIndex));
+                outputSample.put(depthIndex, output.get(depthIndex));
             }
         }
 

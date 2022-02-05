@@ -15,13 +15,6 @@ import utils.matrix.MatrixException;
 public interface Sampler {
 
     /**
-     * Returns depth of sample.
-     *
-     * @return depth of sample.
-     */
-    int getDepth();
-
-    /**
      * Resets sampler.
      *
      */

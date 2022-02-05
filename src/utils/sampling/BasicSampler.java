@@ -10,13 +10,14 @@ import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines BasicSampler for neural network.<br>
+ * Implements basic sampler for neural network.<br>
  *
  */
 public class BasicSampler implements Sampler, Configurable, Serializable {
@@ -25,7 +26,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     private static final long serialVersionUID = 1745926046002213714L;
 
     /**
-     * Sets parameters used for BasicSampler.<br>
+     * Sets parameters used for basic sampler.<br>
      * <br>
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
@@ -170,7 +171,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     private final Random random = new Random();
 
     /**
-     * Constructor for BasicSampler.
+     * Constructor for basic sampler.
      *
      * @param inputs input set for sampling.
      * @param outputs output set for sampling.
@@ -186,11 +187,11 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Constructor for BasicSampler.
+     * Constructor for basic sampler.
      *
      * @param inputs input set for sampling.
      * @param outputs output set for sampling.
-     * @param params parameters used for BasicSampler.
+     * @param params parameters used for basic sampler.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -219,16 +220,16 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Returns parameters used for BasicSampler.
+     * Returns parameters used for basic sampler.
      *
-     * @return parameters used for BasicSampler.
+     * @return parameters used for basic sampler.
      */
     public String getParamDefs() {
         return BasicSampler.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for BasicSampler.<br>
+     * Sets parameters used for basic sampler.<br>
      * <br>
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
@@ -244,7 +245,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      *     - sampleSize: number of samples sampled. Default value 1.<br>
      *     - cyclical: if true considered sample set as cyclical. Default value false.<br>
      *
-     * @param params parameters used for BasicSampler.
+     * @param params parameters used for basic sampler.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -283,20 +284,11 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
         if (output == null) throw new NeuralNetworkException("Output is not defined.");
         if (input.size() != output.size()) throw new NeuralNetworkException("Input and output must be same size.");
         if (input.size() == 0) throw new NeuralNetworkException("Input and output cannot be empty.");
-        if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Sample depth of input and output must match.");
         if (sampleDepth == -1) sampleDepth = input.getDepth();
-        else if (sampleDepth != input.getDepth()) throw new NeuralNetworkException("All input and output samples must have same depth.");
+        if (sampleDepth != input.getDepth() || sampleDepth != output.getDepth()) throw new NeuralNetworkException("All input and output samples must have same depth.");
+        if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Sample depth of input and output must match.");
         inputs.put(inputs.size(), input);
         outputs.put(outputs.size(), output);
-    }
-
-    /**
-     * Returns depth of sample.
-     *
-     * @return depth of sample.
-     */
-    public int getDepth() {
-        return sampleDepth;
     }
 
     /**
@@ -322,8 +314,9 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * @param inputSequence sampled input sequence.
      * @param outputSequence sampled output sequence.
      * @throws NeuralNetworkException throws exception if input and output sequence depths are not equal.
+     * @throws MatrixException throws exception if depth of sample is not matching depth of sequence.
      */
-    public void getSamples(Sequence inputSequence, Sequence outputSequence) throws NeuralNetworkException {
+    public void getSamples(Sequence inputSequence, Sequence outputSequence) throws NeuralNetworkException, MatrixException {
         if (inputSequence.getDepth() != outputSequence.getDepth()) throw new NeuralNetworkException("Depth of samples input and output sequences must match");
 
         ArrayList<Integer> sampleIndices = getSampleIndices();
