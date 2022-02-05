@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Implements gradient clipping class.<br>
+ * Implements gradient clipping.<br>
  * Gradient clipping cuts gradient when certain threshold is reached to prevent then from growing too big i.e. exploding.<br>
  * <br>
  * Reference: https://hackernoon.com/gradient-clipping-57f04f0adae<br>
@@ -25,7 +25,7 @@ import java.util.HashSet;
 public class GradientClipping extends AbstractRegularizationLayer {
 
     /**
-     * Parameter name types for GradientClipping.
+     * Parameter name types for gradient clipping.
      *     - threshold: threshold for clipping gradients. Default value 0.1.<br>
      *
      */
@@ -46,7 +46,7 @@ public class GradientClipping extends AbstractRegularizationLayer {
     /**
      * Constructor for gradient clipping layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -101,25 +101,15 @@ public class GradientClipping extends AbstractRegularizationLayer {
     }
 
     /**
-     * Takes single forward processing step to process layer input(s).<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardProcess() throws MatrixException {
-        resetLayerOutputs();
-        getLayerOutputs().putAll(getPreviousLayerOutputs());
-    }
-
-    /**
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
      * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardProcess() throws MatrixException {
-        resetLayerGradients();
-        getLayerGradients().putAll(getNextLayerGradients());
+    public void backwardProcess() throws MatrixException, DynamicParamException {
+        super.backwardProcess();
 
         HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
         for (Matrix weight : nextLayerRegularizedWeights) {

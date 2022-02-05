@@ -9,6 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.Sequence;
@@ -24,7 +25,7 @@ import utils.sampling.Sequence;
 public class Dropout extends AbstractRegularizationLayer {
 
     /**
-     * Parameter name types for DropOut.
+     * Parameter name types for drop out.
      *     - probability: probability of masking out a layer node. Default value 0.5.<br>
      *
      */
@@ -39,7 +40,7 @@ public class Dropout extends AbstractRegularizationLayer {
     /**
      * Constructor for drop out layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -88,12 +89,12 @@ public class Dropout extends AbstractRegularizationLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardProcess() throws MatrixException {
-        resetLayerOutputs();
         Sequence inputSequence = getPreviousLayerOutputs();
 
         if (isTraining()) {
             for (Integer sampleIndex : inputSequence.keySet()) {
-                for (Matrix matrix : inputSequence.get(sampleIndex).values()) {
+                MMatrix sample = inputSequence.get(sampleIndex);
+                for (Matrix matrix : sample.values()) {
                     // Implements forward step for inverted drop out.<br>
                     // Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
                     // During training phase it also compensates all remaining inputs by dividing by probability.<br>
@@ -105,19 +106,7 @@ public class Dropout extends AbstractRegularizationLayer {
             }
         }
 
-        getLayerOutputs().putAll(inputSequence);
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Additionally applies any regularization defined for layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardProcess() throws MatrixException {
-        resetLayerGradients();
-        getLayerGradients().putAll(getNextLayerGradients());
+        setLayerOutputs(inputSequence);
     }
 
     /**

@@ -24,7 +24,7 @@ import java.util.HashSet;
 public class L1_Regularization extends AbstractRegularizationLayer {
 
     /**
-     * Parameter name types for L1_Regularization.
+     * Parameter name types for L1 regularization.
      *     - lambda: lambda value for regularization. Default value: 0.01.<br>
      *
      */
@@ -45,7 +45,7 @@ public class L1_Regularization extends AbstractRegularizationLayer {
     /**
      * Constructor for L1 regularization layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -105,25 +105,15 @@ public class L1_Regularization extends AbstractRegularizationLayer {
     }
 
     /**
-     * Takes single forward processing step to process layer input(s).<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardProcess() throws MatrixException {
-        resetLayerOutputs();
-        getLayerOutputs().putAll(getPreviousLayerOutputs());
-    }
-
-    /**
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
      * Additionally applies any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardProcess() throws MatrixException {
-        resetLayerGradients();
-        getLayerGradients().putAll(getNextLayerGradients());
+    public void backwardProcess() throws MatrixException, DynamicParamException {
+        super.backwardProcess();
 
         HashMap<Matrix, Matrix> layerWeightGradients = new HashMap<>();
 

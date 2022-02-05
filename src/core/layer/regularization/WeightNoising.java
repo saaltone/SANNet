@@ -16,13 +16,13 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Layer that adds noise to the weights during training phase.<br>
+ * Implements layer that adds noise to the weights during training phase.<br>
  *
  */
 public class WeightNoising extends AbstractRegularizationLayer {
 
     /**
-     * Parameter name types for WeightNoising.
+     * Parameter name types for weight noising.
      *     - initialNoise: initial noise level. Default value 0.02.<br>
      *     - minNoise: minimum noise level. Default value 0.<br>
      *     - noiseDecay: noise decay factor. Default value 0.999.<br>
@@ -63,9 +63,9 @@ public class WeightNoising extends AbstractRegularizationLayer {
     private double noiseDecay;
 
     /**
-     * Constructor for WeightNoising layer.
+     * Constructor for weight noising layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -88,16 +88,16 @@ public class WeightNoising extends AbstractRegularizationLayer {
     }
 
     /**
-     * Returns parameters used for WeightNoising layer.
+     * Returns parameters used for weight noising layer.
      *
-     * @return parameters used for WeightNoising layer.
+     * @return parameters used for weight noising layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + WeightNoising.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for WeightNoising.<br>
+     * Sets parameters used for weight noising.<br>
      * <br>
      * Supported parameters are:<br>
      *     - initialNoise: initial noise level. Default value 0.02.<br>
@@ -129,10 +129,10 @@ public class WeightNoising extends AbstractRegularizationLayer {
      * Takes single forward processing step to process layer input(s).<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void forwardProcess() throws MatrixException {
-        resetLayerOutputs();
-        getLayerOutputs().putAll(getPreviousLayerOutputs());
+    public void forwardProcess() throws MatrixException, DynamicParamException {
+        super.forwardProcess();
 
         if (isTraining()) {
             HashSet<Matrix> nextLayerNormalizedWeights = getNextLayer().getNormalizedWeights();
@@ -141,18 +141,6 @@ public class WeightNoising extends AbstractRegularizationLayer {
                 if (currentNoise > minNoise) currentNoise *= noiseDecay;
             }
         }
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Additionally applies any regularization defined for layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardProcess() throws MatrixException {
-        resetLayerGradients();
-        getLayerGradients().putAll(getNextLayerGradients());
     }
 
     /**

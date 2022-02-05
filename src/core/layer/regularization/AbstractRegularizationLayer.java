@@ -12,19 +12,20 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashSet;
 
 /**
- * Defines class for common regularization functions.
+ * Implements abstract regularization layer for common regularization functions.
  *
  */
 public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer {
 
     /**
-     * Constructor for AbstractRegularization.
+     * Constructor for abstract regularization layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for feedforward layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
@@ -109,6 +110,27 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      */
     protected HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
+    }
+
+    /**
+     * Takes single forward processing step to process layer input(s).<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void forwardProcess() throws MatrixException, DynamicParamException {
+        setLayerOutputs(getPreviousLayerOutputs());
+    }
+
+    /**
+     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
+     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void backwardProcess() throws MatrixException, DynamicParamException {
+        setLayerGradients(getNextLayerGradients());
     }
 
     /**
