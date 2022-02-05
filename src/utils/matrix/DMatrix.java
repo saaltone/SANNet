@@ -6,6 +6,7 @@
 package utils.matrix;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Matrix class that implements dense matrix.<br>
@@ -173,6 +174,31 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
+     * Constructor for dense matrix.
+     *
+     * @param data matrix data.
+     * @param copyData if true matrix data is copied and if false referenced.
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     */
+    public DMatrix(double[][] data, boolean copyData, boolean isTransposed) {
+        super(data.length, data[0].length, false, isTransposed);
+        matrix = copyData ? data.clone() : data;
+        updateSliceDimensions(0, 0, data.length - 1, data[0].length - 1);
+    }
+
+    /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @return newly created reference matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy() throws MatrixException {
+        Matrix newMatrix = new DMatrix(matrix, true, false);
+        super.setParameters(newMatrix);
+        return newMatrix;
+    }
+
+    /**
      * Transposes matrix.
      *
      * @return transposed matrix.
@@ -185,9 +211,60 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns sub-matrices within Matrix.
+     * Checks if data of other matrix is equal to data of this matrix
      *
-     * @return sub-matrices within Matrix.
+     * @param other matrix to be compared.
+     * @return true is data of this and other matrix are equal otherwise false.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public boolean equals(Matrix other) throws MatrixException {
+        if (other instanceof DMatrix otherDMatrix) {
+            if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
+                throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
+            }
+            return otherDMatrix.isEqual(matrix);
+        }
+        else return super.equals(other);
+    }
+
+    /**
+     * Checks if matrix data equals to data of this matrix.
+     *
+     * @return true if matrix data and data of this matrix are equal otherwise returns false.
+     */
+    private boolean isEqual(double[][] matrixData) {
+        return Arrays.deepEquals(matrix, matrixData);
+    }
+
+    /**
+     * Makes current matrix data equal to other matrix data.
+     *
+     * @param other other matrix to be copied as data of this matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void setEqualTo(Matrix other) throws MatrixException {
+        if (other instanceof DMatrix otherDMatrix) {
+            if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
+                throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
+            }
+            otherDMatrix.makeEqual(matrix);
+        }
+        else super.setEqualTo(other);
+    }
+
+    /**
+     * Makes matrix data equals to data of this matrix.
+     *
+     * @param matrixData matrix data
+     */
+    private void makeEqual(double[][] matrixData) {
+        matrix = matrixData.clone();
+    }
+
+    /**
+     * Returns sub-matrices within matrix.
+     *
+     * @return sub-matrices within matrix.
      */
     public ArrayList<Matrix> getSubMatrices() {
         ArrayList<Matrix> matrices = new ArrayList<>();
