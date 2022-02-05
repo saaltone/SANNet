@@ -9,6 +9,7 @@ import core.layer.normalization.BatchNormalization;
 import core.layer.normalization.LayerNormalization;
 import core.layer.normalization.WeightNormalization;
 import core.layer.regularization.*;
+import core.layer.reinforcement.DuelingLayer;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.convolutional.*;
@@ -27,7 +28,7 @@ public class LayerFactory {
     /**
      * Creates neural network execution layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
      * @param initialization initialization function for layer.
@@ -41,6 +42,7 @@ public class LayerFactory {
         return switch (layerType) {
             case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
             case DENSE -> new DenseLayer(layerIndex, initialization, params);
+            case DUELING -> new DuelingLayer(layerIndex, params);
             case ACTIVATION -> new ActivationLayer(layerIndex, activationFunction, params);
             case FLATTEN -> new FlattenLayer(layerIndex, params);
             case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
@@ -86,6 +88,7 @@ public class LayerFactory {
     public static LayerType getLayerType(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
         if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return LayerType.FEEDFORWARD;
         if (neuralNetworkLayer.getClass().equals(DenseLayer.class)) return LayerType.DENSE;
+        if (neuralNetworkLayer.getClass().equals(DuelingLayer.class)) return LayerType.DUELING;
         if (neuralNetworkLayer.getClass().equals(ActivationLayer.class)) return LayerType.ACTIVATION;
         if (neuralNetworkLayer.getClass().equals(FlattenLayer.class)) return LayerType.FLATTEN;
         if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return LayerType.RECURRENT;
@@ -131,6 +134,7 @@ public class LayerFactory {
     public static String getLayerTypeByName(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
         if (neuralNetworkLayer.getClass().equals(FeedforwardLayer.class)) return "FEEDFORWARD";
         if (neuralNetworkLayer.getClass().equals(DenseLayer.class)) return "DENSE";
+        if (neuralNetworkLayer.getClass().equals(DuelingLayer.class)) return "DUELING";
         if (neuralNetworkLayer.getClass().equals(ActivationLayer.class)) return "ACTIVATION";
         if (neuralNetworkLayer.getClass().equals(FlattenLayer.class)) return "FLATTEN";
         if (neuralNetworkLayer.getClass().equals(RecurrentLayer.class)) return "RECURRENT";

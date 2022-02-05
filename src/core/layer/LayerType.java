@@ -24,6 +24,12 @@ public enum LayerType {
     DENSE,
 
     /**
+     * Dueling layer
+     *
+     */
+    DUELING,
+
+    /**
      * Activation layer
      *
      */
