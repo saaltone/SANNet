@@ -23,7 +23,7 @@ import utils.sampling.Sampler;
 import utils.sampling.Sequence;
 
 /**
- * Defines main class for neural network.<br>
+ * Implements neural network.<br>
  * Used to define, construct and execute neural network.<br>
  * Can support multiple layer of different types including regularization, normalization and optimization methods.<br>
  *
@@ -964,7 +964,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public MMatrix predict(MMatrix input) throws NeuralNetworkException, MatrixException {
         if (input == null) throw new NeuralNetworkException("No prediction inputs set");
-        Sequence inputs = new Sequence(input.getDepth());
+        Sequence inputs = new Sequence();
         inputs.put(0, input);
         return predict(inputs, true).get(0);
     }
@@ -1174,8 +1174,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         long startTime = System.nanoTime();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) if (reset) neuralNetworkLayer.resetOptimizer();
         trainingMetric.reset();
-        Sequence inputSequence = new Sequence(trainingSampler.getDepth());
-        Sequence outputSequence = new Sequence(trainingSampler.getDepth());
+        Sequence inputSequence = new Sequence();
+        Sequence outputSequence = new Sequence();
         trainingSampler.getSamples(inputSequence, outputSequence);
         getOutputLayer().setTargets(outputSequence);
         getInputLayer().train(inputSequence);
@@ -1210,8 +1210,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Predicts using given test set inputs.
      *
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    private void predictInput() {
+    private void predictInput() throws MatrixException {
         getInputLayer().predict(predictInputs);
         stateCompleted();
     }
@@ -1229,8 +1230,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         validationSampler.reset();
         int numberOfIterations = validationSampler.getNumberOfIterations();
         for (int sampleIndex = 0; sampleIndex < numberOfIterations; sampleIndex++) {
-            Sequence inputSequence = new Sequence(validationSampler.getDepth());
-            Sequence outputSequence = new Sequence(validationSampler.getDepth());
+            Sequence inputSequence = new Sequence();
+            Sequence outputSequence = new Sequence();
             validationSampler.getSamples(inputSequence, outputSequence);
             validationMetric.report(getInputLayer().predict(inputSequence), outputSequence);
         }
@@ -1361,13 +1362,33 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Returns reference to neural network.
+     *
+     * @return reference to neural network.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public NeuralNetwork reference() throws IOException, ClassNotFoundException, MatrixException, DynamicParamException {
+        NeuralNetwork neuralNetwork = copy();
+        neuralNetwork.reinitialize();
+        return neuralNetwork;
+    }
+
+    /**
      * Reinitializes neural network.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void reinitialize() throws MatrixException {
+    public void reinitialize() throws MatrixException, DynamicParamException {
         waitToComplete();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.reinitialize();
+        if (earlyStopping != null) earlyStopping = earlyStopping.reference();
+        if (validationMetric != null) validationMetric.reset();
+        totalIterations = 0;
+        trainingTime = 0;
     }
 
     /**
