@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Implements Peephole Long Short Term Memory (LSTM)<br>
+ * Implements peephole Long Short Term Memory (LSTM)<br>
  * <br>
  * Reference: https://en.wikipedia.org/wiki/Long_short-term_memory<br>
  * <br>
@@ -33,7 +33,7 @@ import java.util.HashSet;
 public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
 
     /**
-     * Parameter name types for Peephole LSTM layer.
+     * Parameter name types for peephole LSTM layer.
      *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
@@ -44,7 +44,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class PeepholeLSTMWeightSet implements WeightSet, Serializable {
@@ -280,35 +280,66 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     private Matrix input;
 
     /**
-     * Constructor for Peephole LSTM layer.
+     * Constructor for peephole LSTM layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
-     * @param params parameters for Peephole LSTM layer.
+     * @param params parameters for peephole LSTM layer.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public PeepholeLSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, initialization, false, params);
+    }
+
+    /**
+     * Constructor for peephole LSTM layer.
+     *
+     * @param layerIndex layer index
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for peephole LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected PeepholeLSTMLayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         activationFunction = tanh;
     }
 
     /**
-     * Constructor for Peephole LSTM layer.
+     * Constructor for peephole LSTM layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight.
-     * @param params parameters for Peephole LSTM layer.
+     * @param params parameters for peephole LSTM layer.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public PeepholeLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, activationFunction, initialization, false, params);
+    }
+
+    /**
+     * Constructor for peephole LSTM layer.
+     *
+     * @param layerIndex layer index
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for peephole LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected PeepholeLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         this.activationFunction = activationFunction == null ? tanh : activationFunction;
@@ -326,23 +357,23 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns parameters used for Peephole LSTM layer.
+     * Returns parameters used for peephole LSTM layer.
      *
-     * @return parameters used for Peephole LSTM layer.
+     * @return parameters used for peephole LSTM layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + PeepholeLSTMLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for Peephole LSTM layer.<br>
+     * Sets parameters used for peephole LSTM layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
-     * @param params parameters used for Peephole LSTM layer.
+     * @param params parameters used for peephole LSTM layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -385,7 +416,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new PeepholeLSTMWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        weightSet = new PeepholeLSTMWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
         currentWeightSet = weightSet;
     }
 
@@ -410,7 +441,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        if (resetPreviousInput) previousCellState = new DMatrix(super.getLayerWidth(), 1);
+        if (resetPreviousInput) previousCellState = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);
     }
 

@@ -33,7 +33,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class RecurrentWeightSet implements WeightSet, Serializable {
@@ -165,7 +165,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
     /**
      * Constructor for recurrent layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight.
      * @param params parameters for recurrent layer.
@@ -174,7 +174,23 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public RecurrentLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, activationFunction, initialization, false, params);
+    }
+
+    /**
+     * Constructor for recurrent layer.
+     *
+     * @param layerIndex layer index
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for recurrent layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected RecurrentLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
     }
 
@@ -246,7 +262,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new RecurrentWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        weightSet = new RecurrentWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
         currentWeightSet = weightSet;
     }
 
@@ -271,7 +287,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);
     }
 

@@ -46,7 +46,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
             "(regulateStateWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class GravesLSTMWeightSet implements WeightSet, Serializable {
@@ -345,7 +345,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *     - regulateStateWeights: true if recurrent state weights are regulated otherwise false (default value false).<br>
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for Graves LSTM layer.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
@@ -353,7 +353,27 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public GravesLSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, initialization, false, params);
+    }
+
+    /**
+     * Constructor for Graves LSTM layer.<br>
+     * Supported parameters are:<br>
+     *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *     - regulateStateWeights: true if recurrent state weights are regulated otherwise false (default value false).<br>
+     *
+     * @param layerIndex layer index
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for Graves LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected GravesLSTMLayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         activationFunction = tanh;
@@ -367,7 +387,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *     - regulateStateWeights: true if recurrent state weights are regulated otherwise false (default value false).<br>
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight.
      * @param params parameters for Graves LSTM layer.
@@ -376,7 +396,28 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public GravesLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, activationFunction, initialization, false, params);
+    }
+
+    /**
+     * Constructor for Graves LSTM layer.<br>
+     * Supported parameters are:<br>
+     *     - doubleTanh: true if tanh operation at final output step is executed otherwise false (default value true).<br>
+     *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
+     *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
+     *     - regulateStateWeights: true if recurrent state weights are regulated otherwise false (default value false).<br>
+     *
+     * @param layerIndex layer index
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for Graves LSTM layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected GravesLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         this.activationFunction = activationFunction == null ? tanh : activationFunction;
@@ -456,7 +497,7 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new GravesLSTMWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        weightSet = new GravesLSTMWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
         currentWeightSet = weightSet;
     }
 
@@ -482,8 +523,8 @@ public class GravesLSTMLayer extends AbstractRecurrentLayer {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(super.getLayerWidth(), 1);
-            previousCellState = new DMatrix(super.getLayerWidth(), 1);
+            previousOutput = new DMatrix(getInternalLayerWidth(), 1);
+            previousCellState = new DMatrix(getInternalLayerWidth(), 1);
         }
         return new MMatrix(input);
     }

@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Implements gated recurrent unit (GRU) layer.<br>
+ * Implements gated recurrent unit (GRU).<br>
  * <br>
  * Reference: https://en.wikipedia.org/wiki/Gated_recurrent_unit and https://github.com/erikvdplas/gru-rnn<br>
  * <br>
@@ -40,7 +40,7 @@ public class GRULayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class GRUWeightSet implements WeightSet, Serializable {
@@ -255,7 +255,7 @@ public class GRULayer extends AbstractRecurrentLayer {
     /**
      * Constructor for GRU layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for GRU layer.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
@@ -263,7 +263,22 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public GRULayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, initialization, false, params);
+    }
+
+    /**
+     * Constructor for GRU layer.
+     *
+     * @param layerIndex layer index
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for GRU layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected GRULayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
     }
@@ -337,7 +352,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new GRUWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        weightSet = new GRUWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
         currentWeightSet = weightSet;
     }
 
@@ -362,7 +377,7 @@ public class GRULayer extends AbstractRecurrentLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);
     }
 

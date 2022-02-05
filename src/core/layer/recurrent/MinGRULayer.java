@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Implements minimal gated recurrent unit (GRU) layer.<br>
+ * Implements minimal gated recurrent unit (GRU).<br>
  * <br>
  * Reference: https://en.wikipedia.org/wiki/Gated_recurrent_unit<br>
  * <br>
@@ -30,7 +30,7 @@ import java.util.HashSet;
 public class MinGRULayer extends AbstractRecurrentLayer {
 
     /**
-     * Parameter name types for abstract Min GRU layer.
+     * Parameter name types for minimal GRU layer.
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
@@ -39,7 +39,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
             "(regulateRecurrentWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class MinGRUWeightSet implements WeightSet, Serializable {
@@ -222,9 +222,9 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     private Matrix input;
 
     /**
-     * Constructor for Minimal GRU layer.
+     * Constructor for minimal GRU layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
      * @param params parameters for minimal GRU layer.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
@@ -232,7 +232,22 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public MinGRULayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, params);
+        this (layerIndex, initialization, false, params);
+    }
+
+    /**
+     * Constructor for minimal GRU layer.
+     *
+     * @param layerIndex layer index
+     * @param initialization initialization function for weight.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
+     * @param params parameters for minimal GRU layer.
+     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    protected MinGRULayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, isBirectional, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
     }
@@ -248,22 +263,22 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns parameters used for Minimal GRU layer.
+     * Returns parameters used for minimal GRU layer.
      *
-     * @return parameters used for Minimal GRU layer.
+     * @return parameters used for minimal GRU layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + MinGRULayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for Minimal GRU layer.<br>
+     * Sets parameters used for minimal GRU layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - regulateDirectWeights: true if direct weights are regulated otherwise false (default value true).<br>
      *     - regulateRecurrentWeights: true if recurrent weights are regulated otherwise false (default value false).<br>
      *
-     * @param params parameters used for Minimal GRU layer.
+     * @param params parameters used for minimal GRU layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -305,7 +320,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new MinGRUWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        weightSet = new MinGRUWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
         currentWeightSet = weightSet;
     }
 
@@ -330,7 +345,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        if (resetPreviousInput) previousOutput = new DMatrix(super.getLayerWidth(), 1);
+        if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);
     }
 

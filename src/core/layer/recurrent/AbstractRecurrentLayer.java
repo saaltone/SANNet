@@ -9,12 +9,16 @@ import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.Matrix;
+import utils.procedure.Procedure;
 import utils.sampling.Sequence;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
 
+import java.util.HashMap;
+
 /**
- * Implements functions specific and common for all recurrent layers.<br>
+ * Implements abstract recurrent layer providing functions common for all recurrent layers.<br>
  *
  */
 public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
@@ -71,16 +75,30 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     protected int truncateSteps;
 
     /**
-     * Constructor for AbstractRecurrentLayer.
+     * If true recurrent layer is bidirectional otherwise false
      *
-     * @param layerIndex layer Index.
+     */
+    private final boolean isBirectional;
+
+    /**
+     * Reverse procedure for layer. Procedure contains chain of forward and backward expressions.
+     *
+     */
+    protected Procedure reverseProcedure = null;
+
+    /**
+     * Constructor for abstract recurrent layer.
+     *
+     * @param layerIndex layer index
      * @param initialization initialization function.
+     * @param isBirectional if true recurrent layer is bidirectional otherwise false
      * @param params parameters for neural network layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    protected AbstractRecurrentLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+    protected AbstractRecurrentLayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
+        this.isBirectional = isBirectional;
     }
 
     /**
@@ -97,16 +115,16 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns parameters used for AbstractRecurrentLayer.
+     * Returns parameters used for abstract recurrent layer.
      *
-     * @return parameters used for AbstractRecurrentLayer.
+     * @return parameters used for abstract recurrent layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + AbstractRecurrentLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for AbstractRecurrentLayer.<br>
+     * Sets parameters used for abstract recurrent layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - resetStateTraining: true if output is reset prior training forward step start otherwise false (default value false).<br>
@@ -115,7 +133,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *     - restoreStateTesting: true if output is restored prior test phase otherwise false (default value false).<br>
      *     - truncateSteps: number of sequence steps taken in backpropagation phase (default -1 i.e. not used).<br>
      *
-     * @param params parameters used for AbstractRecurrentLayer.
+     * @param params parameters used for abstract recurrent layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -148,13 +166,40 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Check if layer is bidirectional.
+     *
+     * @return true if layer is bidirectional otherwise returns false.
+     */
+    public boolean isBidirectional() {
+        return isBirectional;
+    }
+
+    /**
+     * Returns width of neural network layer.
+     *
+     * @return width of neural network layer.
+     */
+    public int getLayerWidth() {
+        return getInternalLayerWidth() * (!isBidirectional() ? 1 : 2);
+    }
+
+    /**
+     * Returns internal width of neural network layer.
+     *
+     * @return internal width of neural network layer.
+     */
+    protected int getInternalLayerWidth() {
+        return super.getLayerWidth();
+    }
+
+    /**
      * Resets layer.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void resetLayer() throws MatrixException {
-        resetLayerOutputs();
-        procedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
+        super.resetLayer();
+        if (isBidirectional()) reverseProcedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
     }
 
     /**
@@ -165,22 +210,42 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayer();
-        Sequence previousOutputs = getPreviousLayerOutputs();
-
         if (previousState != isTraining()) {
             procedure.reset(true);
             if ((previousState && restoreStateTraining) || ((!previousState && restoreStateTesting))) {
                 procedure.storeDependencies(previousState ? 1 : 2);
+                if (isBidirectional()) reverseProcedure.storeDependencies(previousState ? 1 : 2);
             }
             if ((isTraining() && restoreStateTraining) || ((!isTraining() && restoreStateTesting))) {
                 procedure.restoreDependencies(isTraining() ? 1 : 2);
+                if (isBidirectional()) reverseProcedure.restoreDependencies(isTraining() ? 1 : 2);
             }
         }
-
-        procedure.calculateExpression(previousOutputs, getLayerOutputs());
-
         previousState = isTraining();
+
+        super.forwardProcess();
+        if (isBidirectional()) setLayerOutputs(getLayerOutputs().join(reverseProcedure.calculateExpression(getPreviousLayerOutputs()), true));
+    }
+
+    /**
+     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
+     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void backwardProcess() throws MatrixException, DynamicParamException {
+        if (!isBidirectional()) super.backwardProcess();
+        else {
+            Sequence nextLayerGradients = getNextLayerGradients();
+            Sequence layerGradients = procedure.calculateGradient(nextLayerGradients.unjoin(0), getTruncateSteps());
+            Sequence reverseLayerGradients = reverseProcedure.calculateGradient(nextLayerGradients.unjoin(1), getTruncateSteps());
+            Sequence updatedLayerGradients = new Sequence();
+            for (Integer sampleIndex : layerGradients.keySet()) {
+                updatedLayerGradients.put(sampleIndex, layerGradients.get(sampleIndex).add(reverseLayerGradients.get(sampleIndex)));
+            }
+            setLayerGradients(updatedLayerGradients);
+        }
     }
 
     /**
@@ -190,6 +255,27 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      */
     protected int getTruncateSteps() {
         return truncateSteps;
+    }
+
+    /**
+     * Returns neural network weight gradients.
+     *
+     * @return neural network weight gradients.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public HashMap<Matrix, Matrix> getLayerWeightGradients() throws MatrixException {
+        HashMap<Matrix, Matrix> layerWeightGradients = new HashMap<>(procedure.getGradients());
+        if (isBidirectional()) layerWeightGradients.putAll(reverseProcedure.getGradients());
+        return layerWeightGradients;
+    }
+
+    /**
+     * Returns number of layer parameters.
+     *
+     * @return number of layer parameters.
+     */
+    protected int getNumberOfParameters() {
+        return getWeightSet().getNumberOfParameters() * (!isBidirectional() ? 1 : 2);
     }
 
 }
