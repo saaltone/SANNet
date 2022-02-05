@@ -89,7 +89,7 @@ public class UnaryFunction implements Serializable {
     private double gumbelSoftmaxTau = 1.5;
 
     /**
-     * Constructor for UnaryFunction to create custom function.
+     * Constructor for unary function to create custom function.
      *
      * @param function function.
      * @param derivative derivative of function.
@@ -101,7 +101,7 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Constructor for UnaryFunction.
+     * Constructor for unary function.
      *
      * @param unaryFunctionType type of function to be used.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
@@ -113,7 +113,7 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Constructor for UnaryFunction.<br>
+     * Constructor for unary function.<br>
      * Supported parameters are:<br>
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
