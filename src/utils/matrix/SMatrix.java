@@ -108,6 +108,18 @@ public class SMatrix extends ComputableMatrix {
     }
 
     /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @return newly created reference matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy() throws MatrixException {
+        Matrix newMatrix = new SMatrix(rows, columns, matrix, false);
+        super.setParameters(newMatrix);
+        return newMatrix;
+    }
+
+    /**
      * Transposes matrix.
      *
      * @return transposed matrix.
@@ -120,9 +132,9 @@ public class SMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns sub-matrices within Matrix.
+     * Returns sub-matrices within matrix.
      *
-     * @return sub-matrices within Matrix.
+     * @return sub-matrices within matrix.
      */
     public ArrayList<Matrix> getSubMatrices() {
         ArrayList<Matrix> matrices = new ArrayList<>();
