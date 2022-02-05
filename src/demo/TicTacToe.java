@@ -43,7 +43,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Class that defines player
+     * Implements player
      *
      */
     private static class Player {
@@ -271,7 +271,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Class that defines game board.
+     * Implements game board.
      *
      */
     private class GameBoard {
@@ -721,14 +721,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
         int numberfOfAgents = 2;
-        boolean onlineMemory = true;
         boolean singleFunctionEstimator = false;
         boolean sharedPolicyFunctionEstimator = true;
         boolean sharedValueFunctionEstimator = true;
@@ -753,11 +752,19 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         }
 
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
+        boolean onlineMemory = switch (agentAlgorithmType) {
+            case DDQN, SACDiscrete -> false;
+            default -> true;
+        };
+        boolean applyDueling = switch (agentAlgorithmType) {
+            case DDQN -> true;
+            default -> false;
+        };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "agentUpdateCycle = 10, lambda = 0";
+            case QN -> "agentUpdateCycle = 10";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
-            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
+            case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
 
@@ -768,7 +775,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
 
         Agent agent = null;
         for (int agentCount = 0; agentCount < numberfOfAgents; agentCount++) {
-            if (agent == null) agent = AgentFactory.createAgent(this, agentAlgorithmType, this, getInputSize(), getOutputSize(), onlineMemory, singleFunctionEstimator, executablePolicyType, params);
+            if (agent == null) agent = AgentFactory.createAgent(this, agentAlgorithmType, this, getInputSize(), getOutputSize(), onlineMemory, singleFunctionEstimator, applyDueling, executablePolicyType, params);
             else agent = AgentFactory.createAgent(agent, sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
             agent.start();
             playerList.add(new Player(agent));
@@ -779,21 +786,23 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * Builds neural network for tic tac toe player (agent).
      *
      * @param outputSize output size of neural network (number of actions and their values).
+     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        if (!policyGradient) neuralNetwork.verboseTraining(100);
+        if (!policyGradient) neuralNetwork.verboseTraining(10);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
         return neuralNetwork;
     }
