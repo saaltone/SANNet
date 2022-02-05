@@ -182,13 +182,15 @@ public class Procedure implements Serializable {
      * Calculates chain of forward expressions.
      *
      * @param inputSequence input sequence.
-     * @param outputSequence output sequence.
+     * @return output sequence.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
+    public Sequence calculateExpression(Sequence inputSequence) throws MatrixException, DynamicParamException {
+        Sequence outputSequence = new Sequence();
         if (hasDependencies()) calculateExpressionPerSample(inputSequence, outputSequence);
         else calculateExpressionPerStep(inputSequence, outputSequence);
+        return outputSequence;
     }
 
     /**
@@ -199,7 +201,7 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
+    private void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
         int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
 
@@ -220,7 +222,7 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
+    private void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
 
         for (Integer sampleIndex : inputKeySet) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
@@ -273,14 +275,16 @@ public class Procedure implements Serializable {
      * Calculates chain of backward expressions for multiple inputs per gradient expression step.
      *
      * @param outputGradientSequence output gradients.
-     * @param inputGradientSequence input gradients.
+     * @return input gradients.
      * @param steps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
+    public Sequence calculateGradient(Sequence outputGradientSequence, int steps) throws MatrixException, DynamicParamException {
+        Sequence inputGradientSequence = new Sequence();
         if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequence, steps);
         else calculateGradientPerStep(outputGradientSequence, inputGradientSequence, steps);
+        return inputGradientSequence;
     }
 
     /**
@@ -292,7 +296,7 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+    private void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
         int lastKey = reversedInput ? outputGradientSequence.firstKey() : outputGradientSequence.lastKey();
 
@@ -316,7 +320,7 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+    private void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
 
         int gradientStepCount = 0;
