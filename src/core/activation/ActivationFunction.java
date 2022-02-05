@@ -14,7 +14,7 @@ import utils.matrix.UnaryFunctionType;
 import java.io.Serial;
 
 /**
- * Defines activation function class for neural network and uses implementation of UnaryFunction.<br>
+ * Implements activation function for neural network and uses implementation of unary function.<br>
  * Provides calculation for both function and it's derivative.<br>
  * <br>
  * Following functions are supported:
