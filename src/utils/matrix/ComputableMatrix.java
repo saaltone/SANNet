@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Class that defines computable operations for matrices.<br>
+ * Implements computable operations for matrices.<br>
  *
  */
 public abstract class ComputableMatrix extends AbstractMatrix {
@@ -59,7 +59,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     private final Random random = new Random();
 
     /**
-     * Constructor for matrix.
+     * Constructor for computable matrix.
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -67,11 +67,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar) {
         super(rows, columns);
-        this.isScalar = isScalar;
+        this.isScalar = isScalar || (rows == 1 && columns == 1);
     }
 
     /**
-     * Constructor for matrix.
+     * Constructor for computable matrix.
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -80,11 +80,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar, boolean isTransposed) {
         super(rows, columns, isTransposed);
-        this.isScalar = isScalar;
+        this.isScalar = isScalar || (rows == 1 && columns == 1);
     }
 
     /**
-     * Constructor for matrix.
+     * Constructor for computable matrix.
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -93,7 +93,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar, String name) {
         super(rows, columns, name);
-        this.isScalar = isScalar;
+        this.isScalar = isScalar || (rows == 1 && columns == 1);
     }
 
     /**
