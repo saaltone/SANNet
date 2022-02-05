@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Defines class for weight normalization.
+ * Implements layer for weight normalization.
  *
  */
 public class WeightNormalization extends AbstractExecutionLayer {
@@ -61,11 +61,11 @@ public class WeightNormalization extends AbstractExecutionLayer {
     private HashMap<Matrix, Procedure> procedures = new HashMap<>();
 
     /**
-     * Constructor for batch normalization layer.
+     * Constructor for weight normalization layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
-     * @param params parameters for feedforward layer.
+     * @param params parameters for weight normalization layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -94,7 +94,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Sets parameters used for weight Normalization.<br>
+     * Sets parameters used for weight normalization.<br>
      * <br>
      * Supported parameters are:<br>
      *     - g: g multiplier value for normalization. Default value 1.<br>
@@ -219,23 +219,13 @@ public class WeightNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Resets layer.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void resetLayer() throws MatrixException {
-        resetLayerOutputs();
-    }
-
-    /**
      * Takes single forward processing step to process layer input(s).<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayerOutputs();
-        getLayerOutputs().putAll(getPreviousLayerOutputs());
+        setLayerOutputs(getPreviousLayerOutputs());
 
         if (isTraining()) {
             for (Matrix weight : procedures.keySet()) {
@@ -255,8 +245,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        resetLayerGradients();
-        getLayerGradients().putAll(getNextLayerGradients());
+        setLayerGradients(getNextLayerGradients());
 
         HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
         for (Matrix weight : procedures.keySet()) {

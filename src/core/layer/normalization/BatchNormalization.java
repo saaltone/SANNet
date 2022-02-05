@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Defines class for batch normalization.
+ * Implements layer for batch normalization.
  *
  */
 public class BatchNormalization extends AbstractExecutionLayer {
@@ -34,7 +34,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
             "(momentum:DOUBLE)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class BatchNormalizationWeightSet implements WeightSet, Serializable {
@@ -181,9 +181,9 @@ public class BatchNormalization extends AbstractExecutionLayer {
     /**
      * Constructor for batch normalization layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
-     * @param params parameters for feedforward layer.
+     * @param params parameters for batch normalization layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -213,13 +213,13 @@ public class BatchNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Sets parameters used for batch Normalization.<br>
+     * Sets parameters used for batch normalization.<br>
      * <br>
      * Supported parameters are:<br>
      *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
      *     - momentum: degree of weighting decrease for exponential moving average. (default value 0.95).<br>
      *
-     * @param params parameters used for layer normalization.
+     * @param params parameters used for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -356,27 +356,35 @@ public class BatchNormalization extends AbstractExecutionLayer {
             if (batchSize == -1) batchSize = inputSequence.sampleSize();
             if (inputSequence.sampleSize() < 2) throw new MatrixException("Batch normalization must have minimum batch size of 2 for training phase.");
 
-            procedure.calculateExpression(inputSequence, getLayerOutputs());
+            setLayerOutputs(procedure.calculateExpression(inputSequence));
 
             averageMean = meanNode.getMatrix().exponentialMovingAverage(averageMean, momentum);
             if (!meanOnly) averageVariance = varianceNode.getMatrix().exponentialMovingAverage(averageVariance, momentum);
         }
         else {
+            Sequence layerOutputs = new Sequence();
             if (!meanOnly) {
                 Matrix averageStandardDeviation = averageVariance.multiply(batchSize / (batchSize - 1)).add(epsilonMatrix).apply(UnaryFunctionType.SQRT);
                 for (Integer sampleIndex : inputSequence.keySet()) {
-                    for (Integer entryIndex : inputSequence.get(sampleIndex).keySet()) {
-                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
+                    MMatrix inputSample = inputSequence.get(sampleIndex);
+                    MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
+                    layerOutputs.put(sampleIndex, outputSample);
+                    for (Integer depthIndex : inputSample.keySet()) {
+                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
             else {
                 for (Integer sampleIndex : inputSequence.keySet()) {
-                    for (Integer entryIndex : inputSequence.get(sampleIndex).keySet()) {
-                        getLayerOutputs().put(sampleIndex, entryIndex, inputSequence.get(sampleIndex, entryIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
+                    MMatrix inputSample = inputSequence.get(sampleIndex);
+                    MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
+                    layerOutputs.put(sampleIndex, outputSample);
+                    for (Integer depthIndex : inputSample.keySet()) {
+                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
+            setLayerOutputs(layerOutputs);
         }
     }
 

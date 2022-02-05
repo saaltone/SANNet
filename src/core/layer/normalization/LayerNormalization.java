@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Defines class for layer normalization.
+ * Implements layer for layer normalization.
  *
  */
 public class LayerNormalization extends AbstractExecutionLayer {
@@ -31,7 +31,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
     private final static String paramNameTypes = "(meanOnly:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class LayerNormalizationWeightSet implements WeightSet, Serializable {
@@ -123,17 +123,11 @@ public class LayerNormalization extends AbstractExecutionLayer {
     private Matrix input;
 
     /**
-     * Matrix for epsilon value.
-     *
-     */
-    private Matrix epsilonMatrix;
-
-    /**
      * Constructor for layer normalization layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight.
-     * @param params parameters for feedforward layer.
+     * @param params parameters for layer normalization layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -147,7 +141,6 @@ public class LayerNormalization extends AbstractExecutionLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        epsilonMatrix = new DMatrix(10E-8);
         meanOnly = false;
     }
 
@@ -229,7 +222,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
-        Matrix output = !meanOnly ? input.subtract(input.meanAsMatrix()).divide(input.varianceAsMatrix().add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta) : input.subtract(input.meanAsMatrix()).multiply(weightSet.gamma).add(weightSet.beta);
+        Matrix output = !meanOnly ? input.subtract(input.meanAsMatrix()).divide(input.varianceAsMatrix().apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta) : input.subtract(input.meanAsMatrix()).multiply(weightSet.gamma).add(weightSet.beta);
         output.setName("Output");
 
         MMatrix outputs = new MMatrix(1, "Output");
@@ -243,9 +236,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @return matrices for which gradient is not calculated.
      */
     protected HashSet<Matrix> getStopGradients() {
-        HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(epsilonMatrix);
-        return stopGradients;
+        return new HashSet<>();
     }
 
     /**
@@ -254,9 +245,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @return constant matrices.
      */
     protected HashSet<Matrix> getConstantMatrices() {
-        HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(epsilonMatrix);
-        return constantMatrices;
+        return new HashSet<>();
     }
 
     /**
