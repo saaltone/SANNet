@@ -126,7 +126,7 @@ public enum BinaryFunctionType {
     DQN_REG_LOSS,
 
     /**
-     * Customer (user definable) function
+     * Custom (user definable) function
      *
      */
     CUSTOM

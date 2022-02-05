@@ -53,7 +53,7 @@ public class BinaryFunction implements Serializable {
     private double hingeMargin = 1;
 
     /**
-     * Constructor for custom BinaryFunction.
+     * Constructor for custom binary function.
      *
      * @param function function.
      * @param derivative derivative of function.
@@ -65,7 +65,7 @@ public class BinaryFunction implements Serializable {
     }
 
     /**
-     * Constructor for BinaryFunction.
+     * Constructor for binary function.
      *
      * @param binaryFunctionType type of function to be used.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -76,7 +76,7 @@ public class BinaryFunction implements Serializable {
     }
 
     /**
-     * Constructor for BinaryFunction.<br>
+     * Constructor for binary function.<br>
      * Supported parameters are:<br>
      *     - delta: default value for Huber loss 1.<br>
      *     - hinge: default value for hinge margin 1.<br>
