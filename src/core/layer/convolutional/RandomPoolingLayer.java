@@ -14,18 +14,18 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines random pooling layer.<br>
+ * Implements random pooling layer.<br>
  * Selects each input of pool for propagation randomly with uniform probability.<br>
  *
  */
 public class RandomPoolingLayer extends AbstractPoolingLayer {
 
     /**
-     * Constructor for RandomPoolingLayer.
+     * Constructor for random pooling layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for pooling layer.
+     * @param params parameters for random pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */

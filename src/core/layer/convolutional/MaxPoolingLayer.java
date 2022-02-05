@@ -14,17 +14,17 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines max pooling layer.
+ * Implements max pooling layer.
  *
  */
 public class MaxPoolingLayer extends AbstractPoolingLayer {
 
     /**
-     * Constructor for MaxPoolingLayer.
+     * Constructor for max pooling layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for pooling layer.
+     * @param params parameters for max pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */

@@ -13,18 +13,18 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Class that defines Winograd convolution layer with filter size 3x3, stride 1 and dilation 1.
+ * Implements Winograd convolution layer with filter size 3x3, stride 1 and dilation 1.
  *
  */
 public class WinogradConvolutionLayer extends AbstractConvolutionalLayer {
 
     /**
-     * Constructor for WinogradConvolutionLayer.
+     * Constructor for Winograd convolution layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for convolutional layer.
+     * @param params parameters for Winograd convolution layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */

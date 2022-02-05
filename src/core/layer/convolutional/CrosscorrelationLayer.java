@@ -14,13 +14,13 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines crosscorrelation layer.
+ * Implements crosscorrelation layer.
  *
  */
 public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
 
     /**
-     * Parameter name types for CrosscorrelationLayer.
+     * Parameter name types for crosscorrelation layer.
      *     - filterSize size of filter. Default value 3.<br>
      *     - filterRowSize size of filter in terms of rows. Overrides filterSize parameter. Default value 3.<br>
      *     - filterColumnSize size of filter in terms of columns. Overrides filterSize parameter. Default value 3.<br>
@@ -36,12 +36,12 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
 
 
     /**
-     * Constructor for CrosscorrelationLayer.
+     * Constructor for crosscorrelation layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for convolutional layer.
+     * @param params parameters for crosscorrelation layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
@@ -50,16 +50,16 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
     }
 
     /**
-     * Returns parameters used for convolutional layer.
+     * Returns parameters used for crosscorrelation layer.
      *
-     * @return parameters used for convolutional layer.
+     * @return parameters used for crosscorrelation layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + CrosscorrelationLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for CrosscorrelationLayer.<br>
+     * Sets parameters used for crosscorrelation layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filterSize size of filter. Default value 3.<br>
@@ -68,7 +68,7 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
      *     - stride: size of stride. Default size 1.<br>
      *     - dilation: dilation step for filter. Default step 1.<br>
      *
-     * @param params parameters used for convolutional layer.
+     * @param params parameters used for crosscorrelation layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */

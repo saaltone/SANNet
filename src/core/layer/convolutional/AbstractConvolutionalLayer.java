@@ -19,13 +19,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Implements AbstractConvolutionalLayer which implements common functionality for convolutional layer.
+ * Implements abstract convolutional layer which implements common functionality for convolutional layer.
  *
  */
 public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for AbstractConvolutionalLayer.
+     * Parameter name types for abstract convolutional layer.
      *     - filters: number of filters.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
@@ -34,7 +34,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
             "(regulateWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class ConvolutionWeightSet implements WeightSet, Serializable {
@@ -217,12 +217,12 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     private MMatrix inputs;
 
     /**
-     * Constructor for AbstractConvolutionalLayer.
+     * Constructor for abstract convolutional layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for convolutional layer.
+     * @param params parameters for abstract convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
@@ -245,22 +245,22 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     }
 
     /**
-     * Returns parameters used for AbstractConvolutionalLayer.
+     * Returns parameters used for abstract convolutional layer.
      *
-     * @return parameters used for AbstractConvolutionalLayer.
+     * @return parameters used for abstract convolutional layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + AbstractConvolutionalLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for AbstractConvolutionalLayer.<br>
+     * Sets parameters used for abstract convolutional layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filters: number of filters.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
-     * @param params parameters used for convolutional layer.
+     * @param params parameters used for abstract convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */

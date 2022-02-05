@@ -14,18 +14,18 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines cyclic pooling layer.<br>
+ * Implements cyclic pooling layer.<br>
  * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
  *
  */
 public class CyclicPoolingLayer extends AbstractPoolingLayer {
 
     /**
-     * Constructor for CyclicPoolingLayer.
+     * Constructor for cyclic pooling layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for pooling layer.
+     * @param params parameters for cyclic pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */

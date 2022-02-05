@@ -15,13 +15,13 @@ import utils.matrix.*;
 import java.util.HashSet;
 
 /**
- * Implements AbstractPoolingLayer which implements common functionality for pooling layer.
+ * Implements abstract pooling layer which implements common functionality for pooling layer.
  *
  */
 public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for pooling layer.
+     * Parameter name types for abstract pooling layer.
      *     - filterSize size of filter. Default size 2.<br>
      *     - filterRowSize row size of filter. Default size 2.<br>
      *     - filterColumnSize column size of filter. Default size 2.<br>
@@ -90,11 +90,11 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     private MMatrix inputs;
 
     /**
-     * Constructor for AbstractExecutionLayer.
+     * Constructor for abstract pooling layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for pooling layer.
+     * @param params parameters for abstract pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
@@ -114,16 +114,16 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns parameters used for pooling layer.
+     * Returns parameters used for abstract pooling layer.
      *
-     * @return parameters used for pooling layer.
+     * @return parameters used for abstract pooling layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + AbstractPoolingLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for max pooling layer.<br>
+     * Sets parameters used for abstract pooling layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filterSize size of filter. Default size 2.<br>
@@ -131,7 +131,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      *     - filterColumnSize column size of filter. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
      *
-     * @param params parameters used for pooling layer.
+     * @param params parameters used for abstract pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */

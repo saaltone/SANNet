@@ -19,14 +19,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Implements Abstract Depth-wise Separable ConvolutionalLayer which implements common functionality for convolutional layer.<br>
+ * Implements abstract depth-wise separable convolutional layer which implements common functionality for convolutional layer.<br>
  * Reference: https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728
  *
  */
 public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for AbstractDSConvolutionalLayer.
+     * Parameter name types for abstract depth-wise separable convolutional layer.
      *     - filters: number of filters.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
@@ -35,7 +35,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
             "(regulateWeights:BOOLEAN)";
 
     /**
-     * Class that defines weight set for layer.
+     * Implements weight set for layer.
      *
      */
     protected class DSConvolutionWeightSet implements WeightSet, Serializable {
@@ -244,12 +244,12 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
     private MMatrix inputs;
 
     /**
-     * Constructor for AbstractDSConvolutionalLayer.
+     * Constructor for abstract depth-wise separable convolutional layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for convolutional layer.
+     * @param params parameters for abstract depth-wise separable convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
@@ -272,22 +272,22 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
     }
 
     /**
-     * Returns parameters used for AbstractDSConvolutionalLayer.
+     * Returns parameters used for abstract depth-wise separable convolutional layer.
      *
-     * @return parameters used for AbstractDSConvolutionalLayer.
+     * @return parameters used for abstract depth-wise separable convolutional layer.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + AbstractDSConvolutionalLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for AbstractDSConvolutionalLayer.<br>
+     * Sets parameters used for abstract depth-wise separable convolutional layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filters: number of filters.<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
-     * @param params parameters used for convolutional layer.
+     * @param params parameters used for abstract depth-wise separable convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */

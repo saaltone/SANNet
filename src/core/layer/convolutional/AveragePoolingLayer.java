@@ -12,17 +12,17 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines average pooling layer.
+ * Implements average pooling layer.
  *
  */
 public class AveragePoolingLayer extends AbstractPoolingLayer {
 
     /**
-     * Constructor for AveragePoolingLayer.
+     * Constructor for average pooling layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for pooling layer.
+     * @param params parameters for average pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
