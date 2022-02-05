@@ -6,7 +6,7 @@
 package core.network;
 
 /**
- * Class defining neural network exception thrown in neural network error situations.<br>
+ * Implements neural network exception thrown in neural network error situations.<br>
  *
  */
 public class NeuralNetworkException extends Exception {
