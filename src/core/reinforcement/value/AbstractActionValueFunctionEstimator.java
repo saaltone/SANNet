@@ -10,24 +10,24 @@ import core.reinforcement.memory.StateTransition;
 import utils.configurable.DynamicParamException;
 
 /**
- * Class that defines AbstractActionValueFunctionEstimator (action value function with function estimator).<br>
+ * Implements abstract action value function estimator.<br>
  *
  */
 public abstract class AbstractActionValueFunctionEstimator extends AbstractValueFunctionEstimator {
 
     /**
-     * Constructor for AbstractActionValueFunctionEstimator
+     * Constructor for abstract action value function estimator
      *
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param functionEstimator reference to function estimator.
      */
     public AbstractActionValueFunctionEstimator(FunctionEstimator functionEstimator) {
         super(functionEstimator.getNumberOfActions(), functionEstimator);
     }
 
     /**
-     * Constructor for AbstractActionValueFunctionEstimator
+     * Constructor for abstract action value function estimator
      *
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param functionEstimator reference to function estimator.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */

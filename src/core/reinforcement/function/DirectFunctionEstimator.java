@@ -14,17 +14,17 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines DirectFunctionEstimator (proxy for memory) to be used with PlainValueFunction.<br>
+ * Implements direct function estimator (proxy for memory) to be used with plain value function.<br>
  *
  */
 public class DirectFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
-     * Constructor for DirectFunctionEstimator.
+     * Constructor for direct function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for DirectFunctionEstimator
+     * @param numberOfStates number of states for direct function estimator
+     * @param numberOfActions number of actions for direct function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
@@ -32,11 +32,11 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Constructor for DirectFunctionEstimator.
+     * Constructor for direct function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for DirectFunctionEstimator
+     * @param numberOfStates number of states for direct function estimator
+     * @param numberOfActions number of actions for direct function estimator
      * @param params parameters for function
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -66,6 +66,17 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Returns reference to function estimator.
+     *
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public FunctionEstimator reference(Memory memory) throws DynamicParamException {
+        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
+    }
+
+    /**
      * Not used.
      *
      */
@@ -80,9 +91,9 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns shallow copy of DirectFunctionEstimator.
+     * Returns shallow copy of direct function estimator.
      *
-     * @return shallow copy of DirectFunctionEstimator.
+     * @return shallow copy of direct function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator copy() throws DynamicParamException {
@@ -92,10 +103,10 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Not used.
      *
-     * @param state state
+     * @param stateTransition state
      * @return state value corresponding to a state
      */
-    public Matrix predict(Matrix state) {
+    public Matrix predict(StateTransition stateTransition) {
         return null;
     }
 
@@ -128,9 +139,9 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Sets parameters used for DirectFunctionEstimator.<br>
+     * Sets parameters used for direct function estimator.<br>
      *
-     * @param params parameters used for OnlineMemory.
+     * @param params parameters used for direct function estimator.
      */
     public void setParams(DynamicParam params) {
     }

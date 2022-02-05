@@ -13,7 +13,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Class that implements StateTransition containing information of state matrix, action and available actions, reward and reference to previous and next states transitions.<br>
+ * Implements state transition containing information of state matrix, action and available actions, reward and reference to previous and next states transitions.<br>
  *
  */
 public class StateTransition implements Serializable, Comparable<StateTransition> {
@@ -40,13 +40,13 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     public double reward;
 
     /**
-     * Previous StateTransition.
+     * Previous state transition.
      *
      */
     public StateTransition previousStateTransition;
 
     /**
-     * Next StateTransition.
+     * Next state transition.
      *
      */
     public StateTransition nextStateTransition;
@@ -88,7 +88,7 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     public double advantage;
 
     /**
-     * Constructor for StateTransition.
+     * Constructor for state transition.
      *
      * @param environmentState current environment state.
      */
@@ -106,10 +106,10 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     }
 
     /**
-     * Returns next StateTransition based on current StateTransition.
+     * Returns next state transition based on current state transition.
      *
-     * @param environmentState current StateTransition.
-     * @return next StateTransition.
+     * @param environmentState current state transition.
+     * @return next state transition.
      */
     public StateTransition getNextStateTransition(EnvironmentState environmentState) {
         StateTransition newStateTransition = new StateTransition(environmentState);
@@ -119,10 +119,10 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     }
 
     /**
-     * Compares this StateTransition to other StateTransition.
+     * Compares this state transition to other state transition.
      *
-     * @param otherStateTransition StateTransition to be compared.
-     * @return true if StateTransitions are equal otherwise false.
+     * @param otherStateTransition state transition to be compared.
+     * @return true if state transition are equal otherwise false.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public boolean equals(StateTransition otherStateTransition) throws MatrixException {
@@ -153,12 +153,12 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     }
 
     /**
-     * Compares this StateTransition to other StateTransition.<br>
-     * If other StateTransition is precedent to this StateTransition returns 1.<br>
-     * If other StateTransition succeeds this StateTransition returns -1.<br>
+     * Compares this state transition to other state transition.<br>
+     * If other state transition is precedent to this state transition returns 1.<br>
+     * If other state transition succeeds this state transition returns -1.<br>
      * Otherwise returns 0.<br>
      *
-     * @param otherStateTransition other StateTransition.
+     * @param otherStateTransition other state transition.
      * @return return value of comparison.
      */
     public int compareTo(StateTransition otherStateTransition) {

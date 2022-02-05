@@ -18,13 +18,13 @@ import utils.matrix.MatrixException;
 import java.util.TreeSet;
 
 /**
- * Class that defines AbstractValueFunctionEstimator.<br>
+ * Implements abstract value function estimator providing common functions for value function estimators.<br>
  *
  */
 public abstract class AbstractValueFunctionEstimator extends AbstractValueFunction {
 
     /**
-     * Reference to FunctionEstimator.
+     * Reference to function estimator.
      *
      */
     protected final FunctionEstimator functionEstimator;
@@ -36,10 +36,10 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     private final boolean isStateActionValueFunction;
 
     /**
-     * Constructor for AbstractValueFunctionEstimator
+     * Constructor for abstract value function estimator
      *
-     * @param numberOfActions number of actions for AbstractValueFunctionEstimator.
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param numberOfActions number of actions for abstract value function estimator.
+     * @param functionEstimator reference to function estimator.
      */
     public AbstractValueFunctionEstimator(int numberOfActions, FunctionEstimator functionEstimator) {
         super(numberOfActions);
@@ -48,10 +48,10 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Constructor for AbstractValueFunctionEstimator
+     * Constructor for abstract value function estimator
      *
-     * @param numberOfActions number of actions for AbstractValueFunctionEstimator.
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param numberOfActions number of actions for abstract value function estimator.
+     * @param functionEstimator reference to function estimator.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -63,18 +63,18 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Returns parameters used for AbstractValueFunctionEstimator.
+     * Returns parameters used for abstract value function estimator.
      *
-     * @return parameters used for AbstractValueFunctionEstimator.
+     * @return parameters used for abstract value function estimator.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + functionEstimator.getParamDefs();
     }
 
     /**
-     * Sets parameters used for AbstractValueFunctionEstimator.<br>
+     * Sets parameters used for abstract value function estimator.<br>
      *
-     * @param params parameters used for AbstractValueFunctionEstimator.
+     * @param params parameters used for abstract value function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -83,9 +83,9 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Starts FunctionEstimator
+     * Starts function estimator
      *
-     * @throws NeuralNetworkException throws exception if starting of value FunctionEstimator fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -94,7 +94,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Stops FunctionEstimator
+     * Stops function estimator
      *
      */
     public void stop() {
@@ -102,7 +102,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Registers agent for FunctionEstimator.
+     * Registers agent for function estimator.
      *
      * @param agent agent.
      */
@@ -130,26 +130,14 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     /**
      * Returns values for state.
      *
-     * @param stateTransition state transition.
-     * @return values for state.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private Matrix getValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return getValues(functionEstimator, stateTransition.environmentState.state());
-    }
-
-    /**
-     * Returns values for state.
-     *
      * @param functionEstimator function estimator.
-     * @param state state.
+     * @param stateTransition state.
      * @return values for state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getValues(FunctionEstimator functionEstimator, Matrix state) throws MatrixException, NeuralNetworkException {
-        return isStateActionValueFunction() ? functionEstimator.predict(state).getSubMatrices().get(0) : functionEstimator.predict(state);
+    protected Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        return isStateActionValueFunction() ? functionEstimator.predict(stateTransition).getSubMatrices().get(0) : functionEstimator.predict(stateTransition);
     }
 
     /**
@@ -160,7 +148,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        stateTransition.value = getValues(stateTransition).getValue(getFunctionIndex(stateTransition), 0);
+        stateTransition.value = getValues(functionEstimator, stateTransition).getValue(getFunctionIndex(stateTransition), 0);
     }
 
     /**
@@ -172,7 +160,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Resets FunctionEstimator.
+     * Resets function estimator.
      *
      */
     public void resetFunctionEstimator() {
@@ -200,7 +188,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Samples memory of FunctionEstimator.
+     * Samples memory of function estimator.
      *
      */
     public void sample() {
@@ -217,16 +205,16 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Returns FunctionEstimator.
+     * Returns function estimator.
      *
-     * @return FunctionEstimator.
+     * @return function estimator.
      */
     public FunctionEstimator getFunctionEstimator() {
         return functionEstimator;
     }
 
     /**
-     * Updates FunctionEstimator.
+     * Updates function estimator.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -254,7 +242,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Matrix getTargetValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        Matrix targetValues = getValues(stateTransition).copy();
+        Matrix targetValues = getValues(functionEstimator, stateTransition).copy();
         targetValues.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
         return targetValues;
     }

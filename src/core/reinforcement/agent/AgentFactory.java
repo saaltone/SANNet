@@ -96,6 +96,7 @@ public class AgentFactory {
      * @param inputSize number of inputs for estimator.
      * @param outputSize number of output for estimator.
      * @param singleFunctionEstimator is true single function estimator for policy and value function is assumed otherwise separated estimators.
+     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @param executablePolicyType executable policy type.
      * @param params parameters for agent.
      * @return agent.
@@ -106,7 +107,7 @@ public class AgentFactory {
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean singleFunctionEstimator, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
+    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean singleFunctionEstimator, boolean applyDueling, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
         Memory estimatorMemory = usesOnlineMemory(agentAlgorithmType) ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator;
         FunctionEstimator valueEstimator;
@@ -130,8 +131,8 @@ public class AgentFactory {
         }
         else {
             // Uses separate estimators for value and policy functions.
-            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
-            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
         }
         return switch (agentAlgorithmType) {
             case QN, DQN -> new DQNLearning(environment, executablePolicyType, valueEstimator, params);
@@ -168,6 +169,7 @@ public class AgentFactory {
      * @param outputSize number of output for estimator.
      * @param onlineMemory if true online memory is assumed to be used otherwise priority memory.
      * @param singleFunctionEstimator is true single function estimator for policy and value function is assumed otherwise separated estimators.
+     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @param executablePolicyType executable policy type.
      * @param params parameters for agent.
      * @return agent.
@@ -178,7 +180,7 @@ public class AgentFactory {
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean onlineMemory, boolean singleFunctionEstimator, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
+    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean onlineMemory, boolean singleFunctionEstimator, boolean applyDueling, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
         Memory estimatorMemory = onlineMemory ? new OnlineMemory() : new PriorityMemory();
         FunctionEstimator policyEstimator;
         FunctionEstimator valueEstimator;
@@ -202,8 +204,8 @@ public class AgentFactory {
         }
         else {
             // Uses separate estimators for value and policy functions.
-            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
-            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
         }
         return switch (agentAlgorithmType) {
             case QN, DQN -> new DQNLearning(environment, executablePolicyType, valueEstimator, params);
@@ -222,8 +224,8 @@ public class AgentFactory {
      *
      * @param agent reference agent.
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
@@ -240,14 +242,14 @@ public class AgentFactory {
      * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public static Agent createAgent(Agent agent, boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, AgentException, IOException, DynamicParamException, ClassNotFoundException {
-        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
+        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedMemory);
         if (agent instanceof AbstractQLearning) return ((AbstractQLearning)agent).reference(sharedValueFunctionEstimator, sharedMemory);
         throw new AgentException("Unknown agent type. Unable to create reference for agent.");
     }

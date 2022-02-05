@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
- * Class that implements AbstractFunctionEstimator containing memory management operations and agent handling.<br>
+ * Implements abstract function estimator containing memory management operations and agent handling.<br>
  *
  */
 public abstract class AbstractFunctionEstimator implements Configurable, FunctionEstimator, Serializable {
@@ -32,7 +32,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     private static final long serialVersionUID = -557430597852291426L;
 
     /**
-     * Parameter name types for AbstractFunctionEstimator.
+     * Parameter name types for abstract function estimator.
      *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
      *
      */
@@ -87,19 +87,19 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     private FunctionEstimator targetFunctionEstimator = null;
 
     /**
-     * Update cycle (in episodes) for target FunctionEstimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
+     * Update cycle (in episodes) for target function estimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
      *
      */
     private int targetFunctionUpdateCycle;
 
     /**
-     * Update count for update cycle.
+     * Update count for target function update cycle.
      *
      */
     private transient int updateCount = 0;
 
     /**
-     * Constructor for AbstractFunctionEstimator.
+     * Constructor for abstract function estimator.
      *
      * @param memory memory reference.
      * @param numberOfStates number of states.
@@ -117,7 +117,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Constructor for AbstractFunctionEstimator.
+     * Constructor for abstract function estimator.
      *
      * @param memory memory reference.
      * @param numberOfStates number of states.
@@ -154,26 +154,35 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Returns parameters used for AbstractFunctionEstimator.
+     * Returns parameters used for abstract function estimator.
      *
-     * @return parameters used for AbstractFunctionEstimator.
+     * @return parameters used for abstract function estimator.
      */
     public String getParamDefs() {
         return AbstractFunctionEstimator.paramNameTypes + ", " + memory.getParamDefs();
     }
 
     /**
-     * Sets parameters used for AbstractFunctionEstimator.<br>
+     * Sets parameters used for abstract function estimator.<br>
      * <br>
      * Supported parameters are:<br>
      *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
      *
-     * @param params parameters used for AbstractFunctionEstimator.
+     * @param params parameters used for abstract function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         memory.setParams(params);
         if (params.hasParam("targetFunctionUpdateCycle")) targetFunctionUpdateCycle = params.getValueAsInteger("targetFunctionUpdateCycle");
+    }
+
+    /**
+     * Returns reference to memory of function estimator.
+     *
+     * @return reference to memory of function estimator.
+     */
+    public Memory getMemory() {
+        return memory;
     }
 
     /**
@@ -196,25 +205,25 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Returns number of states for AbstractFunctionEstimator.
+     * Returns number of states for abstract function estimator.
      *
-     * @return number of states for AbstractFunctionEstimator.
+     * @return number of states for abstract function estimator.
      */
     public int getNumberOfStates() {
         return numberOfStates;
     }
 
     /**
-     * Returns number of actions for AbstractFunctionEstimator.
+     * Returns number of actions for abstract function estimator.
      *
-     * @return number of actions for AbstractFunctionEstimator.
+     * @return number of actions for abstract function estimator.
      */
     public int getNumberOfActions() {
         return numberOfActions;
     }
 
     /**
-     * Registers agent for AbstractFunctionEstimator.
+     * Registers agent for abstract function estimator.
      *
      * @param agent agent.
      */
@@ -223,16 +232,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Returns memory of function estimator.
-     *
-     * @return memory of function estimator.
-     */
-    public Memory getMemory() {
-        return memory;
-    }
-
-    /**
-     * Resets FunctionEstimator.
+     * Resets function estimator.
      *
      */
     public void reset() {
@@ -240,15 +240,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Reinitializes FunctionEstimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void reinitialize() throws MatrixException {
-    }
-
-    /**
-     * Samples memory of AbstractFunctionEstimator.
+     * Samples memory of abstract function estimator.
      *
      */
     public void sample() {
@@ -265,7 +257,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Adds new state transition into memory of AbstractFunctionEstimator.
+     * Adds new state transition into memory of abstract function estimator.
      *
      * @param stateTransition state transition
      */
@@ -287,7 +279,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Updates state transitions in memory of AbstractFunctionEstimator.
+     * Updates state transitions in memory of abstract function estimator.
      *
      * @param stateTransitions state transitions
      */
@@ -296,7 +288,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Completes AbstractFunctionEstimator update.
+     * Completes abstract function estimator update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws AgentException throws exception if update cycle is ongoing.
@@ -316,7 +308,54 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Appends parameters to this AbstractFunctionEstimator from another AbstractFunctionEstimator.
+     * Returns action with potential state action value offset.
+     *
+     * @param action action.
+     * @return updated action.
+     */
+    private int getAction(int action) {
+        return (isStateActionValueFunction() ? 1 : 0) + action;
+    }
+
+    /**
+     * Sets target function estimator.
+     *
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException {
+        targetFunctionEstimator = copy();
+    }
+
+    /**
+     * Returns target function estimator.
+     *
+     * @return target function estimator.
+     */
+    public FunctionEstimator getTargetFunctionEstimator() {
+        return targetFunctionEstimator;
+    }
+
+    /**
+     * Updates target function estimator.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    private void updateTargetFunctionEstimator() throws AgentException, MatrixException {
+        if (targetFunctionEstimator == null) return;
+        if (targetFunctionUpdateCycle == 0) targetFunctionEstimator.append(this, false);
+        else {
+            if (++updateCount >= targetFunctionUpdateCycle) {
+                targetFunctionEstimator.append(this, true);
+                updateCount = 0;
+            }
+        }
+    }
+
+    /**
+     * Appends parameters to this abstract function estimator from another abstract function estimator.
      *
      * @throws AgentException throws exception if update cycle is ongoing.
      */
@@ -442,53 +481,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
             }
         }
         return maxAction;
-    }
-
-    /**
-     * Returns action with potential state action value offset.
-     *
-     * @param action action.
-     * @return updated action.
-     */
-    private int getAction(int action) {
-        return (isStateActionValueFunction() ? 1 : 0) + action;
-    }
-
-    /**
-     * Sets target function estimator.
-     *
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException {
-        targetFunctionEstimator = copy();
-    }
-
-    /**
-     * Returns target function estimator.
-     *
-     * @return target function estimator.
-     */
-    public FunctionEstimator getTargetFunctionEstimator() {
-        return targetFunctionEstimator;
-    }
-
-    /**
-     * Updates target function estimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    private void updateTargetFunctionEstimator() throws AgentException, MatrixException {
-        if (targetFunctionEstimator == null) return;
-        if (targetFunctionUpdateCycle == 0) targetFunctionEstimator.append(this, false);
-        else {
-            if (++updateCount >= targetFunctionUpdateCycle) {
-                targetFunctionEstimator.append(this, true);
-                updateCount = 0;
-            }
-        }
     }
 
 }

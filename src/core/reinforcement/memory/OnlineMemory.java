@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines OnlineMemory.<br>
+ * Implements online memory.<br>
  *
  */
 public class OnlineMemory implements Memory, Serializable {
@@ -22,9 +22,9 @@ public class OnlineMemory implements Memory, Serializable {
     private static final long serialVersionUID = 8600974850562595903L;
 
     /**
-     * Parameter name types for OnlineMemory.
-     *     - capacity: Capacity of OnlineMemory. Default value 0 (unlimited).<br>
-     *     - batchSize: Batch size sampled from OnlineMemory. Default value -1 (whole memory is sampled).<br>
+     * Parameter name types for online memory.
+     *     - capacity: Capacity of online memory. Default value 0 (unlimited).<br>
+     *     - batchSize: Batch size sampled from online memory. Default value -1 (whole memory is sampled).<br>
      *
      */
     private final static String paramNameTypes = "(capacity:INT), " +
@@ -43,19 +43,19 @@ public class OnlineMemory implements Memory, Serializable {
     private final Random random = new Random();
 
     /**
-     * Capacity of OnlineMemory.
+     * Capacity of online memory.
      *
      */
     private int capacity;
 
     /**
-     * Batch size sampled from OnlineMemory. If batch size is -1 whole memory is sampled.
+     * Batch size sampled from online memory. If batch size is -1 whole memory is sampled.
      *
      */
     private int batchSize;
 
     /**
-     * Tree set of state transitions in OnlineMemory.
+     * Tree set of state transitions in online memory.
      *
      */
     private TreeSet<StateTransition> stateTransitionSet = new TreeSet<>();
@@ -67,7 +67,7 @@ public class OnlineMemory implements Memory, Serializable {
     private TreeSet<StateTransition> sampledStateTransitions;
 
     /**
-     * Default constructor for OnlineMemory.
+     * Default constructor for online memory.
      *
      */
     public OnlineMemory() {
@@ -76,7 +76,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Default constructor for OnlineMemory.
+     * Default constructor for online memory.
      *
      * @param params parameters for memory
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -106,22 +106,22 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns parameters used for OnlineMemory.
+     * Returns parameters used for online memory.
      *
-     * @return parameters used for OnlineMemory.
+     * @return parameters used for online memory.
      */
     public String getParamDefs() {
         return OnlineMemory.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for OnlineMemory.<br>
+     * Sets parameters used for online memory.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - capacity: Capacity of OnlineMemory. Default value 0 (unlimited).<br>
-     *     - batchSize: Batch size sampled from OnlineMemory. Default value -1 (whole memory is sampled).<br>
+     *     - capacity: Capacity of online memory. Default value 0 (unlimited).<br>
+     *     - batchSize: Batch size sampled from online memory. Default value -1 (whole memory is sampled).<br>
      *
-     * @param params parameters used for OnlineMemory.
+     * @param params parameters used for online memory.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -140,7 +140,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns size of OnlineMemory.
+     * Returns size of online memory.
      *
      */
     public int size() {
@@ -148,7 +148,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Adds state transition into OnlineMemory. Removes old ones exceeding memory capacity by FIFO principle.
+     * Adds state transition into online memory. Removes old ones exceeding memory capacity by FIFO principle.
      *
      * @param stateTransition state transition to be stored.
      */
@@ -158,15 +158,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Updates state transition in OnlineMemory with new error value.
-     *
-     * @param stateTransition state transition to be updated.
-     */
-    public void update(StateTransition stateTransition) {
-    }
-
-    /**
-     * Updates state transitions in OnlineMemory with new error values.
+     * Updates state transitions in online memory with new error values.
      *
      * @param stateTransitions state transitions.
      */
@@ -174,7 +166,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Resets Memory.
+     * Resets memory.
      *
      */
     public void reset() {
@@ -192,7 +184,7 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Samples defined number of state transitions from OnlineMemory.
+     * Samples defined number of state transitions from online memory.
      *
      * @return retrieved state transitions.
      */

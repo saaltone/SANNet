@@ -8,6 +8,7 @@ package core.reinforcement.function;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
@@ -19,7 +20,7 @@ import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
- * Interface defining FunctionEstimator.<br>
+ * Interface defining function estimator.<br>
  *
  */
 public interface FunctionEstimator extends Configurable {
@@ -28,70 +29,88 @@ public interface FunctionEstimator extends Configurable {
      * Returns reference to function estimator.
      *
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    FunctionEstimator reference() throws DynamicParamException;
+    FunctionEstimator reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Returns reference to function estimator.
      *
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException;
+    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
-     * Returns number of states for FunctionEstimator.
+     * Returns reference to function estimator.
      *
-     * @return number of states for FunctionEstimator.
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    FunctionEstimator reference(Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
+
+    /**
+     * Returns number of states for function estimator.
+     *
+     * @return number of states for function estimator.
      */
     int getNumberOfStates();
 
     /**
-     * Returns number of actions for FunctionEstimator.
+     * Returns number of actions for function estimator.
      *
-     * @return number of actions for FunctionEstimator.
+     * @return number of actions for function estimator.
      */
     int getNumberOfActions();
 
     /**
-     * Starts FunctionEstimator.
+     * Returns reference to memory of function estimator.
      *
-     * @throws NeuralNetworkException throws exception if starting of FunctionEstimator fails.
+     * @return reference to memory of function estimator.
+     */
+    Memory getMemory();
+
+    /**
+     * Starts function estimator.
+     *
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Stops FunctionEstimator.
+     * Stops function estimator.
      *
      */
     void stop();
 
     /**
-     * Registers agent for FunctionEstimator.
+     * Registers agent for function estimator.
      *
      * @param agent agent.
      */
     void registerAgent(Agent agent);
 
     /**
-     * Resets FunctionEstimator.
+     * Resets function estimator.
      *
      */
     void reset();
 
     /**
-     * Reinitializes FunctionEstimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void reinitialize() throws MatrixException;
-
-    /**
-     * Samples memory of FunctionEstimator.
+     * Samples memory of function estimator.
      *
      */
     void sample();
@@ -104,7 +123,7 @@ public interface FunctionEstimator extends Configurable {
     TreeSet<StateTransition> getSampledStateTransitions();
 
     /**
-     * Adds new state transition into memory of FunctionEstimator.
+     * Adds new state transition into memory of function estimator.
      *
      * @param stateTransition state transition
      */
@@ -120,7 +139,7 @@ public interface FunctionEstimator extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updates state transitions in memory of FunctionEstimator.
+     * Updates state transitions in memory of function estimator.
      *
      * @param stateTransitions state transitions
      */
@@ -134,11 +153,11 @@ public interface FunctionEstimator extends Configurable {
     boolean isStateActionValueFunction();
 
     /**
-     * Returns copy of FunctionEstimator.
+     * Returns copy of function estimator.
      *
-     * @return copy of FunctionEstimator.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @return copy of function estimator.
+     * @throws IOException throws exception if creation of function estimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of function estimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException;
@@ -146,12 +165,12 @@ public interface FunctionEstimator extends Configurable {
     /**
      * Predicts state values corresponding to a state.
      *
-     * @param state state.
+     * @param stateTransition state.
      * @return state values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException;
+    Matrix predict(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
      * Stores state transition values pair.
@@ -162,7 +181,7 @@ public interface FunctionEstimator extends Configurable {
     void store(StateTransition stateTransition, Matrix values);
 
     /**
-     * Updates (trains) FunctionEstimator.
+     * Updates (trains) function estimator.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -172,9 +191,9 @@ public interface FunctionEstimator extends Configurable {
     void update() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
 
     /**
-     * Appends parameters to this FunctionEstimator from another FunctionEstimator.
+     * Appends parameters to this function estimator from another function estimator.
      *
-     * @param functionEstimator FunctionEstimator used to update current FunctionEstimator.
+     * @param functionEstimator function estimator used to update current function estimator.
      * @param fullUpdate if true full update is done.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws AgentException throws exception if update cycle is ongoing.
@@ -252,8 +271,8 @@ public interface FunctionEstimator extends Configurable {
     /**
      * Sets target function estimator.
      *
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws IOException throws exception if creation of function estimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of function estimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException;

@@ -7,47 +7,28 @@ package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.IOException;
+
 /**
- * Class that defines vanilla UpdateableBasicPolicy.<br>
+ * Implements vanilla updateable basic policy.<br>
  *
  */
 public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
 
     /**
-     * Parameter name types for UpdateableBasicPolicy.
-     *     - applyEntropy: if true entropy is applied when policy is updated. Default value true.<br>
-     *     - entropyCoefficient: co-efficient factor for entropy. Default value 0.01.<br>
-     *
-     */
-    private final static String paramNameTypes = "(applyEntropy:BOOLEAN), " +
-            "(entropyCoefficient:DOUBLE)";
-
-    /**
-     * If true entropy is applied when policy is updated.
-     *
-     */
-    protected boolean applyEntropy;
-
-    /**
-     * Entropy coefficient for policy gradient.
-     *
-     */
-    protected double entropyCoefficient;
-
-    /**
-     * Constructor for UpdateableBasicPolicy.
+     * Constructor for updateable basic policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param functionEstimator reference to function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -56,11 +37,11 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Constructor for UpdateableBasicPolicy.
+     * Constructor for updateable basic policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to FunctionEstimator.
-     * @param params parameters for UpdateableBasicPolicy.
+     * @param functionEstimator reference to function estimator.
+     * @param params parameters for updateable basic policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -73,44 +54,20 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      *
      */
     public void initializeDefaultParams() {
-        applyEntropy = true;
-        entropyCoefficient = 0.01;
-    }
-
-    /**
-     * Returns parameters used for UpdateableBasicPolicy.
-     *
-     * @return parameters used for UpdateableBasicPolicy.
-     */
-    public String getParamDefs() {
-        return super.getParamDefs() + ", " + UpdateableBasicPolicy.paramNameTypes;
-    }
-
-    /**
-     * Sets parameters used for UpdateableBasicPolicy.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - applyEntropy: if true entropy is applied when policy is updated. Default value true.<br>
-     *     - entropyCoefficient: co-efficient factor for entropy. Default value 0.01.<br>
-     *
-     * @param params parameters used for UpdateableBasicPolicy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void setParams(DynamicParam params) throws DynamicParamException {
-        super.setParams(params);
-        if (params.hasParam("applyEntropy")) applyEntropy = params.getValueAsBoolean("applyEntropy");
-        if (params.hasParam("entropyCoefficient")) entropyCoefficient = params.getValueAsDouble("entropyCoefficient");
     }
 
     /**
      * Returns reference to policy.
      *
      * @return reference to policy.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference() throws DynamicParamException, AgentException {
-        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator, params);
+    public Policy reference() throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
+        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator.reference(), params);
     }
 
     /**
@@ -119,11 +76,30 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to policy.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException {
+    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
         return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
+    }
+
+    /**
+     * Returns reference to policy function.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
+     * @param memory reference to memory.
+     * @return reference to policy.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     */
+    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), params);
     }
 
     /**
@@ -133,10 +109,9 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = functionEstimator.predict(stateTransition.environmentState.state());
-        double epsilon = 10E-8;
-        double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0) + epsilon;
-        return -(currentPolicyValue * Math.log(currentPolicyValue) * (stateTransition.advantage + (applyEntropy ? entropyCoefficient * currentPolicyValues.entropy(true) : 0)));
+        Matrix currentPolicyValues = functionEstimator.predict(stateTransition);
+        double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
+        return Math.log(currentPolicyValue) * stateTransition.advantage;
     }
 
 }

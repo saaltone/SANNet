@@ -17,19 +17,19 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines Double Q Learning.<br>
+ * Implements double Q learning algorithm.<br>
  *
  */
 public class DDQNLearning extends AbstractQLearning {
 
     /**
-     * Constructor for DDQNLearning.
+     * Constructor for double Q learning.
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
      * @param valueFunctionEstimator reference to value function estimator.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -38,14 +38,14 @@ public class DDQNLearning extends AbstractQLearning {
     }
 
     /**
-     * Constructor for DDQNLearning.
+     * Constructor for double Q learning.
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
      * @param valueFunctionEstimator reference to value function estimator.
      * @param params parameters for agent.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -57,8 +57,8 @@ public class DDQNLearning extends AbstractQLearning {
      * Returns reference to algorithm.
      *
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
@@ -73,8 +73,8 @@ public class DDQNLearning extends AbstractQLearning {
      * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.

@@ -19,15 +19,15 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Class that defines tabular state action function estimator.<br>
+ * Implements tabular based state action function estimator.<br>
  * Reference for polynomial learning rate: https://www.jmlr.org/papers/volume5/evendar03a/evendar03a.pdf <br>
  *
  */
 public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
-     * Parameter name types for TabularFunctionEstimator.
-     *     - optimizerName: name of optimizer for TabularFunctionEstimator. Default value "Adam".<br>
+     * Parameter name types for tabular function estimator.
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
      */
@@ -41,7 +41,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<Matrix, Matrix> stateValues = new HashMap<>();
 
     /**
-     * Optimizer for TabularFunctionEstimator.
+     * Optimizer for tabular function estimator.
      *
      */
     private Optimizer optimizer;
@@ -53,11 +53,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
 
     /**
-     * Constructor for TabularFunctionEstimator.
+     * Constructor for tabular function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for TabularFunctionEstimator
+     * @param numberOfStates number of states for tabular function estimator
+     * @param numberOfActions number of actions for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
@@ -65,12 +65,12 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Constructor for TabularFunctionEstimator.
+     * Constructor for tabular function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for TabularFunctionEstimator
-     * @param params params for TabularFunctionEstimator
+     * @param numberOfStates number of states for tabular function estimator
+     * @param numberOfActions number of actions for tabular function estimator
+     * @param params params for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, String params) throws DynamicParamException {
@@ -78,12 +78,12 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Constructor for TabularFunctionEstimator.
+     * Constructor for tabular function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for TabularFunctionEstimator
-     * @param stateValues state values inherited for TabularFunctionEstimator.
+     * @param numberOfStates number of states for tabular function estimator
+     * @param numberOfActions number of actions for tabular function estimator
+     * @param stateValues state values inherited for tabular function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues) throws DynamicParamException {
@@ -92,13 +92,13 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Constructor for TabularFunctionEstimator.
+     * Constructor for tabular function estimator.
      *
      * @param memory memory reference.
-     * @param numberOfStates number of states for TabularFunctionEstimator
-     * @param numberOfActions number of actions for TabularFunctionEstimator
-     * @param stateValues state values inherited for TabularFunctionEstimator.
-     * @param params params for TabularFunctionEstimator
+     * @param numberOfStates number of states for tabular function estimator
+     * @param numberOfActions number of actions for tabular function estimator
+     * @param stateValues state values inherited for tabular function estimator.
+     * @param params params for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues, String params) throws DynamicParamException {
@@ -117,22 +117,22 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns parameters used for TabularFunctionEstimator.
+     * Returns parameters used for tabular function estimator.
      *
-     * @return parameters used for TabularFunctionEstimator.
+     * @return parameters used for tabular function estimator.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + TabularFunctionEstimator.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for TabularFunctionEstimator.<br>
+     * Sets parameters used for tabular function estimator.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - optimizerName: name of optimizer for TabularFunctionEstimator. Default value "Adam".<br>
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
-     * @param params parameters used for NNFunctionEstimator.
+     * @param params parameters used for tabular function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -152,7 +152,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator reference() throws DynamicParamException {
-        return new TabularFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions(), getParams());
+        return new TabularFunctionEstimator(getMemory().reference(), getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
@@ -167,7 +167,18 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Sets state values map for TabularFunctionEstimator.
+     * Returns reference to function estimator.
+     *
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public FunctionEstimator reference(Memory memory) throws DynamicParamException {
+        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
+    }
+
+    /**
+     * Sets state values map for tabular function estimator.
      *
      * @param stateValues state values map
      */
@@ -192,9 +203,9 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns shallow copy of TabularFunctionEstimator.
+     * Returns shallow copy of tabular function estimator.
      *
-     * @return shallow copy of TabularFunctionEstimator.
+     * @return shallow copy of tabular function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator copy() throws DynamicParamException {
@@ -202,7 +213,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Resets TabularFunctionEstimator.
+     * Resets tabular function estimator.
      *
      */
     public void reset() {
@@ -211,22 +222,14 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Reinitializes TabularFunctionEstimator.
+     * Returns (predicts) state value corresponding to a state as stored by tabular function estimator.
      *
-     */
-    public void reinitialize() {
-        this.reset();
-    }
-
-    /**
-     * Returns (predicts) state value corresponding to a state as stored by TabularFunctionEstimator.
-     *
-     * @param state state
+     * @param stateTransition state
      * @return state value corresponding to a state
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predict(Matrix state) throws MatrixException {
-        return getStateValue(state);
+    public Matrix predict(StateTransition stateTransition) throws MatrixException {
+        return getStateValue(stateTransition.environmentState.state());
     }
 
     /**
@@ -240,7 +243,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Updates (trains) TabularFunctionEstimator.
+     * Updates (trains) tabular function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws AgentException throws exception if update cycle is ongoing.
@@ -249,7 +252,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void update() throws MatrixException, AgentException, DynamicParamException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
-            Matrix stateValue = predict(stateTransition.environmentState.state());
+            Matrix stateValue = predict(stateTransition);
             Matrix error = stateValue.subtract(stateTransitionValueMap.get(stateTransition));
             if (!stateErrors.containsKey(stateValue)) stateErrors.put(stateValue, error);
             else stateErrors.get(stateValue).add(error, stateErrors.get(stateValue));
@@ -270,10 +273,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         }
 
         updateComplete();
+        reset();
     }
 
     /**
-     * Updates parameters to this TabularFunctionEstimator from another TabularFunctionEstimator.
+     * Updates parameters to this tabular function estimator from another tabular function estimator.
      *
      * @param functionEstimator estimator function used to update this function.
      * @param fullUpdate if true full update is done.
@@ -281,7 +285,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws AgentException {
         super.append();
-         ((TabularFunctionEstimator) functionEstimator).setStateValues(stateValues);
+        ((TabularFunctionEstimator) functionEstimator).setStateValues(stateValues);
     }
 
 }

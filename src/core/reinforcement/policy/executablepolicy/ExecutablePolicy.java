@@ -25,11 +25,11 @@ public interface ExecutablePolicy extends Configurable {
     String getParamDefs();
 
     /**
-     * Resets policy.
+     * Sets flag if agent is in learning mode.
      *
-     * @param forceReset forces to trigger reset.
+     * @param isLearning if true agent is in learning mode.
      */
-    void reset(boolean forceReset);
+    void setLearning(boolean isLearning);
 
     /**
      * Increments policy.
@@ -57,18 +57,17 @@ public interface ExecutablePolicy extends Configurable {
     int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy);
 
     /**
-     * Records state transition for action execution.
+     * Adds state transition for action execution.
      *
      * @param stateTransition state transition.
      */
-    void record(StateTransition stateTransition);
+    void add(StateTransition stateTransition);
 
     /**
-     * Finishes episode.
+     * Ends episode.
      *
-     * @param update if true updates policy.
      */
-    void finish(boolean update);
+    void endEpisode();
 
     /**
      * Returns executable policy type.

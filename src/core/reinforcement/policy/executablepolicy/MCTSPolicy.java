@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines MCTSPolicy.<br>
+ * Implements MCTS policy.<br>
  * <br>
  * Reference: https://medium.com/@jonathan_hui/monte-carlo-tree-search-mcts-in-alphago-zero-8a403588276a <br>
  * Reference: https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5 <br>
@@ -29,7 +29,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     private static final long serialVersionUID = -6567362723286339425L;
 
     /**
-     * Parameter name types for MCTSPolicy.
+     * Parameter name types for MCTS policy.
      *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.75.<br>
      *     - alpha: Shape value for Dirichlet sampling. Default value 0.6.<br>
      *     - epsilon: Weighting for Dirichlet distribution at action selection. Default value 0.8.<br>
@@ -50,7 +50,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.MCTS;
 
     /**
-     * Class that defines action for state.
+     * Implements action for state.
      *
      */
     private class Action {
@@ -210,7 +210,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Class that defines state for MCTS.
+     * Implements state for MCTS.
      *
      */
     private class State {
@@ -503,7 +503,13 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     private int resetCycle;
 
     /**
-     * Constructor for MCTSPolicy
+     * If true agent is in learning mode.
+     *
+     */
+    private boolean isLearning = true;
+
+    /**
+     * Constructor for MCTS policy
      *
      */
     public MCTSPolicy() {
@@ -511,9 +517,9 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Constructor for MCTSPolicy
+     * Constructor for MCTS policy
      *
-     * @param params parameters for MCTSPolicy.
+     * @param params parameters for MCTS policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MCTSPolicy(String params) throws DynamicParamException {
@@ -534,16 +540,16 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Returns parameters used for MCTSPolicy.
+     * Returns parameters used for MCTS policy.
      *
-     * @return parameters used for MCTSPolicy.
+     * @return parameters used for MCTS policy.
      */
     public String getParamDefs() {
         return paramNameTypes;
     }
 
     /**
-     * Sets parameters used for MCTSPolicy.<br>
+     * Sets parameters used for MCTS policy.<br>
      * <br>
      * Supported parameters are:<br>
      *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.75.<br>
@@ -552,7 +558,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *     - tau: Temperature value for node visit count. Default value 1.1.<br>
      *     - resetCycle: Reset cycle counted as number of increments if cycle is 0 then reset is never applied. Default value 0.<br>
      *
-     * @param params parameters used for MCTSPolicy.
+     * @param params parameters used for MCTS policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -564,15 +570,21 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Resets policy.
+     * Sets flag if agent is in learning mode.
      *
-     * @param forceReset forces to trigger reset.
+     * @param isLearning if true agent is in learning mode.
      */
-    public void reset(boolean forceReset) {
-        forceReset = false;
-        if (!forceReset) if (++resetCount < resetCycle || resetCycle < 1) return;
-        resetCount = 0;
-        rootState = currentState = null;
+    public void setLearning(boolean isLearning) {
+        this.isLearning = isLearning;
+    }
+
+    /**
+     * Return flag is agent is in learning mode.
+     *
+     * @return if true agent is in learning mode.
+     */
+    private boolean isLearning() {
+        return isLearning;
     }
 
     /**
@@ -580,6 +592,9 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      */
     public void increment() {
+        if (++resetCount < resetCycle || resetCycle < 1) return;
+        resetCount = 0;
+        rootState = currentState = null;
     }
 
     /**
@@ -617,21 +632,20 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Records state transition for action execution.
+     * Adds state transition for action execution.
      *
      * @param stateTransition state transition.
      */
-    public void record(StateTransition stateTransition) {
+    public void add(StateTransition stateTransition) {
         stateTransitionStack.push(stateTransition);
     }
 
     /**
-     * Finishes episode.
+     * Ends episode.
      *
-     * @param update if true update is executed.
      */
-    public void finish(boolean update) {
-        if (update) {
+    public void endEpisode() {
+        if (isLearning()) {
             if (currentState == null || stateTransitionStack.isEmpty()) return;
             currentState.update(stateTransitionStack);
         }

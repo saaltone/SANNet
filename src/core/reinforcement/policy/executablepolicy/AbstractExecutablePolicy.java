@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that defines AbstractExecutablePolicy which contains shared functions for executable policies.<br>
+ * Implements abstract executable policy which contains shared functions for executable policies.<br>
  *
  */
 public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Serializable {
@@ -24,7 +24,7 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     private static final long serialVersionUID = -3999341188546094490L;
 
     /**
-     * Parameter name types for AbstractExecutablePolicy.
+     * Parameter name types for abstract executable policy.
      *     - asSoftMax: true if action values are recorded as softmax values (e^x).<br>
      *
      */
@@ -46,7 +46,7 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     protected boolean asSoftMax;
 
     /**
-     * Default constructor for AbstractExecutablePolicy.
+     * Default constructor for abstract executable policy.
      *
      */
     AbstractExecutablePolicy() {
@@ -54,9 +54,9 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Default constructor for AbstractExecutablePolicy.
+     * Default constructor for abstract executable policy.
      *
-     * @param params parameters for AbstractExecutablePolicy.
+     * @param params parameters for abstract executable policy.
      * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -74,21 +74,21 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Returns parameters used for AbstractExecutablePolicy.
+     * Returns parameters used for abstract executable policy.
      *
-     * @return parameters used for AbstractExecutablePolicy.
+     * @return parameters used for abstract executable policy.
      */
     public String getParamDefs() {
         return AbstractExecutablePolicy.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for AbstractExecutablePolicy.<br>
+     * Sets parameters used for abstract executable policy.<br>
      * <br>
      * Supported parameters are:<br>
      *     - asSoftMax: true if action values are recorded as softmax values (e^x).<br>
      *
-     * @param params parameters used for AbstractExecutablePolicy.
+     * @param params parameters used for abstract executable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -96,11 +96,11 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Resets policy.
+     * Sets flag if agent is in learning mode.
      *
-     * @param forceReset force reset.
+     * @param isLearning if true agent is in learning mode.
      */
-    public void reset(boolean forceReset) {
+    public void setLearning(boolean isLearning) {
     }
 
     /**
@@ -130,19 +130,18 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
-     * Records state transition for action execution.
+     * Adds state transition for action execution.
      *
      * @param stateTransition state transition.
      */
-    public void record(StateTransition stateTransition) {
+    public void add(StateTransition stateTransition) {
     }
 
     /**
-     * Finishes episode.
+     * Ends episode.
      *
-     * @param update if true update executed.
      */
-    public void finish(boolean update) {
+    public void endEpisode() {
     }
 
     /**

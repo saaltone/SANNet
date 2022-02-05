@@ -15,14 +15,14 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines generic policy gradient algorithm.<br>
+ * Implements generic policy gradient algorithm.<br>
  * Can be used to implement Actor Critic and REINFORCE algorithms.<br>
  *
  */
 public class PolicyGradient extends AbstractPolicyGradient {
 
     /**
-     * Constructor for PolicyGradient.
+     * Constructor for policy gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -33,7 +33,7 @@ public class PolicyGradient extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for PolicyGradient.
+     * Constructor for policy gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -49,27 +49,34 @@ public class PolicyGradient extends AbstractPolicyGradient {
      * Returns reference to algorithm.
      *
      * @return reference to algorithm.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public PolicyGradient reference() throws DynamicParamException {
-        return new PolicyGradient(getEnvironment(), policy, valueFunction, getParams());
+    public PolicyGradient reference() throws DynamicParamException, MatrixException, AgentException, IOException, ClassNotFoundException {
+        Policy newPolicy = policy.reference();
+        ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
+        return new PolicyGradient(getEnvironment(), newPolicy, newValueFunction, getParams());
     }
 
     /**
      * Returns reference to algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public PolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        return new PolicyGradient(getEnvironment(), policy.reference(sharedPolicyFunctionEstimator, sharedMemory), valueFunction.reference(sharedValueFunctionEstimator, sharedMemory), getParams());
+    public PolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+        Policy newPolicy = policy.reference(sharedPolicyFunctionEstimator, sharedMemory);
+        ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
+        return new PolicyGradient(getEnvironment(), newPolicy, newValueFunction, getParams());
     }
 
 }

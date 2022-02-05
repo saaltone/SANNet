@@ -6,7 +6,7 @@
 package core.reinforcement.agent;
 
 /**
- * Class defining agent exception thrown in agent error situations.<br>
+ * Implements agent exception thrown in agent error situations.<br>
  *
  */
 public class AgentException extends Exception {

@@ -17,13 +17,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines policy gradient algorithms.<br>
+ * Implements abstract policy gradient functionality.<br>
  *
  */
 public abstract class AbstractPolicyGradient extends DeepAgent {
 
     /**
-     * Constructor for AbstractPolicyGradient.
+     * Constructor for abstract policy gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -34,7 +34,7 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
     }
 
     /**
-     * Constructor for AbstractPolicyGradient.
+     * Constructor for abstract policy gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -66,18 +66,17 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
     }
 
     /**
-     * Returns reference to AbstractPolicyGradient algorithm.
+     * Returns reference to abstract policy gradient algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
+    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }

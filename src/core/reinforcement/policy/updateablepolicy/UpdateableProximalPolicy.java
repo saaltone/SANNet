@@ -7,6 +7,7 @@ package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
@@ -18,13 +19,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Class that defines UpdateableProximalPolicy. Implements Proximal Policy Optimization (PPO).<br>
+ * Implements updateable proximal policy. Implements Proximal Policy Optimization (PPO).<br>
  *
  */
 public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
 
     /**
-     * Parameter name types for UpdateableProximalPolicy.
+     * Parameter name types for updateable proximal policy.
      *     - epsilon: epsilon value for proximal policy value clipping. Default value 0.2.<br>
      *     - updateCycle: update cycle for previous estimator function update. Default value 1.<br>
      *
@@ -57,12 +58,12 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     private int updateCount = 0;
 
     /**
-     * Constructor for UpdateableProximalPolicy.
+     * Constructor for updateable proximal policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to FunctionEstimator.
-     * @throws IOException throws exception if creation of FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator fails.
+     * @param functionEstimator reference to function estimator.
+     * @throws IOException throws exception if creation of function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -72,13 +73,13 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Constructor for UpdateableProximalPolicy.
+     * Constructor for updateable proximal policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to FunctionEstimator.
-     * @param params parameters for UpdateableProximalPolicy.
-     * @throws IOException throws exception if creation of FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator fails.
+     * @param functionEstimator reference to function estimator.
+     * @param params parameters for updateable proximal policy.
+     * @throws IOException throws exception if creation of function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -97,22 +98,22 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Returns parameters used for UpdateableProximalPolicy.
+     * Returns parameters used for updateable proximal policy.
      *
-     * @return parameters used for UpdateableProximalPolicy.
+     * @return parameters used for updateable proximal policy.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + UpdateableProximalPolicy.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for UpdateableProximalPolicy.<br>
+     * Sets parameters used for updateable proximal policy.<br>
      * <br>
      * Supported parameters are:<br>
      *     - epsilon: epsilon value for proximal policy value clipping. Default value 0.2.<br>
      *     - updateCycle: update cycle for previous estimator function update. Default value 1.<br>
      *
-     * @param params parameters used for UpdateableProximalPolicy.
+     * @param params parameters used for updateable proximal policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -125,8 +126,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * Returns reference to policy.
      *
      * @return reference to policy.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
@@ -140,17 +141,34 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to policy.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
         return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
     }
 
     /**
-     * Starts FunctionEstimator
+     * Returns reference to policy function.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
+     * @param memory reference to memory.
+     * @return reference to policy.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     */
+    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), params);
+    }
+
+    /**
+     * Starts function estimator
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -162,7 +180,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Stops FunctionEstimator
+     * Stops function estimator
      *
      */
     public void stop() {
@@ -179,8 +197,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        double currentActionValue = functionEstimator.predict(stateTransition.environmentState.state()).getValue(stateTransition.action, 0);
-        double previousActionValue = previousFunctionEstimator.predict(stateTransition.environmentState.state()).getValue(stateTransition.action, 0);
+        double currentActionValue = functionEstimator.predict(stateTransition).getValue(stateTransition.action, 0);
+        double previousActionValue = previousFunctionEstimator.predict(stateTransition).getValue(stateTransition.action, 0);
         double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
         return -Math.min(rValue * stateTransition.advantage, clippedRValue * stateTransition.advantage);

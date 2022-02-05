@@ -6,28 +6,32 @@
 package core.reinforcement.value;
 
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
+
+import java.io.IOException;
 
 /**
- * Class that defines ActionValueFunctionEstimator (action value function with function estimator).<br>
+ * Implements action value function estimator.<br>
  *
  */
 public class ActionValueFunctionEstimator extends AbstractActionValueFunctionEstimator {
 
     /**
-     * Constructor for ActionValueFunctionEstimator
+     * Constructor for action value function estimator
      *
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param functionEstimator reference to function estimator.
      */
     public ActionValueFunctionEstimator(FunctionEstimator functionEstimator) {
         super(functionEstimator);
     }
 
     /**
-     * Constructor for ActionValueFunctionEstimator
+     * Constructor for action value function estimator
      *
-     * @param functionEstimator reference to FunctionEstimator.
+     * @param functionEstimator reference to function estimator.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -39,10 +43,13 @@ public class ActionValueFunctionEstimator extends AbstractActionValueFunctionEst
      * Returns reference to value function.
      *
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ValueFunction reference() throws DynamicParamException {
-        return new ActionValueFunctionEstimator(functionEstimator, getParams());
+    public ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new ActionValueFunctionEstimator(functionEstimator.reference(), getParams());
     }
 
     /**
@@ -51,10 +58,28 @@ public class ActionValueFunctionEstimator extends AbstractActionValueFunctionEst
      * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
         return new ActionValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new ActionValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), getParams());
     }
 
     /**

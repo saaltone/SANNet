@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.util.HashMap;
 
 /**
- * Class that defines NNFunctionEstimator.<br>
+ * Implements neural network based function estimator.<br>
  *
  */
 public class NNFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
-     * Parameter name types for NNFunctionEstimator.
+     * Parameter name types for neural network based function estimator.
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - targetFunctionTau: update rate of target function. Default value 0.01.<br>
      *
@@ -45,7 +45,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Number of validation cycles.
      *
      */
-    private int numberOfIterations = 1;
+    private int numberOfIterations;
 
     /**
      * Update rate of target function.
@@ -63,7 +63,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Intermediate map for state value pairs as value cache.
      *
      */
-    private HashMap<Matrix, Matrix> stateValueMap = new HashMap<>();
+    private HashMap<StateTransition, Matrix> stateTransitionCache = new HashMap<>();
 
     /**
      * Intermediate map for state transition value pairs for update.
@@ -72,7 +72,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
 
     /**
-     * Constructor for NNFunctionEstimator.
+     * Constructor for neural network based function estimator.
      *
      * @param memory memory reference.
      * @param neuralNetwork neural network reference.
@@ -85,7 +85,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Constructor for NNFunctionEstimator.
+     * Constructor for neural network based function estimator.
      *
      * @param memory memory reference.
      * @param neuralNetwork neural network reference.
@@ -105,26 +105,27 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void initializeDefaultParams() throws DynamicParamException {
         super.initializeDefaultParams();
+        numberOfIterations = 1;
         targetFunctionTau = 0.01;
     }
 
     /**
-     * Returns parameters used for NNFunctionEstimator.
+     * Returns parameters used for neural network based function estimator.
      *
-     * @return parameters used for NNFunctionEstimator.
+     * @return parameters used for neural network based function estimator.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + NNFunctionEstimator.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for NNFunctionEstimator.<br>
+     * Sets parameters used for neural network based function estimator.<br>
      * <br>
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - targetFunctionTau: update rate of target function. Default value 0.01.<br>
      *
-     * @param params parameters used for NNFunctionEstimator.
+     * @param params parameters used for neural network based function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -141,10 +142,13 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Returns reference to function estimator.
      *
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FunctionEstimator reference() throws DynamicParamException {
-        return new NNFunctionEstimator(getMemory(), getNeuralNetwork(), getParams());
+    public FunctionEstimator reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new NNFunctionEstimator(getMemory().reference(), getNeuralNetwork().reference(), getParams());
     }
 
     /**
@@ -152,10 +156,27 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
-        return new NNFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNeuralNetwork(), getParams());
+    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new NNFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNeuralNetwork().reference(), getParams());
+    }
+
+    /**
+     * Returns reference to function estimator.
+     *
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws IOException throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public FunctionEstimator reference(Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new NNFunctionEstimator(memory, getNeuralNetwork().reference(), getParams());
     }
 
     /**
@@ -180,7 +201,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns neural network used by NNFunctionEstimator.
+     * Returns neural network used by neural network based function estimator.
      *
      * @return neural network.
      */
@@ -189,9 +210,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns copy of NNFunctionEstimator.
+     * Returns copy of neural network based function estimator.
      *
-     * @return copy of NNFunctionEstimator.
+     * @return copy of neural network based function estimator.
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -201,36 +222,27 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Resets NNFunctionEstimator.
+     * Resets neural network based function estimator.
      *
      */
     public void reset() {
         super.reset();
-        stateValueMap = new HashMap<>();
+        stateTransitionCache = new HashMap<>();
         stateTransitionValueMap = new HashMap<>();
-    }
-
-    /**
-     * Reinitializes NNFunctionEstimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void reinitialize() throws MatrixException {
-        neuralNetwork.reinitialize();
     }
 
     /**
      * Predicts state values corresponding to a state.
      *
-     * @param state state.
+     * @param stateTransition state.
      * @return state values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public Matrix predict(Matrix state) throws NeuralNetworkException, MatrixException {
-        if (stateValueMap.containsKey(state)) return stateValueMap.get(state);
-        Matrix values = neuralNetwork.predict(new MMatrix(state)).get(0);
-        stateValueMap.put(state, values);
+    public Matrix predict(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
+        if (stateTransitionCache.containsKey(stateTransition)) return stateTransitionCache.get(stateTransition);
+        Matrix values = neuralNetwork.predict(new MMatrix(stateTransition.environmentState.state())).get(0);
+        stateTransitionCache.put(stateTransition, values);
         return values;
     }
 
@@ -259,7 +271,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
             states.put(index, new MMatrix(stateTransition.environmentState.state()));
             stateValues.put(index, new MMatrix(stateTransitionValueMap.get(stateTransition)));
-            if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index++, stateTransition.importanceSamplingWeight);
+            if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index, stateTransition.importanceSamplingWeight);
             index++;
         }
         if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(importanceSamplingWeights);
@@ -269,7 +281,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Appends parameters to this NNFunctionEstimator from another NNFunctionEstimator.
+     * Appends parameters to this neural network based function estimator from another neural network based function estimator.
      *
      * @param functionEstimator function estimator used to update current function estimator.
      * @param fullUpdate if true full update is done.

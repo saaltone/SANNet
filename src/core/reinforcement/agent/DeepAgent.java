@@ -18,7 +18,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Class that defines DeepAgent.<br>
+ * Implements deep agent.<br>
  *
  */
 public abstract class DeepAgent implements Agent, Configurable, Serializable {
@@ -27,7 +27,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     private static final long serialVersionUID = -1720953512017473344L;
 
     /**
-     * Parameter name types for DeepAgent.
+     * Parameter name types for deep agent.
      *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
@@ -98,7 +98,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     private double rewardTau;
 
     /**
-     * Constructor for DeepAgent.
+     * Constructor for deep agent.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -113,15 +113,13 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
 
         this.policy = policy;
         policy.registerAgent(this);
-        policy.setEnvironment(environment);
 
         this.valueFunction = valueFunction;
         valueFunction.registerAgent(this);
-        policy.setValueFunction(valueFunction);
     }
 
     /**
-     * Constructor for DeepAgent.
+     * Constructor for deep agent.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -152,23 +150,23 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Returns parameters used for DeepAgent.
+     * Returns parameters used for deep agent.
      *
-     * @return parameters used for DeepAgent.
+     * @return parameters used for deep agent.
      */
     public String getParamDefs() {
         return DeepAgent.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for DeepAgent.<br>
+     * Sets parameters used for deep agent.<br>
      * <br>
      * Supported parameters are:<br>
      *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
      *
-     * @param params parameters used for DeepAgent.
+     * @param params parameters used for deep agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
@@ -196,7 +194,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Starts DeepAgent.
+     * Starts deep agent.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -208,7 +206,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Stops DeepAgent.
+     * Stops deep agent.
      *
      */
     public void stop() {
@@ -225,7 +223,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Begins new episode step for DeepAgent.
+     * Begins new episode step for deep agent.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -241,7 +239,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Ends episode and if end of update cycle is reached updates DeepAgent.
+     * Ends episode and if end of update cycle is reached updates deep agent.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
@@ -250,8 +248,11 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      */
     public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         if (updateValuePerEpisode) valueFunction.update(stateTransition);
-        policy.update();
-        if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() % agentUpdateCycle == 0) update();
+        policy.endEpisode();
+        if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() % agentUpdateCycle == 0) {
+            updateFunctionEstimator();
+            policy.increment();
+        }
     }
 
     /**
@@ -319,20 +320,6 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Updates agent.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
-     */
-    private void update() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        updateFunctionEstimator();
-        policy.increment();
-        policy.reset(false);
-    }
-
-    /**
      * Updates policy and value functions of agent.
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -341,13 +328,5 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @throws AgentException throws exception if update of estimator fails.
      */
     protected abstract void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
-
-    /**
-     * Resets policy.
-     *
-     */
-    public void resetPolicy() {
-        policy.reset(true);
-    }
 
 }

@@ -13,13 +13,13 @@ import java.util.Random;
 import java.util.TreeSet;
 
 /**
- * Class that defines SampledPolicy.<br>
+ * Implements sampled policy.<br>
  *
  */
 public class SampledPolicy extends AbstractExecutablePolicy {
 
     /**
-     * Parameter name types for SampledPolicy.
+     * Parameter name types for sampled policy.
      *     - thresholdInitial: initial threshold value for sampling randomness. Default value 1.<br>
      *     - thresholdMin: lowest value for threshold. Default value 0.2.<br>
      *     - thresholdDecay: decay rate of threshold. Default value 0.999.<br>
@@ -36,7 +36,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.SAMPLED;
 
     /**
-     * Random function for SampledPolicy.
+     * Random function for sampled policy.
      *
      */
     private final Random random = new Random();
@@ -66,7 +66,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     private double thresholdDecay = 0.999;
 
     /**
-     * Default constructor for SampledPolicy.
+     * Default constructor for sampled policy.
      *
      */
     public SampledPolicy() {
@@ -74,9 +74,9 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Constructor for SampledPolicy.
+     * Constructor for sampled policy.
      *
-     * @param params parameters for SampledPolicy.
+     * @param params parameters for sampled policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public SampledPolicy(String params) throws DynamicParamException {
@@ -96,23 +96,23 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Returns parameters used for SampledPolicy.
+     * Returns parameters used for sampled policy.
      *
-     * @return parameters used for SampledPolicy.
+     * @return parameters used for sampled policy.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + SampledPolicy.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for SampledPolicy.<br>
+     * Sets parameters used for sampled policy.<br>
      * <br>
      * Supported parameters are:<br>
      *     - thresholdInitial: initial threshold value for sampling randomness. Default value 1.<br>
      *     - thresholdMin: lowest value for threshold. Default value 0.2.<br>
      *     - thresholdDecay: decay rate of threshold. Default value 0.999.<br>
      *
-     * @param params parameters used for SampledPolicy.
+     * @param params parameters used for sampled policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {

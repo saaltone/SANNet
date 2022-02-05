@@ -13,13 +13,13 @@ import java.util.HashSet;
 import java.util.Random;
 
 /**
- * Class that defines EpsilonGreedyPolicy.<br>
+ * Implements epsilon greedy policy.<br>
  *
  */
 public class EpsilonGreedyPolicy extends GreedyPolicy {
 
     /**
-     * Parameter name types for EpsilonGreedyPolicy.
+     * Parameter name types for epsilon greedy policy.
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
      *     - epsilonMin: Lowest value for epsilon. Default value 0.2.<br>
      *     - epsilonDecayRate: Decay rate of epsilon. Default value 0.999.<br>
@@ -38,13 +38,13 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
 
     /**
-     * Random function for EpsilonGreedyPolicy.
+     * Random function for epsilon greedy policy.
      *
      */
     private final Random random = new Random();
 
     /**
-     * Current epsilon value for EpsilonGreedyPolicy defining balance between exploration and exploitation.
+     * Current epsilon value for epsilon greedy policy defining balance between exploration and exploitation.
      *
      */
     private double epsilon;
@@ -80,7 +80,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     private int epsilonUpdateCount = 1;
 
     /**
-     * Constructor for EpsilonGreedyPolicy.
+     * Constructor for epsilon greedy policy.
      *
      */
     public EpsilonGreedyPolicy() {
@@ -88,9 +88,9 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     }
 
     /**
-     * Constructor for EpsilonGreedyPolicy.
+     * Constructor for epsilon greedy policy.
      *
-     * @param params parameters for EpsilonGreedyPolicy.
+     * @param params parameters for epsilon greedy policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public EpsilonGreedyPolicy(String params) throws DynamicParamException {
@@ -111,16 +111,16 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     }
 
     /**
-     * Returns parameters used for EpsilonGreedyPolicy.
+     * Returns parameters used for epsilon greedy policy.
      *
-     * @return parameters used for EpsilonGreedyPolicy.
+     * @return parameters used for epsilon greedy policy.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + EpsilonGreedyPolicy.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for EpsilonGreedyPolicy.<br>
+     * Sets parameters used for epsilon greedy policy.<br>
      * <br>
      * Supported parameters are:<br>
      *     - epsilonInitial: Initial epsilon value for greediness / randomness of learning. Default value 1.<br>
@@ -128,7 +128,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *     - epsilonDecayRate: Decay rate of epsilon. Default value 0.999.<br>
      *     - epsilonDecayByUpdateCount: If true epsilon decays along policy update count otherwise decays by epsilon decay rate. Default value false.<br>
      *
-     * @param params parameters used for EpsilonGreedyPolicy.
+     * @param params parameters used for epsilon greedy policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {

@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Class that defines GreedyPolicy.<br>
+ * Implements greedy policy.<br>
  *
  */
 public class GreedyPolicy extends AbstractExecutablePolicy {
@@ -23,14 +23,14 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.GREEDY;
 
     /**
-     * Constructor for GreedyPolicy.
+     * Constructor for greedy policy.
      *
      */
     public GreedyPolicy() {
     }
 
     /**
-     * Constructor for GreedyPolicy.
+     * Constructor for greedy policy.
      *
      * @param params parameters for Policy.
      * @param paramNameTypes parameter names types

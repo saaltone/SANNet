@@ -13,16 +13,16 @@ import java.util.Random;
 import java.util.TreeSet;
 
 /**
- * Class that defines NoisyNextBestPolicy.<br>
+ * Implements noisy next best policy.<br>
  * Policy make a greedy decision (chooses best policy) or next best policy according to exploration probability.<br>
  *
  */
 public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
 
     /**
-     * Parameter name types for NoisyNextBestPolicy.
-     *     - initialExplorationNoise: initial exploration noise for NoisyNextBestPolicy. Default value 1.<br>
-     *     - minExplorationNoise: minimum exploration noise for NoisyNextBestPolicy. Default value 0.2.<br>
+     * Parameter name types for noisy next best policy.
+     *     - initialExplorationNoise: initial exploration noise for noisy next best policy. Default value 1.<br>
+     *     - minExplorationNoise: minimum exploration noise for noisy next best policy. Default value 0.2.<br>
      *     - explorationNoiseDecay: decay factor for exploration noise. Default value 0.999.<br>
      *
      */
@@ -37,37 +37,37 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
 
     /**
-     * Random function for NoisyNextBestPolicy.
+     * Random function for noisy next best policy.
      *
      */
     private final Random random = new Random();
 
     /**
-     * Exploration noise for NoisyNextBestPolicy.
+     * Exploration noise for noisy next best policy.
      *
      */
     private double explorationNoise;
 
     /**
-     * Exploration noise for NoisyNextBestPolicy.
+     * Exploration noise for noisy next best policy.
      *
      */
     private double initialExplorationNoise;
 
     /**
-     * Minimum exploration noise for NoisyNextBestPolicy.
+     * Minimum exploration noise for noisy next best policy.
      *
      */
     private double minExplorationNoise;
 
     /**
-     * Decay for exploration noise for NoisyNextBestPolicy.
+     * Decay for exploration noise for noisy next best policy.
      *
      */
     private double explorationNoiseDecay;
 
     /**
-     * Constructor for NoisyNextBestPolicy.
+     * Constructor for noisy next best policy.
      *
      */
     public NoisyNextBestPolicy() {
@@ -75,9 +75,9 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Constructor for NoisyNextBestPolicy.
+     * Constructor for noisy next best policy.
      *
-     * @param params parameters for NoisyNextBestPolicy.
+     * @param params parameters for noisy next best policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NoisyNextBestPolicy(String params) throws DynamicParamException {
@@ -97,23 +97,23 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Returns parameters used for NoisyNextBestPolicy.
+     * Returns parameters used for noisy next best policy.
      *
-     * @return parameters used for NoisyNextBestPolicy.
+     * @return parameters used for noisy next best policy.
      */
     public String getParamDefs() {
         return super.getParamDefs() + ", " + NoisyNextBestPolicy.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for NoisyNextBestPolicy.<br>
+     * Sets parameters used for noisy next best policy.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - initialExplorationNoise: initial exploration noise for NoisyNextBestPolicy. Default value 1.<br>
-     *     - minExplorationNoise: minimum exploration noise for NoisyNextBestPolicy. Default value 0.2.<br>
+     *     - initialExplorationNoise: initial exploration noise for noisy next best policy. Default value 1.<br>
+     *     - minExplorationNoise: minimum exploration noise for noisy next best policy. Default value 0.2.<br>
      *     - explorationNoiseDecay: decay factor for exploration noise. Default value 0.999.<br>
      *
-     * @param params parameters used for NoisyNextBestPolicy.
+     * @param params parameters used for noisy next best policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {

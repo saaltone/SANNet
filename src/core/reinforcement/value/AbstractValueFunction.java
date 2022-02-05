@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.util.TreeSet;
 
 /**
- * Class that defines AbstractValueFunction.<br>
+ * Implements abstract value function providing common functionality for value estimation.<br>
  *
  */
 public abstract class AbstractValueFunction implements ValueFunction, Configurable, Serializable {
@@ -26,15 +26,15 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     private static final long serialVersionUID = -7436000520645598105L;
 
     /**
-     * Parameter name types for AbstractValueFunction.
+     * Parameter name types for abstract value function.
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
-     *     - tdErrorPrintCycle: TD error print cycle. Default value 1000.
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
+     *     - tdDataPrintCycle: TD data print cycle. Default value 500.
      *
      */
     private final static String paramNameTypes = "(gamma:DOUBLE), " +
             "(lambda:DOUBLE), " +
-            "(tdErrorPrintCycle:INT)";
+            "(tdDataPrintCycle:INT)";
 
     /**
      * Number of actions for value function.
@@ -61,27 +61,39 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     protected double lambda;
 
     /**
-     * Moving average TDError.
+     * Moving average reward.
+     *
+     */
+    private double averageReward = Double.NEGATIVE_INFINITY;
+
+    /**
+     * Moving average TD target.
+     *
+     */
+    private double averageTDTarget = Double.NEGATIVE_INFINITY;
+
+    /**
+     * Moving average TD error.
      *
      */
     private double averageTDError = Double.NEGATIVE_INFINITY;
 
     /**
-     * Print cycle for average TDError verbosing.
+     * Print cycle for average TD data verbosing.
      *
      */
-    private int tdErrorPrintCycle;
+    private int tdDataPrintCycle;
 
     /**
-     * Count for average TDError verbosing.
+     * Count for average TD data verbosing.
      *
      */
-    private int tdErrorPrintCount = 0;
+    private int tdDataPrintCount = 0;
 
     /**
-     * Constructor for AbstractValueFunction.
+     * Constructor for abstract value function.
      *
-     * @param numberOfActions number of actions for AbstractValueFunction.
+     * @param numberOfActions number of actions for abstract value function.
      */
     AbstractValueFunction(int numberOfActions) {
         initializeDefaultParams();
@@ -90,32 +102,9 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     }
 
     /**
-     * Constructor for AbstractValueFunction.
+     * Constructor for abstract value function.
      *
-     */
-    AbstractValueFunction() {
-        initializeDefaultParams();
-        this.numberOfActions = 1;
-        this.params = null;
-    }
-
-    /**
-     * Constructor for AbstractValueFunction.
-     *
-     * @param params parameters for value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    AbstractValueFunction(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.numberOfActions = 1;
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
-    }
-
-    /**
-     * Constructor for AbstractValueFunction.
-     *
-     * @param numberOfActions number of actions for AbstractValueFunction.
+     * @param numberOfActions number of actions for abstract value function.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -133,7 +122,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     public void initializeDefaultParams() {
         gamma = 0.99;
         lambda = 0;
-        tdErrorPrintCycle = 1000;
+        tdDataPrintCycle = 500;
     }
 
     /**
@@ -146,29 +135,29 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     }
 
     /**
-     * Returns parameters used for AbstractValueFunction.
+     * Returns parameters used for abstract value function.
      *
-     * @return parameters used for AbstractValueFunction.
+     * @return parameters used for abstract value function.
      */
     public String getParamDefs() {
         return AbstractValueFunction.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for AbstractValueFunction.<br>
+     * Sets parameters used for abstract value function.<br>
      * <br>
      * Supported parameters are:<br>
      *     - gamma: discount value for value function. Default value 0.99.<br>
      *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
-     *     - tdErrorPrintCycle: TD error print cycle. Default value 1000.
+     *     - tdDataPrintCycle: TD data print cycle. Default value 500.
      *
-     * @param params parameters used for AbstractValueFunction.
+     * @param params parameters used for abstract value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
         if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
-        if (params.hasParam("tdErrorPrintCycle")) tdErrorPrintCycle = params.getValueAsInteger("tdErrorPrintCycle");
+        if (params.hasParam("tdDataPrintCycle")) tdDataPrintCycle = params.getValueAsInteger("tdDataPrintCycle");
     }
 
     /**
@@ -186,7 +175,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @param stateTransition state transition.
      * @return value for state.
      */
-    public double getValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+    private double getValue(StateTransition stateTransition) {
         return stateTransition.value;
     }
 
@@ -205,6 +194,13 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @param stateTransitions state transitions.
      */
     protected abstract void updateBaseline(TreeSet<StateTransition> stateTransitions);
+
+    /**
+     * Returns sampled state transitions.
+     *
+     * @return sampled state transitions.
+     */
+    protected abstract TreeSet<StateTransition> getSampledStateTransitions();
 
     /**
      * Updates value function for set sampled from memory.
@@ -243,16 +239,31 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      */
     private void updateValue(TreeSet<StateTransition> stateTransitions) throws MatrixException, NeuralNetworkException {
         if (stateTransitions == null) return;
+
         for (StateTransition stateTransition : stateTransitions.descendingSet()) {
             updateValue(stateTransition);
             stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition)));
             stateTransition.tdError = stateTransition.tdTarget - getValue(stateTransition);
             stateTransition.advantage = stateTransition.tdError;
+            averageReward = averageReward == Double.NEGATIVE_INFINITY ? stateTransition.reward : 0.99 * averageReward + 0.01 * stateTransition.reward;
+            averageTDTarget = averageTDTarget == Double.NEGATIVE_INFINITY ? stateTransition.tdTarget : 0.99 * averageTDTarget + 0.01 * stateTransition.tdTarget;
             averageTDError = averageTDError == Double.NEGATIVE_INFINITY ? stateTransition.tdError : 0.99 * averageTDError + 0.01 * stateTransition.tdError;
-            if (tdErrorPrintCycle > 0 && ++tdErrorPrintCount % tdErrorPrintCycle == 0) System.out.println("Average TD error: " + averageTDError);
+            if (tdDataPrintCycle > 0 && ++tdDataPrintCount % tdDataPrintCycle == 0) {
+                System.out.println("Average Reward: " + averageReward + ", Average TD target: " + averageTDTarget + ", Average TD error: " + averageTDError);
+            }
         }
 
         updateBaseline(stateTransitions);
     }
+
+    /**
+     * Returns target value based on next state.
+     *
+     * @param nextStateTransition next state transition.
+     * @return target value based on next state
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException;
 
 }

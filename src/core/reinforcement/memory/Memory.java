@@ -39,13 +39,6 @@ public interface Memory extends Configurable {
     void add(StateTransition stateTransition);
 
     /**
-     * Updates state transition in memory with new error value.
-     *
-     * @param stateTransition state transition to be updated.
-     */
-    void update(StateTransition stateTransition);
-
-    /**
      * Updates state transitions in memory with new error values.
      *
      * @param stateTransitions state transitions.

@@ -104,17 +104,11 @@ public interface Agent {
     void respond(double reward);
 
     /**
-     * Resets policy.
-     *
-     */
-    void resetPolicy();
-
-    /**
      * Returns reference to algorithm.
      *
      * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value FunctionEstimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value FunctionEstimator fails.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
