@@ -82,9 +82,9 @@ public interface Matrix {
     void reset();
 
     /**
-     * Returns sub-matrices within Matrix.
+     * Returns sub-matrices within matrix.
      *
-     * @return sub-matrices within Matrix.
+     * @return sub-matrices within matrix.
      */
     ArrayList<Matrix> getSubMatrices();
 
