@@ -34,9 +34,9 @@ public class JMatrix extends ComputableMatrix {
     private final boolean joinedVertically;
 
     /**
-     * Constructor for JMatrix.
+     * Constructor for joined matrix.
      *
-     * @param matrices matrices contained by JMatrix.
+     * @param matrices matrices contained by joined matrix.
      * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
@@ -45,18 +45,14 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
-     * Constructor for JMatrix.
+     * Constructor for joined matrix.
      *
-     * @param matrices matrices contained by JMatrix.
+     * @param matrices matrices contained by joined matrix.
      * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public JMatrix(ArrayList<Matrix> matrices, boolean joinedVertically) throws MatrixException {
         super(joinedVertically ? matrices.stream().mapToInt(Matrix::getTotalRows).sum() : matrices.get(0).getTotalRows(), joinedVertically ? matrices.get(0).getTotalColumns() : matrices.stream().mapToInt(Matrix::getTotalColumns).sum(), false);
-
-        for (Matrix matrix : matrices) {
-            if (matrix.isScalar()) throw new MatrixException("All matrices need to be non-scalar.");
-        }
 
         this.matrices.addAll(matrices);
         this.joinedVertically = joinedVertically;
@@ -88,6 +84,37 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @return newly created reference matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy() throws MatrixException {
+        ArrayList<Matrix> subMatrices = new ArrayList<>();
+        for (Matrix matrix : matrices) subMatrices.add(matrix.copy());
+        return new JMatrix(subMatrices, joinedVertically);
+    }
+
+    /**
+     * Checks if data of other matrix is equal to data of this matrix
+     *
+     * @param other matrix to be compared.
+     * @return true is data of this and other matrix are equal otherwise false.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public boolean equals(Matrix other) throws MatrixException {
+        if (other instanceof JMatrix otherJMatrix) {
+            if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
+                throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
+            }
+            ArrayList<Matrix> otherSubMatrices = otherJMatrix.getSubMatrices();
+            for (int index = 0; index < matrices.size(); index++) if (!matrices.get(index).equals(otherSubMatrices.get(index))) return false;
+            return true;
+        }
+        else return super.equals(other);
+    }
+
+    /**
      * Transposes matrix.
      *
      * @return transposed matrix.
@@ -101,9 +128,9 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns sub-matrices within Matrix.
+     * Returns sub-matrices within matrix.
      *
-     * @return sub-matrices within Matrix.
+     * @return sub-matrices within matrix.
      */
     public ArrayList<Matrix> getSubMatrices() {
         return new ArrayList<>(matrices);
