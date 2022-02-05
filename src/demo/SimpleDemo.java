@@ -11,7 +11,6 @@ import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.optimization.OptimizationType;
 import core.preprocess.DataSplitter;
-import core.network.EarlyStopping;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.sampling.BasicSampler;
@@ -36,6 +35,7 @@ public class SimpleDemo {
     public static void main(String [] args) {
 
         try {
+
             int numberOfNeuralNetworks = 2;
             HashMap<Integer, HashMap<Integer, MMatrix>> data = getTestData();
             ArrayList<NeuralNetwork> neuralNetworks = new ArrayList<>();
