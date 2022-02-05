@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines entropy matrix operation.
+ * Implements entropy matrix operation.
  *
  */
 public class EntropyMatrixOperation extends AbstractMatrixOperation {

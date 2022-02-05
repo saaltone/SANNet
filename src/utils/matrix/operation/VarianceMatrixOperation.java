@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines variance matrix operation.
+ * Implements variance matrix operation.
  *
  */
 public class VarianceMatrixOperation extends AbstractMatrixOperation {

@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.*;
 
 /**
- * Defines matrix binary operation.
+ * Implements matrix binary operation.
  *
  */
 public class BinaryMatrixOperation extends AbstractMatrixOperation {
@@ -56,7 +56,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
     private final Matrix.MatrixBinaryOperation matrixGradientBinaryOperation;
 
     /**
-     * Constructor for matrix unary operation.
+     * Constructor for matrix binary operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.

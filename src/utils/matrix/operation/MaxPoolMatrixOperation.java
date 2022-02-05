@@ -11,7 +11,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines max pooling matrix operation.
+ * Implements max pooling matrix operation.
  *
  */
 public class MaxPoolMatrixOperation extends AbstractMatrixOperation {

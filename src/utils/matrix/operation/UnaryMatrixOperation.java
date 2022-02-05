@@ -11,7 +11,7 @@ import utils.matrix.UnaryFunction;
 import utils.matrix.UnaryFunctionType;
 
 /**
- * Defines matrix unary operation.
+ * Implements matrix unary operation.
  *
  */
 public class UnaryMatrixOperation extends AbstractMatrixOperation {

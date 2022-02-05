@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines convolution filter gradient matrix operation.
+ * Implements convolution filter gradient matrix operation.
  *
  */
 public class ConvolutionFilterGradientMatrixOperation extends AbstractConvolutionFilterGradientMatrixOperation {

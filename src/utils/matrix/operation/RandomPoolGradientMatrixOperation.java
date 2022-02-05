@@ -11,7 +11,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines random pooling gradient matrix operation.<br>
+ * Implements random pooling gradient matrix operation.<br>
  * Selects each input of pool for propagation randomly with uniform probability.<br>
  *
  */

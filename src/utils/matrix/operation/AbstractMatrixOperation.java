@@ -12,7 +12,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Defines abstract matrix operation used by all matrix operations.
+ * Implements abstract matrix operation used by all matrix operations.
  *
  */
 public abstract class AbstractMatrixOperation implements MatrixOperation, Serializable {

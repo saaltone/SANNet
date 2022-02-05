@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines crosscorrelation matrix operation.
+ * Implements crosscorrelation matrix operation.
  *
  */
 public class CrosscorrelationMatrixOperation extends AbstractConvolutionMatrixOperation {

@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines abstract convolution filter gradient matrix operation.
+ * Implements abstract convolution filter gradient matrix operation.
  *
  */
 public abstract class AbstractConvolutionFilterGradientMatrixOperation extends AbstractMatrixOperation {

@@ -11,7 +11,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines max pooling gradient matrix operation.
+ * Implements max pooling gradient matrix operation.
  *
  */
 public class MaxPoolGradientMatrixOperation extends AbstractMatrixOperation {

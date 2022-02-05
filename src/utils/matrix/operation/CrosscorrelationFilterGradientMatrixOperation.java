@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines crosscorrelation filter gradient matrix operation.
+ * Implements crosscorrelation filter gradient matrix operation.
  *
  */
 public class CrosscorrelationFilterGradientMatrixOperation extends AbstractConvolutionFilterGradientMatrixOperation {

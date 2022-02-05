@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines average pooling matrix operation.
+ * Implements average pooling matrix operation.
  *
  */
 public class AveragePoolMatrixOperation extends AbstractMatrixOperation {

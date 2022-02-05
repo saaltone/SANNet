@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines minimum matrix operation.
+ * Implements minimum matrix operation.
  *
  */
 public class MinMatrixOperation extends AbstractMatrixOperation {

@@ -6,7 +6,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines cyclic pooling matrix operation.<br>
+ * Implements cyclic pooling matrix operation.<br>
  * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
  *
  */
@@ -61,7 +61,7 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
     private transient int currentColumn = 0;
 
     /**
-     * Constructor for random pooling matrix operation.
+     * Constructor for cyclic pooling matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.

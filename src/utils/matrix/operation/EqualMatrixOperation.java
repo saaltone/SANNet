@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines equal matrix operation.
+ * Implements equal matrix operation.
  *
  */
 public class EqualMatrixOperation extends AbstractMatrixOperation {

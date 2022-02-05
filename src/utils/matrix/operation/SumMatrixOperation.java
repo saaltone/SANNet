@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines sum matrix operation.
+ * Implements sum matrix operation.
  *
  */
 public class SumMatrixOperation extends AbstractMatrixOperation {

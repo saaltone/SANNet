@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines maximum matrix operation.
+ * Implements maximum matrix operation.
  *
  */
 public class MaxMatrixOperation extends AbstractMatrixOperation {

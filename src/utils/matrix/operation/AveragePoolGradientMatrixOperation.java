@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines average pooling gradient matrix operation.
+ * Implements average pooling gradient matrix operation.
  *
  */
 public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation {

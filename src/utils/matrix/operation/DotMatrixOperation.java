@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.Matrix;
 
 /**
- * Defines dot operation.
+ * Implements dot operation.
  *
  */
 public class DotMatrixOperation extends AbstractMatrixOperation {

@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines interface for matrix operation.
+ * Implements interface for matrix operation.
  *
  */
 public interface MatrixOperation {

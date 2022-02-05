@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines normalize matrix operation.
+ * Implements normalize matrix operation.
  *
  */
 public class NormalizeMatrixOperation extends AbstractMatrixOperation {

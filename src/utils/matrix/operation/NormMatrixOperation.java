@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines norm matrix operation.
+ * Implements norm matrix operation.
  *
  */
 public class NormMatrixOperation extends AbstractMatrixOperation {

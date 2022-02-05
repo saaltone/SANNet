@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines convolution matrix operation.
+ * Implements convolution matrix operation.
  *
  */
 public class ConvolutionMatrixOperation extends AbstractConvolutionMatrixOperation {

@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * Defines random pooling matrix operation.<br>
+ * Implements random pooling matrix operation.<br>
  * Selects each input of pool for propagation randomly with uniform probability.<br>
  *
  */

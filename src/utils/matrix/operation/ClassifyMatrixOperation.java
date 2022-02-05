@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines matrix multi-label classification operation.
+ * Implements matrix multi-label classification operation.
  *
  */
 public class ClassifyMatrixOperation extends AbstractMatrixOperation {
@@ -27,13 +27,13 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
     private Matrix result;
 
     /**
-     * Defines threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
+     * Implements threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
      *
      */
     private double multiLabelThreshold = 0.5;
 
     /**
-     * Constructor for matrix unary operation.
+     * Constructor for classify matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
@@ -43,7 +43,7 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Constructor for matrix unary operation.
+     * Constructor for classify matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.

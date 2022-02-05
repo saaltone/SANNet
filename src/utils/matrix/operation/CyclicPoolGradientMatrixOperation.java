@@ -6,7 +6,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Defines cyclic pooling gradient matrix operation.<br>
+ * Implements cyclic pooling gradient matrix operation.<br>
  * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
  *
  */

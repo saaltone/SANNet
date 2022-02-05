@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines abstract convolution matrix operation.
+ * Implements abstract convolution matrix operation.
  *
  */
 public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixOperation {

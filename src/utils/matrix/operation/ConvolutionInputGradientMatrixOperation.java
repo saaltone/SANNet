@@ -8,7 +8,7 @@ package utils.matrix.operation;
 import utils.matrix.MatrixException;
 
 /**
- * Defines convolution input gradient matrix operation.
+ * Implements convolution input gradient matrix operation.
  *
  */
 public class ConvolutionInputGradientMatrixOperation extends AbstractConvolutionInputGradientMatrixOperation {

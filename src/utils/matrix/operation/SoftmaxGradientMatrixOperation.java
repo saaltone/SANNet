@@ -9,7 +9,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Defines Softmax gradient matrix operation.
+ * Implements Softmax gradient matrix operation.
  *
  */
 public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
