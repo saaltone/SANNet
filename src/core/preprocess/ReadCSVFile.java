@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Scanner;
 
 /**
- * Defines class for reading CVS file.<br>
+ * Implements functionality for reading CVS file.<br>
  *
  */
 public class ReadCSVFile {

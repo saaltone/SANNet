@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class for sample data normalization.<br>
+ * Implements functionality for sample data normalization.<br>
  * Normalized either by using min max normalization or z- score normalization.<br>
  *
  */

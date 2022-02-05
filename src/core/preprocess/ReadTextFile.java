@@ -12,7 +12,7 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * Defines class for reading text file.<br>
+ * Implements functionality for reading text files.<br>
  * Reads text file and maps each character as separate input or output columns (one-hot encodes characters).<br>
  * Number of characters in input and output can be specified.<br>
  *

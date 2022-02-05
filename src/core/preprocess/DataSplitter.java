@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 /**
- * Class used to split sample set into training and test sample sets by given share.<br>
+ * Implements functionality to split sample set into training and test sample sets by given share.<br>
  * Does split directly in initial sample order or first by randomizing set.<br>
  *
  */

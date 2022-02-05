@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Class that reads, encodes, plays and writes out MIDI file.<br>
+ * Implements functionality reading, encoding, playing and writing out MIDI file.<br>
  *
  */
 public class ReadMIDI {

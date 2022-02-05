@@ -13,7 +13,7 @@ import utils.matrix.SMatrix;
 import java.util.HashMap;
 
 /**
- * Class for one hot encoding data.<br>
+ * Implements functionality for one hot encoding data.<br>
  *
  */
 public class OneHotEncoder {
