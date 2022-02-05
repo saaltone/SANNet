@@ -10,7 +10,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 /**
- * Defines loss function class for neural network.<br>
+ * Implements loss function for neural network used at output layer.<br>
  * Provides calculation for both function and it's derivative.<br>
  * <br>
  * Following functions are supported:
