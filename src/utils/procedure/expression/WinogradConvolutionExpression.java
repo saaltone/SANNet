@@ -16,7 +16,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines expression for Winograd convolution operation.<br>
+ * Implements expression for Winograd convolution operation.<br>
  *
  */
 public class WinogradConvolutionExpression extends AbstractBinaryExpression implements Serializable {

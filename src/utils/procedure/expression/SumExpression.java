@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines expression for sum.<br>
+ * Implements expression for sum.<br>
  *
  */
 public class SumExpression extends AbstractUnaryExpression implements Serializable {
@@ -66,7 +66,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).sumAsMatrix());
     }
 

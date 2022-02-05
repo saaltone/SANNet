@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that defines expression for standard deviation operation.<br>
+ * Implements expression for standard deviation operation.<br>
  *
  */
 public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {
@@ -101,7 +101,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         Matrix mean = argument1.getMatrix(sampleIndex).meanAsMatrix();
         if (means == null) means = new HashMap<>();
         means.put(sampleIndex, mean);

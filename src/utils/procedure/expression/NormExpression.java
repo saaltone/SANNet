@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines norm expression.<br>
+ * Implements norm expression.<br>
  *
  */
 public class NormExpression extends AbstractUnaryExpression implements Serializable {
@@ -84,7 +84,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
     }
 

@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that defines expression for max pooling operation.<br>
+ * Implements expression for max pooling operation.<br>
  *
  */
 public class MaxPoolExpression extends AbstractUnaryExpression implements Serializable {

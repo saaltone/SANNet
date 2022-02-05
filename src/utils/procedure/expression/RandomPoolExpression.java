@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that defines expression for random pooling operation.<br>
+ * Implements expression for random pooling operation.<br>
  *
  */
 public class RandomPoolExpression extends AbstractUnaryExpression implements Serializable {

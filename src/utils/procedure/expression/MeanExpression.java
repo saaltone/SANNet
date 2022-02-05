@@ -12,7 +12,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines expression for mean function.<br>
+ * Implements expression for mean function.<br>
  *
  */
 public class MeanExpression extends AbstractUnaryExpression implements Serializable {
@@ -65,7 +65,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Arguments for operation not defined");
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
         result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).meanAsMatrix());
     }
 

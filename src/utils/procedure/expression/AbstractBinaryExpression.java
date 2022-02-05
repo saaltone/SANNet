@@ -9,7 +9,7 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 /**
- * Class that defines AbstractBinaryExpression.<br>
+ * Implements abstract binary expression.<br>
  *
  */
 public abstract class AbstractBinaryExpression extends AbstractExpression {
@@ -21,7 +21,7 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     protected final Node argument2;
 
     /**
-     * Constructor for AbstractBinaryExpression.
+     * Constructor for abstract binary expression.
      *
      * @param name name of expression.
      * @param operationSignature operation signature

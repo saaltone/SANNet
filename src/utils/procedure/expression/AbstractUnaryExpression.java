@@ -9,13 +9,13 @@ import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
 /**
- * Class that defines unary expression.<br>
+ * Implements abstract unary expression.<br>
  *
  */
 public abstract class AbstractUnaryExpression extends AbstractExpression {
 
     /**
-     * Constructor for unary expression.
+     * Constructor for abstract unary expression.
      *
      * @param name name of expression.
      * @param operationSignature operation signature

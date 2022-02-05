@@ -13,7 +13,7 @@ import utils.procedure.node.Node;
 import java.io.Serializable;
 
 /**
- * Class that defines expression for average pooling operation.<br>
+ * Implements expression for average pooling operation.<br>
  *
  */
 public class AveragePoolExpression extends AbstractUnaryExpression implements Serializable {
