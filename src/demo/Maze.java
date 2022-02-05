@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Class that defines maze where agent takes journeys trying to find way out of maze.<br>
+ * Implements maze where agent takes journeys trying to find way out of maze.<br>
  *
  * Reference: https://rosettacode.org/wiki/Maze_generation<br>
  *
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Maze implements AgentFunctionEstimator, Environment, ActionListener {
 
     /**
-     * Class that defines neighbor i.e. connection between two cells.
+     * Implements neighbor i.e. connection between two cells.
      *
      */
     private class Neighbor {
@@ -116,7 +116,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     }
 
     /**
-     * Class that defines cell of maze.
+     * Implements cell of maze.
      *
      */
     private class Cell {
@@ -306,7 +306,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     }
 
     /**
-     * Class that defines maze agent.
+     * Implements maze agent.
      *
      * @param x x position of maze agent.
      * @param y y position of maze agent.
@@ -768,7 +768,6 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        boolean onlineMemory = true;
         boolean singleFunctionEstimator = false;
         int policyType = 1;
         ExecutablePolicyType executablePolicyType = null;
@@ -789,6 +788,14 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             }
         }
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.PPO;
+        boolean onlineMemory = switch (agentAlgorithmType) {
+            case DDQN, SACDiscrete -> false;
+            default -> true;
+        };
+        boolean applyDueling = switch (agentAlgorithmType) {
+            case DDQN -> true;
+            default -> false;
+        };
         String algorithmParams = switch (agentAlgorithmType) {
             case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
@@ -800,7 +807,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         if (!policyTypeParams.isEmpty() && algorithmParams.isEmpty()) params = policyTypeParams;
         if (!policyTypeParams.isEmpty() && !algorithmParams.isEmpty()) params = policyTypeParams + ", " + algorithmParams;
 
-        Agent agent = AgentFactory.createAgent(this, agentAlgorithmType, this, stateSize, 4, onlineMemory, singleFunctionEstimator, executablePolicyType, params);
+        Agent agent = AgentFactory.createAgent(this, agentAlgorithmType, this, stateSize, 4, onlineMemory, singleFunctionEstimator, applyDueling, executablePolicyType, params);
         agent.start();
         return agent;
     }
@@ -810,12 +817,13 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      *
      * @param inputSize input size of neural network (number of states)
      * @param outputSize output size of neural network (number of actions and their values).
+     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
@@ -825,6 +833,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
