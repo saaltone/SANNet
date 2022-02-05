@@ -418,15 +418,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Resets outputs of neural network layer.
-     *
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     */
-    public void resetLayerOutputs() throws MatrixException {
-        layerOutputs = new Sequence(getLayerDepth());
-    }
-
-    /**
      * Returns neural network layer gradients.
      *
      * @return neural network layer gradients.
@@ -451,15 +442,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public Sequence getNextLayerGradients() {
         return getNextLayer() != null ? getNextLayer().getLayerGradients() : getLayerGradients();
-    }
-
-    /**
-     * Resets gradients of neural network layer.
-     *
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     */
-    public void resetLayerGradients() throws MatrixException {
-        layerGradients = new Sequence(getLayerDepth());
     }
 
     /**
@@ -502,8 +484,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Executes training step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs training inputs for layer.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public void train(Sequence inputs) {
+    public void train(Sequence inputs) throws MatrixException {
         if (inputs.isEmpty()) return;
         layerOutputs = new Sequence(inputs);
         nextState(ExecutionState.TRAIN);
@@ -524,8 +507,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      * @param inputs predict inputs for layer.
      * @return output of next layer or this layer if next layer does not exist.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public Sequence predict(Sequence inputs) {
+    public Sequence predict(Sequence inputs) throws MatrixException {
         if (inputs.isEmpty()) return null;
         layerOutputs = new Sequence(inputs);
         nextState(ExecutionState.PREDICT);

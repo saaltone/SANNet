@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 
 /**
- * Defines class for input layer of neural network.<br>
+ * Implements input layer of neural network.<br>
  *
  */
 public class InputLayer extends AbstractPlainLayer {

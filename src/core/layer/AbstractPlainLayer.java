@@ -14,13 +14,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Implements abstract plain layer. Provides common functions for input and output layers.
+ * Implements abstract plain layer.<br>
+ * Provides common functions for input and output layers.<br>
  *
  */
 public abstract class AbstractPlainLayer extends AbstractLayer {
 
     /**
-     * Constructor for AbstractPlainLayer.
+     * Constructor for abstract plain layer.
      *
      * @param layerIndex index of layer.
      * @param params parameters for input layer.

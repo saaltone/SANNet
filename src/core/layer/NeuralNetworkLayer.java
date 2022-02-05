@@ -161,8 +161,9 @@ public interface NeuralNetworkLayer {
      * Executes training step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs training inputs for layer.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    void train(Sequence inputs);
+    void train(Sequence inputs) throws MatrixException;
 
     /**
      * Executes training step for neural network layer and propagates procedure to next layer.<br>
@@ -176,8 +177,9 @@ public interface NeuralNetworkLayer {
      *
      * @param inputs predict inputs for layer.
      * @return output of next layer or this layer if next layer does not exist.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    Sequence predict(Sequence inputs);
+    Sequence predict(Sequence inputs) throws MatrixException;
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>

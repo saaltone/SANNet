@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Abstract class that implements execution layer for actual neural network layers (feed forward layer, recurrent layer etc.)<br>
+ * Implements abstract execution layer supporting actual neural network layers (feed forward, recurrent, convolutional layers etc.)<br>
  * Provides supportive functions for actual neural network layers.<br>
- * Support automatic gradient i.e. backward gradient calculation for layers supporting it.<br>
+ * Supports automatic gradient i.e. backward gradient calculation for layers needing it.<br>
  *
  */
 public abstract class AbstractExecutionLayer extends AbstractLayer implements ForwardProcedure {
@@ -72,7 +72,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Constructor for abstract execution layer.
      *
-     * @param layerIndex layer Index.
+     * @param layerIndex layer index
      * @param initialization initialization function.
      * @param params parameters for neural network layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -156,7 +156,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     protected void resetLayer() throws MatrixException {
         if (procedure != null) procedure.reset();
-        resetLayerOutputs();
     }
 
     /**
@@ -177,7 +176,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         resetLayer();
-        if (procedure != null) procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
+        setLayerOutputs(procedure.calculateExpression(getPreviousLayerOutputs()));
     }
 
     /**
@@ -188,8 +187,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        resetLayerGradients();
-        if (procedure != null) procedure.calculateGradient(getNextLayerGradients(), getLayerGradients(), getTruncateSteps());
+        if (procedure != null) setLayerGradients(procedure.calculateGradient(getNextLayerGradients(), getTruncateSteps()));
     }
 
     /**
@@ -274,7 +272,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        HashMap<Matrix, Matrix> weightGradients = procedure.getGradients();
+        HashMap<Matrix, Matrix> weightGradients = getLayerWeightGradients();
         for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
     }
 
