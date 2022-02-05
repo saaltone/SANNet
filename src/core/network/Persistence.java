@@ -10,7 +10,7 @@ import core.network.NeuralNetwork;
 import java.io.*;
 
 /**
- * Defines persistence class for neural network.<br>
+ * Implements persistence functionality for neural network.<br>
  * Persistence is used to store (serialize) neural network into file and restore (deserialize) neural network from file.<br>
  *
  */
