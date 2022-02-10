@@ -12,6 +12,7 @@ import utils.sampling.Sequence;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -145,30 +146,6 @@ public class RegressionMetric implements Metric, Serializable {
     }
 
     /**
-     * Updates regression error for multiple predicted / actual sample pairs.
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void update(HashMap<Integer, Matrix> predicted, HashMap<Integer, Matrix> actual) throws MatrixException, DynamicParamException {
-        for (Integer index : predicted.keySet()) update(predicted.get(index), actual.get(index));
-    }
-
-    /**
-     * Updates regression error for multiple predicted / actual sample pairs.
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void update(MMatrix predicted, MMatrix actual) throws MatrixException, DynamicParamException {
-        for (Integer index : predicted.keySet()) update(predicted.get(index), actual.get(index));
-    }
-
-    /**
      * Updates regression accuracy for multiple predicted / actual sample pairs.
      *
      * @param predicted predicted samples.
@@ -177,11 +154,14 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
-        for (Integer sampleIndex : predicted.keySet()) {
-            MMatrix predictedSample = predicted.get(sampleIndex);
+        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix predictedSample = entry.getValue();
             MMatrix actualSample = actual.get(sampleIndex);
-            for (Integer matrixIndex : predicted.entryKeySet()) {
-                update(predictedSample.get(matrixIndex), actualSample.get(matrixIndex));
+            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
+                int matrixIndex = entry1.getKey();
+                Matrix predictedSampleMatrix = entry1.getValue();
+                update(predictedSampleMatrix, actualSample.get(matrixIndex));
             }
         }
     }
@@ -326,8 +306,9 @@ public class RegressionMetric implements Metric, Serializable {
         Matrix meanActualValue = getMeanActualValue();
         Matrix SSRes = null;
         Matrix SSTot = null;
-        for (Integer index : actuals.keySet()) {
-            Matrix actual = actuals.get(index);
+        for (Map.Entry<Integer, Matrix> entry : actuals.entrySet()) {
+            int index = entry.getKey();
+            Matrix actual = entry.getValue();
             Matrix prediction = predictions.get(index);
             Matrix SSResEntry = actual.subtract(prediction).power(2);
             if (SSRes == null) SSRes = SSResEntry;

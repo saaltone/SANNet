@@ -15,6 +15,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Implements functionality for calculation of classification error.
@@ -275,14 +276,8 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     private void incrementConfusion(int predictedRow, int actualRow) {
         if (confusion == null) confusion = new HashMap<>();
-        HashMap<Integer, Integer> actuals;
-        if (confusion.containsKey(predictedRow)) actuals = confusion.get(predictedRow);
-        else {
-            actuals = new HashMap<>();
-            confusion.put(predictedRow, actuals);
-        }
-        if (!actuals.containsKey(actualRow)) actuals.put(actualRow, 1);
-        else actuals.put(actualRow, actuals.get(actualRow) + 1);
+        HashMap<Integer, Integer> actuals = confusion.computeIfAbsent(predictedRow, k -> new HashMap<>());
+        actuals.put(actualRow, actuals.getOrDefault(actualRow, 0) + 1);
     }
 
     /**
@@ -291,8 +286,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param row row
      */
     private void incrementTP(int row) {
-        if (!TP.containsKey(row)) TP.put(row, 1);
-        else TP.put(row, TP.get(row) + 1);
+        TP.put(row, TP.getOrDefault(row, 0) + 1);
         TPTotal++;
     }
 
@@ -302,8 +296,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param row row
      */
     private void incrementTN(int row) {
-        if (!TN.containsKey(row)) TN.put(row, 1);
-        else TN.put(row, TN.get(row) + 1);
+        TN.put(row, TN.getOrDefault(row, 0) + 1);
         TNTotal++;
     }
 
@@ -313,8 +306,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param row row
      */
     private void incrementFN(int row) {
-        if (!FN.containsKey(row)) FN.put(row, 1);
-        else FN.put(row, FN.get(row) + 1);
+        FN.put(row, FN.getOrDefault(row, 0) + 1);
         FNTotal++;
     }
 
@@ -324,8 +316,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param row row
      */
     private void incrementFP(int row) {
-        if (!FP.containsKey(row)) FP.put(row, 1);
-        else FP.put(row, FP.get(row) + 1);
+        FP.put(row, FP.getOrDefault(row, 0) + 1);
         FPTotal++;
     }
 
@@ -336,11 +327,14 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param actual actual (true) samples.
      */
     public void update(Sequence predicted, Sequence actual) {
-        for (Integer sampleIndex : predicted.keySet()) {
-            MMatrix predictedSample = predicted.get(sampleIndex);
+        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix predictedSample = entry.getValue();
             MMatrix actualSample = actual.get(sampleIndex);
-            for (Integer depthIndex : predictedSample.keySet()) {
-                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
+            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
+                int depthIndex = entry1.getKey();
+                Matrix predictedSampleEntry = entry1.getValue();
+                update(predictedSampleEntry, actualSample.get(depthIndex));
             }
         }
     }
@@ -506,12 +500,15 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     private Sequence getClassification(Sequence predicted) throws MatrixException {
         Sequence classified = new Sequence();
-        for (Integer sampleIndex : predicted.keySet()) {
-            MMatrix predictedSample = predicted.get(sampleIndex);
+        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix predictedSample = entry.getValue();
             MMatrix classifiedSample = new MMatrix(predicted.get(sampleIndex).getDepth());
             classified.put(sampleIndex, classifiedSample);
-            for (Integer depthIndex : predictedSample.keySet()) {
-                classifiedSample.put(depthIndex, getClassification(predictedSample.get(depthIndex)));
+            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
+                int depthIndex = entry1.getKey();
+                Matrix predictedSampleEntry = entry1.getValue();
+                classifiedSample.put(depthIndex, getClassification(predictedSampleEntry));
             }
         }
         return classified;
