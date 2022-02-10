@@ -19,6 +19,7 @@ import utils.sampling.BasicSampler;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements neural network based function estimator.<br>
@@ -232,6 +233,16 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Reinitializes neural network based function estimator.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void reinitialize() throws MatrixException, DynamicParamException {
+        neuralNetwork.reinitialize();
+    }
+
+    /**
      * Predicts state values corresponding to a state.
      *
      * @param stateTransition state.
@@ -240,9 +251,11 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
     public Matrix predict(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        if (stateTransitionCache.containsKey(stateTransition)) return stateTransitionCache.get(stateTransition);
-        Matrix values = neuralNetwork.predict(new MMatrix(stateTransition.environmentState.state())).get(0);
-        stateTransitionCache.put(stateTransition, values);
+        Matrix values = stateTransitionCache.get(stateTransition);
+        if (values == null)  {
+            values = neuralNetwork.predict(new MMatrix(stateTransition.environmentState.state())).get(0);
+            stateTransitionCache.put(stateTransition, values);
+        }
         return values;
     }
 
@@ -268,9 +281,11 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         HashMap<Integer, MMatrix> stateValues = new HashMap<>();
         HashMap<Integer, Double> importanceSamplingWeights = new HashMap<>();
         int index = 0;
-        for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
+        for (Map.Entry<StateTransition, Matrix> entry: stateTransitionValueMap.entrySet()) {
+            StateTransition stateTransition = entry.getKey();
+            Matrix matrix = entry.getValue();
             states.put(index, new MMatrix(stateTransition.environmentState.state()));
-            stateValues.put(index, new MMatrix(stateTransitionValueMap.get(stateTransition)));
+            stateValues.put(index, new MMatrix(matrix));
             if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index, stateTransition.importanceSamplingWeight);
             index++;
         }

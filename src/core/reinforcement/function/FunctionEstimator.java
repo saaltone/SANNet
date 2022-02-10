@@ -110,6 +110,14 @@ public interface FunctionEstimator extends Configurable {
     void reset();
 
     /**
+     * Reinitializes function estimator.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    void reinitialize() throws MatrixException, DynamicParamException;
+
+    /**
      * Samples memory of function estimator.
      *
      */

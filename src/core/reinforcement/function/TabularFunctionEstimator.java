@@ -17,6 +17,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements tabular based state action function estimator.<br>
@@ -194,8 +195,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Matrix getStateValue(Matrix state) throws MatrixException {
-        for (Matrix existingState : stateValues.keySet()) {
-            if (state.equals(existingState)) return stateValues.get(existingState);
+        for (Map.Entry<Matrix, Matrix> entry : stateValues.entrySet()) {
+            Matrix currentState = entry.getKey();
+            Matrix stateValue = entry.getValue();
+            if (state.equals(currentState)) return stateValue;
         }
         Matrix stateValue = new DMatrix(numberOfActions, 1, Initialization.RANDOM);
         stateValues.put(state.copy(), stateValue);
@@ -219,6 +222,14 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void reset() {
         super.reset();
         stateTransitionValueMap = new HashMap<>();
+    }
+
+    /**
+     * Reinitializes tabular function estimator.
+     *
+     */
+    public void reinitialize() {
+        this.reset();
     }
 
     /**
@@ -251,14 +262,19 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void update() throws MatrixException, AgentException, DynamicParamException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
-        for (StateTransition stateTransition : stateTransitionValueMap.keySet()) {
+        for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
+            StateTransition stateTransition = entry.getKey();
+            Matrix stateValueEntry = entry.getValue();
             Matrix stateValue = predict(stateTransition);
-            Matrix error = stateValue.subtract(stateTransitionValueMap.get(stateTransition));
-            if (!stateErrors.containsKey(stateValue)) stateErrors.put(stateValue, error);
-            else stateErrors.get(stateValue).add(error, stateErrors.get(stateValue));
+            Matrix error = stateValue.subtract(stateValueEntry);
+            Matrix stateError = stateErrors.get(stateValue);
+            if (stateError == null) stateErrors.put(stateValue, error);
+            else stateError.add(error, stateError);
         }
-        for (Matrix stateValue : stateErrors.keySet()) {
-            optimizer.optimize(stateValue, stateErrors.get(stateValue).divide(stateTransitionValueMap.size()));
+        for (Map.Entry<Matrix, Matrix> entry : stateErrors.entrySet()) {
+            Matrix stateValue = entry.getKey();
+            Matrix stateError = entry.getValue();
+            optimizer.optimize(stateValue, stateError.divide(stateTransitionValueMap.size()));
         }
 
         stateTransitionValueMap = new HashMap<>();

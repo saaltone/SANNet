@@ -240,6 +240,14 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
+     * Reinitializes FunctionEstimator.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void reinitialize() throws MatrixException, DynamicParamException {
+    }
+
+    /**
      * Samples memory of abstract function estimator.
      *
      */
