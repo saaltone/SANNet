@@ -64,9 +64,9 @@ public class Music {
             Sequence sequence = readMIDI.getSequence(data.get(1), data.get(3), data.get(5), metadata.resolution, false, encodeNoteOffs, metadata);
             readMIDI.play(sequence, 10, true);
 
-            String persistenceNameKey = "<PATH>/MusicNNKey";
-            String persistenceNameVelocity = "<PATH>/MusicNNVelocity";
-            String persistenceNameTick = "<PATH>/MusicNNTick";
+            String persistenceNameKey = path + "MusicNNKey";
+            String persistenceNameVelocity = path + "MusicNNVelocity";
+            String persistenceNameTick = path + "MusicNNTick";
 
             boolean restore = false;
             NeuralNetwork neuralNetworkKey;
