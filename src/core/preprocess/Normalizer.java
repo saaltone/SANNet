@@ -145,19 +145,19 @@ public class Normalizer {
             if (adjust) {
                 minimumValues.put(row, Double.POSITIVE_INFINITY);
                 maximumValues.put(row, Double.NEGATIVE_INFINITY);
-                for (Integer entry : data.keySet()) {
-                    for (Integer depth : data.get(entry).keySet()) {
-                        minimumValues.put(row, Math.min(minimumValues.get(row), data.get(entry).get(depth).getValue(row, 0)));
-                        maximumValues.put(row, Math.max(maximumValues.get(row), data.get(entry).get(depth).getValue(row, 0)));
+                for (MMatrix mMatrix : data.values()) {
+                    for (Matrix matrix : mMatrix.values()) {
+                        minimumValues.put(row, Math.min(minimumValues.get(row), matrix.getValue(row, 0)));
+                        maximumValues.put(row, Math.max(maximumValues.get(row), matrix.getValue(row, 0)));
                     }
                 }
                 adjustedMinMax = true;
             }
             double delta = maximumValues.get(row) - minimumValues.get(row) != 0 ? maximumValues.get(row) - minimumValues.get(row) : 1;
-            for (Integer entry : data.keySet()) {
-                for (Integer depth : data.get(entry).keySet()) {
-                    double newValue = (data.get(entry).get(depth).getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
-                    data.get(entry).get(depth).setValue(row, 0, newValue);
+            for (MMatrix mMatrix : data.values()) {
+                for (Matrix matrix : mMatrix.values()) {
+                    double newValue = (matrix.getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
+                    matrix.setValue(row, 0, newValue);
                 }
             }
         }
@@ -223,22 +223,22 @@ public class Normalizer {
             if (adjust) {
                 minimumValues.put(row, Double.POSITIVE_INFINITY);
                 maximumValues.put(row, Double.NEGATIVE_INFINITY);
-                for (Integer entry : data.keySet()) {
-                    for (Integer index : data.get(entry).keySet()) {
-                        for (Integer depth : data.get(entry).get(index).keySet()) {
-                            minimumValues.put(row, Math.min(minimumValues.get(row), data.get(entry).get(index).get(depth).getValue(row, 0)));
-                            maximumValues.put(row, Math.max(maximumValues.get(row), data.get(entry).get(index).get(depth).getValue(row, 0)));
+                for (Sequence sequence : data.values()) {
+                    for (MMatrix mMatrix : sequence.values()) {
+                        for (Matrix matrix : mMatrix.values()) {
+                            minimumValues.put(row, Math.min(minimumValues.get(row), matrix.getValue(row, 0)));
+                            maximumValues.put(row, Math.max(maximumValues.get(row), matrix.getValue(row, 0)));
                         }
                     }
                 }
                 adjustedMinMax = true;
             }
             double delta = maximumValues.get(row) - minimumValues.get(row) != 0 ? maximumValues.get(row) - minimumValues.get(row) : 1;
-            for (Integer entry : data.keySet()) {
-                for (Integer index : data.get(entry).keySet()) {
-                    for (Integer depth : data.get(entry).get(index).keySet()) {
-                        double newValue = (data.get(entry).get(index).get(depth).getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
-                        data.get(entry).get(index).get(depth).setValue(row, 0, newValue);
+            for (Sequence sequence : data.values()) {
+                for (MMatrix mMatrix : sequence.values()) {
+                    for (Matrix matrix : mMatrix.values()) {
+                        double newValue = (matrix.getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
+                        matrix.setValue(row, 0, newValue);
                     }
                 }
             }
@@ -338,17 +338,17 @@ public class Normalizer {
         for (Integer row : zScoreRows) {
             if (adjust) {
                 means.put(row, (double)0);
-                for (Integer entry : data.keySet()) {
-                    for (Integer depth : data.get(entry).keySet()) {
-                        means.put(row, means.get(row) + data.get(entry).get(depth).getValue(row, 0));
+                for (MMatrix mMatrix : data.values()) {
+                    for (Matrix matrix : mMatrix.values()) {
+                        means.put(row, means.get(row) + matrix.getValue(row, 0));
                     }
                 }
                 means.put(row, means.get(row) / (double)data.size());
 
                 standardDeviations.put(row, (double)0);
-                for (Integer entry : data.keySet()) {
-                    for (Integer depth : data.get(entry).keySet()) {
-                        standardDeviations.put(row, standardDeviations.get(row) + Math.pow(data.get(entry).get(depth).getValue(row, 0) - means.get(row), 2));
+                for (MMatrix mMatrix : data.values()) {
+                    for (Matrix matrix : mMatrix.values()) {
+                        standardDeviations.put(row, standardDeviations.get(row) + Math.pow(matrix.getValue(row, 0) - means.get(row), 2));
                     }
                 }
                 standardDeviations.put(row, standardDeviations.get(row) > 0 ? Math.sqrt(standardDeviations.get(row) / ((double)data.size() - 1)) : 0);
@@ -356,10 +356,10 @@ public class Normalizer {
                 adjustedZScore = true;
             }
             if (standardDeviations.get(row) != 0) {
-                for (Integer entry : data.keySet()) {
-                    for (Integer depth : data.get(entry).keySet()) {
-                        double newValue = (data.get(entry).get(depth).getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
-                        data.get(entry).get(depth).setValue(row, 0, newValue);
+                for (MMatrix mMatrix : data.values()) {
+                    for (Matrix matrix : mMatrix.values()) {
+                        double newValue = (matrix.getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
+                        matrix.setValue(row, 0, newValue);
                     }
                 }
             }
@@ -411,20 +411,20 @@ public class Normalizer {
         for (Integer row : zScoreRows) {
             if (adjust) {
                 means.put(row, (double)0);
-                for (Integer entry : data.keySet()) {
-                    for (Integer index : data.get(entry).keySet()) {
-                        for (Integer depth : data.get(entry).get(index).keySet()) {
-                            means.put(row, means.get(row) + data.get(entry).get(index).get(depth).getValue(row, 0));
+                for (Sequence sequence : data.values()) {
+                    for (MMatrix mMatrix : sequence.values()) {
+                        for (Matrix matrix : mMatrix.values()) {
+                            means.put(row, means.get(row) + matrix.getValue(row, 0));
                         }
                     }
                 }
                 means.put(row, means.get(row) / (double)data.size());
 
                 standardDeviations.put(row, (double)0);
-                for (Integer entry : data.keySet()) {
-                    for (Integer index : data.get(entry).keySet()) {
-                        for (Integer depth : data.get(entry).get(index).keySet()) {
-                            standardDeviations.put(row, standardDeviations.get(row) + Math.pow(data.get(entry).get(index).get(depth).getValue(row, 0) - means.get(row), 2));
+                for (Sequence sequence : data.values()) {
+                    for (MMatrix mMatrix : sequence.values()) {
+                        for (Matrix matrix : mMatrix.values()) {
+                            standardDeviations.put(row, standardDeviations.get(row) + Math.pow(matrix.getValue(row, 0) - means.get(row), 2));
                         }
                     }
                 }
@@ -433,11 +433,11 @@ public class Normalizer {
                 adjustedZScore = true;
             }
             if (standardDeviations.get(row) != 0) {
-                for (Integer entry : data.keySet()) {
-                    for (Integer index : data.get(entry).keySet()) {
-                        for (Integer depth : data.get(entry).get(index).keySet()) {
-                            double newValue = (data.get(entry).get(index).get(depth).getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
-                            data.get(entry).get(index).get(depth).setValue(row, 0, newValue);
+                for (Sequence sequence : data.values()) {
+                    for (MMatrix mMatrix : sequence.values()) {
+                        for (Matrix matrix : mMatrix.values()) {
+                            double newValue = (matrix.getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
+                            matrix.setValue(row, 0, newValue);
                         }
                     }
                 }

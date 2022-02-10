@@ -11,6 +11,7 @@ import utils.matrix.MatrixException;
 import utils.matrix.SMatrix;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements functionality for one hot encoding data.<br>
@@ -57,13 +58,15 @@ public class OneHotEncoder {
             HashMap<Double, Integer> rowMapping;
             if (mapping.containsKey(row)) rowMapping = mapping.get(row);
             else mapping.put(row, rowMapping = new HashMap<>());
-            for (Integer entry : input.keySet()) {
-                MMatrix sample = input.get(entry);
+            for (Map.Entry<Integer, MMatrix> entry : input.entrySet()) {
+                int index = entry.getKey();
+                MMatrix sample = entry.getValue();
                 HashMap<Integer, HashMap<Integer, Integer>> sampleMapping;
-                if (itemsMap.containsKey(entry)) sampleMapping = itemsMap.get(entry);
-                else itemsMap.put(entry, sampleMapping = new HashMap<>());
-                for (Integer depth : sample.keySet()) {
-                    Matrix item = sample.get(depth);
+                if (itemsMap.containsKey(index)) sampleMapping = itemsMap.get(index);
+                else itemsMap.put(index, sampleMapping = new HashMap<>());
+                for (Map.Entry<Integer, Matrix> entry1 : sample.entrySet()) {
+                    int depth = entry1.getKey();
+                    Matrix item = entry1.getValue();
                     HashMap<Integer, Integer> entryMapping;
                     if (sampleMapping.containsKey(depth)) entryMapping = sampleMapping.get(depth);
                     else sampleMapping.put(depth, entryMapping = new HashMap<>());
@@ -74,15 +77,19 @@ public class OneHotEncoder {
             }
         }
         HashMap<Integer, MMatrix> output = new HashMap<>();
-        for (Integer entry : itemsMap.keySet()) {
-            MMatrix sample = new MMatrix(itemsMap.get(entry).size());
-            for (Integer depth : itemsMap.get(entry).keySet()) {
+        for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, Integer>>> entry : itemsMap.entrySet()) {
+            int index = entry.getKey();
+            HashMap<Integer, HashMap<Integer, Integer>> itemEntries = entry.getValue();
+            MMatrix sample = new MMatrix(itemEntries.size());
+            for (Map.Entry<Integer, HashMap<Integer, Integer>> entry1 : itemEntries.entrySet()) {
+                int depth = entry1.getKey();
+                HashMap<Integer, Integer> itemEntry = entry1.getValue();
                 Matrix item = new SMatrix(prevMaxKey, 1);
                 sample.put(depth, item);
-                for (Integer row : itemsMap.get(entry).get(depth).values()) {
+                for (Integer row : itemEntry.values()) {
                     item.setValue(row, 0, 1);
                 }
-                output.put(entry, new MMatrix(item));
+                output.put(index, new MMatrix(item));
             }
         }
         return output;

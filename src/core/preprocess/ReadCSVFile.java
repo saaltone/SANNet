@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -86,9 +87,11 @@ public class ReadCSVFile {
 
     private static void addItem(String[] items, HashMap<Integer, Integer> columnMap, int row, boolean as2D, int rows, int columns, boolean asSparseMatrix, HashMap<Integer, MMatrix> data) {
         Matrix inItem = !asSparseMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
-        for (Integer pos : columnMap.keySet()) {
+        for (Map.Entry<Integer, Integer> entry : columnMap.entrySet()) {
+            int pos = entry.getKey();
+            int value = entry.getValue();
             if (items[pos].compareTo("0") != 0) {
-                inItem.setValue(getRow(as2D, columnMap.get(pos), columns), getCol(as2D, columnMap.get(pos), columns), convertToDouble(items[pos]));
+                inItem.setValue(getRow(as2D, value, columns), getCol(as2D, value, columns), convertToDouble(items[pos]));
             }
         }
         data.put(row, new MMatrix(inItem));

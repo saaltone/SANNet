@@ -394,9 +394,10 @@ public class ReadMIDI {
         ArrayList<FrequencyValue> valueFrequencies = new ArrayList<>();
 
         for (Integer data : inputTickData) {
-            if (frequencyValueHashMap.containsKey(data)) frequencyValueHashMap.get(data).increment();
+            FrequencyValue frequencyValue = frequencyValueHashMap.get(data);
+            if (frequencyValue != null) frequencyValue.increment();
             else {
-                FrequencyValue frequencyValue = new FrequencyValue(data);
+                frequencyValue = new FrequencyValue(data);
                 frequencyValueHashMap.put(data, frequencyValue);
                 frequencyValues.add(frequencyValue);
                 valueFrequencies.add(frequencyValue);
@@ -477,8 +478,10 @@ public class ReadMIDI {
         Track track = sequence.createTrack();
         long currentTick = 0;
         boolean firstEntry = true;
-        for (Integer index : dataKey.keySet()) {
-            Matrix keyMatrix = dataKey.get(index).get(0);
+        for (Map.Entry<Integer, MMatrix> entry : dataKey.entrySet()) {
+            int index = entry.getKey();
+            MMatrix dataKeyEntry = entry.getValue();
+            Matrix keyMatrix = dataKeyEntry.get(0);
             Matrix velocityMatrix = dataVelocity.get(index).get(0);
             Matrix tickMatrix = dataTick.get(index).get(0);
             int keyValue = asInput ? keyMatrix.classify().encodeToValue() : keyMatrix.argmax()[0];

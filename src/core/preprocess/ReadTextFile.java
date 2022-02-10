@@ -59,10 +59,13 @@ public class ReadTextFile {
         result.put(1, outputs);
 
         int charSize = charSize();
-        for (Integer pos : inputData.keySet()) {
+        for (Map.Entry<Integer, HashMap<Integer, Integer>> entry : inputData.entrySet()) {
+            int pos = entry.getKey();
+            HashMap<Integer, Integer> inputDataEntry = entry.getValue();
             Matrix input = new SMatrix(numberOfInputCharacters * charSize, 1);
-            for (Integer index : inputData.get(pos).keySet()) {
-                int charAt = inputData.get(pos).get(index);
+            for (Map.Entry<Integer, Integer> entry1 : inputDataEntry.entrySet()) {
+                int index = entry1.getKey();
+                int charAt = entry1.getValue();
                 input.setValue(charAt + index * charSize, 0, 1);
             }
             inputs.put(pos, new MMatrix(input));
@@ -70,8 +73,9 @@ public class ReadTextFile {
 
         for (Integer pos : inputData.keySet()) {
             Matrix output = new SMatrix(numberOfOutputCharacters * charSize, 1);
-            for (Integer index : outputData.get(pos).keySet()) {
-                int charAt = outputData.get(pos).get(index);
+            for (Map.Entry<Integer, Integer> entry : outputData.get(pos).entrySet()) {
+                int index = entry.getKey();
+                int charAt = entry.getValue();
                 int col = charAt + index * charSize;
                 output.setValue(col, 0,1);
             }
