@@ -11,6 +11,7 @@ import utils.sampling.Sequence;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Implements dueling layer for Deep Q Network.
@@ -271,8 +272,9 @@ public class DuelingLayer extends AbstractExecutionLayer {
         int inputDepth = 2;
         Sequence previousLayerOutputs = getPreviousLayerOutputs();
         Sequence layerInputs = new Sequence();
-        for (Integer sampleIndex : previousLayerOutputs.keySet()) {
-            MMatrix previousLayerOutput = previousLayerOutputs.get(sampleIndex);
+        for (Map.Entry<Integer, MMatrix> entry : previousLayerOutputs.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix previousLayerOutput = entry.getValue();
             MMatrix layerInput = new MMatrix(inputDepth, "Inputs");
             layerInput.put(0, previousLayerOutput.get(0));
             layerInput.put(1, previousLayerOutput.get(0));
@@ -291,8 +293,9 @@ public class DuelingLayer extends AbstractExecutionLayer {
         if (procedure != null) setLayerGradients(procedure.calculateGradient(getNextLayerGradients(), getTruncateSteps()));
         int inputDepth = getLayerGradients().getDepth();
         Sequence layerGradients = getLayerGradients();
-        for (Integer sampleIndex : layerGradients.keySet()) {
-            MMatrix layerGradient = layerGradients.get(sampleIndex);
+        for (Map.Entry<Integer, MMatrix> entry : layerGradients.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix layerGradient = entry.getValue();
             MMatrix currentLayerGradient = new MMatrix(inputDepth);
             layerGradient.get(0).add(layerGradient.get(1), layerGradient.get(0));
             currentLayerGradient.put(0, layerGradient.get(0));

@@ -16,6 +16,7 @@ import utils.sampling.Sequence;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements output layer of neural network.<br>
@@ -151,12 +152,14 @@ public class OutputLayer extends AbstractPlainLayer {
     public void forwardProcess() throws MatrixException {
         if (targets == null || targets.isEmpty() || !training) return;
         error = null;
-        for (Integer sampleIndex : targets.keySet()) {
+        for (Map.Entry<Integer, MMatrix> entry : targets.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix target = entry.getValue();
             MMatrix sample = getLayerOutputs().get(sampleIndex);
-            MMatrix target = targets.get(sampleIndex);
-            for (Integer depthIndex : targets.entryKeySet()) {
+            for (Map.Entry<Integer, Matrix> entry1 : target.entrySet()) {
+                int depthIndex = entry1.getKey();
+                Matrix currentTargets = entry1.getValue();
                 Matrix currentOutputs = sample.get(depthIndex);
-                Matrix currentTargets = target.get(depthIndex);
                 Matrix outputError;
                 if (multiOutput) {
                     if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");
@@ -198,13 +201,15 @@ public class OutputLayer extends AbstractPlainLayer {
      */
     public void backwardProcess() throws MatrixException {
         Sequence outputGradients = new Sequence();
-        for (Integer sampleIndex : targets.keySet()) {
+        for (Map.Entry<Integer, MMatrix> entry : targets.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix target = entry.getValue();
             MMatrix sample = getLayerOutputs().get(sampleIndex);
-            MMatrix target = targets.get(sampleIndex);
             MMatrix gradient = new MMatrix(sample.getDepth());
-            for (Integer depthIndex : targets.entryKeySet()) {
+            for (Map.Entry<Integer, Matrix> entry1 : target.entrySet()) {
+                int depthIndex = entry1.getKey();
+                Matrix currentTargets = entry1.getValue();
                 Matrix currentOutputs = sample.get(depthIndex);
-                Matrix currentTargets = target.get(depthIndex);
                 Matrix outputGradient;
                 if (multiOutput) {
                     if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");

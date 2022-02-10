@@ -18,6 +18,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Implements abstract execution layer supporting actual neural network layers (feed forward, recurrent, convolutional layers etc.)<br>
@@ -273,7 +274,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void optimize() throws MatrixException, DynamicParamException {
         HashMap<Matrix, Matrix> weightGradients = getLayerWeightGradients();
-        for (Matrix weight : weightGradients.keySet()) optimizer.optimize(weight, weightGradients.get(weight));
+        for (Map.Entry<Matrix, Matrix> entry : weightGradients.entrySet()) {
+            Matrix weight = entry.getKey();
+            Matrix weightGradient = entry.getValue();
+            optimizer.optimize(weight, weightGradient);
+        }
     }
 
     /**
@@ -296,8 +301,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException {
         HashMap<Integer, Matrix> otherNeuralNetworkWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
-        for (Integer index : weightsMap.keySet()) {
-            Matrix weight = weightsMap.get(index);
+        for (Map.Entry<Integer, Matrix> entry : weightsMap.entrySet()) {
+            int index = entry.getKey();
+            Matrix weight = entry.getValue();
             Matrix otherWeight = otherNeuralNetworkWeightsMap.get(index);
             weight.multiply(1 - tau).add(otherWeight.multiply(tau), weight);
         }
