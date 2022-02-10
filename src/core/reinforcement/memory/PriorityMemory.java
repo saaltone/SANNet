@@ -296,6 +296,7 @@ public class PriorityMemory implements Memory, Serializable {
      * @return retrieved state transitions.
      */
     public TreeSet<StateTransition> getRandomStateTransitions() {
+        if (searchTree.size() == 0) return new TreeSet<>();
         TreeSet<StateTransition> stateTransitions = new TreeSet<>();
         for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) stateTransitions.add(searchTree.getRandomStateTransition());
         return stateTransitions;
