@@ -9,6 +9,7 @@ import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.procedure.Procedure;
 import utils.sampling.Sequence;
@@ -16,6 +17,7 @@ import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements abstract recurrent layer providing functions common for all recurrent layers.<br>
@@ -241,8 +243,10 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
             Sequence layerGradients = procedure.calculateGradient(nextLayerGradients.unjoin(0), getTruncateSteps());
             Sequence reverseLayerGradients = reverseProcedure.calculateGradient(nextLayerGradients.unjoin(1), getTruncateSteps());
             Sequence updatedLayerGradients = new Sequence();
-            for (Integer sampleIndex : layerGradients.keySet()) {
-                updatedLayerGradients.put(sampleIndex, layerGradients.get(sampleIndex).add(reverseLayerGradients.get(sampleIndex)));
+            for (Map.Entry<Integer, MMatrix> entry : layerGradients.entrySet()) {
+                int sampleIndex = entry.getKey();
+                MMatrix layerGradient = entry.getValue();
+                updatedLayerGradients.put(sampleIndex, layerGradient.add(reverseLayerGradients.get(sampleIndex)));
             }
             setLayerGradients(updatedLayerGradients);
         }
