@@ -138,8 +138,8 @@ public class Lp_Regularization extends AbstractRegularizationLayer {
         }
 
         for (Matrix weight : layerRegularizedWeights) {
-            if (layerWeightGradients.containsKey(weight)) {
-                Matrix weightGradientSum = layerWeightGradients.get(weight);
+            Matrix weightGradientSum = layerWeightGradients.get(weight);
+            if (weightGradientSum != null) {
                 weightGradientSum.add(weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0), weightGradientSum);
             }
         }

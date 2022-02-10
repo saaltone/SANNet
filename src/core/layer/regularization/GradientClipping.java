@@ -113,8 +113,8 @@ public class GradientClipping extends AbstractRegularizationLayer {
 
         HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
         for (Matrix weight : nextLayerRegularizedWeights) {
-            if (nextLayerWeightGradients.containsKey(weight)) {
-                Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
+            Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
+            if (weightGradientSum != null) {
                 double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
                 if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
             }

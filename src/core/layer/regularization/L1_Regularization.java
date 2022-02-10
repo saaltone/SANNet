@@ -125,8 +125,8 @@ public class L1_Regularization extends AbstractRegularizationLayer {
         }
 
         for (Matrix weight : layerRegularizedWeights) {
-            if (layerWeightGradients.containsKey(weight)) {
-                Matrix weightGradientSum = layerWeightGradients.get(weight);
+            Matrix weightGradientSum = layerWeightGradients.get(weight);
+            if (weightGradientSum != null) {
                 weightGradientSum.add(weight.apply((value) -> lambda * Math.signum(value)), weightGradientSum);
             }
         }
