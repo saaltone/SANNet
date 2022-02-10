@@ -16,6 +16,7 @@ import utils.sampling.Sequence;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -365,22 +366,28 @@ public class BatchNormalization extends AbstractExecutionLayer {
             Sequence layerOutputs = new Sequence();
             if (!meanOnly) {
                 Matrix averageStandardDeviation = averageVariance.multiply(batchSize / (batchSize - 1)).add(epsilonMatrix).apply(UnaryFunctionType.SQRT);
-                for (Integer sampleIndex : inputSequence.keySet()) {
-                    MMatrix inputSample = inputSequence.get(sampleIndex);
+                for (Map.Entry<Integer, MMatrix> entry : inputSequence.entrySet()) {
+                    int sampleIndex = entry.getKey();
+                    MMatrix inputSample = entry.getValue();
                     MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
                     layerOutputs.put(sampleIndex, outputSample);
-                    for (Integer depthIndex : inputSample.keySet()) {
-                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
+                    for (Map.Entry<Integer, Matrix> entry1 : inputSample.entrySet()) {
+                        int depthIndex = entry1.getKey();
+                        Matrix inputSampleEntry = entry1.getValue();
+                        outputSample.put(depthIndex, inputSampleEntry.subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
             else {
-                for (Integer sampleIndex : inputSequence.keySet()) {
-                    MMatrix inputSample = inputSequence.get(sampleIndex);
+                for (Map.Entry<Integer, MMatrix> entry : inputSequence.entrySet()) {
+                    int sampleIndex = entry.getKey();
+                    MMatrix inputSample = entry.getValue();
                     MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
                     layerOutputs.put(sampleIndex, outputSample);
-                    for (Integer depthIndex : inputSample.keySet()) {
-                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
+                    for (Map.Entry<Integer, Matrix> entry1 : inputSample.entrySet()) {
+                        int depthIndex = entry1.getKey();
+                        Matrix inputSampleEntry = entry1.getValue();
+                        outputSample.put(depthIndex, inputSampleEntry.subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }

@@ -16,6 +16,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Implements layer for weight normalization.
@@ -228,9 +229,10 @@ public class WeightNormalization extends AbstractExecutionLayer {
         setLayerOutputs(getPreviousLayerOutputs());
 
         if (isTraining()) {
-            for (Matrix weight : procedures.keySet()) {
+            for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
+                Matrix weight = entry.getKey();
+                Procedure procedure = entry.getValue();
                 weights.put(weight, weight.copy());
-                Procedure procedure = procedures.get(weight);
                 procedure.reset();
                 weight.setEqualTo(procedure.calculateExpression(weight, 0));
             }
@@ -248,10 +250,11 @@ public class WeightNormalization extends AbstractExecutionLayer {
         setLayerGradients(getNextLayerGradients());
 
         HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
-        for (Matrix weight : procedures.keySet()) {
+        for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
+            Matrix weight = entry.getKey();
+            Procedure procedure = entry.getValue();
             weight.setEqualTo(weights.get(weight));
             Matrix weightGradient = nextLayerWeightGradients.get(weight);
-            Procedure procedure = procedures.get(weight);
             weightGradient.setEqualTo(procedure.calculateGradient(weightGradient, 0));
         }
         weights.clear();
