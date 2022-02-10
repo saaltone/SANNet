@@ -10,6 +10,7 @@ import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -115,7 +116,11 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
         if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
-        for (Integer index : inputs.keySet()) addSample(inputs.get(index), outputs.get(index));
+        for (Map.Entry<Integer, Sequence> entry : inputs.entrySet()) {
+            int index = entry.getKey();
+            Sequence inputSequence = entry.getValue();
+            addSample(inputSequence, outputs.get(index));
+        }
         sampleAt = 0;
     }
 
@@ -230,15 +235,19 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
 
         if (!fullSet && randomOrder) sampleAt = random.nextInt(inputs.size() - 1);
 
-        for (Integer sampleIndex : inputs.get(sampleAt).keySet()) {
-            MMatrix input = inputs.get(sampleAt).get(sampleIndex);
+        Sequence outputSequenceEntry = outputs.get(sampleAt);
+        for (Map.Entry<Integer, MMatrix> entry : inputs.get(sampleAt).entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix input = entry.getValue();
             MMatrix inputSample = new MMatrix(input.getDepth());
             inputSequence.put(sampleIndex, inputSample);
-            MMatrix output = outputs.get(sampleAt).get(sampleIndex);
+            MMatrix output = outputSequenceEntry.get(sampleIndex);
             MMatrix outputSample = new MMatrix(output.getDepth());
             outputSequence.put(sampleIndex, outputSample);
-            for (Integer depthIndex : input.keySet()) {
-                inputSample.put(depthIndex, input.get(depthIndex));
+            for (Map.Entry<Integer, Matrix> depthEntry: input.entrySet()) {
+                int depthIndex = depthEntry.getKey();
+                Matrix inputMatrix = depthEntry.getValue();
+                inputSample.put(depthIndex, inputMatrix);
                 outputSample.put(depthIndex, output.get(depthIndex));
             }
         }

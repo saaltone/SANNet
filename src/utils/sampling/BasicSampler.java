@@ -182,7 +182,11 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
         if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
-        for (Integer index : inputs.keySet()) addSample(inputs.get(index), outputs.get(index));
+        for (Map.Entry<Integer, MMatrix> entry : inputs.entrySet()) {
+            int index = entry.getKey();
+            MMatrix inputMMatrix = entry.getValue();
+            addSample(inputMMatrix, outputs.get(index));
+        }
         sampleAt = 0;
     }
 
