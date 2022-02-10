@@ -7,6 +7,7 @@ package utils.matrix;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Matrix class that implements sparse matrix.<br>
@@ -90,7 +91,11 @@ public class SMatrix extends ComputableMatrix {
      */
     public SMatrix(int rows, int columns, HashMap<Integer, Double> data) {
         this(rows, columns);
-        for (Integer index : data.keySet()) matrix.put(index, data.get(index));
+        for (Map.Entry<Integer, Double> entry : data.entrySet()) {
+            int index = entry.getKey();
+            double value = entry.getValue();
+            matrix.put(index, value);
+        }
     }
 
     /**

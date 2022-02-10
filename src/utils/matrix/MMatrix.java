@@ -137,8 +137,9 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix(HashMap<Integer, Matrix> matrices) throws MatrixException {
         depth = -1;
-        for (Integer depthIndex : matrices.keySet()) {
-            Matrix matrix = matrices.get(depthIndex);
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            Matrix matrix = entry.getValue();
             if (rows == -1 && columns == -1) {
                 rows = matrix.getTotalRows();
                 columns = matrix.getTotalColumns();
@@ -157,8 +158,9 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix(MMatrix matrices) throws MatrixException {
         depth = -1;
-        for (Integer depthIndex : matrices.keySet()) {
-            Matrix matrix = matrices.get(depthIndex);
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            Matrix matrix = entry.getValue();
             if (rows == -1 && columns == -1) {
                 rows = matrix.getTotalRows();
                 columns = matrix.getTotalColumns();
@@ -205,16 +207,6 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void clear() {
         matrices = new HashMap<>();
-    }
-
-    /**
-     * Returns true if contains matrix at specific index.
-     *
-     * @param index index
-     * @return true if contains matrix at specific index otherwise false.
-     */
-    public boolean containsKey(int index) {
-        return matrices.containsKey(index);
     }
 
     /**
@@ -270,6 +262,15 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public Set<Integer> keySet() {
         return matrices.keySet();
+    }
+
+    /**
+     * Returns entry set containing matrix indices.
+     *
+     * @return entry set containing matrix indices.
+     */
+    public Set<Map.Entry<Integer, Matrix>> entrySet() {
+        return matrices.entrySet();
     }
 
     /**
@@ -381,7 +382,11 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if copying fails.
      */
     private void copyMatrixData(MMatrix newMMatrix) throws MatrixException {
-        for (Integer index : newMMatrix.keySet()) put(index, newMMatrix.get(index).copy());
+        for (Map.Entry<Integer, Matrix> entry : newMMatrix.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            put(index, matrix.copy());
+        }
     }
 
     /**
@@ -474,7 +479,11 @@ public class MMatrix implements Cloneable, Serializable {
         if (!hasEqualSize(other)) {
             throw new MatrixException("Incompatible target matrix size: " + other.size());
         }
-        for (Integer index : other.keySet()) put(index, other.get(index));
+        for (Map.Entry<Integer, Matrix> entry : other.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            put(index, matrix);
+        }
     }
 
     /**
@@ -488,7 +497,11 @@ public class MMatrix implements Cloneable, Serializable {
         if (!hasEqualSize(other)) {
             throw new MatrixException("Incompatible target matrix size: " + other.size());
         }
-        for (Integer index : other.keySet()) if (get(index) != other.get(index)) return false;
+        for (Map.Entry<Integer, Matrix> entry : other.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            if (matrix != other.get(index)) return false;
+        }
         return true;
     }
 
@@ -502,11 +515,21 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(MMatrix result, UnaryFunction unaryFunction) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).apply(unaryFunction));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.apply(unaryFunction));
+            }
+        }
         else {
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).apply(unaryFunction));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.apply(unaryFunction));
+            }
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
     }
@@ -537,12 +560,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(MMatrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.applyBi(other.get(index), binaryFunction));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.applyBi(other.get(index), binaryFunction));
+            }
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
     }
@@ -574,12 +607,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(Matrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other, binaryFunction));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.applyBi(other, binaryFunction));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).applyBi(other, binaryFunction));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.applyBi(other, binaryFunction));
+            }
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
     }
@@ -609,12 +652,22 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void add(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.add(other.get(index)));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).add(other.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.add(other.get(index)));
+            }
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
     }
@@ -640,12 +693,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void add(Matrix other, MMatrix result) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.add(other));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).add(other));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.add(other));
+            }
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
     }
@@ -672,12 +735,22 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void subtract(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.subtract(other.get(index)));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.subtract(other.get(index)));
+            }
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
     }
@@ -703,12 +776,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void subtract(Matrix other, MMatrix result) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.subtract(other));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).subtract(other));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.subtract(other));
+            }
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
     }
@@ -735,12 +818,22 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void multiply(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.multiply(other.get(index)));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.multiply(other.get(index)));
+            }
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
     }
@@ -766,12 +859,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void multiply(Matrix other, MMatrix result) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.multiply(other));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).multiply(other));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.multiply(other));
+            }
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
     }
@@ -798,12 +901,22 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void dot(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.dot(other.get(index)));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.dot(other.get(index)));
+            }
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
     }
@@ -829,12 +942,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void dot(Matrix other, MMatrix result) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.dot(other));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).dot(other));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.dot(other));
+            }
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
     }
@@ -861,12 +984,22 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void divide(MMatrix other, MMatrix result) throws MatrixException {
         if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.divide(other.get(index)));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.divide(other.get(index)));
+            }
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
     }
@@ -892,12 +1025,22 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void divide(Matrix other, MMatrix result) throws MatrixException {
-        if (!hasProcedureFactory()) for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
+        if (!hasProcedureFactory()) {
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.divide(other));
+            }
+        }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.put(index, get(index).divide(other));
+            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                result.put(index, matrix.divide(other));
+            }
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
     }
@@ -935,7 +1078,9 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean, Matrix result) throws MatrixException {
-        for (Integer index : keySet()) result.add(get(index), result);
+        for (Matrix matrix : values()) {
+            result.add(matrix, result);
+        }
         return asMean ? result.divide(size()) : result;
     }
 
@@ -1030,12 +1175,16 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix variance(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
         if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
         if (!hasProcedureFactory()) {
-            for (Integer index : matrices.keySet()) result.add(matrices.get(index).subtract(meanMatrix).power(2), result);
+            for (Matrix matrix : matrices.values()) {
+                result.add(matrix.subtract(meanMatrix).power(2), result);
+            }
             result.divide(size(), result);
         }
         else {
             double expressionLock = procedureFactory.startExpression(this);
-            for (Integer index : matrices.keySet()) result.add(matrices.get(index).subtract(meanMatrix).power(2), result);
+            for (Matrix matrix : matrices.values()) {
+                result.add(matrix.subtract(meanMatrix).power(2), result);
+            }
             result.divide(size(), result);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createVarianceExpression(expressionLock, this, result);
@@ -1093,7 +1242,11 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void softmax(MMatrix result) throws MatrixException {
-        for (Integer index : matrices.keySet()) result.put(index, get(index).softmax());
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            result.put(index, matrix.softmax());
+        }
     }
 
     /**
@@ -1126,7 +1279,11 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void gumbelSoftmax(MMatrix result, double gumbelSoftmaxTau) throws MatrixException {
-        for (Integer index : matrices.keySet()) result.put(index, get(index).gumbelSoftmax(gumbelSoftmaxTau));
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            result.put(index, matrix.gumbelSoftmax(gumbelSoftmaxTau));
+        }
     }
 
     /**
@@ -1164,8 +1321,10 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix split(int position, boolean splitVertically) throws MatrixException {
         MMatrix splitMMatrix = new MMatrix(getDepth());
-        for (Integer index : matrices.keySet()) {
-            splitMMatrix.put(index, matrices.get(index).split(position, splitVertically));
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            splitMMatrix.put(index, matrix.split(position, splitVertically));
         }
         return splitMMatrix;
     }
@@ -1179,16 +1338,18 @@ public class MMatrix implements Cloneable, Serializable {
     public MMatrix flatten() throws MatrixException {
         int rows = this.rows;
         int cols = this.columns;
-        Matrix matrix = new DMatrix(rows * cols * size(), 1);
-        MMatrix mmatrix = new MMatrix(1, matrix);
-        for (Integer index : keySet()) {
+        Matrix flattenedMatrix = new DMatrix(rows * cols * size(), 1);
+        MMatrix flattenedMMatrix = new MMatrix(1, flattenedMatrix);
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < cols; col++) {
-                    matrix.setValue(getPosition(rows, cols, row, col, index), 0 , get(index).getValue(row, col));
+                    flattenedMatrix.setValue(getPosition(rows, cols, row, col, index), 0 , matrix.getValue(row, col));
                 }
             }
         }
-        return mmatrix;
+        return flattenedMMatrix;
     }
 
     /**
@@ -1238,9 +1399,12 @@ public class MMatrix implements Cloneable, Serializable {
     public MMatrix join(MMatrix otherMMatrix, boolean joinedVertically) throws MatrixException {
         if (getDepth() != otherMMatrix.getDepth()) throw new MatrixException("Depth of this multi-matrix " + getDepth() + " and other multi-matrix " + otherMMatrix.getDepth() + " do not match.");
         MMatrix joinedMMatrix = getNewMMatrix();
-        for (Integer depthIndex : keySet()) {
-            if (!otherMMatrix.containsKey(depthIndex)) throw new MatrixException("Other multi-matrix does not contain entry index: " + depthIndex);
-            joinedMMatrix.put(depthIndex, new JMatrix(new Matrix[] { get(depthIndex), otherMMatrix.get(depthIndex) }, joinedVertically));
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            Matrix matrix = entry.getValue();
+            Matrix otherMatrix = otherMMatrix.get(depthIndex);
+            if (otherMatrix == null) throw new MatrixException("Other multi-matrix does not contain entry index: " + depthIndex);
+            joinedMMatrix.put(depthIndex, new JMatrix(new Matrix[] { matrix, otherMatrix }, joinedVertically));
         }
         return joinedMMatrix;
     }
@@ -1254,8 +1418,10 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix unjoin(int subMatrixIndex) throws MatrixException {
         MMatrix unjoinedMMatrix = getNewMMatrix();
-        for (Integer depthIndex : keySet()) {
-            ArrayList<Matrix> subMatrices = get(depthIndex).getSubMatrices();
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            Matrix matrix = entry.getValue();
+            ArrayList<Matrix> subMatrices = matrix.getSubMatrices();
             if (subMatrixIndex < 0 || subMatrixIndex > subMatrices.size() - 1) throw new MatrixException("Joined matrix does not have sub matrix index: " + subMatrixIndex);
             unjoinedMMatrix.put(depthIndex, subMatrices.get(subMatrixIndex));
         }
