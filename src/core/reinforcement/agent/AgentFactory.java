@@ -249,7 +249,7 @@ public class AgentFactory {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public static Agent createAgent(Agent agent, boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, AgentException, IOException, DynamicParamException, ClassNotFoundException {
-        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedMemory);
+        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
         if (agent instanceof AbstractQLearning) return ((AbstractQLearning)agent).reference(sharedValueFunctionEstimator, sharedMemory);
         throw new AgentException("Unknown agent type. Unable to create reference for agent.");
     }
