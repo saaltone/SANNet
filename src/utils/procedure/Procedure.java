@@ -202,11 +202,12 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
         int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
 
-        for (Integer sampleIndex : inputKeySet) {
-            setInputSample(sampleIndex, inputSequence.get(sampleIndex));
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix inputSample = entry.getValue();
+            setInputSample(sampleIndex, inputSample);
 
             expressionChain.calculateExpressionStep(sampleIndex, firstKey);
 
@@ -225,11 +226,17 @@ public class Procedure implements Serializable {
     private void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
 
-        for (Integer sampleIndex : inputKeySet) setInputSample(sampleIndex, inputSequence.get(sampleIndex));
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix inputSample = entry.getValue();
+            setInputSample(sampleIndex, inputSample);
+        }
 
         expressionChain.calculateExpressionStep(inputKeySet);
 
-        for (Integer sampleIndex : inputKeySet) outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+        for (Integer sampleIndex : inputKeySet) {
+            outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+        }
     }
 
     /**
@@ -240,7 +247,11 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     private void setInputSample(int sampleIndex, MMatrix inputSample) throws MatrixException {
-        for (Integer nodeIndex : inputSample.keySet()) getInputNodes().get(nodeIndex).setMatrix(sampleIndex, inputSample.get(nodeIndex));
+        for (Map.Entry<Integer, Matrix> entry : inputSample.entrySet()) {
+            int nodeIndex = entry.getKey();
+            Matrix inputSampleEntry = entry.getValue();
+            getInputNodes().get(nodeIndex).setMatrix(sampleIndex, inputSampleEntry);
+        }
     }
 
     /**
@@ -252,7 +263,11 @@ public class Procedure implements Serializable {
      */
     private MMatrix setOutputSample(int sampleIndex) throws MatrixException {
         MMatrix outputSample = new MMatrix(getOutputNodes().size());
-        for (Integer nodeIndex : getOutputNodes().keySet()) outputSample.put(nodeIndex, getOutputNodes().get(nodeIndex).getMatrix(sampleIndex));
+        for (Map.Entry<Integer, Node> entry : getOutputNodes().entrySet()) {
+            int nodeIndex = entry.getKey();
+            Node node = entry.getValue();
+            outputSample.put(nodeIndex, node.getMatrix(sampleIndex));
+        }
         return outputSample;
     }
 
@@ -297,18 +312,20 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
-        Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
         int lastKey = reversedInput ? outputGradientSequence.firstKey() : outputGradientSequence.lastKey();
 
         int gradientStepCount = 0;
-        for (Integer sampleIndex : inputKeySet) {
-            setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix outputGradientSample = entry.getValue();
+            setOutputSampleGradient(sampleIndex, outputGradientSample);
 
             gradientChain.calculateGradientStep(sampleIndex, lastKey);
 
             inputGradientSequence.put(sampleIndex, setInputSampleGradient(sampleIndex));
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
         }
+
     }
 
     /**
@@ -324,8 +341,10 @@ public class Procedure implements Serializable {
         Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
 
         int gradientStepCount = 0;
-        for (Integer sampleIndex : inputKeySet) {
-            setOutputSampleGradient(sampleIndex, outputGradientSequence.get(sampleIndex));
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix outputGradientSample = entry.getValue();
+            setOutputSampleGradient(sampleIndex, outputGradientSample);
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
         }
 
@@ -346,7 +365,11 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     private void setOutputSampleGradient(int sampleIndex, MMatrix outputSampleGradient) throws MatrixException {
-        for (Integer nodeIndex : outputSampleGradient.keySet()) getOutputNodes().get(nodeIndex).setGradient(sampleIndex, outputSampleGradient.get(nodeIndex));
+        for (Map.Entry<Integer, Matrix> entry : outputSampleGradient.entrySet()) {
+            int nodeIndex = entry.getKey();
+            Matrix outputSampleGradientEntry = entry.getValue();
+            getOutputNodes().get(nodeIndex).setGradient(sampleIndex, outputSampleGradientEntry);
+        }
     }
 
     /**
@@ -358,7 +381,11 @@ public class Procedure implements Serializable {
      */
     private MMatrix setInputSampleGradient(int sampleIndex) throws MatrixException {
         MMatrix inputSampleGradient = new MMatrix(getInputNodes().size());
-        for (Integer nodeIndex : getInputNodes().keySet()) inputSampleGradient.put(nodeIndex, getInputNodes().get(nodeIndex).getGradient(sampleIndex));
+        for (Map.Entry<Integer, Node> entry : getInputNodes().entrySet()) {
+            int nodeIndex = entry.getKey();
+            Node node = entry.getValue();
+            inputSampleGradient.put(nodeIndex, node.getGradient(sampleIndex));
+        }
         return inputSampleGradient;
     }
 

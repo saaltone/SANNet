@@ -205,9 +205,11 @@ public class ProcedureFactory implements Serializable {
      */
     private void endProcedure(ProcedureData procedureData, MMatrix outputMatrices) throws MatrixException {
         if (!nodeRegister.contains(outputMatrices)) {
-            for (Integer index : outputMatrices.keySet()) {
-                if (!nodeRegister.contains(outputMatrices.get(index))) throw new MatrixException("Setting of output node failed. No node corresponding output matrix is found.");
-                procedureData.outputNodes.put(index, nodeRegister.getNode(outputMatrices.get(index)));
+            for (Map.Entry<Integer, Matrix> entry : outputMatrices.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                if (!nodeRegister.contains(matrix)) throw new MatrixException("Setting of output node failed. No node corresponding output matrix is found.");
+                procedureData.outputNodes.put(index, nodeRegister.getNode(matrix));
             }
         } else procedureData.outputNodes.put(0, nodeRegister.getNode(outputMatrices));
         defineGradientPath(procedureData);
@@ -295,8 +297,10 @@ public class ProcedureFactory implements Serializable {
      */
     private Node defineNode(Matrix matrix, boolean asSingleNode) throws MatrixException {
         Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID);
-        for (Integer index : currentProcedureData.inputMatrices.keySet()) {
-            if (currentProcedureData.inputMatrices.get(index) == matrix) currentProcedureData.inputNodes.put(index, node);
+        for (Map.Entry<Integer, Matrix> entry : currentProcedureData.inputMatrices.entrySet()) {
+            int index = entry.getKey();
+            Matrix entryMatrix = entry.getValue();
+            if (entryMatrix == matrix) currentProcedureData.inputNodes.put(index, node);
         }
         currentProcedureData.nodes.add(node);
         return node;

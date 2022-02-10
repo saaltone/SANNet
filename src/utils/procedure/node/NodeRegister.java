@@ -79,15 +79,15 @@ public class NodeRegister implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Node defineNode(Matrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
-        if (entriesByMatrix.containsKey(matrix)) return nodeMatrixMap.get(matrix);
-        else {
-            Node node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
+        Node node = nodeMatrixMap.get(matrix);
+        if (node == null) {
+            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
             nodeMatrixMap.put(matrix, node);
-            return node;
         }
+        return node;
     }
 
     /**
@@ -101,15 +101,15 @@ public class NodeRegister implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Node defineNode(MMatrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
-        if (entriesByMMatrix.containsKey(matrix)) return nodeMMatrixMap.get(matrix);
-        else {
-            Node node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
+        Node node = nodeMMatrixMap.get(matrix);
+        if (node == null)  {
+            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
             nodeMMatrixMap.put(matrix, node);
-            return node;
         }
+        return node;
     }
 
     /**
@@ -148,8 +148,8 @@ public class NodeRegister implements Serializable {
      * @return expression ID corresponding the node.
      */
     public int getExpressionID(Node node) {
-        if (entriesByNode.containsKey(node)) return entriesByNode.get(node).expressionID;
-        else return -1;
+        NodeRegister.NodeEntry nodeEntry = entriesByNode.get(node);
+        return nodeEntry != null ? nodeEntry.expressionID() : -1;
     }
 
     /**

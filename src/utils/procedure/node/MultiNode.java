@@ -10,6 +10,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -59,7 +60,11 @@ public class MultiNode extends AbstractNode {
      */
     public MultiNode(int id, MMatrix referenceMatrix) throws MatrixException {
         this(id, referenceMatrix.getReferenceMatrix());
-        for (Integer index : referenceMatrix.keySet()) matrices.put(index, referenceMatrix.get(index));
+        for (Map.Entry<Integer, Matrix> entry : referenceMatrix.entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            matrices.put(index, matrix);
+        }
     }
 
     /**
@@ -80,7 +85,11 @@ public class MultiNode extends AbstractNode {
     public void storeMatrixDependency(int backupIndex) throws MatrixException {
         if (getToNode() == null) return;
         MMatrix matricesBackup = new MMatrix();
-        for (Integer index : keySet()) matricesBackup.put(index, getMatrix(index));
+        for (Map.Entry<Integer, Matrix> entry : entrySet()) {
+            int index = entry.getKey();
+            Matrix matrix = entry.getValue();
+            matricesBackup.put(index, matrix);
+        }
         matrixBackup.put(backupIndex, matricesBackup);
     }
 
@@ -94,7 +103,11 @@ public class MultiNode extends AbstractNode {
         if (getToNode() == null || matrixBackup == null) return;
         if (matrixBackup.containsKey(backupIndex)) {
             MMatrix matricesBackup = matrixBackup.get(backupIndex);
-            for (Integer index : matricesBackup.keySet()) getMatrices().put(index, matricesBackup.get(index));
+            for (Map.Entry<Integer, Matrix> entry : matricesBackup.entrySet()) {
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                getMatrices().put(index, matrix);
+            }
         }
     }
 
@@ -114,6 +127,15 @@ public class MultiNode extends AbstractNode {
      */
     public Set<Integer> keySet() {
         return matrices.keySet();
+    }
+
+    /**
+     * Returns key set of node.
+     *
+     * @return key set of node.
+     */
+    public Set<Map.Entry<Integer, Matrix>> entrySet() {
+        return matrices.entrySet();
     }
 
     /**

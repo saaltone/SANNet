@@ -9,6 +9,7 @@ import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -92,6 +93,15 @@ public class SingleNode extends AbstractNode {
      * @return key set of node.
      */
     public Set<Integer> keySet() {
+        return null;
+    }
+
+    /**
+     * Returns entry set of node.
+     *
+     * @return entry set of node.
+     */
+    public Set<Map.Entry<Integer, Matrix>> entrySet() {
         return null;
     }
 

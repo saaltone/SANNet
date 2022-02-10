@@ -9,6 +9,7 @@ import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -133,6 +134,13 @@ public interface Node {
      * @return key set of node.
      */
     Set<Integer> keySet();
+
+    /**
+     * Returns entry set of node.
+     *
+     * @return entry set of node.
+     */
+    Set<Map.Entry<Integer, Matrix>> entrySet();
 
     /**
      * Checks if node contains specific matrix.
