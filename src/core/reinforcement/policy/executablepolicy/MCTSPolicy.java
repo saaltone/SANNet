@@ -383,7 +383,11 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
                 cumulativeValue += gammaValue;
                 dirichletDistribution.put(action, gammaValue);
             }
-            for (Integer action : dirichletDistribution.keySet()) dirichletDistribution.put(action, dirichletDistribution.get(action) / cumulativeValue);
+            for (Map.Entry<Integer, Double> entry : dirichletDistribution.entrySet()) {
+                int action = entry.getKey();
+                double value = entry.getValue();
+                dirichletDistribution.put(action, value / cumulativeValue);
+            }
             return dirichletDistribution;
         }
 
@@ -420,7 +424,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         private void updateActionProbabilities(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
             for (Integer action : availableActions) {
                 double actionValue = policyValueMatrix.getValue(action, 0);
-                if (actions.containsKey(action)) actions.get(action).setActionProbability(actionValue);
+                MCTSPolicy.Action mctsAction = actions.get(action);
+                if (mctsAction != null) actions.get(action).setActionProbability(actionValue);
                 else actions.put(action, new Action(this, action, actionValue));
             }
             double cumulativeValue = 0;
