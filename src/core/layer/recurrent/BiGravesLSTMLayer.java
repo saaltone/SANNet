@@ -9,13 +9,8 @@ import core.activation.ActivationFunction;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
-import utils.sampling.Sequence;
-
-import java.util.HashMap;
 
 /**
  * Implements bidirectional Graves type of Long Short Term Memory (LSTM)<br>
@@ -38,18 +33,6 @@ public class BiGravesLSTMLayer extends GravesLSTMLayer {
      *
      */
     private GravesLSTMWeightSet reverseWeightSet = null;
-
-    /**
-     * Reverse procedure for layer. Procedure contains chain of forward and backward expressions.
-     *
-     */
-    protected Procedure reverseProcedure = null;
-
-    /**
-     * Layer gradients for reverse sequence.
-     *
-     */
-    private transient Sequence reverseLayerGradients;
 
     /**
      * Constructor for bidirectional Graves type LSTM layer.
@@ -99,70 +82,6 @@ public class BiGravesLSTMLayer extends GravesLSTMLayer {
         super.defineProcedure();
         currentWeightSet = reverseWeightSet;
         reverseProcedure = new ProcedureFactory().getProcedure(this, reverseWeightSet.getWeights(), getConstantMatrices(), getStopGradients(), true);
-    }
-
-    /**
-     * Resets layer.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void resetLayer() throws MatrixException {
-        super.resetLayer();
-        if (reverseProcedure != null) reverseProcedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
-    }
-
-    /**
-     * Takes single forward processing step to process layer input(s).<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayer();
-        setLayerOutputs(procedure.calculateExpression(getPreviousLayerOutputs()));
-        setLayerOutputs(getLayerOutputs().join(reverseProcedure.calculateExpression(getPreviousLayerOutputs()), true));
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
-        Sequence nextLayerGradients = getNextLayerGradients();
-        Sequence directNextLayerGradients = nextLayerGradients.unjoin(0);
-        Sequence reverseNextLayerGradients = nextLayerGradients.unjoin(1);
-        if (procedure != null) setLayerGradients(procedure.calculateGradient(directNextLayerGradients, getTruncateSteps()));
-        if (reverseProcedure != null) reverseLayerGradients = reverseProcedure.calculateGradient(reverseNextLayerGradients, getTruncateSteps());
-        Sequence layerGradients = getLayerGradients();
-        Sequence updatedLayerGradients = new Sequence();
-        for (Integer sampleIndex : layerGradients.keySet()) {
-            updatedLayerGradients.put(sampleIndex, layerGradients.get(sampleIndex).add(reverseLayerGradients.get(sampleIndex)));
-        }
-        setLayerGradients(updatedLayerGradients);
-    }
-
-    /**
-     * Returns neural network weight gradients.
-     *
-     * @return neural network weight gradients.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public HashMap<Matrix, Matrix> getLayerWeightGradients() throws MatrixException {
-        HashMap<Matrix, Matrix> layerWeightGradients = new HashMap<>(procedure.getGradients());
-        layerWeightGradients.putAll(reverseProcedure.getGradients());
-        return layerWeightGradients;
-    }
-
-    /**
-     * Returns number of layer parameters.
-     *
-     * @return number of layer parameters.
-     */
-    protected int getNumberOfParameters() {
-        return super.getWeightSet().getNumberOfParameters() + reverseWeightSet.getNumberOfParameters();
     }
 
 }
