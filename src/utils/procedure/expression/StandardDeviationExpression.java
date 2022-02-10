@@ -14,6 +14,7 @@ import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements expression for standard deviation operation.<br>
@@ -116,8 +117,11 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
     public void calculateGradient() throws MatrixException {
         if (!executeAsSingleStep()) return;
         if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        for (Integer index : argument1.keySet()) {
-            Matrix standardDeviationGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size() - 1).apply(sqrtFunction.getDerivative());
+        double argument1Size = argument1.size() - 1;
+        for (Map.Entry<Integer, Matrix> entry : argument1.entrySet()) {
+            int index = entry.getKey();
+            Matrix argument1Matrix = entry.getValue();
+            Matrix standardDeviationGradient = argument1Matrix.subtract(mean).multiply(2 / argument1Size).apply(sqrtFunction.getDerivative());
             argument1.cumulateGradient(index, result.getGradient().multiply(standardDeviationGradient), false);
         }
     }

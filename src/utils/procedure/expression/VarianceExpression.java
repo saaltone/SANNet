@@ -12,6 +12,7 @@ import utils.procedure.node.Node;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implements expression for variance operation.<br>
@@ -106,9 +107,12 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
     public void calculateGradient() throws MatrixException {
         if (!executeAsSingleStep()) return;
         if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        for (Integer index : argument1.keySet()) {
+        for (Map.Entry<Integer, Matrix> entry : argument1.entrySet()) {
+            double argument1Size = argument1.size();
             if (!argument1.isStopGradient()) {
-                Matrix varianceGradient = argument1.getMatrix(index).subtract(mean).multiply(2 / (double)argument1.size());
+                int index = entry.getKey();
+                Matrix matrix = entry.getValue();
+                Matrix varianceGradient = matrix.subtract(mean).multiply(2 / argument1Size);
                 argument1.cumulateGradient(index, result.getGradient().multiply(varianceGradient), false);
             }
         }
