@@ -29,7 +29,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Parameter name types for abstract value function.
      *     - gamma: discount value for value function. Default value 0.99.<br>
      *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
-     *     - tdDataPrintCycle: TD data print cycle. Default value 500.
+     *     - tdDataPrintCycle: TD data print cycle. Default value 100.
      *
      */
     private final static String paramNameTypes = "(gamma:DOUBLE), " +
@@ -122,7 +122,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     public void initializeDefaultParams() {
         gamma = 0.99;
         lambda = 0;
-        tdDataPrintCycle = 500;
+        tdDataPrintCycle = 100;
     }
 
     /**
@@ -149,7 +149,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Supported parameters are:<br>
      *     - gamma: discount value for value function. Default value 0.99.<br>
      *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
-     *     - tdDataPrintCycle: TD data print cycle. Default value 500.
+     *     - tdDataPrintCycle: TD data print cycle. Default value 100.
      *
      * @param params parameters used for abstract value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
