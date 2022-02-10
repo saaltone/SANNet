@@ -47,7 +47,7 @@ public class RMSProp extends AbstractOptimizer {
      * Hash map to store gradients from previous steps.
      *
      */
-    private transient HashMap<Matrix, Matrix> eg2;
+    private final HashMap<Matrix, Matrix> eg2 = new HashMap<>();
 
     /**
      * Default constructor for RMSProp.
@@ -97,7 +97,7 @@ public class RMSProp extends AbstractOptimizer {
      *
      */
     public void reset() {
-        eg2 = new HashMap<>();
+        eg2.clear();
     }
 
     /**
@@ -110,11 +110,8 @@ public class RMSProp extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (eg2 == null) eg2 = new HashMap<>();
-
-        Matrix mEg2;
-        if (eg2.containsKey(matrix)) mEg2 = eg2.get(matrix);
-        else eg2.put(matrix, mEg2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mEg2 = eg2.get(matrix);
+        if (mEg2 == null) eg2.put(matrix, mEg2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         eg2.put(matrix, mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma)));
 

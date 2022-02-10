@@ -27,13 +27,13 @@ public class ResilientPropagation extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private final HashMap<Matrix, Matrix> dPrev = new HashMap<>();
 
     /**
      * Hash map to store previous directions.
      *
      */
-    private transient HashMap<Matrix, Matrix> wPrev;
+    private final HashMap<Matrix, Matrix> wPrev = new HashMap<>();
 
     /**
      * Default constructor for Resilient Propagation.
@@ -64,8 +64,8 @@ public class ResilientPropagation extends AbstractOptimizer {
      *
      */
     public void reset() {
-        dPrev = new HashMap<>();
-        wPrev = new HashMap<>();
+        dPrev.clear();
+        wPrev.clear();
     }
 
     /**
@@ -78,16 +78,10 @@ public class ResilientPropagation extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (dPrev == null) dPrev = new HashMap<>();
-        if (wPrev == null) wPrev = new HashMap<>();
+        Matrix dMPrev = dPrev.computeIfAbsent(matrix, k -> matrixGradient);
 
-        Matrix dMPrev;
-        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
-        else dPrev.put(matrix, dMPrev = matrixGradient);
-
-        Matrix WPrev;
-        if (wPrev.containsKey(matrix)) WPrev = wPrev.get(matrix);
-        else wPrev.put(matrix, WPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix WPrev = wPrev.get(matrix);
+        if (WPrev == null) wPrev.put(matrix, WPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         Matrix dWDir = dMPrev.sgnmul(matrixGradient);
 

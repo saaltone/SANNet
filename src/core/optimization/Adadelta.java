@@ -47,13 +47,13 @@ public class Adadelta extends AbstractOptimizer {
      * Hash map to store gradients from previous steps.
      *
      */
-    private transient HashMap<Matrix, Matrix> eg2;
+    private final HashMap<Matrix, Matrix> eg2 = new HashMap<>();
 
     /**
      * Hash map to store gradient deltas from previous steps.
      *
      */
-    private transient HashMap<Matrix, Matrix> ed2;
+    private final HashMap<Matrix, Matrix> ed2 = new HashMap<>();
 
     /**
      * Default constructor for Adadelta.
@@ -103,8 +103,8 @@ public class Adadelta extends AbstractOptimizer {
      *
      */
     public void reset() {
-        eg2 = new HashMap<>();
-        ed2 = new HashMap<>();
+        eg2.clear();
+        ed2.clear();
     }
 
     /**
@@ -117,15 +117,11 @@ public class Adadelta extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (eg2 == null) eg2 = new HashMap<>();
-        Matrix mEg2;
-        if (eg2.containsKey(matrix)) mEg2 = eg2.get(matrix);
-        else eg2.put(matrix, mEg2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mEg2 = eg2.get(matrix);
+        if (mEg2 == null)  eg2.put(matrix, mEg2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        if (ed2 == null) ed2 = new HashMap<>();
-        Matrix mEd2;
-        if (ed2.containsKey(matrix)) mEd2 = ed2.get(matrix);
-        else ed2.put(matrix, mEd2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mEd2 = ed2.get(matrix);
+        if (mEd2 == null) ed2.put(matrix, mEd2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma));
 

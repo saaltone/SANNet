@@ -55,13 +55,13 @@ public class AMSGrad extends AbstractOptimizer {
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private final HashMap<Matrix, Matrix> m = new HashMap<>();
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private final HashMap<Matrix, Matrix> v = new HashMap<>();
 
     /**
      * Default constructor for AMSGrad.
@@ -114,8 +114,8 @@ public class AMSGrad extends AbstractOptimizer {
      *
      */
     public void reset() {
-        m = new HashMap<>();
-        v = new HashMap<>();
+        m.clear();
+        v.clear();
     }
 
     /**
@@ -128,16 +128,11 @@ public class AMSGrad extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (m == null) m = new HashMap<>();
-        if (v == null) v = new HashMap<>();
+        Matrix mM = m.get(matrix);
+        if (mM == null) m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        Matrix mM;
-        if (m.containsKey(matrix)) mM = m.get(matrix);
-        else m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
-
-        Matrix vM;
-        if (v.containsKey(matrix)) vM = v.get(matrix);
-        else v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix vM = v.get(matrix);
+        if (vM == null) v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);

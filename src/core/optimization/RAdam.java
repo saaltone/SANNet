@@ -54,7 +54,7 @@ public class RAdam extends AbstractOptimizer {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private final HashMap<Matrix, Integer> iterations = new HashMap<>();
 
     /**
      * Maximum length of approximated SMA.
@@ -66,13 +66,13 @@ public class RAdam extends AbstractOptimizer {
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private final HashMap<Matrix, Matrix> m = new HashMap<>();
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private final HashMap<Matrix, Matrix> v = new HashMap<>();
 
     /**
      * Default constructor for RAdam.
@@ -127,9 +127,9 @@ public class RAdam extends AbstractOptimizer {
      *
      */
     public void reset() {
-        iterations = new HashMap<>();
-        m = new HashMap<>();
-        v = new HashMap<>();
+        iterations.clear();
+        m.clear();
+        v.clear();
     }
 
     /**
@@ -142,19 +142,12 @@ public class RAdam extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (iterations == null) iterations = new HashMap<>();
-        if (m == null) m = new HashMap<>();
-        if (v == null) v = new HashMap<>();
-
         int iteration;
-        if (iterations.containsKey(matrix)) iterations.put(matrix, iteration = iterations.get(matrix) + 1);
-        else iterations.put(matrix, iteration = 1);
+        iterations.put(matrix, iteration = iterations.getOrDefault(matrix, 0) + 1);
 
-        Matrix vM = null;
-        if (v.containsKey(matrix)) vM = v.get(matrix);
+        Matrix vM = v.get(matrix);
 
-        Matrix mM = null;
-        if (m.containsKey(matrix)) mM = m.get(matrix);
+        Matrix mM = m.get(matrix);
 
         vM = vM == null ? matrixGradient.power(2).multiply(1 - beta2) : vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
         v.put(matrix, vM);

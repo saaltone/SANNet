@@ -46,7 +46,7 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private final HashMap<Matrix, Matrix> dPrev = new HashMap<>();
 
     /**
      * Default constructor for Momentum Gradient Descent.
@@ -96,7 +96,7 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      *
      */
     public void reset() {
-        dPrev = new HashMap<>();
+        dPrev.clear();
     }
 
     /**
@@ -108,10 +108,8 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
-        if (dPrev == null) dPrev = new HashMap<>();
-        Matrix dMPrev;
-        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
-        else dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix dMPrev = dPrev.get(matrix);
+        if (dMPrev == null) dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // θt+1=θt+μtvt−εt∇f(θt)
         Matrix dMDelta = dMPrev.multiply(mu).subtract(matrixGradient.multiply(learningRate));

@@ -55,19 +55,19 @@ public class NAdam extends AbstractOptimizer {
      * Hash map to store iteration counts.
      *
      */
-    private transient HashMap<Matrix, Integer> iterations;
+    private final HashMap<Matrix, Integer> iterations = new HashMap<>();
 
     /**
      * Hash map to store first moments (means).
      *
      */
-    private transient HashMap<Matrix, Matrix> m;
+    private final HashMap<Matrix, Matrix> m = new HashMap<>();
 
     /**
      * Hash map to store second moments (uncentered variances).
      *
      */
-    private transient HashMap<Matrix, Matrix> v;
+    private final HashMap<Matrix, Matrix> v = new HashMap<>();
 
     /**
      * Default constructor for Nadam.
@@ -120,9 +120,9 @@ public class NAdam extends AbstractOptimizer {
      *
      */
     public void reset() {
-        iterations = new HashMap<>();
-        m = new HashMap<>();
-        v = new HashMap<>();
+        iterations.clear();
+        m.clear();
+        v.clear();
     }
 
     /**
@@ -135,21 +135,14 @@ public class NAdam extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (iterations == null) iterations = new HashMap<>();
-        if (m == null) m = new HashMap<>();
-        if (v == null) v = new HashMap<>();
-
         int iteration;
-        if (iterations.containsKey(matrix)) iterations.put(matrix, iteration = iterations.get(matrix) + 1);
-        else iterations.put(matrix, iteration = 1);
+        iterations.put(matrix, iteration = iterations.getOrDefault(matrix, 0) + 1);
 
-        Matrix mM;
-        if (m.containsKey(matrix)) mM = m.get(matrix);
-        else m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mM = m.get(matrix);
+        if (mM == null) m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        Matrix vM;
-        if (v.containsKey(matrix)) vM = v.get(matrix);
-        else v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix vM = v.get(matrix);
+        if (vM == null) v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);

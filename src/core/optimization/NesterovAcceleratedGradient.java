@@ -46,13 +46,13 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      * Hash map to store previous gradients.
      *
      */
-    private transient HashMap<Matrix, Matrix> dPrev;
+    private final HashMap<Matrix, Matrix> dPrev = new HashMap<>();
 
     /**
      * Hash map to store previous velocities.
      *
      */
-    private transient HashMap<Matrix, Matrix> vPrev;
+    private final HashMap<Matrix, Matrix> vPrev = new HashMap<>();
 
     /**
      * Default constructor for Nesterov Accelerated Gradient.
@@ -102,8 +102,8 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      *
      */
     public void reset() {
-        dPrev = new HashMap<>();
-        vPrev = new HashMap<>();
+        dPrev.clear();
+        vPrev.clear();
     }
 
     /**
@@ -115,23 +115,19 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
-        if (dPrev == null) dPrev = new HashMap<>();
-        if (vPrev == null) vPrev = new HashMap<>();
-        Matrix dMPrev;
-        if (dPrev.containsKey(matrix)) dMPrev = dPrev.get(matrix);
-        else dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix dMPrev = dPrev.get(matrix);
+        if (dMPrev == null) dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
-        Matrix vMPrev;
-        if (vPrev.containsKey(matrix)) vMPrev = dPrev.get(matrix);
-        else vPrev.put(matrix, vMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix vMPrev = vPrev.get(matrix);
+        if (vMPrev == null) vPrev.put(matrix, vMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         // vt=μvt−1−ϵ∇f(θt−1+μvt−1)
         Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));
 
         matrix.add(vM, matrix);
 
-        vPrev.put(matrix, vM);
         dPrev.put(matrix, matrixGradient);
+        vPrev.put(matrix, vM);
 
     }
 

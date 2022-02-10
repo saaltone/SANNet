@@ -39,7 +39,7 @@ public class Adagrad extends AbstractOptimizer {
      * Hash map to store gradients from previous steps.
      *
      */
-    private transient HashMap<Matrix, Matrix> m2Sum;
+    private final HashMap<Matrix, Matrix> m2Sum = new HashMap<>();
 
     /**
      * Default constructor for Adagrad.
@@ -86,7 +86,7 @@ public class Adagrad extends AbstractOptimizer {
      *
      */
     public void reset() {
-        m2Sum = new HashMap<>();
+        m2Sum.clear();
     }
 
     /**
@@ -99,11 +99,8 @@ public class Adagrad extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        if (m2Sum == null) m2Sum = new HashMap<>();
-
-        Matrix dM2Sum;
-        if (m2Sum.containsKey(matrix)) dM2Sum = m2Sum.get(matrix);
-        else m2Sum.put(matrix, dM2Sum = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix dM2Sum = m2Sum.get(matrix);
+        if (dM2Sum == null) m2Sum.put(matrix, dM2Sum = new DMatrix(matrix.getRows(), matrix.getColumns()));
 
         dM2Sum.add(matrixGradient.multiply(matrixGradient), dM2Sum);
 
