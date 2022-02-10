@@ -787,7 +787,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
                 policyTypeParams = "thresholdInitial = 0.2, thresholdMin = 0.2";
             }
         }
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.PPO;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.SACDiscrete;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, SACDiscrete -> false;
             default -> true;
@@ -797,8 +797,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
-            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
+            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
+            case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
 
@@ -832,7 +832,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
