@@ -85,20 +85,6 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @param numberOfStates number of states for tabular function estimator
      * @param numberOfActions number of actions for tabular function estimator
      * @param stateValues state values inherited for tabular function estimator.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false);
-        this.stateValues = stateValues;
-    }
-
-    /**
-     * Constructor for tabular function estimator.
-     *
-     * @param memory memory reference.
-     * @param numberOfStates number of states for tabular function estimator
-     * @param numberOfActions number of actions for tabular function estimator
-     * @param stateValues state values inherited for tabular function estimator.
      * @param params params for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
