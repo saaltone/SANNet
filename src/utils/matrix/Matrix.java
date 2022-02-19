@@ -89,20 +89,6 @@ public interface Matrix {
     ArrayList<Matrix> getSubMatrices();
 
     /**
-     * Sets initializer of matrix.
-     *
-     * @param initializer initializer.
-     */
-    void setInitializer(Initializer initializer);
-
-    /**
-     * Returns initializer of matrix.
-     *
-     * @return initializer.
-     */
-    Matrix.Initializer getInitializer();
-
-    /**
      * Initializes matrix.
      *
      * @param initialization type of initialization defined in class Init.

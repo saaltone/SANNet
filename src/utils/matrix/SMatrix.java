@@ -119,7 +119,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
-        Matrix newMatrix = new SMatrix(rows, columns, matrix, false);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), matrix, false);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -131,7 +131,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if cloning of mask fails.
      */
     public Matrix transpose() throws MatrixException {
-        Matrix newMatrix = new SMatrix(rows, columns, matrix, true);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), matrix, true);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -172,7 +172,7 @@ public class SMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed ? row : column)) * columns + (getSliceStartColumn() + (!isTransposed ? column : row)), value);
+        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed() ? row : column)) * getPureColumns() + (getSliceStartColumn() + (!isTransposed() ? column : row)), value);
     }
 
     /**
@@ -183,7 +183,7 @@ public class SMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed ? row : column)) * columns + (getSliceStartColumn() + (!isTransposed ? column : row)), (double)0);
+        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed() ? row : column)) * getPureColumns() + (getSliceStartColumn() + (!isTransposed() ? column : row)), (double)0);
     }
 
     /**

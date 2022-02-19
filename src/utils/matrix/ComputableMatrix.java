@@ -17,12 +17,6 @@ import java.util.Random;
 public abstract class ComputableMatrix extends AbstractMatrix {
 
     /**
-     * Initializer variable.
-     *
-     */
-    private Matrix.Initializer initializer;
-
-    /**
      * If true matrix is treated as scalar (1x1) matrix otherwise as normal matrix.
      *
      */
@@ -84,19 +78,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Constructor for computable matrix.
-     *
-     * @param rows defines number of rows in matrix.
-     * @param columns defines number of columns in matrix.
-     * @param isScalar true if matrix is scalar (size 1x1).
-     * @param name name if matrix.
-     */
-    protected ComputableMatrix(int rows, int columns, boolean isScalar, String name) {
-        super(rows, columns, name);
-        this.isScalar = isScalar || (rows == 1 && columns == 1);
-    }
-
-    /**
      * Sets parameters for matrix.
      *
      * @param matrix matrix.
@@ -104,7 +85,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     protected void setParameters(Matrix matrix) throws MatrixException {
         super.setParameters(matrix);
-        matrix.setInitializer(initializer);
         matrix.setStride(stride);
         matrix.setDilation(dilation);
         matrix.setFilterRowSize(filterRowSize);
@@ -132,24 +112,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Sets initializer of matrix.
-     *
-     * @param initializer initializer.
-     */
-    public void setInitializer(Matrix.Initializer initializer) {
-        this.initializer = initializer;
-    }
-
-    /**
-     * Returns initializer of matrix.
-     *
-     * @return initializer.
-     */
-    public Matrix.Initializer getInitializer() {
-        return initializer;
-    }
-
-    /**
      * Initializes matrix.
      *
      * @param initialization type of initialization defined in class Init.
@@ -167,67 +129,22 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public void initialize(Initialization initialization, int inputs, int outputs) {
         switch (initialization) {
-            case ZERO -> initializer = (Initializer & Serializable) (row, col) -> 0;
-            case ONE -> {
-                initializer = (Initializer & Serializable) (row, col) -> 1;
-                initialize(initializer);
-            }
-            case RANDOM -> {
-                initializer = (Initializer & Serializable) (row, col) -> random.nextDouble();
-                initialize(initializer);
-            }
-            case IDENTITY -> {
-                initializer = (Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0;
-                initialize(initializer);
-            }
-            case NORMAL_XAVIER -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (getRows() + getColumns())));
-                initialize(initializer);
-            }
-            case UNIFORM_XAVIER -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows() + getColumns())));
-                initialize(initializer);
-            }
-            case NORMAL_HE -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double) getRows())));
-                initialize(initializer);
-            }
-            case UNIFORM_HE -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows())));
-                initialize(initializer);
-            }
-            case NORMAL_LECUN -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (getRows())));
-                initialize(initializer);
-            }
-            case UNIFORM_LECUN -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (getRows())));
-                initialize(initializer);
-            }
-            case NORMAL_XAVIER_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs + inputs)));
-                initialize(initializer);
-            }
-            case UNIFORM_XAVIER_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs + inputs)));
-                initialize(initializer);
-            }
-            case NORMAL_HE_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs)));
-                initialize(initializer);
-            }
-            case UNIFORM_HE_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs)));
-                initialize(initializer);
-            }
-            case NORMAL_LECUN_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (outputs)));
-                initialize(initializer);
-            }
-            case UNIFORM_LECUN_CONV -> {
-                initializer = (Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (outputs)));
-                initialize(initializer);
-            }
+            case ZERO -> initialize((Initializer & Serializable) (row, col) -> 0);
+            case ONE -> initialize((Initializer & Serializable) (row, col) -> 1);
+            case RANDOM -> initialize((Initializer & Serializable) (row, col) -> random.nextDouble());
+            case IDENTITY -> initialize((Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0);
+            case NORMAL_XAVIER -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (getRows() + getColumns()))));
+            case UNIFORM_XAVIER -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows() + getColumns()))));
+            case NORMAL_HE -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double) getRows()))));
+            case UNIFORM_HE -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows()))));
+            case NORMAL_LECUN -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (getRows()))));
+            case UNIFORM_LECUN -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (getRows()))));
+            case NORMAL_XAVIER_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs + inputs))));
+            case UNIFORM_XAVIER_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs + inputs))));
+            case NORMAL_HE_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs))));
+            case UNIFORM_HE_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs))));
+            case NORMAL_LECUN_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (outputs))));
+            case UNIFORM_LECUN_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (outputs))));
             default -> {
             }
         }

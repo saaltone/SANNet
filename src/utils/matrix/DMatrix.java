@@ -34,19 +34,6 @@ public class DMatrix extends ComputableMatrix {
     }
 
     /**
-     * Constructor for scalar matrix (size 1x1).
-     *
-     * @param scalarValue value for matrix.
-     * @param name name of matrix.
-     */
-    public DMatrix(double scalarValue, String name) {
-        super(1, 1,true, name);
-        matrix = new double[1][1];
-        matrix[0][0] = scalarValue;
-        updateSliceDimensions(0, 0, 0, 0);
-    }
-
-    /**
      * Constructor for dense matrix.
      *
      * @param rows defines number of rows in matrix.
@@ -54,19 +41,6 @@ public class DMatrix extends ComputableMatrix {
      */
     public DMatrix(int rows, int columns) {
         super(rows, columns, false);
-        matrix = new double[rows][columns];
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
-    }
-
-    /**
-     * Constructor for dense matrix.
-     *
-     * @param rows defines number of rows in matrix.
-     * @param columns defines number of columns in matrix.
-     * @param name name of matrix.
-     */
-    public DMatrix(int rows, int columns, String name) {
-        super(rows, columns, false, name);
         matrix = new double[rows][columns];
         updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
@@ -91,51 +65,10 @@ public class DMatrix extends ComputableMatrix {
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
      * @param initialization type of initialization defined in class Init.
-     * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
-     * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
-     * @param name name of matrix.
-     */
-    public DMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs, String name) {
-        this(rows, columns, name);
-        initialize(initialization, inputs, outputs);
-    }
-
-    /**
-     * Constructor for dense matrix.
-     *
-     * @param rows defines number of rows in matrix.
-     * @param columns defines number of columns in matrix.
-     * @param initialization type of initialization defined in class Init.
      */
     public DMatrix(int rows, int columns, Initialization initialization) {
         this(rows, columns);
         initialize(initialization);
-    }
-
-    /**
-     * Constructor for dense matrix.
-     *
-     * @param rows defines number of rows in matrix.
-     * @param columns defines number of columns in matrix.
-     * @param initialization type of initialization defined in class Init.
-     * @param name name of matrix.
-     */
-    public DMatrix(int rows, int columns, Initialization initialization, String name) {
-        this(rows, columns, name);
-        initialize(initialization);
-    }
-
-    /**
-     * Constructor for dense matrix.
-     *
-     * @param rows defines number of rows in matrix.
-     * @param columns defines number of columns in matrix.
-     * @param initializer initializer.
-     * @param name name of matrix.
-     */
-    public DMatrix(int rows, int columns, Matrix.Initializer initializer, String name) {
-        this(rows, columns, name);
-        initialize(initializer);
     }
 
     /**
@@ -297,7 +230,7 @@ public class DMatrix extends ComputableMatrix {
      * @param value new value to be set.
      */
     public void setValue(int row, int column, double value) {
-        matrix[isScalar() ? 0 : getSliceStartRow() + (!isTransposed ? row : column)][isScalar() ? 0 : getSliceStartColumn() + (!isTransposed ? column : row)] = value;
+        matrix[isScalar() ? 0 : getSliceStartRow() + (!isTransposed() ? row : column)][isScalar() ? 0 : getSliceStartColumn() + (!isTransposed() ? column : row)] = value;
     }
 
     /**
@@ -308,7 +241,7 @@ public class DMatrix extends ComputableMatrix {
      * @return value of row and column.
      */
     public double getValue(int row, int column) {
-        return matrix[isScalar() ? 0 : getSliceStartRow() + (!isTransposed ? row : column)][isScalar() ? 0 : getSliceStartColumn() + (!isTransposed ? column : row)];
+        return matrix[isScalar() ? 0 : getSliceStartRow() + (!isTransposed() ? row : column)][isScalar() ? 0 : getSliceStartColumn() + (!isTransposed() ? column : row)];
     }
 
     /**
