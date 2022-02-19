@@ -24,19 +24,19 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * Maximum value.
      *
      */
-    private double value = Double.NEGATIVE_INFINITY;
+    private double maxValue = Double.NEGATIVE_INFINITY;
 
     /**
      * Maximum row.
      *
      */
-    private int row = -1;
+    private int maxRow = -1;
 
     /**
      * Maximum column.
      *
      */
-    private int column = -1;
+    private int maxColumn = -1;
 
     /**
      * Constructor for max matrix operation.
@@ -59,8 +59,8 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
         this.input = input;
         applyMatrixOperation();
         int[] result = new int[2];
-        result[0] = getRow();
-        result[1] = getColumn();
+        result[0] = getMaxRow();
+        result[1] = getMaxColumn();
         return result;
     }
 
@@ -74,7 +74,7 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
     public double applyMax(Matrix input) throws MatrixException {
         this.input = input;
         applyMatrixOperation();
-        return getValue();
+        return getMaxValue();
     }
 
     /**
@@ -103,38 +103,38 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        if (value > this.value) {
-            this.value = value;
-            this.row = row;
-            this.column = column;
+        if (value > this.maxValue) {
+            this.maxValue = value;
+            this.maxRow = row;
+            this.maxColumn = column;
         }
     }
 
     /**
-     * Returns min value;
+     * Returns max value;
      *
-     * @return min value;
+     * @return max value;
      */
-    public double getValue() {
-        return value;
+    public double getMaxValue() {
+        return maxValue;
     }
 
     /**
-     * Returns min row.
+     * Returns max row.
      *
-     * @return min row.
+     * @return max row.
      */
-    public int getRow() {
-        return row;
+    public int getMaxRow() {
+        return maxRow;
     }
 
     /**
-     * Returns min column.
+     * Returns max column.
      *
-     * @return min column.
+     * @return max column.
      */
-    public int getColumn() {
-        return column;
+    public int getMaxColumn() {
+        return maxColumn;
     }
 
 }

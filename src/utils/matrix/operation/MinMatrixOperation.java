@@ -24,19 +24,19 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * Minimum value.
      *
      */
-    private double value = Double.POSITIVE_INFINITY;
+    private double minValue = Double.POSITIVE_INFINITY;
 
     /**
      * Minimum row.
      *
      */
-    private int row = -1;
+    private int minRow = -1;
 
     /**
      * Minimum column.
      *
      */
-    private int column = -1;
+    private int minColumn = -1;
 
     /**
      * Constructor for min matrix operation.
@@ -59,8 +59,8 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
         this.input = input;
         applyMatrixOperation();
         int[] result = new int[2];
-        result[0] = getRow();
-        result[1] = getColumn();
+        result[0] = getMinRow();
+        result[1] = getMinColumn();
         return result;
     }
 
@@ -74,7 +74,7 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
     public double applyMin(Matrix input) throws MatrixException {
         this.input = input;
         applyMatrixOperation();
-        return getValue();
+        return getMinValue();
     }
 
     /**
@@ -103,10 +103,10 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        if (value < this.value) {
-            this.value = value;
-            this.row = row;
-            this.column = column;
+        if (value < this.minValue) {
+            this.minValue = value;
+            this.minRow = row;
+            this.minColumn = column;
         }
     }
 
@@ -115,8 +115,8 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      *
      * @return min value;
      */
-    public double getValue() {
-        return value;
+    public double getMinValue() {
+        return minValue;
     }
 
     /**
@@ -124,8 +124,8 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      *
      * @return min row.
      */
-    public int getRow() {
-        return row;
+    public int getMinRow() {
+        return minRow;
     }
 
     /**
@@ -133,8 +133,8 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      *
      * @return min column.
      */
-    public int getColumn() {
-        return column;
+    public int getMinColumn() {
+        return minColumn;
     }
 
 }
