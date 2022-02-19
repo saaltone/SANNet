@@ -124,17 +124,26 @@ public class GRULayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         GRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wz = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wz");
-            Wr = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wr");
-            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
+            Wz = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wz.setName("Wz");
+            Wr = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wr.setName("Wr");
+            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wh.setName("Wh");
 
-            Uz = new DMatrix(layerWidth, layerWidth, initialization, "Uz");
-            Ur = new DMatrix(layerWidth, layerWidth, initialization, "Ur");
-            Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
+            Uz = new DMatrix(layerWidth, layerWidth, initialization);
+            Uz.setName("Uz");
+            Ur = new DMatrix(layerWidth, layerWidth, initialization);
+            Ur.setName("Ur");
+            Uh = new DMatrix(layerWidth, layerWidth, initialization);
+            Uh.setName("Uh");
 
-            bz = new DMatrix(layerWidth, 1, "bz");
-            br = new DMatrix(layerWidth, 1, "br");
-            bh = new DMatrix(layerWidth, 1, "bh");
+            bz = new DMatrix(layerWidth, 1);
+            bz.setName("bz");
+            br = new DMatrix(layerWidth, 1);
+            br.setName("br");
+            bh = new DMatrix(layerWidth, 1);
+            bh.setName("bh");
 
             weights.add(Wz);
             weights.add(Wr);
@@ -375,7 +384,8 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);

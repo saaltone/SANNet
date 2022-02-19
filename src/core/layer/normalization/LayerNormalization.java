@@ -63,8 +63,10 @@ public class LayerNormalization extends AbstractExecutionLayer {
          * @param previousLayerHeight height of previous layer.
          */
         LayerNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight) {
-            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
-            beta = new DMatrix(previousLayerWidth, previousLayerHeight, "Beta");
+            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1);
+            gamma.setName("Gamma");
+            beta = new DMatrix(previousLayerWidth, previousLayerHeight);
+            beta.setName("Beta");
 
             weights.add(gamma);
             weights.add(beta);
@@ -209,7 +211,8 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         return new MMatrix(input);
     }

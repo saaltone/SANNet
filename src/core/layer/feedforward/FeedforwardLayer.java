@@ -68,8 +68,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
          * @param regulateDirectWeights if true direct weights are regulated.
          */
         FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
-            weight = new DMatrix(layerWidth, previousLayerWidth, initialization, "Weight");
-            bias = new DMatrix(layerWidth, 1, "bias");
+            weight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            weight.setName("Weight");
+            bias = new DMatrix(layerWidth, 1);
+            bias.setName("Bias");
 
             weights.add(weight);
             weights.add(bias);
@@ -232,7 +234,8 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         return new MMatrix(input);
     }

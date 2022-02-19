@@ -64,8 +64,10 @@ public class BatchNormalization extends AbstractExecutionLayer {
          * @param previousLayerHeight height of previous layer.
          */
         BatchNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight) {
-            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1, "Gamma");
-            beta = new DMatrix(previousLayerWidth, previousLayerHeight, "Beta");
+            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1);
+            gamma.setName("Gamma");
+            beta = new DMatrix(previousLayerWidth, previousLayerHeight);
+            beta.setName("Beta");
 
             weights.add(gamma);
             weights.add(beta);
@@ -272,7 +274,9 @@ public class BatchNormalization extends AbstractExecutionLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new MMatrix(1, "Inputs");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        input.put(0, new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE, "Inputs"));
+        Matrix inputMatrix = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
+        inputMatrix.setName("Input");
+        input.put(0, inputMatrix);
         return input;
     }
 
@@ -369,12 +373,11 @@ public class BatchNormalization extends AbstractExecutionLayer {
                 for (Map.Entry<Integer, MMatrix> entry : inputSequence.entrySet()) {
                     int sampleIndex = entry.getKey();
                     MMatrix inputSample = entry.getValue();
-                    MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
+                    int depth = inputSample.getDepth();
+                    MMatrix outputSample = new MMatrix(depth);
                     layerOutputs.put(sampleIndex, outputSample);
-                    for (Map.Entry<Integer, Matrix> entry1 : inputSample.entrySet()) {
-                        int depthIndex = entry1.getKey();
-                        Matrix inputSampleEntry = entry1.getValue();
-                        outputSample.put(depthIndex, inputSampleEntry.subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
+                    for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }
@@ -384,10 +387,9 @@ public class BatchNormalization extends AbstractExecutionLayer {
                     MMatrix inputSample = entry.getValue();
                     MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
                     layerOutputs.put(sampleIndex, outputSample);
-                    for (Map.Entry<Integer, Matrix> entry1 : inputSample.entrySet()) {
-                        int depthIndex = entry1.getKey();
-                        Matrix inputSampleEntry = entry1.getValue();
-                        outputSample.put(depthIndex, inputSampleEntry.subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
+                    int depth = inputSample.getDepth();
+                    for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                     }
                 }
             }

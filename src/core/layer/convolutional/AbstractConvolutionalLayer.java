@@ -101,12 +101,14 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
             this.previousLayerDepth = previousLayerDepth;
 
             for (int filterIndex = 0; filterIndex < numberOfFilters; filterIndex++) {
-                Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize, "Wf" + filterIndex);
+                Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, initialization, previousLayerDepth * filterRowSize * filterColumnSize, numberOfFilters * filterRowSize * filterColumnSize);
+                filterWeight.setName("Wf" + filterIndex);
                 filterWeights.put(filterIndex, filterWeight);
                 weights.add(filterWeight);
                 registerWeight(filterWeight, regulateWeights, true);
 
-                Matrix filterBias = new DMatrix(0, "Bf" + filterIndex);
+                Matrix filterBias = new DMatrix(0);
+                filterBias.setName("Bf" + filterIndex);
                 filterBiases.put(filterIndex, filterBias);
                 weights.add(filterBias);
                 registerWeight(filterBias, false, false);
@@ -403,7 +405,11 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new MMatrix(previousLayerDepth, "Inputs");
-        for (int index = 0; index < previousLayerDepth; index++) inputs.put(index, new DMatrix(previousLayerWidth, previousLayerHeight, "Input" + index));
+        for (int index = 0; index < previousLayerDepth; index++) {
+            Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
+            input.setName("Input" + index);
+            inputs.put(index, input);
+        }
         return inputs;
     }
 

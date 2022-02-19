@@ -75,9 +75,12 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         RecurrentWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            weight = new DMatrix(layerWidth, previousLayerWidth, initialization, "Weight");
-            recurrentWeight = new DMatrix(layerWidth, layerWidth, initialization, "RecurrentWeight");
-            bias = new DMatrix(layerWidth, 1, "bias");
+            weight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            weight.setName("Weight");
+            recurrentWeight = new DMatrix(layerWidth, layerWidth, initialization);
+            recurrentWeight.setName("RecurrentWeight");
+            bias = new DMatrix(layerWidth, 1);
+            bias.setName("Bias");
 
             weights.add(weight);
             weights.add(recurrentWeight);
@@ -285,7 +288,8 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);

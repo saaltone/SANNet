@@ -147,7 +147,8 @@ public class ActivationLayer extends AbstractExecutionLayer {
         int layerDepth = getLayerDepth();
         inputs = new MMatrix(layerDepth, "Inputs");
         for (int index = 0; index < layerDepth; index++) {
-            Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), Initialization.ONE, "Input" + index);
+            Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), Initialization.ONE);
+            input.setName("Input" + index);
             if (getPreviousLayer().isBidirectional()) input = input.split(getLayerWidth() / 2, true);
             inputs.put(index, input);
         }

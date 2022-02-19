@@ -134,19 +134,30 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         PeepholeLSTMWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wi = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wi");
-            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
-            Wo = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wo");
-            Ws = new DMatrix(layerWidth, previousLayerWidth, initialization, "Ws");
+            Wi = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wi.setName("Wi");
+            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wf.setName("Wf");
+            Wo = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wo.setName("Wo");
+            Ws = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Ws.setName("Ws");
 
-            Ui = new DMatrix(layerWidth, layerWidth, initialization, "Ui");
-            Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
-            Uo = new DMatrix(layerWidth, layerWidth, initialization, "Uo");
+            Ui = new DMatrix(layerWidth, layerWidth, initialization);
+            Ui.setName("Ui");
+            Uf = new DMatrix(layerWidth, layerWidth, initialization);
+            Uf.setName("Uf");
+            Uo = new DMatrix(layerWidth, layerWidth, initialization);
+            Uo.setName("Uo");
 
-            bi = new DMatrix(layerWidth, 1, "bi");
-            bf = new DMatrix(layerWidth, 1, "bf");
-            bo = new DMatrix(layerWidth, 1, "bo");
-            bs = new DMatrix(layerWidth, 1, "bs");
+            bi = new DMatrix(layerWidth, 1);
+            bi.setName("bi");
+            bf = new DMatrix(layerWidth, 1);
+            bf.setName("bf");
+            bo = new DMatrix(layerWidth, 1);
+            bo.setName("bo");
+            bs = new DMatrix(layerWidth, 1);
+            bs.setName("bs");
 
             weights.add(Wi);
             weights.add(Wf);
@@ -439,7 +450,8 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) previousCellState = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);

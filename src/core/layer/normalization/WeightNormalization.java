@@ -81,7 +81,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         g = 1;
-        gMatrix = new DMatrix(g, "g");
+        gMatrix = new DMatrix(g);
+        gMatrix.setName("g");
         gMatrix.setValue(0, 0, g);
     }
 
@@ -149,8 +150,9 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         return new MMatrix(input);
     }
 

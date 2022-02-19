@@ -74,10 +74,14 @@ public class DuelingLayer extends AbstractExecutionLayer {
          * @param regulateDirectWeights if true direct weights are regulated.
          */
         DuelingWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
-            valueWeight = new DMatrix(1, previousLayerWidth, initialization, "ValueWeight");
-            valueBias = new DMatrix(layerWidth, 1, "ValueBias");
-            actionWeight = new DMatrix(layerWidth, previousLayerWidth, initialization, "ActionWeight");
-            actionBias = new DMatrix(layerWidth, 1, "ActionBias");
+            valueWeight = new DMatrix(1, previousLayerWidth, initialization);
+            valueWeight.setName("ValueWeight");
+            valueBias = new DMatrix(layerWidth, 1);
+            valueWeight.setName("ValueBias");
+            actionWeight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            valueWeight.setName("ActionWeight");
+            actionBias = new DMatrix(layerWidth, 1);
+            valueWeight.setName("ActionBias");
 
             weights.add(valueWeight);
             weights.add(valueBias);
@@ -229,11 +233,13 @@ public class DuelingLayer extends AbstractExecutionLayer {
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new MMatrix(2, "Inputs");
 
-        Matrix valueInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        Matrix valueInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        valueInput.setName("Input");
         if (getPreviousLayer().isBidirectional()) valueInput = valueInput.split(getPreviousLayerWidth() / 2, true);
         inputs.put(0, valueInput);
 
-        Matrix actionInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        Matrix actionInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        actionInput.setName("Input");
         if (getPreviousLayer().isBidirectional()) actionInput = actionInput.split(getPreviousLayerWidth() / 2, true);
         inputs.put(1, actionInput);
 
@@ -291,15 +297,13 @@ public class DuelingLayer extends AbstractExecutionLayer {
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
         if (procedure != null) setLayerGradients(procedure.calculateGradient(getNextLayerGradients(), getTruncateSteps()));
-        int inputDepth = getLayerGradients().getDepth();
-        Sequence layerGradients = getLayerGradients();
-        for (Map.Entry<Integer, MMatrix> entry : layerGradients.entrySet()) {
+        Sequence unJoinedLayerGradients = getLayerGradients();
+        Sequence layerGradients = new Sequence();
+        setLayerGradients(layerGradients);
+        for (Map.Entry<Integer, MMatrix> entry : unJoinedLayerGradients.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix layerGradient = entry.getValue();
-            MMatrix currentLayerGradient = new MMatrix(inputDepth);
-            layerGradient.get(0).add(layerGradient.get(1), layerGradient.get(0));
-            currentLayerGradient.put(0, layerGradient.get(0));
-            layerGradients.put(sampleIndex, currentLayerGradient);
+            layerGradients.put(sampleIndex, new MMatrix(layerGradient.get(0).add(layerGradient.get(1))));
         }
     }
 

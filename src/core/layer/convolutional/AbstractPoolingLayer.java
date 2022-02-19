@@ -221,7 +221,11 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new MMatrix(previousLayerDepth, "Inputs");
-        for (int index = 0; index < previousLayerDepth; index++) inputs.put(index, new DMatrix(previousLayerWidth, previousLayerHeight, "Input" + index));
+        for (int index = 0; index < previousLayerDepth; index++) {
+            Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
+            input.setName("Input" + index);
+            inputs.put(index, input);
+        }
         return inputs;
     }
 
@@ -234,15 +238,16 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(previousLayerDepth, "Outputs");
 
-        int size = inputs.size();
-        for (int channelIndex = 0; channelIndex < size; channelIndex++) {
+        int depth = inputs.getDepth();
+        for (int channelIndex = 0; channelIndex < depth; channelIndex++) {
             Matrix input = inputs.get(channelIndex);
             input.setStride(stride);
             input.setFilterRowSize(filterRowSize);
             input.setFilterColumnSize(filterColumnSize);
 
-            Matrix output;
-            outputs.put(channelIndex, output = new DMatrix(layerWidth, layerHeight, "Output" + channelIndex));
+            Matrix output = new DMatrix(layerWidth, layerHeight);
+            output.setName("Output" + channelIndex);
+            outputs.put(channelIndex, output);
 
             executePoolingOperation(input, output);
         }

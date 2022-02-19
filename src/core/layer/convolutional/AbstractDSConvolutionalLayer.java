@@ -107,12 +107,14 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
             this.numberOfFilters = numberOfFilters;
 
             for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, initialization, filterRowSize * filterColumnSize, filterRowSize * filterColumnSize, "WfD" + channelIndex);
+                Matrix filterWeight = new DMatrix(filterRowSize, filterColumnSize, initialization, filterRowSize * filterColumnSize, filterRowSize * filterColumnSize);
+                filterWeight.setName("WfD" + channelIndex);
                 filterWeightsDepthWise.put(channelIndex, filterWeight);
                 weights.add(filterWeight);
                 registerWeight(filterWeight, regulateWeights, true);
 
-                Matrix filterBias = new DMatrix(0, "BfD" + channelIndex);
+                Matrix filterBias = new DMatrix(0);
+                filterBias.setName("BfD" + channelIndex);
                 filterBiasesDepthWise.put(channelIndex, filterBias);
                 weights.add(filterBias);
                 registerWeight(filterBias, false, false);
@@ -122,13 +124,15 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
                 HashMap<Integer, Matrix> filterWeightsPointWisePerChannel = new HashMap<>();
                 filterWeightsPointWise.put(filterIndex, filterWeightsPointWisePerChannel);
                 for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-                    Matrix filterWeight = new DMatrix(1, 1, initialization, 1, numberOfFilters, "WfP" + filterIndex);
+                    Matrix filterWeight = new DMatrix(1, 1, initialization, 1, numberOfFilters);
+                    filterWeight.setName("WfP" + filterIndex);
                     filterWeightsPointWisePerChannel.put(channelIndex, filterWeight);
                     weights.add(filterWeight);
                     registerWeight(filterWeight, regulateWeights, true);
                 }
 
-                Matrix filterBias = new DMatrix(0, "BfP" + filterIndex);
+                Matrix filterBias = new DMatrix(0);
+                filterBias.setName("BfP" + filterIndex);
                 filterBiasesPointWise.put(filterIndex, filterBias);
                 weights.add(filterBias);
                 registerWeight(filterBias, false, false);
@@ -430,7 +434,11 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new MMatrix(previousLayerDepth, "Inputs");
-        for (int index = 0; index < previousLayerDepth; index++) inputs.put(index, new DMatrix(previousLayerWidth, previousLayerHeight, "Input" + index));
+        for (int index = 0; index < previousLayerDepth; index++) {
+            Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
+            input.setName("Input" + index);
+            inputs.put(index, input);
+        }
         return inputs;
     }
 

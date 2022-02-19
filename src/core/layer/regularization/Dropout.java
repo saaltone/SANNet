@@ -93,7 +93,9 @@ public class Dropout extends AbstractRegularizationLayer {
 
         if (isTraining()) {
             for (MMatrix sample : inputSequence.values()) {
-                for (Matrix matrix : sample.values()) {
+                int matrixDepth = sample.getDepth();
+                for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                    Matrix matrix = sample.get(inputDepth);
                     // Implements forward step for inverted drop out.<br>
                     // Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
                     // During training phase it also compensates all remaining inputs by dividing by probability.<br>

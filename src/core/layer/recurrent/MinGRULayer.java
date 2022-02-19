@@ -105,14 +105,20 @@ public class MinGRULayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         MinGRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wf");
-            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization, "Wh");
+            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wf.setName("Wf");
+            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wh.setName("Wh");
 
-            Uf = new DMatrix(layerWidth, layerWidth, initialization, "Uf");
-            Uh = new DMatrix(layerWidth, layerWidth, initialization, "Uh");
+            Uf = new DMatrix(layerWidth, layerWidth, initialization);
+            Uf.setName("Uf");
+            Uh = new DMatrix(layerWidth, layerWidth, initialization);
+            Uh.setName("Uh");
 
-            bf = new DMatrix(layerWidth, 1, "bf");
-            bh = new DMatrix(layerWidth, 1, "bh");
+            bf = new DMatrix(layerWidth, 1);
+            bf.setName("bf");
+            bh = new DMatrix(layerWidth, 1);
+            bh.setName("bh");
 
             weights.add(Wf);
             weights.add(Wh);
@@ -343,7 +349,8 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE, "Input");
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
         if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
         return new MMatrix(input);

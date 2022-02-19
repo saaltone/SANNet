@@ -156,9 +156,9 @@ public class OutputLayer extends AbstractPlainLayer {
             int sampleIndex = entry.getKey();
             MMatrix target = entry.getValue();
             MMatrix sample = getLayerOutputs().get(sampleIndex);
-            for (Map.Entry<Integer, Matrix> entry1 : target.entrySet()) {
-                int depthIndex = entry1.getKey();
-                Matrix currentTargets = entry1.getValue();
+            int depth = target.getDepth();
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                Matrix currentTargets = target.get(depthIndex);
                 Matrix currentOutputs = sample.get(depthIndex);
                 Matrix outputError;
                 if (multiOutput) {
@@ -204,11 +204,11 @@ public class OutputLayer extends AbstractPlainLayer {
         for (Map.Entry<Integer, MMatrix> entry : targets.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix target = entry.getValue();
+            int depth = target.getDepth();
             MMatrix sample = getLayerOutputs().get(sampleIndex);
-            MMatrix gradient = new MMatrix(sample.getDepth());
-            for (Map.Entry<Integer, Matrix> entry1 : target.entrySet()) {
-                int depthIndex = entry1.getKey();
-                Matrix currentTargets = entry1.getValue();
+            MMatrix gradient = new MMatrix(depth);
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                Matrix currentTargets = target.get(depthIndex);
                 Matrix currentOutputs = sample.get(depthIndex);
                 Matrix outputGradient;
                 if (multiOutput) {
