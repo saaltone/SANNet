@@ -5,12 +5,12 @@
 
 package utils.procedure.node;
 
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Defines interface for node.
@@ -88,17 +88,15 @@ public interface Node {
      * Stores matrix dependency
      *
      * @param backupIndex backup index
-     * @throws MatrixException throws exception if storing dependency fails.
      */
-    void storeMatrixDependency(int backupIndex) throws MatrixException;
+    void storeMatrixDependency(int backupIndex);
 
     /**
      * Restores matrix dependency.
      *
      * @param backupIndex backup index.
-     * @throws MatrixException throws exception if restoring of backup fails.
      */
-    void restoreMatrixDependency(int backupIndex) throws MatrixException;
+    void restoreMatrixDependency(int backupIndex);
 
     /**
      * Return name of node
@@ -212,16 +210,15 @@ public interface Node {
      *
      * @return matrices of node.
      */
-    MMatrix getMatrices();
+    TreeMap<Integer, Matrix> getMatrices();
 
     /**
      * Sets gradient matrix of node.
      *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
-     * @throws MatrixException throws exception if putting of matrix fails.
      */
-    void setGradient(int index, Matrix gradient) throws MatrixException;
+    void setGradient(int index, Matrix gradient);
 
     /**
      * Returns gradient matrix of node.

@@ -11,6 +11,7 @@ import utils.matrix.MatrixException;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Defines node with single matrix inside.
@@ -171,7 +172,7 @@ public class SingleNode extends AbstractNode {
      *
      * @return matrices of node.
      */
-    public MMatrix getMatrices() {
+    public TreeMap<Integer, Matrix> getMatrices() {
         return null;
     }
 

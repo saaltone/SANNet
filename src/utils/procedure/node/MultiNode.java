@@ -12,6 +12,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Defines node with multiple matrices inside.
@@ -23,19 +24,19 @@ public class MultiNode extends AbstractNode {
      * Matrices for node.
      *
      */
-    private transient MMatrix matrices;
+    private transient TreeMap<Integer, Matrix> matrices;
 
     /**
      * Gradients for node.
      *
      */
-    private transient MMatrix gradients;
+    private transient TreeMap<Integer, Matrix> gradients;
 
     /**
      * Matrix backup for forward dependencies.
      *
      */
-    private transient HashMap<Integer, MMatrix> matrixBackup = new HashMap<>();
+    private transient HashMap<Integer, TreeMap<Integer, Matrix>> matrixBackup = new HashMap<>();
 
     /**
      * Constructor for multi node.
@@ -46,9 +47,9 @@ public class MultiNode extends AbstractNode {
      */
     public MultiNode(int id, Matrix referenceMatrix) throws MatrixException {
         super(id, referenceMatrix);
-        matrices = new MMatrix();
+        matrices = new TreeMap<>();
         matrices.put(0, referenceMatrix);
-        gradients = new MMatrix();
+        gradients = new TreeMap<>();
     }
 
     /**
@@ -60,10 +61,9 @@ public class MultiNode extends AbstractNode {
      */
     public MultiNode(int id, MMatrix referenceMatrix) throws MatrixException {
         this(id, referenceMatrix.getReferenceMatrix());
-        for (Map.Entry<Integer, Matrix> entry : referenceMatrix.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            matrices.put(index, matrix);
+        int depth = referenceMatrix.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            matrices.put(depthIndex, referenceMatrix.get(depthIndex));
         }
     }
 
@@ -80,11 +80,10 @@ public class MultiNode extends AbstractNode {
      * Stores matrix dependency
      *
      * @param backupIndex backup index
-     * @throws MatrixException throws exception if storing dependency fails.
      */
-    public void storeMatrixDependency(int backupIndex) throws MatrixException {
+    public void storeMatrixDependency(int backupIndex) {
         if (getToNode() == null) return;
-        MMatrix matricesBackup = new MMatrix();
+        TreeMap<Integer, Matrix> matricesBackup = new TreeMap<>();
         for (Map.Entry<Integer, Matrix> entry : entrySet()) {
             int index = entry.getKey();
             Matrix matrix = entry.getValue();
@@ -97,12 +96,11 @@ public class MultiNode extends AbstractNode {
      * Restores matrix dependency.
      *
      * @param backupIndex backup index.
-     * @throws MatrixException throws exception if restoring of backup fails.
      */
-    public void restoreMatrixDependency(int backupIndex) throws MatrixException {
+    public void restoreMatrixDependency(int backupIndex) {
         if (getToNode() == null || matrixBackup == null) return;
         if (matrixBackup.containsKey(backupIndex)) {
-            MMatrix matricesBackup = matrixBackup.get(backupIndex);
+            TreeMap<Integer, Matrix> matricesBackup = matrixBackup.get(backupIndex);
             for (Map.Entry<Integer, Matrix> entry : matricesBackup.entrySet()) {
                 int index = entry.getKey();
                 Matrix matrix = entry.getValue();
@@ -145,7 +143,7 @@ public class MultiNode extends AbstractNode {
      * @return returns true if node contains specific matrix.
      */
     public boolean contains(Matrix matrix) {
-        return matrices.contains(matrix);
+        return matrices.containsValue(matrix);
     }
 
     /**
@@ -155,8 +153,8 @@ public class MultiNode extends AbstractNode {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public void resetNode(boolean resetDependentNodes) throws MatrixException {
-        if (getToNode() == null || resetDependentNodes) matrices = new MMatrix();
-        gradients = new MMatrix();
+        if (getToNode() == null || resetDependentNodes) matrices = new TreeMap<>();
+        gradients = new TreeMap<>();
         matrixBackup = new HashMap<>();
         super.resetNode(resetDependentNodes);
     }
@@ -205,7 +203,7 @@ public class MultiNode extends AbstractNode {
      *
      * @return matrices of node.
      */
-    public MMatrix getMatrices() {
+    public TreeMap<Integer, Matrix> getMatrices() {
         return matrices;
     }
 
@@ -214,9 +212,8 @@ public class MultiNode extends AbstractNode {
      *
      * @param index data index for gradient.
      * @param gradient gradient matrix of node.
-     * @throws MatrixException throws exception if putting of matrix fails.
      */
-    public void setGradient(int index, Matrix gradient) throws MatrixException {
+    public void setGradient(int index, Matrix gradient) {
         gradients.put(index, gradient);
     }
 
