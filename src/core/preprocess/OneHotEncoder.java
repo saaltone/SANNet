@@ -46,7 +46,9 @@ public class OneHotEncoder {
         if (!keepMapping) mapping = new HashMap<>();
         int rows = -1;
         for (MMatrix sample : input.values()) {
-            for (Matrix entry : sample.values()) {
+            int matrixDepth = sample.getDepth();
+            for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                Matrix entry = sample.get(inputDepth);
                 if (rows == -1) rows = entry.getColumns();
                 else if(rows != entry.getColumns()) throw new MatrixException("Inconsistent number of columns in input.");
             }
@@ -64,9 +66,9 @@ public class OneHotEncoder {
                 HashMap<Integer, HashMap<Integer, Integer>> sampleMapping;
                 if (itemsMap.containsKey(index)) sampleMapping = itemsMap.get(index);
                 else itemsMap.put(index, sampleMapping = new HashMap<>());
-                for (Map.Entry<Integer, Matrix> entry1 : sample.entrySet()) {
-                    int depth = entry1.getKey();
-                    Matrix item = entry1.getValue();
+                int depth = sample.getDepth();
+                for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                    Matrix item = sample.get(depthIndex);
                     HashMap<Integer, Integer> entryMapping;
                     if (sampleMapping.containsKey(depth)) entryMapping = sampleMapping.get(depth);
                     else sampleMapping.put(depth, entryMapping = new HashMap<>());
@@ -80,12 +82,9 @@ public class OneHotEncoder {
         for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, Integer>>> entry : itemsMap.entrySet()) {
             int index = entry.getKey();
             HashMap<Integer, HashMap<Integer, Integer>> itemEntries = entry.getValue();
-            MMatrix sample = new MMatrix(itemEntries.size());
             for (Map.Entry<Integer, HashMap<Integer, Integer>> entry1 : itemEntries.entrySet()) {
-                int depth = entry1.getKey();
                 HashMap<Integer, Integer> itemEntry = entry1.getValue();
                 Matrix item = new SMatrix(prevMaxKey, 1);
-                sample.put(depth, item);
                 for (Integer row : itemEntry.values()) {
                     item.setValue(row, 0, 1);
                 }

@@ -30,8 +30,9 @@ public class ReadTextFile {
      * @param skipRowsFromStart skips specified number of rows from start.
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
+    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException, MatrixException {
         StringBuilder text = readText(fileName, skipRowsFromStart);
 
         HashMap<Integer, HashMap<Integer, Integer>> inputData = new HashMap<>();

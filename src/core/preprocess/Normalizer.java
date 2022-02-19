@@ -8,6 +8,7 @@ package core.preprocess;
 import core.network.NeuralNetworkException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 import utils.sampling.Sequence;
 
 import java.util.HashMap;
@@ -80,8 +81,9 @@ public class Normalizer {
      *
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public void minMaxSample(Matrix data) throws NeuralNetworkException {
+    public void minMaxSample(Matrix data) throws NeuralNetworkException, MatrixException {
         minMaxSample (new MMatrix(data));
     }
 
@@ -146,7 +148,9 @@ public class Normalizer {
                 minimumValues.put(row, Double.POSITIVE_INFINITY);
                 maximumValues.put(row, Double.NEGATIVE_INFINITY);
                 for (MMatrix mMatrix : data.values()) {
-                    for (Matrix matrix : mMatrix.values()) {
+                    int matrixDepth = mMatrix.getDepth();
+                    for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                        Matrix matrix = mMatrix.get(inputDepth);
                         minimumValues.put(row, Math.min(minimumValues.get(row), matrix.getValue(row, 0)));
                         maximumValues.put(row, Math.max(maximumValues.get(row), matrix.getValue(row, 0)));
                     }
@@ -155,7 +159,9 @@ public class Normalizer {
             }
             double delta = maximumValues.get(row) - minimumValues.get(row) != 0 ? maximumValues.get(row) - minimumValues.get(row) : 1;
             for (MMatrix mMatrix : data.values()) {
-                for (Matrix matrix : mMatrix.values()) {
+                int matrixDepth = mMatrix.getDepth();
+                for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                    Matrix matrix = mMatrix.get(inputDepth);
                     double newValue = (matrix.getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
                     matrix.setValue(row, 0, newValue);
                 }
@@ -225,7 +231,9 @@ public class Normalizer {
                 maximumValues.put(row, Double.NEGATIVE_INFINITY);
                 for (Sequence sequence : data.values()) {
                     for (MMatrix mMatrix : sequence.values()) {
-                        for (Matrix matrix : mMatrix.values()) {
+                        int matrixDepth = mMatrix.getDepth();
+                        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                            Matrix matrix = mMatrix.get(inputDepth);
                             minimumValues.put(row, Math.min(minimumValues.get(row), matrix.getValue(row, 0)));
                             maximumValues.put(row, Math.max(maximumValues.get(row), matrix.getValue(row, 0)));
                         }
@@ -236,7 +244,9 @@ public class Normalizer {
             double delta = maximumValues.get(row) - minimumValues.get(row) != 0 ? maximumValues.get(row) - minimumValues.get(row) : 1;
             for (Sequence sequence : data.values()) {
                 for (MMatrix mMatrix : sequence.values()) {
-                    for (Matrix matrix : mMatrix.values()) {
+                    int matrixDepth = mMatrix.getDepth();
+                    for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                        Matrix matrix = mMatrix.get(inputDepth);
                         double newValue = (matrix.getValue(row, 0) - minimumValues.get(row)) / delta * (newMaximum - newMinimum) + newMinimum;
                         matrix.setValue(row, 0, newValue);
                     }
@@ -288,8 +298,9 @@ public class Normalizer {
      *
      * @param data data to be normalized.
      * @throws NeuralNetworkException throws exception if normalizer is not yet adjusted.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public void zScoreSample(Matrix data) throws NeuralNetworkException {
+    public void zScoreSample(Matrix data) throws NeuralNetworkException, MatrixException {
         zScoreSample(new MMatrix(data));
     }
 
@@ -339,7 +350,9 @@ public class Normalizer {
             if (adjust) {
                 means.put(row, (double)0);
                 for (MMatrix mMatrix : data.values()) {
-                    for (Matrix matrix : mMatrix.values()) {
+                    int matrixDepth = mMatrix.getDepth();
+                    for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                        Matrix matrix = mMatrix.get(inputDepth);
                         means.put(row, means.get(row) + matrix.getValue(row, 0));
                     }
                 }
@@ -347,7 +360,9 @@ public class Normalizer {
 
                 standardDeviations.put(row, (double)0);
                 for (MMatrix mMatrix : data.values()) {
-                    for (Matrix matrix : mMatrix.values()) {
+                    int matrixDepth = mMatrix.getDepth();
+                    for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                        Matrix matrix = mMatrix.get(inputDepth);
                         standardDeviations.put(row, standardDeviations.get(row) + Math.pow(matrix.getValue(row, 0) - means.get(row), 2));
                     }
                 }
@@ -357,7 +372,9 @@ public class Normalizer {
             }
             if (standardDeviations.get(row) != 0) {
                 for (MMatrix mMatrix : data.values()) {
-                    for (Matrix matrix : mMatrix.values()) {
+                    int matrixDepth = mMatrix.getDepth();
+                    for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                        Matrix matrix = mMatrix.get(inputDepth);
                         double newValue = (matrix.getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
                         matrix.setValue(row, 0, newValue);
                     }
@@ -413,7 +430,9 @@ public class Normalizer {
                 means.put(row, (double)0);
                 for (Sequence sequence : data.values()) {
                     for (MMatrix mMatrix : sequence.values()) {
-                        for (Matrix matrix : mMatrix.values()) {
+                        int matrixDepth = mMatrix.getDepth();
+                        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                            Matrix matrix = mMatrix.get(inputDepth);
                             means.put(row, means.get(row) + matrix.getValue(row, 0));
                         }
                     }
@@ -423,7 +442,9 @@ public class Normalizer {
                 standardDeviations.put(row, (double)0);
                 for (Sequence sequence : data.values()) {
                     for (MMatrix mMatrix : sequence.values()) {
-                        for (Matrix matrix : mMatrix.values()) {
+                        int matrixDepth = mMatrix.getDepth();
+                        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                            Matrix matrix = mMatrix.get(inputDepth);
                             standardDeviations.put(row, standardDeviations.get(row) + Math.pow(matrix.getValue(row, 0) - means.get(row), 2));
                         }
                     }
@@ -435,7 +456,9 @@ public class Normalizer {
             if (standardDeviations.get(row) != 0) {
                 for (Sequence sequence : data.values()) {
                     for (MMatrix mMatrix : sequence.values()) {
-                        for (Matrix matrix : mMatrix.values()) {
+                        int matrixDepth = mMatrix.getDepth();
+                        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                            Matrix matrix = mMatrix.get(inputDepth);
                             double newValue = (matrix.getValue(row, 0) - means.get(row)) / standardDeviations.get(row);
                             matrix.setValue(row, 0, newValue);
                         }
