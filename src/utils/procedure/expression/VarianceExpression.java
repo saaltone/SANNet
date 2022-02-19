@@ -6,6 +6,7 @@
 package utils.procedure.expression;
 
 import utils.configurable.DynamicParamException;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
@@ -80,8 +81,8 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        mean = argument1.getMatrices().mean();
-        result.setMatrix(argument1.getMatrices().variance(mean));
+        mean = MMatrix.mean(argument1.getMatrices());
+        result.setMatrix(MMatrix.variance(argument1.getMatrices(), mean));
     }
 
     /**
