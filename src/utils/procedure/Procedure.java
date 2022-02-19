@@ -162,9 +162,8 @@ public class Procedure implements Serializable {
      * Stores matrix dependency
      *
      * @param backupIndex backup index
-     * @throws MatrixException throws exception if storing dependencies fails.
      */
-    public void storeDependencies(int backupIndex) throws MatrixException {
+    public void storeDependencies(int backupIndex) {
         for (Node node : nodes) node.storeMatrixDependency(backupIndex);
     }
 
@@ -172,9 +171,8 @@ public class Procedure implements Serializable {
      * Restores matrix dependency.
      *
      * @param backupIndex backup index.
-     * @throws MatrixException throws exception if restoring of backup fails.
      */
-    public void restoreDependencies(int backupIndex) throws MatrixException {
+    public void restoreDependencies(int backupIndex) {
         for (Node node : nodes) node.restoreMatrixDependency(backupIndex);
     }
 
@@ -247,10 +245,10 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      */
     private void setInputSample(int sampleIndex, MMatrix inputSample) throws MatrixException {
-        for (Map.Entry<Integer, Matrix> entry : inputSample.entrySet()) {
-            int nodeIndex = entry.getKey();
-            Matrix inputSampleEntry = entry.getValue();
-            getInputNodes().get(nodeIndex).setMatrix(sampleIndex, inputSampleEntry);
+        int depth = inputSample.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            Matrix inputSampleEntry = inputSample.get(depthIndex);
+            getInputNodes().get(depthIndex).setMatrix(sampleIndex, inputSampleEntry);
         }
     }
 
@@ -362,13 +360,12 @@ public class Procedure implements Serializable {
      *
      * @param sampleIndex sample index
      * @param outputSampleGradient output sample gradient
-     * @throws MatrixException throws exception if calculation fails.
      */
-    private void setOutputSampleGradient(int sampleIndex, MMatrix outputSampleGradient) throws MatrixException {
-        for (Map.Entry<Integer, Matrix> entry : outputSampleGradient.entrySet()) {
-            int nodeIndex = entry.getKey();
-            Matrix outputSampleGradientEntry = entry.getValue();
-            getOutputNodes().get(nodeIndex).setGradient(sampleIndex, outputSampleGradientEntry);
+    private void setOutputSampleGradient(int sampleIndex, MMatrix outputSampleGradient) {
+        int depth = outputSampleGradient.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            Matrix outputSampleGradientEntry = outputSampleGradient.get(depthIndex);
+            getOutputNodes().get(depthIndex).setGradient(sampleIndex, outputSampleGradientEntry);
         }
     }
 

@@ -192,7 +192,10 @@ public class ProcedureFactory implements Serializable {
     private void newProcedure(ProcedureData procedureData, MMatrix inputMatrices) {
         procedureData.inputMatrices = inputMatrices;
         inputMatrices.setProcedureFactory(this);
-        for (Matrix matrix : inputMatrices.get().values()) matrix.setProcedureFactory(this);
+        int depth = inputMatrices.getDepth();
+        for (int inputDepth = 0; inputDepth < depth; inputDepth++) {
+            inputMatrices.get(inputDepth).setProcedureFactory(this);
+        }
         currentExpressionID = 0;
         currentProcedureData = procedureData;
     }
@@ -205,11 +208,11 @@ public class ProcedureFactory implements Serializable {
      */
     private void endProcedure(ProcedureData procedureData, MMatrix outputMatrices) throws MatrixException {
         if (!nodeRegister.contains(outputMatrices)) {
-            for (Map.Entry<Integer, Matrix> entry : outputMatrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
+            int depth = outputMatrices.getDepth();
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                Matrix matrix = outputMatrices.get(depthIndex);
                 if (!nodeRegister.contains(matrix)) throw new MatrixException("Setting of output node failed. No node corresponding output matrix is found.");
-                procedureData.outputNodes.put(index, nodeRegister.getNode(matrix));
+                procedureData.outputNodes.put(depthIndex, nodeRegister.getNode(matrix));
             }
         } else procedureData.outputNodes.put(0, nodeRegister.getNode(outputMatrices));
         defineGradientPath(procedureData);
@@ -297,10 +300,9 @@ public class ProcedureFactory implements Serializable {
      */
     private Node defineNode(Matrix matrix, boolean asSingleNode) throws MatrixException {
         Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID);
-        for (Map.Entry<Integer, Matrix> entry : currentProcedureData.inputMatrices.entrySet()) {
-            int index = entry.getKey();
-            Matrix entryMatrix = entry.getValue();
-            if (entryMatrix == matrix) currentProcedureData.inputNodes.put(index, node);
+        int depth = currentProcedureData.inputMatrices.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            if (currentProcedureData.inputMatrices.get(depthIndex) == matrix) currentProcedureData.inputNodes.put(depthIndex, node);
         }
         currentProcedureData.nodes.add(node);
         return node;
@@ -315,15 +317,17 @@ public class ProcedureFactory implements Serializable {
      */
     private Node defineNode(MMatrix matrix) throws MatrixException {
         boolean isSingleNode = false;
-        for (Matrix singleMatrix : matrix.values()) {
-            if (constantMatrices.contains(singleMatrix)) {
+        int matrixDepth = matrix.getDepth();
+        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+            if (constantMatrices.contains(matrix.get(inputDepth))) {
                 isSingleNode = true;
                 break;
             }
         }
         Node node = nodeRegister.defineNode(matrix, isSingleNode, currentExpressionID);
-        for (Integer index : currentProcedureData.inputMatrices.keySet()) {
-            if (currentProcedureData.inputMatrices == matrix) currentProcedureData.inputNodes.put(index, node);
+        int depth = currentProcedureData.inputMatrices.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            if (currentProcedureData.inputMatrices == matrix) currentProcedureData.inputNodes.put(depthIndex, node);
         }
         currentProcedureData.nodes.add(node);
         return node;
