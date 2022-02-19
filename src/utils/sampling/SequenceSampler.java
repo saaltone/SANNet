@@ -10,7 +10,6 @@ import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.Serial;
@@ -239,15 +238,14 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
         for (Map.Entry<Integer, MMatrix> entry : inputs.get(sampleAt).entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix input = entry.getValue();
-            MMatrix inputSample = new MMatrix(input.getDepth());
+            int depth = input.getDepth();
+            MMatrix inputSample = new MMatrix(depth);
             inputSequence.put(sampleIndex, inputSample);
             MMatrix output = outputSequenceEntry.get(sampleIndex);
-            MMatrix outputSample = new MMatrix(output.getDepth());
+            MMatrix outputSample = new MMatrix(depth);
             outputSequence.put(sampleIndex, outputSample);
-            for (Map.Entry<Integer, Matrix> depthEntry: input.entrySet()) {
-                int depthIndex = depthEntry.getKey();
-                Matrix inputMatrix = depthEntry.getValue();
-                inputSample.put(depthIndex, inputMatrix);
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                inputSample.put(depthIndex, input.get(depthIndex));
                 outputSample.put(depthIndex, output.get(depthIndex));
             }
         }

@@ -286,8 +286,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
     private void addSample(MMatrix input, MMatrix output) throws NeuralNetworkException {
         if (input == null) throw new NeuralNetworkException("Input is not defined.");
         if (output == null) throw new NeuralNetworkException("Output is not defined.");
-        if (input.size() != output.size()) throw new NeuralNetworkException("Input and output must be same size.");
-        if (input.size() == 0) throw new NeuralNetworkException("Input and output cannot be empty.");
+        if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Input and output must be of same depth.");
         if (sampleDepth == -1) sampleDepth = input.getDepth();
         if (sampleDepth != input.getDepth() || sampleDepth != output.getDepth()) throw new NeuralNetworkException("All input and output samples must have same depth.");
         if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Sample depth of input and output must match.");
