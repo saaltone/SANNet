@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
@@ -54,7 +55,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
     public void calculateExpression() throws MatrixException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        result.setMatrix(argument1.getMatrices().mean());
+        result.setMatrix(MMatrix.mean(argument1.getMatrices()));
     }
 
     /**
