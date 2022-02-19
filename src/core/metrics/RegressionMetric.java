@@ -158,10 +158,9 @@ public class RegressionMetric implements Metric, Serializable {
             int sampleIndex = entry.getKey();
             MMatrix predictedSample = entry.getValue();
             MMatrix actualSample = actual.get(sampleIndex);
-            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
-                int matrixIndex = entry1.getKey();
-                Matrix predictedSampleMatrix = entry1.getValue();
-                update(predictedSampleMatrix, actualSample.get(matrixIndex));
+            int depth = predictedSample.getDepth();
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
             }
         }
     }

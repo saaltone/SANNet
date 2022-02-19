@@ -331,10 +331,9 @@ public class ClassificationMetric implements Metric, Serializable {
             int sampleIndex = entry.getKey();
             MMatrix predictedSample = entry.getValue();
             MMatrix actualSample = actual.get(sampleIndex);
-            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
-                int depthIndex = entry1.getKey();
-                Matrix predictedSampleEntry = entry1.getValue();
-                update(predictedSampleEntry, actualSample.get(depthIndex));
+            int depth = predictedSample.getDepth();
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
             }
         }
     }
@@ -503,12 +502,11 @@ public class ClassificationMetric implements Metric, Serializable {
         for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix predictedSample = entry.getValue();
-            MMatrix classifiedSample = new MMatrix(predicted.get(sampleIndex).getDepth());
+            int depth = predictedSample.getDepth();
+            MMatrix classifiedSample = new MMatrix(depth);
             classified.put(sampleIndex, classifiedSample);
-            for (Map.Entry<Integer, Matrix> entry1 : predictedSample.entrySet()) {
-                int depthIndex = entry1.getKey();
-                Matrix predictedSampleEntry = entry1.getValue();
-                classifiedSample.put(depthIndex, getClassification(predictedSampleEntry));
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                classifiedSample.put(depthIndex, getClassification(predictedSample.get(depthIndex)));
             }
         }
         return classified;
