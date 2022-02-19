@@ -32,10 +32,12 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * Parameter name types for updateable soft Q policy.
      *     - softQAlpha; entropy regularization coefficient. Default value 1.<br>
      *     - autoSoftAlpha; if true alpha is adjusted automatically otherwise not. Default value true.<br>
+     *     - softQAlphaVerboseInterval; verbose internal for alpha. Default value 25.<br>
      *
      */
     private final static String paramNameTypes = "(softQAlpha:DOUBLE), " +
-            "(autoSoftAlpha:BOOLEAN)";
+            "(autoSoftAlpha:BOOLEAN), " +
+            "(softQAlphaVerboseInterval:INT)";
 
     /**
      * Alpha parameter for entropy control.
@@ -72,6 +74,18 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      *
      */
     private final Optimizer optimizer = new Adam("learningRate = 0.001");
+
+    /**
+     * Soft Q alpha verbose interval.
+     *
+     */
+    private int softQAlphaVerboseInterval;
+
+    /**
+     * Soft Q alpha verbose count.
+     *
+     */
+    private int softQAlphaVerboseCount = 0;
 
     /**
      * Constructor for updateable soft Q policy.
@@ -113,6 +127,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     public void initializeDefaultParams() {
         autoSoftAlpha = true;
         softQAlpha = 0.25;
+        softQAlphaVerboseInterval = 25;
     }
 
     /**
@@ -130,6 +145,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * Supported parameters are:<br>
      *     - softQAlpha; entropy regularization coefficient. Default value 1.<br>
      *     - autoSoftAlpha; if true alpha is adjusted automatically otherwise not. Default value true.<br>
+     *     - softQAlphaVerboseInterval; verbose internal for alpha. Default value 25.<br>
      *
      * @param params parameters used for updateable soft Q policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -138,6 +154,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
         super.setParams(params);
         if (params.hasParam("softQAlpha")) softQAlpha = params.getValueAsDouble("softQAlpha");
         if (params.hasParam("autoSoftAlpha")) autoSoftAlpha = params.getValueAsBoolean("autoSoftAlpha");
+        if (params.hasParam("softQAlphaVerboseInterval")) softQAlphaVerboseInterval = params.getValueAsInteger("softQAlphaVerboseInterval");
     }
 
     /**
@@ -256,14 +273,12 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
         softQAlphaMatrix.setValue(0,0, softQAlpha);
         optimizer.optimize(softQAlphaMatrix, new DMatrix(-alphaLossGradient / (double)alphaLossGradientCount));
         softQAlpha = softQAlphaMatrix.getValue(0,0);
-        if (++printCount == 25) {
+        if (++softQAlphaVerboseCount == softQAlphaVerboseInterval && softQAlphaVerboseInterval > 0) {
             System.out.println("Soft Q alpha: " + softQAlpha);
-            printCount = 0;
+            softQAlphaVerboseCount = 0;
         }
         alphaLossGradientCount = 0;
         alphaLossGradient = 0;
     }
-
-    private int printCount = 0;
 
 }
