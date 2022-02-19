@@ -123,8 +123,9 @@ public class SimpleDemo {
      *
      * @return created training and testing samples.
      * @throws NeuralNetworkException throws exception if creation of samples fail.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException {
+    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException, MatrixException {
         HashMap<Integer, HashMap<Integer, MMatrix>> data = new HashMap<>();
         HashMap<Integer, MMatrix> input = new HashMap<>();
         HashMap<Integer, MMatrix> output = new HashMap<>();
