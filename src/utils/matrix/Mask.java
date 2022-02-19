@@ -57,6 +57,13 @@ public interface Mask {
     Mask transpose() throws MatrixException;
 
     /**
+     * Checks if mask is transposed.
+     *
+     * @return true is mask is transposed otherwise false.
+     */
+    boolean isTransposed();
+
+    /**
      * Sets if mask is transposed.
      *
      * @param isTransposed if true mask is transposed and if false not transposed.

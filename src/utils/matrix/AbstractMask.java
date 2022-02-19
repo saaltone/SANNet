@@ -40,7 +40,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * If true mask is transposed.
      *
      */
-    protected boolean isTransposed = false;
+    private boolean isTransposed = false;
 
     /**
      * Random function for mask class.
@@ -57,19 +57,6 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     public AbstractMask(int rows, int columns) {
         this.rows = rows;
         this.columns = columns;
-    }
-
-    /**
-     * Constructor for abstract mask.
-     *
-     * @param rows number of rows in mask.
-     * @param columns number of columns in mask.
-     * @param probability probability of masking.
-     */
-    public AbstractMask(int rows, int columns, double probability) {
-        this.rows = rows;
-        this.columns = columns;
-        this.probability = probability;
     }
 
     /**
@@ -102,7 +89,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of rows in mask.
      */
     public int getRows() {
-        return !isTransposed ? rows : columns;
+        return !isTransposed() ? rows : columns;
     }
 
     /**
@@ -111,7 +98,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of columns in mask.
      */
     public int getColumns() {
-        return !isTransposed ? columns : rows;
+        return !isTransposed() ? columns : rows;
     }
 
     /**
@@ -149,6 +136,15 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
         Mask transposedMask = reference();
         transposedMask.setTranspose(true);
         return transposedMask;
+    }
+
+    /**
+     * Checks if mask is transposed.
+     *
+     * @return true is mask is transposed otherwise false.
+     */
+    public boolean isTransposed() {
+        return isTransposed;
     }
 
     /**
