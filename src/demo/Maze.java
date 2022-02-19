@@ -776,7 +776,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.25, epsilonMin = 0.25";
+                policyTypeParams = "epsilonInitial = 0.25, epsilonMin = 0.05";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
