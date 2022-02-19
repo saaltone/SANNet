@@ -155,14 +155,17 @@ public class MNISTDemo {
         String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test.csv";
         HashMap<Integer, HashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
         for (MMatrix sample : data.get(0).values()) {
-            for (Matrix entry : sample.values()) {
+            int matrixDepth = sample.getDepth();
+            for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
+                Matrix entry = sample.get(inputDepth);
                 entry.divide(255, entry);
             }
         }
         for (Integer sampleIndex : data.get(1).keySet()) {
             MMatrix sample = data.get(1).get(sampleIndex);
-            MMatrix encodedSample = new MMatrix(sample.getDepth());
-            for (Integer depthIndex : sample.keySet()) {
+            int depth = sample.getDepth();
+            MMatrix encodedSample = new MMatrix(depth);
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
                 int value = (int)sample.get(depthIndex).getValue(0,0);
                 Matrix output = new SMatrix(10, 1);
                 output.setValue(value, 0, 1);
