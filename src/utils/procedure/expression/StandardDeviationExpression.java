@@ -6,10 +6,7 @@
 package utils.procedure.expression;
 
 import utils.configurable.DynamicParamException;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunction;
-import utils.matrix.UnaryFunctionType;
+import utils.matrix.*;
 import utils.procedure.node.Node;
 
 import java.io.Serializable;
@@ -89,9 +86,8 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
-        mean = argument1.getMatrices().mean();
-        Matrix standardDeviation = argument1.getMatrices().standardDeviation(mean);
-        result.setMatrix(standardDeviation);
+        mean = MMatrix.mean(argument1.getMatrices());
+        result.setMatrix(MMatrix.standardDeviation(argument1.getMatrices(), mean));
     }
 
     /**
