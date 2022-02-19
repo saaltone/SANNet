@@ -23,16 +23,10 @@ public class MMatrix implements Cloneable, Serializable {
     private static final long serialVersionUID = 2208329722377770337L;
 
     /**
-     * Depth for multi-matrix.
-     *
-     */
-    private final int depth;
-
-    /**
      * Map for matrices.
      *
      */
-    private HashMap<Integer, Matrix> matrices;
+    private Matrix[] matrices;
 
     /**
      * Reference entry for multi-matrix.
@@ -66,29 +60,6 @@ public class MMatrix implements Cloneable, Serializable {
     private String name;
 
     /**
-     * Constructor for multi-matrix without depth limitation.
-     *
-     */
-    public MMatrix() {
-        matrices = new HashMap<>();
-        depth = -1;
-    }
-
-    /**
-     * Constructor for sample with depth assumption of 1.
-     *
-     * @param matrix single entry for sample with assumption of maxSize 1.
-     */
-    public MMatrix(Matrix matrix) {
-        rows = matrix.getTotalRows();
-        columns = matrix.getTotalColumns();
-        matrices = new HashMap<>();
-        depth = 1;
-        matrices.put(0, matrix);
-        referenceMatrix = matrix;
-    }
-
-    /**
      * Constructor with depth limitation.
      *
      * @param depth depth of multi-matrix.
@@ -96,8 +67,17 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public MMatrix(int depth) throws MatrixException {
         if (depth < 1) throw new MatrixException("Depth must be at least 1.");
-        matrices = new HashMap<>();
-        this.depth = depth;
+        matrices = new Matrix[depth];
+    }
+
+    /**
+     * Constructor for sample with depth assumption of 1.
+     *
+     * @param matrix single entry for sample with assumption of maxSize 1.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
+     */
+    public MMatrix(Matrix matrix) throws MatrixException {
+        this(1, matrix);
     }
 
     /**
@@ -108,9 +88,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if depth is less than 1.
      */
     public MMatrix(int depth, String name) throws MatrixException {
-        if (depth < 1) throw new MatrixException("Depth must be at least 1.");
-        matrices = new HashMap<>();
-        this.depth = depth;
+        this(depth);
         this.name = name;
     }
 
@@ -125,51 +103,20 @@ public class MMatrix implements Cloneable, Serializable {
         this(depth);
         rows = matrix.getTotalRows();
         columns = matrix.getTotalColumns();
-        matrices.put(0, matrix);
         referenceMatrix = matrix;
+        put(0, matrix);
     }
 
     /**
      * Constructor for multi-matrix without depth limitation.
      *
-     * @param matrices matrices for multi-matrix.
+     * @param newMatrices matrices for multi-matrix.
      * @throws MatrixException throws exception if number of rows and columns are not matching for inserted matrices.
      */
-    public MMatrix(HashMap<Integer, Matrix> matrices) throws MatrixException {
-        depth = -1;
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            Matrix matrix = entry.getValue();
-            if (rows == -1 && columns == -1) {
-                rows = matrix.getTotalRows();
-                columns = matrix.getTotalColumns();
-                referenceMatrix = matrix;
-            }
-            else if (matrix.getTotalRows() != rows || matrix.getTotalColumns() != columns) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
-            matrices.put(depthIndex, matrix);
-        }
-    }
-
-    /**
-     * Constructor for multi-matrix without depth limitation.
-     *
-     * @param matrices matrices for multi-matrix.
-     * @throws MatrixException throws exception if number of rows and columns are not matching for inserted matrices.
-     */
-    public MMatrix(MMatrix matrices) throws MatrixException {
-        depth = -1;
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            Matrix matrix = entry.getValue();
-            if (rows == -1 && columns == -1) {
-                rows = matrix.getTotalRows();
-                columns = matrix.getTotalColumns();
-                referenceMatrix = matrix;
-            }
-            else if (matrix.getTotalRows() != rows || matrix.getTotalColumns() != columns) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
-            this.matrices.put(depthIndex, matrix);
-        }
-        this.name = matrices.getName();
+    public MMatrix(MMatrix newMatrices) throws MatrixException {
+        this(newMatrices.getDepth(), newMatrices.getName());
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) put(index, newMatrices.get(index));
     }
 
     /**
@@ -189,7 +136,7 @@ public class MMatrix implements Cloneable, Serializable {
      */
     public void setName(String name, boolean assignToMatrices) {
         setName(name);
-        if (assignToMatrices) for (Matrix matrix : matrices.values()) matrix.setName(name);
+        if (assignToMatrices) for (Matrix matrix : matrices) matrix.setName(name);
     }
 
     /**
@@ -206,16 +153,7 @@ public class MMatrix implements Cloneable, Serializable {
      *
      */
     public void clear() {
-        matrices = new HashMap<>();
-    }
-
-    /**
-     * Returns matrices.
-     *
-     * @return matrices.
-     */
-    public Map<Integer, Matrix> get() {
-        return matrices;
+        matrices = new Matrix[matrices.length];
     }
 
     /**
@@ -225,7 +163,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @return matrix.
      */
     public Matrix get(int index) {
-        return matrices.get(index);
+        return matrices[index];
     }
 
     /**
@@ -233,53 +171,18 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @param index index
      * @param matrix matrix
-     * @throws MatrixException throws exception if matrix is exceeding its depth.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
     public void put(int index, Matrix matrix) throws MatrixException {
-        if (!matrices.containsKey(index) && depth > 0 && matrices.size() >= depth) throw new MatrixException("Multi-matrix is exceeding defined depth.");
+        if (matrix == null) throw new MatrixException("Matrix is not defined.");
+        if (index > matrices.length - 1) throw new MatrixException("Index is exceeding defined depth.");
         if (rows == -1 && columns == -1) {
             rows = matrix.getTotalRows();
             columns = matrix.getTotalColumns();
             referenceMatrix = matrix;
         }
         else if (rows != matrix.getTotalRows() || columns != matrix.getTotalColumns()) throw new MatrixException("Number of rows and columns are not matching for inserted matrices.");
-        matrices.put(index, matrix);
-    }
-
-    /**
-     * Removes matrix at specific index.
-     *
-     * @param index specific index.
-     */
-    public void remove(int index) {
-        matrices.remove(index);
-    }
-
-    /**
-     * Returns key set containing matrix indices.
-     *
-     * @return key set containing matrix indices.
-     */
-    public Set<Integer> keySet() {
-        return matrices.keySet();
-    }
-
-    /**
-     * Returns entry set containing matrix indices.
-     *
-     * @return entry set containing matrix indices.
-     */
-    public Set<Map.Entry<Integer, Matrix>> entrySet() {
-        return matrices.entrySet();
-    }
-
-    /**
-     * Returns matrices as collection.
-     *
-     * @return matrices as collection.
-     */
-    public Collection<Matrix> values() {
-        return matrices.values();
+        matrices[index] = matrix;
     }
 
     /**
@@ -289,7 +192,8 @@ public class MMatrix implements Cloneable, Serializable {
      * @return returns true is matrix is contained inside sample.
      */
     public boolean contains(Matrix matrix) {
-        return matrices.containsValue(matrix);
+        for (Matrix thisMatrix : matrices) if (thisMatrix != matrix) return false;
+        return true;
     }
 
     /**
@@ -298,16 +202,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @return depth of multi-matrix.
      */
     public int getDepth() {
-        return depth;
-    }
-
-    /**
-     * Returns number of matrices stored.
-     *
-     * @return number of matrices stored.
-     */
-    public int size() {
-        return matrices.size();
+        return matrices.length;
     }
 
     /**
@@ -317,7 +212,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if creation of new matrix fails.
      */
     public MMatrix getNewMMatrix() throws MatrixException {
-        return getDepth() == -1 ? new MMatrix() : new MMatrix(getDepth());
+        return new MMatrix(getDepth());
     }
 
     /**
@@ -382,25 +277,25 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if copying fails.
      */
     private void copyMatrixData(MMatrix newMMatrix) throws MatrixException {
-        for (Map.Entry<Integer, Matrix> entry : newMMatrix.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            put(index, matrix.copy());
+        if (!hasEqualSize(newMMatrix)) {
+            throw new MatrixException("Incompatible target matrix depth: " + newMMatrix.getDepth());
         }
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) put(index, newMMatrix.get(index).copy());
     }
 
     /**
-     * Checks if this matrix and other matrix are equal in size.
+     * Checks if this multi-matrix and other multi-matrix are equal in size.
      *
-     * @param other other matrix to be compared against.
-     * @return true if matrices are of same size otherwise false.
+     * @param other other multi-matrix to be compared against.
+     * @return true if multi-matrices are of same size otherwise false.
      */
     public boolean hasEqualSize(MMatrix other) {
-        return other.size() == size();
+        return other.getDepth() == getDepth();
     }
 
     /**
-     * Sets procedure factory for matrix.
+     * Sets procedure factory for multi-matrix.
      *
      * @param procedureFactory new procedure factory.
      */
@@ -409,7 +304,7 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Returns current procedure factory of matrix.
+     * Returns current procedure factory of multi-matrix.
      *
      * @return current procedure factory.
      */
@@ -422,14 +317,14 @@ public class MMatrix implements Cloneable, Serializable {
      *
      */
     public void removeProcedureFactory() {
-        for (Matrix matrix : matrices.values()) matrix.removeProcedureFactory();
+        for (Matrix matrix : matrices) matrix.removeProcedureFactory();
         this.procedureFactory = null;
     }
 
     /**
-     * Returns true if matrix has procedure factory otherwise false.
+     * Returns true if multi-matrix has procedure factory otherwise false.
      *
-     * @return true if matrix has procedure factory otherwise false.
+     * @return true if multi-matrix has procedure factory otherwise false.
      */
     public boolean hasProcedureFactory() {
         return procedureFactory != null;
@@ -472,79 +367,67 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Makes current multi-matrix data equal to other multi-matrix data.
      *
-     * @param other other matrix to be copied as data of this matrix.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @param other othermulti- matrix to be copied as data of this multi-matrix.
+     * @throws MatrixException throws MatrixException if this and other multi-matrix are not of equal dimensions.
      */
     public void setEqualTo(MMatrix other) throws MatrixException {
         if (!hasEqualSize(other)) {
-            throw new MatrixException("Incompatible target matrix size: " + other.size());
+            throw new MatrixException("Incompatible target matrix depth: " + other.getDepth());
         }
-        for (Map.Entry<Integer, Matrix> entry : other.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            put(index, matrix);
-        }
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) put(index, other.get(index));
     }
 
     /**
      * Checks if data of other multi-matrix is equal to data of this multi-matrix
      *
-     * @param other matrix to be compared.
-     * @return true is data of this and other matrix are equal otherwise false.
+     * @param other multi-matrix to be compared.
+     * @return true is data of this and other multi-matrix are equal otherwise false.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public boolean equals(MMatrix other) throws MatrixException {
         if (!hasEqualSize(other)) {
-            throw new MatrixException("Incompatible target matrix size: " + other.size());
+            throw new MatrixException("Incompatible target matrix depth: " + other.getDepth());
         }
-        for (Map.Entry<Integer, Matrix> entry : other.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            if (matrix != other.get(index)) return false;
-        }
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) if(get(index) != other.get(index)) return false;
         return true;
     }
 
     /**
      * Applies unaryFunction to this multi-matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
+     * Example of operation can be applying square root operation to this multi-matrix.<br>
      * Applies masking if multi-matrix is masked.<br>
      *
      * @param unaryFunction unaryFunction to be applied.
-     * @param result result matrix.
+     * @param result result multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(MMatrix result, UnaryFunction unaryFunction) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.apply(unaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
         }
         else {
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.apply(unaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
     }
 
     /**
      * Applies unaryFunction to this multi-matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
+     * Example of operation can be applying square root operation to this multi-matrix.<br>
      * Applies masking if multi-matrix is masked.<br>
      *
      * @param unaryFunction unaryFunction to be applied.
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix apply(UnaryFunction unaryFunction) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         apply(result, unaryFunction);
         return result;
     }
@@ -554,28 +437,22 @@ public class MMatrix implements Cloneable, Serializable {
      * Example of operation can be subtraction of other multi-matrix from this multi-matrix.<br>
      * Applies masking if multi-matrix is masked.<br>
      *
-     * @param other other matrix
-     * @param result result matrix.
+     * @param other other multi-matrix
+     * @param result result multi-matrix.
      * @param binaryFunction binaryFunction to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(MMatrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.applyBi(other.get(index), binaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.applyBi(other.get(index), binaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
     }
@@ -585,13 +462,13 @@ public class MMatrix implements Cloneable, Serializable {
      * Example of operation can be subtraction of other multi-matrix from this multi-matrix.<br>
      * Applies masking if multi-matrix is masked.<br>
      *
-     * @param other other matrix
+     * @param other other multi-matrix
      * @param binaryFunction binaryFunction to be applied.
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix applyBi(MMatrix other, BinaryFunction binaryFunction) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         applyBi(other, result, binaryFunction);
         return result;
     }
@@ -602,43 +479,37 @@ public class MMatrix implements Cloneable, Serializable {
      * Applies masking if multi-matrix is masked.<br>
      *
      * @param other other matrix
-     * @param result result matrix.
+     * @param result result multi-matrix.
      * @param binaryFunction binaryFunction to be applied.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void applyBi(Matrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.applyBi(other, binaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.applyBi(other, binaryFunction));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
     }
 
     /**
      * Applies binaryFunction to this multi-matrix.<br>
-     * Example of operation can be subtraction of other multi-matrix from this multi-matrix.<br>
+     * Example of operation can be subtraction of other matrix from this multi-matrix.<br>
      * Applies masking if multi-matrix is masked.<br>
      *
      * @param other other matrix
      * @param binaryFunction binaryFunction to be applied.
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix applyBi(Matrix other, BinaryFunction binaryFunction) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         applyBi(other, result, binaryFunction);
         return result;
     }
@@ -646,28 +517,21 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Adds other multi-matrix to this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void add(MMatrix other, MMatrix result) throws MatrixException {
-        if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.add(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.add(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
     }
@@ -675,53 +539,47 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Adds other multi-matrix to this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @return multi-result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix add(MMatrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         add(other, result);
         return result;
     }
 
     /**
-     * Adds other multi-matrix to this multi-matrix.
+     * Adds other matrix to this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void add(Matrix other, MMatrix result) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.add(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.add(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
     }
 
     /**
-     * Adds other multi-matrix to this multi-matrix.
+     * Adds other matrix to this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @return multi-result matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix add(Matrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         add(other, result);
         return result;
     }
@@ -729,28 +587,21 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Subtracts other multi-matrix from this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void subtract(MMatrix other, MMatrix result) throws MatrixException {
-        if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.subtract(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.subtract(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
     }
@@ -758,53 +609,47 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Subtracts other multi-matrix from this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix subtract(MMatrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         subtract(other, result);
         return result;
     }
 
     /**
-     * Subtracts other multi-matrix from this multi-matrix.
+     * Subtracts other matrix from this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void subtract(Matrix other, MMatrix result) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.subtract(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.subtract(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
     }
 
     /**
-     * Subtracts other multi-matrix from this multi-matrix.
+     * Subtracts other matrix from this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix subtract(Matrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         subtract(other, result);
         return result;
     }
@@ -812,28 +657,21 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Multiplies other multi-matrix with this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void multiply(MMatrix other, MMatrix result) throws MatrixException {
-        if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.multiply(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.multiply(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
     }
@@ -841,53 +679,47 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Multiplies other multi-matrix with this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix multiply(MMatrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         multiply(other, result);
         return result;
     }
 
     /**
-     * Multiplies other multi-matrix with this multi-matrix.
+     * Multiplies other matrix with this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void multiply(Matrix other, MMatrix result) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.multiply(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.multiply(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
     }
 
     /**
-     * Multiplies other multi-matrix with this multi-matrix.
+     * Multiplies other matrix with this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix multiply(Matrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         multiply(other, result);
         return result;
     }
@@ -895,28 +727,21 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Dots other multi-matrix with this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void dot(MMatrix other, MMatrix result) throws MatrixException {
-        if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.dot(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.dot(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
     }
@@ -924,53 +749,47 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Dots other multi-matrix with this multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix dot(MMatrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         dot(other, result);
         return result;
     }
 
     /**
-     * Dots other multi-matrix with this multi-matrix.
+     * Dots other matrix with this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void dot(Matrix other, MMatrix result) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.dot(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.dot(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
     }
 
     /**
-     * Dots other multi-matrix with this multi-matrix.
+     * Dots other matrix with this multi-matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @return result matrix which stores operation result.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix dot(Matrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         dot(other, result);
         return result;
     }
@@ -978,28 +797,21 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Divides this multi-matrix with other multi-matrix.
      *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param other multi-matrix which acts as second variable in the operation.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void divide(MMatrix other, MMatrix result) throws MatrixException {
-        if (size() != other.size()) throw new MatrixException("Size of matrices are not matching.");
+        if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.divide(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.divide(other.get(index)));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
     }
@@ -1007,53 +819,47 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Divides this multi-matrix with other multi-matrix.
      *
-     * @param other other matrix.
-     * @return result matrix which stores operation result.
+     * @param other multi-other matrix.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix divide(MMatrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         divide(other, result);
         return result;
     }
 
     /**
-     * Divides this multi-matrix with other multi-matrix.
+     * Divides this multi-matrix with other matrix.
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @param result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void divide(Matrix other, MMatrix result) throws MatrixException {
+        if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
+        int depth = getDepth();
         if (!hasProcedureFactory()) {
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.divide(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
         }
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
             double expressionLock = procedureFactory.startExpression(this);
-            for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                result.put(index, matrix.divide(other));
-            }
+            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
     }
 
     /**
-     * Divides this multi-matrix with other multi-matrix.
+     * Divides this multi-matrix with other matrix.
      *
      * @param other other matrix.
-     * @return result matrix which stores operation result.
+     * @return result multi-matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public MMatrix divide(Matrix other) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         divide(other, result);
         return result;
     }
@@ -1078,10 +884,38 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean, Matrix result) throws MatrixException {
-        for (Matrix matrix : values()) {
+        for (Matrix matrix : matrices) {
             result.add(matrix, result);
         }
-        return asMean ? result.divide(size()) : result;
+        return asMean ? result.divide(getDepth()) : result;
+    }
+
+    /**
+     * Calculates sum or mean.
+     *
+     * @param matrices matrices.
+     * @param asMean if true returns mean otherwise sum.
+     * @return result of sum or mean
+     * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
+     */
+    public static Matrix count(TreeMap<Integer, Matrix> matrices, boolean asMean) throws MatrixException {
+        Matrix result = null;
+        for (Matrix matrix : matrices.values()) {
+            if (result == null) result = matrix.getNewMatrix();
+            result.add(matrix, result);
+        }
+        return asMean ? result == null ? result : result.divide(matrices.size()) : result;
+    }
+
+    /**
+     * Calculates sum.
+     *
+     * @param matrices matrices.
+     * @return resulting sum
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix sum(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        return MMatrix.count(matrices, false);
     }
 
     /**
@@ -1115,6 +949,17 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates mean.
      *
+     * @param matrices matrices.
+     * @return resulting mean
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix mean(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        return MMatrix.count(matrices, true);
+    }
+
+    /**
+     * Calculates mean.
+     *
      * @return resulting mean
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
@@ -1138,6 +983,37 @@ public class MMatrix implements Cloneable, Serializable {
             procedureFactory.createMeanExpression(expressionLock, this, result);
             return result;
         }
+    }
+
+    /**
+     * Calculates variance.
+     *
+     * @param matrices matrices.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix variance(TreeMap<Integer, Matrix> matrices) throws MatrixException, DynamicParamException {
+        return MMatrix.variance(matrices, MMatrix.mean(matrices));
+    }
+
+    /**
+     * Calculates variance.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix variance(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
+        Matrix result = null;
+        for (Matrix matrix : matrices.values()) {
+            if (result == null) result = matrix.getNewMatrix();
+            result.add(matrix.subtract(meanMatrix).power(2), result);
+        }
+        return result == null ? result : result.divide(matrices.size());
     }
 
     /**
@@ -1175,17 +1051,17 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix variance(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
         if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
         if (!hasProcedureFactory()) {
-            for (Matrix matrix : matrices.values()) {
+            for (Matrix matrix : matrices) {
                 result.add(matrix.subtract(meanMatrix).power(2), result);
             }
-            result.divide(size(), result);
+            result.divide(getDepth(), result);
         }
         else {
             double expressionLock = procedureFactory.startExpression(this);
-            for (Matrix matrix : matrices.values()) {
+            for (Matrix matrix : matrices) {
                 result.add(matrix.subtract(meanMatrix).power(2), result);
             }
-            result.divide(size(), result);
+            result.divide(getDepth(), result);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createVarianceExpression(expressionLock, this, result);
         }
@@ -1195,7 +1071,7 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates standard deviation.
      *
-     * @return resulting variance
+     * @return resulting standard deviation
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -1206,8 +1082,35 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates standard deviation.
      *
-     * @param meanMatrix matrix containing mean values for variance calculation.
-     * @return resulting variance
+     * @param matrices matrices.
+     * @return resulting standard deviation
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices) throws MatrixException, DynamicParamException {
+        Matrix result = MMatrix.variance(matrices, MMatrix.mean(matrices)).multiply(matrices.size()).divide(matrices.size() - 1);
+        return result.apply(UnaryFunctionType.SQRT);
+    }
+
+    /**
+     * Calculates standard deviation.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for standard deviation calculation.
+     * @return resulting standard deviation
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        Matrix result = MMatrix.variance(matrices, meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1);
+        return result.apply(UnaryFunctionType.SQRT);
+    }
+
+    /**
+     * Calculates standard deviation.
+     *
+     * @param meanMatrix matrix containing mean values for standard deviation calculation.
+     * @return resulting standard deviation
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -1218,17 +1121,17 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates standard deviation.
      *
-     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @param meanMatrix matrix containing mean values for standard deviation calculation.
      * @param result result matrix.
-     * @return resulting variance
+     * @return resulting standard deviation
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix standardDeviation(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
-        if (!hasProcedureFactory()) variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(result, UnaryFunctionType.SQRT);
+        if (!hasProcedureFactory()) variance(meanMatrix).multiply(getDepth()).divide(getDepth() - 1).apply(result, UnaryFunctionType.SQRT);
         else {
             double expressionLock = procedureFactory.startExpression(this);
-            variance(meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(result, UnaryFunctionType.SQRT);
+            variance(meanMatrix).multiply(getDepth()).divide(getDepth() - 1).apply(result, UnaryFunctionType.SQRT);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
         }
@@ -1238,25 +1141,22 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates softmax.
      *
-     * @param result result matrix.
+     * @param result result multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void softmax(MMatrix result) throws MatrixException {
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            result.put(index, matrix.softmax());
-        }
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) result.put(index, get(index).softmax());
     }
 
     /**
      * Calculates softmax.
      *
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix softmax() throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         softmax(result);
         return result;
     }
@@ -1264,7 +1164,7 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Calculates Gumbel softmax.
      *
-     * @param result result matrix.
+     * @param result result multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void gumbelSoftmax(MMatrix result) throws MatrixException {
@@ -1275,25 +1175,22 @@ public class MMatrix implements Cloneable, Serializable {
      * Calculates Gumbel softmax.
      *
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @param result result matrix.
+     * @param result result multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void gumbelSoftmax(MMatrix result, double gumbelSoftmaxTau) throws MatrixException {
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            result.put(index, matrix.gumbelSoftmax(gumbelSoftmaxTau));
-        }
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) result.put(index, get(index).gumbelSoftmax(gumbelSoftmaxTau));
     }
 
     /**
      * Calculates Gumbel softmax.
      *
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix gumbelSoftmax() throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         gumbelSoftmax(result, 1);
         return result;
     }
@@ -1302,11 +1199,11 @@ public class MMatrix implements Cloneable, Serializable {
      * Calculates Gumbel softmax.
      *
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @return matrix which stores operation result.
+     * @return multi-matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     public MMatrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
-        MMatrix result = new MMatrix();
+        MMatrix result = getNewMMatrix();
         gumbelSoftmax(result, gumbelSoftmaxTau);
         return result;
     }
@@ -1316,16 +1213,13 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @param position position of split
      * @param splitVertically if true splits vertically otherwise horizontally.
-     * @return split matrix as JMatrix.
+     * @return split multi-matrix.
      * @throws MatrixException throws matrix exception if splitting fails.
      */
     public MMatrix split(int position, boolean splitVertically) throws MatrixException {
-        MMatrix splitMMatrix = new MMatrix(getDepth());
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            splitMMatrix.put(index, matrix.split(position, splitVertically));
-        }
+        MMatrix splitMMatrix = getNewMMatrix();
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) splitMMatrix.put(index, get(index).split(position, splitVertically));
         return splitMMatrix;
     }
 
@@ -1338,14 +1232,13 @@ public class MMatrix implements Cloneable, Serializable {
     public MMatrix flatten() throws MatrixException {
         int rows = this.rows;
         int cols = this.columns;
-        Matrix flattenedMatrix = new DMatrix(rows * cols * size(), 1);
+        Matrix flattenedMatrix = new DMatrix(rows * cols * getDepth(), 1);
         MMatrix flattenedMMatrix = new MMatrix(1, flattenedMatrix);
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) {
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < cols; col++) {
-                    flattenedMatrix.setValue(getPosition(rows, cols, row, col, index), 0 , matrix.getValue(row, col));
+                    flattenedMatrix.setValue(getPosition(rows, cols, row, col, index), 0 , get(index).getValue(row, col));
                 }
             }
         }
@@ -1362,18 +1255,18 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix unflatten(int width, int height, int depth) throws MatrixException {
-        if (size() != 1) throw new MatrixException("MMatrix cannot be unflattened since it is not column vector (size equals 1).");
-        MMatrix mmatrix = new MMatrix(depth);
+        if (getDepth() != 1) throw new MatrixException("MMatrix cannot be unflattened since it is not column vector (size equals 1).");
+        MMatrix mMatrix = new MMatrix(depth);
         for (int index = 0; index < depth; index++) {
             Matrix matrix = new DMatrix(width, height);
-            mmatrix.put(index, matrix);
+            mMatrix.put(index, matrix);
             for (int row = 0; row < width; row++) {
                 for (int col = 0; col < height; col++) {
                     matrix.setValue(row, col, get(0).getValue(getPosition(width, height, row, col, index), 0));
                 }
             }
         }
-        return mmatrix;
+        return mMatrix;
     }
 
     /**
@@ -1393,37 +1286,35 @@ public class MMatrix implements Cloneable, Serializable {
      *
      * @param otherMMatrix other multi-matrix.
      * @param joinedVertically if true MMatrices are joint vertically otherwise horizontally.
-     * @return joined MMatrices.
+     * @return joined multi-matrices.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix join(MMatrix otherMMatrix, boolean joinedVertically) throws MatrixException {
         if (getDepth() != otherMMatrix.getDepth()) throw new MatrixException("Depth of this multi-matrix " + getDepth() + " and other multi-matrix " + otherMMatrix.getDepth() + " do not match.");
         MMatrix joinedMMatrix = getNewMMatrix();
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            Matrix matrix = entry.getValue();
-            Matrix otherMatrix = otherMMatrix.get(depthIndex);
-            if (otherMatrix == null) throw new MatrixException("Other multi-matrix does not contain entry index: " + depthIndex);
-            joinedMMatrix.put(depthIndex, new JMatrix(new Matrix[] { matrix, otherMatrix }, joinedVertically));
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) {
+            Matrix otherMatrix = otherMMatrix.get(index);
+            if (otherMatrix == null) throw new MatrixException("Other multi-matrix does not contain entry index: " + index);
+            joinedMMatrix.put(index, new JMatrix(new Matrix[] { get(index), otherMatrix }, joinedVertically));
         }
         return joinedMMatrix;
     }
 
     /**
-     * Unjoins joined matrix by returning matrix corresponding given sub matrix index.
+     * Unjoins joined multi-matrix by returning multi-matrix corresponding given sub matrix index.
      *
      * @param subMatrixIndex sub matrix index.
-     * @return unjoined matrix.
+     * @return unjoined multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix unjoin(int subMatrixIndex) throws MatrixException {
         MMatrix unjoinedMMatrix = getNewMMatrix();
-        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            Matrix matrix = entry.getValue();
-            ArrayList<Matrix> subMatrices = matrix.getSubMatrices();
+        int depth = getDepth();
+        for (int index = 0; index < depth; index++) {
+            ArrayList<Matrix> subMatrices = get(index).getSubMatrices();
             if (subMatrixIndex < 0 || subMatrixIndex > subMatrices.size() - 1) throw new MatrixException("Joined matrix does not have sub matrix index: " + subMatrixIndex);
-            unjoinedMMatrix.put(depthIndex, subMatrices.get(subMatrixIndex));
+            unjoinedMMatrix.put(index, subMatrices.get(subMatrixIndex));
         }
         return unjoinedMMatrix;
     }
