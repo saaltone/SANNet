@@ -62,7 +62,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     private double epsilonMin;
 
     /**
-     * Decay rate for epsilon if number of episodes is not used for epsilon decay.
+     * Decay-rate for epsilon if number of episodes is not used for epsilon decay.
      *
      */
     private double epsilonDecayRate;

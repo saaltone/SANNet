@@ -30,7 +30,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
 
     /**
      * Parameter name types for MCTS policy.
-     *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.75.<br>
+     *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.5.<br>
      *     - alpha: Shape value for Dirichlet sampling. Default value 0.6.<br>
      *     - epsilon: Weighting for Dirichlet distribution at action selection. Default value 0.8.<br>
      *     - tau: Temperature value for node visit count. Default value 1.1.<br>
@@ -371,15 +371,16 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * Returns Dirichlet distribution.<br>
          * Reference: https://stats.stackexchange.com/questions/69210/drawing-from-dirichlet-distribution<br>
          *
-         * @param alpha shape of Dirichlet distribution.
+         * @param shape shape parameter.
          * @param availableActions available actions.
          * @return Dirichlet distribution.
          */
-        private HashMap<Integer, Double> getDirichletDistribution(double alpha, HashSet<Integer> availableActions) {
+        private HashMap<Integer, Double> getDirichletDistribution(double shape, HashSet<Integer> availableActions) {
+            // Computes log(sum(exp(elements across dimensions of a tensor))).
             HashMap<Integer, Double> dirichletDistribution = new HashMap<>();
             double cumulativeValue = 0;
             for (Integer action : availableActions) {
-                double gammaValue = generateGamma(alpha, 1);
+                double gammaValue = sampleGamma(shape, 1);
                 cumulativeValue += gammaValue;
                 dirichletDistribution.put(action, gammaValue);
             }
@@ -392,27 +393,27 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
 
         /**
-         * Generates random variable from gamma distribution.<br>
+         * Samples random variable from gamma distribution.<br>
          * Reference: https://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/
          *
-         * @param alpha alpha parameter
-         * @param beta beta parameter
+         * @param shape shape (alpha) parameter
+         * @param scale scale (beta) parameter
          * @return random variable from gamma distribution
          */
-        private double generateGamma (double alpha, double beta) {
-            if (alpha > 1) {
-                double d = alpha - 1 / (double)3;
+        private double sampleGamma(double shape, double scale) {
+            if (shape > 1) {
+                double d = shape - 1 / (double)3;
                 double c = 1 / Math.sqrt(9 * d);
                 while (true) {
-                    double Z = random.nextGaussian();
-                    if (Z > - 1 / c) {
-                        double U = random.nextDouble();
-                        double V = Math.pow(1 + c * Z, 3);
-                        if (Math.log(U) < 0.5 * Math.pow(Z, 2) + d - d * V + d * Math.log(V)) return d * V / beta;
+                    double gaussian = random.nextGaussian();
+                    if (gaussian > - 1 / c) {
+                        double uniform = random.nextDouble();
+                        double V = Math.pow(1 + c * gaussian, 3);
+                        if (Math.log(uniform) < 0.5 * Math.pow(gaussian, 2) + d - d * V + d * Math.log(V)) return d * V / scale;
                     }
                 }
             }
-            else return generateGamma(alpha + 1, beta) * Math.pow(random.nextDouble(), 1 / alpha);
+            else return sampleGamma(shape + 1, scale) * Math.pow(random.nextDouble(), 1 / shape);
         }
 
         /**
@@ -537,7 +538,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      */
     public void initializeDefaultParams() {
-        cPUCT = 2.75;
+        cPUCT = 2.5;
         alpha = 0.6;
         epsilon = 0.8;
         tau = 1.1;
@@ -557,7 +558,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Sets parameters used for MCTS policy.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.75.<br>
+     *     - cPUCT: Constant value for controlling amount of exploration i.e. C value of polynomial upper confidence tree. Default value 2.5.<br>
      *     - alpha: Shape value for Dirichlet sampling. Default value 0.6.<br>
      *     - epsilon: Weighting for Dirichlet distribution at action selection. Default value 0.8.<br>
      *     - tau: Temperature value for node visit count. Default value 1.1.<br>

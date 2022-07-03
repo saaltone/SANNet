@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 /**
  * Implements noisy next best policy.<br>
- * Policy make a greedy decision (chooses best policy) or next best policy according to exploration probability.<br>
+ * Policy make a greedy decision or next best policy according to exploration probability.<br>
  *
  */
 public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
