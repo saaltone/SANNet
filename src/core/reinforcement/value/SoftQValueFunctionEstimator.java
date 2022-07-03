@@ -16,6 +16,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.TreeSet;
 
 /**
@@ -27,9 +28,10 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     /**
      * Parameter name types for soft Q value function estimator.
      *     - dualFunctionEstimation: if true uses dual function estimation for value function. Default value true.<br>
-     *
+     *     - minMaxBalance: defines balance (probability) between choosing maximal and minimal value between estimator (experimental parameter). Default value 1.<br>
      */
-    private final static String paramNameTypes = "(dualFunctionEstimation:BOOLEAN)";
+    private final static String paramNameTypes = "(dualFunctionEstimation:BOOLEAN), " +
+            "(minMaxBalance:DOUBLE)";
 
     /**
      * Reference to second function estimator.
@@ -56,6 +58,18 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     private boolean dualFunctionEstimation;
 
     /**
+     * Defines balance (probability) between choosing maximal and minimal value between estimator (experimental parameter).
+     *
+     */
+    private double minMaxBalance;
+
+    /**
+     * Random function.
+     *
+     */
+    private final Random random = new Random();
+
+    /**
      * Constructor for soft Q value function estimator.
      *
      * @param policyFunctionEstimator reference to policy function estimator.
@@ -69,10 +83,10 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      */
     public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException {
         super(functionEstimator);
+        functionEstimator.createTargetFunctionEstimator();
         this.policyFunctionEstimator = policyFunctionEstimator;
-        functionEstimator.setTargetFunctionEstimator();
-        functionEstimator2 = functionEstimator.reference();
-        functionEstimator2.setTargetFunctionEstimator();
+        functionEstimator2 = dualFunctionEstimation ? functionEstimator.reference() : null;
+        if (functionEstimator2 != null) functionEstimator2.createTargetFunctionEstimator();
         this.softQAlphaMatrix = softQAlphaMatrix;
         if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
     }
@@ -92,10 +106,10 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      */
     public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException {
         super(functionEstimator, params);
+        functionEstimator.createTargetFunctionEstimator();
         this.policyFunctionEstimator = policyFunctionEstimator;
-        functionEstimator.setTargetFunctionEstimator();
-        functionEstimator2 = functionEstimator.reference();
-        functionEstimator2.setTargetFunctionEstimator();
+        functionEstimator2 = dualFunctionEstimation ? functionEstimator.reference() : null;
+        if (functionEstimator2 != null) functionEstimator2.createTargetFunctionEstimator();
         this.softQAlphaMatrix = softQAlphaMatrix;
         if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
     }
@@ -107,6 +121,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         dualFunctionEstimation = true;
+        minMaxBalance = 0;
     }
 
     /**
@@ -123,6 +138,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * <br>
      * Supported parameters are:<br>
      *     - dualFunctionEstimation: if true uses dual function estimation for value function. Default value true.<br>
+     *     - minMaxBalance: defines balance (probability) between choosing maximal and minimal value between estimator (experimental parameter). Default value 1.<br>
      *
      * @param params parameters used for soft Q value function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -130,6 +146,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     public void setParams(DynamicParam params) throws DynamicParamException {
         super.setParams(params);
         if (params.hasParam("dualFunctionEstimation")) dualFunctionEstimation = params.getValueAsBoolean("dualFunctionEstimation");
+        if (params.hasParam("minMaxBalance")) minMaxBalance = params.getValueAsDouble("minMaxBalance");
     }
 
     /**
@@ -183,9 +200,11 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         super.start();
         if (dualFunctionEstimation) functionEstimator2.start();
     }
@@ -258,7 +277,22 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetPolicyValues = policyFunctionEstimator.predict(nextStateTransition);
         int targetAction = policyFunctionEstimator.argmax(targetPolicyValues, nextStateTransition.environmentState.availableActions());
-        return (dualFunctionEstimation ? Math.min(getTargetValue(functionEstimator, nextStateTransition, targetAction), getTargetValue(functionEstimator2, nextStateTransition, targetAction)) : getTargetValue(functionEstimator, nextStateTransition, targetAction)) - softQAlphaMatrix.getValue(0, 0) * Math.log(targetPolicyValues.getValue(targetAction, 0));
+        return (dualFunctionEstimation ? getClippedValue(nextStateTransition, targetAction) : getTargetValue(functionEstimator, nextStateTransition, targetAction)) - softQAlphaMatrix.getValue(0, 0) * Math.log(targetPolicyValues.getValue(targetAction, 0));
+    }
+
+    /**
+     * Returns clipped value.
+     *
+     * @param nextStateTransition next state transition.
+     * @param targetAction target action.
+     * @return clipped value.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private double getClippedValue(StateTransition nextStateTransition, int targetAction) throws MatrixException, NeuralNetworkException {
+        double value1 = getTargetValue(functionEstimator, nextStateTransition, targetAction);
+        double value2 = getTargetValue(functionEstimator2, nextStateTransition, targetAction);
+        return random.nextDouble() < minMaxBalance ? Math.min(value1, value2) : Math.max(value1, value2);
     }
 
     /**
