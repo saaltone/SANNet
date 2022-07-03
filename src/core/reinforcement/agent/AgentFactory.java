@@ -69,6 +69,12 @@ public class AgentFactory {
         PPO,
 
         /**
+         * Deep Deterministic Policy Gradient (DDPG)
+         *
+         */
+        DDPG,
+
+        /**
          * Soft Actor Critic Discrete
          *
          */
@@ -113,14 +119,14 @@ public class AgentFactory {
         FunctionEstimator valueEstimator;
         boolean nnEstimator = switch (agentAlgorithmType) {
             case QN -> false;
-            case DQN, DDQN, Sarsa, ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+            case DQN, DDQN, Sarsa, ActorCritic, PPO, DDPG, SACDiscrete, REINFORCE, MCTS -> true;
         };
         boolean policyGradient = switch (agentAlgorithmType) {
             case QN, DQN, DDQN, Sarsa -> false;
-            case ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+            case ActorCritic, PPO, DDPG, SACDiscrete, REINFORCE, MCTS -> true;
         };
         boolean stateValue = switch (agentAlgorithmType) {
-            case QN, DQN, DDQN, Sarsa, SACDiscrete, REINFORCE -> false;
+            case QN, DQN, DDQN, Sarsa, DDPG, SACDiscrete, REINFORCE -> false;
             case ActorCritic, PPO, MCTS -> true;
         };
         if (singleFunctionEstimator) {
@@ -140,6 +146,7 @@ public class AgentFactory {
             case Sarsa -> new Sarsa(environment, executablePolicyType, valueEstimator, params);
             case ActorCritic -> new ActorCritic(environment, executablePolicyType, policyEstimator, valueEstimator, params);
             case PPO -> new PPO(environment, executablePolicyType, policyEstimator, valueEstimator, params);
+            case DDPG -> new DDPG(environment, executablePolicyType, policyEstimator, valueEstimator);
             case SACDiscrete -> new SoftActorCriticDiscrete(environment, executablePolicyType, policyEstimator, valueEstimator, new DMatrix(0), params);
             case REINFORCE -> new REINFORCE(environment, executablePolicyType, policyEstimator, params);
             case MCTS -> new MCTSLearning(environment, policyEstimator, valueEstimator, params);
@@ -155,7 +162,7 @@ public class AgentFactory {
     private static boolean usesOnlineMemory(AgentAlgorithmType agentAlgorithmType) {
         return switch (agentAlgorithmType) {
             case QN, DQN, Sarsa, REINFORCE, ActorCritic, PPO, MCTS -> true;
-            case DDQN, SACDiscrete -> false;
+            case DDQN, DDPG, SACDiscrete -> false;
         };
     }
 
@@ -186,14 +193,14 @@ public class AgentFactory {
         FunctionEstimator valueEstimator;
         boolean nnEstimator = switch (agentAlgorithmType) {
             case QN -> false;
-            case DQN, DDQN, Sarsa, ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+            case DQN, DDQN, Sarsa, ActorCritic, PPO, DDPG, SACDiscrete, REINFORCE, MCTS -> true;
         };
         boolean policyGradient = switch (agentAlgorithmType) {
             case QN, DQN, DDQN, Sarsa -> false;
-            case ActorCritic, PPO, SACDiscrete, REINFORCE, MCTS -> true;
+            case ActorCritic, PPO, DDPG, SACDiscrete, REINFORCE, MCTS -> true;
         };
         boolean stateValue = switch (agentAlgorithmType) {
-            case QN, DQN, DDQN, Sarsa, SACDiscrete, REINFORCE -> false;
+            case QN, DQN, DDQN, Sarsa, DDPG, SACDiscrete, REINFORCE -> false;
             case ActorCritic, PPO, MCTS -> true;
         };
         if (singleFunctionEstimator) {
@@ -213,6 +220,7 @@ public class AgentFactory {
             case Sarsa -> new Sarsa(environment, executablePolicyType, valueEstimator, params);
             case ActorCritic -> new ActorCritic(environment, executablePolicyType, policyEstimator, valueEstimator, params);
             case PPO -> new PPO(environment, executablePolicyType, policyEstimator, valueEstimator, params);
+            case DDPG -> new DDPG(environment, executablePolicyType, policyEstimator, valueEstimator);
             case SACDiscrete -> new SoftActorCriticDiscrete(environment, executablePolicyType, policyEstimator, valueEstimator, new DMatrix(0), params);
             case REINFORCE -> new REINFORCE(environment, executablePolicyType, policyEstimator, params);
             case MCTS -> new MCTSLearning(environment, policyEstimator, valueEstimator, params);
