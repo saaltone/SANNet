@@ -70,31 +70,31 @@ public class ClassificationMetric implements Metric, Serializable {
      * Features classified.
      *
      */
-    private HashSet<Integer> features = new HashSet<>();
+    private final HashSet<Integer> features = new HashSet<>();
 
     /**
      * True positive counts for each feature.
      *
      */
-    private HashMap<Integer, Integer> TP = new HashMap<>();
+    private final HashMap<Integer, Integer> TP = new HashMap<>();
 
     /**
      * False positive counts for each feature.
      *
      */
-    private HashMap<Integer, Integer> FP = new HashMap<>();
+    private final HashMap<Integer, Integer> FP = new HashMap<>();
 
     /**
      * True negative counts for each feature.
      *
      */
-    private HashMap<Integer, Integer> TN = new HashMap<>();
+    private final HashMap<Integer, Integer> TN = new HashMap<>();
 
     /**
      * False negative counts for each feature.
      *
      */
-    private HashMap<Integer, Integer> FN = new HashMap<>();
+    private final HashMap<Integer, Integer> FN = new HashMap<>();
 
     /**
      * Total true positive count over all features.
@@ -124,7 +124,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * Confusion matrix.
      *
      */
-    private HashMap<Integer, HashMap<Integer, Integer>> confusion;
+    private final HashMap<Integer, HashMap<Integer, Integer>> confusion = new HashMap<>();
 
     /**
      * If true print confusion matrix along other classification metrics.
@@ -193,6 +193,17 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
+     * Constructor for classification metric.
+     *
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
+     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     */
+    public ClassificationMetric(boolean multiLabel, double multiLabelThreshold) {
+        this(multiLabel);
+        this.multiLabelThreshold = multiLabelThreshold;
+    }
+
+    /**
      * Sets if confusion matrix is printed along other classification metrics.
      *
      * @param printConfusionMatrix if true confusion matrix is printed along other classification metrics.
@@ -220,17 +231,6 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Constructor for classification metric.
-     *
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
-     */
-    public ClassificationMetric(boolean multiLabel, double multiLabelThreshold) {
-        this(multiLabel);
-        this.multiLabelThreshold = multiLabelThreshold;
-    }
-
-    /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
      * @param predicted predicted errors.
@@ -249,7 +249,6 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param actual actual (true) sample.
      */
     public void update(Matrix predicted, Matrix actual) {
-        if (confusion == null) reset();
         int actualRows = actual.getRows();
         int predictedRows = predicted.getRows();
         for (int predictedRow = 0; predictedRow < predictedRows; predictedRow++) {
@@ -275,7 +274,6 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param actualRow actual row
      */
     private void incrementConfusion(int predictedRow, int actualRow) {
-        if (confusion == null) confusion = new HashMap<>();
         HashMap<Integer, Integer> actuals = confusion.computeIfAbsent(predictedRow, k -> new HashMap<>());
         actuals.put(actualRow, actuals.getOrDefault(actualRow, 0) + 1);
     }
@@ -352,16 +350,16 @@ public class ClassificationMetric implements Metric, Serializable {
      *
      */
     public void reset() {
-        features = new HashSet<>();
-        TP = new HashMap<>();
-        FP = new HashMap<>();
-        TN = new HashMap<>();
-        FN = new HashMap<>();
+        features.clear();
+        TP.clear();
+        FP.clear();
+        TN.clear();
+        FN.clear();
         TPTotal = 0;
         FPTotal = 0;
         TNTotal = 0;
         FNTotal = 0;
-        confusion = new HashMap<>();
+        confusion.clear();
     }
 
     /**
