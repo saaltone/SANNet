@@ -14,7 +14,7 @@ import java.util.*;
 
 /**
  * Defines multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
- * Class also has operations to calculate sum, mean, variance and standard deviation over multiple matrices element by element.<br>
+ * Class also has operations to calculate sum, mean, variance and standard deviation element by element over multiple matrices.<br>
  *
  */
 public class MMatrix implements Cloneable, Serializable {
@@ -48,7 +48,7 @@ public class MMatrix implements Cloneable, Serializable {
 
     /**
      * Procedure factory reference for matrix.<br>
-     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure and it's gradient.<br>
+     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure and its gradient.<br>
      *
      */
     private transient ProcedureFactory procedureFactory = null;
@@ -304,6 +304,17 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
+     * Sets procedure factory for multi-matrix.
+     *
+     * @param procedureFactory new procedure factory.
+     * @param setForMatrices if true set procedure factory for all matrices of multi-matrix.
+     */
+    public void setProcedureFactory(ProcedureFactory procedureFactory, boolean setForMatrices) {
+        setProcedureFactory(procedureFactory);
+        if (setForMatrices) for (Matrix matrix : matrices) matrix.setProcedureFactory(procedureFactory);
+    }
+
+    /**
      * Returns current procedure factory of multi-matrix.
      *
      * @return current procedure factory.
@@ -367,7 +378,7 @@ public class MMatrix implements Cloneable, Serializable {
     /**
      * Makes current multi-matrix data equal to other multi-matrix data.
      *
-     * @param other othermulti- matrix to be copied as data of this multi-matrix.
+     * @param other other multi-matrix to be copied as data of this multi-matrix.
      * @throws MatrixException throws MatrixException if this and other multi-matrix are not of equal dimensions.
      */
     public void setEqualTo(MMatrix other) throws MatrixException {
@@ -390,7 +401,7 @@ public class MMatrix implements Cloneable, Serializable {
             throw new MatrixException("Incompatible target matrix depth: " + other.getDepth());
         }
         int depth = getDepth();
-        for (int index = 0; index < depth; index++) if(get(index) != other.get(index)) return false;
+        for (int index = 0; index < depth; index++) if(!get(index).equals(other.get(index))) return false;
         return true;
     }
 
@@ -904,7 +915,7 @@ public class MMatrix implements Cloneable, Serializable {
             if (result == null) result = matrix.getNewMatrix();
             result.add(matrix, result);
         }
-        return asMean ? result == null ? result : result.divide(matrices.size()) : result;
+        return asMean ? result == null ? null : result.divide(matrices.size()) : result;
     }
 
     /**
@@ -1013,7 +1024,7 @@ public class MMatrix implements Cloneable, Serializable {
             if (result == null) result = matrix.getNewMatrix();
             result.add(matrix.subtract(meanMatrix).power(2), result);
         }
-        return result == null ? result : result.divide(matrices.size());
+        return result == null ? null : result.divide(matrices.size());
     }
 
     /**
@@ -1088,8 +1099,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices) throws MatrixException, DynamicParamException {
-        Matrix result = MMatrix.variance(matrices, MMatrix.mean(matrices)).multiply(matrices.size()).divide(matrices.size() - 1);
-        return result.apply(UnaryFunctionType.SQRT);
+        return MMatrix.variance(matrices, MMatrix.mean(matrices)).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
     }
 
     /**
@@ -1102,8 +1112,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        Matrix result = MMatrix.variance(matrices, meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1);
-        return result.apply(UnaryFunctionType.SQRT);
+        return MMatrix.variance(matrices, meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
     }
 
     /**
@@ -1282,41 +1291,55 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Joins this multi-matrix with other multi-matrix.
+     * Joins multi-matrices.
      *
-     * @param otherMMatrix other multi-matrix.
+     * @param mMatrices multi-matrices.
      * @param joinedVertically if true MMatrices are joint vertically otherwise horizontally.
-     * @return joined multi-matrices.
+     * @return joint multi-matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix join(MMatrix otherMMatrix, boolean joinedVertically) throws MatrixException {
-        if (getDepth() != otherMMatrix.getDepth()) throw new MatrixException("Depth of this multi-matrix " + getDepth() + " and other multi-matrix " + otherMMatrix.getDepth() + " do not match.");
-        MMatrix joinedMMatrix = getNewMMatrix();
-        int depth = getDepth();
-        for (int index = 0; index < depth; index++) {
-            Matrix otherMatrix = otherMMatrix.get(index);
-            if (otherMatrix == null) throw new MatrixException("Other multi-matrix does not contain entry index: " + index);
-            joinedMMatrix.put(index, new JMatrix(new Matrix[] { get(index), otherMatrix }, joinedVertically));
+    public static MMatrix join(MMatrix[] mMatrices, boolean joinedVertically) throws MatrixException {
+        int depth = -1;
+        HashMap<Integer, ArrayList<Matrix>> mMatrixArrays = new HashMap<>();
+        MMatrix joinedMMatrix = null;
+        for (MMatrix mMatrix : mMatrices) {
+            if (joinedMMatrix == null) joinedMMatrix = mMatrix.getNewMMatrix();
+            if (depth == -1) depth = mMatrix.getDepth();
+            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+                Matrix matrix = mMatrix.get(depthIndex);
+                if (matrix == null) throw new MatrixException("Other multi-matrix does not contain depth index: " + depthIndex);
+                mMatrixArrays.computeIfAbsent(depthIndex, k -> new ArrayList<>()).add(matrix);
+            }
+        }
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            joinedMMatrix.put(depthIndex, new JMatrix(mMatrixArrays.get(depthIndex), joinedVertically));
         }
         return joinedMMatrix;
     }
 
     /**
-     * Unjoins joined multi-matrix by returning multi-matrix corresponding given sub matrix index.
+     * Unjoins multi-matrix.
      *
-     * @param subMatrixIndex sub matrix index.
-     * @return unjoined multi-matrix.
+     * @param mMatrix multi-matrix.
+     * @return unjoined multi-matrices.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix unjoin(int subMatrixIndex) throws MatrixException {
-        MMatrix unjoinedMMatrix = getNewMMatrix();
-        int depth = getDepth();
-        for (int index = 0; index < depth; index++) {
-            ArrayList<Matrix> subMatrices = get(index).getSubMatrices();
-            if (subMatrixIndex < 0 || subMatrixIndex > subMatrices.size() - 1) throw new MatrixException("Joined matrix does not have sub matrix index: " + subMatrixIndex);
-            unjoinedMMatrix.put(index, subMatrices.get(subMatrixIndex));
+    public static MMatrix[] unjoin(MMatrix mMatrix) throws MatrixException {
+        int depth = mMatrix.getDepth();
+        int subMatricesSize = -1;
+        MMatrix[] unjoinedMMatrices = null;
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            ArrayList<Matrix> subMatrices = mMatrix.get(depthIndex).getSubMatrices();
+            if (unjoinedMMatrices == null) {
+                subMatricesSize = subMatrices.size();
+                unjoinedMMatrices = new MMatrix[subMatricesSize];
+                for (int subMatrixIndex = 0; subMatrixIndex < subMatricesSize; subMatrixIndex++) unjoinedMMatrices[subMatrixIndex] = new MMatrix(depth);
+            }
+            for (int subMatrixIndex = 0; subMatrixIndex < subMatricesSize; subMatrixIndex++) {
+                unjoinedMMatrices[subMatrixIndex].put(depthIndex, subMatrices.get(subMatrixIndex));
+            }
         }
-        return unjoinedMMatrix;
+        return unjoinedMMatrices;
     }
 
 }
