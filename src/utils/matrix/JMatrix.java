@@ -58,8 +58,8 @@ public class JMatrix extends ComputableMatrix {
         this.joinedVertically = joinedVertically;
 
         if (joinedVertically) {
-            int columns = -1;
             int totalRows = 0;
+            int columns = -1;
             for (Matrix matrix : matrices) {
                 int matrixTotalColumns = matrix.getTotalColumns();
                 if (columns == -1) columns = matrixTotalColumns;
