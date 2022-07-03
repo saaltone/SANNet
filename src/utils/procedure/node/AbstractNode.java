@@ -141,7 +141,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
     public void updateMatrixDependency(int index) throws MatrixException {
-        if (fromNode != null) setMatrix(index, fromNode.getMatrix(index - 1) != null ? fromNode.getMatrix(index - 1) : getEmptyMatrix());
+        if (fromNode != null) setMatrix(index, fromNode.getMatrix(index - 1) != null ? fromNode.getMatrix(index - 1) : getNewMatrix());
     }
 
     /**
@@ -151,7 +151,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
     public void updateGradientDependency(int index) throws MatrixException {
-        if (toNode != null) setGradient(index, toNode.getGradient(index + 1) != null ? toNode.getGradient(index + 1) : getEmptyMatrix());
+        if (toNode != null) setGradient(index, toNode.getGradient(index + 1) != null ? toNode.getGradient(index + 1) : getNewMatrix());
     }
 
     /**
@@ -196,7 +196,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @return empty matrix with dimensions of reference matrix.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public Matrix getEmptyMatrix() throws MatrixException {
+    public Matrix getNewMatrix() throws MatrixException {
         return referenceMatrix.getNewMatrix();
     }
 
@@ -206,7 +206,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNode(boolean resetDependentNodes) throws MatrixException {
+    public void reset(boolean resetDependentNodes) throws MatrixException {
         cumulatedGradientEntryCount = 0;
     }
 
@@ -218,7 +218,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
      */
     public Matrix getNewMatrix(int index) throws MatrixException {
-        Matrix newMatrix = getEmptyMatrix();
+        Matrix newMatrix = getNewMatrix();
         setMatrix(index, newMatrix);
         return newMatrix;
     }
@@ -251,7 +251,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getGradientMean() throws MatrixException {
-        return cumulatedGradientEntryCount == 0 ? getEmptyMatrix() : getGradient().divide(cumulatedGradientEntryCount);
+        return cumulatedGradientEntryCount == 0 ? getNewMatrix() : getGradient().divide(cumulatedGradientEntryCount);
     }
 
     /**
@@ -263,10 +263,10 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException {
-        if (getGradient(index) == null) setGradient(index, getEmptyMatrix());
+        if (getGradient(index) == null) setGradient(index, getNewMatrix());
 
-        if (!negateGradient) getGradient(index).add(outputGradient, getGradient(index));
-        else getGradient(index).subtract(outputGradient, getGradient(index));
+        if (!negateGradient) getGradient(index).incrementBy(outputGradient);
+        else getGradient(index).decrementBy(outputGradient);
 
         cumulatedGradientEntryCount++;
     }

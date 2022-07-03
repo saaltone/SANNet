@@ -149,20 +149,29 @@ public interface Node {
     boolean contains(Matrix matrix);
 
     /**
-     * Returns empty matrix with dimensions of reference matrix.
-     *
-     * @return empty matrix with dimensions of reference matrix.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    Matrix getEmptyMatrix() throws MatrixException;
-
-    /**
      * Resets node and removes other data than constant data.
      *
      * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void resetNode(boolean resetDependentNodes) throws MatrixException;
+    void reset(boolean resetDependentNodes) throws MatrixException;
+
+    /**
+     * Returns new matrix with dimensions of reference matrix.
+     *
+     * @return new matrix with dimensions of reference matrix.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
+     */
+    Matrix getNewMatrix() throws MatrixException;
+
+    /**
+     * Returns new matrix of node.
+     *
+     * @param index data index for matrix.
+     * @return matrix of node.
+     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
+     */
+    Matrix getNewMatrix(int index) throws MatrixException;
 
     /**
      * Sets matrix of this node.
@@ -195,15 +204,6 @@ public interface Node {
      * @return matrix of node.
      */
     Matrix getMatrix(int index);
-
-    /**
-     * Returns new matrix of node.
-     *
-     * @param index data index for matrix.
-     * @return matrix of node.
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
-     */
-    Matrix getNewMatrix(int index) throws MatrixException;
 
     /**
      * Returns matrices of node.

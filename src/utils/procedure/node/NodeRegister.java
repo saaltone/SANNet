@@ -103,7 +103,7 @@ public class NodeRegister implements Serializable {
     public Node defineNode(MMatrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
         Node node = nodeMMatrixMap.get(matrix);
         if (node == null)  {
-            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
+            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix.getReferenceMatrix()) : new MultiNode(getTotalSize() + 1, matrix.getReferenceMatrix());
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
@@ -177,7 +177,7 @@ public class NodeRegister implements Serializable {
      *
      */
     public void removeProcedureFactory() {
-        for (Matrix matrix : nodeMatrixMap.keySet())  matrix.removeProcedureFactory();
+        for (Matrix matrix : nodeMatrixMap.keySet()) matrix.removeProcedureFactory();
     }
 
 }

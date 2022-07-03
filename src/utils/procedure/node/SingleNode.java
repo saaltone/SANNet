@@ -5,7 +5,6 @@
 
 package utils.procedure.node;
 
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -41,17 +40,6 @@ public class SingleNode extends AbstractNode {
     public SingleNode(int id, Matrix referenceMatrix) throws MatrixException {
         super(id, referenceMatrix);
         matrix = referenceMatrix;
-    }
-
-    /**
-     * Constructor for single node.
-     *
-     * @param id id.
-     * @param referenceMatrix reference matrix.
-     * @throws MatrixException throws exception is matrix is not defined.
-     */
-    public SingleNode(int id, MMatrix referenceMatrix) throws MatrixException {
-        this(id, referenceMatrix.getReferenceMatrix());
     }
 
     /**
@@ -122,9 +110,9 @@ public class SingleNode extends AbstractNode {
      * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNode(boolean resetDependentNodes) throws MatrixException {
+    public void reset(boolean resetDependentNodes) throws MatrixException {
         gradient = null;
-        super.resetNode(resetDependentNodes);
+        super.reset(resetDependentNodes);
     }
 
     /**

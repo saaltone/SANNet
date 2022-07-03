@@ -5,7 +5,6 @@
 
 package utils.procedure.node;
 
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -50,21 +49,6 @@ public class MultiNode extends AbstractNode {
         matrices = new TreeMap<>();
         matrices.put(0, referenceMatrix);
         gradients = new TreeMap<>();
-    }
-
-    /**
-     * Constructor for multi node.
-     *
-     * @param id id.
-     * @param referenceMatrix reference matrix.
-     * @throws MatrixException throws exception is matrix is not defined.
-     */
-    public MultiNode(int id, MMatrix referenceMatrix) throws MatrixException {
-        this(id, referenceMatrix.getReferenceMatrix());
-        int depth = referenceMatrix.getDepth();
-        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-            matrices.put(depthIndex, referenceMatrix.get(depthIndex));
-        }
     }
 
     /**
@@ -152,11 +136,11 @@ public class MultiNode extends AbstractNode {
      * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void resetNode(boolean resetDependentNodes) throws MatrixException {
+    public void reset(boolean resetDependentNodes) throws MatrixException {
         if (getToNode() == null || resetDependentNodes) matrices = new TreeMap<>();
         gradients = new TreeMap<>();
         matrixBackup = new HashMap<>();
-        super.resetNode(resetDependentNodes);
+        super.reset(resetDependentNodes);
     }
 
     /**
