@@ -22,9 +22,11 @@ public interface Agent {
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
 
     /**
      * Stops agent.
