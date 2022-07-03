@@ -644,10 +644,42 @@ public interface Matrix {
     Matrix divide(double constant) throws MatrixException;
 
     /**
+     * Increments matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void incrementBy(Matrix otherMatrix) throws MatrixException;
+
+    /**
+     * Decrements matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void decrementBy(Matrix otherMatrix) throws MatrixException;
+
+    /**
+     * Multiplies matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void multiplyBy(Matrix otherMatrix) throws MatrixException;
+
+    /**
+     * Divides matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void divideBy(Matrix otherMatrix) throws MatrixException;
+
+    /**
      * Raises this matrix element wise to the power of value power.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param power power value to which this elements is to be raised.
+     * @param power value of power.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -658,7 +690,7 @@ public interface Matrix {
      * Raises this matrix element wise to the power of value power.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param power power value to which this elements is to be raised.
+     * @param power value of power.
      * @param result matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -1517,7 +1549,7 @@ public interface Matrix {
      *
      * @param position position of split
      * @param splitVertically if true splits vertically otherwise horizontally.
-     * @return splitted matrix as JMatrix.
+     * @return split matrix as JMatrix.
      * @throws MatrixException throws matrix exception if splitting fails.
      *
      */
@@ -1643,7 +1675,7 @@ public interface Matrix {
     Mask getMask();
 
     /**
-     * Returns if matrix has mask at specific position.
+     * Returns if matrix is masked at specific position.
      *
      * @param row specific row.
      * @param column specific column.
