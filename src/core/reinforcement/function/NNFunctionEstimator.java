@@ -64,13 +64,13 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Intermediate map for state value pairs as value cache.
      *
      */
-    private HashMap<StateTransition, Matrix> stateTransitionCache = new HashMap<>();
+    private final HashMap<StateTransition, Matrix> stateTransitionCache = new HashMap<>();
 
     /**
      * Intermediate map for state transition value pairs for update.
      *
      */
-    private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
+    private final HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
 
     /**
      * Constructor for neural network based function estimator.
@@ -80,9 +80,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork) throws DynamicParamException {
-        super (memory, neuralNetwork.getInputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput() ? neuralNetwork.getOutputLayer().getLayerWidth() - 1 : neuralNetwork.getOutputLayer().getLayerWidth(), neuralNetwork.getOutputLayer().isMultiOutput());
-        this.neuralNetwork = neuralNetwork;
-        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
+        this (memory, neuralNetwork, null);
     }
 
     /**
@@ -185,9 +183,11 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         super.start();
         if (!neuralNetwork.isStarted()) neuralNetwork.start();
     }
@@ -217,8 +217,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException {
+    public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
         return new NNFunctionEstimator(memory, neuralNetwork.copy(), getParams());
     }
 
@@ -228,8 +229,8 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void reset() {
         super.reset();
-        stateTransitionCache = new HashMap<>();
-        stateTransitionValueMap = new HashMap<>();
+        stateTransitionCache.clear();
+        stateTransitionValueMap.clear();
     }
 
     /**
@@ -307,6 +308,15 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         super.append();
         if (fullUpdate) neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), 1);
         else neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), targetFunctionTau);
+    }
+
+    /**
+     * Sets if importance sampling weights are applied.
+     *
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
+     */
+    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
+        this.applyImportanceSamplingWeights = applyImportanceSamplingWeights;
     }
 
 }
