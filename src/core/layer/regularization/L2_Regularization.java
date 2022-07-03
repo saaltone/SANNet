@@ -107,7 +107,7 @@ public class L2_Regularization extends AbstractRegularizationLayer {
     /**
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Additionally applies any regularization defined for layer.<br>
+     * Applies additionally any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.

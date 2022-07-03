@@ -15,6 +15,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements abstract regularization layer for common regularization functions.
@@ -73,7 +74,7 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) {
         return null;
     }
 
