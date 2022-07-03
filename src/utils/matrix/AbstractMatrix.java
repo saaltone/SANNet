@@ -90,7 +90,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
 
     /**
      * Procedure factory reference for matrix.
-     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure and it's gradient.
+     * Procedure factory records chain of executed matrix operations enabling dynamic construction of procedure, and it's gradient.
      *
      */
     private transient ProcedureFactory procedureFactory = null;
@@ -344,7 +344,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return true if matrices are of same size otherwise false.
      */
     public boolean hasEqualSize(Matrix other) {
-        return other.getRows() == getRows() || other.getColumns() == getColumns();
+        return other.getRows() == getRows() && other.getColumns() == getColumns();
     }
 
     /**
@@ -903,10 +903,50 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Increments matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void incrementBy(Matrix otherMatrix) throws MatrixException {
+        add(otherMatrix, this);
+    }
+
+    /**
+     * Decrements matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void decrementBy(Matrix otherMatrix) throws MatrixException {
+        subtract(otherMatrix, this);
+    }
+
+    /**
+     * Multiplies matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void multiplyBy(Matrix otherMatrix) throws MatrixException {
+        multiply(otherMatrix, this);
+    }
+
+    /**
+     * Divides matrix by other matrix.
+     *
+     * @param otherMatrix other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void divideBy(Matrix otherMatrix) throws MatrixException {
+        divide(otherMatrix, this);
+    }
+
+    /**
      * Raises this matrix element wise to the power of value power.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param power power value to which this elements is to be raised.
+     * @param power power value to which elements are to be raised.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -919,7 +959,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Raises this matrix element wise to the power of value power.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param power power value to which this elements is to be raised.
+     * @param power power value to which elements are to be raised.
      * @param result matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -1828,7 +1868,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param position position of split
      * @param splitVertically if true splits vertically otherwise horizontally.
-     * @return splitted matrix as JMatrix.
+     * @return split matrix as JMatrix.
      * @throws MatrixException throws matrix exception if splitting fails.
      *
      */
@@ -2089,7 +2129,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Checks if matrix has mask at specific position.
+     * Checks if mask has been set at specific position.
      *
      * @param row specific row.
      * @param column specific column.
