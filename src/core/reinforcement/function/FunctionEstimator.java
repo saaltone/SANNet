@@ -86,9 +86,11 @@ public interface FunctionEstimator extends Configurable {
      *
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
 
     /**
      * Stops function estimator.
@@ -167,8 +169,9 @@ public interface FunctionEstimator extends Configurable {
      * @throws IOException throws exception if creation of function estimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of function estimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException;
+    FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
 
     /**
      * Predicts state values corresponding to a state.
@@ -277,13 +280,14 @@ public interface FunctionEstimator extends Configurable {
     int argmax(Matrix stateValues, HashSet<Integer> availableActions);
 
     /**
-     * Sets target function estimator.
+     * Creates target function estimator.
      *
-     * @throws IOException throws exception if creation of function estimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of function estimator copy fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException;
+    void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
 
     /**
      * Returns target function estimator.
@@ -291,5 +295,12 @@ public interface FunctionEstimator extends Configurable {
      * @return target function estimator.
      */
     FunctionEstimator getTargetFunctionEstimator();
+
+    /**
+     * Sets if importance sampling weights are applied.
+     *
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
+     */
+    void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights);
 
 }

@@ -28,7 +28,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
      * Parameter name types for tabular function estimator.
-     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
      */
@@ -42,16 +42,16 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<Matrix, Matrix> stateValues = new HashMap<>();
 
     /**
+     * Intermediate map for state transition value pairs for function update.
+     *
+     */
+    private final HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
+
+    /**
      * Optimizer for tabular function estimator.
      *
      */
     private Optimizer optimizer;
-
-    /**
-     * Intermediate map for state transition value pairs for function update.
-     *
-     */
-    private HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
 
     /**
      * Constructor for tabular function estimator.
@@ -100,7 +100,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void initializeDefaultParams() throws DynamicParamException {
         super.initializeDefaultParams();
-        optimizer = new Adam("learningRate = 0.01");
+        optimizer = new Adadelta();
     }
 
     /**
@@ -116,7 +116,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Sets parameters used for tabular function estimator.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
      * @param params parameters used for tabular function estimator.
@@ -174,7 +174,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Returns state values corresponding to a state or if state does not exists creates and returns new state value matrix.
+     * Returns state values corresponding to a state or if state does not exist creates and returns new state value matrix.
      *
      * @param state state
      * @return state values corresponding to a state
@@ -207,7 +207,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void reset() {
         super.reset();
-        stateTransitionValueMap = new HashMap<>();
+        stateTransitionValueMap.clear();
     }
 
     /**
@@ -263,7 +263,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
             optimizer.optimize(stateValue, stateError.divide(stateTransitionValueMap.size()));
         }
 
-        stateTransitionValueMap = new HashMap<>();
+        stateTransitionValueMap.clear();
 
         // Allows other threads to get execution time.
         try {
@@ -288,6 +288,14 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws AgentException {
         super.append();
         ((TabularFunctionEstimator) functionEstimator).setStateValues(stateValues);
+    }
+
+    /**
+     * Sets if importance sampling weights are applied.
+     *
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
+     */
+    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
 }
