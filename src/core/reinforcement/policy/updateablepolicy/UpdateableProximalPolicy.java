@@ -7,7 +7,6 @@ package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
@@ -66,10 +65,10 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws ClassNotFoundException throws exception if creation of function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator);
-        previousFunctionEstimator = functionEstimator.copy();
+    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, AgentException, MatrixException {
+        this(executablePolicyType, functionEstimator, null);
     }
 
     /**
@@ -82,8 +81,9 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws ClassNotFoundException throws exception if creation of function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, AgentException {
+    public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, AgentException, MatrixException {
         super(executablePolicyType, functionEstimator, params);
         previousFunctionEstimator = functionEstimator.copy();
     }
@@ -130,8 +130,9 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Policy reference() throws DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public Policy reference() throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
         return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator, params);
     }
 
@@ -152,29 +153,15 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Returns reference to policy function.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
-     * @param memory reference to memory.
-     * @return reference to policy.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
-        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), params);
-    }
-
-    /**
      * Starts function estimator
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         super.start();
         previousFunctionEstimator.start();
     }

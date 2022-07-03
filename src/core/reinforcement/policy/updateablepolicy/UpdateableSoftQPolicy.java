@@ -6,11 +6,10 @@
 package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
-import core.optimization.Adam;
 import core.optimization.Optimizer;
+import core.optimization.OptimizerFactory;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -73,7 +72,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * Optimizer for alpha loss.
      *
      */
-    private final Optimizer optimizer = new Adam("learningRate = 0.001");
+    private final Optimizer optimizer = OptimizerFactory.createDefault();
 
     /**
      * Soft Q alpha verbose interval.
@@ -97,10 +96,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator);
-        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
-        this.softQAlphaMatrix = softQAlphaMatrix;
-        this.softQAlphaMatrix.setValue(0, 0, softQAlpha);
+        this(executablePolicyType, functionEstimator, softQAlphaMatrix, null);
     }
 
     /**
@@ -185,22 +181,6 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
         return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), new DMatrix(0), params);
-    }
-
-    /**
-     * Returns reference to policy function.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
-     * @param memory reference to memory.
-     * @return reference to policy.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
-        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), new DMatrix(0), params);
     }
 
     /**
