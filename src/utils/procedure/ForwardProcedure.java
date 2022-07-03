@@ -9,6 +9,8 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.MatrixException;
 
+import java.util.TreeMap;
+
 /**
  * Defines interface for forward procedure.<br>
  *
@@ -19,10 +21,10 @@ public interface ForwardProcedure {
      * Returns input matrix for procedure construction.
      *
      * @param resetPreviousInput if true resets previous input.
-     * @return input matrix for procedure construction.
+     * @return input matrices for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException;
+    TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException;
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.

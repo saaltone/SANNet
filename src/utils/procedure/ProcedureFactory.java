@@ -60,7 +60,7 @@ public class ProcedureFactory implements Serializable {
          * Input matrices.
          *
          */
-        private MMatrix inputMatrices;
+        private TreeMap<Integer, MMatrix> inputMatrices;
 
         /**
          * Input nodes.
@@ -110,13 +110,13 @@ public class ProcedureFactory implements Serializable {
      * Unique expression lock to reserve procedure factory.
      *
      */
-    private double expressionLock = 0;
+    private transient double expressionLock = 0;
 
     /**
      * If true silently continues creation of existing procedure even new one is attempted.
      *
      */
-    private boolean silentlyContinue = false;
+    private transient boolean silentlyContinue = false;
 
     /**
      * Random function.
@@ -189,13 +189,9 @@ public class ProcedureFactory implements Serializable {
      *
      * @param inputMatrices input matrices.
      */
-    private void newProcedure(ProcedureData procedureData, MMatrix inputMatrices) {
+    private void newProcedure(ProcedureData procedureData, TreeMap<Integer, MMatrix> inputMatrices) {
         procedureData.inputMatrices = inputMatrices;
-        inputMatrices.setProcedureFactory(this);
-        int depth = inputMatrices.getDepth();
-        for (int inputDepth = 0; inputDepth < depth; inputDepth++) {
-            inputMatrices.get(inputDepth).setProcedureFactory(this);
-        }
+        for (MMatrix mMatrix : inputMatrices.values()) mMatrix.setProcedureFactory(this, true);
         currentExpressionID = 0;
         currentProcedureData = procedureData;
     }
@@ -300,37 +296,75 @@ public class ProcedureFactory implements Serializable {
      */
     private Node defineNode(Matrix matrix, boolean asSingleNode) throws MatrixException {
         Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID);
-        int depth = currentProcedureData.inputMatrices.getDepth();
-        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-            if (currentProcedureData.inputMatrices.get(depthIndex) == matrix) currentProcedureData.inputNodes.put(depthIndex, node);
-        }
+
+        attachMatrixToInputNode(currentProcedureData.inputMatrices, matrix, currentProcedureData.inputNodes, node);
+
         currentProcedureData.nodes.add(node);
+
         return node;
+    }
+
+    /**
+     * Attaches matrix to input node.
+     *
+     * @param inputMatrices input matrices
+     * @param matrix matrix to be attached to node.
+     * @param inputNodes input nodes.
+     * @param node node.
+     */
+    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, Matrix matrix, HashMap<Integer, Node> inputNodes, Node node) {
+        for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            MMatrix inputMMatrix = entry.getValue();
+            if (inputMMatrix.contains(matrix)) inputNodes.put(depthIndex, node);
+            int depth = inputMMatrix.getDepth();
+            for (int depthIndex1 = 0; depthIndex1 < depth; depthIndex1++) {
+                Matrix inputMatrix = inputMMatrix.get(depthIndex1);
+                if (inputMatrix == matrix) inputNodes.put(depthIndex, node);
+            }
+        }
     }
 
     /**
      * Defines node for procedure. Sets input and result nodes as non-constant nodes.
      *
-     * @param matrix matrix for node.
+     * @param mMatrix multi-matrix for node.
      * @return defined node.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private Node defineNode(MMatrix matrix) throws MatrixException {
+    private Node defineNode(MMatrix mMatrix) throws MatrixException {
         boolean isSingleNode = false;
-        int matrixDepth = matrix.getDepth();
+
+        int matrixDepth = mMatrix.getDepth();
         for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
-            if (constantMatrices.contains(matrix.get(inputDepth))) {
+            if (constantMatrices.contains(mMatrix.get(inputDepth))) {
                 isSingleNode = true;
                 break;
             }
         }
-        Node node = nodeRegister.defineNode(matrix, isSingleNode, currentExpressionID);
-        int depth = currentProcedureData.inputMatrices.getDepth();
-        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-            if (currentProcedureData.inputMatrices == matrix) currentProcedureData.inputNodes.put(depthIndex, node);
-        }
+
+        Node node = nodeRegister.defineNode(mMatrix, isSingleNode, currentExpressionID);
+
+        attachMatrixToInputNode(currentProcedureData.inputMatrices, mMatrix, currentProcedureData.inputNodes, node);
+
         currentProcedureData.nodes.add(node);
+
         return node;
+    }
+
+    /**
+     * Attaches multi-matrix to input node.
+     *
+     * @param inputMatrices input matrices
+     * @param mMatrix multi-matrix to be attached to input node.
+     * @param node node.
+     */
+    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, MMatrix mMatrix, HashMap<Integer, Node> inputNodes, Node node) {
+        for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
+            int depthIndex = entry.getKey();
+            MMatrix inputMMatrix = entry.getValue();
+            if (inputMMatrix == mMatrix) inputNodes.put(depthIndex, node);
+        }
     }
 
     /**
