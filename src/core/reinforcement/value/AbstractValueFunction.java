@@ -64,19 +64,19 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Moving average reward.
      *
      */
-    private double averageReward = Double.NEGATIVE_INFINITY;
+    private double averageReward = Double.MIN_VALUE;
 
     /**
      * Moving average TD target.
      *
      */
-    private double averageTDTarget = Double.NEGATIVE_INFINITY;
+    private double averageTDTarget = Double.MIN_VALUE;
 
     /**
      * Moving average TD error.
      *
      */
-    private double averageTDError = Double.NEGATIVE_INFINITY;
+    private double averageTDError = Double.MIN_VALUE;
 
     /**
      * Print cycle for average TD data verbosing.
@@ -226,7 +226,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
             stateTransitions.add(currentStateTransition);
             currentStateTransition = currentStateTransition.previousStateTransition;
         }
-
         updateValue(stateTransitions);
     }
 
@@ -245,9 +244,9 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
             stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition)));
             stateTransition.tdError = stateTransition.tdTarget - getValue(stateTransition);
             stateTransition.advantage = stateTransition.tdError;
-            averageReward = averageReward == Double.NEGATIVE_INFINITY ? stateTransition.reward : 0.99 * averageReward + 0.01 * stateTransition.reward;
-            averageTDTarget = averageTDTarget == Double.NEGATIVE_INFINITY ? stateTransition.tdTarget : 0.99 * averageTDTarget + 0.01 * stateTransition.tdTarget;
-            averageTDError = averageTDError == Double.NEGATIVE_INFINITY ? stateTransition.tdError : 0.99 * averageTDError + 0.01 * stateTransition.tdError;
+            averageReward = averageReward == Double.MIN_VALUE ? stateTransition.reward : 0.99 * averageReward + 0.01 * stateTransition.reward;
+            averageTDTarget = averageTDTarget == Double.MIN_VALUE ? stateTransition.tdTarget : 0.99 * averageTDTarget + 0.01 * stateTransition.tdTarget;
+            averageTDError = averageTDError == Double.MIN_VALUE ? stateTransition.tdError : 0.99 * averageTDError + 0.01 * stateTransition.tdError;
             if (tdDataPrintCycle > 0 && ++tdDataPrintCount % tdDataPrintCycle == 0) {
                 System.out.println("Average Reward: " + averageReward + ", Average TD target: " + averageTDTarget + ", Average TD error: " + averageTDError);
             }

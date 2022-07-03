@@ -15,6 +15,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.IOException;
 import java.util.TreeSet;
 
 /**
@@ -87,9 +88,11 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         functionEstimator.start();
     }
 

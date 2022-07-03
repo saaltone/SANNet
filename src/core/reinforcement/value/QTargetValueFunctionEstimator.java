@@ -27,10 +27,11 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws IOException throws exception if creation of target value function estimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException {
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
         super(functionEstimator);
-        functionEstimator.setTargetFunctionEstimator();
+        functionEstimator.createTargetFunctionEstimator();
     }
 
     /**
@@ -41,10 +42,11 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws IOException throws exception if creation of target value function estimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException {
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException {
         super(functionEstimator, params);
-        functionEstimator.setTargetFunctionEstimator();
+        functionEstimator.createTargetFunctionEstimator();
     }
 
     /**

@@ -24,7 +24,7 @@ public class PlainValueFunction extends AbstractValueFunction {
 
     /**
      * Parameter name types for plain value function.
-     *     - useBaseline: if true uses baseline for value function. Default value false.<br>
+     *     - useBaseline: if true baseline is used for value function. Default value false.<br>
      *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.95.<br>
      *
      */
