@@ -31,7 +31,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     private final int columns;
 
     /**
-     * Bernoulli probability for selecting if entry (row, column) is masked or not.
+     * Bernoulli-probability for selecting if entry (row, column) is masked or not.
      *
      */
     private double probability = 0;
@@ -66,11 +66,12 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @param columns number of columns in mask.
      * @param probability probability of masking.
      * @param isTransposed is true mask is transposed otherwise false.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public AbstractMask(int rows, int columns, double probability, boolean isTransposed) {
+    public AbstractMask(int rows, int columns, double probability, boolean isTransposed) throws MatrixException {
         this.rows = rows;
         this.columns = columns;
-        this.probability = probability;
+        setProbability(probability);
         this.isTransposed = isTransposed;
     }
 
@@ -122,8 +123,9 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * Creates new mask with full copy of this mask.
      *
      * @return newly created mask copy.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public Mask copy() {
+    public Mask copy() throws MatrixException {
         return getCopy();
     }
 
