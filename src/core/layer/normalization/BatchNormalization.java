@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 /**
  * Implements layer for batch normalization.
@@ -123,7 +124,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * Input matrix for procedure construction.
      *
      */
-    private MMatrix input;
+    private MMatrix inputs;
 
     /**
      * Matrix for epsilon value.
@@ -201,6 +202,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         epsilonMatrix = new DMatrix(10E-8);
+        epsilonMatrix.setName("Epsilon");
         meanOnly = false;
         batchSize = -1;
         momentum = 0.95;
@@ -271,13 +273,13 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new MMatrix(1, "Inputs");
-        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        Matrix inputMatrix = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
-        inputMatrix.setName("Input");
-        input.put(0, inputMatrix);
-        return input;
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        inputs = new MMatrix(1, "Inputs");
+        inputs = handleBidirectionalInput(inputs);
+        Matrix input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
+        input.setName("Input");
+        inputs.put(0, input);
+        return new TreeMap<>() {{ put(0, inputs); }};
     }
 
     /**
@@ -302,12 +304,12 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
-        mean = input.mean();
+        mean = inputs.mean();
 
         MMatrix outputs;
-        MMatrix meanNormalizedInput = input.subtract(mean);
+        MMatrix meanNormalizedInput = inputs.subtract(mean);
         if (!meanOnly) {
-            variance = input.variance(mean);
+            variance = inputs.variance(mean);
             outputs = meanNormalizedInput.divide(variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta);
         }
         else outputs = meanNormalizedInput.multiply(weightSet.gamma).add(weightSet.beta);
@@ -354,14 +356,14 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayer();
+        this.reset();
         Sequence inputSequence = getPreviousLayerOutputs();
 
         if (isTraining()) {
             if (batchSize == -1) batchSize = inputSequence.sampleSize();
             if (inputSequence.sampleSize() < 2) throw new MatrixException("Batch normalization must have minimum batch size of 2 for training phase.");
 
-            setLayerOutputs(procedure.calculateExpression(inputSequence));
+            procedure.calculateExpression(inputSequence, getLayerOutputs());
 
             averageMean = meanNode.getMatrix().exponentialMovingAverage(averageMean, momentum);
             if (!meanOnly) averageVariance = varianceNode.getMatrix().exponentialMovingAverage(averageVariance, momentum);

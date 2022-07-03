@@ -16,6 +16,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.TreeMap;
 
 /**
  * Implements layer for layer normalization.
@@ -210,11 +211,11 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      * @return input matrix for procedure construction.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
+        input = handleBidirectionalInput(input);
         input.setName("Input");
-        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
-        return new MMatrix(input);
+        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
     /**

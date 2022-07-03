@@ -17,6 +17,7 @@ import utils.procedure.ProcedureFactory;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Implements layer for weight normalization.
@@ -152,8 +153,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        return new MMatrix(input);
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
     /**
