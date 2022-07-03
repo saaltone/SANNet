@@ -199,14 +199,14 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void resetLayer() throws MatrixException {
-        super.resetLayer();
+    public void reset() throws MatrixException {
+        super.reset();
         if (isBidirectional()) reverseProcedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
     }
 
     /**
      * Takes single forward processing step process layer input(s).<br>
-     * Additionally applies any regularization defined for layer.<br>
+     * Applies additionally any regularization defined for layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -226,7 +226,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         previousState = isTraining();
 
         super.forwardProcess();
-        if (isBidirectional()) setLayerOutputs(getLayerOutputs().join(reverseProcedure.calculateExpression(getPreviousLayerOutputs()), true));
+        if (isBidirectional()) {
+            Sequence layerReverseOutputs = new Sequence();
+            reverseProcedure.calculateExpression(getPreviousLayerOutputs(), layerReverseOutputs);
+            setLayerOutputs(Sequence.join(new Sequence[] { getLayerOutputs(), layerReverseOutputs }, true));
+        }
     }
 
     /**
@@ -240,8 +244,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
         if (!isBidirectional()) super.backwardProcess();
         else {
             Sequence nextLayerGradients = getNextLayerGradients();
-            Sequence layerGradients = procedure.calculateGradient(nextLayerGradients.unjoin(0), getTruncateSteps());
-            Sequence reverseLayerGradients = reverseProcedure.calculateGradient(nextLayerGradients.unjoin(1), getTruncateSteps());
+            Sequence[] unjoinedNextLayerGradients = Sequence.unjoin(nextLayerGradients);
+            Sequence layerGradients = new Sequence();
+            procedure.calculateGradient(unjoinedNextLayerGradients[0], layerGradients, getTruncateSteps());
+            Sequence reverseLayerGradients = new Sequence();
+            reverseProcedure.calculateGradient(unjoinedNextLayerGradients[1], reverseLayerGradients, getTruncateSteps());
             Sequence updatedLayerGradients = new Sequence();
             for (Map.Entry<Integer, MMatrix> entry : layerGradients.entrySet()) {
                 int sampleIndex = entry.getKey();

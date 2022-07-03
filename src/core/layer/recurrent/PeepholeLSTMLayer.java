@@ -15,6 +15,7 @@ import utils.matrix.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements peephole Long Short Term Memory (LSTM)<br>
@@ -449,12 +450,12 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input = handleBidirectionalInput(input);
         input.setName("Input");
-        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
         if (resetPreviousInput) previousCellState = new DMatrix(getInternalLayerWidth(), 1);
-        return new MMatrix(input);
+        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
     /**
