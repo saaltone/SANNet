@@ -156,7 +156,7 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      * Compares this state transition to other state transition.<br>
      * If other state transition is precedent to this state transition returns 1.<br>
      * If other state transition succeeds this state transition returns -1.<br>
-     * Otherwise returns 0.<br>
+     * If above conditions are not met returns 0.<br>
      *
      * @param otherStateTransition other state transition.
      * @return return value of comparison.

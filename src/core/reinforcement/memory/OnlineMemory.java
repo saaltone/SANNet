@@ -37,12 +37,6 @@ public class OnlineMemory implements Memory, Serializable {
     private final String params;
 
     /**
-     * Random number generator.
-     *
-     */
-    private final Random random = new Random();
-
-    /**
      * Capacity of online memory.
      *
      */
@@ -58,7 +52,7 @@ public class OnlineMemory implements Memory, Serializable {
      * Tree set of state transitions in online memory.
      *
      */
-    private TreeSet<StateTransition> stateTransitionSet = new TreeSet<>();
+    private final TreeSet<StateTransition> stateTransitionSet = new TreeSet<>();
 
     /**
      * Sampled state transitions.
@@ -170,8 +164,8 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     public void reset() {
-        stateTransitionSet = new TreeSet<>();
         sampledStateTransitions = null;
+        stateTransitionSet.clear();
     }
 
     /**
@@ -180,7 +174,7 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public void sample() {
         sampledStateTransitions = new TreeSet<>(stateTransitionSet);
-        stateTransitionSet = new TreeSet<>();
+        stateTransitionSet.clear();
     }
 
     /**
@@ -193,26 +187,20 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns defined number of random state transitions.
+     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      *
-     * @return retrieved state transitions.
-     */
-    public TreeSet<StateTransition> getRandomStateTransitions() {
-        if (stateTransitionSet.isEmpty()) return new TreeSet<>();
-        TreeSet<StateTransition> result = new TreeSet<>();
-        Object[] sampleArray = stateTransitionSet.toArray();
-        int maxIndex = (batchSize < 0 ? stateTransitionSet.size() : batchSize);
-        for (int sampleIndex = 0; sampleIndex < maxIndex; sampleIndex++) result.add((StateTransition)sampleArray[random.nextInt(sampleArray.length)]);
-        return result;
-    }
-
-    /**
-     * Returns true if memory contains importance sampling weights and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights and they are to be applied otherwise returns false.
+     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      */
     public boolean applyImportanceSamplingWeights() {
         return false;
+    }
+
+    /**
+     * Sets if importance sampling weights are applied.
+     *
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
+     */
+    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
 }

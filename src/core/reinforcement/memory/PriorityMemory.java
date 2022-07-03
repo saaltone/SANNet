@@ -262,7 +262,6 @@ public class PriorityMemory implements Memory, Serializable {
      */
     public void sample() {
         if (!applyUniformSampling) {
-            double entryAmount = searchTree.size();
             double totalPriority = searchTree.getTotalPriority();
             double segment = totalPriority / (double)batchSize;
             beta = Math.min(beta + betaStepSize, 1);
@@ -273,12 +272,19 @@ public class PriorityMemory implements Memory, Serializable {
                 StateTransition stateTransition = searchTree.getStateTransition(prioritySum);
                 if (stateTransition != null) {
                     sampledStateTransitions.add(stateTransition);
-                    maxWeight = Math.max(stateTransition.importanceSamplingWeight = Math.pow(entryAmount * stateTransition.priority, -beta), maxWeight);
+                    maxWeight = Math.max(stateTransition.importanceSamplingWeight = Math.pow(1 / prioritySum, beta), maxWeight);
                 }
             }
             for (StateTransition stateTransition : sampledStateTransitions) stateTransition.importanceSamplingWeight /= maxWeight;
         }
-        else sampledStateTransitions = getRandomStateTransitions();
+        else {
+            sampledStateTransitions = new TreeSet<>();
+            if (searchTree.size() > 0) {
+                for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
+                    sampledStateTransitions.add(searchTree.getRandomStateTransition());
+                }
+            }
+        }
     }
 
     /**
@@ -291,25 +297,12 @@ public class PriorityMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns defined number of random state transitions from prioritized replay memory.
+     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      *
-     * @return retrieved state transitions.
-     */
-    public TreeSet<StateTransition> getRandomStateTransitions() {
-        if (searchTree.size() == 0) return new TreeSet<>();
-        TreeSet<StateTransition> stateTransitions = new TreeSet<>();
-        for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) stateTransitions.add(searchTree.getRandomStateTransition());
-        return stateTransitions;
-    }
-
-    /**
-     * Returns true if memory contains importance sampling weights and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights and they are to be applied otherwise returns false.
+     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      */
     public boolean applyImportanceSamplingWeights() {
         return applyImportanceSamplingWeights;
     }
-
 
 }

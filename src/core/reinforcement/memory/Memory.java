@@ -65,16 +65,9 @@ public interface Memory extends Configurable {
     TreeSet<StateTransition> getSampledStateTransitions();
 
     /**
-     * Samples defined number of random state transitions.
+     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      *
-     * @return retrieved state transitions.
-     */
-    TreeSet<StateTransition> getRandomStateTransitions();
-
-    /**
-     * Returns true if memory contains importance sampling weights and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights and they are to be applied otherwise returns false.
+     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
      */
     boolean applyImportanceSamplingWeights();
 

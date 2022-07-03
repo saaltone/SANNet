@@ -29,7 +29,7 @@ public record EnvironmentState(int episodeID, int timeStep, Matrix state, HashSe
      * Compares this environment state to other environment state.<br>
      * If other environment state is precedent to this environment state returns 1.<br>
      * If other environment state succeeds this environment state returns -1.<br>
-     * Otherwise returns 0.<br>
+     * If above conditions are not met returns 0.<br>
      *
      * @param otherEnvironmentState other environment state
      * @return return value of comparison.
