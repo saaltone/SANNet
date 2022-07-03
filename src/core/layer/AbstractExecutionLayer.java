@@ -10,15 +10,15 @@ import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
+import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
+import utils.sampling.Sequence;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implements abstract execution layer supporting actual neural network layers (feed forward, recurrent, convolutional layers etc.)<br>
@@ -39,6 +39,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      */
     protected Procedure procedure = null;
+
+    /**
+     * Input sequences.
+     *
+     */
+    private transient HashMap<Integer, Sequence> inputSequences;
+
+    /**
+     * Input gradient sequences.
+     *
+     */
+    private transient HashMap<Integer, Sequence> inputGradientSequences;
 
     /**
      * Weights to be normalized.
@@ -126,12 +138,73 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract void initializeWeights();
 
     /**
+     * Adds input sequence for procedure definition.
+     *
+     * @param inputSequence input sequence
+     * @param inputGradientSequence input gradient sequence.
+     */
+    protected void addInputSequence(Sequence inputSequence, Sequence inputGradientSequence) {
+        inputSequences.put(inputSequences.size(), inputSequence);
+        inputGradientSequences.put(inputGradientSequences.size(), inputGradientSequence);
+    }
+
+    /**
+     * Add input layer by layer index.
+     *
+     * @param inputLayerIndex input layer index.
+     */
+    protected void addInputSequence(int inputLayerIndex) {
+        addInputSequence(getPreviousLayerOutputs(inputLayerIndex), getPreviousLayerGradients(inputLayerIndex + 1));
+    }
+
+    /**
+     * Handles birectional input.
+     *
+     * @param input input
+     * @return handled input
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix handleBidirectionalInput(Matrix input) throws MatrixException {
+        Matrix handledInput;
+        if (getPreviousLayer().isBidirectional()) handledInput = input.split(getPreviousLayerWidth() / 2, true);
+        else handledInput = input;
+        return handledInput;
+    }
+
+    /**
+     * Handles birectional input.
+     *
+     * @param input input
+     * @return handled input
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected MMatrix handleBidirectionalInput(MMatrix input) throws MatrixException {
+        MMatrix handledInput;
+        if (getPreviousLayer().isBidirectional()) handledInput = input.split(getPreviousLayerWidth() / 2, true);
+        else handledInput = input;
+        return handledInput;
+    }
+
+    /**
+     * Returns true if input is unjoined otherwise returns false.
+     *
+     * @return true if input is unjoined otherwise returns false.
+     */
+    protected boolean isUnjoinedInput() {
+        return true;
+    }
+
+    /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        inputSequences = new HashMap<>();
+        inputGradientSequences = new HashMap<>();
+        addInputSequence(getPreviousLayerOutputs(), getLayerGradients());
+
         if (procedure == null) initializeWeights();
         procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), false);
     }
@@ -155,7 +228,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void resetLayer() throws MatrixException {
+    public void reset() throws MatrixException {
+        super.reset();
         if (procedure != null) procedure.reset();
     }
 
@@ -165,8 +239,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void reinitialize() throws MatrixException {
+        reset();
         if (getWeightSet() != null) getWeightSet().reinitialize();
-        resetLayer();
     }
 
     /**
@@ -176,8 +250,16 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayer();
-        setLayerOutputs(procedure.calculateExpression(getPreviousLayerOutputs()));
+        reset();
+        if (procedure != null) {
+            if (inputSequences.size() == 1) {
+                procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
+            }
+            else {
+                if (isUnjoinedInput()) procedure.calculateExpression(inputSequences, getLayerOutputs());
+                else procedure.calculateExpression(Sequence.join(inputSequences, true), getLayerOutputs());
+            }
+        }
     }
 
     /**
@@ -188,7 +270,15 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) setLayerGradients(procedure.calculateGradient(getNextLayerGradients(), getTruncateSteps()));
+        if (procedure != null) {
+            if (inputGradientSequences.size() == 1) {
+                procedure.calculateGradient(getNextLayerGradients(), getLayerGradients(), getTruncateSteps());
+            }
+            else {
+                procedure.calculateGradient(getNextLayerGradients(), inputGradientSequences, getTruncateSteps());
+                if (!isUnjoinedInput()) Sequence.unjoinAsMap(inputGradientSequences.get(0), inputGradientSequences);
+            }
+        }
     }
 
     /**
