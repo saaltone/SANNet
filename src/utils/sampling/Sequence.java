@@ -25,7 +25,7 @@ public class Sequence implements Serializable {
      * Sample depth.
      *
      */
-    private int depth = -1;
+    private int depth;
 
     /**
      * Ordered map of samples.
@@ -38,6 +38,7 @@ public class Sequence implements Serializable {
      *
      */
     public Sequence() {
+        depth = -1;
     }
 
     /**
@@ -58,13 +59,22 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if depth of samples are not equal.
      */
     public Sequence(HashMap<Integer, MMatrix> newSamples) throws MatrixException {
-        this.depth = newSamples.get(0).getDepth();
+        depth = newSamples.get(0).getDepth();
         for (Map.Entry<Integer, MMatrix> entry : newSamples.entrySet()) {
             int key = entry.getKey();
             MMatrix value = entry.getValue();
             if (value.getDepth() != depth) throw new MatrixException("Depths of all samples are not equal.");
             samples.put(key, value);
         }
+    }
+
+    /**
+     * Resets sequence.
+     *
+     */
+    public void reset() {
+        samples.clear();
+        depth = -1;
     }
 
     /**
@@ -246,40 +256,99 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Joins this and other sequence together by sample indices.
+     * Sequences together by sample indices.
      *
-     * @param otherSequence other sequence.
+     * @param sequences sequences to be joined.
      * @param joinedVertically if true sequences are joined together vertically otherwise horizontally.
      * @return joined sequence.
      * @throws MatrixException throws exception if joining of matrices fails.
      */
-    public Sequence join(Sequence otherSequence, boolean joinedVertically) throws MatrixException {
-        if (getDepth() != otherSequence.getDepth()) throw new MatrixException("Depth of this sequence + " + getDepth() + " and other sequence " + otherSequence.getDepth() + " do not match.");
+    public static Sequence join(HashMap<Integer, Sequence> sequences, boolean joinedVertically) throws MatrixException {
         Sequence joinedSequence = new Sequence();
-        for (Map.Entry<Integer, MMatrix> entry : entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix mMatrix = entry.getValue();
-            if (mMatrix == null) throw new MatrixException("Other sequence does not contain sample index: " + sampleIndex);
-            joinedSequence.put(sampleIndex, mMatrix.join(mMatrix, joinedVertically));
+        for (Integer sampleIndex : sequences.get(0).keySet()) {
+            MMatrix[] mMatrices = new MMatrix[sequences.size()];
+            for (Map.Entry<Integer, Sequence> entry : sequences.entrySet()) {
+                mMatrices[entry.getKey()] = entry.getValue().get(sampleIndex);
+            }
+            joinedSequence.put(sampleIndex, MMatrix.join(mMatrices, joinedVertically));
         }
         return joinedSequence;
     }
 
     /**
-     * Unjoins sequence by return specific submatrices of JMatrix.
+     * Sequences together by sample indices.
      *
-     * @param subMatrixIndex sub matrix index.
-     * @return unjoined sequence.
-     * @throws MatrixException throws exception if unjoining of matrices fails.
+     * @param sequences sequences to be joined.
+     * @param joinedVertically if true sequences are joined together vertically otherwise horizontally.
+     * @return joined sequence.
+     * @throws MatrixException throws exception if joining of matrices fails.
      */
-    public Sequence unjoin(int subMatrixIndex) throws MatrixException {
-        Sequence unjoinedSequence = new Sequence();
-        for (Map.Entry<Integer, MMatrix> entry : entrySet()) {
+    public static Sequence join(Sequence[] sequences, boolean joinedVertically) throws MatrixException {
+        Sequence joinedSequence = new Sequence();
+        for (Integer sampleIndex : sequences[0].keySet()) {
+            MMatrix[] mMatrices = new MMatrix[sequences.length];
+            int index = 0;
+            for (Sequence sequence : sequences) mMatrices[index++] = sequence.get(sampleIndex);
+            joinedSequence.put(sampleIndex, MMatrix.join(mMatrices, joinedVertically));
+        }
+        return joinedSequence;
+    }
+
+    /**
+     * Unjoins sequence
+     *
+     * @param sequence sequence
+     * @return unjoined sequence
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Sequence[] unjoin(Sequence sequence) throws MatrixException {
+        Sequence[] unjoinedSequence = null;
+        int unjoinedSize = -1;
+        for (Map.Entry<Integer, MMatrix> entry : sequence.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix mMatrix = entry.getValue();
-            unjoinedSequence.put(sampleIndex, mMatrix.unjoin(subMatrixIndex));
+            MMatrix[] unjoinedMMatrix = MMatrix.unjoin(mMatrix);
+            if (unjoinedSequence == null) {
+                unjoinedSize = unjoinedMMatrix.length;
+                unjoinedSequence = new Sequence[unjoinedSize];
+                for (int index = 0; index < unjoinedSize; index++) unjoinedSequence[index] = new Sequence();
+            }
+            for (int index = 0; index < unjoinedSize; index++) {
+                unjoinedSequence[index].put(sampleIndex, unjoinedMMatrix[index]);
+            }
         }
         return unjoinedSequence;
+    }
+
+    /**
+     * Unjoins sequence
+     *
+     * @param sequence sequence
+     * @param unjoinedSequence unjoined sequence
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static void unjoinAsMap(Sequence sequence, HashMap<Integer, Sequence> unjoinedSequence) throws MatrixException {
+        for (Map.Entry<Integer, MMatrix> entry : sequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix mMatrix = entry.getValue();
+            MMatrix[] unjoinedMMatrix = MMatrix.unjoin(mMatrix);
+            for (int index = 0; index < unjoinedMMatrix.length; index++) {
+                unjoinedSequence.get(index).put(sampleIndex, unjoinedMMatrix[index]);
+            }
+        }
+    }
+
+    /**
+     * Increments other multi-matrix to specific multi-matrix.
+     *
+     * @param sampleIndex sample index.
+     * @param mMatrix other multi-matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public void increment(int sampleIndex, MMatrix mMatrix) throws MatrixException {
+        MMatrix currentMMatrix = get(sampleIndex);
+        if (currentMMatrix != null) currentMMatrix.add(mMatrix, currentMMatrix);
+        else put(sampleIndex, mMatrix);
     }
 
 }
