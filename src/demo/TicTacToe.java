@@ -28,7 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Class that implements tic tac toe game using deep reinforcement learning.<br>
+ * Class that implements Tic-Tac-Toe game using deep reinforcement learning.<br>
  *
  */
 public class TicTacToe implements Environment, AgentFunctionEstimator, ActionListener, MouseListener {
@@ -466,7 +466,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Implements JPanel into which tic tac toe game is drawn.<br>
+     * Implements JPanel into which Tic-Tac-Toe game is drawn.<br>
      *
      */
     private class TicTacToePanel extends JPanel {
@@ -640,13 +640,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     private JFrame jFrame;
 
     /**
-     * Root panel holding both tic tac toe and radio button panels.
+     * Root panel holding both Tic-Tac-Toe and radio button panels.
      *
      */
     private final JPanel jRootPanel = new JPanel();
 
     /**
-     * Tic tac toe panel that is used to show tic tac toe game grid.
+     * Tic-Tac-Toe panel that is used to show Tic-Tac-Toe game grid.
      *
      */
     private final TicTacToePanel ticTacToePanel = new TicTacToePanel();
@@ -682,13 +682,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     private final ButtonGroup gameModeButtonGroup = new ButtonGroup();
 
     /**
-     * Lock that is used to synchronize GUI (radio button events) and tic tac toe threads with each other.
+     * Lock that is used to synchronize GUI (radio button events) and Tic-Tac-Toe threads with each other.
      *
      */
     private final Lock lock = new ReentrantLock();
 
     /**
-     * Lock that is used to synchronize GUI panel and tic tac toe threads with each other.
+     * Lock that is used to synchronize GUI panel and Tic-Tac-Toe threads with each other.
      *
      */
     private final Lock panelLock = new ReentrantLock();
@@ -700,7 +700,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     private final Condition humanAction = lock.newCondition();
 
     /**
-     * Main function for tic tac toe.
+     * Main function for Tic-Tac-Toe.
      *
      * @param args not used.
      */
@@ -717,7 +717,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Constructor for tic tac toe.
+     * Constructor for Tic-Tac-Toe.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
@@ -727,11 +727,11 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        int numberfOfAgents = 2;
+        int numberfOfAgents = 4;
         boolean singleFunctionEstimator = false;
-        boolean sharedPolicyFunctionEstimator = true;
-        boolean sharedValueFunctionEstimator = true;
-        boolean sharedMemory = true;
+        boolean sharedPolicyFunctionEstimator = false;
+        boolean sharedValueFunctionEstimator = false;
+        boolean sharedMemory = false;
         int policyType = 1;
         ExecutablePolicyType executablePolicyType = null;
         String policyTypeParams = "";
@@ -739,7 +739,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams += "epsilonInitial = 1, epsilonMin = 0.2";
+                policyTypeParams += "epsilonInitial = 0.5, epsilonMin = 0.09";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -753,17 +753,17 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
 
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
         boolean onlineMemory = switch (agentAlgorithmType) {
-            case DDQN, SACDiscrete -> false;
+            case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DDQN -> true;
+            case DQN, DDQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "agentUpdateCycle = 10";
+            case QN -> "lambda = 1, agentUpdateCycle = 1";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
+            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -783,7 +783,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Builds neural network for tic tac toe player (agent).
+     * Builds neural network for Tic-Tac-Toe player (agent).
      *
      * @param outputSize output size of neural network (number of actions and their values).
      * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
@@ -796,9 +796,9 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
-        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100" + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
@@ -808,7 +808,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     }
 
     /**
-     * Builds neural network for tic tac toe player (agent).
+     * Builds neural network for Tic-Tac-Toe player (agent).
      *
      * @param outputSize output size of neural network (number of actions and their values).
      * @return built neural network
@@ -946,7 +946,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     public void mouseEntered (MouseEvent e) {}
 
     /**
-     * Handles mouse click action taking place in tic tac toe panel.
+     * Handles mouse click action taking place in Tic-Tac-Toe panel.
      *
      * @param e mouse event.
      */
@@ -968,7 +968,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
 
         for (int game = 0; game < numberOfGames; game++) {
             playGame();
-            if (game % 250 == 0 && game > 0) {
+            if (game % 100 == 0 && game > 0) {
                 System.out.print("Game #" + game);
                 for (int playerIndex = 0; playerIndex < currentPlayerList.size(); playerIndex++) {
                     Player player = currentPlayerList.get(playerIndex);
