@@ -57,13 +57,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient Lock executeLock;
 
     /**
-     * Lock condition for synchronizing execution procedures (train, predict, validate).
+     * Lock-condition for synchronizing execution procedures (train, predict, validate).
      *
      */
     private transient Condition executeLockCondition;
 
     /**
-     * Lock condition for synchronizing completion of procedure execution and shift to idle state.
+     * Lock-condition for synchronizing completion of procedure execution and shift to idle state.
      *
      */
     private transient Condition completeLockCondition;
@@ -159,7 +159,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     private int totalIterations = 0;
 
     /**
-     * Total training time of neural network in nano seconds.
+     * Total training time of neural network in nanoseconds.
      *
      */
     private long trainingTime = 0;
@@ -251,7 +251,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Sets optimizer to specific neural network layer.
      *
-     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
+     * @param neuralNetworkLayerIndex neural network layer. Input layer is index 0.
      * @param optimization type of optimizer.
      * @param params parameters for optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
@@ -284,7 +284,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Sets optimizer to specific neural network layer.
      *
-     * @param neuralNetworkLayerIndex neural network layer. Input layer has index 0.
+     * @param neuralNetworkLayerIndex neural network layer. Input layer is index 0.
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -543,8 +543,8 @@ public class NeuralNetwork implements Runnable, Serializable {
 
     /**
      * Builds neural network.<br>
-     * Connects layers to each other.<br>
-     * Initializes layers.<br>
+     * Build function connects layers to each other.<br>
+     * Build function initializes layers.<br>
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
@@ -556,23 +556,22 @@ public class NeuralNetwork implements Runnable, Serializable {
         neuralNetworkLayers.add(outputLayer);
 
         int neuralNetworkLayersSize = neuralNetworkLayers.size();
-
         boolean hasRecurrentLayers = false;
-        for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
+        for (int layerIndex = 0; layerIndex < neuralNetworkLayersSize - 1; layerIndex++) {
             if (neuralNetworkLayers.get(layerIndex).isRecurrentLayer()) {
                 hasRecurrentLayers = true;
                 break;
             }
         }
         if (hasRecurrentLayers) {
-            for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
+            for (int layerIndex = 0; layerIndex < neuralNetworkLayersSize - 1; layerIndex++) {
                 if (!neuralNetworkLayers.get(layerIndex).worksWithRecurrentLayer()) {
                     throw new NeuralNetworkException(LayerFactory.getLayerTypeByName(neuralNetworkLayers.get(layerIndex)) + " layer does not work with recurrent layers.");
                 }
             }
         }
 
-        for (int layerIndex = 0; layerIndex <neuralNetworkLayersSize - 1; layerIndex++) {
+        for (int layerIndex = 0; layerIndex < neuralNetworkLayersSize - 1; layerIndex++) {
             neuralNetworkLayers.get(layerIndex).setNextLayer(neuralNetworkLayers.get(layerIndex + 1));
             neuralNetworkLayers.get(layerIndex + 1).setPreviousLayer(neuralNetworkLayers.get(layerIndex));
         }
@@ -765,7 +764,7 @@ public class NeuralNetwork implements Runnable, Serializable {
 
     /**
      * Sets training sample sets of neural network via sampler.<br>
-     * Equal indices of input and output reflect input output pair of neural network.<br>
+     * Equal indices of input and output reflect input output pairs of neural network.<br>
      *
      * @param trainingSampler training sampler containing training data set.
      * @throws NeuralNetworkException throws exception if setting of training sample sets fail.
@@ -913,9 +912,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns neural network training time in milli seconds.
+     * Returns neural network training time in milliseconds.
      *
-     * @return neural network training time in milli seconds.
+     * @return neural network training time in milliseconds.
      */
     public long getTrainingTimeInMilliseconds() {
         waitToComplete();
@@ -1346,9 +1345,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return copy of this neural network.
      * @throws IOException throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NeuralNetwork copy() throws IOException, ClassNotFoundException {
+    public NeuralNetwork copy() throws IOException, ClassNotFoundException, MatrixException {
         waitToComplete();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers) neuralNetworkLayer.reset();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(this);
