@@ -77,6 +77,14 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Sets parameters used for direct function estimator.<br>
+     *
+     * @param params parameters used for direct function estimator.
+     */
+    public void setParams(DynamicParam params) {
+    }
+
+    /**
      * Not used.
      *
      */
@@ -139,11 +147,11 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Sets parameters used for direct function estimator.<br>
+     * Sets if importance sampling weights are applied.
      *
-     * @param params parameters used for direct function estimator.
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
      */
-    public void setParams(DynamicParam params) {
+    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
 }
