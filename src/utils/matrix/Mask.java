@@ -38,15 +38,17 @@ public interface Mask {
      * Creates new mask with object full copy of this mask.
      *
      * @return newly created reference mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    Mask copy();
+    Mask copy() throws MatrixException;
 
     /**
      * Retrieves copy of mask.
      *
      * @return copy of mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    Mask getCopy();
+    Mask getCopy() throws MatrixException;
 
     /**
      * Transposes mask.

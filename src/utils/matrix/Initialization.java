@@ -32,7 +32,7 @@ public enum Initialization {
     RANDOM,
 
     /**
-     * Initialized as identity matrix i.e. ones in diagonal and zeros elsewhere.
+     * Initialized as identity matrix i.e. matrix with one in diagonal and zeros elsewhere.
      *
      */
     IDENTITY,
@@ -50,13 +50,13 @@ public enum Initialization {
     UNIFORM_XAVIER,
 
     /**
-     * Initialized with normal (Gaussian) He initialization.
+     * Initialized with normal (Gaussian) He-initialization.
      *
      */
     NORMAL_HE,
 
     /**
-     * Initialized with uniform He initialization.
+     * Initialized with uniform He-initialization.
      *
      */
     UNIFORM_HE,
@@ -86,13 +86,13 @@ public enum Initialization {
     UNIFORM_XAVIER_CONV,
 
     /**
-     * Initialized with normal (Gaussian) He initialization for convolutional layer.
+     * Initialized with normal (Gaussian) He-initialization for convolutional layer.
      *
      */
     NORMAL_HE_CONV,
 
     /**
-     * Initialized with uniform He initialization for convolutional layer.
+     * Initialized with uniform He-initialization for convolutional layer.
      *
      */
     UNIFORM_HE_CONV,

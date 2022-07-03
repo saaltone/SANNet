@@ -12,7 +12,7 @@ package utils.matrix;
 public class DMask extends AbstractMask {
 
     /**
-     * Mask data structure as two dimensional row column array.
+     * Defines mask data structure using 2-dimensional row column array.
      *
      */
     private boolean[][] mask;
@@ -34,8 +34,9 @@ public class DMask extends AbstractMask {
      * @param data clones mask data from given mask data.
      * @param probability probability of masking.
      * @param isTransposed is true mask is transposed otherwise false.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    private DMask(boolean[][] data, double probability, boolean isTransposed) {
+    private DMask(boolean[][] data, double probability, boolean isTransposed) throws MatrixException {
         super(data.length, data[0].length, probability, isTransposed);
         mask = data.clone();
     }
@@ -63,16 +64,17 @@ public class DMask extends AbstractMask {
      * Returns copy of mask.
      *
      * @return copy of mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public Mask getCopy() {
+    public Mask getCopy() throws MatrixException {
         return new DMask(mask, getProbability(), isTransposed());
     }
 
     /**
      * Sets mask at specific row and column.
      *
-     * @param row row of value to be get.
-     * @param column column of value to be get.
+     * @param row row of value to be fetched.
+     * @param column column of value to be fetched.
      * @param value defines if specific row and column is masked (true) or not (false).
      */
     public void setMask(int row, int column, boolean value) {

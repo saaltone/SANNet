@@ -37,8 +37,9 @@ public class SMask extends AbstractMask {
      * @param data mask data.
      * @param probability probability of masking.
      * @param isTransposed is true mask is transposed otherwise false.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    private SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability, boolean isTransposed) {
+    private SMask(int rows, int columns, HashMap<Integer, Boolean> data, double probability, boolean isTransposed) throws MatrixException {
         super(rows, columns, probability, isTransposed);
         mask.putAll(data);
     }
@@ -66,8 +67,9 @@ public class SMask extends AbstractMask {
      * Retrieves copy of mask.
      *
      * @return copy of mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public Mask getCopy() {
+    public Mask getCopy() throws MatrixException {
         return new SMask(!isTransposed() ? getRows() : getColumns(), !isTransposed() ? getColumns() : getRows(), mask, getProbability(), isTransposed());
     }
 

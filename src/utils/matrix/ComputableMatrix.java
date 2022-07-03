@@ -129,22 +129,22 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public void initialize(Initialization initialization, int inputs, int outputs) {
         switch (initialization) {
-            case ZERO -> initialize((Initializer & Serializable) (row, col) -> 0);
-            case ONE -> initialize((Initializer & Serializable) (row, col) -> 1);
-            case RANDOM -> initialize((Initializer & Serializable) (row, col) -> random.nextDouble());
-            case IDENTITY -> initialize((Initializer & Serializable) (row, col) -> (row == col) ? 1 : 0);
-            case NORMAL_XAVIER -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (getRows() + getColumns()))));
-            case UNIFORM_XAVIER -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows() + getColumns()))));
-            case NORMAL_HE -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / ((double) getRows()))));
-            case UNIFORM_HE -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (getRows()))));
-            case NORMAL_LECUN -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (getRows()))));
-            case UNIFORM_LECUN -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (getRows()))));
-            case NORMAL_XAVIER_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs + inputs))));
-            case UNIFORM_XAVIER_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs + inputs))));
-            case NORMAL_HE_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(2 / (double) (outputs))));
-            case UNIFORM_HE_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(6 / (double) (outputs))));
-            case NORMAL_LECUN_CONV -> initialize((Initializer & Serializable) (row, col) -> normal(Math.sqrt(1 / (double) (outputs))));
-            case UNIFORM_LECUN_CONV -> initialize((Initializer & Serializable) (row, col) -> uniform(Math.sqrt(3 / (double) (outputs))));
+            case ZERO -> initialize((Initializer & Serializable) (row, column) -> 0);
+            case ONE -> initialize((Initializer & Serializable) (row, column) -> 1);
+            case RANDOM -> initialize((Initializer & Serializable) (row, column) -> random.nextDouble());
+            case IDENTITY -> initialize((Initializer & Serializable) (row, column) -> (row == column) ? 1 : 0);
+            case NORMAL_XAVIER -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(2 / (double) (getRows() + getColumns()))));
+            case UNIFORM_XAVIER -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(6 / (double) (getRows() + getColumns()))));
+            case NORMAL_HE -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(2 / ((double) getRows()))));
+            case UNIFORM_HE -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(6 / (double) (getRows()))));
+            case NORMAL_LECUN -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(1 / (double) (getRows()))));
+            case UNIFORM_LECUN -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(3 / (double) (getRows()))));
+            case NORMAL_XAVIER_CONV -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(2 / (double) (outputs + inputs))));
+            case UNIFORM_XAVIER_CONV -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(6 / (double) (outputs + inputs))));
+            case NORMAL_HE_CONV -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(2 / (double) (outputs))));
+            case UNIFORM_HE_CONV -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(6 / (double) (outputs))));
+            case NORMAL_LECUN_CONV -> initialize((Initializer & Serializable) (row, column) -> normal(Math.sqrt(1 / (double) (outputs))));
+            case UNIFORM_LECUN_CONV -> initialize((Initializer & Serializable) (row, column) -> uniform(Math.sqrt(3 / (double) (outputs))));
             default -> {
             }
         }
@@ -168,8 +168,8 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         int rows = getRows();
         int columns = getColumns();
         for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < columns; col++) {
-                setValue(row, col, initializer.value(row, col));
+            for (int column = 0; column < columns; column++) {
+                setValue(row, column, initializer.value(row, column));
             }
         }
     }
@@ -183,8 +183,8 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         int rows = getRows();
         int columns = getColumns();
         for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < columns; col++) {
-                setValue(row, col, value);
+            for (int column = 0; column < columns; column++) {
+                setValue(row, column, value);
             }
         }
     }
@@ -412,8 +412,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return normalized matrix.
      */
     public Matrix normalize(boolean inplace) throws MatrixException {
-        Matrix result = inplace ? this : getNewMatrix();
-        return new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance()).apply(this, result);
+        return new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance()).apply(this, inplace ? this : getNewMatrix());
     }
 
     /**
@@ -489,7 +488,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         final double maxValue = max();
         apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value - maxValue));
         result.divide(result.sum(), result);
-
         return result;
     }
 
@@ -515,8 +513,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         final double maxValue = max();
         apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value - maxValue));
         result.divide(result.sum(), result);
-
-
         return result;
     }
 
@@ -545,7 +541,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getRows() != result.getRows() || getRows() != result.getColumns()) {
             throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
         }
-
         return new SoftmaxGradientMatrixOperation(getRows(), getRows()).apply(this, result);
     }
 

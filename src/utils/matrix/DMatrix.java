@@ -16,7 +16,7 @@ import java.util.Arrays;
 public class DMatrix extends ComputableMatrix {
 
     /**
-     * Matrix data structure as two dimensional row column array.
+     * Defines matrix data structure using 2-dimensional row column array.
      *
      */
     private double[][] matrix;
