@@ -108,12 +108,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction) throws DynamicParamException {
-        initializeDefaultParams();
-        this.memory = memory;
-        this.numberOfStates = numberOfStates;
-        this.numberOfActions = numberOfActions;
-        this.isStateActionValueFunction = isStateActionValueFunction;
-        this.params = null;
+        this(memory, numberOfStates, numberOfActions, isStateActionValueFunction, null);
     }
 
     /**
@@ -190,9 +185,11 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      *
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         if (targetFunctionEstimator != null) targetFunctionEstimator.start();
     }
 
@@ -240,7 +237,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Reinitializes FunctionEstimator.
+     * Reinitializes function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      */
@@ -326,13 +323,14 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Sets target function estimator.
+     * Creates target function estimator.
      *
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setTargetFunctionEstimator() throws ClassNotFoundException, DynamicParamException, IOException {
+    public void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
         targetFunctionEstimator = copy();
     }
 
