@@ -224,7 +224,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         }
 
         /**
-         * Returns opposite direction i.e if direction is left then right is returned.
+         * Returns opposite direction i.e. if direction is left then right is returned.
          *
          * @param direction direction to be taken as opposite.
          * @return opposite direction.
@@ -462,7 +462,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     private EnvironmentState environmentState;
 
     /**
-     * If true requests agent to be reset to a starting position.
+     * If true will request agent to be reset to a starting position.
      *
      */
     private boolean resetRequested = false;
@@ -776,7 +776,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.25, epsilonMin = 0.05";
+                policyTypeParams = "epsilonInitial = 0.05, epsilonMin = 0.05";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -789,7 +789,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         }
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.SACDiscrete;
         boolean onlineMemory = switch (agentAlgorithmType) {
-            case DDQN, SACDiscrete -> false;
+            case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
@@ -797,7 +797,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
+            case QN -> "lambda = 1, agentUpdateCycle = 1";
+            case SACDiscrete -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 200000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
             case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -832,8 +833,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
-        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
