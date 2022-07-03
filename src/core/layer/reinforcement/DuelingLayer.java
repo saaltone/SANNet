@@ -6,12 +6,11 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Implements dueling layer for Deep Q Network.
@@ -143,7 +142,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * Input matrix for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, MMatrix> inputs;
 
     /**
      * Constructor for dueling layer.
@@ -224,24 +223,35 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        super.defineProcedure();
+        addInputSequence(getPreviousLayerOutputs(getLayerIndex() - 1), getPreviousLayerGradients(getLayerIndex()));
+    }
+
+    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        inputs = new MMatrix(2, "Inputs");
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        inputs = new TreeMap<>();
 
         Matrix valueInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        valueInput = handleBidirectionalInput(valueInput);
         valueInput.setName("Input");
-        if (getPreviousLayer().isBidirectional()) valueInput = valueInput.split(getPreviousLayerWidth() / 2, true);
-        inputs.put(0, valueInput);
+        inputs.put(0, new MMatrix(valueInput));
 
         Matrix actionInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        actionInput = handleBidirectionalInput(actionInput);
         actionInput.setName("Input");
-        if (getPreviousLayer().isBidirectional()) actionInput = actionInput.split(getPreviousLayerWidth() / 2, true);
-        inputs.put(1, actionInput);
+        inputs.put(1, new MMatrix(actionInput));
 
         return inputs;
     }
@@ -253,10 +263,10 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0));
+        Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0).get(0));
         valueOutput = valueOutput.add(weightSet.valueBias);
 
-        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(1));
+        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(1).get(0));
         actionOutput = actionOutput.add(weightSet.actionBias);
 
         Matrix output = valueOutput.add(actionOutput.subtract(actionOutput.meanAsMatrix()));
@@ -266,45 +276,6 @@ public class DuelingLayer extends AbstractExecutionLayer {
         outputs.put(0, output);
         return outputs;
 
-    }
-
-    /**
-     * Takes single forward processing step to process layer input(s).<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardProcess() throws MatrixException, DynamicParamException {
-        resetLayer();
-        int inputDepth = 2;
-        Sequence previousLayerOutputs = getPreviousLayerOutputs();
-        Sequence layerInputs = new Sequence();
-        for (Map.Entry<Integer, MMatrix> entry : previousLayerOutputs.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix previousLayerOutput = entry.getValue();
-            MMatrix layerInput = new MMatrix(inputDepth, "Inputs");
-            layerInput.put(0, previousLayerOutput.get(0));
-            layerInput.put(1, previousLayerOutput.get(0));
-            layerInputs.put(sampleIndex, layerInput);
-        }
-        if (procedure != null) setLayerOutputs(procedure.calculateExpression(layerInputs));
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) setLayerGradients(procedure.calculateGradient(getNextLayerGradients(), getTruncateSteps()));
-        Sequence unJoinedLayerGradients = getLayerGradients();
-        Sequence layerGradients = new Sequence();
-        setLayerGradients(layerGradients);
-        for (Map.Entry<Integer, MMatrix> entry : unJoinedLayerGradients.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix layerGradient = entry.getValue();
-            layerGradients.put(sampleIndex, new MMatrix(layerGradient.get(0).add(layerGradient.get(1))));
-        }
     }
 
     /**
