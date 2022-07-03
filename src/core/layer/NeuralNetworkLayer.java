@@ -22,6 +22,13 @@ import java.util.HashSet;
 public interface NeuralNetworkLayer {
 
     /**
+     * Returns index of a layer.
+     *
+     * @return index of a layer.
+     */
+    int getLayerIndex();
+
+    /**
      * Sets reference to next neural network layer.
      *
      * @param nextLayer reference to next neural network layer.
@@ -41,6 +48,14 @@ public interface NeuralNetworkLayer {
      * @return reference to previous neural network layer.
      */
     NeuralNetworkLayer getPreviousLayer();
+
+    /**
+     * Returns reference to previous neural network layer matching given layer index.
+     *
+     * @param previousLayerIndex previous layer index.
+     * @return reference to previous neural network layer matching given layer index.
+     */
+    NeuralNetworkLayer getPreviousLayer(int previousLayerIndex);
 
     /**
      * Returns width of neural network layer.
@@ -90,6 +105,13 @@ public interface NeuralNetworkLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     void initializeDimensions() throws NeuralNetworkException;
+
+    /**
+     * Resets layer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    void reset() throws MatrixException;
 
     /**
      * Reinitializes neural network layer.
