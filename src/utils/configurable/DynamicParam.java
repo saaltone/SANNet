@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 /**
  * Implements dynamic parameter handling.<br>
- * Let's user to define parameters and their types.<br>
+ * Allows user to define parameters and their types.<br>
  * Stores parameter as name, type and value triplet.<br>
  *
  */
@@ -66,7 +66,13 @@ public class DynamicParam implements Serializable {
          * Boolean
          *
          */
-        BOOLEAN
+        BOOLEAN,
+
+        /**
+         * List
+         *
+         */
+        LIST
 
     }
 
@@ -154,6 +160,11 @@ public class DynamicParam implements Serializable {
                     else throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Boolean");
                     this.type = type;
                     break;
+                case LIST:
+                    this.type = type;
+                    if (!newValue.startsWith("[") && !newValue.startsWith("]")) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to List");
+                    this.value = newValue.replace("[", "").replace("]", "").replace(" ", "").split(",");
+                    break;
             }
         }
 
@@ -173,6 +184,7 @@ public class DynamicParam implements Serializable {
             if (type == ParamType.CHAR && !(value instanceof Character)) throw new DynamicParamException("Parameter: " + param + " value not type of Character.");
             if (type == ParamType.STRING && !(value instanceof String)) throw new DynamicParamException("Parameter: " + param + " value not type of String.");
             if (type == ParamType.BOOLEAN && !(value instanceof Boolean)) throw new DynamicParamException("Parameter: " + param + " value not type of Boolean.");
+            if (type == ParamType.LIST && !(value instanceof String)) throw new DynamicParamException("Parameter: " + param + " value not type of List.");
             this.type = type;
             this.value = value;
         }
@@ -279,6 +291,18 @@ public class DynamicParam implements Serializable {
             return (boolean)value;
         }
 
+        /**
+         * Returns value of parameter as list.
+         *
+         * @param param name of parameter.
+         * @return value of parameter.
+         * @throws DynamicParamException throws exception if parameter type is not boolean.
+         */
+        public String[] getValueAsList(String param) throws DynamicParamException {
+            if (type != ParamType.LIST) throw new DynamicParamException("Parameter: " + param + " value not type of List");
+            return (String[])value;
+        }
+
     }
 
     /**
@@ -345,6 +369,7 @@ public class DynamicParam implements Serializable {
                 case "CHAR" -> ParamType.CHAR;
                 case "STRING" -> ParamType.STRING;
                 case "BOOLEAN" -> ParamType.BOOLEAN;
+                case "LIST" -> ParamType.LIST;
                 default -> throw new DynamicParamException("Illegal type for name type pair: " + nameTypeString);
             };
             this.nameTypes.put(nameTypePair[0].trim(), paramType);
@@ -390,7 +415,7 @@ public class DynamicParam implements Serializable {
      * Defines parameter based on given name value and name type pairs.
      *
      * @param params parameters to be set as name value pair separated by equal sign.
-     * @throws DynamicParamException throws exception if parameter is not properly defined or parameter is cannot be casted into defined parameter type.
+     * @throws DynamicParamException throws exception if parameter is not properly defined or parameter cannot be cast into defined parameter type.
      */
     public void setParamsByVal(String params) throws DynamicParamException {
         if (params.trim().isEmpty()) return;
@@ -403,7 +428,7 @@ public class DynamicParam implements Serializable {
      * Defines parameter based on given name value and name type pairs.
      *
      * @param param parameter to be set as name value pair separated by equal sign.
-     * @throws DynamicParamException throws exception if parameter is not properly defined or parameter is cannot be casted into defined parameter type.
+     * @throws DynamicParamException throws exception if parameter is not properly defined or parameter cannot be cast into defined parameter type.
      */
     public void setParamByVal(String param) throws DynamicParamException {
         String[] typeValue = param.split("=");
