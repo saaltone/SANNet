@@ -20,7 +20,7 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * Creates recurrent neural network (RNN) that learns sequences of text.<br>
+ * Creates recurrent neural network (RNN) that learns text sequences.<br>
  * RNN reads one or more characters as input and learns next character as output.<br>
  * During validation phase RNN reproduces sequences it has learnt during training process.<br>
  *
@@ -97,7 +97,7 @@ public class TextSeqDemo {
         neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
         neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
         neuralNetwork.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
