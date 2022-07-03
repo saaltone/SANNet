@@ -7,7 +7,6 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -23,21 +22,21 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
 
     /**
      * Parameter name types for NesterovAcceleratedGradient.
-     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
-     *     - mu: mu (momentum) value for optimizer. Default value 0.0001.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *     - mu: mu (momentum) value for optimizer. Default value 0.001.<br>
      *
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE), " +
             "(mu:DOUBLE)";
 
     /**
-     * Learning rate for Nesterov Accelerated Gradient. Default value 0.001.
+     * Learning rate for Nesterov Accelerated Gradient. Default value 0.01.
      *
      */
     private double learningRate;
 
     /**
-     * Momentum term for Nesterov Accelerated Gradient. Default value 0.0001.
+     * Momentum term for Nesterov Accelerated Gradient. Default value 0.001.
      *
      */
     private double mu;
@@ -78,16 +77,16 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      *
      */
     public void initializeDefaultParams() {
-        learningRate = 0.001;
-        mu = 0.0001;
+        learningRate = 0.01;
+        mu = 0.001;
     }
 
     /**
      * Sets parameters used for Nesterov Accelerated Descent.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
-     *     - mu: mu (momentum) value for optimizer. Default value 0.0001.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *     - mu: mu (momentum) value for optimizer. Default value 0.001.<br>
      *
      * @param params parameters used for Nesterov Accelerated Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -115,11 +114,8 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
-        Matrix dMPrev = dPrev.get(matrix);
-        if (dMPrev == null) dPrev.put(matrix, dMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
-
-        Matrix vMPrev = vPrev.get(matrix);
-        if (vMPrev == null) vPrev.put(matrix, vMPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix dMPrev = getParameterMatrix(dPrev, matrix);
+        Matrix vMPrev = getParameterMatrix(vPrev, matrix);
 
         // vt=μvt−1−ϵ∇f(θt−1+μvt−1)
         Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));

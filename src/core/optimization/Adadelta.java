@@ -7,7 +7,6 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
@@ -117,11 +116,8 @@ public class Adadelta extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        Matrix mEg2 = eg2.get(matrix);
-        if (mEg2 == null)  eg2.put(matrix, mEg2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
-
-        Matrix mEd2 = ed2.get(matrix);
-        if (mEd2 == null) ed2.put(matrix, mEd2 = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mEg2 = getParameterMatrix(eg2, matrix);
+        Matrix mEd2 = getParameterMatrix(ed2, matrix);
 
         mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma));
 

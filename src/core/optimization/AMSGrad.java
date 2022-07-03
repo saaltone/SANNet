@@ -7,7 +7,6 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
@@ -128,11 +127,8 @@ public class AMSGrad extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        Matrix mM = m.get(matrix);
-        if (mM == null) m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
-
-        Matrix vM = v.get(matrix);
-        if (vM == null) v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mM = getParameterMatrix(m, matrix);
+        Matrix vM = getParameterMatrix(v, matrix);
 
         // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);

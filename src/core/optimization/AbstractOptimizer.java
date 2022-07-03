@@ -8,9 +8,12 @@ package core.optimization;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
+import utils.matrix.Matrix;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * Implements abstract optimizer containing common functions for optimizers.
@@ -85,6 +88,19 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
      */
     public String getName() {
         return optimizationType.toString();
+    }
+
+    /**
+     * Returns existing of new parameter matrix based on given matrix.
+     *
+     * @param parameterMatrices parameter matrices.
+     * @param matrix matrix.
+     * @return parameter matrix.
+     */
+    protected Matrix getParameterMatrix(HashMap<Matrix, Matrix> parameterMatrices, Matrix matrix) {
+        Matrix parameterMatrix = parameterMatrices.get(matrix);
+        if (parameterMatrix == null)  parameterMatrices.put(matrix, parameterMatrix = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        return parameterMatrix;
     }
 
 }

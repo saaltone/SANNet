@@ -7,7 +7,6 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
@@ -138,28 +137,25 @@ public class Adamax extends AbstractOptimizer {
         int iteration;
         iterations.put(matrix, iteration = iterations.getOrDefault(matrix, 0) + 1);
 
-        Matrix mM = m.get(matrix);
-        if (mM == null) m.put(matrix, mM = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix mM = getParameterMatrix(m, matrix);
+        Matrix vM = getParameterMatrix(v, matrix);
 
-        Matrix vM = v.get(matrix);
-        if (vM == null) v.put(matrix, vM = new DMatrix(matrix.getRows(), matrix.getColumns()));
-
-        Matrix matrixGradientAbs = matrixGradient.apply(UnaryFunctionType.ABS);
-
-        // mt = β1*mt−1 + (1 − β1)*gt
+        // mt = β1*mt − 1 + (1 − β1)*gt
         mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);
 
-        // vt = β2*vt−1 + (1 − β2)*|gt|
-        vM.multiply(beta2).add(matrixGradientAbs.multiply(1 - beta2), vM);
+        // vt = max (β2*vt, abs(gt))
+        (vM.multiply(beta2)).max(matrixGradient.apply(UnaryFunctionType.ABS), vM);
 
         // mt = mt / (1 − βt1)
         Matrix mM_hat = mM.divide(1 - Math.pow(beta1, iteration));
 
-        // ut= max(β2⋅vt−1,|gt|)
-        Matrix uM = (vM.multiply(beta2)).max(matrixGradientAbs);
+        // vt = vt / (1 − βt2)
+        Matrix vM_hat = vM.divide(1 - Math.pow(beta2, iteration));
 
-        // θt+1 = θt − η / ut * mt
-        matrix.subtract(mM_hat.divide(uM).multiply(learningRate), matrix);
+        // θt+1 = θt − η / (√^vt + ϵ) * mt
+        double epsilon = 10E-8;
+        matrix.subtract(mM_hat.divide(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+
     }
 
 }

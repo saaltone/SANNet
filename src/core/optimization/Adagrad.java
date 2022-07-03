@@ -7,7 +7,6 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
@@ -99,8 +98,7 @@ public class Adagrad extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        Matrix dM2Sum = m2Sum.get(matrix);
-        if (dM2Sum == null) m2Sum.put(matrix, dM2Sum = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        Matrix dM2Sum = getParameterMatrix(m2Sum, matrix);
 
         dM2Sum.add(matrixGradient.multiply(matrixGradient), dM2Sum);
 

@@ -20,7 +20,7 @@ public class GradientDescent extends AbstractOptimizer {
 
     /**
      * Parameter name types for GradientDescent.
-     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
      */
     private final static String paramNameTypes = "(learningRate:DOUBLE)";
@@ -55,14 +55,14 @@ public class GradientDescent extends AbstractOptimizer {
      *
      */
     public void initializeDefaultParams() {
-        learningRate = 0.001;
+        learningRate = 0.01;
     }
 
     /**
      * Sets parameters used for Gradient Descent.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
      *
      * @param params parameters used for Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
