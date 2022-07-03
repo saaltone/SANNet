@@ -48,6 +48,7 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("CONVOLVE", "CONVOLVE", expressionID, argument1, argument2, result);
+
         convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
         convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
         convolutionFilterGradientMatrixOperation = new ConvolutionFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
@@ -95,8 +96,8 @@ public class ConvolveExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, convolutionInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, convolutionFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, convolutionInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, convolutionFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix()), false);
     }
 
     /**

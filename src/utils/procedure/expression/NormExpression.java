@@ -53,6 +53,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      */
     public NormExpression(int expressionID, Node argument1, Node result, int p) throws MatrixException {
         super("NORM", "NORM", expressionID, argument1, result);
+
         if (p < 2) throw new MatrixException("Norm p value must be at least 2.");
         this.p = p;
 
@@ -105,8 +106,8 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
-            Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getEmptyMatrix());
-            Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), normGradientMatrix, argument1.getEmptyMatrix());
+            Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getNewMatrix());
+            Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), normGradientMatrix, argument1.getNewMatrix());
             argument1.cumulateGradient(sampleIndex, resultMatrix, false);
         }
     }

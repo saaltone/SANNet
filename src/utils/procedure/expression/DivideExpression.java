@@ -99,10 +99,10 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, divideMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, divideMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
         if (!argument2.isStopGradient()) {
-            Matrix multiplyGradientResult = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getEmptyMatrix());
-            Matrix divideGradientResult = divideGradientMatrixOperation.apply(multiplyGradientResult, argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix());
+            Matrix multiplyGradientResult = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix());
+            Matrix divideGradientResult = divideGradientMatrixOperation.apply(multiplyGradientResult, argument2.getMatrix(sampleIndex), argument1.getNewMatrix());
             argument2.cumulateGradient(sampleIndex, divideGradientResult, true);
         }
     }

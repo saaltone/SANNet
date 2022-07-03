@@ -43,6 +43,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      */
     public AveragePoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("AVERAGE_POOL", "AVERAGE_POOL", expressionID, argument1, result);
+
         averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(),filterRowSize, filterColumnSize, stride);
         averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), filterRowSize, filterColumnSize, stride);
     }
@@ -89,7 +90,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getNewMatrix()), false);
     }
 
     /**

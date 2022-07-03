@@ -55,6 +55,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
      */
     public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException, DynamicParamException {
         super("STANDARD_DEVIATION", "STANDARD_DEVIATION", expressionID, argument1, result);
+
         this.executeAsSingleStep = executeAsSingleStep;
     }
 

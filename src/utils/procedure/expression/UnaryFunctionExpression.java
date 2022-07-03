@@ -46,6 +46,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
         super("UNARY_FUNCTION", String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
+
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
 

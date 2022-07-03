@@ -34,6 +34,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public SumExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
         super("SUM", "SUM", expressionID, argument1, result);
+
         this.executeAsSingleStep = executeAsSingleStep;
     }
 

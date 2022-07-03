@@ -50,6 +50,7 @@ public class RandomPoolExpression extends AbstractUnaryExpression implements Ser
      */
     public RandomPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("RANDOM_POOL", "RANDOM_POOL", expressionID, argument1, result);
+
         randomPoolMatrixOperation = new RandomPoolMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
         randomPoolGradientMatrixOperation = new RandomPoolGradientMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), stride);
     }
@@ -100,7 +101,7 @@ public class RandomPoolExpression extends AbstractUnaryExpression implements Ser
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
         HashMap<Integer, Integer> inputPosEntry = inputPos.get(sampleIndex);
         if (inputPosEntry == null) throw new MatrixException("Input positions for gradient calculation are not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, randomPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPosEntry, argument1.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, randomPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPosEntry, argument1.getNewMatrix()), false);
         inputPos.remove(sampleIndex);
     }
 

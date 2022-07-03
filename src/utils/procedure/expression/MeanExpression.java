@@ -35,6 +35,7 @@ public class MeanExpression extends AbstractUnaryExpression implements Serializa
      */
     public MeanExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
         super("MEAN", "MEAN", expressionID, argument1, result);
+
         this.executeAsSingleStep = executeAsSingleStep;
     }
 

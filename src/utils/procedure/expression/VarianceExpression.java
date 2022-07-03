@@ -50,6 +50,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public VarianceExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
         super("VARIANCE", "VARIANCE", expressionID, argument1, result);
+
         this.executeAsSingleStep = executeAsSingleStep;
     }
 

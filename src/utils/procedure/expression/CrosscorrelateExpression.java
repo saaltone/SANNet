@@ -50,6 +50,7 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      */
     public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("CROSSCORRELATE", "CROSSCORRELATE", expressionID, argument1, argument2, result);
+
         crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
         crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
         crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
@@ -97,8 +98,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix()), false);
     }
 
     /**

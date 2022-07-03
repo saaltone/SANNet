@@ -85,8 +85,8 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getEmptyMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, multiplyMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex), argument2.getEmptyMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, multiplyMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex), argument2.getNewMatrix()), false);
 
     }
 
