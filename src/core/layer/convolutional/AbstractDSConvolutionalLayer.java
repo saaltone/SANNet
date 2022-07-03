@@ -17,6 +17,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements abstract depth-wise separable convolutional layer which implements common functionality for convolutional layer.<br>
@@ -62,7 +63,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
         private final int numberOfFilters;
 
         /**
-         * Tree map for depth-wise filter maps (weights).
+         * Treemap for depth-wise filter maps (weights).
          *
          */
         private final HashMap<Integer, Matrix> filterWeightsDepthWise = new HashMap<>();
@@ -74,13 +75,13 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
         private final HashMap<Integer, Matrix> filterBiasesDepthWise = new HashMap<>();
 
         /**
-         * Tree map for point-wise filter maps (weights).
+         * Treemap for point-wise filter maps (weights).
          *
          */
         private final HashMap<Integer, HashMap<Integer, Matrix>> filterWeightsPointWise = new HashMap<>();
 
         /**
-         * Tree map for point-wise biases.
+         * Treemap for point-wise biases.
          *
          */
         private final HashMap<Integer, Matrix> filterBiasesPointWise = new HashMap<>();
@@ -245,7 +246,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
      * Input matrices for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, MMatrix> inputs;
 
     /**
      * Constructor for abstract depth-wise separable convolutional layer.
@@ -432,12 +433,12 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
      * @return input matrices for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        inputs = new MMatrix(previousLayerDepth, "Inputs");
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        inputs = new TreeMap<>();
         for (int index = 0; index < previousLayerDepth; index++) {
             Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
             input.setName("Input" + index);
-            inputs.put(index, input);
+            inputs.put(index, new MMatrix(input));
         }
         return inputs;
     }
@@ -452,7 +453,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
         // Depth-wise separable convolution
         HashMap<Integer, Matrix> dwOutputs = new HashMap<>();
         for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
-            Matrix input = inputs.get(channelIndex);
+            Matrix input = inputs.get(channelIndex).get(0);
             input.setStride(stride);
             input.setDilation(dilation);
             input.setFilterRowSize(filterRowSize);

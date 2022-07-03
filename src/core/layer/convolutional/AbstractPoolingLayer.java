@@ -13,6 +13,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements abstract pooling layer which implements common functionality for pooling layer.
@@ -87,7 +88,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, MMatrix> inputs;
 
     /**
      * Constructor for abstract pooling layer.
@@ -219,12 +220,12 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        inputs = new MMatrix(previousLayerDepth, "Inputs");
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        inputs = new TreeMap<>();
         for (int index = 0; index < previousLayerDepth; index++) {
             Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
             input.setName("Input" + index);
-            inputs.put(index, input);
+            inputs.put(index, new MMatrix(input));
         }
         return inputs;
     }
@@ -238,9 +239,8 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         MMatrix outputs = new MMatrix(previousLayerDepth, "Outputs");
 
-        int depth = inputs.getDepth();
-        for (int channelIndex = 0; channelIndex < depth; channelIndex++) {
-            Matrix input = inputs.get(channelIndex);
+        for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
+            Matrix input = inputs.get(channelIndex).get(0);
             input.setStride(stride);
             input.setFilterRowSize(filterRowSize);
             input.setFilterColumnSize(filterColumnSize);

@@ -17,6 +17,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements abstract convolutional layer which implements common functionality for convolutional layer.
@@ -67,13 +68,13 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
         private final int previousLayerDepth;
 
         /**
-         * Tree map for filter maps (weights).
+         * Treemap for filter maps (weights).
          *
          */
         private final HashMap<Integer, Matrix> filterWeights = new HashMap<>();
 
         /**
-         * Tree map for biases.
+         * Treemap for biases.
          *
          */
         private final HashMap<Integer, Matrix> filterBiases = new HashMap<>();
@@ -216,7 +217,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * Input matrices for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, MMatrix> inputs;
 
     /**
      * Constructor for abstract convolutional layer.
@@ -403,12 +404,12 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @return input matrices for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        inputs = new MMatrix(previousLayerDepth, "Inputs");
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+        inputs = new TreeMap<>();
         for (int index = 0; index < previousLayerDepth; index++) {
             Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
             input.setName("Input" + index);
-            inputs.put(index, input);
+            inputs.put(index, new MMatrix(input));
         }
         return inputs;
     }
@@ -425,7 +426,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
             Matrix output = weightSet.filterBiases.get(filterIndex);
             for (int channelIndex = 0; channelIndex < previousLayerDepth; channelIndex++) {
                 Matrix Wf = weightSet.filterWeights.get(filterIndex);
-                Matrix input = inputs.get(channelIndex);
+                Matrix input = inputs.get(channelIndex).get(0);
                 input.setStride(stride);
                 input.setDilation(dilation);
                 input.setFilterRowSize(filterRowSize);
