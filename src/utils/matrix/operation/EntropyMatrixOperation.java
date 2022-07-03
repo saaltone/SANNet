@@ -72,6 +72,8 @@ public class EntropyMatrixOperation extends AbstractMatrixOperation {
      */
     public double applyEntropy(Matrix input) throws MatrixException {
         this.input = input;
+        value = 0;
+        count = 0;
         applyMatrixOperation();
         return -value / (double)count;
     }

@@ -57,6 +57,9 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      */
     public int[] applyArgMin(Matrix input) throws MatrixException {
         this.input = input;
+        minValue = Double.POSITIVE_INFINITY;
+        minRow = -1;
+        minColumn = -1;
         applyMatrixOperation();
         int[] result = new int[2];
         result[0] = getMinRow();

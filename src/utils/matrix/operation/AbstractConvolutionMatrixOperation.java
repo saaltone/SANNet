@@ -27,18 +27,6 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
     protected Matrix filter;
 
     /**
-     * Result matrix.
-     *
-     */
-    protected Matrix result;
-
-    /**
-     * Matrix dilation value.
-     *
-     */
-    protected final int dilation;
-
-    /**
      * Filter row size.
      *
      */
@@ -49,6 +37,18 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
      *
      */
     protected final int filterColumnSize;
+
+    /**
+     * Matrix dilation value.
+     *
+     */
+    protected final int dilation;
+
+    /**
+     * Result matrix.
+     *
+     */
+    protected Matrix result;
 
     /**
      * Constructor for abstract convolution matrix operation.

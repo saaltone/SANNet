@@ -39,16 +39,16 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
     protected final int filterColumnSize;
 
     /**
-     * Resulting input gradient.
-     *
-     */
-    protected Matrix inputGradient;
-
-    /**
      * Dilation.
      *
      */
     protected final int dilation;
+
+    /**
+     * Resulting input gradient.
+     *
+     */
+    protected Matrix inputGradient;
 
     /**
      * Constructor for abstract convolution input gradient matrix operation.

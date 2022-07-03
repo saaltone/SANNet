@@ -72,6 +72,8 @@ public class SumMatrixOperation extends AbstractMatrixOperation {
      */
     public double applySum(Matrix input) throws MatrixException {
         this.input = input;
+        value = 0;
+        count = 0;
         applyMatrixOperation();
         return value;
     }

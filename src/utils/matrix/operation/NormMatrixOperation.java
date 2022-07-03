@@ -53,6 +53,7 @@ public class NormMatrixOperation extends AbstractMatrixOperation {
      */
     public double apply(Matrix input) throws MatrixException {
         this.input = input;
+        value = 0;
         applyMatrixOperation();
         return Math.pow(value, 1 / (double)p);
     }

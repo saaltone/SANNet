@@ -76,13 +76,13 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Check if first matrix and optionally second matrix has mask at specific row and column.
+     * Check if first matrix and optionally second matrix are masked at specific row and column.
      *
      * @param row row.
      * @param column column.
      * @param first first matrix.
      * @param second second matrix.
-     * @return returns true if first or second matrix has mask at specific row and column.
+     * @return returns true if first or second matrix are masked at specific row and column.
      */
     protected boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
         return false;
@@ -92,7 +92,6 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * Applies matrix operation.
      *
      */
-
     protected void applyMatrixOperation() {
         final int rows1 = getRows();
         final Matrix other = getAnother();

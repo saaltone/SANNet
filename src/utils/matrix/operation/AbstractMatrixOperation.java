@@ -187,36 +187,36 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
     protected abstract Matrix getTargetMatrix();
 
     /**
-     * Check if first matrix and optionally second matrix has mask.
+     * Checks if first matrix and optionally second matrix are masked.
      *
      * @param first first matrix.
      * @param second second matrix.
-     * @return returns true if first or second matrix has mask.
+     * @return returns true if first or second matrix are masked.
      */
     protected boolean hasMask(Matrix first, Matrix second) {
         return first.getMask() != null || (second != null && second.getMask() != null);
     }
 
     /**
-     * Check if first matrix and optionally second matrix has mask at specific row and column.
+     * Check if first matrix and optionally second matrix are masked at specific row and column.
      *
      * @param row row.
      * @param column column.
      * @param first first matrix.
      * @param second second matrix.
-     * @return returns true if first or second matrix has mask at specific row and column.
+     * @return returns true if first or second matrix are masked at specific row and column.
      */
     protected boolean hasMaskAt(int row, int column, Matrix first, Matrix second) {
         return first.hasMaskAt(row, column) || (second != null && second.hasMaskAt(row, column));
     }
 
     /**
-     * Check if matrix has mask at specific row and column.
+     * Check if matrix is masked at specific row and column.
      *
      * @param row row.
      * @param column column.
      * @param matrix matrix.
-     * @return returns true if first or second matrix has mask at specific row and column.
+     * @return returns true if first or second matrix is masked at specific row and column.
      */
     protected boolean hasMaskAt(int row, int column, Matrix matrix) {
         return matrix.hasMaskAt(row, column);

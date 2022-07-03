@@ -57,6 +57,9 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      */
     public int[] applyArgMax(Matrix input) throws MatrixException {
         this.input = input;
+        maxValue = Double.NEGATIVE_INFINITY;
+        maxRow = -1;
+        maxColumn = -1;
         applyMatrixOperation();
         int[] result = new int[2];
         result[0] = getMaxRow();

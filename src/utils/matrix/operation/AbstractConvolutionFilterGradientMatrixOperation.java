@@ -39,16 +39,16 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
     protected final int filterColumnSize;
 
     /**
-     * Resulting filter gradient.
-     *
-     */
-    protected Matrix filterGradient;
-
-    /**
      * Dilation.
      *
      */
     protected final int dilation;
+
+    /**
+     * Resulting filter gradient.
+     *
+     */
+    protected Matrix filterGradient;
 
     /**
      * Constructor for abstract convolution filter gradient matrix operation.

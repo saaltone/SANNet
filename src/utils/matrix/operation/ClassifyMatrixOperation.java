@@ -30,7 +30,7 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
      * Implements threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
      *
      */
-    private double multiLabelThreshold = 0.5;
+    private final double multiLabelThreshold;
 
     /**
      * Constructor for classify matrix operation.
@@ -40,6 +40,7 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
      */
     public ClassifyMatrixOperation(int rows, int columns) {
         super(rows, columns, true);
+        this.multiLabelThreshold = 0.5;
     }
 
     /**
@@ -50,7 +51,7 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
      * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
      */
     public ClassifyMatrixOperation(int rows, int columns, double multiLabelThreshold) {
-        this(rows, columns);
+        super(rows, columns, true);
         this.multiLabelThreshold = multiLabelThreshold;
     }
 

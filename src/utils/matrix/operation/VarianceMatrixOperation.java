@@ -59,6 +59,8 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      */
     public double applyVariance(Matrix input) throws MatrixException {
         this.input = input;
+        value = 0;
+        count = 0;
         applyMatrixOperation();
         return count > 0 ? value / (double)count : 0;
     }
