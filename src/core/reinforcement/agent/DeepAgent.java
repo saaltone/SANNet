@@ -14,6 +14,7 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
+import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -105,17 +106,16 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @param valueFunction reference to value function.
      */
     public DeepAgent(Environment environment, Policy policy, ValueFunction valueFunction) {
-        initializeDefaultParams();
-
         this.environment = environment;
         this.episodic = environment.isEpisodic();
-        if (!episodic) agentUpdateCycle = 10;
 
         this.policy = policy;
         policy.registerAgent(this);
 
         this.valueFunction = valueFunction;
         valueFunction.registerAgent(this);
+
+        initializeDefaultParams();
     }
 
     /**
@@ -145,7 +145,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      */
     public void initializeDefaultParams() {
         updateValuePerEpisode = false;
-        agentUpdateCycle = 1;
+        agentUpdateCycle = episodic ? 1 : 10;
         rewardTau = 0.9;
     }
 
@@ -198,9 +198,11 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         policy.start();
         if (valueFunction != null) valueFunction.start();
     }
@@ -248,6 +250,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      */
     public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         if (updateValuePerEpisode) valueFunction.update(stateTransition);
+
         policy.endEpisode();
         if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() % agentUpdateCycle == 0) {
             updateFunctionEstimator();
@@ -301,8 +304,8 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(int action) throws NeuralNetworkException, MatrixException {
-        policy.act(stateTransition, action);
         stateTransition.action = action;
+        policy.act(stateTransition);
         environment.commitAction(this, stateTransition.action);
     }
 
