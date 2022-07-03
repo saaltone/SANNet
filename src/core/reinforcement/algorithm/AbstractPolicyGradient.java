@@ -44,6 +44,7 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      */
     public AbstractPolicyGradient(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
         super(environment, policy, valueFunction, params);
+        policy.getFunctionEstimator().setEnableImportanceSamplingWeights(false);
     }
 
     /**

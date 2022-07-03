@@ -62,8 +62,9 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, boolean asProximalPolicy) throws ClassNotFoundException, DynamicParamException, IOException, AgentException {
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, boolean asProximalPolicy) throws ClassNotFoundException, DynamicParamException, IOException, AgentException, MatrixException {
         super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(policyFunctionEstimator.getMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())));
     }
 
@@ -79,8 +80,9 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params, boolean asProximalPolicy) throws DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public REINFORCE(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params, boolean asProximalPolicy) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
         super(environment, asProximalPolicy ? new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator) : new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(policyFunctionEstimator.getNumberOfActions(), new DirectFunctionEstimator(policyFunctionEstimator.getMemory(), policyFunctionEstimator.getNumberOfStates(), policyFunctionEstimator.getNumberOfActions())), params);
     }
 
