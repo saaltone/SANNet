@@ -31,10 +31,10 @@ public class ReadCSVFile {
      * @param outputColumns columns to be used for output samples.
      * @param skipRowsFromStart skips this number of rows from start.
      * @param asSparseMatrix returns sample set as sparse matrix (SMatrix).
-     * @param inAs2D assumes two dimensional input such as image.
+     * @param inAs2D assumes 2-dimensional input such as image.
      * @param inRows number of input rows.
      * @param inCols number of input cols (relevant for 2D input).
-     * @param outAs2D assumes two dimensional output such as image.
+     * @param outAs2D assumes 2-dimensional output such as image.
      * @param outRows number of output rows.
      * @param outCols number of output cols (relevant for 2D output).
      * @return structure containing input and output matrices.
