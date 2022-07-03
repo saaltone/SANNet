@@ -13,6 +13,7 @@ import utils.matrix.*;
 import utils.sampling.Sequence;
 
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements flattening layer.<br>
@@ -98,7 +99,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void reinitialize() throws MatrixException {
-        resetLayer();
+        this.reset();
     }
 
     /**
@@ -107,7 +108,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardProcess() throws MatrixException {
-        resetLayer();
+        this.reset();
         setLayerOutputs(getPreviousLayerOutputs().flatten());
     }
 
@@ -154,7 +155,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) {
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) {
         return null;
     }
 
