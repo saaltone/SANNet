@@ -235,18 +235,19 @@ public class Music {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int hiddenSize, int neuralNetworkType) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.BILSTM, "width = " + hiddenSize);
+        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
+        neuralNetwork.addHiddenLayer(LayerType.BIGRU, "width = " + hiddenSize);
         switch (neuralNetworkType) {
             case 0 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 1 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 2 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             default -> {
