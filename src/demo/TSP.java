@@ -89,25 +89,25 @@ public class TSP implements Environment, AgentFunctionEstimator {
         private double totalDistance = 0;
 
         /**
-         * Length of shortest route found as normalized distance.
+         * Distance for shortest route as normalized distance.
          *
          */
         private double minNormalizedDistance = Double.POSITIVE_INFINITY;
 
         /**
-         * Length of shortest route found.
+         * Distance for shortest route.
          *
          */
         private double minDistance = Double.POSITIVE_INFINITY;
 
         /**
-         * Length of longest route found as normalized distance.
+         * Distance for longest route found as normalized distance.
          *
          */
         private double maxNormalizedDistance = Double.NEGATIVE_INFINITY;
 
         /**
-         * Length of longest route found.
+         * Distance for longest route found.
          *
          */
         private double maxDistance = Double.NEGATIVE_INFINITY;
@@ -506,7 +506,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
     }
 
     /**
-     * Returns shortest route found by deep agent (travelling salesman) as indices of cities.
+     * Returns route that is shortest found by deep agent (travelling salesman) as indices of cities.
      *
      * @return shortest route as indices of cities.
      */
@@ -515,7 +515,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
     }
 
     /**
-     * Returns longest route found by deep agent (travelling salesman) as indices of cities.
+     * Returns route that is longest found by deep agent (travelling salesman) as indices of cities.
      *
      * @return longest route as indices of cities.
      */
@@ -542,7 +542,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
     }
 
     /**
-     * Main function for travelling sales man.
+     * Main function for travelling salesman.
      *
      * @param args not used.
      */
@@ -815,7 +815,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.4, epsilonDecayRate = 0.999, epsilonMin = 0";
+                policyTypeParams = "epsilonInitial = 0.4, epsilonDecayRate = 0.999, epsilonMin = 0.00";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -829,18 +829,18 @@ public class TSP implements Environment, AgentFunctionEstimator {
         boolean singleFunctionEstimator = false;
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
         boolean onlineMemory = switch (agentAlgorithmType) {
-            case DDQN, SACDiscrete -> false;
+            case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DDQN -> true;
+            case DQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "agentUpdateCycle = 25, optimizerName = RAdam, learningRate = 0.001";
+            case QN -> "lambda = 1, agentUpdateCycle = 1";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case Sarsa, ActorCritic, PPO, REINFORCE -> "lambda = 1";
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 1";
+            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -872,8 +872,8 @@ public class TSP implements Environment, AgentFunctionEstimator {
         String width = "width = " + (4 * inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
-        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
