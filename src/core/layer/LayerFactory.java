@@ -79,10 +79,10 @@ public class LayerFactory {
     }
 
     /**
-     * Returns type of a given layer.
+     * Returns layer type.
      *
      * @param neuralNetworkLayer given layer.
-     * @return type of a layer.
+     * @return layer type.
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     public static LayerType getLayerType(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
@@ -128,7 +128,7 @@ public class LayerFactory {
      * Returns type of layer as string.
      *
      * @param neuralNetworkLayer given layer.
-     * @return type of a layer as string.
+     * @return layer type as string.
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     public static String getLayerTypeByName(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
