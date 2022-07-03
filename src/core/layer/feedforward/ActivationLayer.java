@@ -15,6 +15,7 @@ import utils.matrix.*;
 import utils.sampling.Sequence;
 
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements activation layer.<br>
@@ -45,7 +46,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, MMatrix> inputs;
 
     /**
      * Constructor for activation layer.
@@ -143,14 +144,14 @@ public class ActivationLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         int layerDepth = getLayerDepth();
-        inputs = new MMatrix(layerDepth, "Inputs");
+        inputs = new TreeMap<>();
         for (int index = 0; index < layerDepth; index++) {
             Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), Initialization.ONE);
             input.setName("Input" + index);
-            if (getPreviousLayer().isBidirectional()) input = input.split(getLayerWidth() / 2, true);
-            inputs.put(index, input);
+            input = handleBidirectionalInput(input);
+            inputs.put(index, new MMatrix(input));
         }
         return inputs;
     }
@@ -166,7 +167,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
         MMatrix outputs = new MMatrix(layerDepth, "Output");
 
         for (int depthIndex = 0; depthIndex < layerDepth; depthIndex++) {
-            Matrix output = inputs.get(depthIndex);
+            Matrix output = inputs.get(depthIndex).get(0);
             if (splitOutputAtPosition == -1) output = output.apply(activationFunction);
             else {
                 Matrix result = output.split(splitOutputAtPosition, true);
