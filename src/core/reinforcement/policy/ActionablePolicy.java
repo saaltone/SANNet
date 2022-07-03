@@ -8,7 +8,6 @@ package core.reinforcement.policy;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -90,22 +89,6 @@ public class ActionablePolicy extends AbstractPolicy {
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
         return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
-    }
-
-    /**
-     * Returns reference to policy function.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
-     * @param memory reference to memory.
-     * @return reference to policy.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), params);
     }
 
     /**

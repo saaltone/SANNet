@@ -9,7 +9,6 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import utils.configurable.Configurable;
@@ -58,27 +57,15 @@ public interface Policy extends Configurable {
     Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException;
 
     /**
-     * Returns reference to policy function.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used between policy functions otherwise separate policy function estimator is used.
-     * @param memory reference to memory.
-     * @return reference to policy.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException;
-
-    /**
      * Starts policy.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
 
     /**
      * Stops policy.
@@ -124,11 +111,10 @@ public interface Policy extends Configurable {
      * Takes action defined by external agent.
      *
      * @param stateTransition state transition.
-     * @param action action.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void act(StateTransition stateTransition, int action) throws MatrixException, NeuralNetworkException;
+    void act(StateTransition stateTransition) throws MatrixException, NeuralNetworkException;
 
     /**
      * Takes action defined by executable policy.
