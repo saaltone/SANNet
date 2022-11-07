@@ -619,12 +619,14 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     /**
      * Plays maze game until user quits game (closes window).
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update of estimator fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         while (true) {
             agent.newStep();
             agent.act();
@@ -731,7 +733,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadend()) agent.respond(0);
         else {
             double distanceToStart = 1 - 1 / Math.max(1, Math.sqrt(Math.pow((double)size / 2 - mazeAgentCurrent.x, 2) + Math.pow((double)size / 2 - mazeAgentCurrent.y, 2)));
-            double positionPenalty = Math.pow(1 / (double)maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 10);
+            double positionPenalty = Math.pow(1 / (double)maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 2);
             agent.respond(Math.max(0, distanceToStart * positionPenalty));
         }
     }
@@ -797,9 +799,9 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "lambda = 1, agentUpdateCycle = 1";
-            case SACDiscrete -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 200000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
-            case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
+            case QN -> "gamma = 1, agentUpdateCycle = 10";
+            case SACDiscrete -> "gamma = 1, applyImportanceSamplingWeights = false, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
 
@@ -832,8 +834,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 1");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
