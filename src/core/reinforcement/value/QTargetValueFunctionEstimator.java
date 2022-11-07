@@ -6,6 +6,7 @@
 package core.reinforcement.value;
 
 import core.network.NeuralNetworkException;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
@@ -28,8 +29,9 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException {
         super(functionEstimator);
         functionEstimator.createTargetFunctionEstimator();
     }
@@ -43,8 +45,9 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException {
+    public QTargetValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException, NeuralNetworkException {
         super(functionEstimator, params);
         functionEstimator.createTargetFunctionEstimator();
     }
@@ -57,8 +60,9 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference() throws DynamicParamException, IOException, ClassNotFoundException, MatrixException {
+    public ValueFunction reference() throws DynamicParamException, IOException, ClassNotFoundException, MatrixException, NeuralNetworkException {
         return new QTargetValueFunctionEstimator(functionEstimator.reference(), getParams());
     }
 
@@ -72,8 +76,9 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException, NeuralNetworkException {
         return new QTargetValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
     }
 
@@ -87,8 +92,9 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
         return new QTargetValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), getParams());
     }
 
@@ -102,6 +108,23 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      */
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
         return getValues(functionEstimator.getTargetFunctionEstimator(), nextStateTransition).getValue(functionEstimator.argmax(getValues(functionEstimator, nextStateTransition), nextStateTransition.environmentState.availableActions()), 0);
+    }
+
+    /**
+     * Appends parameters to this value function from another value function.
+     *
+     * @param valueFunction value function used to update current value function.
+     * @param tau tau which controls contribution of other value function.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(ValueFunction valueFunction, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        super.append(valueFunction, tau);
+        functionEstimator.createTargetFunctionEstimator();
     }
 
 }
