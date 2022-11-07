@@ -29,7 +29,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
      *     - connectFromPreviousLayer: creates connection from output of specified previous layer.<br>
-     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value true.<br>
+     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
      *
      */
     private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
@@ -214,7 +214,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         regulateDirectWeights = true;
         splitOutputAtPosition = -1;
         connectFromPreviousLayer = -1;
-        joinPreviousLayerInput = true;
+        joinPreviousLayerInput = false;
     }
 
     /**
@@ -233,7 +233,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
      *     - connectFromPreviousLayer: creates connection from output of specified previous layer.<br>
-     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value true.<br>
+     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
      *
      * @param params parameters used for feedforward layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
