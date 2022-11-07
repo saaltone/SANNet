@@ -46,7 +46,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * Implements player
      *
      */
-    private static class Player {
+    private static class Player implements Comparable<Player> {
 
         /**
          * Role of player.
@@ -59,6 +59,12 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          *
          */
         private final Agent agent;
+
+        /**
+         * Player index.
+         *
+         */
+        private final int index;
 
         /**
          * If true player is human.
@@ -106,9 +112,11 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * Constructor for player.
          *
          * @param agent agent of player.
+         * @param index player index
          */
-        Player (Agent agent) {
+        Player(Agent agent, int index) {
             this.agent = agent;
+            this.index = index;
         }
 
         /**
@@ -136,6 +144,15 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          */
         public Agent getAgent() {
             return agent;
+        }
+
+        /**
+         * Returns player index.
+         *
+         * @return player index.
+         */
+        public int getIndex() {
+            return index;
         }
 
         /**
@@ -247,6 +264,15 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             return drawCountCyclic;
         }
 
+        /**
+         * Compares two players based on
+         *
+         * @param otherPlayer other player
+         * @return result of comparison
+         */
+        public int compareTo(Player otherPlayer) {
+            return Double.compare(agent.getCumulativeReward(false), otherPlayer.getAgent().getCumulativeReward(false));
+        }
     }
 
     /**
@@ -751,20 +777,17 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             }
         }
 
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDQN;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
         };
-        boolean applyDueling = switch (agentAlgorithmType) {
-            case DQN, DDQN -> true;
-            default -> false;
-        };
+        boolean applyDueling = false;
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "lambda = 1, agentUpdateCycle = 1";
-            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case QN -> "agentUpdateCycle = 10";
+            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, batchSize = 128, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
             case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
+            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
 
@@ -778,7 +801,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             if (agent == null) agent = AgentFactory.createAgent(this, agentAlgorithmType, this, getInputSize(), getOutputSize(), onlineMemory, singleFunctionEstimator, applyDueling, executablePolicyType, params);
             else agent = AgentFactory.createAgent(agent, sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
             agent.start();
-            playerList.add(new Player(agent));
+            playerList.add(new Player(agent, agentCount));
         }
     }
 
@@ -796,8 +819,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100" + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
@@ -864,7 +887,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      *
      */
     private final RewardStructure rewardStructure = new RewardStructure();
-
 
     /**
      * Initializes window for maze.
@@ -960,22 +982,46 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void playGames() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    private void playGames() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         initWindow();
         jFrame.revalidate();
 
+        String stringFormat = "%.3f";
         int numberOfGames = 500000000;
 
         for (int game = 0; game < numberOfGames; game++) {
             playGame();
             if (game % 100 == 0 && game > 0) {
                 System.out.print("Game #" + game);
-                for (int playerIndex = 0; playerIndex < currentPlayerList.size(); playerIndex++) {
-                    Player player = currentPlayerList.get(playerIndex);
-                    System.out.print(" Player #" + playerIndex + " (won: " + player.getWonCountCyclic() + ", lost: " + player.getLostCountCyclic() + ", draw: " + player.getDrawCountCyclic() + ")");
+                for (Player player : currentPlayerList) {
+                    System.out.print(" Player #" + player.getIndex() + " (won: " + player.getWonCountCyclic() + ", lost: " + player.getLostCountCyclic() + ", draw: " + player.getDrawCountCyclic() + ")");
                 }
                 System.out.println();
-                for (Player player : playerList) player.resetCyclicalCounts();
+                System.out.print("Learned / non-learned cumulative reward:");
+                for (Player player : playerList) {
+                    System.out.print(" Player #" + player.getIndex() + " (" + player.getAgent().getCumulativeReward(true) + " / " + player.getAgent().getCumulativeReward(false) + ")");
+                }
+                System.out.println();
+                System.out.print("Learned / non-learned moving average reward:");
+                Collections.sort(playerList);
+                for (Player player : playerList) {
+                    System.out.print(" Player #" + player.getIndex() + " (" + String.format(stringFormat, player.getAgent().getMovingAverageReward(true)) + " / " + String.format(stringFormat, player.getAgent().getMovingAverageReward(false)) + ")");
+                }
+                System.out.println();
+                if (game % 1000 == 0) {
+                    Player appendingPlayer = playerList.get(playerList.size() - 1);
+                    System.out.println("Append other players with " + appendingPlayer.getIndex());
+                    for (int index = 0; index < playerList.size() - 1; index++) {
+                        Player currentPlayer = playerList.get(index);
+                        if (currentPlayer != appendingPlayer) currentPlayer.getAgent().append(appendingPlayer.getAgent(), 1);
+                    }
+                }
+                if (game % 1000 == 0) {
+                    for (Player player : playerList) {
+                        player.getAgent().resetRewardMetrics();
+                        player.resetCyclicalCounts();
+                    }
+                }
             }
         }
         for (int playerIndex = 0; playerIndex < currentPlayerList.size(); playerIndex++) {
@@ -991,29 +1037,58 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * Plays single episode of game.
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    private void playGame() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    private void playGame() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         PlayerRole currentHumanPlayerRole = humanPlayerRole;
 
         currentPlayerList = new ArrayList<>();
 
-        int players = playerList.size();
-        int noughtIndex;
-        int crossIndex;
+        if (currentHumanPlayerRole == null) {
+            Collections.shuffle(playerList);
 
-        if (players % 2 == 0) noughtIndex = 2 * random.nextInt(players / 2);
-        else noughtIndex = 2 * random.nextInt((players + 1) / 2);
-        crossIndex = 2 * random.nextInt(players / 2) + 1;
+            currentPlayerList.add(playerList.get(0));
+            currentPlayerList.get(0).setPlayerRole(PlayerRole.NOUGHT);
+            currentPlayerList.add(playerList.get(playerList.size() - 1));
+            currentPlayerList.get(1).setPlayerRole(PlayerRole.CROSS);
 
-        currentPlayerList.add(playerList.get(noughtIndex));
-        currentPlayerList.get(0).setPlayerRole(PlayerRole.NOUGHT);
-        currentPlayerList.add(playerList.get(crossIndex));
-        currentPlayerList.get(1).setPlayerRole(PlayerRole.CROSS);
+            currentPlayerList.get(0).setAsHuman(false);
+            currentPlayerList.get(1).setAsHuman(false);
 
-        currentPlayerList.get(0).setAsHuman(currentHumanPlayerRole == currentPlayerList.get(0).getPlayerRole());
-        currentPlayerList.get(1).setAsHuman(currentHumanPlayerRole == currentPlayerList.get(1).getPlayerRole());
+            boolean enableLearning = random.nextDouble() < 0.8;
+            for (Player player : currentPlayerList) {
+                if (enableLearning) player.getAgent().enableLearning();
+                else player.getAgent().disableLearning();
+            }
+        }
+        else {
+            Collections.sort(playerList);
+
+            switch (currentHumanPlayerRole) {
+                case NOUGHT -> {
+                    currentPlayerList.add(playerList.get(0));
+                    currentPlayerList.get(0).setPlayerRole(PlayerRole.NOUGHT);
+                    currentPlayerList.get(0).setAsHuman(true);
+                    currentPlayerList.add(playerList.get(playerList.size() - 1));
+                    currentPlayerList.get(1).setPlayerRole(PlayerRole.CROSS);
+                    currentPlayerList.get(1).setAsHuman(false);
+                }
+                case CROSS -> {
+                    currentPlayerList.add(playerList.get(playerList.size() - 1));
+                    currentPlayerList.get(0).setPlayerRole(PlayerRole.NOUGHT);
+                    currentPlayerList.get(0).setAsHuman(false);
+                    currentPlayerList.add(playerList.get(0));
+                    currentPlayerList.get(1).setPlayerRole(PlayerRole.CROSS);
+                    currentPlayerList.get(1).setAsHuman(true);
+                }
+            }
+
+            for (Player player : currentPlayerList) player.getAgent().disableLearning();
+        }
 
         gameBoard = new GameBoard();
         gameStatus = GameStatus.ONGOING;
@@ -1022,9 +1097,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         ticTacToePanel.setHumanPlayer(currentHumanPlayerRole);
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
         panelLock.unlock();
-
-        if (currentHumanPlayerRole == null) for (Player player : currentPlayerList) player.getAgent().enableLearning();
-        else for (Player player : currentPlayerList) player.getAgent().disableLearning();
 
         currentPlayer = random.nextInt(currentPlayerList.size());
 
