@@ -37,9 +37,9 @@ public class EarlyStopping implements Configurable, Serializable {
      *     - validationStopThreshold: stop threshold for validation error condition. Default 20 (consequent iterations where condition is met).<br>
      *
      */
-    private final static String paramNameTypes = "(trainingAverageSize:INT, )" +
-            "(trainingStopThreshold:INT, )" +
-            "(validationAverageSize:INT, )" +
+    private final static String paramNameTypes = "(trainingAverageSize:INT), " +
+            "(trainingStopThreshold:INT), " +
+            "(validationAverageSize:INT), " +
             "(validationStopThreshold:INT)";
 
     /**
