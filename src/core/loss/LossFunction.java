@@ -9,6 +9,8 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
+import java.util.ArrayList;
+
 /**
  * Implements loss function for neural network used at output layer.<br>
  * Provides calculation for both function and it's derivative.<br>
@@ -55,6 +57,7 @@ public class LossFunction extends BinaryFunction {
             BinaryFunctionType.POLICY_GRADIENT,
             BinaryFunctionType.POLICY_VALUE,
             BinaryFunctionType.DQN_REG_LOSS,
+            BinaryFunctionType.COS_SIM,
             BinaryFunctionType.CUSTOM
     };
 
@@ -115,6 +118,12 @@ public class LossFunction extends BinaryFunction {
                 }
                 return error;
             }
+            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
+            case COS_SIM -> {
+                double norm_output = output.norm(2);
+                double norm_target = target.norm(2);
+                return output.multiply(target).divide(norm_output * norm_target);
+            }
             default -> {
                 return output.applyBi(target, getFunction());
             }
@@ -131,6 +140,36 @@ public class LossFunction extends BinaryFunction {
      */
     public static Matrix getMeanError(Matrix totalError, int numberOfErrors) throws MatrixException {
         return totalError.divide(numberOfErrors);
+    }
+
+    /**
+     * Returns absolute error.
+     *
+     * @param error error.
+     * @return absolute error.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double getAbsoluteError(Matrix error) throws MatrixException {
+        return getType() == BinaryFunctionType.COS_SIM ? 1 - error.mean() * (double)error.size() : error.mean();
+    }
+
+    /**
+     * Returns absolute error.
+     *
+     * @param error error.
+     * @param lossFunctions loss functions.
+     * @return absolute error.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static double getAbsoluteError(Matrix error, ArrayList<LossFunction> lossFunctions) throws MatrixException {
+        ArrayList<Matrix> subErrors = error.getSubMatrices();
+        double totalError = 0;
+        for (int index = 0; index < lossFunctions.size(); index++) {
+            LossFunction lossFunction = lossFunctions.get(index);
+            Matrix subError = subErrors.get(index);
+            totalError += lossFunction.getType() == BinaryFunctionType.COS_SIM ? 1 - subError.sum() * (double)subError.size() : subError.sum();
+        }
+        return totalError / (double)error.size();
     }
 
     /**
@@ -153,6 +192,14 @@ public class LossFunction extends BinaryFunction {
                     gradient.setValue(row, 0 , row == 0 ? (output.getValue(0, 0) - target.getValue(0, 0)) : target.getValue(row, 0));
                 }
                 return gradient;
+            }
+            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
+            case COS_SIM -> {
+                double norm_output = output.norm(2);
+                double norm_target = target.norm(2);
+                double norm_multiply = norm_output * norm_target;
+                Matrix cos_sim = output.multiply(target).divide(norm_multiply);
+                return output.divide(norm_multiply).subtract(target.divide(Math.pow(norm_output, 2)).multiply(cos_sim));
             }
             default -> {
                 return output.applyBi(target, getDerivative());
