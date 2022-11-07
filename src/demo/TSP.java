@@ -554,7 +554,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             tsp.initWindow();
             for (int tour = 0; tour < 1000000; tour++) {
                 tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + String.format(stringFormat, tsp.getTotalDistance()) + " (" + String.format(stringFormat, tsp.getTotalNormalizedDistance()) +")" + " Min: " + String.format(stringFormat, tsp.getMinDistance()) + " (" + String.format(stringFormat, tsp.getMinNormalizedDistance()) + ")" + " Max: " + String.format(stringFormat, tsp.getMaxDistance()) + " (" + String.format(stringFormat, tsp.getMaxNormalizedDistance()) + ")");
+                System.out.println("Tour #" + (tour + 1) + " Total: " + String.format(stringFormat, tsp.getTotalDistance()) + " (" + String.format(stringFormat, tsp.getTotalNormalizedDistance()) +")" + " Min: " + String.format(stringFormat, tsp.getMinDistance()) + " (" + String.format(stringFormat, tsp.getMinNormalizedDistance()) + ")" + " Max: " + String.format(stringFormat, tsp.getMaxDistance()) + " (" + String.format(stringFormat, tsp.getMaxNormalizedDistance()) + ")" + " Cumul. reward learning " + String.format(stringFormat, tsp.getCumulativeReward(true)) + " Cumul. reward non-learning " + String.format(stringFormat, tsp.getCumulativeReward(false)));
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -757,10 +757,13 @@ public class TSP implements Environment, AgentFunctionEstimator {
      *
      * @param redraw if true current journey is drawn to window.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         resetRoute();
 
         getAgent().newEpisode();
@@ -784,6 +787,16 @@ public class TSP implements Environment, AgentFunctionEstimator {
             jFrame.revalidate();
             tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
         }
+    }
+
+    /**
+     * Returns cumulative reward.
+     *
+     * @param isLearning if true returns cumulative reward during learning otherwise return cumulative reward when not learning
+     * @return cumulative reward.
+     */
+    public double getCumulativeReward(boolean isLearning) {
+        return getAgent().getCumulativeReward(isLearning);
     }
 
     /**
@@ -833,15 +846,14 @@ public class TSP implements Environment, AgentFunctionEstimator {
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DQN -> true;
+            case DQN, DDQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "lambda = 1, agentUpdateCycle = 1";
+            case QN -> "agentUpdateCycle = 10";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case Sarsa, ActorCritic, PPO, REINFORCE -> "lambda = 1";
             case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case MCTS -> "lambda = 1, gamma = 1, updateValuePerEpisode = true";
+            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
 
@@ -872,7 +884,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
         String width = "width = " + (4 * inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)) + (!policyGradient ? ", connectFromPreviousLayer = 0" : ""));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
