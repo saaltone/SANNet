@@ -122,4 +122,13 @@ public class ActionablePolicy extends AbstractPolicy {
     public void updateFunctionEstimator() {
     }
 
+    /**
+     * Appends parameters to this policy from another policy.
+     *
+     * @param policy policy used to update current policy.
+     * @param tau tau which controls contribution of other policy.
+     */
+    public void append(Policy policy, double tau) {
+    }
+
 }
