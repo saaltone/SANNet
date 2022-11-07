@@ -204,12 +204,14 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     /**
      * Updates function estimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         super.updateFunctionEstimator();
         if (isAutoSoftAlpha()) updateAlpha();
     }
