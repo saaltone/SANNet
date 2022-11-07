@@ -2068,15 +2068,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     public void print() {
-        int sliceStartRow = getSliceStartRow();
-        int sliceEndRow = sliceStartRow + getSliceRows() - 1;
-        int sliceStartColumn = getSliceStartColumn();
-        int sliceEndColumn = sliceStartColumn + getSliceColumns() - 1;
-        for (int row = sliceStartRow; row <= sliceEndRow; row++) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int row = 0; row < rows; row++) {
             System.out.print("[");
-            for (int column = sliceStartColumn; column <= sliceEndColumn; column++) {
+            for (int column = 0; column < columns; column++) {
                 System.out.print(getValue(row, column));
-                if (column < sliceEndColumn) System.out.print(" ");
+                if (column < columns - 1) System.out.print(" ");
             }
             System.out.println("]");
         }
