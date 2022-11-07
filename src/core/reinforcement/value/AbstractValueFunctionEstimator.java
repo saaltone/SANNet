@@ -219,14 +219,19 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     /**
      * Updates function estimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         TreeSet<StateTransition> sampledStateTransitions = functionEstimator.getSampledStateTransitions();
-        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) return;
+        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) {
+            functionEstimator.abortUpdate();
+            return;
+        }
 
         updateFunctionEstimatorMemory(sampledStateTransitions);
 
@@ -248,6 +253,22 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
         Matrix targetValues = getValues(functionEstimator, stateTransition).copy();
         targetValues.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
         return targetValues;
+    }
+
+    /**
+     * Appends parameters to this value function from another value function.
+     *
+     * @param valueFunction value function used to update current value function.
+     * @param tau tau which controls contribution of other value function.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(ValueFunction valueFunction, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        functionEstimator.append(valueFunction.getFunctionEstimator(), tau);
     }
 
 }
