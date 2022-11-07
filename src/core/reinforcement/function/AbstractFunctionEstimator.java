@@ -183,7 +183,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     /**
      * Starts function estimator.
      *
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
@@ -293,12 +293,24 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
+     * Aborts function estimator update.
+     *
+     */
+    public void abortUpdate() {
+        completedAgents.clear();
+    }
+
+    /**
      * Completes abstract function estimator update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void updateComplete() throws AgentException, MatrixException {
+    protected void updateComplete() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         updateTargetFunctionEstimator();
         completedAgents.clear();
     }
@@ -329,9 +341,13 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
+    public void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException {
+        boolean isStarted = false;
+        if (targetFunctionEstimator != null) isStarted= targetFunctionEstimator.isStarted();
         targetFunctionEstimator = copy();
+        if (isStarted) targetFunctionEstimator.start();
     }
 
     /**
@@ -347,9 +363,13 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * Updates target function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    private void updateTargetFunctionEstimator() throws AgentException, MatrixException {
+    private void updateTargetFunctionEstimator() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         if (targetFunctionEstimator == null) return;
         if (targetFunctionUpdateCycle == 0) targetFunctionEstimator.append(this, false);
         else {
@@ -367,6 +387,24 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      */
     public void append() throws AgentException {
         if (!completedAgents.isEmpty()) throw new AgentException("Update cycle is ongoing.");
+    }
+
+    /**
+     * Finalizes append.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected void finalizeAppend() throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        if (targetFunctionEstimator != null) {
+            boolean isStarted = targetFunctionEstimator.isStarted();
+            if (isStarted) targetFunctionEstimator.stop();
+            targetFunctionEstimator = copy();
+            if (isStarted) targetFunctionEstimator.start();
+        }
     }
 
     /**
