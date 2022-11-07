@@ -290,9 +290,21 @@ public class PlainValueFunction extends AbstractValueFunction {
      */
     public void updateFunctionEstimator() {
         TreeSet<StateTransition> sampledStateTransitions = getSampledStateTransitions();
-        if (sampledStateTransitions == null) return;
+        if (sampledStateTransitions == null) {
+            functionEstimator.abortUpdate();
+            return;
+        }
 
         getFunctionEstimator().update(sampledStateTransitions);
+    }
+
+    /**
+     * Appends parameters to this value function from another value function.
+     *
+     * @param valueFunction value function used to update current value function.
+     * @param tau tau which controls contribution of other value function.
+     */
+    public void append(ValueFunction valueFunction, double tau) {
     }
 
 }
