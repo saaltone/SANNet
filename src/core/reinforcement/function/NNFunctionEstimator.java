@@ -202,6 +202,15 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Checks if function estimator is started.
+     *
+     * @return true if function estimator is started otherwise false.
+     */
+    public boolean isStarted() {
+        return neuralNetwork.isStarted();
+    }
+
+    /**
      * Returns neural network used by neural network based function estimator.
      *
      * @return neural network.
@@ -272,12 +281,14 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Updates (trains) neural network.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void update() throws NeuralNetworkException, DynamicParamException, AgentException, MatrixException {
+    public void update() throws NeuralNetworkException, DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
         HashMap<Integer, MMatrix> states = new HashMap<>();
         HashMap<Integer, MMatrix> stateValues = new HashMap<>();
         HashMap<Integer, Double> importanceSamplingWeights = new HashMap<>();
@@ -308,6 +319,24 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         super.append();
         if (fullUpdate) neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), 1);
         else neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), targetFunctionTau);
+    }
+
+    /**
+     * Appends parameters to this function estimator from another function estimator.
+     *
+     * @param functionEstimator function estimator used to update current function estimator.
+     * @param tau tau which controls contribution of other function estimator.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(FunctionEstimator functionEstimator, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        super.append();
+        neuralNetwork.append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), tau);
+        finalizeAppend();
     }
 
     /**
