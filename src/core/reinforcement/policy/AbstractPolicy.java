@@ -234,7 +234,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
 
     /**
      * Takes action defined by external agent.
-     *  @param stateTransition state transition.
+     * @param stateTransition state transition.
      *
      */
     public void act(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
@@ -250,7 +250,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        stateTransition.action = executablePolicy.action(getValues(functionEstimator, stateTransition), stateTransition.environmentState.availableActions(), alwaysGreedy);
+        stateTransition.action = executablePolicy.action(getValues(functionEstimator, stateTransition), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
         if (isLearning()) functionEstimator.add(stateTransition);
     }
 
