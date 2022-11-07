@@ -36,7 +36,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * Reference to previous policy function estimator.
      *
      */
-    private final FunctionEstimator previousFunctionEstimator;
+    private FunctionEstimator previousFunctionEstimator;
 
     /**
      * Epsilon value for proximal policy value clipping.
@@ -195,13 +195,35 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * Postprocesses policy gradient update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void postProcess() throws MatrixException, AgentException {
+    protected void postProcess() throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         if (++updateCount >= updateCycle) {
             previousFunctionEstimator.append(functionEstimator, true);
             updateCount = 0;
         }
+    }
+
+    /**
+     * Appends parameters to this policy from another policy.
+     *
+     * @param policy policy used to update current policy.
+     * @param tau tau which controls contribution of other policy.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(Policy policy, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        super.append(policy, tau);
+        previousFunctionEstimator = functionEstimator.copy();
+        previousFunctionEstimator.start();
     }
 
 }
