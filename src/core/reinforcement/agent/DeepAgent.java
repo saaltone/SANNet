@@ -17,6 +17,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * Implements deep agent.<br>
@@ -32,11 +33,13 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
+     *     - nonEpisodicTrajectoryLength: trajectory length for non-episodic agent. Default value 5.<br>
      *
      */
     private final static String paramNameTypes = "(updateValuePerEpisode:BOOLEAN), " +
             "(agentUpdateCycle:INT), " +
-            "(rewardTau:DOUBLE)";
+            "(rewardTau:DOUBLE), " +
+            "(nonEpisodicTrajectoryLength:DOUBLE)";
 
     /**
      * Parameters for deep agent.
@@ -99,6 +102,68 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     private double rewardTau;
 
     /**
+     * Tau value for reward moving averaging.
+     *
+     */
+    private double rewardMovingAverageTau;
+
+    /**
+     * If true agent is in learning mode.
+     *
+     */
+    private boolean isLearning;
+
+    /**
+     * Cumulative reward when agent is learning.
+     *
+     */
+    private double cumulativeRewardAsLearning = 0;
+
+
+    /**
+     * Cumulative reward when agent is not learning.
+     *
+     */
+    private double cumulativeRewardAsNotLearning = 0;
+
+    /**
+     * Moving average reward when agent is learning.
+     *
+     */
+    private double movingAverageRewardAsLearning = Double.MIN_VALUE;
+
+
+    /**
+     * Moving average reward when agent is not learning.
+     *
+     */
+    private double movingAverageRewardAsNotLearning = Double.MIN_VALUE;
+
+    /**
+     * Trajectory length count for non-episodic agent.
+     *
+     */
+    private int nonEpisodicTrajectoryCount = 0;
+
+    /**
+     * Trajectory length for non-episodic agent.
+     *
+     */
+    private int nonEpisodicTrajectoryLength;
+
+    /**
+     * Episode ID when agent was last updated.
+     *
+     */
+    private int agentLastUpdatedEpisodeID;
+
+    /**
+     * Random function.
+     *
+     */
+    private final Random random = new Random();
+
+    /**
      * Constructor for deep agent.
      *
      * @param environment reference to environment.
@@ -144,9 +209,13 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *
      */
     public void initializeDefaultParams() {
+        isLearning = true;
         updateValuePerEpisode = false;
         agentUpdateCycle = episodic ? 1 : 10;
         rewardTau = 0.9;
+        rewardMovingAverageTau = 0.99;
+        nonEpisodicTrajectoryLength = 5;
+        agentLastUpdatedEpisodeID = 0;
     }
 
     /**
@@ -227,15 +296,20 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     /**
      * Begins new episode step for deep agent.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update of estimator fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void newStep() throws MatrixException, DynamicParamException, NeuralNetworkException, AgentException {
+    public void newStep() throws MatrixException, DynamicParamException, NeuralNetworkException, AgentException, IOException, ClassNotFoundException {
         if (!episodic) {
-            endEpisode();
-            stateTransition = null;
+            if (++nonEpisodicTrajectoryCount >= nonEpisodicTrajectoryLength) {
+                endEpisode();
+                stateTransition = null;
+                nonEpisodicTrajectoryCount = 0;
+            }
         }
         stateTransition = stateTransition == null ? new StateTransition(environment.getState()) : stateTransition.getNextStateTransition(environment.getState());
     }
@@ -243,27 +317,22 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     /**
      * Ends episode and if end of update cycle is reached updates deep agent.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update of estimator fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    public void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         if (updateValuePerEpisode) valueFunction.update(stateTransition);
 
         policy.endEpisode();
-        if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() % agentUpdateCycle == 0) {
+        if (policy.isLearning() && environment.getState().episodeID() > 0 && environment.getState().episodeID() >= agentLastUpdatedEpisodeID + agentUpdateCycle) {
+            agentLastUpdatedEpisodeID = environment.getState().episodeID();
             updateFunctionEstimator();
             policy.increment();
         }
-    }
-
-    /**
-     * Disables learning.
-     *
-     */
-    public void disableLearning() {
-        policy.setLearning(false);
     }
 
     /**
@@ -271,7 +340,26 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *
      */
     public void enableLearning() {
+        isLearning = true;
         policy.setLearning(true);
+    }
+
+    /**
+     * Disables learning.
+     *
+     */
+    public void disableLearning() {
+        isLearning = false;
+        policy.setLearning(false);
+    }
+
+    /**
+     * Check if agent is learning or not.
+     *
+     * @return true if agent is learning otherwise returns false.
+     */
+    public boolean isLearning() {
+        return isLearning;
     }
 
     /**
@@ -320,6 +408,46 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
             averageReward = averageReward == Double.NEGATIVE_INFINITY ? reward : rewardTau * averageReward + (1 - rewardTau) * reward;
             stateTransition.reward -= averageReward;
         }
+
+        if (isLearning) {
+            cumulativeRewardAsLearning += stateTransition.reward;
+            movingAverageRewardAsLearning = movingAverageRewardAsLearning == Double.MIN_VALUE ? stateTransition.reward : movingAverageRewardAsNotLearning * rewardMovingAverageTau + stateTransition.reward * (1 - rewardMovingAverageTau);
+        }
+        else {
+            cumulativeRewardAsNotLearning += stateTransition.reward;
+            movingAverageRewardAsNotLearning = movingAverageRewardAsNotLearning == Double.MIN_VALUE ? stateTransition.reward : movingAverageRewardAsNotLearning * rewardMovingAverageTau + stateTransition.reward * (1 - rewardMovingAverageTau);
+       }
+    }
+
+    /**
+     * Returns cumulative reward.
+     *
+     * @param isLearning if true returns cumulative reward during learning otherwise returns cumulative reward when not learning
+     * @return cumulative reward.
+     */
+    public double getCumulativeReward(boolean isLearning) {
+        return isLearning ? cumulativeRewardAsLearning : cumulativeRewardAsNotLearning;
+    }
+
+    /**
+     * Returns moving average reward.
+     *
+     * @param isLearning if true returns moving average reward during learning otherwise return moving average reward when not learning
+     * @return moving average reward.
+     */
+    public double getMovingAverageReward(boolean isLearning) {
+        return isLearning ? movingAverageRewardAsLearning : movingAverageRewardAsNotLearning;
+    }
+
+    /**
+     * Resets cumulative and moving average reward metrics to zero.
+     *
+     */
+    public void resetRewardMetrics() {
+        cumulativeRewardAsLearning = 0;
+        cumulativeRewardAsNotLearning = 0;
+        movingAverageRewardAsLearning = Double.MIN_VALUE;
+        movingAverageRewardAsNotLearning = Double.MIN_VALUE;
     }
 
     /**
@@ -329,7 +457,27 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update of estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      */
-    protected abstract void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
+    protected abstract void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+
+    /**
+     * Returns policy of agent.
+     *
+     * @return policy of agent.
+     */
+    public Policy getPolicy() {
+        return policy;
+    }
+
+    /**
+     * Returns value function of agent.
+     *
+     * @return value function of agent.
+     */
+    public ValueFunction getValueFunction() {
+        return valueFunction;
+    }
 
 }
