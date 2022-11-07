@@ -1396,7 +1396,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Appends other neural network to this neural network by weight tau. Effectively appends each weight and bias matrix of each layer by this weight factor.
      *
      * @param otherNeuralNetwork other neural network that contributes to this neural network.
-     * @param tau tau which controls contribution of other layer.
+     * @param tau tau which controls contribution of other neural network.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void append(NeuralNetwork otherNeuralNetwork, double tau) throws MatrixException {
