@@ -157,11 +157,27 @@ public interface Policy extends Configurable {
     /**
      * Updates function estimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException;
+    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+
+    /**
+     * Appends parameters to this policy from another policy.
+     *
+     * @param policy policy used to update current policy.
+     * @param tau tau which controls contribution of other policy.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    void append(Policy policy, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException;
 
 }
