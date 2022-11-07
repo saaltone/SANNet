@@ -5,6 +5,7 @@
 
 package core.reinforcement.algorithm;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.policy.Policy;
@@ -54,8 +55,9 @@ public class PolicyGradient extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public PolicyGradient reference() throws DynamicParamException, MatrixException, AgentException, IOException, ClassNotFoundException {
+    public PolicyGradient reference() throws DynamicParamException, MatrixException, AgentException, IOException, ClassNotFoundException, NeuralNetworkException {
         Policy newPolicy = policy.reference();
         ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
         return new PolicyGradient(getEnvironment(), newPolicy, newValueFunction, getParams());
@@ -73,8 +75,9 @@ public class PolicyGradient extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public PolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public PolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         Policy newPolicy = policy.reference(sharedPolicyFunctionEstimator, sharedMemory);
         ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
         return new PolicyGradient(getEnvironment(), newPolicy, newValueFunction, getParams());

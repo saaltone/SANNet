@@ -5,6 +5,7 @@
 
 package core.reinforcement.algorithm;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.function.FunctionEstimator;
@@ -58,8 +59,9 @@ public class Sarsa extends AbstractQLearning {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public Sarsa reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public Sarsa reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         return new Sarsa(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), valueFunction.reference().getFunctionEstimator(), getParams());
     }
 
@@ -74,8 +76,9 @@ public class Sarsa extends AbstractQLearning {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public Sarsa reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public Sarsa reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         return new Sarsa(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), valueFunction.reference(sharedValueFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
     }
 

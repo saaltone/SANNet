@@ -5,6 +5,7 @@
 
 package core.reinforcement.algorithm;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.function.FunctionEstimator;
@@ -37,8 +38,9 @@ public class DDPG extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public DDPG(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, DynamicParamException, IOException, AgentException, MatrixException {
+    public DDPG(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws ClassNotFoundException, DynamicParamException, IOException, AgentException, MatrixException, NeuralNetworkException {
         super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator));
     }
 
@@ -55,8 +57,9 @@ public class DDPG extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public DDPG(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws ClassNotFoundException, DynamicParamException, IOException, AgentException, MatrixException {
+    public DDPG(Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws ClassNotFoundException, DynamicParamException, IOException, AgentException, MatrixException, NeuralNetworkException {
         super(environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator), params);
     }
 
@@ -69,8 +72,9 @@ public class DDPG extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public DDPG reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public DDPG reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         Policy newPolicy = policy.reference();
         ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
         return new DDPG(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
@@ -88,8 +92,9 @@ public class DDPG extends AbstractPolicyGradient {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public DDPG reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
+    public DDPG reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         Policy newPolicy = policy.reference(sharedPolicyFunctionEstimator, sharedMemory);
         ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
         return new DDPG(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());

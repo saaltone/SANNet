@@ -6,6 +6,7 @@
 package core.reinforcement.algorithm;
 
 import core.network.NeuralNetworkException;
+import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.DeepAgent;
 import core.reinforcement.agent.Environment;
@@ -50,11 +51,13 @@ public abstract class AbstractQLearning extends DeepAgent {
      * Updates value function of agent.
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if memory instances of value and policy function are not equal.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
+    protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         if(valueFunction.readyToUpdate(this)) {
             valueFunction.sample();
             if (!updateValuePerEpisode) valueFunction.update();
@@ -74,7 +77,24 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
+    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException;
+
+    /**
+     * Appends parameters to this agent from another agent.
+     *
+     * @param agent agent used to update current agent.
+     * @param tau tau which controls contribution of other agent.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(Agent agent, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        valueFunction.append(agent.getValueFunction(), tau);
+    }
 
 }
