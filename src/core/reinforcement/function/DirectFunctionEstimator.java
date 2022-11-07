@@ -5,6 +5,7 @@
 
 package core.reinforcement.function;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.StateTransition;
@@ -12,6 +13,8 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+
+import java.io.IOException;
 
 /**
  * Implements direct function estimator (proxy for memory) to be used with plain value function.<br>
@@ -99,6 +102,15 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Checks if function estimator is started.
+     *
+     * @return true if function estimator is started otherwise false.
+     */
+    public boolean isStarted() {
+        return true;
+    }
+
+    /**
      * Returns shallow copy of direct function estimator.
      *
      * @return shallow copy of direct function estimator.
@@ -131,9 +143,13 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Not used.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void update() throws AgentException, MatrixException {
+    public void update() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         updateComplete();
     }
 
@@ -144,6 +160,15 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param fullUpdate if true full update is done.
      */
     public void append(FunctionEstimator functionEstimator, boolean fullUpdate) {
+    }
+
+    /**
+     * Appends parameters to this function estimator from another function estimator.
+     *
+     * @param functionEstimator function estimator used to update current function estimator.
+     * @param tau tau which controls contribution of other function estimator.
+     */
+    public void append(FunctionEstimator functionEstimator, double tau) {
     }
 
     /**
