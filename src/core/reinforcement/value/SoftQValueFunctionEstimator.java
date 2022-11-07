@@ -37,7 +37,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * Reference to second function estimator.
      *
      */
-    protected final FunctionEstimator functionEstimator2;
+    protected FunctionEstimator functionEstimator2;
 
     /**
      * Reference to current policy.
@@ -80,8 +80,9 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException {
+    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException, NeuralNetworkException {
         super(functionEstimator);
         functionEstimator.createTargetFunctionEstimator();
         this.policyFunctionEstimator = policyFunctionEstimator;
@@ -103,8 +104,9 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException {
+    public SoftQValueFunctionEstimator(FunctionEstimator policyFunctionEstimator, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, AgentException, NeuralNetworkException {
         super(functionEstimator, params);
         functionEstimator.createTargetFunctionEstimator();
         this.policyFunctionEstimator = policyFunctionEstimator;
@@ -121,7 +123,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         dualFunctionEstimation = true;
-        minMaxBalance = 0;
+        minMaxBalance = 1;
     }
 
     /**
@@ -158,8 +160,9 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+    public ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException {
         return new SoftQValueFunctionEstimator(policyFunctionEstimator.reference(), functionEstimator.reference(), softQAlphaMatrix, getParams());
     }
 
@@ -174,8 +177,9 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException {
         return new SoftQValueFunctionEstimator(policyFunctionEstimator.reference(), sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), softQAlphaMatrix, getParams());
     }
 
@@ -190,8 +194,9 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
+     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException {
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException {
         return new SoftQValueFunctionEstimator(policyFunctionEstimator.reference(), sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), softQAlphaMatrix, getParams());
     }
 
@@ -230,14 +235,19 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     /**
      * Updates function estimator.
      *
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if function estimator update fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException {
+    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         TreeSet<StateTransition> sampledStateTransitions = getSampledStateTransitions();
-        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) return;
+        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) {
+            functionEstimator.abortUpdate();
+            return;
+        }
 
         updateFunctionEstimatorMemory(sampledStateTransitions);
 
@@ -307,6 +317,28 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      */
     private double getTargetValue(FunctionEstimator currentFunctionEstimator, StateTransition nextStateTransition, int targetAction) throws MatrixException, NeuralNetworkException {
         return getValues(currentFunctionEstimator.getTargetFunctionEstimator(), nextStateTransition).getValue(targetAction, 0);
+    }
+
+    /**
+     * Appends parameters to this value function from another value function.
+     *
+     * @param valueFunction value function used to update current value function.
+     * @param tau tau which controls contribution of other value function.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(ValueFunction valueFunction, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        super.append(valueFunction, tau);
+        functionEstimator.createTargetFunctionEstimator();
+        functionEstimator2 = dualFunctionEstimation ? functionEstimator.reference() : null;
+        if (functionEstimator2 != null) {
+            functionEstimator2.start();
+            functionEstimator2.createTargetFunctionEstimator();
+        }
     }
 
 }
