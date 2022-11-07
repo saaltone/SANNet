@@ -119,6 +119,14 @@ public class StateTransition implements Serializable, Comparable<StateTransition
     }
 
     /**
+     * Removes previous state transition.
+     *
+     */
+    public void removePreviousStateTransition() {
+        previousStateTransition = null;
+    }
+
+    /**
      * Compares this state transition to other state transition.
      *
      * @param otherStateTransition state transition to be compared.
