@@ -147,7 +147,10 @@ public class OnlineMemory implements Memory, Serializable {
      * @param stateTransition state transition to be stored.
      */
     public void add(StateTransition stateTransition) {
-        if (stateTransitionSet.size() >= capacity && capacity > 0) stateTransitionSet.pollFirst();
+        if (stateTransitionSet.size() >= capacity && capacity > 0) {
+            StateTransition removedStateTransition = stateTransitionSet.pollFirst();
+            if (removedStateTransition != null) removedStateTransition.removePreviousStateTransition();
+        }
         stateTransitionSet.add(stateTransition);
     }
 
