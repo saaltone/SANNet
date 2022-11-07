@@ -5,6 +5,7 @@
 
 package core.reinforcement.function;
 
+import core.network.NeuralNetworkException;
 import core.optimization.*;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
@@ -16,6 +17,7 @@ import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,6 +135,15 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Checks if function estimator is started.
+     *
+     * @return true if function estimator is started otherwise false.
+     */
+    public boolean isStarted() {
+        return true;
+    }
+
+    /**
      * Returns reference to function estimator.
      *
      * @return reference to value function.
@@ -167,10 +178,25 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Sets state values map for tabular function estimator.
      *
-     * @param stateValues state values map
+     * @param newStateValues new state values map
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private void setStateValues(HashMap<Matrix, Matrix> stateValues) {
-        this.stateValues = stateValues;
+    private void setStateValues(HashMap<Matrix, Matrix> newStateValues) throws MatrixException {
+        stateValues.clear();
+        for (Map.Entry<Matrix, Matrix> entry : newStateValues.entrySet()) {
+            Matrix currentState = entry.getKey();
+            Matrix stateValue = entry.getValue();
+            stateValues.put(currentState.copy(), stateValue.copy());
+        }
+    }
+
+    /**
+     * Returns state values map of tabular function estimator.
+     *
+     * @return state values map
+     */
+    public HashMap<Matrix, Matrix> getStateValues() {
+        return stateValues;
     }
 
     /**
@@ -243,10 +269,13 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Updates (trains) tabular function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void update() throws MatrixException, AgentException, DynamicParamException {
+    public void update() throws MatrixException, AgentException, DynamicParamException, NeuralNetworkException, IOException, ClassNotFoundException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
         for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
             StateTransition stateTransition = entry.getKey();
@@ -283,11 +312,35 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @param functionEstimator estimator function used to update this function.
      * @param fullUpdate if true full update is done.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws AgentException {
+    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         super.append();
-        ((TabularFunctionEstimator) functionEstimator).setStateValues(stateValues);
+        setStateValues(((TabularFunctionEstimator) functionEstimator).getStateValues());
+        finalizeAppend();
+    }
+
+    /**
+     * Appends parameters to this function estimator from another function estimator.
+     *
+     * @param functionEstimator function estimator used to update current function estimator.
+     * @param tau tau which controls contribution of other function estimator.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void append(FunctionEstimator functionEstimator, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+        super.append();
+        setStateValues(((TabularFunctionEstimator) functionEstimator).getStateValues());
+        finalizeAppend();
     }
 
     /**
