@@ -126,6 +126,12 @@ public enum BinaryFunctionType {
     DQN_REG_LOSS,
 
     /**
+     * Cosine similarity
+     *
+     */
+    COS_SIM,
+
+    /**
      * Custom (user definable) function
      *
      */

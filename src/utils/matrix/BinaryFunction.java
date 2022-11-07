@@ -38,7 +38,7 @@ public class BinaryFunction implements Serializable {
      * Defines type of function such as Sigmoid, ReLU.
      *
      */
-    private BinaryFunctionType binaryFunctionType;
+    private final BinaryFunctionType binaryFunctionType;
 
     /**
      * Delta value for Huber loss.
@@ -72,7 +72,7 @@ public class BinaryFunction implements Serializable {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public BinaryFunction(BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
-        setFunction(binaryFunctionType, null);
+        this (binaryFunctionType, null);
     }
 
     /**
@@ -87,6 +87,7 @@ public class BinaryFunction implements Serializable {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public BinaryFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
+        this.binaryFunctionType = binaryFunctionType;
         setFunction(binaryFunctionType, params);
     }
 
@@ -103,7 +104,6 @@ public class BinaryFunction implements Serializable {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
-        this.binaryFunctionType = binaryFunctionType;
         switch (binaryFunctionType) {
             case POW -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
@@ -184,6 +184,10 @@ public class BinaryFunction implements Serializable {
             case DQN_REG_LOSS -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.1 * value + Math.pow(value - constant, 2);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0.1 + 2 * (value - constant);
+            }
+            case POLICY_VALUE, COS_SIM -> {
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 0;
             }
             case CUSTOM -> throw new MatrixException("Custom function cannot defined with this constructor.");
             default -> throw new MatrixException("Unknown binary function.");
