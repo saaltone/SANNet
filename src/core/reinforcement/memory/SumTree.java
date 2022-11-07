@@ -382,6 +382,7 @@ public class SumTree implements SearchTree, Serializable {
      * @param stateTransition state transition to be added.
      */
     public void add(StateTransition stateTransition) {
+        if (currentLeafNode.getStateTransition() != null) currentLeafNode.getStateTransition().removePreviousStateTransition();
         stateTransitionNodeHashMap.remove(currentLeafNode.getStateTransition());
         if (leafNodes.size() < capacity()) leafNodes.add(currentLeafNode);
         currentLeafNode.setStateTransition(stateTransition);
