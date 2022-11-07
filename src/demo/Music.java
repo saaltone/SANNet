@@ -55,7 +55,7 @@ public class Music {
             boolean excludeZeroValuedEntries = true;
             String path = "<PATH>/";
             ArrayList<String> fileNames = new ArrayList<>();
-            fileNames.add(path + "howdsolo.mid");
+            fileNames.add(path + "Jesu-Joy-Of-Man-Desiring.mid");
 
             ReadMIDI readMIDI = new ReadMIDI();
             HashMap<Integer, HashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numOfInputs, encodeNoteOffs, excludeZeroValuedEntries, 8);
@@ -64,9 +64,9 @@ public class Music {
             Sequence sequence = readMIDI.getSequence(data.get(1), data.get(3), data.get(5), metadata.resolution, false, encodeNoteOffs, metadata);
             readMIDI.play(sequence, 10, true);
 
-            String persistenceNameKey = path + "MusicNNKey";
-            String persistenceNameVelocity = path + "MusicNNVelocity";
-            String persistenceNameTick = path + "MusicNNTick";
+            String persistenceNameKey = "<PATH>/MusicNNKey";
+            String persistenceNameVelocity = "<PATH>/MusicNNVelocity";
+            String persistenceNameTick = "<PATH>/MusicNNTick";
 
             boolean restore = false;
             NeuralNetwork neuralNetworkKey;
@@ -239,15 +239,15 @@ public class Music {
         neuralNetwork.addHiddenLayer(LayerType.BIGRU, "width = " + hiddenSize);
         switch (neuralNetworkType) {
             case 0 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 1 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 2 -> {
-                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
+                neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
                 neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             default -> {
