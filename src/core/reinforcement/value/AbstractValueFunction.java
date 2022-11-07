@@ -28,7 +28,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     /**
      * Parameter name types for abstract value function.
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
+     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
      *     - tdDataPrintCycle: TD data print cycle. Default value 100.
      *
      */
@@ -121,7 +121,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      */
     public void initializeDefaultParams() {
         gamma = 0.99;
-        lambda = 0;
+        lambda = 1;
         tdDataPrintCycle = 100;
     }
 
@@ -241,7 +241,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
 
         for (StateTransition stateTransition : stateTransitions.descendingSet()) {
             updateValue(stateTransition);
-            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition)));
+            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((lambda == 0 ? getValue(stateTransition.nextStateTransition) : lambda == 1 ? getTargetValue(stateTransition.nextStateTransition) : (1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition))));
             stateTransition.tdError = stateTransition.tdTarget - getValue(stateTransition);
             stateTransition.advantage = stateTransition.tdError;
             averageReward = averageReward == Double.MIN_VALUE ? stateTransition.reward : 0.99 * averageReward + 0.01 * stateTransition.reward;
