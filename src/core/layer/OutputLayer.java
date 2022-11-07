@@ -263,7 +263,7 @@ public class OutputLayer extends AbstractPlainLayer {
      * @return total error of neural network.
      */
     public double getTotalError() throws MatrixException, DynamicParamException {
-        return (error == null || targets == null) ? 0 : error.mean() + error();
+        return (error == null || targets == null) ? 0 : (isMultiOutput() ? LossFunction.getAbsoluteError(error, lossFunctions) : lossFunction.getAbsoluteError(error)) + error();
     }
 
     /**
