@@ -235,20 +235,20 @@ public class Music {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int hiddenSize, int neuralNetworkType) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.GRU, "width = " + hiddenSize);
+        neuralNetwork.addHiddenLayer(LayerType.BIGRU, "width = " + hiddenSize);
         neuralNetwork.addHiddenLayer(LayerType.BIGRU, "width = " + hiddenSize);
         switch (neuralNetworkType) {
             case 0 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
             }
             case 1 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
             }
             case 2 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
             }
             default -> {
                 System.out.println("Unknown loss type.");
