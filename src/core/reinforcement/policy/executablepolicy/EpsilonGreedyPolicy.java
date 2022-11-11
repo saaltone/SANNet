@@ -7,13 +7,12 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.Matrix;
 
-import java.util.HashSet;
 import java.util.Random;
+import java.util.TreeSet;
 
 /**
- * Implements epsilon greedy policy.<br>
+ * Implements epsilon greedy policy. Greediness is defined by entropy of action values.<br>
  *
  */
 public class EpsilonGreedyPolicy extends GreedyPolicy {
@@ -30,12 +29,6 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
             "(epsilonMin:DOUBLE), " +
             "(epsilonDecayRate:DOUBLE), " +
             "(epsilonDecayByUpdateCount:BOOLEAN)";
-
-    /**
-     * Executable policy type.
-     *
-     */
-    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
 
     /**
      * Random function for epsilon greedy policy.
@@ -84,7 +77,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      */
     public EpsilonGreedyPolicy() {
-        super();
+        super(ExecutablePolicyType.EPSILON_GREEDY);
     }
 
     /**
@@ -94,7 +87,7 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public EpsilonGreedyPolicy(String params) throws DynamicParamException {
-        super(params, EpsilonGreedyPolicy.paramNameTypes);
+        super(ExecutablePolicyType.EPSILON_GREEDY, params, EpsilonGreedyPolicy.paramNameTypes);
     }
 
     /**
@@ -146,34 +139,23 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      */
     public void increment() {
         if (epsilon > epsilonMin) {
-            if (epsilonDecayByUpdateCount) epsilon = epsilonInitial / (double)epsilonUpdateCount++;
-            else epsilon *= epsilonDecayRate;
+            epsilon = epsilonDecayByUpdateCount ? epsilonInitial / (double)epsilonUpdateCount++ : epsilon * epsilonDecayRate;
         }
     }
 
     /**
-     * Takes epsilon greedy action.
+     * Returns action based on policy.
      *
-     * @param policyValueMatrix current state value matrix.
-     * @param availableActions available actions in current state
-     * @param alwaysGreedy if true greedy action is always taken.
-     * @return action taken.
+     * @param stateValueSet priority queue containing action values in decreasing order.
+     * @return chosen action.
      */
-    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         if (Math.random() < epsilon) {
-            Object[] availableActionsArray = availableActions.toArray();
-            return (int)availableActionsArray[random.nextInt(availableActionsArray.length)];
+            ActionValueTuple[] actionValueTupleArray = new ActionValueTuple[stateValueSet.size()];
+            actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
+            return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
         }
-        else return super.action(policyValueMatrix, availableActions, alwaysGreedy);
-    }
-
-    /**
-     * Returns executable policy type.
-     *
-     * @return executable policy type.
-     */
-    public ExecutablePolicyType getExecutablePolicyType() {
-        return executablePolicyType;
+        else return super.getAction(stateValueSet);
     }
 
 }

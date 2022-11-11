@@ -30,12 +30,6 @@ public class SampledPolicy extends AbstractExecutablePolicy {
             "(thresholdDecay:DOUBLE)";
 
     /**
-     * Executable policy type.
-     *
-     */
-    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.SAMPLED;
-
-    /**
      * Random function for sampled policy.
      *
      */
@@ -70,7 +64,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      */
     public SampledPolicy() {
-        super();
+        super(ExecutablePolicyType.SAMPLED);
     }
 
     /**
@@ -80,7 +74,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public SampledPolicy(String params) throws DynamicParamException {
-        super(params, SampledPolicy.paramNameTypes);
+        super(ExecutablePolicyType.SAMPLED, params, SampledPolicy.paramNameTypes);
     }
 
     /**
@@ -149,12 +143,10 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Returns executable policy type.
+     * Resets executable policy.
      *
-     * @return executable policy type.
      */
-    public ExecutablePolicyType getExecutablePolicyType() {
-        return executablePolicyType;
+    public void reset() {
     }
 
 }

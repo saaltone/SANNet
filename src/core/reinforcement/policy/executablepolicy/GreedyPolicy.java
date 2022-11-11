@@ -17,16 +17,20 @@ import java.util.TreeSet;
 public class GreedyPolicy extends AbstractExecutablePolicy {
 
     /**
-     * Executable policy type.
-     *
-     */
-    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.GREEDY;
-
-    /**
      * Constructor for greedy policy.
      *
      */
     public GreedyPolicy() {
+        super(ExecutablePolicyType.GREEDY);
+    }
+
+    /**
+     * Constructor for greedy policy.
+     *
+     * @param executablePolicyType executable policy type.
+     */
+    protected GreedyPolicy(ExecutablePolicyType executablePolicyType) {
+        super(executablePolicyType);
     }
 
     /**
@@ -37,7 +41,19 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public GreedyPolicy(String params, String paramNameTypes) throws DynamicParamException {
-        super(params, paramNameTypes);
+        super(ExecutablePolicyType.GREEDY, params, paramNameTypes);
+    }
+
+    /**
+     * Constructor for greedy policy.
+     *
+     * @param executablePolicyType executable policy type.
+     * @param params parameters for Policy.
+     * @param paramNameTypes parameter names types
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected GreedyPolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException {
+        super(executablePolicyType, params, paramNameTypes);
     }
 
     /**
@@ -58,12 +74,10 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
     }
 
     /**
-     * Returns executable policy type.
+     * Resets executable policy.
      *
-     * @return executable policy type.
      */
-    public ExecutablePolicyType getExecutablePolicyType() {
-        return executablePolicyType;
+    public void reset() {
     }
 
 }

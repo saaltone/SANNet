@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 /**
  * Implements noisy next best policy.<br>
- * Policy make a greedy decision or next best policy according to exploration probability.<br>
+ * Policy makes a greedy decision or next best policy according to exploration probability.<br>
  *
  */
 public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
@@ -29,12 +29,6 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     private final static String paramNameTypes = "(initialExplorationNoise:DOUBLE), " +
             "(minExplorationNoise:DOUBLE), " +
             "(explorationNoiseDecay:DOUBLE)";
-
-    /**
-     * Executable policy type.
-     *
-     */
-    private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
 
     /**
      * Random function for noisy next best policy.
@@ -71,7 +65,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      *
      */
     public NoisyNextBestPolicy() {
-        super();
+        super(ExecutablePolicyType.NOISY_NEXT_BEST);
     }
 
     /**
@@ -81,7 +75,7 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NoisyNextBestPolicy(String params) throws DynamicParamException {
-        super(params, NoisyNextBestPolicy.paramNameTypes);
+        super(ExecutablePolicyType.NOISY_NEXT_BEST, params, NoisyNextBestPolicy.paramNameTypes);
     }
 
     /**
@@ -139,17 +133,15 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      * @return chosen action.
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
-        if (stateValueSet.size() > 1 && explorationNoise > random.nextDouble()) stateValueSet.pollLast();
+        if (stateValueSet.size() > 1 && Math.random() < explorationNoise) stateValueSet.pollLast();
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
     }
 
     /**
-     * Returns executable policy type.
+     * Resets executable policy.
      *
-     * @return executable policy type.
      */
-    public ExecutablePolicyType getExecutablePolicyType() {
-        return executablePolicyType;
+    public void reset() {
     }
 
 }

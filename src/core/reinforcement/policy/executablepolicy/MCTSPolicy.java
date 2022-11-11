@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
@@ -657,6 +657,16 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
         stateTransitionStack = new Stack<>();
         currentState = null;
+    }
+
+    /**
+     * Resets executable policy.
+     *
+     */
+    public void reset() {
+        rootState = currentState = null;
+        stateTransitionStack = new Stack<>();
+        resetCount = 0;
     }
 
     /**

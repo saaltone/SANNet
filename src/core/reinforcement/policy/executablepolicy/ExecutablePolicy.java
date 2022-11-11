@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.Configurable;
 import utils.matrix.Matrix;
 
@@ -68,6 +68,12 @@ public interface ExecutablePolicy extends Configurable {
      *
      */
     void endEpisode();
+
+    /**
+     * Resets executable policy.
+     *
+     */
+    void reset();
 
     /**
      * Returns executable policy type.
