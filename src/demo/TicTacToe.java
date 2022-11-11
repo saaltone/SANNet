@@ -758,7 +758,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         boolean sharedPolicyFunctionEstimator = false;
         boolean sharedValueFunctionEstimator = false;
         boolean sharedMemory = false;
-        int policyType = 1;
+        int policyType = 4;
         ExecutablePolicyType executablePolicyType = null;
         String policyTypeParams = "";
         switch (policyType) {
@@ -775,14 +775,19 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 policyTypeParams += "thresholdInitial = 1, thresholdMin = 0.3";
             }
+            case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
+            case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
 
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDQN;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
         };
-        boolean applyDueling = false;
+        boolean applyDueling = switch (agentAlgorithmType) {
+            case DQN -> true;
+            default -> false;
+        };
         String algorithmParams = switch (agentAlgorithmType) {
             case QN -> "agentUpdateCycle = 10";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, batchSize = 128, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
@@ -820,7 +825,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
