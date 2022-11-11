@@ -9,7 +9,7 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -24,7 +24,7 @@ public class PlainValueFunction extends AbstractValueFunction {
 
     /**
      * Parameter name types for plain value function.
-     *     - useBaseline: if true baseline is used for value function. Default value false.<br>
+     *     - useBaseline: if true baseline is used for value function. Default value true.<br>
      *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.95.<br>
      *
      */
@@ -128,7 +128,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * Sets parameters used for plain value function.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - useBaseline: if true uses baseline for value function. Default value false.<br>
+     *     - useBaseline: if true uses baseline for value function. Default value true.<br>
      *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.95.<br>
      *
      * @param params parameters used for plain value function.

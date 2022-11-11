@@ -7,7 +7,7 @@ package core.reinforcement.value;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;

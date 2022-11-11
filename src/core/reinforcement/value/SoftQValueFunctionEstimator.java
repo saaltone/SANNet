@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
@@ -272,7 +272,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      */
     private void updateTargetValues(FunctionEstimator currentFunctionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         Matrix targetValues = currentFunctionEstimator.predict(stateTransition);
-        targetValues.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
+        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
         currentFunctionEstimator.store(stateTransition, targetValues);
     }
 

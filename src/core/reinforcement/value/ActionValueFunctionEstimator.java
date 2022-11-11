@@ -7,7 +7,7 @@ package core.reinforcement.value;
 
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 

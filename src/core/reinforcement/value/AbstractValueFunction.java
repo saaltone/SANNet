@@ -6,7 +6,7 @@
 package core.reinforcement.value;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -88,7 +88,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Count for average TD data verbosing.
      *
      */
-    private int tdDataPrintCount = 0;
+    private int tdDataPrintCount;
 
     /**
      * Constructor for abstract value function.
@@ -123,6 +123,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
         gamma = 0.99;
         lambda = 1;
         tdDataPrintCycle = 100;
+        tdDataPrintCount = 0;
     }
 
     /**

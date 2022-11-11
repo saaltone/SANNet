@@ -8,7 +8,7 @@ package core.reinforcement.value;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -123,12 +123,12 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Returns function index applying potential state action value offset.
+     * Returns value function index.
      *
      * @param stateTransition state transition.
-     * @return function index.
+     * @return value function index.
      */
-    protected abstract int getFunctionIndex(StateTransition stateTransition);
+    protected abstract int getValueFunctionIndex(StateTransition stateTransition);
 
     /**
      * Returns values for state.
@@ -151,7 +151,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        stateTransition.value = getValues(functionEstimator, stateTransition).getValue(getFunctionIndex(stateTransition), 0);
+        stateTransition.value = getValues(functionEstimator, stateTransition).getValue(getValueFunctionIndex(stateTransition), 0);
     }
 
     /**
@@ -251,7 +251,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      */
     private Matrix getTargetValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetValues = getValues(functionEstimator, stateTransition).copy();
-        targetValues.setValue(getFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
+        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
         return targetValues;
     }
 

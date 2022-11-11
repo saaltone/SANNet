@@ -6,7 +6,7 @@
 package core.reinforcement.value;
 
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -88,7 +88,7 @@ public class StateValueFunctionEstimator extends AbstractValueFunctionEstimator 
      * @param stateTransition state transition.
      * @return updated action.
      */
-    protected int getFunctionIndex(StateTransition stateTransition) {
+    protected int getValueFunctionIndex(StateTransition stateTransition) {
         return 0;
     }
 
