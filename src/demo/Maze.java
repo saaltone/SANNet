@@ -771,7 +771,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
         boolean singleFunctionEstimator = false;
-        int policyType = 1;
+        int policyType = 4;
         ExecutablePolicyType executablePolicyType = null;
         String policyTypeParams = "";
         switch (policyType) {
@@ -782,12 +782,14 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
-                policyTypeParams = "initialExplorationNoise = 0.25, minExplorationNoise = 0.25";
+                policyTypeParams = "initialExplorationNoise = 0.5, minExplorationNoise = 0.05";
             }
             case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 policyTypeParams = "thresholdInitial = 0.2, thresholdMin = 0.2";
             }
+            case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
+            case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.SACDiscrete;
         boolean onlineMemory = switch (agentAlgorithmType) {
@@ -830,12 +832,12 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 1");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetwork.build();
