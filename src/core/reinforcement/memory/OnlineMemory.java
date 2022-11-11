@@ -5,6 +5,7 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 
@@ -24,11 +25,9 @@ public class OnlineMemory implements Memory, Serializable {
     /**
      * Parameter name types for online memory.
      *     - capacity: Capacity of online memory. Default value 0 (unlimited).<br>
-     *     - batchSize: Batch size sampled from online memory. Default value -1 (whole memory is sampled).<br>
      *
      */
-    private final static String paramNameTypes = "(capacity:INT), " +
-            "(batchSize:INT)";
+    private final static String paramNameTypes = "(capacity:INT)";
 
     /**
      * Parameters for memory.
@@ -41,12 +40,6 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     private int capacity;
-
-    /**
-     * Batch size sampled from online memory. If batch size is -1 whole memory is sampled.
-     *
-     */
-    private int batchSize;
 
     /**
      * Tree set of state transitions in online memory.
@@ -87,7 +80,6 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public void initializeDefaultParams() {
         capacity = 0;
-        batchSize = -1;
     }
 
     /**
@@ -113,14 +105,12 @@ public class OnlineMemory implements Memory, Serializable {
      * <br>
      * Supported parameters are:<br>
      *     - capacity: Capacity of online memory. Default value 0 (unlimited).<br>
-     *     - batchSize: Batch size sampled from online memory. Default value -1 (whole memory is sampled).<br>
      *
      * @param params parameters used for online memory.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("capacity")) capacity = params.getValueAsInteger("capacity");
-        if (params.hasParam("batchSize")) batchSize = params.getValueAsInteger("batchSize");
     }
 
     /**
@@ -196,14 +186,6 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public boolean applyImportanceSamplingWeights() {
         return false;
-    }
-
-    /**
-     * Sets if importance sampling weights are applied.
-     *
-     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     */
-    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
 }
