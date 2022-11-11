@@ -1,6 +1,6 @@
 /**
  * Defines interfaces for agent and environment.
- * Implements DeppAgent and EnvironmentState.
+ * Implements DeepAgent, EnvironmentState and StateTransition.
  *
  */
 package core.reinforcement.agent;
