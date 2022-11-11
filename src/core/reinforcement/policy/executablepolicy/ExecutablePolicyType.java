@@ -39,6 +39,18 @@ public enum ExecutablePolicyType {
      * Monte Carlo Tree Search based policy.
      *
      */
-    MCTS
+    MCTS,
+
+    /**
+     * Entropy greedy policy
+     *
+     */
+    ENTROPY_GREEDY,
+
+    /**
+     * Epsilon noisy next best policy
+     *
+     */
+    ENTROPY_NOISY_NEXT_BEST
 
 }

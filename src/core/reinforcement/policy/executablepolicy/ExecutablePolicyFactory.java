@@ -31,6 +31,8 @@ public class ExecutablePolicyFactory implements Serializable {
             case NOISY_NEXT_BEST -> params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
             case SAMPLED -> params == null ? new SampledPolicy() : new SampledPolicy(params);
             case MCTS -> params == null ? new MCTSPolicy() : new MCTSPolicy(params);
+            case ENTROPY_GREEDY -> new EntropyGreedyPolicy();
+            case ENTROPY_NOISY_NEXT_BEST -> new EntropyNoisyNextBestPolicy();
         };
     }
 
@@ -53,11 +55,13 @@ public class ExecutablePolicyFactory implements Serializable {
      * @throws AgentException throws exception is executable policy is of unknown type.
      */
     public static ExecutablePolicyType getExecutablePolicyType(ExecutablePolicy executablePolicy) throws AgentException {
+        if (executablePolicy instanceof EntropyGreedyPolicy) return ExecutablePolicyType.ENTROPY_GREEDY;
         if (executablePolicy instanceof EpsilonGreedyPolicy) return ExecutablePolicyType.EPSILON_GREEDY;
         if (executablePolicy instanceof GreedyPolicy) return ExecutablePolicyType.GREEDY;
         if (executablePolicy instanceof NoisyNextBestPolicy) return ExecutablePolicyType.NOISY_NEXT_BEST;
         if (executablePolicy instanceof SampledPolicy) return ExecutablePolicyType.SAMPLED;
         if (executablePolicy instanceof MCTSPolicy) return ExecutablePolicyType.MCTS;
+        if (executablePolicy instanceof EntropyNoisyNextBestPolicy) return ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         throw new AgentException("Unknown executable policy type");
     }
 
