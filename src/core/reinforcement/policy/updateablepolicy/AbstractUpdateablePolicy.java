@@ -8,7 +8,7 @@ package core.reinforcement.policy.updateablepolicy;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.AbstractPolicy;
 import core.reinforcement.policy.Policy;
@@ -209,6 +209,7 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      */
     public void append(Policy policy, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         functionEstimator.append(policy.getFunctionEstimator(), tau);
+        getExecutablePolicy().reset();
     }
 
 }

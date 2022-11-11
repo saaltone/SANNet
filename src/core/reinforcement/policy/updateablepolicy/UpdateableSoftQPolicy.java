@@ -10,7 +10,7 @@ import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParam;

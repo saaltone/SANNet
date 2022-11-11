@@ -7,7 +7,7 @@ package core.reinforcement.policy.updateablepolicy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
