@@ -77,13 +77,13 @@ public class AutoEncoder {
     }
 
     /**
-     * Initializes neural network
+     * Initializes neural network.
      *
-     * @param neuralNetwork neural network.
+     * @param neuralNetwork neural network instance
      * @param data input and output data.
-     * @throws NeuralNetworkException throws neural network exception is initialization of neural network fails.
-     * @throws MatrixException throws matrix exception is matrix operation fails.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
+     * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
     private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, MMatrix>> data) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + 1);
@@ -136,8 +136,8 @@ public class AutoEncoder {
 
     /**
      * Creates training and test samples with split of 70% / 30%.
-     * Inputs are one hot encoded numbers between 1 and 10.
-     * Outputs are one hot encoded numbers between 1 and 10.
+     * Inputs are numbers between zero and 10 as one-hot encoded.
+     * Outputs are numbers between zero and 10 as one-hot encoded.
      *
      * @return created training and testing samples.
      * @throws NeuralNetworkException throws exception if creation of samples fail.
