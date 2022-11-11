@@ -206,6 +206,15 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Returns true if input is joined otherwise returns false.
+     *
+     * @return true if input is joined otherwise returns false.
+     */
+    protected boolean isJoinedInput() {
+        return false;
+    }
+
+    /**
      * Returns weight set.
      *
      * @return weight set.
