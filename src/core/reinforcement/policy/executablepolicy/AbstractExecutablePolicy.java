@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
@@ -40,6 +40,12 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     }
 
     /**
+     * Executable policy type.
+     *
+     */
+    private final ExecutablePolicyType executablePolicyType;
+
+    /**
      * True if values are recorded as softmax values (e^x).
      *
      */
@@ -48,20 +54,23 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     /**
      * Default constructor for abstract executable policy.
      *
+     * @param executablePolicyType executable policy type.
      */
-    AbstractExecutablePolicy() {
+    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType) {
+        this.executablePolicyType = executablePolicyType;
         initializeDefaultParams();
     }
 
     /**
      * Default constructor for abstract executable policy.
      *
+     * @param executablePolicyType executable policy type.
      * @param params parameters for abstract executable policy.
      * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    AbstractExecutablePolicy(String params, String paramNameTypes) throws DynamicParamException {
-        this();
+    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException {
+        this(executablePolicyType);
         if (params != null) setParams(new DynamicParam(params, AbstractExecutablePolicy.paramNameTypes + (paramNameTypes != null ? ", " + paramNameTypes : "")));
     }
 
@@ -129,6 +138,16 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
         return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
     }
 
+    protected double getActionEntropy(TreeSet<ActionValueTuple> stateValueSet) {
+        double entropy = 0;
+        double actionValueSum = 0;
+        for (ActionValueTuple actionValueTuple : stateValueSet) actionValueSum += (actionValueTuple.value() + 10E-08);
+        for (ActionValueTuple actionValueTuple : stateValueSet) {
+            entropy += -((actionValueTuple.value() + 10E-08) / actionValueSum) * Math.log10((actionValueTuple.value() + 10E-08) / actionValueSum);
+        }
+        return entropy;
+    }
+
     /**
      * Adds state transition for action execution.
      *
@@ -151,5 +170,14 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @return chosen action.
      */
     protected abstract int getAction(TreeSet<ActionValueTuple> stateValueSet);
+
+    /**
+     * Returns executable policy type.
+     *
+     * @return executable policy type.
+     */
+    public ExecutablePolicyType getExecutablePolicyType() {
+        return executablePolicyType;
+    }
 
 }
