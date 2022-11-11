@@ -1876,8 +1876,8 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!((this instanceof DMatrix) || (this instanceof SMatrix))) throw new MatrixException("Matrix must be of type DMatrix or SMatrix");
         Matrix matrix1;
         Matrix matrix2;
-        int rows = getPureRows();
-        int columns = getPureColumns();
+        int rows = getTotalRows();
+        int columns = getTotalColumns();
         if (splitVertically) {
             if (position < 1 || position > rows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
             matrix1 = getNewMatrix(position, columns);

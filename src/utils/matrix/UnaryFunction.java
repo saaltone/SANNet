@@ -137,7 +137,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for Gumbel Softmax 5.<br>
+     *     - tau: default value for Gumbel Softmax 1.5.<br>
      *     - tauDecay: default value for Gumbel Softmax 0.999. <br>
      *
      * @param unaryFunctionType type of function to be used.
