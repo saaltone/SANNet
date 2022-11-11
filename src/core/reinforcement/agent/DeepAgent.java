@@ -6,7 +6,6 @@
 package core.reinforcement.agent;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.memory.StateTransition;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ValueFunction;
 import utils.configurable.Configurable;
