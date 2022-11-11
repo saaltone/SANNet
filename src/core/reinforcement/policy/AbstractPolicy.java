@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyFactory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -84,13 +84,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws DynamicParamException, AgentException {
-        initializeDefaultParams();
-        this.executablePolicy = ExecutablePolicyFactory.create(executablePolicyType);
-        this.functionEstimator = functionEstimator;
-        isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
-        if (isStateActionValueFunction && !isUpdateablePolicy()) throw new AgentException("Non-updateable policy cannot be applied along state value function estimator.");
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+        this(ExecutablePolicyFactory.create(executablePolicyType), functionEstimator, params);
     }
 
     /**
