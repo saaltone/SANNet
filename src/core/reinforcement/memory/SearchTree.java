@@ -5,6 +5,8 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.StateTransition;
+
 /**
  * Interface for search tree.
  *

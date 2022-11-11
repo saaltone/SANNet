@@ -5,6 +5,8 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.StateTransition;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
@@ -323,6 +325,7 @@ public class SumTree implements SearchTree, Serializable {
             nodes.add(parentNode.setLeftNode(new Node(parentNode)));
             nodes.add(parentNode.setRightNode(new Node(parentNode)));
         }
+
         Iterator<Node> nodeIterator = nodes.iterator();
         Node previousNode = null;
         Node firstNode = null;
@@ -332,6 +335,7 @@ public class SumTree implements SearchTree, Serializable {
             else previousNode.setNextLeafNode(node);
             previousNode = node;
         }
+
         if (previousNode != null) previousNode.setNextLeafNode(firstNode);
         return rootNode;
     }

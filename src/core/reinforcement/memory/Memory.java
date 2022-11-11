@@ -5,6 +5,7 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
 
