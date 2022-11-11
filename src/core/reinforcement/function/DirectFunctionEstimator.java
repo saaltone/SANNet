@@ -8,7 +8,7 @@ package core.reinforcement.function;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.memory.StateTransition;
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
