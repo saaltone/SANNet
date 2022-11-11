@@ -165,8 +165,20 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix handleBidirectionalInput(Matrix input) throws MatrixException {
+        return handleBidirectionalInput(input, getLayerIndex() - 1);
+    }
+
+    /**
+     * Handles birectional input.
+     *
+     * @param input input
+     * @param previousLayerIndex previous layer index
+     * @return handled input
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix handleBidirectionalInput(Matrix input, int previousLayerIndex) throws MatrixException {
         Matrix handledInput;
-        if (getPreviousLayer().isBidirectional()) handledInput = input.split(getPreviousLayerWidth() / 2, true);
+        if (getPreviousLayer(previousLayerIndex).isBidirectional()) handledInput = input.split(getPreviousLayerWidth(previousLayerIndex) / 2, true);
         else handledInput = input;
         return handledInput;
     }
@@ -186,11 +198,11 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
-     * Returns true if input is unjoined otherwise returns false.
+     * Returns true if input is joined otherwise returns false.
      *
-     * @return true if input is unjoined otherwise returns false.
+     * @return true if input is joined otherwise returns false.
      */
-    protected boolean isUnjoinedInput() {
+    protected boolean isJoinedInput() {
         return true;
     }
 
@@ -256,8 +268,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
                 procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
             }
             else {
-                if (isUnjoinedInput()) procedure.calculateExpression(inputSequences, getLayerOutputs());
-                else procedure.calculateExpression(Sequence.join(inputSequences, true), getLayerOutputs());
+                if (isJoinedInput()) procedure.calculateExpression(Sequence.join(inputSequences, true), getLayerOutputs());
+                else procedure.calculateExpression(inputSequences, getLayerOutputs());
             }
         }
     }
@@ -276,7 +288,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
             }
             else {
                 procedure.calculateGradient(getNextLayerGradients(), inputGradientSequences, getTruncateSteps());
-                if (!isUnjoinedInput()) Sequence.unjoinAsMap(inputGradientSequences.get(0), inputGradientSequences);
+                if (isJoinedInput()) Sequence.unjoinAsMap(inputGradientSequences.get(0), inputGradientSequences);
             }
         }
     }
