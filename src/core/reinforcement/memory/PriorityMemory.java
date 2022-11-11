@@ -5,6 +5,7 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.StateTransition;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 
@@ -26,7 +27,7 @@ public class PriorityMemory implements Memory, Serializable {
 
     /**
      * Parameter name types for prioritized replay memory.
-     *     - capacity: capacity of prioritized replay memory. Default value 2000.<br>
+     *     - capacity: capacity of prioritized replay memory. Default value 20000.<br>
      *     - batchSize: batch size sampled from prioritized replay memory. Default value 32.<br>
      *     - alpha: proportional prioritization factor for samples in prioritized replay memory. Default value 0.6.<br>
      *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
@@ -145,7 +146,7 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public void initializeDefaultParams() {
-        capacity = 2000;
+        capacity = 20000;
         batchSize = 32;
         alpha = 0.6;
         beta = 0.4;
@@ -177,7 +178,7 @@ public class PriorityMemory implements Memory, Serializable {
      * Sets parameters used for prioritized replay memory.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - capacity: capacity of prioritized replay memory. Default value 2000.<br>
+     *     - capacity: capacity of prioritized replay memory. Default value 20000.<br>
      *     - batchSize: batch size sampled from prioritized replay memory. Default value 32.<br>
      *     - alpha: proportional prioritization factor for samples in prioritized replay memory. Default value 0.6.<br>
      *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
@@ -234,7 +235,7 @@ public class PriorityMemory implements Memory, Serializable {
      * @param stateTransition state transition to be updated.
      */
     private void update(StateTransition stateTransition) {
-        double epsilon = 10E-8;
+        final double epsilon = 10E-8;
         stateTransition.priority = Math.pow(Math.abs(stateTransition.tdError) + epsilon, alpha);
         searchTree.update(stateTransition);
     }
@@ -261,12 +262,12 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public void sample() {
+        sampledStateTransitions = new TreeSet<>();
         if (!applyUniformSampling) {
-            double totalPriority = searchTree.getTotalPriority();
-            double segment = totalPriority / (double)batchSize;
+            final double totalPriority = searchTree.getTotalPriority();
+            final double segment = totalPriority / (double)batchSize;
             beta = Math.min(beta + betaStepSize, 1);
             double maxWeight = Double.NEGATIVE_INFINITY;
-            sampledStateTransitions = new TreeSet<>();
             for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
                 double prioritySum = proportionalPrioritization ? segment * (random.nextDouble() + (double)sampleIndex) : (totalPriority - 10E-8) * random.nextDouble() + 10E-8;
                 StateTransition stateTransition = searchTree.getStateTransition(prioritySum);
@@ -278,7 +279,6 @@ public class PriorityMemory implements Memory, Serializable {
             for (StateTransition stateTransition : sampledStateTransitions) stateTransition.importanceSamplingWeight /= maxWeight;
         }
         else {
-            sampledStateTransitions = new TreeSet<>();
             if (searchTree.size() > 0) {
                 for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
                     sampledStateTransitions.add(searchTree.getRandomStateTransition());
