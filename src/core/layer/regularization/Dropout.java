@@ -27,15 +27,23 @@ public class Dropout extends AbstractRegularizationLayer {
     /**
      * Parameter name types for drop out.
      *     - probability: probability of masking out a layer node. Default value 0.5.<br>
+     *     - monte_carlo: if true applies Monte Carlo dropout (applies dropout also during inference). Default value false.<br>
      *
      */
-    private final static String paramNameTypes = "(probability:DOUBLE)";
+    private final static String paramNameTypes = "(probability:DOUBLE), " +
+            "(monte_carlo:BOOLEAN)";
 
     /**
      * Drop out probability of node.
      *
      */
     private double probability;
+
+    /**
+     * If true applies Monte Carlo drop out (drop out during inference) otherwise applies normal drop out.
+     *
+     */
+    private boolean monte_carlo;
 
     /**
      * Constructor for drop out layer.
@@ -57,6 +65,7 @@ public class Dropout extends AbstractRegularizationLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         probability = 0.5;
+        monte_carlo = false;
     }
 
     /**
@@ -73,6 +82,7 @@ public class Dropout extends AbstractRegularizationLayer {
      * <br>
      * Supported parameters are:<br>
      *     - probability: probability of masking out a layer node. Default value 0.5.<br>
+     *     - monte_carlo: if true applies Monte Carlo dropout (applies dropout also during inference). Default value false.<br>
      *
      * @param params parameters used for drop out.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -81,6 +91,7 @@ public class Dropout extends AbstractRegularizationLayer {
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
         if (params.hasParam("probability")) probability = 1 - params.getValueAsDouble("probability");
+        if (params.hasParam("monte_carlo")) monte_carlo = params.getValueAsBoolean("monte_carlo");
     }
 
     /**
@@ -91,7 +102,7 @@ public class Dropout extends AbstractRegularizationLayer {
     public void forwardProcess() throws MatrixException {
         Sequence inputSequence = getPreviousLayerOutputs();
 
-        if (isTraining()) {
+        if (isTraining() || monte_carlo) {
             for (MMatrix sample : inputSequence.values()) {
                 int matrixDepth = sample.getDepth();
                 for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
