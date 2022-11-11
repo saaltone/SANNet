@@ -1,5 +1,5 @@
 /**
- * Defines feedforward layer.<br>
+ * Defines feedforward layers.<br>
  *
  */
 package core.layer.feedforward;
