@@ -15,6 +15,7 @@ import utils.matrix.*;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.TreeMap;
 
@@ -267,12 +268,12 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns true if input is unjoined otherwise returns false.
+     * Returns true if input is joined otherwise returns false.
      *
-     * @return true if input is unjoined otherwise returns false.
+     * @return true if input is joined otherwise returns false.
      */
-    protected boolean isUnjoinedInput() {
-        return !joinPreviousLayerInput;
+    protected boolean isJoinedInput() {
+        return joinPreviousLayerInput;
     }
 
     /**
@@ -313,26 +314,22 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         int numberOfInputs = connectFromPreviousLayer < 0 ? 1 : 2;
         inputs = new TreeMap<>();
-        if (isUnjoinedInput()) {
-            for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
-                int connectFromLayer = inputIndex == 0 ? getLayerIndex() - 1 : connectFromPreviousLayer;
-                Matrix input = new DMatrix(getPreviousLayerWidth(connectFromLayer), 1, Initialization.ONE);
-                if (inputIndex == 0) input = handleBidirectionalInput(input);
-                input.setName("Input" + connectFromLayer);
-                inputs.put(inputIndex, new MMatrix(input));
-            }
+
+        ArrayList<Matrix> inputMatrices = new ArrayList<>();
+        for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
+            int connectFromLayer = inputIndex == 0 ? getLayerIndex() - 1 : connectFromPreviousLayer;
+            Matrix input = new DMatrix(getPreviousLayerWidth(connectFromLayer), 1, Initialization.ONE);
+            input = handleBidirectionalInput(input, connectFromLayer);
+            input.setName("Input" + connectFromLayer);
+            inputMatrices.add(input);
         }
+        if (isJoinedInput()) inputs.put(0, new MMatrix(inputMatrices.size() == 1 ? inputMatrices.get(0) : new JMatrix(inputMatrices, true)));
         else {
-            Matrix[] inputMatrices = new Matrix[numberOfInputs];
-            for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
-                int connectFromLayer = inputIndex == 0 ? getLayerIndex() - 1 : connectFromPreviousLayer;
-                Matrix input = new DMatrix(getPreviousLayerWidth(connectFromLayer), 1, Initialization.ONE);
-                if (inputIndex == 0) input = handleBidirectionalInput(input);
-                input.setName("Input" + connectFromLayer);
-                inputMatrices[inputIndex] = input;
+            for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
+                inputs.put(inputIndex, new MMatrix(inputMatrices.get(inputIndex)));
             }
-            inputs.put(0, new MMatrix(new JMatrix(inputMatrices, true)));
         }
+
         return inputs;
     }
 
@@ -345,7 +342,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         Matrix output;
         if (connectFromPreviousLayer > -1) {
-            if (joinPreviousLayerInput) {
+            if (isJoinedInput()) {
                 Matrix joinedInput = inputs.get(0).get(0);
                 joinedInput.setName("JoinedInput");
                 output = weightSet.weight.dot(joinedInput);
@@ -411,7 +408,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName() + ", ") + "Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A" + ", Connect from previous layer: " + (connectFromPreviousLayer != -1 ? connectFromPreviousLayer : "N/A") + ", Join previous layer inputs: " + (joinPreviousLayerInput ? "Yes" : "No"));
+        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName() + ", ") + "Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A" + ", Connect from previous layer: " + (connectFromPreviousLayer != -1 ? connectFromPreviousLayer : "N/A") + ", Join previous layer inputs: " + (isJoinedInput() ? "Yes" : "No"));
     }
 
 }
