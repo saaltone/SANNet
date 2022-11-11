@@ -838,6 +838,8 @@ public class TSP implements Environment, AgentFunctionEstimator {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 policyTypeParams = "thresholdInitial = 0.7, thresholdMin = 0.0";
             }
+            case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
+            case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
         boolean singleFunctionEstimator = false;
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
