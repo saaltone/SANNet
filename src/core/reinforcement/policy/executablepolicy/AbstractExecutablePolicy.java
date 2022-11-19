@@ -138,6 +138,12 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
         return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
     }
 
+    /**
+     * Returns action entropy
+     *
+     * @param stateValueSet action value set.
+     * @return action entropy.
+     */
     protected double getActionEntropy(TreeSet<ActionValueTuple> stateValueSet) {
         double entropy = 0;
         double actionValueSum = 0;
