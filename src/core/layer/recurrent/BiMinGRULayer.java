@@ -5,10 +5,12 @@
 
 package core.layer.recurrent;
 
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.MatrixException;
+import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
 /**
@@ -45,24 +47,35 @@ public class BiMinGRULayer extends MinGRULayer {
     }
 
     /**
+     * Returns current weight set.
+     *
+     * @return current weight set.
+     */
+    protected WeightSet getCurrentWeightSet() {
+        return reverseWeightSet;
+    }
+
+    /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected Procedure getReverseProcedure() throws MatrixException, DynamicParamException {
+        currentWeightSet = reverseWeightSet;
+        Procedure reverseProcedure = new ProcedureFactory().getProcedure(this, reverseWeightSet.getWeights(), getConstantMatrices(), getStopGradients(), null, isJoinedInput());
+        currentWeightSet = weightSet;
+        return reverseProcedure;
+    }
+
+    /**
      * Initializes neural network layer weights.
      *
      */
     public void initializeWeights() {
         super.initializeWeights();
         reverseWeightSet = new MinGRUWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), getRegulateDirectWeights(), getRegulateRecurrentWeights());
-    }
-
-    /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        super.defineProcedure();
-        currentWeightSet = reverseWeightSet;
-        reverseProcedure = new ProcedureFactory().getProcedure(this, reverseWeightSet.getWeights(), getConstantMatrices(), getStopGradients(), true);
     }
 
 }

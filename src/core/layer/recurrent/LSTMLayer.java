@@ -11,6 +11,7 @@ import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -415,6 +416,17 @@ public class LSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected Procedure getReverseProcedure() throws MatrixException, DynamicParamException {
+        return null;
+    }
+
+    /**
      * Returns if direct weights are regulated.
      *
      * @return true if direct weights are regulated otherwise false.
@@ -442,23 +454,20 @@ public class LSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
+     * Returns current weight set.
+     *
+     * @return current weight set.
+     */
+    protected WeightSet getCurrentWeightSet() {
+        return getWeightSet();
+    }
+
+    /**
      * Initializes neural network layer weights.
      *
      */
     public void initializeWeights() {
-        weightSet = new LSTMWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
-        currentWeightSet = weightSet;
-    }
-
-    /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        currentWeightSet = weightSet;
-        super.defineProcedure();
+        currentWeightSet = weightSet = new LSTMWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**

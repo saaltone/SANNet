@@ -5,19 +5,16 @@
 
 package core.layer.recurrent;
 
-import core.network.NeuralNetworkException;
 import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
+import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
-import utils.matrix.Matrix;
-import utils.procedure.Procedure;
-import utils.sampling.Sequence;
 import utils.matrix.Initialization;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Implements abstract recurrent layer providing functions common for all recurrent layers.<br>
@@ -81,12 +78,6 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      *
      */
     private final boolean isBirectional;
-
-    /**
-     * Reverse procedure for layer. Procedure contains chain of forward and backward expressions.
-     *
-     */
-    protected Procedure reverseProcedure = null;
 
     /**
      * Constructor for abstract recurrent layer.
@@ -177,6 +168,15 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Returns true if input is joined otherwise returns false.
+     *
+     * @return true if input is joined otherwise returns false.
+     */
+    protected boolean isJoinedInput() {
+        return false;
+    }
+
+    /**
      * Returns width of neural network layer.
      *
      * @return width of neural network layer.
@@ -195,14 +195,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Resets layer.
+     * Returns current weight set.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return current weight set.
      */
-    public void reset() throws MatrixException {
-        super.reset();
-        if (isBidirectional()) reverseProcedure.reset((isTraining() && resetStateTraining) || (!isTraining() && resetStateTesting));
-    }
+    protected abstract WeightSet getCurrentWeightSet();
 
     /**
      * Takes single forward processing step process layer input(s).<br>
@@ -216,47 +213,14 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
             procedure.reset(true);
             if ((previousState && restoreStateTraining) || ((!previousState && restoreStateTesting))) {
                 procedure.storeDependencies(previousState ? 1 : 2);
-                if (isBidirectional()) reverseProcedure.storeDependencies(previousState ? 1 : 2);
             }
             if ((isTraining() && restoreStateTraining) || ((!isTraining() && restoreStateTesting))) {
                 procedure.restoreDependencies(isTraining() ? 1 : 2);
-                if (isBidirectional()) reverseProcedure.restoreDependencies(isTraining() ? 1 : 2);
             }
         }
         previousState = isTraining();
 
         super.forwardProcess();
-        if (isBidirectional()) {
-            Sequence layerReverseOutputs = new Sequence();
-            reverseProcedure.calculateExpression(getPreviousLayerOutputs(), layerReverseOutputs);
-            setLayerOutputs(Sequence.join(new Sequence[] { getLayerOutputs(), layerReverseOutputs }, true));
-        }
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (!isBidirectional()) super.backwardProcess();
-        else {
-            Sequence nextLayerGradients = getNextLayerGradients();
-            Sequence[] unjoinedNextLayerGradients = Sequence.unjoin(nextLayerGradients);
-            Sequence layerGradients = new Sequence();
-            procedure.calculateGradient(unjoinedNextLayerGradients[0], layerGradients, getTruncateSteps());
-            Sequence reverseLayerGradients = new Sequence();
-            reverseProcedure.calculateGradient(unjoinedNextLayerGradients[1], reverseLayerGradients, getTruncateSteps());
-            Sequence updatedLayerGradients = new Sequence();
-            for (Map.Entry<Integer, MMatrix> entry : layerGradients.entrySet()) {
-                int sampleIndex = entry.getKey();
-                MMatrix layerGradient = entry.getValue();
-                updatedLayerGradients.put(sampleIndex, layerGradient.add(reverseLayerGradients.get(sampleIndex)));
-            }
-            setLayerGradients(updatedLayerGradients);
-        }
     }
 
     /**
@@ -275,9 +239,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public HashMap<Matrix, Matrix> getLayerWeightGradients() throws MatrixException {
-        HashMap<Matrix, Matrix> layerWeightGradients = new HashMap<>(procedure.getGradients());
-        if (isBidirectional()) layerWeightGradients.putAll(reverseProcedure.getGradients());
-        return layerWeightGradients;
+        return procedure.getGradients();
     }
 
     /**
