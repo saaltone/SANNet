@@ -163,7 +163,7 @@ public class DynamicParam implements Serializable {
                 case LIST:
                     this.type = type;
                     if (!newValue.startsWith("[") && !newValue.startsWith("]")) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to List");
-                    this.value = newValue.replace("[", "").replace("]", "").replace(" ", "").split(",");
+                    this.value = newValue.replace("[", "").replace("]", "").replace(" ", "").split(";");
                     break;
             }
         }
@@ -533,6 +533,18 @@ public class DynamicParam implements Serializable {
     public boolean getValueAsBoolean(String param) throws DynamicParamException {
         if (!paramList.containsKey(param.trim())) throw new DynamicParamException("No parameter: " + param + " found");
         return paramList.get(param).getValueAsBoolean(param);
+    }
+
+    /**
+     * Returns value of parameter as list.
+     *
+     * @param param name of parameter.
+     * @return value of parameter as list.
+     * @throws DynamicParamException throws exception if parameter by name is not found.
+     */
+    public String[] getValueAsList(String param) throws DynamicParamException {
+        if (!paramList.containsKey(param.trim())) throw new DynamicParamException("No parameter: " + param + " found");
+        return paramList.get(param).getValueAsList(param);
     }
 
     /**
