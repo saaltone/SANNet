@@ -12,10 +12,10 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.TreeMap;
 
@@ -26,17 +26,13 @@ import java.util.TreeMap;
 public class FeedforwardLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for dense layer.
+     * Parameter name types for feedforward layer.
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
-     *     - connectFromPreviousLayer: creates connection from output of specified previous layer.<br>
-     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
      *
      */
     private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
-            "(splitOutputAtPosition:INT), " +
-            "(connectFromPreviousLayer:INT), " +
-            "(joinPreviousLayerInput:BOOLEAN)";
+            "(splitOutputAtPosition:INT)";
 
     /**
      * Implements weight set for layer.
@@ -60,12 +56,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         private final Matrix bias;
 
         /**
-         * Previous connection layer weight matrix.
-         *
-         */
-        private final Matrix previousConnectLayerWeight;
-
-        /**
          * Set of weights.
          *
          */
@@ -77,12 +67,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
          * @param initialization weight initialization function.
          * @param previousLayerWidth width of previous layer.
          * @param layerWidth width of current layer.
-         * @param previousConnectLayerWidth width of previous connection layer.
-         * @param joinPreviousLayerInput if true input and previous connect input are joined otherwise previous connect layer input is added through dedicated weight.
          * @param regulateDirectWeights if true direct weights are regulated.
          */
-        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, int previousConnectLayerWidth, boolean joinPreviousLayerInput, boolean regulateDirectWeights) {
-            weight = (previousConnectLayerWidth < 0 || !joinPreviousLayerInput) ? new DMatrix(layerWidth, previousLayerWidth, initialization) : new DMatrix(layerWidth, previousLayerWidth + previousConnectLayerWidth, initialization);
+        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
+            weight = new DMatrix(layerWidth, previousLayerWidth, initialization);
             weight.setName("Weight");
             bias = new DMatrix(layerWidth, 1);
             bias.setName("Bias");
@@ -92,14 +80,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
 
             registerWeight(weight, regulateDirectWeights, true);
             registerWeight(bias, false, false);
-
-            if (previousConnectLayerWidth > -1 && !joinPreviousLayerInput) {
-                previousConnectLayerWeight = new DMatrix(layerWidth, previousConnectLayerWidth, initialization);
-                previousConnectLayerWeight.setName("PreviousConnectWeight");
-                weights.add(previousConnectLayerWeight);
-                registerWeight(previousConnectLayerWeight, false, false);
-            }
-            else previousConnectLayerWeight = null;
         }
 
         /**
@@ -118,7 +98,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         public void reinitialize() {
             weight.initialize(initialization);
             bias.reset();
-            if (previousConnectLayerWeight != null) previousConnectLayerWeight.initialize(initialization);
         }
 
         /**
@@ -159,22 +138,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     private int splitOutputAtPosition;
 
     /**
-     * Index of previous connection from output of specified earlier layer.
-     *
-     */
-    private int connectFromPreviousLayer;
-
-    /**
-     * If true input and previous connect input are joined otherwise previous connect input is added through dedicated weight.
-     *
-     */
-    private boolean joinPreviousLayerInput;
-
-    /**
      * Input matrix for procedure construction.
      *
      */
-    private TreeMap<Integer, MMatrix> inputs;
+    private Matrix input;
 
     /**
      * Constructor for feedforward layer.
@@ -214,8 +181,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         super.initializeDefaultParams();
         regulateDirectWeights = true;
         splitOutputAtPosition = -1;
-        connectFromPreviousLayer = -1;
-        joinPreviousLayerInput = false;
     }
 
     /**
@@ -233,8 +198,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * Supported parameters are:<br>
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
      *     - splitOutputAtPosition: splits output at specific position.<br>
-     *     - connectFromPreviousLayer: creates connection from output of specified previous layer.<br>
-     *     - joinPreviousLayerInput: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
      *
      * @param params parameters used for feedforward layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -244,11 +207,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         super.setParams(params);
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
         if (params.hasParam("splitOutputAtPosition")) splitOutputAtPosition = params.getValueAsInteger("splitOutputAtPosition");
-        if (params.hasParam("connectFromPreviousLayer")) {
-            connectFromPreviousLayer = params.getValueAsInteger("connectFromPreviousLayer");
-            if (connectFromPreviousLayer < 0 || connectFromPreviousLayer > getLayerIndex() - 2) throw new DynamicParamException("Previous connect layer index must be positive value and connection must be created from a layer having index at least 2 smaller than this layer: " + getLayerIndex());
-        }
-        if (params.hasParam("joinPreviousLayerInput")) joinPreviousLayerInput = params.getValueAsBoolean("joinPreviousLayerInput");
     }
 
     /**
@@ -268,12 +226,12 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns true if input is joined otherwise returns false.
+     * Returns reversed procedure.
      *
-     * @return true if input is joined otherwise returns false.
+     * @return reversed procedure.
      */
-    protected boolean isJoinedInput() {
-        return joinPreviousLayerInput;
+    protected Procedure getReverseProcedure() {
+        return null;
     }
 
     /**
@@ -290,18 +248,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new FeedforwardWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), connectFromPreviousLayer > -1 ? getPreviousLayerWidth(connectFromPreviousLayer) : -1, joinPreviousLayerInput, regulateDirectWeights);
-    }
-
-    /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        super.defineProcedure();
-        if (connectFromPreviousLayer > -1) addInputSequence(connectFromPreviousLayer);
+        weightSet = new FeedforwardWeightSet(initialization, getPreviousLayerWidth(), getLayerWidth(), regulateDirectWeights);
     }
 
     /**
@@ -312,25 +259,10 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        int numberOfInputs = connectFromPreviousLayer < 0 ? 1 : 2;
-        inputs = new TreeMap<>();
-
-        ArrayList<Matrix> inputMatrices = new ArrayList<>();
-        for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
-            int connectFromLayer = inputIndex == 0 ? getLayerIndex() - 1 : connectFromPreviousLayer;
-            Matrix input = new DMatrix(getPreviousLayerWidth(connectFromLayer), 1, Initialization.ONE);
-            input = handleBidirectionalInput(input, connectFromLayer);
-            input.setName("Input" + connectFromLayer);
-            inputMatrices.add(input);
-        }
-        if (isJoinedInput()) inputs.put(0, new MMatrix(inputMatrices.size() == 1 ? inputMatrices.get(0) : new JMatrix(inputMatrices, true)));
-        else {
-            for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
-                inputs.put(inputIndex, new MMatrix(inputMatrices.get(inputIndex)));
-            }
-        }
-
-        return inputs;
+        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input");
+        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
+        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
     /**
@@ -340,23 +272,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        Matrix output;
-        if (connectFromPreviousLayer > -1) {
-            if (isJoinedInput()) {
-                Matrix joinedInput = inputs.get(0).get(0);
-                joinedInput.setName("JoinedInput");
-                output = weightSet.weight.dot(joinedInput);
-            }
-            else {
-                output = weightSet.weight.dot(inputs.get(0).get(0));
-                Matrix previousConnectOutput = weightSet.previousConnectLayerWeight.dot(inputs.get(1).get(0));
-                output = output.add(previousConnectOutput);
-            }
-        }
-        else {
-            output = weightSet.weight.dot(inputs.get(0).get(0));
-        }
-
+        Matrix output = weightSet.weight.dot(input);
         output = output.add(weightSet.bias);
 
         if (splitOutputAtPosition == -1) {
@@ -372,7 +288,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         MMatrix outputs = new MMatrix(1, "Output");
         outputs.put(0, output);
         return outputs;
-
     }
 
     /**
@@ -408,7 +323,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName() + ", ") + "Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A" + ", Connect from previous layer: " + (connectFromPreviousLayer != -1 ? connectFromPreviousLayer : "N/A") + ", Join previous layer inputs: " + (isJoinedInput() ? "Yes" : "No"));
+        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName() + ", ") + "Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A");
     }
 
 }
