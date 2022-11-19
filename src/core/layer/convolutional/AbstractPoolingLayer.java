@@ -11,6 +11,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -170,6 +171,15 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      */
     public boolean worksWithRecurrentLayer() {
         return true;
+    }
+
+    /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     */
+    protected Procedure getReverseProcedure() {
+        return null;
     }
 
     /**
