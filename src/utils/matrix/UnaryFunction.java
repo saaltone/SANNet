@@ -147,6 +147,10 @@ public class UnaryFunction implements Serializable {
      */
     private void setFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
         switch (unaryFunctionType) {
+            case EQUAL -> {
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value;
+            }
             case ABS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::abs;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value / Math.abs(value);

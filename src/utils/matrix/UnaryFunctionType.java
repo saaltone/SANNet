@@ -12,6 +12,12 @@ package utils.matrix;
 public enum UnaryFunctionType {
 
     /**
+     * Equal
+     *
+     */
+    EQUAL,
+
+    /**
      * Absolute
      *
      */
