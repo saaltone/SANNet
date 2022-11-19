@@ -11,6 +11,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 import utils.procedure.node.Node;
 import utils.sampling.Sequence;
 
@@ -248,6 +249,15 @@ public class BatchNormalization extends AbstractExecutionLayer {
      */
     public boolean worksWithRecurrentLayer() {
         return false;
+    }
+
+    /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     */
+    protected Procedure getReverseProcedure() {
+        return null;
     }
 
     /**

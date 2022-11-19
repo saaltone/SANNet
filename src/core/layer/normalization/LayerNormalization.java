@@ -11,6 +11,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -185,6 +186,15 @@ public class LayerNormalization extends AbstractExecutionLayer {
      */
     public boolean worksWithRecurrentLayer() {
         return true;
+    }
+
+    /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     */
+    protected Procedure getReverseProcedure() {
+        return null;
     }
 
     /**

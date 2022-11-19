@@ -131,6 +131,15 @@ public class WeightNormalization extends AbstractExecutionLayer {
     }
 
     /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     */
+    protected Procedure getReverseProcedure() {
+        return null;
+    }
+
+    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -144,6 +153,15 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
+    }
+
+    /**
+     * Returns true if input is joined otherwise returns false.
+     *
+     * @return true if input is joined otherwise returns false.
+     */
+    protected boolean isJoinedInput() {
+        return false;
     }
 
     /**
@@ -171,7 +189,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
         HashSet<Matrix> nextLayerNormalizedWeights = getNextLayer().getNormalizedWeights();
         for (Matrix weight : nextLayerNormalizedWeights) {
             input = weight;
-            Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), false);
+            Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), null, isJoinedInput());
             procedures.put(weight, procedure);
         }
     }
@@ -297,6 +315,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void printGradients() throws NeuralNetworkException {
+        if (procedures.size() == 0) return;
         System.out.println(getLayerName() + ": ");
         procedures.get(input).printGradientChain();
         System.out.println();
