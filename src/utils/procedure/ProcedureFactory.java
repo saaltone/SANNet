@@ -138,12 +138,13 @@ public class ProcedureFactory implements Serializable {
      * @param parameterMatrices parameter matrices.
      * @param constantMatrices constant matrices to be registered.
      * @param stopGradientMatrices matrices for which gradient is not updated.
-     * @param reversedInput if true input will be reversed for input sequence.
+     * @param reversedProcedure reversedProcedure.
+     * @param joinedInput if true inputs are joined otherwise not.
      * @return resulting procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> parameterMatrices, HashSet<Matrix> constantMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput) throws MatrixException, DynamicParamException {
+    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> parameterMatrices, HashSet<Matrix> constantMatrices, HashSet<Matrix> stopGradientMatrices, Procedure reversedProcedure, boolean joinedInput) throws MatrixException, DynamicParamException {
         registerConstantMatrices(parameterMatrices);
         registerConstantMatrices(constantMatrices);
 
@@ -170,7 +171,7 @@ public class ProcedureFactory implements Serializable {
             previousExpression = expression;
         }
 
-        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes, parameterMatrices, stopGradientMatrices, reversedInput);
+        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes, parameterMatrices, stopGradientMatrices, reversedProcedure, joinedInput);
     }
 
     /**
