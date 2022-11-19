@@ -797,7 +797,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DDQN -> true;
+            case DQN, DDQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
@@ -832,11 +832,16 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30 + ", connectFromPreviousLayer = 0, joinPreviousLayerInput = true");
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0], joinPreviousLayerInputs = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1], joinPreviousLayerInputs = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1; 3], joinPreviousLayerInputs = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1; 3; 5], joinPreviousLayerInputs = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1; 3; 5; 7], joinPreviousLayerInputs = false");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
         neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
         if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);

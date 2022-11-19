@@ -106,9 +106,10 @@ public class SimpleDemo {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 20, connectFromPreviousLayer = 0");
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 20");
         neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize + ", connectFromPreviousLayer = 2");
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1], joinPreviousLayerInputs = true");
+        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
         neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
         neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetwork.build();

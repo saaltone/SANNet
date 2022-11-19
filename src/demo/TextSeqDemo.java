@@ -97,7 +97,8 @@ public class TextSeqDemo {
         neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
         neuralNetwork.addHiddenLayer(LayerType.BIMINGRU, "width = 64");
         neuralNetwork.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize + ", connectFromPreviousLayer = 0");
+        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0]");
+        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
         neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetwork.build();
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
