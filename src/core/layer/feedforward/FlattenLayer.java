@@ -10,7 +10,7 @@ import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.sampling.Sequence;
+import utils.procedure.Procedure;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -62,12 +62,12 @@ public class FlattenLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns previous layer outputs.
+     * Returns reversed procedure.
      *
-     * @return previous layer outputs.
+     * @return reversed procedure.
      */
-    public Sequence getPreviousLayerOutputs() {
-        return hasPreviousLayer() ? getPreviousLayer().getLayerOutputs() : getLayerOutputs();
+    protected Procedure getReverseProcedure() {
+        return null;
     }
 
     /**
