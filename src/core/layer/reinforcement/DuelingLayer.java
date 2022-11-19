@@ -6,6 +6,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
+import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -206,6 +207,15 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     */
+    protected Procedure getReverseProcedure() {
+        return null;
+    }
+
+    /**
      * Returns true if input is joined otherwise returns false.
      *
      * @return true if input is joined otherwise returns false.
@@ -228,18 +238,15 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new DuelingWeightSet(initialization, getPreviousLayerWidth(), super.getLayerWidth(), regulateDirectWeights);
+        weightSet = new DuelingWeightSet(initialization, getPreviousLayerWidth(), getLayerWidth(), regulateDirectWeights);
     }
 
     /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     * Adds other input layers.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        super.defineProcedure();
-        addInputSequence(getPreviousLayerOutputs(getLayerIndex() - 1), getPreviousLayerGradients(getLayerIndex()));
+    protected void addOtherInputLayers() {
+        addInputSequence(getLayerIndex() - 1);
     }
 
     /**
@@ -254,12 +261,12 @@ public class DuelingLayer extends AbstractExecutionLayer {
 
         Matrix valueInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
         valueInput = handleBidirectionalInput(valueInput);
-        valueInput.setName("Input");
+        valueInput.setName("ValueInput");
         inputs.put(0, new MMatrix(valueInput));
 
         Matrix actionInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
         actionInput = handleBidirectionalInput(actionInput);
-        actionInput.setName("Input");
+        actionInput.setName("ActionInput");
         inputs.put(1, new MMatrix(actionInput));
 
         return inputs;
