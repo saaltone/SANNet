@@ -219,6 +219,12 @@ public enum LayerType {
      * Weight noising layer.
      *
      */
-    WEIGHT_NOISING
+    WEIGHT_NOISING,
+
+    /**
+     * Connector layer.
+     *
+     */
+    CONNECTOR
 
 }

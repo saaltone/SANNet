@@ -75,6 +75,7 @@ public class LayerFactory {
             case L2_REGULARIZATION -> new L2_Regularization(layerIndex, initialization, params);
             case Lp_REGULARIZATION -> new Lp_Regularization(layerIndex, initialization, params);
             case WEIGHT_NOISING -> new WeightNoising(layerIndex, initialization, params);
+            case CONNECTOR -> new ConnectorLayer(layerIndex, initialization, params);
         };
     }
 
@@ -121,6 +122,7 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return LayerType.L2_REGULARIZATION;
         if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return LayerType.Lp_REGULARIZATION;
         if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return LayerType.WEIGHT_NOISING;
+        if (neuralNetworkLayer.getClass().equals(ConnectorLayer.class)) return LayerType.CONNECTOR;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -167,6 +169,7 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return "L2_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return "Lp_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return "WEIGHT_NOISING";
+        if (neuralNetworkLayer.getClass().equals(ConnectorLayer.class)) return "CONNECTOR";
         throw new NeuralNetworkException("Unknown layer type");
     }
 
