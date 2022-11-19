@@ -351,4 +351,38 @@ public class Sequence implements Serializable {
         else put(sampleIndex, mMatrix);
     }
 
+    /**
+     * Merges (adds) two sequences to each other.
+     *
+     * @param sequence sequence
+     * @param otherSequence other sequence.
+     * @return merged sequence.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Sequence merge(Sequence sequence, Sequence otherSequence) throws MatrixException {
+        Sequence mergedSequence = new Sequence();
+        for (Map.Entry<Integer, MMatrix> entry : sequence.entrySet()) {
+            int sampleIndex = entry.getKey();
+            MMatrix layerGradient = entry.getValue();
+            mergedSequence.put(sampleIndex, layerGradient.add(otherSequence.get(sampleIndex)));
+        }
+        return mergedSequence;
+    }
+
+
+    /**
+     * Merges (adds) multiple sequences to each other.
+     *
+     * @param sequences sequences
+     * @return merged sequence.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Sequence merge(Sequence[] sequences) throws MatrixException {
+        if (sequences.length == 1) return sequences[0];
+        Sequence mergedSequence = new Sequence();
+        for (int sequenceIndex = 0; sequenceIndex < sequences.length - 1; sequenceIndex++) {
+            Sequence.merge(sequenceIndex == 0 ? sequences[sequenceIndex] : mergedSequence, sequences[sequenceIndex + 1]);
+        }
+        return mergedSequence;
+    }
 }
