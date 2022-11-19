@@ -41,6 +41,12 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected Procedure procedure = null;
 
     /**
+     * Input layer indices.
+     *
+     */
+    private transient ArrayList<Integer> inputLayerIndices;
+
+    /**
      * Input sequences.
      *
      */
@@ -138,23 +144,41 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract void initializeWeights();
 
     /**
-     * Adds input sequence for procedure definition.
-     *
-     * @param inputSequence input sequence
-     * @param inputGradientSequence input gradient sequence.
-     */
-    protected void addInputSequence(Sequence inputSequence, Sequence inputGradientSequence) {
-        inputSequences.put(inputSequences.size(), inputSequence);
-        inputGradientSequences.put(inputGradientSequences.size(), inputGradientSequence);
-    }
-
-    /**
      * Add input layer by layer index.
      *
      * @param inputLayerIndex input layer index.
      */
     protected void addInputSequence(int inputLayerIndex) {
-        addInputSequence(getPreviousLayerOutputs(inputLayerIndex), getPreviousLayerGradients(inputLayerIndex + 1));
+        inputLayerIndices.add(inputLayerIndex);
+        inputSequences.put(inputSequences.size(), getPreviousLayerOutputs(inputLayerIndex));
+        inputGradientSequences.put(inputGradientSequences.size(), getPreviousLayerGradients(inputLayerIndex + 1));
+    }
+
+    /**
+     * Returns input sequences.
+     *
+     * @return input sequences.
+     */
+    protected HashMap<Integer, Sequence> getInputSequences() {
+        return inputSequences;
+    }
+
+    /**
+     * Returns input gradient sequences.
+     *
+     * @return input gradient sequences.
+     */
+    protected HashMap<Integer, Sequence> getInputGradientSequences() {
+        return inputGradientSequences;
+    }
+
+    /**
+     * Returns input layer indices.
+     *
+     * @return input layer indices.
+     */
+    protected ArrayList<Integer> getInputLayerIndices() {
+        return inputLayerIndices;
     }
 
     /**
@@ -213,12 +237,31 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+        inputLayerIndices = new ArrayList<>();
         inputSequences = new HashMap<>();
         inputGradientSequences = new HashMap<>();
-        addInputSequence(getPreviousLayerOutputs(), getLayerGradients());
+        addInputSequence(getLayerIndex() - 1);
+        addOtherInputLayers();
 
         if (procedure == null) initializeWeights();
-        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), false);
+        Procedure reverseProcedure = getReverseProcedure();
+        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), reverseProcedure, isJoinedInput());
+    }
+
+    /**
+     * Returns reversed procedure.
+     *
+     * @return reversed procedure.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected abstract Procedure getReverseProcedure() throws MatrixException, DynamicParamException;
+
+    /**
+     * Adds other input layers.
+     *
+     */
+    protected void addOtherInputLayers() {
     }
 
     /**
@@ -263,15 +306,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         reset();
-        if (procedure != null) {
-            if (inputSequences.size() == 1) {
-                procedure.calculateExpression(getPreviousLayerOutputs(), getLayerOutputs());
-            }
-            else {
-                if (isJoinedInput()) procedure.calculateExpression(Sequence.join(inputSequences, true), getLayerOutputs());
-                else procedure.calculateExpression(inputSequences, getLayerOutputs());
-            }
-        }
+        if (procedure != null) procedure.calculateExpression(getInputSequences(), getPreviousLayerOutputs(), getLayerOutputs());
     }
 
     /**
@@ -282,15 +317,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) {
-            if (inputGradientSequences.size() == 1) {
-                procedure.calculateGradient(getNextLayerGradients(), getLayerGradients(), getTruncateSteps());
-            }
-            else {
-                procedure.calculateGradient(getNextLayerGradients(), inputGradientSequences, getTruncateSteps());
-                if (isJoinedInput()) Sequence.unjoinAsMap(inputGradientSequences.get(0), inputGradientSequences);
-            }
-        }
+        if (procedure != null) procedure.calculateGradient(getNextLayerGradients(), getInputGradientSequences(), getLayerGradients(), getTruncateSteps());
     }
 
     /**
