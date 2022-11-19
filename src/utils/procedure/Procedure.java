@@ -69,6 +69,18 @@ public class Procedure implements Serializable {
     private final boolean reversedInput;
 
     /**
+     * Reversed procedure instance.
+     *
+     */
+    private final Procedure reversedProcedure;
+
+    /**
+     * If true inputs are joined otherwise not.
+     *
+     */
+    private final boolean joinedInput;
+
+    /**
      * Parameter matrices.
      *
      */
@@ -84,10 +96,11 @@ public class Procedure implements Serializable {
      * @param hasDependentNodes true if procedure has dependent nodes.
      * @param parameterMatrices parameter matrices.
      * @param stopGradientMatrices matrices for which gradient is not updated.
-     * @param reversedInput if true input is reversed other not.
+     * @param reversedProcedure reversedProcedure.
+     * @param joinedInput if true inputs are joined otherwise not.
      * @throws MatrixException throws exception if node does not contain all constant and parameter matrices.
      */
-    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, boolean hasDependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput) throws MatrixException {
+    public Procedure(HashMap<Integer, Node> inputNodes, HashMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, boolean hasDependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, Procedure reversedProcedure, boolean joinedInput) throws MatrixException {
         this.inputNodes.putAll(inputNodes);
         this.outputNodes.putAll(outputNodes);
         this.nodes.addAll(nodes);
@@ -97,7 +110,9 @@ public class Procedure implements Serializable {
         this.parameterMatrices = parameterMatrices;
         if (parameterMatrices != null) checkParameterMatrices();
         if (stopGradientMatrices != null) setStopGradient(stopGradientMatrices, true);
-        this.reversedInput = reversedInput;
+        this.reversedInput = reversedProcedure != null;
+        this.reversedProcedure = reversedProcedure;
+        this.joinedInput = joinedInput;
     }
 
     /**
@@ -107,6 +122,7 @@ public class Procedure implements Serializable {
      */
     public void reset() throws MatrixException {
         reset(true);
+        if (reversedProcedure != null) reversedProcedure.reset(true);
     }
 
     /**
@@ -118,6 +134,7 @@ public class Procedure implements Serializable {
     public void reset(boolean resetDependentNodes) throws MatrixException {
         for (Node node : nodes) node.reset(resetDependentNodes);
         expressionChain.reset();
+        if (reversedProcedure != null) reversedProcedure.reset(resetDependentNodes);
     }
 
     /**
@@ -165,6 +182,7 @@ public class Procedure implements Serializable {
      */
     public void storeDependencies(int backupIndex) {
         for (Node node : nodes) node.storeMatrixDependency(backupIndex);
+        if (reversedProcedure != null) reversedProcedure.storeDependencies(backupIndex);
     }
 
     /**
@@ -174,6 +192,72 @@ public class Procedure implements Serializable {
      */
     public void restoreDependencies(int backupIndex) {
         for (Node node : nodes) node.restoreMatrixDependency(backupIndex);
+        if (reversedProcedure != null) reversedProcedure.restoreDependencies(backupIndex);
+    }
+
+    /**
+     * Calculates chain of forward expressions.
+     *
+     * @param inputSequence input sequence.
+     * @param inputSequences input sequences.
+     * @return output sequence.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Sequence calculateExpression(Sequence inputSequence, HashMap<Integer, Sequence> inputSequences) throws MatrixException, DynamicParamException {
+        Sequence outputSequence = new Sequence();
+        calculateExpression(inputSequences, inputSequence, outputSequence);
+        return outputSequence;
+    }
+
+    /**
+     * Calculates chain of forward expressions.
+     *
+     * @param inputSequences input sequences.
+     * @param inputSequence input sequence.
+     * @param outputSequence output sequence.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void calculateExpression(HashMap<Integer, Sequence> inputSequences, Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
+        if (reversedProcedure == null) {
+            if (inputSequences.size() == 1) {
+                calculateExpression(inputSequence, outputSequence);
+            }
+            else {
+                if (joinedInput) calculateExpression(Sequence.join(inputSequences, true), outputSequence);
+                else calculateExpression(inputSequences, outputSequence);
+            }
+        }
+        else {
+            if (inputSequences.size() == 1) {
+                outputSequence.putAll(Sequence.join(new Sequence[] { calculateExpression(inputSequence), reversedProcedure.calculateExpression(inputSequence) }, true));
+            }
+            else {
+                if (joinedInput) {
+                    Sequence joinedInputSequence = Sequence.join(inputSequences, true);
+                    outputSequence.putAll(Sequence.join(new Sequence[] { calculateExpression(joinedInputSequence), reversedProcedure.calculateExpression(joinedInputSequence) }, true));
+                }
+                else {
+                    outputSequence.putAll(Sequence.join(new Sequence[] { calculateExpression(inputSequences), reversedProcedure.calculateExpression(inputSequences) }, true));
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculates chain of forward expressions.
+     *
+     * @param inputSequence input sequence.
+     * @return output sequence.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Sequence calculateExpression(Sequence inputSequence) throws MatrixException, DynamicParamException {
+        Sequence outputSequence = new Sequence();
+        if (hasDependencies()) calculateExpressionPerSample(inputSequence, outputSequence);
+        else calculateExpressionPerStep(inputSequence, outputSequence);
+        return outputSequence;
     }
 
     /**
@@ -248,6 +332,20 @@ public class Procedure implements Serializable {
         for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
             setInputSample(sampleIndex, depthIndex, inputSample, inputNodes.get(depthIndex));
         }
+    }
+
+    /**
+     * Calculates chain of forward expressions.
+     *
+     * @param inputSequences input sequences.
+     * @return output sequence.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Sequence calculateExpression(HashMap<Integer, Sequence> inputSequences) throws MatrixException, DynamicParamException {
+        Sequence outputSequence = new Sequence();
+        calculateExpression(inputSequences, outputSequence);
+        return outputSequence;
     }
 
     /**
@@ -367,6 +465,75 @@ public class Procedure implements Serializable {
         setInputSample(sampleIndex, new MMatrix(inputMatrix), getInputNodes());
         expressionChain.calculateExpressionStep(sampleIndex, 0);
         return getOutputNodes().get(0).getMatrix(sampleIndex);
+    }
+
+    /**
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
+     *
+     * @param outputGradientSequence output gradients.
+     * @param inputGradientSequences input gradients.
+     * @param steps number of steps calculated backwards.
+     * @return input gradient.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Sequence calculateGradient(HashMap<Integer, Sequence> inputGradientSequences, Sequence outputGradientSequence, int steps) throws MatrixException, DynamicParamException {
+        Sequence inputGradientSequence = new Sequence();
+        calculateGradient(outputGradientSequence, inputGradientSequences, inputGradientSequence, steps);
+        return inputGradientSequence;
+    }
+
+    /**
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
+     *
+     * @param outputGradientSequence output gradients.
+     * @param inputGradientSequences input gradients.
+     * @param inputGradientSequence input gradient.
+     * @param steps number of steps calculated backwards.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void calculateGradient(Sequence outputGradientSequence, HashMap<Integer, Sequence> inputGradientSequences, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
+        if (reversedProcedure == null) {
+            if (inputGradientSequences.size() == 1) {
+                calculateGradient(outputGradientSequence, inputGradientSequence, steps);
+            }
+            else {
+                if (joinedInput) Sequence.unjoinAsMap(calculateGradient(outputGradientSequence, steps), inputGradientSequences);
+                else calculateGradient(outputGradientSequence, inputGradientSequences, steps);
+            }
+        }
+        else {
+            Sequence[] unjoinedOutputGradientSequence = Sequence.unjoin(outputGradientSequence);
+            if (inputGradientSequences.size() == 1) {
+                inputGradientSequence.putAll(Sequence.merge(calculateGradient(unjoinedOutputGradientSequence[0], steps), reversedProcedure.calculateGradient(unjoinedOutputGradientSequence[1], steps)));
+            }
+            else {
+                if (joinedInput) {
+                    Sequence.unjoinAsMap(Sequence.merge(calculateGradient(unjoinedOutputGradientSequence[0], steps), reversedProcedure.calculateGradient(unjoinedOutputGradientSequence[1], steps)), inputGradientSequences);
+                }
+                else {
+                    calculateGradient(unjoinedOutputGradientSequence[0], inputGradientSequences, steps);
+                    reversedProcedure.calculateGradient(unjoinedOutputGradientSequence[1], inputGradientSequences, steps);
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
+     *
+     * @param outputGradientSequence output gradients.
+     * @param steps number of steps calculated backwards.
+     * @return input gradients.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Sequence calculateGradient(Sequence outputGradientSequence, int steps) throws MatrixException, DynamicParamException {
+        Sequence inputGradientSequence = new Sequence();
+        if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequence, steps);
+        else calculateGradientPerStep(outputGradientSequence, inputGradientSequence, steps);
+        return inputGradientSequence;
     }
 
     /**
@@ -613,6 +780,7 @@ public class Procedure implements Serializable {
     public HashMap<Matrix, Matrix> getGradients() throws MatrixException {
         HashMap<Matrix, Matrix> gradients = new HashMap<>();
         getGradients(gradients);
+        if (reversedProcedure != null) gradients.putAll(reversedProcedure.getGradients());
         return gradients;
     }
 
