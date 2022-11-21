@@ -121,20 +121,9 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public void reset() throws MatrixException {
-        reset(true);
-        if (reversedProcedure != null) reversedProcedure.reset(true);
-    }
-
-    /**
-     * Resets data for every index in nodes of procedure.
-     *
-     * @param resetDependentNodes if true resets also dependent nodes.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    public void reset(boolean resetDependentNodes) throws MatrixException {
-        for (Node node : nodes) node.reset(resetDependentNodes);
+        for (Node node : nodes) node.reset();
         expressionChain.reset();
-        if (reversedProcedure != null) reversedProcedure.reset(resetDependentNodes);
+        if (reversedProcedure != null) reversedProcedure.reset();
     }
 
     /**
@@ -173,26 +162,6 @@ public class Procedure implements Serializable {
      */
     public boolean hasDependencies() {
         return hasDependentNodes;
-    }
-
-    /**
-     * Stores matrix dependency
-     *
-     * @param backupIndex backup index
-     */
-    public void storeDependencies(int backupIndex) {
-        for (Node node : nodes) node.storeMatrixDependency(backupIndex);
-        if (reversedProcedure != null) reversedProcedure.storeDependencies(backupIndex);
-    }
-
-    /**
-     * Restores matrix dependency.
-     *
-     * @param backupIndex backup index.
-     */
-    public void restoreDependencies(int backupIndex) {
-        for (Node node : nodes) node.restoreMatrixDependency(backupIndex);
-        if (reversedProcedure != null) reversedProcedure.restoreDependencies(backupIndex);
     }
 
     /**
