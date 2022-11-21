@@ -443,9 +443,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @return matrices for which gradient is not calculated.
      */
     protected HashSet<Matrix> getStopGradients() {
-        HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(currentWeightSet.ones);
-        return stopGradients;
+        return new HashSet<>() {{ add(currentWeightSet.ones); }};
     }
 
     /**
@@ -454,9 +452,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @return constant matrices.
      */
     protected HashSet<Matrix> getConstantMatrices() {
-        HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(currentWeightSet.ones);
-        return constantMatrices;
+        return new HashSet<>() {{ add(currentWeightSet.ones); }};
     }
 
     /**
