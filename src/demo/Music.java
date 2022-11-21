@@ -240,15 +240,15 @@ public class Music {
         switch (neuralNetworkType) {
             case 0 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 1 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             case 2 -> {
                 neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-                neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
+                neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
             }
             default -> {
                 System.out.println("Unknown loss type.");
