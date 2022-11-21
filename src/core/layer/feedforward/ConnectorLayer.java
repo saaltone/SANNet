@@ -1,8 +1,3 @@
-/*
- * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
- */
-
 package core.layer.feedforward;
 
 import core.layer.AbstractExecutionLayer;
@@ -21,7 +16,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Layer that connects or joins multiple inputs from previous layers.
+ * Implements layer that connects or joins multiple inputs from previous layers.
  *
  */
 public class ConnectorLayer extends AbstractExecutionLayer {
