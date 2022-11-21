@@ -575,7 +575,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public void train(Sequence inputs) throws MatrixException {
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
-        nextState(ExecutionState.TRAIN);
+        train();
         waitToComplete();
     }
 
@@ -598,7 +598,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public Sequence predict(Sequence inputs) throws MatrixException {
         if (inputs.isEmpty()) return null;
         setLayerOutputs(inputs);
-        nextState(ExecutionState.PREDICT);
+        predict();
         waitToComplete();
         return getOutput();
     }
@@ -694,25 +694,25 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
                         setTraining(true);
                         forwardProcess();
                         if (hasNextLayer()) getNextLayer().train();
-                        else if (hasPreviousLayer()) getPreviousLayer().stateCompleted(false);
+                        else stateCompleted(false);
                         break;
                     case PREDICT:
                         setTraining(false);
                         forwardProcess();
                         if (hasNextLayer()) getNextLayer().predict();
-                        else if (hasPreviousLayer()) getPreviousLayer().stateCompleted(false);
+                        else stateCompleted(false);
                         break;
                     case BACKWARD:
                         if (hasPreviousLayer()) {
                             backwardProcess();
                             getPreviousLayer().backward();
                         }
-                        else if (hasNextLayer()) getNextLayer().stateCompleted(true);
+                        else stateCompleted(true);
                         break;
                     case UPDATE:
                         optimize();
                         if (hasNextLayer()) getNextLayer().update();
-                        else if (hasPreviousLayer()) getPreviousLayer().stateCompleted(false);
+                        else stateCompleted(false);
                         break;
                     case TERMINATED:
                         if (hasNextLayer()) getNextLayer().stop();
