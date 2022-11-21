@@ -181,9 +181,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
      */
     public void calculateExpressionStep(int sampleIndex, int firstSampleIndex) throws MatrixException, DynamicParamException {
         updateExpressionDependency(sampleIndex);
-        if (executeAsSingleStep()) {
-            if (sampleIndex == firstSampleIndex) calculateExpression();
-        }
+        if (executeAsSingleStep() && sampleIndex == firstSampleIndex) calculateExpression();
         else calculateExpression(sampleIndex);
         if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndex, firstSampleIndex);
     }
