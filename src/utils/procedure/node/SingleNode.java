@@ -52,22 +52,6 @@ public class SingleNode extends AbstractNode {
     }
 
     /**
-     * Stores matrix dependency
-     *
-     * @param backupIndex backup index
-     */
-    public void storeMatrixDependency(int backupIndex) {
-    }
-
-    /**
-     * Restores matrix dependency.
-     *
-     * @param backupIndex backup index.
-     */
-    public void restoreMatrixDependency(int backupIndex) {
-    }
-
-    /**
      * Returns size of node.
      *
      * @return size of node.
@@ -107,12 +91,11 @@ public class SingleNode extends AbstractNode {
     /**
      * Resets node and removes other data than constant data.
      *
-     * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset(boolean resetDependentNodes) throws MatrixException {
+    public void reset() throws MatrixException {
         gradient = null;
-        super.reset(resetDependentNodes);
+        super.reset();
     }
 
     /**

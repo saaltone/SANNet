@@ -85,20 +85,6 @@ public interface Node {
     void updateGradientDependency(int index) throws MatrixException;
 
     /**
-     * Stores matrix dependency
-     *
-     * @param backupIndex backup index
-     */
-    void storeMatrixDependency(int backupIndex);
-
-    /**
-     * Restores matrix dependency.
-     *
-     * @param backupIndex backup index.
-     */
-    void restoreMatrixDependency(int backupIndex);
-
-    /**
      * Return name of node
      *
      * @return name of node
@@ -151,10 +137,9 @@ public interface Node {
     /**
      * Resets node and removes other data than constant data.
      *
-     * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    void reset(boolean resetDependentNodes) throws MatrixException;
+    void reset() throws MatrixException;
 
     /**
      * Returns new matrix with dimensions of reference matrix.

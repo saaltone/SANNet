@@ -203,10 +203,9 @@ public abstract class AbstractNode implements Node, Serializable {
     /**
      * Resets node and removes other data than constant data.
      *
-     * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset(boolean resetDependentNodes) throws MatrixException {
+    public void reset() throws MatrixException {
         cumulatedGradientEntryCount = 0;
     }
 

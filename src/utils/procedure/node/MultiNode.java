@@ -8,7 +8,6 @@ package utils.procedure.node;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -32,12 +31,6 @@ public class MultiNode extends AbstractNode {
     private transient TreeMap<Integer, Matrix> gradients;
 
     /**
-     * Matrix backup for forward dependencies.
-     *
-     */
-    private transient HashMap<Integer, TreeMap<Integer, Matrix>> matrixBackup = new HashMap<>();
-
-    /**
      * Constructor for multi node.
      *
      * @param id id.
@@ -58,39 +51,6 @@ public class MultiNode extends AbstractNode {
      */
     public boolean isMultiIndex() {
         return true;
-    }
-
-    /**
-     * Stores matrix dependency
-     *
-     * @param backupIndex backup index
-     */
-    public void storeMatrixDependency(int backupIndex) {
-        if (getToNode() == null) return;
-        TreeMap<Integer, Matrix> matricesBackup = new TreeMap<>();
-        for (Map.Entry<Integer, Matrix> entry : entrySet()) {
-            int index = entry.getKey();
-            Matrix matrix = entry.getValue();
-            matricesBackup.put(index, matrix);
-        }
-        matrixBackup.put(backupIndex, matricesBackup);
-    }
-
-    /**
-     * Restores matrix dependency.
-     *
-     * @param backupIndex backup index.
-     */
-    public void restoreMatrixDependency(int backupIndex) {
-        if (getToNode() == null || matrixBackup == null) return;
-        if (matrixBackup.containsKey(backupIndex)) {
-            TreeMap<Integer, Matrix> matricesBackup = matrixBackup.get(backupIndex);
-            for (Map.Entry<Integer, Matrix> entry : matricesBackup.entrySet()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                getMatrices().put(index, matrix);
-            }
-        }
     }
 
     /**
@@ -133,14 +93,12 @@ public class MultiNode extends AbstractNode {
     /**
      * Resets node and removes other data than constant data.
      *
-     * @param resetDependentNodes if true resets also dependent nodes.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public void reset(boolean resetDependentNodes) throws MatrixException {
-        if (getToNode() == null || resetDependentNodes) matrices = new TreeMap<>();
+    public void reset() throws MatrixException {
+        if (getToNode() == null) matrices = new TreeMap<>();
         gradients = new TreeMap<>();
-        matrixBackup = new HashMap<>();
-        super.reset(resetDependentNodes);
+        super.reset();
     }
 
     /**
