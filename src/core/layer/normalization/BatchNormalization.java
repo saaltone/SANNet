@@ -334,9 +334,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @return matrices for which gradient is not calculated.
      */
     protected HashSet<Matrix> getStopGradients() {
-        HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(epsilonMatrix);
-        return stopGradients;
+        return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
     /**
@@ -345,9 +343,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @return constant matrices.
      */
     protected HashSet<Matrix> getConstantMatrices() {
-        HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(epsilonMatrix);
-        return constantMatrices;
+        return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
     /**

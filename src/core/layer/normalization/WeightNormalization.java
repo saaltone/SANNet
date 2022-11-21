@@ -214,9 +214,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @return matrices for which gradient is not calculated.
      */
     protected HashSet<Matrix> getStopGradients() {
-        HashSet<Matrix> stopGradients = new HashSet<>();
-        stopGradients.add(gMatrix);
-        return stopGradients;
+        return new HashSet<>() {{ add(gMatrix); }};
     }
 
     /**
@@ -225,10 +223,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @return constant matrices.
      */
     protected HashSet<Matrix> getConstantMatrices() {
-        HashSet<Matrix> constantMatrices = new HashSet<>();
-        constantMatrices.add(input);
-        constantMatrices.add(gMatrix);
-        return constantMatrices;
+        return new HashSet<>() {{ add(input); add(gMatrix); }};
     }
 
     /**
