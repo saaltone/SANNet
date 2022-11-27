@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Interface that implements matrix with extensive set of matrix operations and masking for matrix.<br>
+ * Interface that defines matrix with extensive set of matrix operations and masking for matrix.<br>
  *
  */
 public interface Matrix {

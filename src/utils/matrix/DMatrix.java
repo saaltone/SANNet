@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Matrix class that implements dense matrix.<br>
+ * Implements dense matrix.<br>
  * Dense matrix assumes full array data structure including storage of zero values.<br>
  *
  */

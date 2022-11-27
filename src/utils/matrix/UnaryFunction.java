@@ -12,9 +12,8 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Defines single (unary) argument function class.<br>
+ * Implement single (unary) argument function.<br>
  * Provides calculation for both function and it's derivative.<br>
- * <br>
  * Functions supported are listed in related type enum.<br>
  */
 public class UnaryFunction implements Serializable {

@@ -12,9 +12,8 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Defines two (binary) argument function class.<br>
+ * Implement two (binary) argument function.<br>
  * Provides calculation for both function and it's derivative.<br>
- * <br>
  * Functions supported are listed in related type enum.<br>
  */
 public class BinaryFunction implements Serializable {

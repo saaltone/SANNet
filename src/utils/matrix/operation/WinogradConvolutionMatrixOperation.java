@@ -11,7 +11,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Class that implements F(2x2, 3x3) Winograd convolution.<br>
+ * Implements F(2x2, 3x3) Winograd convolution.<br>
  *
  * Reference: http://cs231n.stanford.edu/reports/2016/pdfs/117_Report.pdf <br>
  *

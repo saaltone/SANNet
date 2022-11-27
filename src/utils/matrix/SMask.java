@@ -8,7 +8,7 @@ package utils.matrix;
 import java.util.HashMap;
 
 /**
- * Implements sparse mask to mask sparse matrices.<br>
+ * Implements sparse mask for sparse matrices.<br>
  *
  */
 public class SMask extends AbstractMask {

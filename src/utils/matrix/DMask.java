@@ -6,7 +6,7 @@
 package utils.matrix;
 
 /**
- * Implements dense mask to mask dense matrices.<br>
+ * Implements dense mask for dense matrices.<br>
  *
  */
 public class DMask extends AbstractMask {

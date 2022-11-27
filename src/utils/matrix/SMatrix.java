@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Matrix class that implements sparse matrix.<br>
+ * Implements sparse matrix.<br>
  * Sparse matrix optimizes matrix memory usage by storing only non-zero values.<br>
  * This matrix type is useful when input sample is expected to contain mostly zero values.<br>
  *

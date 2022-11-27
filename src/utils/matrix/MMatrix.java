@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Defines multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
+ * Implements multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
  * Class also has operations to calculate sum, mean, variance and standard deviation element by element over multiple matrices.<br>
  *
  */
