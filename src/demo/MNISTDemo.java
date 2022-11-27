@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class that implements learning and prediction of MNIST digits by using Convolutional Neural Network (CNN).<br>
+ * Implements learning and prediction of MNIST digits by using Convolutional Neural Network (CNN).<br>
  * Implementation reads training and test samples from CSV file and then executes learning process.<br>
  *
  */
