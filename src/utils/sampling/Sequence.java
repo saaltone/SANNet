@@ -370,19 +370,4 @@ public class Sequence implements Serializable {
     }
 
 
-    /**
-     * Merges (adds) multiple sequences to each other.
-     *
-     * @param sequences sequences
-     * @return merged sequence.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public static Sequence merge(Sequence[] sequences) throws MatrixException {
-        if (sequences.length == 1) return sequences[0];
-        Sequence mergedSequence = new Sequence();
-        for (int sequenceIndex = 0; sequenceIndex < sequences.length - 1; sequenceIndex++) {
-            Sequence.merge(sequenceIndex == 0 ? sequences[sequenceIndex] : mergedSequence, sequences[sequenceIndex + 1]);
-        }
-        return mergedSequence;
-    }
 }
