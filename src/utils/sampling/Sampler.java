@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.matrix.MatrixException;
 
 /**
- * Interface for Sampler.<br>
+ * Interface for sampler.<br>
  *
  */
 public interface Sampler {
