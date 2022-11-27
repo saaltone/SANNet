@@ -16,7 +16,6 @@ import utils.matrix.MatrixException;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
-import utils.sampling.Sequence;
 
 import java.util.*;
 
@@ -39,24 +38,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      */
     protected Procedure procedure = null;
-
-    /**
-     * Input layer indices.
-     *
-     */
-    private transient ArrayList<Integer> inputLayerIndices;
-
-    /**
-     * Input sequences.
-     *
-     */
-    private transient HashMap<Integer, Sequence> inputSequences;
-
-    /**
-     * Input gradient sequences.
-     *
-     */
-    private transient HashMap<Integer, Sequence> inputGradientSequences;
 
     /**
      * Weights to be normalized.
@@ -144,44 +125,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract void initializeWeights();
 
     /**
-     * Add input layer by layer index.
-     *
-     * @param inputLayerIndex input layer index.
-     */
-    protected void addInputSequence(int inputLayerIndex) {
-        inputLayerIndices.add(inputLayerIndex);
-        inputSequences.put(inputSequences.size(), getPreviousLayerOutputs(inputLayerIndex));
-        inputGradientSequences.put(inputGradientSequences.size(), getPreviousLayerGradients(inputLayerIndex + 1));
-    }
-
-    /**
-     * Returns input sequences.
-     *
-     * @return input sequences.
-     */
-    protected HashMap<Integer, Sequence> getInputSequences() {
-        return inputSequences;
-    }
-
-    /**
-     * Returns input gradient sequences.
-     *
-     * @return input gradient sequences.
-     */
-    protected HashMap<Integer, Sequence> getInputGradientSequences() {
-        return inputGradientSequences;
-    }
-
-    /**
-     * Returns input layer indices.
-     *
-     * @return input layer indices.
-     */
-    protected ArrayList<Integer> getInputLayerIndices() {
-        return inputLayerIndices;
-    }
-
-    /**
      * Handles birectional input.
      *
      * @param input input
@@ -201,10 +144,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix handleBidirectionalInput(Matrix input, int previousLayerIndex) throws MatrixException {
-        Matrix handledInput;
-        if (getPreviousLayer(previousLayerIndex).isBidirectional()) handledInput = input.split(getPreviousLayerWidth(previousLayerIndex) / 2, true);
-        else handledInput = input;
-        return handledInput;
+        return getPreviousLayer(previousLayerIndex).isBidirectional() ? input.split(getPreviousLayerWidth(previousLayerIndex) / 2, true) : input;
     }
 
     /**
@@ -215,10 +155,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected MMatrix handleBidirectionalInput(MMatrix input) throws MatrixException {
-        MMatrix handledInput;
-        if (getPreviousLayer().isBidirectional()) handledInput = input.split(getPreviousLayerWidth() / 2, true);
-        else handledInput = input;
-        return handledInput;
+        return getPreviousLayer().isBidirectional() ? input.split(getPreviousLayerWidth() / 2, true) : input;
     }
 
     /**
@@ -227,7 +164,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @return true if input is joined otherwise returns false.
      */
     protected boolean isJoinedInput() {
-        return true;
+        return false;
     }
 
     /**
@@ -237,9 +174,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        inputLayerIndices = new ArrayList<>();
-        inputSequences = new HashMap<>();
-        inputGradientSequences = new HashMap<>();
         addInputSequence(getLayerIndex() - 1);
         addOtherInputLayers();
 
@@ -306,7 +240,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         reset();
-        if (procedure != null) procedure.calculateExpression(getInputSequences(), getPreviousLayerOutputs(), getLayerOutputs());
+        if (procedure != null) procedure.calculateForwardExpression(getInputSequences(), getLayerOutputs());
     }
 
     /**
@@ -317,7 +251,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) procedure.calculateGradient(getNextLayerGradients(), getInputGradientSequences(), getLayerGradients(), getTruncateSteps());
+        if (procedure != null) procedure.calculateBackwardGradient(getNextLayerGradients(), getInputGradientSequences(), getTruncateSteps());
     }
 
     /**
@@ -402,12 +336,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        HashMap<Matrix, Matrix> weightGradients = getLayerWeightGradients();
-        for (Map.Entry<Matrix, Matrix> entry : weightGradients.entrySet()) {
-            Matrix weight = entry.getKey();
-            Matrix weightGradient = entry.getValue();
-            optimizer.optimize(weight, weightGradient);
-        }
+        for (Map.Entry<Matrix, Matrix> entry : getLayerWeightGradients().entrySet()) optimizer.optimize(entry.getKey(), entry.getValue());
     }
 
     /**
@@ -431,10 +360,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException {
         HashMap<Integer, Matrix> otherNeuralNetworkWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
         for (Map.Entry<Integer, Matrix> entry : weightsMap.entrySet()) {
-            int index = entry.getKey();
-            Matrix weight = entry.getValue();
-            Matrix otherWeight = otherNeuralNetworkWeightsMap.get(index);
-            weight.multiply(1 - tau).add(otherWeight.multiply(tau), weight);
+            entry.getValue().multiply(1 - tau).add(otherNeuralNetworkWeightsMap.get(entry.getKey()).multiply(tau), entry.getValue());
         }
     }
 
