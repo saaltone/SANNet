@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Class that implements deep reinforcement learning solution solving travelling salesman problem.<br>
+ * Implements deep reinforcement learning solution solving travelling salesman problem.<br>
  *
  */
 public class TSP implements Environment, AgentFunctionEstimator {
