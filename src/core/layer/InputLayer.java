@@ -27,15 +27,6 @@ public class InputLayer extends AbstractPlainLayer {
     }
 
     /**
-     * Executes parameter (weight) update for training step of neural network layer.
-     *
-     */
-    public void update(){
-        super.update();
-        waitToComplete();
-    }
-
-    /**
      * Sets training flag.
      *
      * @param training if true layer is training otherwise false.
