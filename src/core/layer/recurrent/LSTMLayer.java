@@ -454,15 +454,6 @@ public class LSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns current weight set.
-     *
-     * @return current weight set.
-     */
-    protected WeightSet getCurrentWeightSet() {
-        return getWeightSet();
-    }
-
-    /**
      * Initializes neural network layer weights.
      *
      */

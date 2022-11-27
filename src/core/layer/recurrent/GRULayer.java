@@ -369,15 +369,6 @@ public class GRULayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns current weight set.
-     *
-     * @return current weight set.
-     */
-    protected WeightSet getCurrentWeightSet() {
-        return getWeightSet();
-    }
-
-    /**
      * Initializes GRU layer.<br>
      * Initialize weights and bias and their gradients.<br>
      *

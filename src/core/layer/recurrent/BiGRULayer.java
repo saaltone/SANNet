@@ -5,7 +5,6 @@
 
 package core.layer.recurrent;
 
-import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
@@ -45,15 +44,6 @@ public class BiGRULayer extends GRULayer {
      */
     public BiGRULayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, true, params);
-    }
-
-    /**
-     * Returns current weight set.
-     *
-     * @return current weight set.
-     */
-    protected WeightSet getCurrentWeightSet() {
-        return reverseWeightSet;
     }
 
     /**

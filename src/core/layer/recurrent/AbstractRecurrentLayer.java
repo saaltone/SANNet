@@ -6,7 +6,6 @@
 package core.layer.recurrent;
 
 import core.layer.AbstractExecutionLayer;
-import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -139,13 +138,6 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     protected int getInternalLayerWidth() {
         return super.getLayerWidth();
     }
-
-    /**
-     * Returns current weight set.
-     *
-     * @return current weight set.
-     */
-    protected abstract WeightSet getCurrentWeightSet();
 
     /**
      * Returns number of truncated steps for gradient calculation. -1 means no truncation.
