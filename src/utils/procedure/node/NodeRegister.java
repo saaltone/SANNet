@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Class that provides node instances and keeps register of them.<br>
+ * Implements functionality to create and keep register of node instances.<br>
  *
  */
 public class NodeRegister implements Serializable {

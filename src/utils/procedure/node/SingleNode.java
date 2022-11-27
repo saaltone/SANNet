@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Defines node with single matrix inside.
+ * Implements node with single matrix inside.
  *
  */
 public class SingleNode extends AbstractNode {

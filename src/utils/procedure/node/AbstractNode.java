@@ -12,7 +12,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Class that implements abstract node for expression calculation.<br>
+ * Implements abstract node for expression calculation.<br>
  * Stores both matrices and gradients for multiple data indices.<br>
  *
  */

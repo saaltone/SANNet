@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Defines node with multiple matrices inside.
+ * Implements node with multiple matrices inside.
  *
  */
 public class MultiNode extends AbstractNode {
