@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * Defines cyclic pool expression.
+ * Implements expression for cyclic pool operation.
  *
  */
 public class CyclicPoolExpression extends AbstractUnaryExpression implements Serializable {

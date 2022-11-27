@@ -14,7 +14,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
- * Abstract class that defines single computable expression including gradient expression.<br>
+ * Implements single computable expression including gradient expression.<br>
  * Assumes underlying class that implements specific expression.<br>
  *
  */
