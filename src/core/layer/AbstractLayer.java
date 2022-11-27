@@ -13,6 +13,8 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -136,6 +138,24 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     private transient Sequence layerGradients;
+
+    /**
+     * Input layer indices.
+     *
+     */
+    private transient ArrayList<Integer> inputLayerIndices;
+
+    /**
+     * Input sequences.
+     *
+     */
+    private transient HashMap<Integer, Sequence> inputSequences;
+
+    /**
+     * Input gradient sequences.
+     *
+     */
+    private transient HashMap<Integer, Sequence> inputGradientSequences;
 
     /**
      * Default constructor for abstract layer.
@@ -528,6 +548,44 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
+     * Add input layer by layer index.
+     *
+     * @param inputLayerIndex input layer index.
+     */
+    protected void addInputSequence(int inputLayerIndex) {
+        inputLayerIndices.add(inputLayerIndex);
+        inputSequences.put(inputSequences.size(), getPreviousLayerOutputs(inputLayerIndex));
+        inputGradientSequences.put(inputGradientSequences.size(), getPreviousLayerGradients(inputLayerIndex + 1));
+    }
+
+    /**
+     * Returns input sequences.
+     *
+     * @return input sequences.
+     */
+    protected HashMap<Integer, Sequence> getInputSequences() {
+        return inputSequences;
+    }
+
+    /**
+     * Returns input gradient sequences.
+     *
+     * @return input gradient sequences.
+     */
+    protected HashMap<Integer, Sequence> getInputGradientSequences() {
+        return inputGradientSequences;
+    }
+
+    /**
+     * Returns input layer indices.
+     *
+     * @return input layer indices.
+     */
+    protected ArrayList<Integer> getInputLayerIndices() {
+        return inputLayerIndices;
+    }
+
+    /**
      * Starts neural network layer and it's execution thread.
      *
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
@@ -548,6 +606,10 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         layerOutputs = new Sequence();
         layerGradients = new Sequence();
 
+        inputLayerIndices = new ArrayList<>();
+        inputSequences = new HashMap<>();
+        inputGradientSequences = new HashMap<>();
+
         if (hasNextLayer()) getNextLayer().start();
 
         defineProcedure();
@@ -559,11 +621,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void stop() {
-        executeLock.lock();
-        executionState = ExecutionState.TERMINATED;
-        executeLockCondition.signal();
-        if (hasNextLayer()) getNextLayer().stop();
-        executeLock.unlock();
+        nextState(ExecutionState.TERMINATED);
     }
 
     /**
@@ -585,6 +643,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void train() {
+        setTraining(true);
         nextState(ExecutionState.TRAIN);
     }
 
@@ -609,6 +668,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void predict() {
+        setTraining(false);
         nextState(ExecutionState.PREDICT);
     }
 
@@ -628,6 +688,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void update() {
         nextState(ExecutionState.UPDATE);
+        if (!hasPreviousLayer()) waitToComplete();
     }
 
     /**
@@ -648,13 +709,12 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @param forwardDirection if true propagates state completion signal to forward direction otherwise propagates to backward direction.
      */
     public void stateCompleted(boolean forwardDirection) {
+        stateCompleted();
         if (forwardDirection) {
             if (hasNextLayer()) getNextLayer().stateCompleted(true);
-            else stateCompleted();
         }
         else {
             if (hasPreviousLayer()) getPreviousLayer().stateCompleted(false);
-            else stateCompleted();
         }
     }
 
@@ -675,7 +735,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     void waitToComplete() {
         executeLock.lock();
-        if (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
+        while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
         executeLock.unlock();
     }
 
@@ -687,46 +747,45 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public void run() {
         while (true) {
             executeLock.lock();
-            if (executionState == ExecutionState.IDLE || executionState == ExecutionState.EXECUTING) executeLockCondition.awaitUninterruptibly();
             try {
                 switch (executionState) {
-                    case TRAIN:
-                        setTraining(true);
+                    case TRAIN -> {
                         forwardProcess();
+                        executionState = ExecutionState.EXECUTING;
                         if (hasNextLayer()) getNextLayer().train();
                         else stateCompleted(false);
-                        break;
-                    case PREDICT:
-                        setTraining(false);
+                    }
+                    case PREDICT -> {
                         forwardProcess();
+                        executionState = ExecutionState.EXECUTING;
                         if (hasNextLayer()) getNextLayer().predict();
                         else stateCompleted(false);
-                        break;
-                    case BACKWARD:
-                        if (hasPreviousLayer()) {
-                            backwardProcess();
-                            getPreviousLayer().backward();
-                        }
+                    }
+                    case BACKWARD -> {
+                        backwardProcess();
+                        executionState = ExecutionState.EXECUTING;
+                        if (hasPreviousLayer()) getPreviousLayer().backward();
                         else stateCompleted(true);
-                        break;
-                    case UPDATE:
+                    }
+                    case UPDATE -> {
                         optimize();
+                        executionState = ExecutionState.EXECUTING;
                         if (hasNextLayer()) getNextLayer().update();
                         else stateCompleted(false);
-                        break;
-                    case TERMINATED:
+                    }
+                    case TERMINATED -> {
                         if (hasNextLayer()) getNextLayer().stop();
                         layerThread = null;
-                        executionState = ExecutionState.IDLE;
                         executeLock.unlock();
                         return;
+                    }
+                    default -> executeLockCondition.awaitUninterruptibly();
                 }
             }
             catch (Exception exception) {
                 exception.printStackTrace();
                 System.exit(-1);
             }
-            executionState = ExecutionState.EXECUTING;
             executeLock.unlock();
         }
     }
