@@ -40,7 +40,7 @@ public class AutoEncoder {
             int maxValue = 10;
 
             HashMap<Integer, HashMap<Integer, MMatrix>> data = getTestData(maxValue);
-            NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
+            NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows());
             initializeNeuralNetwork(neuralNetwork, data);
 
             neuralNetwork.train(true, false);
@@ -106,13 +106,12 @@ public class AutoEncoder {
      * Build neural network instance for regression.
      *
      * @param inputSize input layer size (in this case 10).
-     * @param outputSize output layer size (in this case 10).
      * @return neural network instance.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
         neuralNetwork.addInputLayer("width = " + inputSize);
         neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 3));
@@ -150,7 +149,6 @@ public class AutoEncoder {
         data.put(0, input);
         data.put(1, output);
 
-        double scaleFactor = 2 / (double)maxValue;
         Random random = new Random();
         for (int i = 0; i < 100 * maxValue; i++) {
             int inputValue = random.nextInt(maxValue);
