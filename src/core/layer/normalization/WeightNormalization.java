@@ -250,7 +250,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
                 Procedure procedure = entry.getValue();
                 weights.put(weight, weight.copy());
                 procedure.reset();
-                weight.setEqualTo(procedure.calculateExpression(weight, 0));
+                weight.setEqualTo(procedure.calculateExpression(weight));
             }
         }
     }
@@ -271,7 +271,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
             Procedure procedure = entry.getValue();
             weight.setEqualTo(weights.get(weight));
             Matrix weightGradient = nextLayerWeightGradients.get(weight);
-            weightGradient.setEqualTo(procedure.calculateGradient(weightGradient, 0));
+            weightGradient.setEqualTo(procedure.calculateGradient(weightGradient));
         }
         weights.clear();
     }
