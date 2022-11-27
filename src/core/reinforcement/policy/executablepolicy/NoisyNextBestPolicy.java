@@ -9,7 +9,6 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 
 import java.util.Objects;
-import java.util.Random;
 import java.util.TreeSet;
 
 /**
@@ -29,12 +28,6 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     private final static String paramNameTypes = "(initialExplorationNoise:DOUBLE), " +
             "(minExplorationNoise:DOUBLE), " +
             "(explorationNoiseDecay:DOUBLE)";
-
-    /**
-     * Random function for noisy next best policy.
-     *
-     */
-    private final Random random = new Random();
 
     /**
      * Exploration noise for noisy next best policy.

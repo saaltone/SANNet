@@ -6,7 +6,6 @@
 package core.reinforcement.policy.executablepolicy;
 
 import java.util.Objects;
-import java.util.Random;
 import java.util.TreeSet;
 
 /**
@@ -15,12 +14,6 @@ import java.util.TreeSet;
  *
  */
 public class EntropyNoisyNextBestPolicy extends AbstractExecutablePolicy {
-
-    /**
-     * Random function for entropy noisy next best policy.
-     *
-     */
-    private final Random random = new Random();
 
     /**
      * Constructor for entropy noisy next best policy.

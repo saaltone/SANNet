@@ -18,13 +18,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements double Q learning algorithm.<br>
+ * Implements Double Q Learning (DDQN) algorithm.<br>
  *
  */
 public class DDQNLearning extends AbstractQLearning {
 
     /**
-     * Constructor for double Q learning.
+     * Constructor for Double Q Learning (DDQN).
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
@@ -41,7 +41,7 @@ public class DDQNLearning extends AbstractQLearning {
     }
 
     /**
-     * Constructor for double Q learning.
+     * Constructor for Double Q Learning (DDQN).
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.

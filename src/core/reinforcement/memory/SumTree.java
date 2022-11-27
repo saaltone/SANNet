@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Implements sum tree using tree structure.<br>
+ * Implements sum tree using search tree interface.<br>
  * Links leaf nodes together as forward cycled list.<br>
  * Stores mapping of state transition and each leaf node containing respective state transition.<br>
  * <br>

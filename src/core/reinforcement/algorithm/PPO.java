@@ -20,13 +20,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements proximal policy optimization (PPO) algorithm.<br>
+ * Implements Proximal Policy Optimization (PPO) algorithm.<br>
  *
  */
 public class PPO extends AbstractPolicyGradient {
 
     /**
-     * Constructor for proximal policy optimization
+     * Constructor for Proximal Policy Optimization
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
@@ -43,7 +43,7 @@ public class PPO extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for proximal policy optimization
+     * Constructor for Proximal Policy Optimization
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.

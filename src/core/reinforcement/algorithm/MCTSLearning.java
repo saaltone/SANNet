@@ -20,13 +20,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements MCTS learning algorithm.<br>
+ * Implements MCTS Learning algorithm.<br>
  *
  */
 public class MCTSLearning extends AbstractPolicyGradient {
 
     /**
-     * Constructor for MCTS learning
+     * Constructor for MCTS Learning
      *
      * @param environment reference to environment.
      * @param policyFunctionEstimator reference to policy function estimator.
@@ -39,7 +39,7 @@ public class MCTSLearning extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for MCTS learning
+     * Constructor for MCTS Learning
      *
      * @param environment reference to environment.
      * @param policyFunctionEstimator reference to policy function estimator.
@@ -53,7 +53,7 @@ public class MCTSLearning extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for MCTS learning
+     * Constructor for MCTS Learning
      *
      * @param environment reference to environment.
      * @param policyFunctionEstimator reference to policy function estimator.
@@ -67,7 +67,7 @@ public class MCTSLearning extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for MCTS learning
+     * Constructor for MCTS Learning
      *
      * @param environment reference to environment.
      * @param policyFunctionEstimator reference to policy function estimator.

@@ -22,13 +22,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements discrete soft actor critic algorithm.<br>
+ * Implements discrete Soft Actor Critic (SAC) algorithm.<br>
  *
  */
 public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
 
     /**
-     * Constructor for discrete soft actor critic
+     * Constructor for discrete Soft Actor Critic
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
@@ -47,7 +47,7 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for discrete soft actor critic
+     * Constructor for discrete Soft Actor Critic
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.

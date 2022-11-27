@@ -10,6 +10,7 @@ import java.util.TreeSet;
 
 /**
  * Implements entropy greedy policy.<br>
+ * Policy makes a greedy (exploit) or random (explore) decision according to exploration probability coming from action value entropy.<br>
  *
  */
 public class EntropyGreedyPolicy extends GreedyPolicy {

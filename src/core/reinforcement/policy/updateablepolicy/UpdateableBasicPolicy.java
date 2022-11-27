@@ -18,7 +18,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements vanilla updateable basic policy.<br>
+ * Implements updateable basic policy gradient.<br>
  *
  */
 public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {

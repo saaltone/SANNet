@@ -33,19 +33,19 @@ public class AgentFactory {
      */
     public enum AgentAlgorithmType {
         /**
-         * Tabular Q- Learning
+         * Tabular Q Learning
          *
          */
         QN,
 
         /**
-         * Q- Learning
+         * Q Learning
          *
          */
         DQN,
 
         /**
-         * Double Deep Q- Learning
+         * Double Deep Q Learning
          *
          */
         DDQN,

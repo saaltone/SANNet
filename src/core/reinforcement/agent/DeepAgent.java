@@ -16,7 +16,6 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Random;
 
 /**
  * Implements deep agent.<br>
@@ -155,12 +154,6 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *
      */
     private int agentLastUpdatedEpisodeID;
-
-    /**
-     * Random function.
-     *
-     */
-    private final Random random = new Random();
 
     /**
      * Constructor for deep agent.

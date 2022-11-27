@@ -16,14 +16,14 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements generic policy gradient algorithm.<br>
+ * Implements generic Policy Gradient algorithm.<br>
  * Can be used to implement Actor Critic and REINFORCE algorithms.<br>
  *
  */
 public class PolicyGradient extends AbstractPolicyGradient {
 
     /**
-     * Constructor for policy gradient.
+     * Constructor for Policy Gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.
@@ -34,7 +34,7 @@ public class PolicyGradient extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for policy gradient.
+     * Constructor for Policy Gradient.
      *
      * @param environment reference to environment.
      * @param policy reference to policy.

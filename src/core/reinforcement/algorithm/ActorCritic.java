@@ -20,13 +20,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements actor critic algorithm.<br>
+ * Implements Actor Critic algorithm.<br>
  *
  */
 public class ActorCritic extends AbstractPolicyGradient {
 
     /**
-     * Constructor for actor critic
+     * Constructor for Actor Critic
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.
@@ -40,7 +40,7 @@ public class ActorCritic extends AbstractPolicyGradient {
     }
 
     /**
-     * Constructor for actor critic
+     * Constructor for Actor Critic
      *
      * @param environment reference to environment.
      * @param executablePolicyType executable policy type.

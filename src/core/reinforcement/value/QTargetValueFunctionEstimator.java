@@ -16,13 +16,13 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 
 /**
- * Implements Q target value function estimator.<br>
+ * Implements target Q value function estimator.<br>
  *
  */
 public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEstimator {
 
     /**
-     * Constructor for Q target value function estimator.
+     * Constructor for target Q value function estimator.
      *
      * @param functionEstimator reference to function estimator.
      * @throws IOException throws exception if creation of target value function estimator fails.
@@ -37,10 +37,10 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
     }
 
     /**
-     * Constructor for Q target value function estimator.
+     * Constructor for target Q value function estimator.
      *
      * @param functionEstimator reference to value FunctionEstimator.
-     * @param params parameters for Q target value function estimator.
+     * @param params parameters for target Q value function estimator.
      * @throws IOException throws exception if creation of target value function estimator fails.
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
