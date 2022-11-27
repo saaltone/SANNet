@@ -32,6 +32,7 @@ import java.util.ArrayList;
  *     POLICY_GRADIENT,
  *     POLICY_VALUE,
  *     DQN_REG_LOSS,
+ *     COS_SIM,
  *     CUSTOM
  */
 public class LossFunction extends BinaryFunction {
