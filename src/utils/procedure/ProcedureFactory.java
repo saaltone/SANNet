@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * Class that builds computable procedures from chain of matrix operations including automated differentiation (automatic gradient) as backward operation.<br>
+ * Builds computable procedures from chain of matrix operations including automated differentiation (automatic gradient) as backward operation.<br>
  * Procedure factory records matrix operations in matrix instances having attachment to procedure factory.<br>
  *
  */
