@@ -14,6 +14,7 @@ import utils.matrix.MatrixException;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Interface for neural network layer.<br>
@@ -29,33 +30,55 @@ public interface NeuralNetworkLayer {
     int getLayerIndex();
 
     /**
-     * Sets reference to next neural network layer.
+     * Checks if layer can have multiple previous layers.
+     *
+     * @return  if true layer can have multiple previous layers otherwise false.
+     */
+    boolean canHaveMultiplePreviousLayers();
+
+    /**
+     * Adds reference to next neural network layer.
      *
      * @param nextLayer reference to next neural network layer.
+     * @throws NeuralNetworkException throws exception if next layer is attempted to be added to output layer.
      */
-    void setNextLayer(NeuralNetworkLayer nextLayer);
+    void addNextLayer(NeuralNetworkLayer nextLayer) throws NeuralNetworkException;
 
     /**
-     * Sets reference to previous neural network layer.
+     * Returns references to next layers.
+     *
+     * @return references to next layers.
+     */
+    TreeMap<Integer, NeuralNetworkLayer> getNextLayers();
+
+    /**
+     * Returns if layer has next layers.
+     *
+     * @return true if layer has next layers otherwise false.
+     */
+    boolean hasNextLayers();
+
+    /**
+     * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
+     * @throws NeuralNetworkException throws exception if previous layer is attempted to be added to input layer.
      */
-    void setPreviousLayer(NeuralNetworkLayer previousLayer);
+    void addPreviousLayer(NeuralNetworkLayer previousLayer) throws NeuralNetworkException;
 
     /**
-     * Returns reference to previous neural network layer.
+     * Returns references to previous neural network layers.
      *
-     * @return reference to previous neural network layer.
+     * @return references to previous neural network layers.
      */
-    NeuralNetworkLayer getPreviousLayer();
+    TreeMap<Integer, NeuralNetworkLayer> getPreviousLayers();
 
     /**
-     * Returns reference to previous neural network layer matching given layer index.
+     * Returns if layer has previous layers.
      *
-     * @param previousLayerIndex previous layer index.
-     * @return reference to previous neural network layer matching given layer index.
+     * @return true if layer has previous layer otherwise false.
      */
-    NeuralNetworkLayer getPreviousLayer(int previousLayerIndex);
+    boolean hasPreviousLayers();
 
     /**
      * Returns width of neural network layer.
@@ -93,11 +116,11 @@ public interface NeuralNetworkLayer {
     boolean worksWithRecurrentLayer();
 
     /**
-     * Check if layer is bidirectional.
+     * Check if layer input is reversed.
      *
-     * @return true if layer is bidirectional otherwise returns false.
+     * @return if true input layer input is reversed otherwise not.
      */
-    boolean isBidirectional();
+    boolean isReversedInput();
 
     /**
      * Initializes neural network layer dimensions.
@@ -121,13 +144,6 @@ public interface NeuralNetworkLayer {
     void reinitialize() throws MatrixException;
 
     /**
-     * Returns output of neural network.
-     *
-     * @return output of neural network.
-     */
-    Sequence getOutput();
-
-    /**
      * Returns outputs of neural network layer.
      *
      * @return outputs of neural network layer.
@@ -135,11 +151,11 @@ public interface NeuralNetworkLayer {
     Sequence getLayerOutputs();
 
     /**
-     * Returns neural network layer gradients.
+     * Returns neural network layer input gradients.
      *
-     * @return neural network layer gradients.
+     * @return neural network layer input gradients.
      */
-    Sequence getLayerGradients();
+    Sequence getLayerOutputGradients();
 
     /**
      * Returns weights for normalization.
@@ -198,10 +214,9 @@ public interface NeuralNetworkLayer {
      * Executes predict step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs predict inputs for layer.
-     * @return output of next layer or this layer if next layer does not exist.
      * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    Sequence predict(Sequence inputs) throws MatrixException;
+    void predict(Sequence inputs) throws MatrixException;
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
@@ -224,6 +239,12 @@ public interface NeuralNetworkLayer {
     void update();
 
     /**
+     * Waits for layer to complete execution.
+     *
+     */
+    void waitToComplete();
+
+    /**
      * Cumulates error from regularization. Mainly from L1 / L2 / Lp regularization.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -231,13 +252,6 @@ public interface NeuralNetworkLayer {
      * @return cumulated error from regularization.
      */
     double error() throws MatrixException, DynamicParamException;
-
-    /**
-     * Marks state completed and propagates information to forward or backward direction depending on given flag.
-     *
-     * @param forwardDirection if true propagates state completion signal to forward direction otherwise propagates to backward direction.
-     */
-    void stateCompleted(boolean forwardDirection);
 
     /**
      * Executes forward processing step of layer.
