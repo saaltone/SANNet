@@ -5,17 +5,12 @@
 
 package core.layer.regularization;
 
-import core.layer.NeuralNetworkLayer;
-import core.layer.OutputLayer;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Implements Lp regularization (experimental). P here is any norm higher or equal to 1.<br>
@@ -24,34 +19,20 @@ import java.util.HashSet;
  * This is experimental regularization method.<br>
  *
  */
-public class Lp_Regularization extends AbstractRegularizationLayer {
+public class Lp_Regularization extends AbstractLx_Regularization {
 
     /**
      * Parameter name types for Lp regularization.
-     *     - lambda: lambda value for regularization. Default value: 0.01.<br>
      *     - p: p norm of normalizer. Default 3.<br>
      *
      */
-    private final static String paramNameTypes = "(lambda:DOUBLE), " +
-            "(p:INT)";
-
-    /**
-     * Regularization rate.
-     *
-     */
-    private double lambda;
+    private final static String paramNameTypes = "(p:INT)";
 
     /**
      * Order of norm.
      *
      */
     private int p;
-
-    /**
-     * Regularized weight of next layer.
-     *
-     */
-    private final HashSet<Matrix> layerRegularizedWeights = new HashSet<>();
 
     /**
      * Constructor for Lp regularization layer.
@@ -72,7 +53,7 @@ public class Lp_Regularization extends AbstractRegularizationLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        lambda = 0.01;
+        p = 3;
     }
 
     /**
@@ -88,7 +69,6 @@ public class Lp_Regularization extends AbstractRegularizationLayer {
      * Sets parameters used for Lp regularization.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - lambda: lambda value for regularization. Default value: 0.01.<br>
      *     - p: p norm of normalizer. Default 3.<br>
      *
      * @param params parameters used for Lp regularization.
@@ -97,67 +77,19 @@ public class Lp_Regularization extends AbstractRegularizationLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
         if (params.hasParam("p")) p = params.getValueAsInteger("p");
     }
 
     /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     * Applies regularization.
      *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     */
-    protected void defineProcedure() throws NeuralNetworkException {
-        if (!(getNextLayer() instanceof OutputLayer)) throw new NeuralNetworkException("Lp Regularization must be final layer prior output layer.");
-
-        NeuralNetworkLayer previousNeuralNetworkLayer = getPreviousLayer();
-        while (previousNeuralNetworkLayer != null) {
-            HashSet<Matrix> regularizedWeights = previousNeuralNetworkLayer.getRegularizedWeights();
-            if (regularizedWeights != null) layerRegularizedWeights.addAll(regularizedWeights);
-            previousNeuralNetworkLayer = previousNeuralNetworkLayer.getPreviousLayer();
-        }
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Applies additionally any regularization defined for layer.<br>
-     *
+     * @param weight weight
+     * @param lambda lambda value
+     * @return regularization result
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
-        super.backwardProcess();
-
-        HashMap<Matrix, Matrix> layerWeightGradients = new HashMap<>();
-
-        NeuralNetworkLayer previousNeuralNetworkLayer = getPreviousLayer();
-        while (previousNeuralNetworkLayer != null) {
-            HashMap<Matrix, Matrix> currentLayerWeightGradients = previousNeuralNetworkLayer.getLayerWeightGradients();
-            if (currentLayerWeightGradients != null) layerWeightGradients.putAll(currentLayerWeightGradients);
-            previousNeuralNetworkLayer = previousNeuralNetworkLayer.getPreviousLayer();
-        }
-
-        for (Matrix weight : layerRegularizedWeights) {
-            Matrix weightGradientSum = layerWeightGradients.get(weight);
-            if (weightGradientSum != null) {
-                weightGradientSum.add(weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0), weightGradientSum);
-            }
-        }
-    }
-
-    /**
-     * Cumulates error from (L1 / L2 / Lp) regularization.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return cumulated error from regularization.
-     */
-    public double error() throws MatrixException, DynamicParamException {
-        double weightSum = 0;
-        for (Matrix weight : layerRegularizedWeights) {
-            weightSum += weight.power(p).sum();
-        }
-        return lambda * weightSum;
+    protected Matrix applyRegularization(Matrix weight, double lambda) throws MatrixException {
+        return weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0);
     }
 
     /**
@@ -166,7 +98,7 @@ public class Lp_Regularization extends AbstractRegularizationLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "Lambda: " + lambda;
+        return super.getLayerDetailsByName() + ", p: " + p;
     }
 
 }
