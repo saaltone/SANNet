@@ -9,10 +9,7 @@ import core.network.NeuralNetworkException;
 import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
-import utils.matrix.Initialization;
-import utils.matrix.MMatrix;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
+import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
 import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
@@ -125,40 +122,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract void initializeWeights();
 
     /**
-     * Handles birectional input.
-     *
-     * @param input input
-     * @return handled input
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected Matrix handleBidirectionalInput(Matrix input) throws MatrixException {
-        return handleBidirectionalInput(input, getLayerIndex() - 1);
-    }
-
-    /**
-     * Handles birectional input.
-     *
-     * @param input input
-     * @param previousLayerIndex previous layer index
-     * @return handled input
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected Matrix handleBidirectionalInput(Matrix input, int previousLayerIndex) throws MatrixException {
-        return getPreviousLayer(previousLayerIndex).isBidirectional() ? input.split(getPreviousLayerWidth(previousLayerIndex) / 2, true) : input;
-    }
-
-    /**
-     * Handles birectional input.
-     *
-     * @param input input
-     * @return handled input
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected MMatrix handleBidirectionalInput(MMatrix input) throws MatrixException {
-        return getPreviousLayer().isBidirectional() ? input.split(getPreviousLayerWidth() / 2, true) : input;
-    }
-
-    /**
      * Returns true if input is joined otherwise returns false.
      *
      * @return true if input is joined otherwise returns false.
@@ -174,28 +137,8 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        addInputSequence(getLayerIndex() - 1);
-        addOtherInputLayers();
-
         if (procedure == null) initializeWeights();
-        Procedure reverseProcedure = getReverseProcedure();
-        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), reverseProcedure, isJoinedInput());
-    }
-
-    /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected abstract Procedure getReverseProcedure() throws MatrixException, DynamicParamException;
-
-    /**
-     * Adds other input layers.
-     *
-     */
-    protected void addOtherInputLayers() {
+        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), isReversedInput(), isJoinedInput());
     }
 
     /**
@@ -251,7 +194,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) procedure.calculateBackwardGradient(getNextLayerGradients(), getInputGradientSequences(), getTruncateSteps());
+        if (procedure != null) procedure.calculateBackwardGradient(getLayerOutputGradients(), getInputGradientSequences(), getTruncateSteps());
     }
 
     /**
@@ -398,8 +341,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
         System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + " ]");
         System.out.println("Number of parameters: " + getNumberOfParameters());
         System.out.println(getOptimizerByName());
+        String layerConnections = hasPreviousLayers() ? getLayerConnections() : "";
         String layerDetailsByName = getLayerDetailsByName();
-        if (layerDetailsByName != null) System.out.println("Layer details [ " + layerDetailsByName + " ]");
+        if (layerDetailsByName != null) System.out.println("Layer details [ " + layerConnections + (!layerDetailsByName.equals("") ? ", " + layerDetailsByName : "") + " ]");
     }
 
     /**
@@ -430,6 +374,17 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
             System.out.println();
         }
         System.out.println();
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerConnections() {
+        ArrayList<Integer> inputLayerList = new ArrayList<>();
+        for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) inputLayerList.add(previousLayer.getLayerIndex());
+        return "Connect from layers: " + (!inputLayerList.isEmpty() ? inputLayerList : "N/A") + ", Join previous layer inputs: " + (isJoinedInput() ? "Yes" : "No");
     }
 
 }
