@@ -10,7 +10,6 @@ import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -40,7 +39,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeDimensions() {
-        setLayerWidth(getPreviousLayerWidth() * getPreviousLayerHeight() * getPreviousLayerDepth());
+        setLayerWidth(getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth());
         setLayerHeight(1);
         setLayerDepth(1);
     }
@@ -59,15 +58,6 @@ public class FlattenLayer extends AbstractExecutionLayer {
      */
     public boolean worksWithRecurrentLayer() {
         return true;
-    }
-
-    /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
     }
 
     /**
@@ -109,7 +99,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      */
     public void forwardProcess() throws MatrixException {
         this.reset();
-        setLayerOutputs(getPreviousLayerOutputs().flatten());
+        setLayerOutputs(getDefaultLayerInput().flatten());
     }
 
     /**
@@ -119,7 +109,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        setLayerGradients(getNextLayerGradients().unflatten(getPreviousLayerWidth(), getPreviousLayerHeight(), getPreviousLayerDepth()));
+        setLayerOutputGradients(getLayerOutputGradients().unflatten(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth()));
     }
 
     /**
@@ -181,7 +171,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "N/A";
+        return "";
     }
 
 }
