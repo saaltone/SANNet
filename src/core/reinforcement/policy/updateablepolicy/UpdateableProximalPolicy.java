@@ -36,7 +36,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * Reference to previous policy function estimator.
      *
      */
-    private FunctionEstimator previousFunctionEstimator;
+    private final FunctionEstimator previousFunctionEstimator;
 
     /**
      * Epsilon value for proximal policy value clipping.
@@ -133,7 +133,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Policy reference() throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
-        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator, params);
+        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator(), params);
     }
 
     /**
@@ -149,7 +149,16 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
-        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
+        return new UpdateableProximalPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), params);
+    }
+
+    /**
+     * Returns previous function estimator.
+     *
+     * @return previous function estimator.
+     */
+    private FunctionEstimator getPreviousFunctionEstimator() {
+        return previousFunctionEstimator;
     }
 
     /**
@@ -163,7 +172,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      */
     public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         super.start();
-        previousFunctionEstimator.start();
+        getPreviousFunctionEstimator().start();
     }
 
     /**
@@ -172,7 +181,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      */
     public void stop() {
         super.stop();
-        previousFunctionEstimator.stop();
+        getPreviousFunctionEstimator().stop();
     }
 
     /**
@@ -184,8 +193,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        double currentActionValue = functionEstimator.predict(stateTransition).getValue(stateTransition.action, 0);
-        double previousActionValue = previousFunctionEstimator.predict(stateTransition).getValue(stateTransition.action, 0);
+        double currentActionValue = getValues(getFunctionEstimator(), stateTransition).getValue(stateTransition.action, 0);
+        double previousActionValue = getValues(getPreviousFunctionEstimator(), stateTransition).getValue(stateTransition.action, 0);
         double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
         return -Math.min(rValue * stateTransition.advantage, clippedRValue * stateTransition.advantage);
@@ -203,27 +212,9 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      */
     protected void postProcess() throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
         if (++updateCount >= updateCycle) {
-            previousFunctionEstimator.append(functionEstimator, true);
+            getPreviousFunctionEstimator().append(getFunctionEstimator(), true);
             updateCount = 0;
         }
-    }
-
-    /**
-     * Appends parameters to this policy from another policy.
-     *
-     * @param policy policy used to update current policy.
-     * @param tau tau which controls contribution of other policy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void append(Policy policy, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        super.append(policy, tau);
-        previousFunctionEstimator = functionEstimator.copy();
-        previousFunctionEstimator.start();
     }
 
 }

@@ -164,7 +164,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference() throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator.reference(), new DMatrix(0), params);
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), new DMatrix(0), params);
     }
 
     /**
@@ -180,7 +180,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), new DMatrix(0), params);
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), new DMatrix(0), params);
     }
 
     /**
@@ -225,7 +225,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = functionEstimator.predict(stateTransition);
+        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition);
         double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
         if (isAutoSoftAlpha()) incrementPolicyValues(currentPolicyValues, stateTransition.action, stateTransition.environmentState.availableActions().size());
         return getSoftAlpha() * Math.log(currentPolicyValue) - stateTransition.tdTarget;

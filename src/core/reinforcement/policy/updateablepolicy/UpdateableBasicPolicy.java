@@ -66,7 +66,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference() throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), functionEstimator.reference(), params);
+        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), params);
     }
 
     /**
@@ -82,7 +82,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
+        return new UpdateableBasicPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), params);
     }
 
     /**
@@ -92,7 +92,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = functionEstimator.predict(stateTransition);
+        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition);
         double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
         return Math.log(currentPolicyValue) * stateTransition.advantage;
     }

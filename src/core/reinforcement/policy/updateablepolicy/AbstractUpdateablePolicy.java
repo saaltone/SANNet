@@ -112,7 +112,7 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      *
      */
     public void resetFunctionEstimator() {
-        functionEstimator.reset();
+        getFunctionEstimator().reset();
     }
 
     /**
@@ -123,7 +123,7 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @return true if all registered agents are ready to update.
      */
     public boolean readyToUpdate(Agent agent) throws AgentException {
-        return functionEstimator.readyToUpdate(agent);
+        return getFunctionEstimator().readyToUpdate(agent);
     }
 
     /**
@@ -137,16 +137,16 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        TreeSet<StateTransition> sampledStateTransitions = functionEstimator.getSampledStateTransitions();
+        TreeSet<StateTransition> sampledStateTransitions = getFunctionEstimator().getSampledStateTransitions();
         if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) {
-            functionEstimator.abortUpdate();
+            getFunctionEstimator().abortUpdate();
             return;
         }
 
-        for (StateTransition stateTransition : sampledStateTransitions) functionEstimator.store(stateTransition, getPolicyValues(stateTransition));
+        for (StateTransition stateTransition : sampledStateTransitions) getFunctionEstimator().storePolicyValues(stateTransition, getPolicyValues(stateTransition));
         postProcess();
 
-        functionEstimator.update();
+        getFunctionEstimator().update();
     }
 
     /**
@@ -158,18 +158,9 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     private Matrix getPolicyValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        if (isStateActionValueFunction()) {
-            Matrix stateValue = new DMatrix(1, 1);
-            stateValue.setValue(0, 0, stateTransition.tdTarget);
-            Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
-            policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
-            return new JMatrix(new Matrix[] {stateValue, policyValues}, true);
-        }
-        else {
-            Matrix policyValues = new DMatrix(functionEstimator.getNumberOfActions(), 1);
-            policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
-            return policyValues;
-        }
+        Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1);
+        policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
+        return policyValues;
     }
 
     /**

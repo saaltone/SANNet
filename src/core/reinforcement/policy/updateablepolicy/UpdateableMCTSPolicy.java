@@ -88,7 +88,7 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference() throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableMCTSPolicy(functionEstimator.reference(), new MCTSPolicy(), params);
+        return new UpdateableMCTSPolicy(getFunctionEstimator().reference(), new MCTSPolicy(), params);
     }
 
     /**
@@ -104,7 +104,7 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableMCTSPolicy(sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), sharedPolicyFunctionEstimator ? (MCTSPolicy)executablePolicy : new MCTSPolicy(), params);
+        return new UpdateableMCTSPolicy(sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), sharedPolicyFunctionEstimator ? (MCTSPolicy)executablePolicy : new MCTSPolicy(), params);
     }
 
     /**
@@ -114,7 +114,7 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @return policy value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return -stateTransition.value * Math.log(functionEstimator.predict(stateTransition).getValue(stateTransition.action, 0) + 10E-6);
+        return -stateTransition.value * Math.log(getValues(getFunctionEstimator(), stateTransition).getValue(stateTransition.action, 0) + 10E-6);
     }
 
 }
