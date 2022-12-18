@@ -11,7 +11,6 @@ import core.activation.ActivationFunction;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -320,23 +319,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public LSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        this (layerIndex, initialization, false, params);
-    }
-
-    /**
-     * Constructor for LSTM layer.
-     *
-     * @param layerIndex layer index
-     * @param initialization initialization function for weight.
-     * @param isBirectional if true recurrent layer is bidirectional otherwise false
-     * @param params parameters for LSTM layer.
-     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    protected LSTMLayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, isBirectional, params);
+    protected LSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         activationFunction = tanh;
@@ -354,23 +338,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public LSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        this (layerIndex, activationFunction, initialization, false, params);
-    }
-
-    /**
-     * Constructor for LSTM layer.
-     *
-     * @param layerIndex layer index
-     * @param activationFunction activation function used.
-     * @param initialization initialization function for weight.
-     * @param isBirectional if true recurrent layer is bidirectional otherwise false
-     * @param params parameters for LSTM layer.
-     * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    protected LSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, boolean isBirectional, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super (layerIndex, initialization, isBirectional, params);
+        super (layerIndex, initialization, params);
         tanh = new ActivationFunction(UnaryFunctionType.TANH);
         sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
         this.activationFunction = activationFunction == null ? tanh : activationFunction;
@@ -416,35 +384,6 @@ public class LSTMLayer extends AbstractRecurrentLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected Procedure getReverseProcedure() throws MatrixException, DynamicParamException {
-        return null;
-    }
-
-    /**
-     * Returns if direct weights are regulated.
-     *
-     * @return true if direct weights are regulated otherwise false.
-     */
-    protected boolean getRegulateDirectWeights() {
-        return regulateDirectWeights;
-    }
-
-    /**
-     * Returns if recurrent weights are regulated.
-     *
-     * @return true if recurrent weights are regulated otherwise false.
-     */
-    protected boolean getRegulateRecurrentWeights() {
-        return regulateRecurrentWeights;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -458,7 +397,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        currentWeightSet = weightSet = new LSTMWeightSet(initialization, getPreviousLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet = new LSTMWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**
@@ -469,9 +408,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
-        input = handleBidirectionalInput(input);
-        input.setName("Input");
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
             previousOutput = new DMatrix(getInternalLayerWidth(), 1);
             previousCellState = new DMatrix(getInternalLayerWidth(), 1);
@@ -543,15 +481,6 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      */
     protected HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
-    }
-
-    /**
-     * Returns layer details as string.
-     *
-     * @return layer details as string.
-     */
-    protected String getLayerDetailsByName() {
-        return null;
     }
 
 }
