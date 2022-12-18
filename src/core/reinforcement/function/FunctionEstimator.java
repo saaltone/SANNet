@@ -181,22 +181,40 @@ public interface FunctionEstimator extends Configurable {
     FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
 
     /**
-     * Predicts state values corresponding to a state.
+     * Predicts policy values corresponding to a state.
      *
      * @param stateTransition state.
-     * @return state values corresponding to a state.
+     * @return policy values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix predict(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    Matrix predictPolicyValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Stores state transition values pair.
+     * Predicts state action values corresponding to a state.
+     *
+     * @param stateTransition state.
+     * @return state action values corresponding to a state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix predictStateActionValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+
+    /**
+     * Stores policy state transition values pair.
      *
      * @param stateTransition state transition.
      * @param values values.
      */
-    void store(StateTransition stateTransition, Matrix values);
+    void storePolicyValues(StateTransition stateTransition, Matrix values);
+
+    /**
+     * Stores state action state transition values pair.
+     *
+     * @param stateTransition state transition.
+     * @param values values.
+     */
+    void storeStateActionValues(StateTransition stateTransition, Matrix values);
 
     /**
      * Updates (trains) function estimator.

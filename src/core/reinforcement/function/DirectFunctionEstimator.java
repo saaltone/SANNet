@@ -124,9 +124,19 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Not used.
      *
      * @param stateTransition state
-     * @return state value corresponding to a state
+     * @return policy values corresponding to a state
      */
-    public Matrix predict(StateTransition stateTransition) {
+    public Matrix predictPolicyValues(StateTransition stateTransition) {
+        return null;
+    }
+
+    /**
+     * Not used.
+     *
+     * @param stateTransition state
+     * @return state action values corresponding to a state
+     */
+    public Matrix predictStateActionValues(StateTransition stateTransition) {
         return null;
     }
 
@@ -136,7 +146,16 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param stateTransition state transition.
      * @param values values.
      */
-    public void store(StateTransition stateTransition, Matrix values) {
+    public void storePolicyValues(StateTransition stateTransition, Matrix values) {
+    }
+
+    /**
+     * Not used.
+     *
+     * @param stateTransition state transition.
+     * @param values values.
+     */
+    public void storeStateActionValues(StateTransition stateTransition, Matrix values) {
     }
 
     /**

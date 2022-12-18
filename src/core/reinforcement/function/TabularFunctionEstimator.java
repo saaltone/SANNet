@@ -31,7 +31,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Parameter name types for tabular function estimator.
      *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
-     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
      *
      */
     private final static String paramNameTypes = "(optimizerName:String), " +
@@ -119,7 +119,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * <br>
      * Supported parameters are:<br>
      *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
-     *     - learningRate: learning rate for optimizer. Default value 0.01.<br>
+     *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
      *
      * @param params parameters used for tabular function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -128,7 +128,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         super.setParams(params);
         if (params.hasParam("optimizerName")) {
             String optimizerName = params.getValueAsString("optimizerName");
-            double learningRate = 0.01;
+            double learningRate = 0.001;
             if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
             optimizer = OptimizerFactory.create(optimizerName, "learningRate = " + learningRate);
         }
@@ -251,18 +251,39 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @return state value corresponding to a state
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predict(StateTransition stateTransition) throws MatrixException {
+    public Matrix predictPolicyValues(StateTransition stateTransition) throws MatrixException {
         return getStateValue(stateTransition.environmentState.state());
     }
 
     /**
-     * Stores state transition values pair.
+     * Predicts state action values corresponding to a state.
+     *
+     * @param stateTransition state.
+     * @return state action values corresponding to a state.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix predictStateActionValues(StateTransition stateTransition) throws MatrixException {
+        return predictPolicyValues(stateTransition);
+    }
+
+    /**
+     * Stores policy state transition values pair.
      *
      * @param stateTransition state transition.
      * @param values values.
      */
-    public void store(StateTransition stateTransition, Matrix values) {
+    public void storePolicyValues(StateTransition stateTransition, Matrix values) {
         stateTransitionValueMap.put(stateTransition, values);
+    }
+
+    /**
+     * Stores state action state transition values pair.
+     *
+     * @param stateTransition state transition.
+     * @param values values.
+     */
+    public void storeStateActionValues(StateTransition stateTransition, Matrix values) {
+        storePolicyValues(stateTransition, values);
     }
 
     /**
@@ -280,7 +301,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
             StateTransition stateTransition = entry.getKey();
             Matrix stateValueEntry = entry.getValue();
-            Matrix stateValue = predict(stateTransition);
+            Matrix stateValue = predictPolicyValues(stateTransition);
             Matrix error = stateValue.subtract(stateValueEntry);
             Matrix stateError = stateErrors.get(stateValue);
             if (stateError == null) stateErrors.put(stateValue, error);
