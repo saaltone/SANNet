@@ -6,6 +6,7 @@
 package demo;
 
 import core.network.NeuralNetwork;
+import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
@@ -874,24 +875,33 @@ public class TSP implements Environment, AgentFunctionEstimator {
      *
      * @param inputSize input size of neural network (number of states)
      * @param outputSize output size of neural network (number of actions and their values).
+     * @param policyGradient if true neural network is policy gradient network.
      * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         String width = "width = " + (4 * inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0], joinPreviousLayerInputs = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1], joinPreviousLayerInputs = true");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
-        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
-        neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
-        neuralNetwork.build();
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        if (!policyGradient && applyDueling) neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+        neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
+        neuralNetworkConfiguration.connectLayersSerially();
+        neuralNetworkConfiguration.connectLayers(0, 2);
+        neuralNetworkConfiguration.connectLayers(0, 4);
+        neuralNetworkConfiguration.connectLayers(1, 4);
+
+        neuralNetwork.build(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         if (!policyGradient) neuralNetwork.verboseTraining(10);
         return neuralNetwork;
@@ -909,15 +919,27 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         String width = "width = " + (6 * inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0], joinPreviousLayerInputs = false");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1], joinPreviousLayerInputs = false");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (1 + outputSize) + ", splitOutputAtPosition = 1");
-        neuralNetwork.addOutputLayer(new BinaryFunctionType[] {BinaryFunctionType.MEAN_SQUARED_ERROR,BinaryFunctionType.DIRECT_GRADIENT});
-        neuralNetwork.build();
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        neuralNetworkConfiguration.connectLayersSerially();
+        neuralNetworkConfiguration.connectLayers(0, 2);
+        neuralNetworkConfiguration.connectLayers(0, 4);
+        neuralNetworkConfiguration.connectLayers(1, 4);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayers(4, 7);
+        neuralNetworkConfiguration.connectLayers(7, 8);
+
+        neuralNetwork.build(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
