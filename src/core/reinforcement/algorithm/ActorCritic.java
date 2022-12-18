@@ -75,7 +75,6 @@ public class ActorCritic extends AbstractPolicyGradient {
      * Returns reference to algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
      * @throws IOException throws exception if creation of target value function estimator fails.
@@ -85,7 +84,7 @@ public class ActorCritic extends AbstractPolicyGradient {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public ActorCritic reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
+    public ActorCritic reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException {
         Policy newPolicy = policy.reference(sharedPolicyFunctionEstimator, sharedMemory);
         ValueFunction newValueFunction = valueFunction.reference(false, policy.getFunctionEstimator().getMemory());
         return new ActorCritic(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());

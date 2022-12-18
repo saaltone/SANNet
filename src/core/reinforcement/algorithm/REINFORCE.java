@@ -104,7 +104,6 @@ public class REINFORCE extends AbstractPolicyGradient {
      * Returns reference to algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
      * @throws IOException throws exception if creation of target value function estimator fails.
@@ -113,7 +112,7 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
      */
-    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws IOException, DynamicParamException, ClassNotFoundException, AgentException, MatrixException {
+    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws IOException, DynamicParamException, ClassNotFoundException, AgentException, MatrixException {
         return new REINFORCE(getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
     }
 

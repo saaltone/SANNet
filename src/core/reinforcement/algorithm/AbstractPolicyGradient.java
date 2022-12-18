@@ -73,7 +73,6 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * Returns reference to abstract policy gradient algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
      * @throws IOException throws exception if creation of target value function estimator fails.
@@ -83,7 +82,7 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException;
+    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException;
 
     /**
      * Appends parameters to this agent from another agent.
