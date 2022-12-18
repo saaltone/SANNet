@@ -27,6 +27,17 @@ public class InputLayer extends AbstractPlainLayer {
     }
 
     /**
+     /**
+     * Sets reference to previous neural network layer.
+     *
+     * @param previousLayer reference to previous neural network layer.
+     * @throws NeuralNetworkException throws exception if previous layer is attempted to be added to input layer.
+     */
+    public void addPreviousLayer(NeuralNetworkLayer previousLayer) throws NeuralNetworkException {
+        throw new NeuralNetworkException("Input layer cannot have previous layers.");
+    }
+
+    /**
      * Sets training flag.
      *
      * @param training if true layer is training otherwise false.
