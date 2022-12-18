@@ -72,7 +72,7 @@ public class ActionablePolicy extends AbstractPolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference() throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), functionEstimator.reference(), params);
+        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), params);
     }
 
     /**
@@ -88,7 +88,7 @@ public class ActionablePolicy extends AbstractPolicy {
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), params);
+        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), params);
     }
 
     /**

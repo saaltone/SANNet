@@ -39,12 +39,6 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     protected final FunctionEstimator functionEstimator;
 
     /**
-     * If true function estimator is state action value function.
-     *
-     */
-    private final boolean isStateActionValueFunction;
-
-    /**
      * Reference to executable policy.
      *
      */
@@ -112,8 +106,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
         initializeDefaultParams();
         this.executablePolicy = executablePolicy;
         this.functionEstimator = functionEstimator;
-        isStateActionValueFunction = functionEstimator.isStateActionValueFunction();
-        if (isStateActionValueFunction && !isUpdateablePolicy()) throw new AgentException("Non-updateable policy cannot be applied along state value function estimator.");
+        if (getFunctionEstimator().isStateActionValueFunction() && !isUpdateablePolicy()) throw new AgentException("Non-updateable policy cannot be applied along state value function estimator.");
         this.params = params;
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -124,7 +117,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @return parameters used for abstract policy.
      */
     public String getParamDefs() {
-        return executablePolicy.getParamDefs() + ", " + functionEstimator.getParamDefs();
+        return getExecutablePolicy().getParamDefs() + ", " + getFunctionEstimator().getParamDefs();
     }
 
     /**
@@ -134,17 +127,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        executablePolicy.setParams(params);
-        functionEstimator.setParams(params);
-    }
-
-    /**
-     * Return true is function is state action value function.
-     *
-     * @return true is function is state action value function.
-     */
-    public boolean isStateActionValueFunction() {
-        return isStateActionValueFunction;
+        getExecutablePolicy().setParams(params);
+        getFunctionEstimator().setParams(params);
     }
 
     /**
@@ -157,7 +141,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
-        functionEstimator.start();
+        getFunctionEstimator().start();
     }
 
     /**
@@ -165,7 +149,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      *
      */
     public void stop() {
-        functionEstimator.stop();
+        getFunctionEstimator().stop();
     }
 
     /**
@@ -174,7 +158,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @param agent agent.
      */
     public void registerAgent(Agent agent) {
-        functionEstimator.registerAgent(agent);
+        getFunctionEstimator().registerAgent(agent);
     }
 
     /**
@@ -210,7 +194,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      *
      */
     public void increment() {
-        executablePolicy.increment();
+        getExecutablePolicy().increment();
     }
 
     /**
@@ -222,8 +206,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return isStateActionValueFunction() ? functionEstimator.predict(stateTransition).getSubMatrices().get(1) : functionEstimator.predict(stateTransition);
+    protected Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+        return functionEstimator.predictPolicyValues(stateTransition);
     }
 
     /**
@@ -232,7 +216,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      *
      */
     public void act(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        executablePolicy.action(getValues(functionEstimator, stateTransition), stateTransition.environmentState.availableActions(), stateTransition.action);
+        getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition), stateTransition.environmentState.availableActions(), stateTransition.action);
     }
 
     /**
@@ -244,8 +228,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        stateTransition.action = executablePolicy.action(getValues(functionEstimator, stateTransition), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
-        if (isLearning()) functionEstimator.add(stateTransition);
+        stateTransition.action = getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
+        if (isLearning()) getFunctionEstimator().add(stateTransition);
     }
 
     /**
