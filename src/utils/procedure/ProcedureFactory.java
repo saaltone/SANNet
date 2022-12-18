@@ -66,13 +66,13 @@ public class ProcedureFactory implements Serializable {
          * Input nodes.
          *
          */
-        private final HashMap<Integer, Node> inputNodes = new HashMap<>();
+        private final TreeMap<Integer, Node> inputNodes = new TreeMap<>();
 
         /**
          * Output nodes.
          *
          */
-        private final HashMap<Integer, Node> outputNodes = new HashMap<>();
+        private final TreeMap<Integer, Node> outputNodes = new TreeMap<>();
 
         /**
          * Nodes of procedure.
@@ -138,13 +138,13 @@ public class ProcedureFactory implements Serializable {
      * @param parameterMatrices parameter matrices.
      * @param constantMatrices constant matrices to be registered.
      * @param stopGradientMatrices matrices for which gradient is not updated.
-     * @param reversedProcedure reversedProcedure.
+     * @param reversedInput is reversed input.
      * @param joinedInput if true inputs are joined otherwise not.
      * @return resulting procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> parameterMatrices, HashSet<Matrix> constantMatrices, HashSet<Matrix> stopGradientMatrices, Procedure reversedProcedure, boolean joinedInput) throws MatrixException, DynamicParamException {
+    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> parameterMatrices, HashSet<Matrix> constantMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException, DynamicParamException {
         registerConstantMatrices(parameterMatrices);
         registerConstantMatrices(constantMatrices);
 
@@ -171,7 +171,7 @@ public class ProcedureFactory implements Serializable {
             previousExpression = expression;
         }
 
-        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes, parameterMatrices, stopGradientMatrices, reversedProcedure, joinedInput);
+        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes, parameterMatrices, stopGradientMatrices, reversedInput, joinedInput);
     }
 
     /**
@@ -313,7 +313,7 @@ public class ProcedureFactory implements Serializable {
      * @param inputNodes input nodes.
      * @param node node.
      */
-    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, Matrix matrix, HashMap<Integer, Node> inputNodes, Node node) {
+    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, Matrix matrix, TreeMap<Integer, Node> inputNodes, Node node) {
         for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
             int depthIndex = entry.getKey();
             MMatrix inputMMatrix = entry.getValue();
@@ -360,7 +360,7 @@ public class ProcedureFactory implements Serializable {
      * @param mMatrix multi-matrix to be attached to input node.
      * @param node node.
      */
-    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, MMatrix mMatrix, HashMap<Integer, Node> inputNodes, Node node) {
+    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, MMatrix mMatrix, TreeMap<Integer, Node> inputNodes, Node node) {
         for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
             int depthIndex = entry.getKey();
             MMatrix inputMMatrix = entry.getValue();
