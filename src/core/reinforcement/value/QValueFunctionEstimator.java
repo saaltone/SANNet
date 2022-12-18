@@ -50,7 +50,7 @@ public class QValueFunctionEstimator extends AbstractActionValueFunctionEstimato
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new QValueFunctionEstimator(functionEstimator.reference(), getParams());
+        return new QValueFunctionEstimator(getFunctionEstimator().reference(), getParams());
     }
 
     /**
@@ -65,7 +65,7 @@ public class QValueFunctionEstimator extends AbstractActionValueFunctionEstimato
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new QValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(sharedMemory), getParams());
+        return new QValueFunctionEstimator(sharedValueFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), getParams());
     }
 
     /**
@@ -80,7 +80,7 @@ public class QValueFunctionEstimator extends AbstractActionValueFunctionEstimato
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new QValueFunctionEstimator(sharedValueFunctionEstimator ? functionEstimator : functionEstimator.reference(memory), getParams());
+        return new QValueFunctionEstimator(sharedValueFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(memory), getParams());
     }
 
     /**
@@ -92,7 +92,7 @@ public class QValueFunctionEstimator extends AbstractActionValueFunctionEstimato
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
-        return functionEstimator.max(getValues(functionEstimator, nextStateTransition), nextStateTransition.environmentState.availableActions());
+        return getFunctionEstimator().max(getValues(getFunctionEstimator(), nextStateTransition), nextStateTransition.environmentState.availableActions());
     }
 
 }

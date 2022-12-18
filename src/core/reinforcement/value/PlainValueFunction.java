@@ -192,7 +192,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @param agent agent.
      */
     public void registerAgent(Agent agent) {
-        functionEstimator.registerAgent(agent);
+        getFunctionEstimator().registerAgent(agent);
     }
 
     /**
@@ -291,7 +291,7 @@ public class PlainValueFunction extends AbstractValueFunction {
     public void updateFunctionEstimator() {
         TreeSet<StateTransition> sampledStateTransitions = getSampledStateTransitions();
         if (sampledStateTransitions == null) {
-            functionEstimator.abortUpdate();
+            getFunctionEstimator().abortUpdate();
             return;
         }
 
