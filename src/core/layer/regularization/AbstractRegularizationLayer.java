@@ -13,7 +13,6 @@ import utils.matrix.Initialization;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.procedure.Procedure;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -51,15 +50,6 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      */
     public boolean worksWithRecurrentLayer() {
         return true;
-    }
-
-    /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
     }
 
     /**
@@ -130,7 +120,7 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        setLayerOutputs(getPreviousLayerOutputs());
+        passLayerOutputs();
     }
 
     /**
@@ -141,7 +131,7 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        setLayerGradients(getNextLayerGradients());
+        passLayerOutputGradients();
     }
 
     /**

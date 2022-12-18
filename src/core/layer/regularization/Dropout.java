@@ -100,9 +100,9 @@ public class Dropout extends AbstractRegularizationLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void forwardProcess() throws MatrixException {
-        Sequence inputSequence = getPreviousLayerOutputs();
-
         if (isTraining() || monte_carlo) {
+            this.reset();
+            Sequence inputSequence = getDefaultLayerInput();
             for (MMatrix sample : inputSequence.values()) {
                 int matrixDepth = sample.getDepth();
                 for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
@@ -116,9 +116,9 @@ public class Dropout extends AbstractRegularizationLayer {
                     matrix.getMask().maskRowByProbability();
                 }
             }
+            setLayerOutputs(inputSequence);
         }
-
-        setLayerOutputs(inputSequence);
+        else passLayerOutputs();
     }
 
     /**
@@ -127,7 +127,7 @@ public class Dropout extends AbstractRegularizationLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "Probability: " + probability;
+        return "Probability: " + probability + ", Monte Carlo: " + monte_carlo;
     }
 
 }

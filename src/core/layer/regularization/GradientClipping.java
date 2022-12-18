@@ -5,6 +5,7 @@
 
 package core.layer.regularization;
 
+import core.layer.NeuralNetworkLayer;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -95,9 +96,10 @@ public class GradientClipping extends AbstractRegularizationLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     protected void defineProcedure() throws NeuralNetworkException {
-        if (getNextLayer().getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight normalization. Next layer does not contain any weights.");
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) if (nextLayer.getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight normalization. Next layer #" + nextLayer.getLayerIndex() + " does not contain any weights.");
 
-        nextLayerRegularizedWeights = getNextLayer().getRegularizedWeights();
+        nextLayerRegularizedWeights = new HashSet<>();
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayerRegularizedWeights.addAll(nextLayer.getRegularizedWeights());
     }
 
     /**
@@ -111,12 +113,14 @@ public class GradientClipping extends AbstractRegularizationLayer {
     public void backwardProcess() throws MatrixException, DynamicParamException {
         super.backwardProcess();
 
-        HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
-        for (Matrix weight : nextLayerRegularizedWeights) {
-            Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
-            if (weightGradientSum != null) {
-                double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
-                if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
+            HashMap<Matrix, Matrix> nextLayerWeightGradients = nextLayer.getLayerWeightGradients();
+            for (Matrix weight : nextLayerRegularizedWeights) {
+                Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
+                if (weightGradientSum != null) {
+                    double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
+                    if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
+                }
             }
         }
     }
