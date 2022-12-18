@@ -25,10 +25,22 @@ public class ReadMIDI {
     public static class Metadata {
 
         /**
+         * Division type for MIDI sequence.
+         *
+         */
+        private final float divisionType;
+
+        /**
          * Resolution for MIDI sequence.
          *
          */
-        public final int resolution = 120;
+        public final int resolution;
+
+        /**
+         * If true note off are encoded otherwise not.
+         *
+         */
+        public boolean encodeNoteOffs;
 
         /**
          * Minimum key value found.
@@ -43,18 +55,6 @@ public class ReadMIDI {
         public int maxKeyValue = Integer.MIN_VALUE;
 
         /**
-         * Output size of key mapping.
-         *
-         */
-        public int keyOutputSize;
-
-        /**
-         * Bit vector size needed to encode key for input.
-         *
-         */
-        public int keyBitVectorSize;
-
-        /**
          * Minimum velocity value found.
          *
          */
@@ -65,18 +65,6 @@ public class ReadMIDI {
          *
          */
         public int maxVelocityValue = Integer.MIN_VALUE;
-
-        /**
-         * Output size of velocity mapping.
-         *
-         */
-        public int velocityOutputSize;
-
-        /**
-         * Bit vector size needed to encode velocity for input.
-         *
-         */
-        public int velocityBitVectorSize;
 
         /**
          * Maximum number of encoded ticks.
@@ -94,41 +82,216 @@ public class ReadMIDI {
          * Tick value mapping.
          *
          */
-        public final HashMap<Integer, Integer> tickValueMapping = new HashMap<>();
+        public final HashMap<Long, Integer> tickValueMapping = new HashMap<>();
 
         /**
          * Tick value reverse mapping.
          *
          */
-        public final HashMap<Integer, Integer> tickValueReverseMapping = new HashMap<>();
+        public final HashMap<Integer, Long> tickValueReverseMapping = new HashMap<>();
 
         /**
          * Minimum tick value found.
          *
          */
-        public long minTickValue = Integer.MAX_VALUE;
+        public long minTickValue = Long.MAX_VALUE;
 
         /**
          * Maximum tick value found.
          *
          */
-        public long maxTickValue = Integer.MIN_VALUE;
+        public long maxTickValue = Long.MIN_VALUE;
 
         /**
          * Constructor for MetaData.
          *
+         * @param divisionType division type
+         * @param resolution resolution
          */
-        Metadata() {
+        Metadata(float divisionType, int resolution) {
             this.maxNumberOfEncodedTicks = 25;
+            this.divisionType = divisionType;
+            this.resolution = resolution;
         }
 
         /**
          * Constructor for MetaData.
          *
          * @param maxNumberOfEncodedTicks maximum number of encoded ticks.
+         * @param divisionType division type
+         * @param resolution resolution
          */
-        Metadata(int maxNumberOfEncodedTicks) {
+        Metadata(int maxNumberOfEncodedTicks, boolean encodeNoteOffs, float divisionType, int resolution) {
             this.maxNumberOfEncodedTicks = maxNumberOfEncodedTicks;
+            this.encodeNoteOffs = encodeNoteOffs;
+            this.divisionType = divisionType;
+            this.resolution = resolution;
+        }
+
+        /**
+         * Returns division type
+         *
+         * @return division type
+         */
+        private float getDivisionType() {
+            return divisionType;
+        }
+
+        /**
+         * Returns resolution
+         *
+         * @return resolution
+         */
+        private int getResolution() {
+            return resolution;
+        }
+
+        /**
+         * Updates key min max values.
+         *
+         * @param keyValue key value
+         */
+        private void updateKeyMinMaxValue(int keyValue) {
+            minKeyValue = Math.min(minKeyValue, keyValue);
+            maxKeyValue = Math.max(maxKeyValue, keyValue);
+        }
+
+        /**
+         * Updates velocity min max values.
+         *
+         * @param velocityValue velocity value
+         */
+        private void updateVelocityMinMaxValue(int velocityValue) {
+            minVelocityValue = Math.min(minVelocityValue, velocityValue);
+            maxVelocityValue = Math.max(maxVelocityValue, velocityValue);
+        }
+
+        /**
+         * Updates tick min max values.
+         *
+         * @param tickValue tick value
+         */
+        private void updateTickMinMaxValue(long tickValue) {
+            minTickValue = Math.min(minTickValue, tickValue);
+            maxTickValue = Math.max(maxTickValue, tickValue);
+        }
+
+        /**
+         * Updates key, velocity and tick min max values.
+         *
+         * @param keyValue key value
+         * @param velocityValue velocity value
+         * @param tickValue tick value
+         */
+        private void updateMinMaxValues(int keyValue, int velocityValue, long tickValue) {
+            updateKeyMinMaxValue(keyValue);
+            updateVelocityMinMaxValue(velocityValue);
+            updateTickMinMaxValue(tickValue);
+        }
+
+        /**
+         * Return key min value
+         *
+         * @return key min value.
+         */
+        private int getMinKeyValue() {
+            return minKeyValue;
+        }
+
+        /**
+         * Return key max value
+         *
+         * @return key max value.
+         */
+        private int getMaxKeyValue() {
+            return maxKeyValue;
+        }
+
+        /**
+         * Return velocity min value
+         *
+         * @return velocity min value.
+         */
+        private int getMinVelocityValue() {
+            return minVelocityValue;
+        }
+
+        /**
+         * Return velocity max value
+         *
+         * @return velocity max value.
+         */
+        private int getMaxVelocityValue() {
+            return maxVelocityValue;
+        }
+
+        /**
+         * Returns maximum number of encoded ticks
+         *
+         * @return maximum number of encoded ticks
+         */
+        private int getMaxNumberOfEncodedTicks() {
+            return maxNumberOfEncodedTicks;
+        }
+
+        /**
+         * Returns key output size
+         *
+         * @return key output size
+         */
+        public int getKeyOutputSize() {
+            return maxKeyValue - minKeyValue + 1;
+        }
+
+        /**
+         * Returns velocity output size
+         *
+         * @return velocity output size
+         */
+        public int getVelocityOutputSize() {
+            return maxVelocityValue - minVelocityValue + 1;
+        }
+
+        /**
+         * Returns note offset
+         *
+         * @return note offset
+         */
+        public int getNoteOffset() {
+            return checkEncodeNoteOffs() ? 1 : 0;
+        }
+
+        /**
+         * Checks if note offs are encoded.
+         *
+         * @return true if note offs are encoded.
+         */
+        public boolean checkEncodeNoteOffs() {
+            return encodeNoteOffs;
+        }
+
+        /**
+         * Encodes key or velocity item
+         *
+         * @param value value
+         * @param minValue min value
+         * @return encoded item.
+         */
+        public int encodeItem(int value, int minValue) {
+            if (!checkEncodeNoteOffs()) return value - minValue;
+            else return value == 0 ? 0 : value - minValue;
+        }
+
+        /**
+         * Decodes key or velocity item
+         *
+         * @param value value
+         * @param minValue min value
+         * @return decoded item.
+         */
+        public int decodeItem(int value, int minValue) {
+            if (!checkEncodeNoteOffs()) return value + minValue;
+            else return value == 0 ? 0 : value + minValue;
         }
 
     }
@@ -137,7 +300,7 @@ public class ReadMIDI {
      * Metadata for MIDI record.
      *
      */
-    private Metadata metadata = new Metadata();
+    private Metadata metadata = null;
 
     /**
      * Returns metadata for MIDI record.
@@ -158,26 +321,7 @@ public class ReadMIDI {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName) throws InvalidMidiDataException, IOException, MatrixException {
-        ArrayList<String> fileNames = new ArrayList<>();
-        fileNames.add(fileName);
-        return readFile(fileNames, 1, false, true, 25);
-    }
-
-    /**
-     * Reads and encodes MIDI file.
-     *
-     * @param fileName file name
-     * @param maxEncodedTicks maximum number of encoded ticks.
-     * @return encoded MIDI file
-     * @throws InvalidMidiDataException if opening file fails throws exception.
-     * @throws IOException if opening file fails throws exception.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
-        metadata = new Metadata(maxEncodedTicks);
-        ArrayList<String> fileNames = new ArrayList<>();
-        fileNames.add(fileName);
-        return readFile(fileNames, 1, false, true, 25);
+        return readFile(new ArrayList<>() {{ add(fileName); }}, 1, false, 0, 25);
     }
 
     /**
@@ -186,17 +330,14 @@ public class ReadMIDI {
      * @param fileNames MIDI files.
      * @param numberOfInputs number of inputs.
      * @param encodeNoteOffs if true encodes note offs otherwise does not include note offs.
-     * @param excludeZeroValuedEntries if true encoded values where key, velocity or tick has zero value otherwise adds all.
+     * @param minTickDelta minimum tick delta
      * @param maxEncodedTicks maximum number of encoded ticks.
      * @return encoded inputs and outputs.
      * @throws InvalidMidiDataException if opening file fails throws exception.
      * @throws IOException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, boolean excludeZeroValuedEntries, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
-        metadata = new Metadata(maxEncodedTicks);
-        int noteOffOffset = encodeNoteOffs ? 1 : 0;
-
+    public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, long minTickDelta, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
         HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
         result.put(0, new HashMap<>());
         result.put(1, new HashMap<>());
@@ -206,18 +347,19 @@ public class ReadMIDI {
         result.put(5, new HashMap<>());
 
         ArrayList<Integer> keyDataAsInteger = new ArrayList<>();
-        ArrayList<Matrix> keyDataAsMatrix = new ArrayList<>();
         ArrayList<Integer> velocityDataAsInteger = new ArrayList<>();
-        ArrayList<Matrix> velocityDataAsMatrix = new ArrayList<>();
-        ArrayList<Integer> tickData = new ArrayList<>();
+        ArrayList<Long> tickData = new ArrayList<>();
 
+        TreeMap<Integer, Integer> keyDataDistribution = new TreeMap<>();
+        TreeMap<Integer, Integer> velocityDataDistribution = new TreeMap<>();
+        TreeMap<Long, Integer> tickDataDistribution = new TreeMap<>();
         for (String fileName : fileNames) {
             Sequence sequence = MidiSystem.getSequence(new File(fileName));
+            if (metadata == null) metadata = new Metadata(maxEncodedTicks, encodeNoteOffs, sequence.getDivisionType(), sequence.getResolution());
             if (sequence.getDivisionType() != Sequence.PPQ) {
                 System.out.println("File: '" + fileName + "' omitted because Sequence must have division type of PPQ.");
                 continue;
             }
-            double resolutionRatio = 1 / ((double)metadata.resolution / (double)sequence.getResolution());
             Track[] tracks = sequence.getTracks();
             for (Track track : tracks) {
                 long previousTick = 0;
@@ -226,37 +368,37 @@ public class ReadMIDI {
                     MidiEvent midiEvent = track.get(trackIndex);
                     MidiMessage midiMessage = midiEvent.getMessage();
                     if (midiMessage instanceof ShortMessage shortMessage) {
-                        long tick;
+                        long tick = midiEvent.getTick();
+                        long tickDelta = Math.max(minTickDelta, tick - previousTick);
+                        previousTick = tick;
+                        int keyValue = shortMessage.getData1() + metadata.getNoteOffset();
                         switch (shortMessage.getCommand()) {
                             case ShortMessage.NOTE_ON -> {
-                                int keyValue = shortMessage.getData1();
-                                int velocityValue = shortMessage.getData2();
-                                tick = midiEvent.getTick();
-                                int tickDelta = (int)(resolutionRatio * (double)(tick - previousTick));
-                                previousTick = tick;
-
-                                if (!(excludeZeroValuedEntries && (keyValue == 0 || velocityValue == 0 || tickDelta == 0))) {
-                                    metadata.minKeyValue = Math.min(metadata.minKeyValue, keyValue);
-                                    metadata.maxKeyValue = Math.max(metadata.maxKeyValue, keyValue);
-                                    keyDataAsInteger.add(keyValue + noteOffOffset);
-
-                                    metadata.minVelocityValue = Math.min(metadata.minVelocityValue, velocityValue);
-                                    metadata.maxVelocityValue = Math.max(metadata.maxVelocityValue, velocityValue);
-                                    velocityDataAsInteger.add(velocityValue + noteOffOffset);
-
-                                    metadata.minTickValue = Math.min(metadata.minTickValue, tickDelta);
-                                    metadata.maxTickValue = Math.max(metadata.maxTickValue, tickDelta);
+                                int velocityValue = Math.min(127, shortMessage.getData2()) + metadata.getNoteOffset();
+                                if (velocityValue > 1 - (metadata.checkEncodeNoteOffs() ? 0 : 1)) {
+                                    metadata.updateMinMaxValues(keyValue, velocityValue, tickDelta);
+                                    keyDataAsInteger.add(keyValue);
+                                    velocityDataAsInteger.add(velocityValue);
                                     tickData.add(tickDelta);
+                                    if (keyDataDistribution.containsKey(keyValue)) keyDataDistribution.put(keyValue, keyDataDistribution.get(keyValue) + 1);
+                                    else keyDataDistribution.put(keyValue, 1);
+                                    if (velocityDataDistribution.containsKey(velocityValue)) velocityDataDistribution.put(velocityValue, velocityDataDistribution.get(velocityValue) + 1);
+                                    else velocityDataDistribution.put(velocityValue, 1);
+                                    if (tickDataDistribution.containsKey(tickDelta)) tickDataDistribution.put(tickDelta, tickDataDistribution.get(tickDelta) + 1);
+                                    else tickDataDistribution.put(tickDelta, 1);
                                 }
                             }
                             case ShortMessage.NOTE_OFF -> {
-                                tick = midiEvent.getTick();
-                                int tickDelta = (int)(resolutionRatio * (double)(tick - previousTick));
-                                previousTick = tick;
-                                if (encodeNoteOffs) {
-                                    keyDataAsInteger.add(0);
+                                if (metadata.checkEncodeNoteOffs()) {
+                                    keyDataAsInteger.add(keyValue);
                                     velocityDataAsInteger.add(0);
                                     tickData.add(tickDelta);
+                                    if (keyDataDistribution.containsKey(keyValue)) keyDataDistribution.put(keyValue, keyDataDistribution.get(keyValue) + 1);
+                                    else keyDataDistribution.put(keyValue, 1);
+                                    if (velocityDataDistribution.containsKey(0)) velocityDataDistribution.put(0, velocityDataDistribution.get(0) + 1);
+                                    else velocityDataDistribution.put(0, 1);
+                                    if (tickDataDistribution.containsKey(tickDelta)) tickDataDistribution.put(tickDelta, tickDataDistribution.get(tickDelta) + 1);
+                                    else tickDataDistribution.put(tickDelta, 1);
                                 }
                             }
                             default -> {
@@ -266,197 +408,150 @@ public class ReadMIDI {
                 }
             }
         }
+        System.out.println("Key data distribution: (value=count): ");
+        System.out.println(keyDataDistribution);
+        System.out.println("Velocity data distribution: (value=count): ");
+        System.out.println(velocityDataDistribution);
+        System.out.println("Tick data distribution: (value=count): ");
+        System.out.println(tickDataDistribution);
+        System.out.println();
 
-        metadata.keyOutputSize = noteOffOffset + metadata.maxKeyValue - metadata.minKeyValue + 1;
-        metadata.keyBitVectorSize = ComputableMatrix.numberOfBits(metadata.keyOutputSize);
-        for (int index = 0; index < keyDataAsInteger.size(); index++) {
-            int keyValue = keyDataAsInteger.get(index) - (encodeNoteOffs && keyDataAsInteger.get(index) == 0 ? 0 : metadata.minKeyValue);
-            keyDataAsInteger.set(index, keyValue);
-            keyDataAsMatrix.add(ComputableMatrix.encodeToBitColumnVector(keyValue, metadata.keyBitVectorSize));
-        }
-
-        metadata.velocityOutputSize = noteOffOffset + metadata.maxVelocityValue - metadata.minVelocityValue + 1;
-        metadata.velocityBitVectorSize = ComputableMatrix.numberOfBits(metadata.velocityOutputSize);
-        for (int index = 0; index < velocityDataAsInteger.size(); index++) {
-            int velocityValue = velocityDataAsInteger.get(index) - (encodeNoteOffs && velocityDataAsInteger.get(index) == 0 ? 0 : metadata.minVelocityValue);
-            velocityDataAsInteger.set(index, velocityValue);
-            velocityDataAsMatrix.add(ComputableMatrix.encodeToBitColumnVector(velocityValue, metadata.velocityBitVectorSize));
-        }
-
-        ArrayList<Integer> scaledTickData = new ArrayList<>();
-        scaleTickData(tickData, scaledTickData, metadata);
-
-        ArrayDeque<Integer> encodedKeyQueueAsInteger = new ArrayDeque<>();
-        ArrayDeque<Matrix> encodedKeyQueueAsMatrix = new ArrayDeque<>();
-        ArrayDeque<Integer> encodedVelocityQueueAsInteger = new ArrayDeque<>();
-        ArrayDeque<Matrix> encodedVelocityQueueAsMatrix = new ArrayDeque<>();
-        ArrayDeque<Integer> encodedTickQueue = new ArrayDeque<>();
+        ArrayList<HashMap<Integer, Matrix>> keyDataAsMatrix = encodeDataIntoMatrix(keyDataAsInteger, metadata.getMinKeyValue(), metadata.getKeyOutputSize());
+        ArrayList<HashMap<Integer, Matrix>> velocityDataAsMatrix = encodeDataIntoMatrix(velocityDataAsInteger, metadata.getMinVelocityValue(), metadata.getVelocityOutputSize());
+        ArrayList<HashMap<Integer, Matrix>> tickDataAsMatrix = scaleTickData(tickData, metadata);
 
         int pos = 0;
-        for (int dataIndex = 0; dataIndex < keyDataAsInteger.size(); dataIndex++) {
-            encodedKeyQueueAsInteger.addLast(keyDataAsInteger.get(dataIndex));
-            encodedKeyQueueAsMatrix.addLast(keyDataAsMatrix.get(dataIndex));
-            encodedVelocityQueueAsInteger.addLast(velocityDataAsInteger.get(dataIndex));
-            encodedVelocityQueueAsMatrix.addLast(velocityDataAsMatrix.get(dataIndex));
-            encodedTickQueue.addLast(scaledTickData.get(dataIndex));
-            if (encodedKeyQueueAsInteger.size() >= numberOfInputs + 1) {
-                Matrix[] keyInputMatrices = new Matrix[numberOfInputs];
-                Matrix keyOutputMatrix = new DMatrix(metadata.keyOutputSize, 1);
-                Iterator<Integer> keyIntegerIterator = encodedKeyQueueAsInteger.iterator();
-                Iterator<Matrix> keyMatrixIterator = encodedKeyQueueAsMatrix.iterator();
-
-                Matrix[] velocityInputMatrices = new Matrix[numberOfInputs];
-                Matrix velocityOutputMatrix = new DMatrix(metadata.velocityOutputSize, 1);
-                Iterator<Integer> velocityIntegerIterator = encodedVelocityQueueAsInteger.iterator();
-                Iterator<Matrix> velocityMatrixIterator = encodedVelocityQueueAsMatrix.iterator();
-
-                Matrix[] tickInputMatrices = new Matrix[numberOfInputs];
-                Matrix tickOutputMatrix = new DMatrix(metadata.numberOfEncodedTicks, 1);
-                Iterator<Integer> tickIterator = encodedTickQueue.iterator();
-
-                int inputIndex = 0;
-                while (keyIntegerIterator.hasNext()) {
-                    int keyValue = keyIntegerIterator.next();
-                    Matrix keyMatrix = keyMatrixIterator.next();
-
-                    int velocityValue = velocityIntegerIterator.next();
-                    Matrix velocityMatrix = velocityMatrixIterator.next();
-
-                    int tickValue = tickIterator.next();
-
-                    if (inputIndex < numberOfInputs) {
-                        keyInputMatrices[inputIndex] = keyMatrix;
-                        velocityInputMatrices[inputIndex] = velocityMatrix;
-                        tickInputMatrices[inputIndex] = new DMatrix(metadata.numberOfEncodedTicks, 1);
-                        tickInputMatrices[inputIndex].setValue(metadata.tickValueMapping.get(tickValue), 0, 1);
-                    }
-                    else {
-                        keyOutputMatrix.setValue(keyValue, 0, 1);
-                        velocityOutputMatrix.setValue(velocityValue, 0, 1);
-                        tickOutputMatrix.setValue(metadata.tickValueMapping.get(tickValue), 0, 1);
-                    }
-                    inputIndex++;
+        for (int dataIndex = 0; dataIndex < (keyDataAsMatrix.size() - (numberOfInputs + 1)); dataIndex++) {
+            ArrayList<Matrix> keyDataMatrices = new ArrayList<>();
+            ArrayList<Matrix> velocityDataMatrices = new ArrayList<>();
+            ArrayList<Matrix> tickDataMatrices = new ArrayList<>();
+            Matrix keyOutputMatrix = null;
+            Matrix velocityOutputMatrix = null;
+            Matrix tickOutputMatrix = null;
+            for (int entryIndex = 0; entryIndex < (numberOfInputs + 1); entryIndex++) {
+                if (entryIndex < numberOfInputs) {
+                    keyDataMatrices.add(keyDataAsMatrix.get(dataIndex + entryIndex).get(0));
+                    velocityDataMatrices.add(velocityDataAsMatrix.get(dataIndex + entryIndex).get(0));
+                    tickDataMatrices.add(tickDataAsMatrix.get(dataIndex + entryIndex).get(0));
                 }
-
-                JMatrix joinedKeyInputMatrix = new JMatrix(keyInputMatrices, true);
-                JMatrix joinedVelocityInputMatrix = new JMatrix(velocityInputMatrices, true);
-                JMatrix joinedTickInputMatrix = new JMatrix(tickInputMatrices, true);
-
-                result.get(0).put(pos, new MMatrix(joinedKeyInputMatrix));
-                result.get(1).put(pos, new MMatrix(keyOutputMatrix));
-
-                result.get(2).put(pos, new MMatrix(joinedVelocityInputMatrix));
-                result.get(3).put(pos, new MMatrix(velocityOutputMatrix));
-
-                result.get(4).put(pos, new MMatrix(joinedTickInputMatrix));
-                result.get(5).put(pos, new MMatrix(tickOutputMatrix));
-
-                pos++;
-
-                encodedKeyQueueAsInteger.removeFirst();
-                encodedKeyQueueAsMatrix.removeFirst();
-
-                encodedVelocityQueueAsInteger.removeFirst();
-                encodedVelocityQueueAsMatrix.removeFirst();
-
-                encodedTickQueue.removeFirst();
+                else {
+                    keyOutputMatrix = keyDataAsMatrix.get(dataIndex + entryIndex).get(1);
+                    velocityOutputMatrix = velocityDataAsMatrix.get(dataIndex + entryIndex).get(1);
+                    tickOutputMatrix = tickDataAsMatrix.get(dataIndex + entryIndex).get(1);
+                }
             }
+            JMatrix joinedKeyInputMatrix = new JMatrix(keyDataMatrices, true);
+            JMatrix joinedVelocityInputMatrix = new JMatrix(velocityDataMatrices, true);
+            JMatrix joinedTickInputMatrix = new JMatrix(tickDataMatrices, true);
 
+            result.get(0).put(pos, new MMatrix(joinedKeyInputMatrix));
+            result.get(1).put(pos, new MMatrix(keyOutputMatrix));
+
+            result.get(2).put(pos, new MMatrix(joinedVelocityInputMatrix));
+            result.get(3).put(pos, new MMatrix(velocityOutputMatrix));
+
+            result.get(4).put(pos, new MMatrix(joinedTickInputMatrix));
+            result.get(5).put(pos, new MMatrix(tickOutputMatrix));
+            pos++;
         }
 
         return result;
     }
 
     /**
-     * Scales tick data between zero and one.
+     * Encodes key and velocity entries into matrix form.
+     *
+     * @param integerData key or velocity integer data
+     * @param minValue min value
+     * @param outputSize output size
+     * @return encoded matrices.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private ArrayList<HashMap<Integer, Matrix>> encodeDataIntoMatrix(ArrayList<Integer> integerData, int minValue, int outputSize) throws MatrixException {
+        ArrayList<HashMap<Integer, Matrix>> dataAsMatrix = new ArrayList<>();
+        int numberOfBits = ComputableMatrix.numberOfBits(outputSize);
+        for (Integer integerDataItem : integerData) {
+            HashMap<Integer, Matrix> matrixEntries = new HashMap<>();
+            dataAsMatrix.add(matrixEntries);
+            matrixEntries.put(0, ComputableMatrix.encodeToBitColumnVector(metadata.encodeItem(integerDataItem, minValue), numberOfBits));
+            Matrix oneHotEncodedMatrix = new DMatrix(outputSize, 1);
+            oneHotEncodedMatrix.setValue(metadata.encodeItem(integerDataItem, minValue), 0, 1);
+            matrixEntries.put(1, oneHotEncodedMatrix);
+        }
+        return dataAsMatrix;
+    }
+
+    /**
+     * Scales tick data between zero and one and encodes into matrix form.
      *
      * @param inputTickData input tick data.
-     * @param outputTickData output tick data.
      * @param metadata record data.
+     * @return scaled tick data in matrix form.
      */
-    private void scaleTickData(ArrayList<Integer> inputTickData, ArrayList<Integer> outputTickData, Metadata metadata) {
+    private ArrayList<HashMap<Integer, Matrix>> scaleTickData(ArrayList<Long> inputTickData, Metadata metadata) throws MatrixException {
 
-        class FrequencyValue {
+        class TickFrequency implements Comparable<TickFrequency> {
             int frequency = 1;
-            final int value;
+            final long tick;
 
-            FrequencyValue(int value) {
-                this.value = value;
+            TickFrequency(long tick) {
+                this.tick = tick;
             }
 
             void increment() {
                 frequency++;
             }
+
+            public int compareTo(TickFrequency o) {
+                return Integer.compare(frequency, o.frequency);
+            }
         }
 
-        HashMap<Integer, FrequencyValue> frequencyValueHashMap = new HashMap<>();
-        ArrayList<FrequencyValue> frequencyValues = new ArrayList<>();
-        ArrayList<FrequencyValue> valueFrequencies = new ArrayList<>();
+        ArrayList<TickFrequency> tickFrequencyDistribution = new ArrayList<>();
 
-        for (Integer data : inputTickData) {
-            FrequencyValue frequencyValue = frequencyValueHashMap.get(data);
-            if (frequencyValue != null) frequencyValue.increment();
+        TreeMap<Long, TickFrequency> tickFrequencyMap = new TreeMap<>();
+        for (Long inputTick : inputTickData) {
+            if(!tickFrequencyMap.containsKey(inputTick)) {
+                TickFrequency tickFrequency = new TickFrequency(inputTick);
+                tickFrequencyMap.put(inputTick, tickFrequency);
+                tickFrequencyDistribution.add(tickFrequency);
+            }
+            else tickFrequencyMap.get(inputTick).increment();
+        }
+        Collections.sort(tickFrequencyDistribution);
+
+        ArrayList<Long> tickOrder = new ArrayList<>();
+        TreeMap<Long, TickFrequency> updatedTickFrequencyMap = new TreeMap<>();
+        for (TickFrequency tickFrequency : tickFrequencyDistribution) {
+            if (updatedTickFrequencyMap.size() < metadata.getMaxNumberOfEncodedTicks()) {
+                updatedTickFrequencyMap.put(tickFrequency.tick, tickFrequency);
+                tickOrder.add(tickFrequency.tick);
+                metadata.tickValueMapping.put(tickFrequency.tick, tickOrder.size() - 1);
+                metadata.tickValueReverseMapping.put(tickOrder.size() - 1, tickFrequency.tick);
+            }
+        }
+
+        ArrayList<HashMap<Integer, Matrix>> outputTickData = new ArrayList<>();
+
+        metadata.numberOfEncodedTicks = Math.min(metadata.getMaxNumberOfEncodedTicks(), updatedTickFrequencyMap.size());
+        int numberOfBits = ComputableMatrix.numberOfBits(metadata.numberOfEncodedTicks);
+        for (Long inputTick : inputTickData) {
+            long tick;
+            if (updatedTickFrequencyMap.containsKey(inputTick)) tick = inputTick;
             else {
-                frequencyValue = new FrequencyValue(data);
-                frequencyValueHashMap.put(data, frequencyValue);
-                frequencyValues.add(frequencyValue);
-                valueFrequencies.add(frequencyValue);
+                long floorTick = updatedTickFrequencyMap.floorKey(inputTick) == null ? updatedTickFrequencyMap.firstKey() : updatedTickFrequencyMap.floorKey(inputTick);
+                long ceilingTick = updatedTickFrequencyMap.ceilingKey(inputTick) == null ? updatedTickFrequencyMap.lastKey() : updatedTickFrequencyMap.ceilingKey(inputTick);
+                tick = Math.abs(inputTick - floorTick) < Math.abs(inputTick - ceilingTick) ? floorTick : ceilingTick;
             }
-        }
-        frequencyValues.sort((o1, o2) -> o1.frequency == o2.frequency ? 0 : o2.frequency - o1.frequency);
-        valueFrequencies.sort((o1, o2) -> o1.value == o2.value ? 0 : o2.value - o1.value);
-
-        metadata.numberOfEncodedTicks = Math.min(metadata.maxNumberOfEncodedTicks, frequencyValues.size());
-
-        int count = 0;
-        for (FrequencyValue frequencyValue : frequencyValues) {
-            metadata.tickValueMapping.put(frequencyValue.value, count);
-            metadata.tickValueReverseMapping.put(count, frequencyValue.value);
-            if (++count == metadata.numberOfEncodedTicks) break;
+            HashMap<Integer, Matrix> matrixEntries = new HashMap<>();
+            outputTickData.add(matrixEntries);
+            matrixEntries.put(0, ComputableMatrix.encodeToBitColumnVector(tickOrder.indexOf(tick), numberOfBits));
+            Matrix oneHotEncodedMatrix = new DMatrix(metadata.numberOfEncodedTicks, 1);
+            oneHotEncodedMatrix.setValue(tickOrder.indexOf(tick), 0, 1);
+            matrixEntries.put(1, oneHotEncodedMatrix);
         }
 
-        HashMap<Integer, Integer> updatedMapping = new HashMap<>();
-        for (int oldIndex = metadata.numberOfEncodedTicks - 1; oldIndex < frequencyValues.size(); oldIndex++) {
-
-            int minDistance = Integer.MAX_VALUE;
-            int minIndex = -1;
-            for (int newIndex = 0; newIndex < metadata.numberOfEncodedTicks; newIndex++) {
-                updatedMapping.put(frequencyValues.get(newIndex).value, frequencyValues.get(newIndex).value);
-                int currentDistance = Math.abs(frequencyValues.get(newIndex).value - frequencyValues.get(oldIndex).value);
-                if (currentDistance > 0 && currentDistance < minDistance) {
-                    minDistance = currentDistance;
-                    minIndex = newIndex;
-                }
-            }
-
-            updatedMapping.put(frequencyValues.get(oldIndex).value, frequencyValues.get(minIndex).value);
-        }
-        for (Integer data: inputTickData) outputTickData.add(updatedMapping.get(data));
-
-    }
-
-    /**
-     * Return division type of MIDI sequence.
-     *
-     * @param fileName MIDI file name.
-     * @return division type of MIDI sequence.
-     * @throws InvalidMidiDataException if opening file fails throws exception.
-     * @throws IOException if opening file fails throws exception.
-     */
-    public float getDivisionType(String fileName) throws InvalidMidiDataException, IOException {
-        return MidiSystem.getSequence(new File(fileName)).getDivisionType();
-    }
-
-    /**
-     * Returns resolution of MIDI sequence.
-     *
-     * @param fileName MIDI file name.
-     * @return resolution of MIDI sequence.
-     * @throws InvalidMidiDataException if opening file fails throws exception.
-     * @throws IOException if sequence creation fails throws exception.
-     */
-    public int getResolution(String fileName) throws InvalidMidiDataException, IOException {
-        return MidiSystem.getSequence(new File(fileName)).getResolution();
+        return outputTickData;
     }
 
     /**
@@ -467,62 +562,113 @@ public class ReadMIDI {
      * @param dataTick MIDI tick data.
      * @param resolution resolution.
      * @param asInput if true matrices are provided as input otherwise as output.
-     * @param encodeNoteOffs if true encodes note offs otherwise does not include note offs.
+     * @return MIDI sequence based on data.
+     * @throws InvalidMidiDataException if opening file fails throws exception.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Sequence getSequence(HashMap<Integer, Matrix> dataKey, HashMap<Integer, Matrix> dataVelocity, HashMap<Integer, Matrix> dataTick, int resolution, boolean asInput) throws InvalidMidiDataException, MatrixException {
+        Sequence sequence = new Sequence(Sequence.PPQ, resolution);
+        Track track = sequence.createTrack();
+        long currentTick = 0;
+        boolean firstEntry = true;
+        for (Map.Entry<Integer, Matrix> entry : dataKey.entrySet()) {
+            int index = entry.getKey();
+            Matrix keyMatrix = entry.getValue();
+            Matrix velocityMatrix = dataVelocity.get(index);
+            Matrix tickMatrix = dataTick.get(index);
+            currentTick = addMIDISequenceEntry(keyMatrix, velocityMatrix, tickMatrix, track, currentTick, firstEntry, asInput);
+            firstEntry = false;
+        }
+        return sequence;
+    }
+
+    /**
+     * Returns MIDI sequence based on data.
+     *
+     * @param dataKey MIDI key data.
+     * @param dataVelocity MIDI velocity data.
+     * @param dataTick MIDI tick data.
+     * @param asInput if true matrices are provided as input otherwise as output.
      * @param metadata metadata
      * @return MIDI sequence based on data.
      * @throws InvalidMidiDataException if opening file fails throws exception.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sequence getSequence(HashMap<Integer, MMatrix> dataKey, HashMap<Integer, MMatrix> dataVelocity, HashMap<Integer, MMatrix> dataTick, int resolution, boolean asInput, boolean encodeNoteOffs, Metadata metadata) throws InvalidMidiDataException, MatrixException {
-        Sequence sequence = new Sequence(Sequence.PPQ, resolution);
+    public Sequence getSequenceAsMMatrix(HashMap<Integer, MMatrix> dataKey, HashMap<Integer, MMatrix> dataVelocity, HashMap<Integer, MMatrix> dataTick, boolean asInput, Metadata metadata) throws InvalidMidiDataException, MatrixException {
+        Sequence sequence = new Sequence(metadata.getDivisionType(), metadata.getResolution());
         Track track = sequence.createTrack();
         long currentTick = 0;
         boolean firstEntry = true;
         for (Map.Entry<Integer, MMatrix> entry : dataKey.entrySet()) {
             int index = entry.getKey();
-            MMatrix dataKeyEntry = entry.getValue();
-            Matrix keyMatrix = dataKeyEntry.get(0);
+            Matrix keyMatrix = entry.getValue().get(0);
             Matrix velocityMatrix = dataVelocity.get(index).get(0);
             Matrix tickMatrix = dataTick.get(index).get(0);
-            int keyValue = asInput ? keyMatrix.classify().encodeToValue() : keyMatrix.argmax()[0];
-            int velocityValue = asInput ? velocityMatrix.classify().encodeToValue() : velocityMatrix.argmax()[0];
-            if (firstEntry) {
-                ShortMessage shortMessage;
-                MidiEvent midiEvent;
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.PROGRAM_CHANGE, 0, 0);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 7, 127);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 10, 58);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 1, 10);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 91, 65);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                shortMessage = new ShortMessage();
-                shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 93, 110);
-                midiEvent = new MidiEvent(shortMessage, currentTick);
-                track.add(midiEvent);
-                firstEntry = false;
-            }
-            ShortMessage shortMessage = new ShortMessage();
-            int shortMessageCode = encodeNoteOffs && keyValue == 0 && velocityValue == 0 ? ShortMessage.NOTE_OFF : ShortMessage.NOTE_ON;
-            shortMessage.setMessage(shortMessageCode, metadata.minKeyValue + keyValue, metadata.minVelocityValue + velocityValue);
-            currentTick += (long) metadata.tickValueReverseMapping.get(tickMatrix.argmax()[0]);
-            MidiEvent midiEvent = new MidiEvent(shortMessage, currentTick);
-            track.add(midiEvent);
+            currentTick = addMIDISequenceEntry(keyMatrix, velocityMatrix, tickMatrix, track, currentTick, firstEntry, asInput);
+            firstEntry = false;
         }
         return sequence;
+    }
+
+    /**
+     * Add entry to MIDI sequence
+     *
+     * @param keyMatrix key matrix
+     * @param velocityMatrix velocity matrix
+     * @param tickMatrix tick matrix
+     * @param track track
+     * @param currentTick current tick
+     * @param firstEntry if true this is first entry otherwise false
+     * @param asInput if true matrices are provided as input otherwise as output.
+     * @return current tick
+     * @throws InvalidMidiDataException if opening file fails throws exception.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private long addMIDISequenceEntry(Matrix keyMatrix, Matrix velocityMatrix, Matrix tickMatrix, Track track, long currentTick, boolean firstEntry, boolean asInput) throws MatrixException, InvalidMidiDataException {
+        int keyValue = asInput ? keyMatrix.classify().encodeToValue() : keyMatrix.argmax()[0];
+        int velocityValue = asInput ? velocityMatrix.classify().encodeToValue() : velocityMatrix.argmax()[0];
+        if (firstEntry) {
+            ShortMessage shortMessage;
+            MidiEvent midiEvent;
+            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.PROGRAM_CHANGE, 46, 0);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent);
+/*            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 7, 127);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent);
+            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 10, 58);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent);
+            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 1, 10);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent);
+            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 91, 65);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent);
+            shortMessage = new ShortMessage();
+            shortMessage.setMessage(ShortMessage.CONTROL_CHANGE, 93, 110);
+            midiEvent = new MidiEvent(shortMessage, currentTick);
+            track.add(midiEvent); */
+        }
+        ShortMessage shortMessage = new ShortMessage();
+        if (metadata.encodeNoteOffs) {
+            if (velocityValue == 0) {
+                shortMessage.setMessage(ShortMessage.NOTE_OFF, metadata.minKeyValue + keyValue - 1, 0);
+            }
+            else {
+                shortMessage.setMessage(ShortMessage.NOTE_ON, metadata.minKeyValue + keyValue - 1, metadata.minVelocityValue + velocityValue - 1);
+            }
+        }
+        else shortMessage.setMessage(ShortMessage.NOTE_ON, metadata.minKeyValue + keyValue, metadata.minVelocityValue + velocityValue);
+        currentTick += metadata.tickValueReverseMapping.get(tickMatrix.argmax()[0]);
+        MidiEvent midiEvent = new MidiEvent(shortMessage, currentTick);
+        track.add(midiEvent);
+        return currentTick;
     }
 
     /**
@@ -531,8 +677,8 @@ public class ReadMIDI {
      * @param sequence sequence
      * @param playTime play time before stopping.
      * @param wait if true waits given play time before stopping otherwise returns function after starts playing.
-     * @throws MidiUnavailableException throws exception is playing fails.
-     * @throws InvalidMidiDataException throws exception is playing fails.
+     * @throws MidiUnavailableException throws exception if playing fails.
+     * @throws InvalidMidiDataException throws exception if playing fails.
      * @return sequencer
      */
     public Sequencer play(Sequence sequence, int playTime, boolean wait) throws MidiUnavailableException, InvalidMidiDataException {
