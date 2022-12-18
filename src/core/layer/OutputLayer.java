@@ -8,7 +8,6 @@ package core.layer;
 import core.loss.LossFunction;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
-import utils.matrix.JMatrix;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -33,22 +32,10 @@ public class OutputLayer extends AbstractPlainLayer {
     private final LossFunction lossFunction;
 
     /**
-     * Neural network loss functions for output layer (multi-output case).
-     *
-     */
-    private final ArrayList<LossFunction> lossFunctions = new ArrayList<>();
-
-    /**
-     * If true output layer has multiple outputs otherwise single output.
-     *
-     */
-    private final boolean multiOutput;
-
-    /**
      * Neural network output error.
      *
      */
-    private transient Matrix error;
+    private transient Matrix loss;
 
     /**
      * Target (actual true) output values for error calculation in training phase.
@@ -79,22 +66,16 @@ public class OutputLayer extends AbstractPlainLayer {
     public OutputLayer(int layerIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
         super(layerIndex, null);
         this.lossFunction = lossFunction;
-        this.multiOutput = false;
     }
 
     /**
-     * Constructor for output layer.
+     * Sets reference to next neural network layer.
      *
-     * @param layerIndex index of layer.
-     * @param lossFunctions loss functions for output layer.
-     * @throws NeuralNetworkException throws exception if setting of activation function fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param nextLayer reference to next neural network layer.
+     * @throws NeuralNetworkException throws exception if next layer is attempted to be added to output layer.
      */
-    public OutputLayer(int layerIndex, ArrayList<LossFunction> lossFunctions) throws NeuralNetworkException, DynamicParamException {
-        super(layerIndex, null);
-        this.lossFunction = null;
-        this.lossFunctions.addAll(lossFunctions);
-        this.multiOutput = true;
+    public void addNextLayer(NeuralNetworkLayer nextLayer) throws NeuralNetworkException {
+        throw new NeuralNetworkException("Output layer cannot have next layers.");
     }
 
     /**
@@ -102,18 +83,9 @@ public class OutputLayer extends AbstractPlainLayer {
      *
      */
     public void initializeDimensions() {
-        setLayerWidth(getPreviousLayer().getLayerWidth());
-        setLayerHeight(getPreviousLayer().getLayerHeight());
-        setLayerDepth(getPreviousLayer().getLayerDepth());
-    }
-
-    /**
-     * Returns if output layer has multiple outputs.
-     *
-     * @return if true output layer has multiple outputs otherwise single output.
-     */
-    public boolean isMultiOutput() {
-        return multiOutput;
+        setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
+        setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
+        setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
     }
 
     /**
@@ -141,7 +113,7 @@ public class OutputLayer extends AbstractPlainLayer {
      * @return outputs of neural network layer.
      */
     public Sequence getLayerOutputs() {
-        return getPreviousLayer().getLayerOutputs();
+        return getDefaultLayerInput();
     }
 
     /**
@@ -151,36 +123,20 @@ public class OutputLayer extends AbstractPlainLayer {
      */
     public void forwardProcess() throws MatrixException {
         if (targets == null || targets.isEmpty() || !training) return;
-        error = null;
+        loss = null;
         for (Map.Entry<Integer, MMatrix> entry : targets.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix target = entry.getValue();
-            MMatrix sample = getLayerOutputs().get(sampleIndex);
+            MMatrix output = getLayerOutputs().get(sampleIndex);
             int depth = target.getDepth();
             for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                Matrix currentTargets = target.get(depthIndex);
-                Matrix currentOutputs = sample.get(depthIndex);
-                Matrix outputError;
-                if (multiOutput) {
-                    if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");
-                    ArrayList<Matrix> totalError = new ArrayList<>();
-                    int lossFunctionsSize = lossFunctions.size();
-                    for (int index = 0; index < lossFunctionsSize; index++) {
-                        LossFunction lossFunction = lossFunctions.get(index);
-                        Matrix subOutputs = currentOutputs.getSubMatrices().get(index);
-                        Matrix subTargets = currentTargets.getSubMatrices().get(index);
-                        Matrix subOutputError = lossFunction.getError(subOutputs, subTargets);
-                        totalError.add(subOutputError);
-                    }
-                    outputError = new JMatrix(totalError, true);
-                }
-                else {
-                    outputError = lossFunction.getError(currentOutputs, currentTargets);
-                }
-                error = error == null ? outputError : error.add(outputError);
+                Matrix currentTarget = target.get(depthIndex);
+                Matrix currentOutput = output.get(depthIndex);
+                Matrix currentLoss = lossFunction.getError(currentOutput, currentTarget);
+                loss = loss == null ? currentLoss : loss.add(currentLoss);
             }
         }
-        error = LossFunction.getMeanError(error, targets.totalSize());
+        loss = LossFunction.getMeanError(loss, targets.totalSize());
     }
 
     /**
@@ -200,39 +156,23 @@ public class OutputLayer extends AbstractPlainLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void backwardProcess() throws MatrixException {
-        Sequence outputGradients = new Sequence();
+        Sequence lossGradients = new Sequence();
         for (Map.Entry<Integer, MMatrix> entry : targets.entrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix target = entry.getValue();
             int depth = target.getDepth();
-            MMatrix sample = getLayerOutputs().get(sampleIndex);
-            MMatrix gradient = new MMatrix(depth);
+            MMatrix output = getLayerOutputs().get(sampleIndex);
+            MMatrix totalLossGradient = new MMatrix(depth);
             for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                Matrix currentTargets = target.get(depthIndex);
-                Matrix currentOutputs = sample.get(depthIndex);
-                Matrix outputGradient;
-                if (multiOutput) {
-                    if (currentOutputs.getSubMatrices().size() != lossFunctions.size()) throw new MatrixException("Number of outputs is not matching with number of loss functions");
-                    ArrayList<Matrix> totalGradient = new ArrayList<>();
-                    int lossFunctionsSize = lossFunctions.size();
-                    for (int index = 0; index < lossFunctionsSize; index++) {
-                        LossFunction lossFunction = lossFunctions.get(index);
-                        Matrix subOutputs = currentOutputs.getSubMatrices().get(index);
-                        Matrix subTargets = currentTargets.getSubMatrices().get(index);
-                        Matrix subOutputGradient = lossFunction.getGradient(subOutputs, subTargets);
-                        totalGradient.add(subOutputGradient);
-                    }
-                    outputGradient = new JMatrix(totalGradient, true);
-                }
-                else {
-                    outputGradient = lossFunction.getGradient(currentOutputs, currentTargets);
-                }
-                if (importanceSamplingWeights != null) outputGradient.multiply(importanceSamplingWeights.get(depthIndex), outputGradient);
-                gradient.put(depthIndex, outputGradient);
+                Matrix currentTarget = target.get(depthIndex);
+                Matrix currentOutput = output.get(depthIndex);
+                Matrix lossGradient = lossFunction.getGradient(currentOutput, currentTarget);
+                if (importanceSamplingWeights != null) lossGradient.multiply(importanceSamplingWeights.get(depthIndex), lossGradient);
+                totalLossGradient.put(depthIndex, lossGradient);
             }
-            outputGradients.put(sampleIndex, gradient);
+            lossGradients.put(sampleIndex, totalLossGradient);
         }
-        setLayerGradients(outputGradients);
+        getDefaultLayerInputGradient().increment(lossGradients);
     }
 
     /**
@@ -252,7 +192,7 @@ public class OutputLayer extends AbstractPlainLayer {
      * @return cumulated error from regularization.
      */
     public double error() throws MatrixException, DynamicParamException {
-        return hasPreviousLayer() ? getPreviousLayer().error() / (double)targets.totalSize() : 0;
+        return hasPreviousLayers() ? getDefaultPreviousLayer().error() / (double)targets.totalSize() : 0;
     }
 
     /**
@@ -263,7 +203,7 @@ public class OutputLayer extends AbstractPlainLayer {
      * @return total error of neural network.
      */
     public double getTotalError() throws MatrixException, DynamicParamException {
-        return (error == null || targets == null) ? 0 : (isMultiOutput() ? LossFunction.getAbsoluteError(error, lossFunctions) : lossFunction.getAbsoluteError(error)) + error();
+        return (loss == null || targets == null) ? 0 : lossFunction.getAbsoluteError(loss) + error();
     }
 
     /**
@@ -272,12 +212,18 @@ public class OutputLayer extends AbstractPlainLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void print() throws NeuralNetworkException {
-        if (!multiOutput) System.out.println(getLayerName() + " [ Loss function: " + lossFunction.getName() + " ]");
-        else {
-            System.out.print(getLayerName() + " [ Loss functions: ");
-            for (LossFunction lossFunction : lossFunctions) System.out.print(lossFunction.getName() + " ");
-            System.out.println("]");
-        }
+        System.out.println(getLayerName() + " [ " + getLayerConnections() + ", Loss function: " + lossFunction.getName() + " ]");
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerConnections() {
+        ArrayList<Integer> inputLayerList = new ArrayList<>();
+        for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) inputLayerList.add(previousLayer.getLayerIndex());
+        return "Connect from layers: " + (!inputLayerList.isEmpty() ? inputLayerList : "N/A");
     }
 
 }
