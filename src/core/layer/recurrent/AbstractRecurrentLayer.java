@@ -20,9 +20,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     /**
      * Parameter name types for abstract recurrent layer.
      *     - truncateSteps: number of sequence steps taken in backpropagation phase (default -1 i.e. not used).<br>
+     *     - reversedInput: if true layer input is reversed otherwise not. Default value false.<br>
      *
      */
-    private final static String paramNameTypes = "(truncateSteps:INT)";
+    private final static String paramNameTypes = "(truncateSteps:INT), " +
+            "(reversedInput:BOOLEAN)";
 
     /**
      * Limits number of backward propagation sequence steps.
@@ -31,24 +33,22 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     protected int truncateSteps;
 
     /**
-     * If true recurrent layer is bidirectional otherwise false
+     * If true input is reversed for the layer.
      *
      */
-    private final boolean isBirectional;
+    private boolean reversedInput;
 
     /**
      * Constructor for abstract recurrent layer.
      *
      * @param layerIndex layer index
      * @param initialization initialization function.
-     * @param isBirectional if true recurrent layer is bidirectional otherwise false
      * @param params parameters for neural network layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    protected AbstractRecurrentLayer(int layerIndex, Initialization initialization, boolean isBirectional, String params) throws DynamicParamException, NeuralNetworkException {
+    protected AbstractRecurrentLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
-        this.isBirectional = isBirectional;
     }
 
     /**
@@ -58,6 +58,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         truncateSteps = -1;
+        reversedInput = false;
     }
 
     /**
@@ -74,6 +75,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - truncateSteps: number of sequence steps taken in backpropagation phase (default -1 i.e. not used).<br>
+     *     - reversedInput: if true layer input is reversed otherwise not. Default value false.<br>
      *
      * @param params parameters used for abstract recurrent layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -85,6 +87,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
             truncateSteps = params.getValueAsInteger("truncateSteps");
             if (truncateSteps < 0) throw new NeuralNetworkException("Truncate steps cannot be less than 0.");
         }
+        if (params.hasParam("reversedInput")) reversedInput = params.getValueAsBoolean("reversedInput");
     }
 
     /**
@@ -104,13 +107,11 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Check if layer is bidirectional.
+     * Check if layer input is reversed.
      *
-     * @return true if layer is bidirectional otherwise returns false.
+     * @return if true input layer input is reversed otherwise not.
      */
-    public boolean isBidirectional() {
-        return isBirectional;
-    }
+    public boolean isReversedInput() { return reversedInput; }
 
     /**
      * Returns true if input is joined otherwise returns false.
@@ -127,7 +128,7 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @return width of neural network layer.
      */
     public int getLayerWidth() {
-        return getInternalLayerWidth() * (!isBidirectional() ? 1 : 2);
+        return getInternalLayerWidth();
     }
 
     /**
@@ -154,7 +155,16 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
      * @return number of layer parameters.
      */
     protected int getNumberOfParameters() {
-        return getWeightSet().getNumberOfParameters() * (!isBidirectional() ? 1 : 2);
+        return getWeightSet().getNumberOfParameters();
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerDetailsByName() {
+        return "Reversed input: " + (isReversedInput() ? "Yes" : "No");
     }
 
 }
