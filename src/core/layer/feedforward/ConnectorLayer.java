@@ -1,16 +1,20 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
+ */
+
 package core.layer.feedforward;
 
 import core.layer.AbstractExecutionLayer;
+import core.layer.NeuralNetworkLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
@@ -23,12 +27,10 @@ public class ConnectorLayer extends AbstractExecutionLayer {
 
     /**
      * Parameter name types for connector layer.
-     *     - inputLayers: list of connected previous layers.<br>
-     *     - joinPreviousLayerInputs: if true join outputs of previous layers otherwise connects via weights and summation. Default value false.<br>
+     *     - joinInputs: if true join outputs of previous layers otherwise connects via weights and summation. Default value false.<br>
      *
      */
-    private final static String paramNameTypes = "(inputLayers:LIST), " +
-            "(joinPreviousLayerInputs:BOOLEAN)";
+    private final static String paramNameTypes = "(joinInputs:BOOLEAN)";
 
     /**
      * Implements weight set for layer.
@@ -43,7 +45,7 @@ public class ConnectorLayer extends AbstractExecutionLayer {
          * Other input weight matrices.
          *
          */
-        private final ArrayList<Matrix> otherInputWeights = new ArrayList<>();
+        private final TreeMap<Integer, Matrix> previousInputWeights = new TreeMap<>();
 
         /**
          * Set of weights.
@@ -56,17 +58,24 @@ public class ConnectorLayer extends AbstractExecutionLayer {
          *
          * @param initialization weight initialization function.
          * @param layerWidth width of current layer.
-         * @param inputLayerWidths width of previous connection layer.
-         * @param joinPreviousLayerInputs if true input and previous connect input are joined otherwise previous connect layer input is added through dedicated weight.
+         * @param previousLayers input layers.
+         * @param joinInputs if true input and previous connect input are joined otherwise previous connect layer input is added through dedicated weight.
          */
-        ConnectorWeightSet(Initialization initialization, int layerWidth, ArrayList<Integer> inputLayerWidths, boolean joinPreviousLayerInputs) {
-            if (!inputLayerWidths.isEmpty() && !joinPreviousLayerInputs) {
-                for (Integer inputLayerWidth : inputLayerWidths) {
-                    Matrix otherInputWeight = new DMatrix(layerWidth, inputLayerWidth, initialization);
-                    otherInputWeight.setName("PreviousConnectWeight");
-                    weights.add(otherInputWeight);
-                    registerWeight(otherInputWeight, false, false);
-                    otherInputWeights.add(otherInputWeight);
+        ConnectorWeightSet(Initialization initialization, int layerWidth, TreeMap<Integer, NeuralNetworkLayer> previousLayers, boolean joinInputs) {
+            if (isJoinedInput() && getLayerWidth() != getPreviousLayerTotalWidth()) {
+                Matrix previousInputWeight = new DMatrix(layerWidth, getPreviousLayerTotalWidth(), initialization);
+                previousInputWeight.setName("JoinedInputWeight");
+                weights.add(previousInputWeight);
+                registerWeight(previousInputWeight, false, false);
+                previousInputWeights.put(0, previousInputWeight);
+            }
+            if (!joinInputs) {
+                for (Map.Entry<Integer, NeuralNetworkLayer> entry : previousLayers.entrySet()) {
+                    Matrix previousInputWeight = new DMatrix(layerWidth, entry.getValue().getLayerWidth(), initialization);
+                    previousInputWeight.setName("InputWeight" + entry.getValue().getLayerIndex());
+                    weights.add(previousInputWeight);
+                    registerWeight(previousInputWeight, false, false);
+                    previousInputWeights.put(entry.getKey(), previousInputWeight);
                 }
             }
         }
@@ -85,7 +94,7 @@ public class ConnectorLayer extends AbstractExecutionLayer {
          *
          */
         public void reinitialize() {
-            for (Matrix otherInputWeight : otherInputWeights) otherInputWeight.initialize(initialization);
+            for (Matrix weight : weights) weight.initialize(initialization);
         }
 
         /**
@@ -108,16 +117,10 @@ public class ConnectorLayer extends AbstractExecutionLayer {
     protected ConnectorWeightSet weightSet;
 
     /**
-     * Indices of other input layers.
-     *
-     */
-    private ArrayList<Integer> inputLayerList;
-
-    /**
      * If true previous layer inputs are joined otherwise previous layer inputs are added through dedicated weights.
      *
      */
-    private boolean joinPreviousLayerInputs;
+    private boolean joinInputs;
 
     /**
      * Input matrix for procedure construction.
@@ -146,13 +149,44 @@ public class ConnectorLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Initializes neural network layer dimensions.
+     *
+     */
+    public void initializeDimensions() {
+        if (getLayerWidth() == -1) {
+            setLayerWidth(isJoinedInput() ? getPreviousLayerTotalWidth() : getDefaultPreviousLayer().getLayerWidth());
+            setLayerHeight(1);
+            setLayerDepth(1);
+        }
+    }
+
+    /**
+     * Returns total width of previous layers.
+     *
+     * @return total width of previous layers.
+     */
+    private int getPreviousLayerTotalWidth() {
+        int totalPreviousLayerWidth = 0;
+        for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) totalPreviousLayerWidth += previousLayer.getLayerWidth();
+        return totalPreviousLayerWidth;
+    }
+
+    /**
+     * Checks if layer can have multiple previous layers.
+     *
+     * @return  if true layer can have multiple previous layers otherwise false.
+     */
+    public boolean canHaveMultiplePreviousLayers() {
+        return true;
+    }
+
+    /**
      * Initializes default params.
      *
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        inputLayerList = new ArrayList<>();
-        joinPreviousLayerInputs = false;
+        joinInputs = false;
     }
 
     /**
@@ -168,8 +202,7 @@ public class ConnectorLayer extends AbstractExecutionLayer {
      * Sets parameters used for connector layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - inputLayers: list of connected previous layers.<br>
-     *     - joinPreviousLayerInputs: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
+     *     - joinInputs: if true join inputs of previous layers otherwise connects via weight and summation. Default value false.<br>
      *
      * @param params parameters used for connector layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -177,16 +210,8 @@ public class ConnectorLayer extends AbstractExecutionLayer {
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("inputLayers")) {
-            String[] inputLayers = params.getValueAsList("inputLayers");
-            for (String inputLayerIndexString : inputLayers) {
-                int inputLayerIndex = Integer.parseInt(inputLayerIndexString);
-                if (inputLayerIndex < 0 || inputLayerIndex > getLayerIndex() - 2) throw new DynamicParamException("Previous connect layer index must be positive value and connection must be created from a layer having index at least 2 smaller than this layer: " + getLayerIndex());
-                inputLayerList.add(inputLayerIndex);
-            }
-        }
-        if (params.hasParam("joinPreviousLayerInputs")) {
-            joinPreviousLayerInputs = params.getValueAsBoolean("joinPreviousLayerInputs");
+        if (params.hasParam("joinInputs")) {
+            joinInputs = params.getValueAsBoolean("joinInputs");
         }
     }
 
@@ -207,21 +232,12 @@ public class ConnectorLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns true if input is joined otherwise returns false.
      *
      * @return true if input is joined otherwise returns false.
      */
     protected boolean isJoinedInput() {
-        return joinPreviousLayerInputs;
+        return joinInputs;
     }
 
     /**
@@ -234,44 +250,11 @@ public class ConnectorLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns width of neural network layer.
-     *
-     * @return width of neural network layer.
-     */
-    public int getLayerWidth()  {
-        if (!isJoinedInput()) return getPreviousLayerWidth();
-        else {
-            int otherLayerWidth = 0;
-            for (Integer otherLayer : inputLayerList) otherLayerWidth += getPreviousLayerWidth(otherLayer);
-            return getPreviousLayerWidth() + otherLayerWidth;
-        }
-    }
-
-    /**
      * Initializes neural network layer weights.
      *
      */
     public void initializeWeights() {
-        weightSet = new ConnectorWeightSet(initialization, getLayerWidth(), getOtherLayerInputWidths(), joinPreviousLayerInputs);
-    }
-
-    /**
-     * Returns other layer input widths.
-     *
-     * @return other layer input widths.
-     */
-    private ArrayList<Integer> getOtherLayerInputWidths() {
-        ArrayList<Integer> otherLayerInputWidths = new ArrayList<>();
-        for (Integer otherLayerIndex : inputLayerList) otherLayerInputWidths.add(getPreviousLayerWidth(otherLayerIndex));
-        return otherLayerInputWidths;
-    }
-
-    /**
-     * Adds other input layers.
-     *
-     */
-    protected void addOtherInputLayers() {
-        for (Integer otherLayerIndex : inputLayerList) addInputSequence(otherLayerIndex);
+        weightSet = new ConnectorWeightSet(initialization, getLayerWidth(), getPreviousLayers(), joinInputs);
     }
 
     /**
@@ -284,13 +267,13 @@ public class ConnectorLayer extends AbstractExecutionLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
-        ArrayList<Matrix> inputMatrices = new ArrayList<>();
-        for (Integer inputLayerIndex : getInputLayerIndices()) {
-            Matrix input = new DMatrix(getPreviousLayerWidth(inputLayerIndex), 1, Initialization.ONE);
-            input = handleBidirectionalInput(input, inputLayerIndex);
-            input.setName("Input" + inputLayerIndex);
-            inputMatrices.add(input);
+        TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
+            Matrix input = new DMatrix(entry.getValue().getLayerWidth(), 1, Initialization.ONE);
+            input.setName("Input" + entry.getValue().getLayerIndex());
+            inputMatrices.put(entry.getKey(), input);
         }
+
         if (isJoinedInput()) {
             if (inputMatrices.size() == 1) inputs.put(0, new MMatrix(inputMatrices.get(0)));
             else {
@@ -320,19 +303,13 @@ public class ConnectorLayer extends AbstractExecutionLayer {
      */
     public MMatrix getForwardProcedure() throws MatrixException {
         Matrix output = null;
-        if (!inputLayerList.isEmpty()) {
-            if (isJoinedInput()) {
-                output = inputs.get(0).get(0).apply(equalFunction);
-            }
-            else {
-                for (Map.Entry<Integer, MMatrix> entry : inputs.entrySet()) {
-                    if (entry.getKey() == 0) output = entry.getValue().get(0);
-                    else output = output == null ? entry.getValue().get(0) : output.add(weightSet.otherInputWeights.get(entry.getKey() - 1).dot(entry.getValue().get(0)));
-                }
-            }
+        if (isJoinedInput()) {
+            output = getLayerWidth() == getPreviousLayerTotalWidth() ? inputs.get(0).get(0).apply(equalFunction) : weightSet.previousInputWeights.get(0).dot(inputs.get(0).get(0));
         }
         else {
-            output = inputs.get(0).get(0).apply(equalFunction);
+            for (Map.Entry<Integer, MMatrix> entry : inputs.entrySet()) {
+                output = output == null ? weightSet.previousInputWeights.get(entry.getKey()).dot(entry.getValue().get(0)) : output.add(weightSet.previousInputWeights.get(entry.getKey()).dot(entry.getValue().get(0)));
+            }
         }
 
         if (output != null) output.setName("Output");
@@ -375,7 +352,7 @@ public class ConnectorLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "Connect from previous layers: " + (!inputLayerList.isEmpty() ? inputLayerList : "N/A") + ", Join previous layer inputs: " + (isJoinedInput() ? "Yes" : "No");
+        return "";
     }
 
 
