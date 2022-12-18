@@ -6,7 +6,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -207,15 +206,6 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns true if input is joined otherwise returns false.
      *
      * @return true if input is joined otherwise returns false.
@@ -238,15 +228,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new DuelingWeightSet(initialization, getPreviousLayerWidth(), getLayerWidth(), regulateDirectWeights);
-    }
-
-    /**
-     * Adds other input layers.
-     *
-     */
-    protected void addOtherInputLayers() {
-        addInputSequence(getLayerIndex() - 1);
+        weightSet = new DuelingWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights);
     }
 
     /**
@@ -259,15 +241,9 @@ public class DuelingLayer extends AbstractExecutionLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
-        Matrix valueInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
-        valueInput = handleBidirectionalInput(valueInput);
-        valueInput.setName("ValueInput");
-        inputs.put(0, new MMatrix(valueInput));
-
-        Matrix actionInput = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
-        actionInput = handleBidirectionalInput(actionInput);
-        actionInput.setName("ActionInput");
-        inputs.put(1, new MMatrix(actionInput));
+        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
+        inputs.put(0, new MMatrix(input));
 
         return inputs;
     }
@@ -282,7 +258,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
         Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0).get(0));
         valueOutput = valueOutput.add(weightSet.valueBias);
 
-        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(1).get(0));
+        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0).get(0));
         actionOutput = actionOutput.add(weightSet.actionBias);
 
         Matrix output = valueOutput.add(actionOutput.subtract(actionOutput.meanAsMatrix()));
@@ -327,7 +303,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "N/A";
+        return "";
     }
 
 }
