@@ -124,14 +124,6 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns size of online memory.
-     *
-     */
-    public int size() {
-        return stateTransitionSet.size();
-    }
-
-    /**
      * Adds state transition into online memory. Removes old ones exceeding memory capacity by FIFO principle.
      *
      * @param stateTransition state transition to be stored.

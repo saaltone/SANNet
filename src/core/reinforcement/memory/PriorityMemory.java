@@ -213,14 +213,6 @@ public class PriorityMemory implements Memory, Serializable {
     }
 
     /**
-     * Returns current size of search tree.
-     *
-     */
-    public int size() {
-        return searchTree.size();
-    }
-
-    /**
      * Adds sample into prioritized replay memory. Removes old ones exceeding memory capacity by FIFO principle.
      *
      * @param stateTransition state transition to be stored.

@@ -26,13 +26,6 @@ public interface Memory extends Configurable {
     Memory reference() throws DynamicParamException;
 
     /**
-     * Returns size of memory.
-     *
-     * @return size of memory.
-     */
-    int size();
-
-    /**
      * Adds state transition into memory.
      *
      * @param stateTransition sample to be stored.

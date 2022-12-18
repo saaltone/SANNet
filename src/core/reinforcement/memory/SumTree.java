@@ -366,7 +366,7 @@ public class SumTree implements SearchTree, Serializable {
      *
      * @return total capacity of sum tree.
      */
-    public int capacity() {
+    private int capacity() {
         return capacity;
     }
 

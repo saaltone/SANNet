@@ -21,13 +21,6 @@ public interface SearchTree {
     int size();
 
     /**
-     * Returns total capacity of search tree.
-     *
-     * @return total capacity of search tree.
-     */
-    int capacity();
-
-    /**
      * Returns total priority of search tree.
      *
      * @return total priority of search tree.
