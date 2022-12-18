@@ -7,7 +7,9 @@ package demo;
 
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.network.EarlyStopping;
 import core.network.NeuralNetwork;
+import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
 import core.optimization.OptimizationType;
 import core.preprocess.DataSplitter;
@@ -18,6 +20,7 @@ import utils.sampling.BasicSampler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.TreeMap;
 
 /**
  * Creates two instances of neural network.<br>
@@ -59,7 +62,7 @@ public class SimpleDemo {
                 inputData.setValue(1, 0, (double)input2 / 100);
 
                 for (NeuralNetwork neuralNetwork : neuralNetworks) {
-                    Matrix outputData = neuralNetwork.predict(inputData);
+                    Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, inputData); }}).get(0);
                     int predictedOutput = (int)(outputData.getValue(0, 0) * 100);
                     System.out.println(neuralNetwork.getNeuralNetworkName() + ": " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
                 }
@@ -80,15 +83,15 @@ public class SimpleDemo {
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setAutoValidate(5);
         neuralNetwork.verboseValidation();
-//        neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
+        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping("trainingStopThreshold = 100, validationStopThreshold = 100")); }});
         neuralNetwork.start();
         if (print) {
             neuralNetwork.print();
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
         }
-        neuralNetwork.setTrainingData(new BasicSampler(data.get(0), data.get(1), "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 2500"));
-        neuralNetwork.setValidationData(new BasicSampler(data.get(2), data.get(3), "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
+        neuralNetwork.setTrainingData(new BasicSampler(new HashMap<>() {{ put(0, data.get(0)); }}, new HashMap<>() {{ put(0, data.get(1)); }}, "randomOrder = false, shuffleSamples = true, sampleSize = 100, numberOfIterations = 2500"));
+        neuralNetwork.setValidationData(new BasicSampler(new HashMap<>() {{ put(0, data.get(2)); }}, new HashMap<>() {{ put(0, data.get(3)); }}, "randomOrder = false, shuffleSamples = true, sampleSize = " + data.get(2).size()));
 
     }
 
@@ -104,15 +107,21 @@ public class SimpleDemo {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 20");
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addHiddenLayer(LayerType.CONNECTOR, "inputLayers = [0; 1], joinPreviousLayerInputs = true");
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
-        neuralNetwork.build();
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayersSerially();
+        neuralNetworkConfiguration.connectLayers(1, 4);
+
+        neuralNetwork.build(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         return neuralNetwork;
     }
