@@ -51,12 +51,6 @@ public class LayerFactory {
             case GRAVESLSTM -> new GravesLSTMLayer(layerIndex, activationFunction, initialization, params);
             case GRU -> new GRULayer(layerIndex, initialization, params);
             case MINGRU -> new MinGRULayer(layerIndex, initialization, params);
-            case BIRECURRENT -> new BiRecurrentLayer(layerIndex, activationFunction, initialization, params);
-            case BILSTM -> new BiLSTMLayer(layerIndex, activationFunction, initialization, params);
-            case BIPEEPHOLELSTM -> new BiPeepholeLSTMLayer(layerIndex, activationFunction, initialization, params);
-            case BIGRAVESLSTM -> new BiGravesLSTMLayer(layerIndex, activationFunction, initialization, params);
-            case BIGRU -> new BiGRULayer(layerIndex, initialization, params);
-            case BIMINGRU -> new BiMinGRULayer(layerIndex, initialization, params);
             case CONVOLUTION -> new ConvolutionLayer(layerIndex, activationFunction, initialization, params);
             case CROSSCORRELATION -> new CrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
             case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
@@ -98,12 +92,6 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(GravesLSTMLayer.class)) return LayerType.GRAVESLSTM;
         if (neuralNetworkLayer.getClass().equals(GRULayer.class)) return LayerType.GRU;
         if (neuralNetworkLayer.getClass().equals(MinGRULayer.class)) return LayerType.MINGRU;
-        if (neuralNetworkLayer.getClass().equals(BiRecurrentLayer.class)) return LayerType.BIRECURRENT;
-        if (neuralNetworkLayer.getClass().equals(BiLSTMLayer.class)) return LayerType.BILSTM;
-        if (neuralNetworkLayer.getClass().equals(BiPeepholeLSTMLayer.class)) return LayerType.BIPEEPHOLELSTM;
-        if (neuralNetworkLayer.getClass().equals(BiGravesLSTMLayer.class)) return LayerType.BIGRAVESLSTM;
-        if (neuralNetworkLayer.getClass().equals(BiGRULayer.class)) return LayerType.BIGRU;
-        if (neuralNetworkLayer.getClass().equals(BiMinGRULayer.class)) return LayerType.BIMINGRU;
         if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return LayerType.CONVOLUTION;
         if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return LayerType.CROSSCORRELATION;
         if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return LayerType.WINOGRAD_CONVOLUTION;
@@ -145,12 +133,6 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(GravesLSTMLayer.class)) return "GRAVESLSTM";
         if (neuralNetworkLayer.getClass().equals(GRULayer.class)) return "GRU";
         if (neuralNetworkLayer.getClass().equals(MinGRULayer.class)) return "MINGRU";
-        if (neuralNetworkLayer.getClass().equals(BiRecurrentLayer.class)) return "BIRECURRENT";
-        if (neuralNetworkLayer.getClass().equals(BiLSTMLayer.class)) return "BILSTM";
-        if (neuralNetworkLayer.getClass().equals(BiPeepholeLSTMLayer.class)) return "BIPEEPHOLELSTM";
-        if (neuralNetworkLayer.getClass().equals(BiGravesLSTMLayer.class)) return "BIGRAVESLSTM";
-        if (neuralNetworkLayer.getClass().equals(BiGRULayer.class)) return "BIGRU";
-        if (neuralNetworkLayer.getClass().equals(BiMinGRULayer.class)) return "BIMINGRU";
         if (neuralNetworkLayer.getClass().equals(ConvolutionLayer.class)) return "CONVOLUTION";
         if (neuralNetworkLayer.getClass().equals(CrosscorrelationLayer.class)) return "CROSSCORRELATION";
         if (neuralNetworkLayer.getClass().equals(WinogradConvolutionLayer.class)) return "WINOGRAD_CONVOLUTION";
