@@ -6,6 +6,7 @@
 package demo;
 
 import core.network.NeuralNetwork;
+import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
@@ -789,7 +790,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "agentUpdateCycle = 10";
+            case QN -> "agentUpdateCycle = 1, learningRate = 0.001";
             case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, batchSize = 128, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01, agentUpdateCycle = 10";
             case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
@@ -813,22 +814,28 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     /**
      * Builds neural network for Tic-Tac-Toe player (agent).
      *
+     * @param inputSize input size of neural network (number of states).
      * @param outputSize output size of neural network (number of actions and their values).
+     * @param policyGradient if true neural network is policy gradient network.
      * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + (outputSize + (!policyGradient ? (stateValue ? 1 : 0) : 0)));
-        if (!policyGradient && applyDueling) neuralNetwork.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
-        neuralNetwork.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
-        neuralNetwork.build();
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        if (!policyGradient && applyDueling) neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+        neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
+        neuralNetworkConfiguration.connectLayersSerially();
+
+        neuralNetwork.build(neuralNetworkConfiguration);
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         if (!policyGradient) neuralNetwork.verboseTraining(10);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
@@ -846,13 +853,22 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + (outputSize + 1) + ", splitOutputAtPosition = 1");
-        neuralNetwork.addOutputLayer(new BinaryFunctionType[] {BinaryFunctionType.MEAN_SQUARED_ERROR,BinaryFunctionType.DIRECT_GRADIENT});
-        neuralNetwork.verboseTraining(1);
-        neuralNetwork.build();
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        neuralNetworkConfiguration.connectLayersSerially();
+
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayers(2, 5);
+        neuralNetworkConfiguration.connectLayers(5, 6);
+
+        neuralNetwork.build(neuralNetworkConfiguration);
+        neuralNetwork.verboseTraining(10);
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
         return neuralNetwork;
