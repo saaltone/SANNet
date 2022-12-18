@@ -51,6 +51,17 @@ public class JMatrix extends ComputableMatrix {
      * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
+    public JMatrix(TreeMap<Integer, Matrix> matrices, boolean joinedVertically) throws MatrixException {
+        this(new ArrayList<>(matrices.values()), joinedVertically);
+    }
+
+    /**
+     * Constructor for joined matrix.
+     *
+     * @param matrices matrices contained by joined matrix.
+     * @param joinedVertically true if matrices are joined vertically otherwise matrices are joined horizontally.
+     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
+     */
     public JMatrix(ArrayList<Matrix> matrices, boolean joinedVertically) throws MatrixException {
         super(joinedVertically ? matrices.stream().mapToInt(Matrix::getTotalRows).sum() : matrices.get(0).getTotalRows(), joinedVertically ? matrices.get(0).getTotalColumns() : matrices.stream().mapToInt(Matrix::getTotalColumns).sum(), false);
 

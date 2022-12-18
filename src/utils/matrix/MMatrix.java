@@ -10,7 +10,10 @@ import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Implements multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
@@ -1340,6 +1343,19 @@ public class MMatrix implements Cloneable, Serializable {
             }
         }
         return unjoinedMMatrices;
+    }
+
+    /**
+     * Creates multi-matrices out of matrices.
+     *
+     * @param matrices matrices
+     * @return multi-matrices.
+     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
+     */
+    public static TreeMap<Integer, MMatrix> getMMatrices(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        TreeMap<Integer, MMatrix> mMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) mMatrices.put(entry.getKey(), new MMatrix(entry.getValue()));
+        return mMatrices;
     }
 
 }
