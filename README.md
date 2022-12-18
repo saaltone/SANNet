@@ -3,14 +3,20 @@
 ## Background
 SANNet is an artificial neural network framework that provides functionalities to build multi-layer neural networks. It has been born from long term interest towards artificial neural networks and curiosity to understand their inner workings.
 
-Framework's primary components are neural network instance, input layer, variable number of hidden layers and output layer. Neural network instance and layers run in their dedicated threads to enable concurrency between multiple neural network instances.
+Framework's primary components are neural network instance with variable number of input, hidden and output layers. Neural network instance and layers run in their dedicated threads to enable concurrency between multiple neural network instances. Framework allows to define multiple parallel input, hidden and output layers using flexible neural network configuration instance.
 
 SANNet is written on Java and has been built from ground up starting from implementation of matrix library and functions. 
 
 ## Layers, activation and loss functions
-Framework provides feedforward (with option for additional connections to earlier layers) / dense (with option for additional connections to earlier layers) / activation and flattening layers, connector layer to create connection from previous layers, unidirectional and bidirectional recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) and convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer). All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
+Framework provides
+- feedforward / dense / activation layers,
+- connector layer to create connections from multiple previous layers,
+- recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers,
+- convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer) and
+- flattening layer for convolutional layers.
+All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
 
-Framework supports multiple layer activation functions and loss functions for output layer. Multiple parallel loss functions with single splitted output can be used at output layer. Additionally there are multiple initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations.
+Framework supports multiple layer activation functions for hidden layers and loss functions for output layer. Multiple layer initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations are available.
 
 ## Reinforcement learning
 Framework implements deep reinforcement learning agent that communicates with environment through defined interface. Deep agent learns via experience by taking actions through environment states and receiving rewards.
