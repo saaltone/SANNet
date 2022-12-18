@@ -9,8 +9,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
-import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -47,13 +45,13 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * Input sample set for sampling.
      *
      */
-    private final HashMap<Integer, Sequence> inputs = new HashMap<>();
+    private final HashMap<Integer, HashMap<Integer, Sequence>> inputs = new HashMap<>();
 
     /**
      * Output sample set for sampling.
      *
      */
-    private final HashMap<Integer, Sequence> outputs = new HashMap<>();
+    private final HashMap<Integer, HashMap<Integer, Sequence>> outputs = new HashMap<>();
 
     /**
      * Number of iterations for training or validation phase.
@@ -86,12 +84,6 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     private int stepSize;
 
     /**
-     * Depth of sample.
-     *
-     */
-    private int sampleDepth = -1;
-
-    /**
      * Current sampling position assuming no random sampling.
      *
      */
@@ -110,17 +102,28 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * @param outputs output sequences for sampling.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
-    public SequenceSampler(HashMap<Integer, Sequence> inputs, HashMap<Integer, Sequence> outputs) throws NeuralNetworkException {
+    public SequenceSampler(HashMap<Integer, HashMap<Integer, Sequence>> inputs, HashMap<Integer, HashMap<Integer, Sequence>> outputs) throws NeuralNetworkException {
         initializeDefaultParams();
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
-        if (inputs.size() != outputs.size()) throw new NeuralNetworkException("Size of sample inputs and outputs must match.");
-        for (Map.Entry<Integer, Sequence> entry : inputs.entrySet()) {
-            int index = entry.getKey();
-            Sequence inputSequence = entry.getValue();
-            addSample(inputSequence, outputs.get(index));
+        Set<Integer> sampleIndexSet = null;
+
+        for (Map.Entry<Integer, HashMap<Integer, Sequence>> entry : inputs.entrySet()) {
+            HashMap<Integer, Sequence> currentInputMap = new HashMap<>();
+            this.inputs.put(entry.getKey(), currentInputMap);
+            HashMap<Integer, Sequence> inputsMap = entry.getValue();
+            if (sampleIndexSet == null) sampleIndexSet = inputsMap.keySet();
+            if (sampleIndexSet.size() != inputsMap.keySet().size()) throw new NeuralNetworkException("Number of samples is not matching");
+            currentInputMap.putAll(inputsMap);
         }
-        sampleAt = 0;
+
+        for (Map.Entry<Integer, HashMap<Integer, Sequence>> entry : outputs.entrySet()) {
+            HashMap<Integer, Sequence> currentOutputMap = new HashMap<>();
+            this.outputs.put(entry.getKey(), currentOutputMap);
+            HashMap<Integer, Sequence> outputsMap = entry.getValue();
+            if (sampleIndexSet.size() != outputsMap.keySet().size()) throw new NeuralNetworkException("Number of samples is not matching");
+            currentOutputMap.putAll(outputsMap);
+        }
     }
 
     /**
@@ -132,7 +135,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public SequenceSampler(HashMap<Integer, Sequence> inputs, HashMap<Integer, Sequence> outputs, String params) throws NeuralNetworkException, DynamicParamException {
+    public SequenceSampler(HashMap<Integer, HashMap<Integer, Sequence>> inputs, HashMap<Integer, HashMap<Integer, Sequence>> outputs, String params) throws NeuralNetworkException, DynamicParamException {
         this(inputs, outputs);
         setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -142,6 +145,7 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
      *
      */
     public void initializeDefaultParams() {
+        sampleAt = 0;
         numberOfIterations = 1;
         fullSet = false;
         randomOrder = true;
@@ -186,25 +190,6 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     }
 
     /**
-     * Adds sample into sampler.
-     *
-     * @param input input sequence.
-     * @param output output sequence.
-     * @throws NeuralNetworkException throws exception if input or output is not defined.
-     */
-    private void addSample(Sequence input, Sequence output) throws NeuralNetworkException {
-        if (input == null) throw new NeuralNetworkException("Input is not defined.");
-        if (output == null) throw new NeuralNetworkException("Output is not defined.");
-        if (input.totalSize() != output.totalSize()) throw new NeuralNetworkException("Input and output must be same size.");
-        if (input.totalSize() == 0) throw new NeuralNetworkException("Input and output cannot be empty.");
-        if (input.getDepth() != output.getDepth()) throw new NeuralNetworkException("Sample depth of input and output must match.");
-        if (sampleDepth == -1) sampleDepth = input.getDepth();
-        else if (sampleDepth != input.getDepth()) throw new NeuralNetworkException("All input and output samples must have same depth.");
-        inputs.put(inputs.size(), input);
-        outputs.put(outputs.size(), output);
-    }
-
-    /**
      * Resets sampler.
      *
      */
@@ -224,30 +209,17 @@ public class SequenceSampler implements Sampler, Configurable, Serializable {
     /**
      * Samples number of samples from input output pairs.
      *
-     * @param inputSequence sampled input sequence.
-     * @param outputSequence sampled output sequence.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if input and output sequence depths are not equal.
+     * @param inputSequences sampled input sequences.
+     * @param outputSequences sampled output sequences.
      */
-    public void getSamples(Sequence inputSequence, Sequence outputSequence) throws MatrixException, NeuralNetworkException {
-        if (inputSequence.getDepth() != outputSequence.getDepth()) throw new NeuralNetworkException("Depth of samples input and output sequences must match");
-
+    public void getSamples(TreeMap<Integer, Sequence> inputSequences, TreeMap<Integer, Sequence>  outputSequences) {
         if (!fullSet && randomOrder) sampleAt = random.nextInt(inputs.size() - 1);
 
-        Sequence outputSequenceEntry = outputs.get(sampleAt);
-        for (Map.Entry<Integer, MMatrix> entry : inputs.get(sampleAt).entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix input = entry.getValue();
-            int depth = input.getDepth();
-            MMatrix inputSample = new MMatrix(depth);
-            inputSequence.put(sampleIndex, inputSample);
-            MMatrix output = outputSequenceEntry.get(sampleIndex);
-            MMatrix outputSample = new MMatrix(depth);
-            outputSequence.put(sampleIndex, outputSample);
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                inputSample.put(depthIndex, input.get(depthIndex));
-                outputSample.put(depthIndex, output.get(depthIndex));
-            }
+        for (Map.Entry<Integer, HashMap<Integer, Sequence>> entry : inputs.entrySet()) {
+            inputSequences.put(entry.getKey(), entry.getValue().get(sampleAt));
+        }
+        for (Map.Entry<Integer, HashMap<Integer, Sequence>> entry : outputs.entrySet()) {
+            outputSequences.put(entry.getKey(), entry.getValue().get(sampleAt));
         }
 
         if (!randomOrder || fullSet) {

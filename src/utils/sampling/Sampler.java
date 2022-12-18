@@ -5,8 +5,9 @@
 
 package utils.sampling;
 
-import core.network.NeuralNetworkException;
 import utils.matrix.MatrixException;
+
+import java.util.TreeMap;
 
 /**
  * Interface for sampler.<br>
@@ -30,11 +31,10 @@ public interface Sampler {
     /**
      * Samples number of samples from input output pairs.
      *
-     * @param inputSequence sampled input sequence.
-     * @param outputSequence sampled output sequence.
+     * @param inputSequences sampled input sequences.
+     * @param outputSequences sampled output sequences.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if input and output sequence depths are not equal.
      */
-    void getSamples(Sequence inputSequence, Sequence outputSequence) throws MatrixException, NeuralNetworkException;
+    void getSamples(TreeMap<Integer, Sequence> inputSequences, TreeMap<Integer, Sequence>  outputSequences) throws MatrixException;
 
 }
