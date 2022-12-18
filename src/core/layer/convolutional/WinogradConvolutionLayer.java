@@ -50,7 +50,7 @@ public class WinogradConvolutionLayer extends AbstractConvolutionalLayer {
      * @return current layer width
      */
     protected int getCurrentLayerWidth() {
-        return getPreviousLayerWidth() - 2;
+        return getDefaultPreviousLayer().getLayerWidth() - 2;
     }
 
     /**
@@ -59,7 +59,7 @@ public class WinogradConvolutionLayer extends AbstractConvolutionalLayer {
      * @return current layer height
      */
     protected int getCurrentLayerHeight() {
-        return getPreviousLayerHeight() - 2;
+        return getDefaultPreviousLayer().getLayerHeight() - 2;
     }
 
     /**

@@ -11,7 +11,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -174,23 +173,14 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Initializes neural network layer dimensions.
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initializeDimensions() throws NeuralNetworkException {
-        previousLayerWidth = getPreviousLayerWidth();
-        previousLayerHeight = getPreviousLayerHeight();
-        previousLayerDepth = getPreviousLayerDepth();
+        previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
+        previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
+        previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
 
         if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride);
         if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride);
@@ -234,7 +224,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
         inputs = new TreeMap<>();
         for (int index = 0; index < previousLayerDepth; index++) {
             Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
-            input.setName("Input" + index);
+            input.setName("Input" + getDefaultPreviousLayer().getLayerIndex() + "{" + index + "}");
             inputs.put(index, new MMatrix(input));
         }
         return inputs;

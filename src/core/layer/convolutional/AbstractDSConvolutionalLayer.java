@@ -12,7 +12,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -323,15 +322,6 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Sets filter row size.
      *
      * @param filterRowSize filter row size.
@@ -373,9 +363,9 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initializeDimensions() throws NeuralNetworkException {
-        previousLayerWidth = getPreviousLayerWidth();
-        previousLayerHeight = getPreviousLayerHeight();
-        previousLayerDepth = getPreviousLayerDepth();
+        previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
+        previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
+        previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
 
         int layerWidth = getCurrentLayerWidth();
         int layerHeight = getCurrentLayerHeight();
@@ -447,7 +437,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
         inputs = new TreeMap<>();
         for (int index = 0; index < previousLayerDepth; index++) {
             Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight);
-            input.setName("Input" + index);
+            input.setName("Input" + getDefaultPreviousLayer().getLayerIndex() + "{" + index + "}");
             inputs.put(index, new MMatrix(input));
         }
         return inputs;
