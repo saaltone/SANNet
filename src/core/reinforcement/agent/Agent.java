@@ -79,13 +79,6 @@ public interface Agent {
     void enableLearning();
 
     /**
-     * Check if agent is learning or not.
-     *
-     * @return true if agent is learning otherwise returns false.
-     */
-    boolean isLearning();
-
-    /**
      * Takes action per defined agent policy.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.

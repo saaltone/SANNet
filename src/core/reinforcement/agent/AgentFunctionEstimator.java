@@ -22,14 +22,13 @@ public interface AgentFunctionEstimator {
      * @param inputSize input size of neural network (number of states)
      * @param outputSize output size of neural network (number of actions and their values).
      * @param policyGradient if true neural network is of type policy gradient.
-     * @param stateValue if true neural network is of type state value otherwise of type action value.
      * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
      * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean stateValue, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException;
+    NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException;
 
     /**
      * Build neural network for agent (shared function for state action value function estimator).

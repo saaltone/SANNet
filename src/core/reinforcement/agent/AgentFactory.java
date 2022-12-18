@@ -133,12 +133,12 @@ public class AgentFactory {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
             NeuralNetwork stateActionValueNN = agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize);
             policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
-            valueEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+            valueEstimator = policyEstimator;
         }
         else {
             // Uses separate estimators for value and policy functions.
-            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
-            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, stateValue ? 1 : outputSize, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
         }
         return switch (agentAlgorithmType) {
             case QN, DQN -> new DQNLearning(environment, executablePolicyType, valueEstimator, params);
@@ -207,12 +207,12 @@ public class AgentFactory {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
             NeuralNetwork stateActionValueNN = agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize);
             policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
-            valueEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+            valueEstimator = policyEstimator;
         }
         else {
             // Uses separate estimators for value and policy functions.
-            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
-            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, false, stateValue, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, stateValue ? 1 : outputSize, false, applyDueling)) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
         }
         return switch (agentAlgorithmType) {
             case QN, DQN -> new DQNLearning(environment, executablePolicyType, valueEstimator, params);
@@ -259,7 +259,7 @@ public class AgentFactory {
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
     public static Agent createAgent(Agent agent, boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, AgentException, IOException, DynamicParamException, ClassNotFoundException, NeuralNetworkException {
-        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
+        if (agent instanceof AbstractPolicyGradient) return ((AbstractPolicyGradient)agent).reference(sharedPolicyFunctionEstimator, sharedMemory);
         if (agent instanceof AbstractQLearning) return ((AbstractQLearning)agent).reference(sharedValueFunctionEstimator, sharedMemory);
         throw new AgentException("Unknown agent type. Unable to create reference for agent.");
     }

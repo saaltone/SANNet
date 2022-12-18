@@ -346,15 +346,6 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
-     * Check if agent is learning or not.
-     *
-     * @return true if agent is learning otherwise returns false.
-     */
-    public boolean isLearning() {
-        return isLearning;
-    }
-
-    /**
      * Takes action per defined agent policy.
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
