@@ -12,7 +12,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -28,11 +27,9 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     /**
      * Parameter name types for feedforward layer.
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
-     *     - splitOutputAtPosition: splits output at specific position.<br>
      *
      */
-    private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN), " +
-            "(splitOutputAtPosition:INT)";
+    private final static String paramNameTypes = "(regulateDirectWeights:BOOLEAN)";
 
     /**
      * Implements weight set for layer.
@@ -132,12 +129,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     private boolean regulateDirectWeights;
 
     /**
-     * Splits output at given position.
-     *
-     */
-    private int splitOutputAtPosition;
-
-    /**
      * Input matrix for procedure construction.
      *
      */
@@ -180,7 +171,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         regulateDirectWeights = true;
-        splitOutputAtPosition = -1;
     }
 
     /**
@@ -197,7 +187,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - regulateDirectWeights: true if (direct) weights are regulated otherwise false. Default value true.<br>
-     *     - splitOutputAtPosition: splits output at specific position.<br>
      *
      * @param params parameters used for feedforward layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -206,7 +195,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
         if (params.hasParam("regulateDirectWeights")) regulateDirectWeights = params.getValueAsBoolean("regulateDirectWeights");
-        if (params.hasParam("splitOutputAtPosition")) splitOutputAtPosition = params.getValueAsInteger("splitOutputAtPosition");
     }
 
     /**
@@ -226,15 +214,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -248,7 +227,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new FeedforwardWeightSet(initialization, getPreviousLayerWidth(), getLayerWidth(), regulateDirectWeights);
+        weightSet = new FeedforwardWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights);
     }
 
     /**
@@ -259,9 +238,8 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), 1, Initialization.ONE);
-        input.setName("Input");
-        if (getPreviousLayer().isBidirectional()) input = input.split(getPreviousLayerWidth() / 2, true);
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
@@ -275,14 +253,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         Matrix output = weightSet.weight.dot(input);
         output = output.add(weightSet.bias);
 
-        if (splitOutputAtPosition == -1) {
-            if (activationFunction != null) output = output.apply(activationFunction);
-        }
-        else {
-            Matrix result = output.split(splitOutputAtPosition, true);
-            if (activationFunction != null) output.apply(result, activationFunction);
-            output = result;
-        }
+        if (activationFunction != null) output = output.apply(activationFunction);
 
         output.setName("Output");
         MMatrix outputs = new MMatrix(1, "Output");
@@ -323,7 +294,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName() + ", ") + "Split output at: " + (splitOutputAtPosition != -1 ? splitOutputAtPosition : "N/A");
+        return (activationFunction == null ? "" : "Activation function: " + activationFunction.getName());
     }
 
 }
