@@ -8,13 +8,12 @@ package core.layer;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.sampling.Sequence;
 import utils.matrix.MatrixException;
+import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,7 +45,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         PREDICT,
         BACKWARD,
         UPDATE,
-        EXECUTING,
         TERMINATED
     }
 
@@ -101,13 +99,13 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Reference to next layer
      *
      */
-    private NeuralNetworkLayer nextLayer;
+    private final TreeMap<Integer, NeuralNetworkLayer> nextLayers = new TreeMap<>();
 
     /**
      * Reference to previous layer.
      *
      */
-    private NeuralNetworkLayer previousLayer;
+    private final TreeMap<Integer, NeuralNetworkLayer> previousLayers = new TreeMap<>();
 
     /**
      * Width of neural network layer. Also known as number of neural network layer nodes.
@@ -131,31 +129,31 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Outputs of neural network layer.
      *
      */
-    private transient Sequence layerOutputs;
+    private final Sequence layerOutputs = new Sequence();
 
     /**
      * Gradients of neural network layer.
      *
      */
-    private transient Sequence layerGradients;
-
-    /**
-     * Input layer indices.
-     *
-     */
-    private transient ArrayList<Integer> inputLayerIndices;
+    private final Sequence layerOutputGradients = new Sequence();
 
     /**
      * Input sequences.
      *
      */
-    private transient HashMap<Integer, Sequence> inputSequences;
+    private final TreeMap<Integer, Sequence> inputSequences = new TreeMap<>();
 
     /**
      * Input gradient sequences.
      *
      */
-    private transient HashMap<Integer, Sequence> inputGradientSequences;
+    private final TreeMap<Integer, Sequence> inputGradientSequences = new TreeMap<>();
+
+    /**
+     * Count for state start request from previous layers.
+     *
+     */
+    private transient int stateStartCount = 0;
 
     /**
      * Default constructor for abstract layer.
@@ -178,6 +176,15 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public int getLayerIndex() {
         return layerIndex;
+    }
+
+    /**
+     * Checks if layer can have multiple previous layers.
+     *
+     * @return  if true layer can have multiple previous layers otherwise false.
+     */
+    public boolean canHaveMultiplePreviousLayers() {
+        return false;
     }
 
     /**
@@ -206,9 +213,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void initializeDimensions() throws NeuralNetworkException {
         if (getLayerWidth() == -1) {
-            setLayerWidth(getPreviousLayerWidth());
-            setLayerHeight(getPreviousLayerHeight());
-            setLayerDepth(getPreviousLayerDepth());
+            setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
+            setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
+            setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
         }
     }
 
@@ -246,11 +253,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws NeuralNetworkException throws exception if operation fails.
      */
     public String getLayerName() throws NeuralNetworkException {
-        return switch (layerIndex) {
-            case 0 -> "InputLayer";
-            case -1 -> "OutputLayer";
-            default -> "Hidden Layer " + layerIndex + " - " + getTypeByName();
-        };
+        if (this.getClass().equals(InputLayer.class)) return "InputLayer " + getLayerIndex();
+        if (this.getClass().equals(OutputLayer.class)) return "OutputLayer " + getLayerIndex();
+        return "Hidden Layer " + getLayerIndex() + " - " + getTypeByName();
     }
 
     /**
@@ -262,76 +267,79 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     protected abstract String getTypeByName() throws NeuralNetworkException;
 
     /**
-     * Check if layer is bidirectional.
+     * Check if layer input is reversed.
      *
-     * @return true if layer is bidirectional otherwise returns false.
+     * @return if true input layer input is reversed otherwise not.
      */
-    public boolean isBidirectional() {
-        return false;
-    }
+    public boolean isReversedInput() { return false; }
 
     /**
-     * Sets reference to next neural network layer.
+     * Adds reference to next neural network layer.
      *
      * @param nextLayer reference to next neural network layer.
+     * @throws NeuralNetworkException throws exception if next layer is attempted to be added to output layer.
      */
-    public void setNextLayer(NeuralNetworkLayer nextLayer) {
-        this.nextLayer = nextLayer;
+    public void addNextLayer(NeuralNetworkLayer nextLayer) throws NeuralNetworkException {
+        int nextLayerIndex = nextLayers.size();
+        nextLayers.put(nextLayerIndex, nextLayer);
     }
 
     /**
-     * Returns reference to next layer.
+     * Returns references to next layers.
      *
-     * @return reference to next layer.
+     * @return references to next layers.
      */
-    public NeuralNetworkLayer getNextLayer() {
-        return nextLayer;
+    public TreeMap<Integer, NeuralNetworkLayer> getNextLayers() {
+        return nextLayers;
     }
 
     /**
-     * Returns if layer has next layer.
+     * Returns if layer has next layers.
      *
-     * @return true if layer has next layer.
+     * @return true if layer has next layers otherwise false.
      */
-    public boolean hasNextLayer() {
-        return nextLayer != null;
+    public boolean hasNextLayers() {
+        return !nextLayers.isEmpty();
     }
 
     /**
-     * Sets reference to previous neural network layer.
+     * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
+     * @throws NeuralNetworkException throws exception if previous layer is attempted to be added to input layer.
      */
-    public void setPreviousLayer(NeuralNetworkLayer previousLayer) {
-        this.previousLayer = previousLayer;
+    public void addPreviousLayer(NeuralNetworkLayer previousLayer) throws NeuralNetworkException {
+        int previousLayerIndex = previousLayers.size();
+        previousLayers.put(previousLayerIndex, previousLayer);
+        inputSequences.put(previousLayerIndex, previousLayer.getLayerOutputs());
+        inputGradientSequences.put(previousLayerIndex, previousLayer.getLayerOutputGradients());
     }
 
     /**
-     * Returns reference to previous neural network layer.
+     * Returns references to previous neural network layers.
      *
-     * @return reference to previous neural network layer.
+     * @return references to previous neural network layers.
      */
-    public NeuralNetworkLayer getPreviousLayer() {
-        return previousLayer;
+    public TreeMap<Integer, NeuralNetworkLayer> getPreviousLayers() {
+        return previousLayers;
     }
 
     /**
-     * Returns if layer has previous layer.
+     * Returns default previous layer.
      *
-     * @return true if layer has previous layer otherwise false.
+     * @return default previous layer.
      */
-    public boolean hasPreviousLayer() {
-        return previousLayer != null;
+    protected NeuralNetworkLayer getDefaultPreviousLayer() {
+        return getPreviousLayers().get(0);
     }
 
     /**
-     * Returns reference to previous neural network layer.
+     * Returns if layer has previous layers.
      *
-     * @param previousLayerIndex index of previous layer.
-     * @return reference to previous neural network layer.
+     * @return true if layer has previous layers otherwise false.
      */
-    public NeuralNetworkLayer getPreviousLayer(int previousLayerIndex) {
-        return getLayerIndex() == previousLayerIndex ? this : hasPreviousLayer() ? getPreviousLayer().getPreviousLayer(previousLayerIndex) : null;
+    public boolean hasPreviousLayers() {
+        return !previousLayers.isEmpty();
     }
 
     /**
@@ -385,63 +393,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Returns width of previous layer.
-     *
-     * @return width of previous layer.
-     */
-    public int getPreviousLayerWidth() {
-        return getPreviousLayer().getLayerWidth();
-    }
-
-    /**
-     * Returns height of previous layer.
-     *
-     * @return height of previous layer.
-     */
-    public int getPreviousLayerHeight() {
-        return getPreviousLayer().getLayerHeight();
-    }
-
-    /**
-     * Returns depth of previous layer.
-     *
-     * @return depth of previous layer.
-     */
-    public int getPreviousLayerDepth() {
-        return getPreviousLayer().getLayerDepth();
-    }
-
-    /**
-     * Returns width of previous layer matching given layer index.
-     *
-     * @param previousLayerIndex index of previous layer.
-     * @return width of previous layer matching given layer index.
-     */
-    public int getPreviousLayerWidth(int previousLayerIndex) {
-        return getPreviousLayer(previousLayerIndex).getLayerWidth();
-    }
-
-    /**
-     * Returns height of previous layer matching given layer index.
-     *
-     * @param previousLayerIndex index of previous layer.
-     * @return height of previous layer matching given layer index.
-     */
-    public int getPreviousLayerHeight(int previousLayerIndex) {
-        return getPreviousLayer(previousLayerIndex).getLayerHeight();
-    }
-
-    /**
-     * Returns depth of previous layer matching given layer index.
-     *
-     * @param previousLayerIndex index of previous layer.
-     * @return depth of previous layer matching given layer index.
-     */
-    public int getPreviousLayerDepth(int previousLayerIndex) {
-        return getPreviousLayer(previousLayerIndex).getLayerDepth();
-    }
-
-    /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -457,16 +408,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void reset() throws MatrixException {
         if (getLayerOutputs() != null) getLayerOutputs().reset();
-        if (getLayerGradients() != null) getLayerGradients().reset();
-    }
-
-    /**
-     * Returns output of neural network.
-     *
-     * @return output of neural network.
-     */
-    public Sequence getOutput() {
-        return hasNextLayer() ? getNextLayer().getOutput() : getLayerOutputs();
+        if (getLayerOutputGradients() != null) getLayerOutputGradients().reset();
     }
 
     /**
@@ -490,72 +432,51 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Returns previous layer outputs.
+     * Passes inputs from previous layer to this layer.
      *
-     * @return previous layer outputs.
-     */
-    public Sequence getPreviousLayerOutputs() {
-        return hasPreviousLayer() ? getPreviousLayer().getLayerOutputs() : getLayerOutputs();
-    }
-
-    /**
-     * Returns previous layer outputs.
-     *
-     * @param previousLayerIndex previous layer index.
-     * @return previous layer outputs.
-     */
-    public Sequence getPreviousLayerOutputs(int previousLayerIndex) {
-        return previousLayerIndex > -1 ? getPreviousLayer(previousLayerIndex).getLayerOutputs() : null;
-    }
-
-    /**
-     * Returns neural network layer gradients.
-     *
-     * @return neural network layer gradients.
-     */
-    public Sequence getLayerGradients() {
-        return layerGradients;
-    }
-
-    /**
-     * Returns neural network layer gradients.
-     *
-     * @param previousLayerIndex previous layer index.
-     * @return neural network layer gradients.
-     */
-    public Sequence getPreviousLayerGradients(int previousLayerIndex) {
-        return previousLayerIndex > -1 ? getPreviousLayer(previousLayerIndex).getLayerGradients() : null;
-    }
-
-    /**
-     * Sets layer gradients.
-     *
-     * @param newLayerGradients layer gradients.
      * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    protected void setLayerGradients(Sequence newLayerGradients) throws MatrixException {
-        layerGradients.reset();
-        layerGradients.putAll(newLayerGradients);
+    protected void passLayerOutputs() throws MatrixException {
+        this.reset();
+        setLayerOutputs(getDefaultLayerInput());
     }
 
     /**
-     * Returns gradients of next neural network layer.
+     * Returns neural network layer input gradients.
      *
-     * @return gradients of next neural network layer
+     * @return neural network layer input gradients.
      */
-    public Sequence getNextLayerGradients() {
-        return getNextLayer() != null ? getNextLayer().getLayerGradients() : getLayerGradients();
+    public Sequence getLayerOutputGradients() {
+        return layerOutputGradients;
     }
 
     /**
-     * Add input layer by layer index.
+     * Sets layer input gradients.
      *
-     * @param inputLayerIndex input layer index.
+     * @param newLayerInputGradients layer input gradients.
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    protected void addInputSequence(int inputLayerIndex) {
-        inputLayerIndices.add(inputLayerIndex);
-        inputSequences.put(inputSequences.size(), getPreviousLayerOutputs(inputLayerIndex));
-        inputGradientSequences.put(inputGradientSequences.size(), getPreviousLayerGradients(inputLayerIndex + 1));
+    protected void setLayerOutputGradients(Sequence newLayerInputGradients) throws MatrixException {
+        layerOutputGradients.reset();
+        layerOutputGradients.putAll(newLayerInputGradients);
+    }
+
+    /**
+     * Passes output gradients from this layer to previous layer.
+     *
+     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
+     */
+    protected void passLayerOutputGradients() throws MatrixException {
+        getDefaultLayerInputGradient().increment(getLayerOutputGradients());
+    }
+
+    /**
+     * Returns default layer input.
+     *
+     * @return default layer input.
+     */
+    protected Sequence getDefaultLayerInput() {
+        return getInputSequences().get(0);
     }
 
     /**
@@ -563,8 +484,17 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      * @return input sequences.
      */
-    protected HashMap<Integer, Sequence> getInputSequences() {
+    protected TreeMap<Integer, Sequence> getInputSequences() {
         return inputSequences;
+    }
+
+    /**
+     * Returns default layer input gradient.
+     *
+     * @return default layer input gradient.
+     */
+    protected Sequence getDefaultLayerInputGradient() {
+        return getInputGradientSequences().get(0);
     }
 
     /**
@@ -572,17 +502,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      * @return input gradient sequences.
      */
-    protected HashMap<Integer, Sequence> getInputGradientSequences() {
+    protected TreeMap<Integer, Sequence> getInputGradientSequences() {
         return inputGradientSequences;
-    }
-
-    /**
-     * Returns input layer indices.
-     *
-     * @return input layer indices.
-     */
-    protected ArrayList<Integer> getInputLayerIndices() {
-        return inputLayerIndices;
     }
 
     /**
@@ -603,14 +524,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         layerThread.setName(getLayerName());
         layerThread.start();
 
-        layerOutputs = new Sequence();
-        layerGradients = new Sequence();
-
-        inputLayerIndices = new ArrayList<>();
-        inputSequences = new HashMap<>();
-        inputGradientSequences = new HashMap<>();
-
-        if (hasNextLayer()) getNextLayer().start();
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.start();
 
         defineProcedure();
     }
@@ -634,7 +548,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
         train();
-        waitToComplete();
     }
 
     /**
@@ -651,15 +564,12 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Executes predict step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs predict inputs for layer.
-     * @return output of next layer or this layer if next layer does not exist.
      * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public Sequence predict(Sequence inputs) throws MatrixException {
-        if (inputs.isEmpty()) return null;
+    public void predict(Sequence inputs) throws MatrixException {
+        if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
         predict();
-        waitToComplete();
-        return getOutput();
     }
 
     /**
@@ -679,7 +589,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void backward() throws NeuralNetworkException {
         nextState(ExecutionState.BACKWARD);
-        if (!hasNextLayer()) waitToComplete();
     }
 
     /**
@@ -688,7 +597,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void update() {
         nextState(ExecutionState.UPDATE);
-        if (!hasPreviousLayer()) waitToComplete();
     }
 
     /**
@@ -698,44 +606,48 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     private void nextState(ExecutionState executionState) {
         executeLock.lock();
-        this.executionState = executionState;
-        executeLockCondition.signal();
+        switch (executionState) {
+            case TRAIN, PREDICT, UPDATE, TERMINATED -> {
+                if (++stateStartCount >= previousLayers.size()) {
+                    this.executionState = executionState;
+                    executeLockCondition.signalAll();
+                    stateStartCount = 0;
+                }
+            }
+            case BACKWARD -> {
+                if (++stateStartCount >= nextLayers.size()) {
+                    this.executionState = executionState;
+                    executeLockCondition.signalAll();
+                    stateStartCount = 0;
+                }
+            }
+            default -> {
+                this.executionState = executionState;
+                executeLockCondition.signalAll();
+            }
+        }
+        if (executionState != ExecutionState.TERMINATED) waitToComplete();
         executeLock.unlock();
     }
 
     /**
-     * Marks state completed and propagates information to forward or backward direction depending on given flag.
+     * Waits for layer to complete execution.
      *
-     * @param forwardDirection if true propagates state completion signal to forward direction otherwise propagates to backward direction.
      */
-    public void stateCompleted(boolean forwardDirection) {
-        stateCompleted();
-        if (forwardDirection) {
-            if (hasNextLayer()) getNextLayer().stateCompleted(true);
-        }
-        else {
-            if (hasPreviousLayer()) getPreviousLayer().stateCompleted(false);
-        }
+    public void waitToComplete() {
+        executeLock.lock();
+        while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
+        executeLock.unlock();
     }
 
     /**
      * Changes layer execution state to IDLE.
      *
      */
-    private void stateCompleted() {
+    private void completeState() {
         executeLock.lock();
         executionState = ExecutionState.IDLE;
-        executeLockCompleteCondition.signal();
-        executeLock.unlock();
-    }
-
-    /**
-     * Waits that layer execution step is completed.
-     *
-     */
-    void waitToComplete() {
-        executeLock.lock();
-        while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
+        executeLockCompleteCondition.signalAll();
         executeLock.unlock();
     }
 
@@ -751,30 +663,31 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
                 switch (executionState) {
                     case TRAIN -> {
                         forwardProcess();
-                        executionState = ExecutionState.EXECUTING;
-                        if (hasNextLayer()) getNextLayer().train();
-                        else stateCompleted(false);
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.train();
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                        completeState();
                     }
                     case PREDICT -> {
                         forwardProcess();
-                        executionState = ExecutionState.EXECUTING;
-                        if (hasNextLayer()) getNextLayer().predict();
-                        else stateCompleted(false);
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.predict();
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                        completeState();
                     }
                     case BACKWARD -> {
                         backwardProcess();
-                        executionState = ExecutionState.EXECUTING;
-                        if (hasPreviousLayer()) getPreviousLayer().backward();
-                        else stateCompleted(true);
+                        if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.backward();
+                        if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.waitToComplete();
+                        completeState();
                     }
                     case UPDATE -> {
                         optimize();
-                        executionState = ExecutionState.EXECUTING;
-                        if (hasNextLayer()) getNextLayer().update();
-                        else stateCompleted(false);
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.update();
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                        completeState();
                     }
                     case TERMINATED -> {
-                        if (hasNextLayer()) getNextLayer().stop();
+                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.stop();
+                        completeState();
                         layerThread = null;
                         executeLock.unlock();
                         return;
