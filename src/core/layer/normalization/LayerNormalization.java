@@ -11,7 +11,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -189,15 +188,6 @@ public class LayerNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -211,7 +201,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new LayerNormalizationWeightSet(getPreviousLayerWidth(), getPreviousLayerHeight());
+        weightSet = new LayerNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight());
     }
 
     /**
@@ -222,9 +212,8 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      */
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
-        input = handleBidirectionalInput(input);
-        input.setName("Input");
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 

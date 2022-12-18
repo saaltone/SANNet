@@ -6,6 +6,7 @@
 package core.layer.normalization;
 
 import core.layer.AbstractExecutionLayer;
+import core.layer.NeuralNetworkLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
@@ -131,15 +132,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -180,17 +172,16 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
-        if (getNextLayer().getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight normalization. Next layer does not contain any weights.");
-
+    protected void defineProcedure() throws MatrixException, DynamicParamException {
         procedures = new HashMap<>();
-        HashSet<Matrix> nextLayerNormalizedWeights = getNextLayer().getNormalizedWeights();
-        for (Matrix weight : nextLayerNormalizedWeights) {
-            input = weight;
-            Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), null, isJoinedInput());
-            procedures.put(weight, procedure);
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
+            HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
+            for (Matrix weight : nextLayerNormalizedWeights) {
+                input = weight;
+                Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), false, isJoinedInput());
+                procedures.put(weight, procedure);
+            }
         }
     }
 
@@ -242,7 +233,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        setLayerOutputs(getPreviousLayerOutputs());
+        passLayerOutputs();
 
         if (isTraining()) {
             for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
@@ -263,17 +254,18 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        setLayerGradients(getNextLayerGradients());
+        passLayerOutputGradients();
 
-        HashMap<Matrix, Matrix> nextLayerWeightGradients = getNextLayer().getLayerWeightGradients();
         for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
             Matrix weight = entry.getKey();
             Procedure procedure = entry.getValue();
             weight.setEqualTo(weights.get(weight));
-            Matrix weightGradient = nextLayerWeightGradients.get(weight);
-            weightGradient.setEqualTo(procedure.calculateGradient(weightGradient));
+            for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
+                Matrix weightGradient = nextLayer.getLayerWeightGradients().get(weight);
+                if (weightGradient != null) weightGradient.setEqualTo(procedure.calculateGradient(weightGradient));
+            }
         }
-        weights.clear();
+
     }
 
     /**

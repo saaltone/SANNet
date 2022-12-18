@@ -11,7 +11,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
-import utils.procedure.Procedure;
 import utils.procedure.node.Node;
 import utils.sampling.Sequence;
 
@@ -252,15 +251,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns reversed procedure.
-     *
-     * @return reversed procedure.
-     */
-    protected Procedure getReverseProcedure() {
-        return null;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -274,7 +264,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new BatchNormalizationWeightSet(getPreviousLayerWidth(), getPreviousLayerHeight());
+        weightSet = new BatchNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight());
     }
 
     /**
@@ -285,9 +275,8 @@ public class BatchNormalization extends AbstractExecutionLayer {
      */
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new MMatrix(1, "Inputs");
-        inputs = handleBidirectionalInput(inputs);
-        Matrix input = new DMatrix(getPreviousLayerWidth(), getPreviousLayerHeight(), Initialization.ONE);
-        input.setName("Input");
+        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         inputs.put(0, input);
         return new TreeMap<>() {{ put(0, inputs); }};
     }
@@ -323,7 +312,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
             outputs = meanNormalizedInput.divide(variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta);
         }
         else outputs = meanNormalizedInput.multiply(weightSet.gamma).add(weightSet.beta);
-        outputs.setName("Outputs", true);
+        outputs.setName("Output", true);
 
         return outputs;
     }
@@ -363,7 +352,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         this.reset();
-        Sequence inputSequence = getPreviousLayerOutputs();
+        Sequence inputSequence = getDefaultLayerInput();
 
         if (isTraining()) {
             if (batchSize == -1) batchSize = inputSequence.sampleSize();
