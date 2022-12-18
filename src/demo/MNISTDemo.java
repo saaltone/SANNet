@@ -8,10 +8,7 @@ package demo;
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.metrics.ClassificationMetric;
-import core.network.EarlyStopping;
-import core.network.NeuralNetwork;
-import core.network.NeuralNetworkException;
-import core.network.Persistence;
+import core.network.*;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadCSVFile;
 import utils.configurable.DynamicParamException;
@@ -22,6 +19,7 @@ import utils.sampling.Sequence;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements learning and prediction of MNIST digits by using Convolutional Neural Network (CNN).<br>
@@ -55,12 +53,12 @@ public class MNISTDemo {
             neuralNetwork.verboseTraining(10);
             neuralNetwork.setAutoValidate(100);
             neuralNetwork.verboseValidation();
-            neuralNetwork.setTrainingEarlyStopping(new EarlyStopping());
+            neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping()); }});
 
             neuralNetwork.start();
 
-            neuralNetwork.setTrainingData(new BasicSampler(trainMNIST.get(0), trainMNIST.get(1), "perEpoch = true, randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
-            neuralNetwork.setValidationData(new BasicSampler(testMNIST.get(0), testMNIST.get(1), "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
+            neuralNetwork.setTrainingData(new BasicSampler(new HashMap<>() {{ put(0, trainMNIST.get(0)); }}, new HashMap<>() {{ put(0, trainMNIST.get(1)); }},"perEpoch = true, randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
+            neuralNetwork.setValidationData(new BasicSampler(new HashMap<>() {{ put(0, testMNIST.get(0)); }}, new HashMap<>() {{ put(0, testMNIST.get(1)); }}, "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
 
             neuralNetwork.print();
             neuralNetwork.printExpressions();
@@ -79,7 +77,7 @@ public class MNISTDemo {
                     input.put(index1, testMNIST.get(0).get(index * 100 + index1));
                     output.put(index1, testMNIST.get(1).get(index * 100 + index1));
                 }
-                Sequence predict = neuralNetwork.predict(input);
+                Sequence predict = neuralNetwork.predict(new TreeMap<>() {{ put(0, input); }}).get(0);
                 if (index == 0) {
                     System.out.println("Printing out first 100 predictions...");
                     for (int index1 = 0; index1 < 100; index1++) {
@@ -116,22 +114,25 @@ public class MNISTDemo {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetwork neuralNetwork = new NeuralNetwork();
-        neuralNetwork.addInputLayer("width = " + inputSize + ", height = " + inputSize);
-        neuralNetwork.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
-        neuralNetwork.addHiddenLayer(LayerType.FLATTEN);
-        neuralNetwork.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = 100");
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetwork.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
-        neuralNetwork.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
-        neuralNetwork.addOutputLayer(BinaryFunctionType.COS_SIM);
-//        neuralNetwork.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
-        neuralNetwork.build();
+
+        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.FLATTEN);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 100");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.COS_SIM);
+        neuralNetworkConfiguration.connectLayersSerially();
+
+        neuralNetwork.build(neuralNetworkConfiguration);
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
         return neuralNetwork;
     }
