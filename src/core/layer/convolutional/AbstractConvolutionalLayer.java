@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.convolutional;
@@ -337,6 +337,9 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
         previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
         previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
         previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
+        if (previousLayerWidth < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + previousLayerWidth);
+        if (previousLayerHeight < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + previousLayerHeight);
+        if (previousLayerDepth < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + previousLayerDepth);
 
         int layerWidth = getCurrentLayerWidth();
         int layerHeight = getCurrentLayerHeight();
@@ -456,7 +459,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -465,7 +468,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      * @return constant matrices.
      */
-   protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
        return new HashSet<>();
    }
 
