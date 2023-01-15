@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -824,8 +824,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
@@ -835,7 +833,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         if (!policyGradient) neuralNetwork.verboseTraining(10);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
@@ -852,22 +851,21 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
 
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
-        neuralNetworkConfiguration.connectLayers(2, 5);
-        neuralNetworkConfiguration.connectLayers(5, 6);
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
+        int outputLayerIndex2 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndex4);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex4, outputLayerIndex2);
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
