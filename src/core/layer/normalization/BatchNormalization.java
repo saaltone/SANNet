@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.normalization;
@@ -322,7 +322,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
@@ -331,7 +331,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
@@ -351,14 +351,13 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
-        this.reset();
         Sequence inputSequence = getDefaultLayerInput();
 
         if (isTraining()) {
             if (batchSize == -1) batchSize = inputSequence.sampleSize();
             if (inputSequence.sampleSize() < 2) throw new MatrixException("Batch normalization must have minimum batch size of 2 for training phase.");
 
-            procedure.calculateExpression(inputSequence, getLayerOutputs());
+            super.forwardProcess();
 
             averageMean = meanNode.getMatrix().exponentialMovingAverage(averageMean, momentum);
             if (!meanOnly) averageVariance = varianceNode.getMatrix().exponentialMovingAverage(averageVariance, momentum);

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.normalization;
@@ -126,6 +126,12 @@ public class LayerNormalization extends AbstractExecutionLayer {
     private Matrix input;
 
     /**
+     * Matrix for epsilon value.
+     *
+     */
+    private Matrix epsilonMatrix;
+
+    /**
      * Constructor for layer normalization layer.
      *
      * @param layerIndex layer index
@@ -144,6 +150,8 @@ public class LayerNormalization extends AbstractExecutionLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
+        epsilonMatrix = new DMatrix(10E-8);
+        epsilonMatrix.setName("Epsilon");
         meanOnly = false;
     }
 
@@ -225,7 +233,7 @@ public class LayerNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
-        Matrix output = !meanOnly ? input.subtract(input.meanAsMatrix()).divide(input.varianceAsMatrix().apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta) : input.subtract(input.meanAsMatrix()).multiply(weightSet.gamma).add(weightSet.beta);
+        Matrix output = !meanOnly ? input.subtract(input.meanAsMatrix()).divide(input.varianceAsMatrix().add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta) : input.subtract(input.meanAsMatrix()).multiply(weightSet.gamma).add(weightSet.beta);
         output.setName("Output");
 
         MMatrix outputs = new MMatrix(1, "Output");
@@ -238,8 +246,8 @@ public class LayerNormalization extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
+    public HashSet<Matrix> getStopGradients() {
+        return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
     /**
@@ -247,8 +255,8 @@ public class LayerNormalization extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
+    public HashSet<Matrix> getConstantMatrices() {
+        return new HashSet<>() {{ add(epsilonMatrix); }};
     }
 
     /**

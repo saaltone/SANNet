@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.normalization;
@@ -148,15 +148,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns true if input is joined otherwise returns false.
-     *
-     * @return true if input is joined otherwise returns false.
-     */
-    protected boolean isJoinedInput() {
-        return false;
-    }
-
-    /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.
@@ -172,14 +163,15 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if operation fails.
      */
-    protected void defineProcedure() throws MatrixException, DynamicParamException {
+    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
         procedures = new HashMap<>();
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
             HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
             for (Matrix weight : nextLayerNormalizedWeights) {
                 input = weight;
-                Procedure procedure = new ProcedureFactory().getProcedure(this, null, getConstantMatrices(), getStopGradients(), false, isJoinedInput());
+                Procedure procedure = new ProcedureFactory().getProcedure(this);
                 procedures.put(weight, procedure);
             }
         }
@@ -204,7 +196,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>() {{ add(gMatrix); }};
     }
 
@@ -213,7 +205,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>() {{ add(input); add(gMatrix); }};
     }
 
