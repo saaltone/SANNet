@@ -1,14 +1,14 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
 
+import core.activation.ActivationFunction;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
-import core.activation.ActivationFunction;
 import core.layer.LayerType;
 import core.optimization.OptimizationType;
 import core.preprocess.ReadMIDI;
@@ -51,19 +51,19 @@ public class Music {
     private void execute() {
         try {
 
-            int numOfInputs = 5;
+            int numberOfInputs = 5;
             boolean encodeNoteOffs = false;
-            long minTickDelta = 80;
+            long minTickDelta = 120;
             int maxEncodedTicks = 50;
             String path = "<PATH>/";
             ArrayList<String> fileNames = new ArrayList<>();
             fileNames.add(path + "Jesu-Joy-Of-Man-Desiring.mid");
 
             ReadMIDI readMIDI = new ReadMIDI();
-            HashMap<Integer, HashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numOfInputs, encodeNoteOffs, minTickDelta, maxEncodedTicks);
+            HashMap<Integer, HashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numberOfInputs, encodeNoteOffs, minTickDelta, maxEncodedTicks);
             ReadMIDI.Metadata metadata = readMIDI.getMetadata();
 
-            Sequence sequence = readMIDI.getSequenceAsMMatrix(data.get(1), data.get(3), data.get(5), false, metadata);
+            Sequence sequence = readMIDI.getSequenceAsMMatrix(data.get((numberOfInputs + 1) - 1), data.get(2 * (numberOfInputs + 1) - 1), data.get(3 * (numberOfInputs + 1) - 1), false, metadata);
             readMIDI.play(sequence, 30, true);
 
             String persistenceName = "<PATH>/MusicNN";
@@ -71,7 +71,13 @@ public class Music {
             boolean restore = false;
             NeuralNetwork neuralNetwork;
             if (!restore) {
-                neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(2).get(0).get(0).getRows(), data.get(4).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows(), data.get(3).get(0).get(0).getRows(), data.get(5).get(0).get(0).getRows(), data.get(0).get(0).get(0).getRows() * 4);
+                int keyInputSize = data.get(0).get(0).get(0).getRows();
+                int velocityInputSize = data.get((numberOfInputs + 1)).get(0).get(0).getRows();
+                int tickInputSize = data.get(2 * (numberOfInputs + 1)).get(0).get(0).getRows();
+                int keyOutputSize = data.get((numberOfInputs + 1) - 1).get(0).get(0).getRows();
+                int velocityOutputSize = data.get(2 * (numberOfInputs + 1) - 1).get(0).get(0).getRows();
+                int tickOutputSize = data.get(3 * (numberOfInputs + 1) - 1).get(0).get(0).getRows();
+                neuralNetwork = buildNeuralNetwork(numberOfInputs, keyInputSize, numberOfInputs, velocityInputSize, numberOfInputs, tickInputSize, keyOutputSize, velocityOutputSize, tickOutputSize);
                 neuralNetwork.setNeuralNetworkName("MIDI NN");
             }
             else {
@@ -80,9 +86,9 @@ public class Music {
 
             neuralNetwork.setAsClassification();
 
-            Persistence persistenceCombined = new Persistence(true, 100, neuralNetwork, persistenceName, true);
+            Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
 
-            neuralNetwork.setPersistence(persistenceCombined);
+            neuralNetwork.setPersistence(persistence);
 
             neuralNetwork.verboseTraining(10);
 
@@ -92,8 +98,20 @@ public class Music {
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
 
-            String params = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 48, numberOfIterations = 100";
-            neuralNetwork.setTrainingData(new BasicSampler(new HashMap<>() {{ put(0, data.get(0)); put(1, data.get(2)); put(2, data.get(4)); }}, new HashMap<>() {{ put(0, data.get(1)); put(1, data.get(3)); put(2, data.get(5)); }}, params));
+            String params = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 32, numberOfIterations = 100";
+            HashMap<Integer, HashMap<Integer, MMatrix>> trainingInputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, MMatrix>> trainingOutputs = new HashMap<>();
+            int trainInputPos = 0;
+            int trainOutputPos = 0;
+            for (int index = 0; index < 3; index++) {
+                for (int index1 = 0; index1 < numberOfInputs + 1; index1++) {
+                    if (index1 < numberOfInputs) trainingInputs.put(trainInputPos++, data.get(index * (numberOfInputs + 1) + index1));
+                    else trainingOutputs.put(trainOutputPos++, data.get(index * (numberOfInputs + 1) + index1));
+                }
+            }
+            neuralNetwork.resetDependencies(false);
+            neuralNetwork.setTrainingData(new BasicSampler(trainingInputs, trainingOutputs, params));
+
 
             int totalIterations = neuralNetwork.getTotalIterations();
             int fileVersion = 0;
@@ -112,9 +130,12 @@ public class Music {
                 result.put(2, new HashMap<>());
 
                 TreeMap<Integer, Matrix> currentSample = new TreeMap<>();
-                currentSample.put(0, data.get(0).get(0).get(0));
-                currentSample.put(1, data.get(2).get(0).get(0));
-                currentSample.put(2, data.get(4).get(0).get(0));
+                int predictInputPos = 0;
+                for (int index = 0; index < 3; index++) {
+                    for (int index1 = 0; index1 < numberOfInputs + 1; index1++) {
+                        if (index1 < numberOfInputs) currentSample.put(predictInputPos++, data.get(index * (numberOfInputs + 1) + index1).get(0).get(0));
+                    }
+                }
 
                 for (int sampleIndex = 0; sampleIndex < 300; sampleIndex++) {
 
@@ -126,9 +147,14 @@ public class Music {
                     int targetTick = targetMatrices.get(2).argmax()[0];
                     System.out.println("Tick: " + metadata.tickValueReverseMapping.get(targetTick));
 
-                    currentSample.put(0, getNextSample(currentSample.get(0), ComputableMatrix.encodeToBitColumnVector(targetKey, ComputableMatrix.numberOfBits(metadata.getKeyOutputSize()))));
-                    currentSample.put(1, getNextSample(currentSample.get(1), ComputableMatrix.encodeToBitColumnVector(targetVelocity, ComputableMatrix.numberOfBits(metadata.getVelocityOutputSize()))));
-                    currentSample.put(2, getNextSample(currentSample.get(2), ComputableMatrix.encodeToBitColumnVector(targetTick, ComputableMatrix.numberOfBits(metadata.numberOfEncodedTicks))));
+                    Matrix keyTargetMatrix = new DMatrix(metadata.getKeyOutputSize(), 1);
+                    keyTargetMatrix.setValue(targetKey, 0, 1);
+                    Matrix velocityTargetMatrix = new DMatrix(metadata.getVelocityOutputSize(), 1);
+                    velocityTargetMatrix.setValue(targetVelocity, 0, 1);
+                    Matrix tickTargetMatrix = new DMatrix(metadata.numberOfEncodedTicks, 1);
+                    tickTargetMatrix.setValue(targetTick, 0, 1);
+
+                    getNextSample(currentSample, keyTargetMatrix, velocityTargetMatrix, tickTargetMatrix, numberOfInputs);
 
                 }
                 neuralNetworkForPrediction.stop();
@@ -173,17 +199,20 @@ public class Music {
      * Returns next sample
      *
      * @param currentSample current sample
-     * @param targetMatrix target matrix
-     * @return next sample
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param keyTargetMatrix key target matrix
+     * @param velocityTargetMatrix velocity target matrix
+     * @param tickTargetMatrix tick target matrix
      */
-    private Matrix getNextSample(Matrix currentSample, Matrix targetMatrix) throws MatrixException {
-        ArrayList<Matrix> currentSamples = currentSample.getSubMatrices();
-        int maxSampleIndex = currentSamples.size() - 1;
-        for (int sampleIndex = 0; sampleIndex < maxSampleIndex; sampleIndex++) currentSamples.set(sampleIndex, currentSamples.get(sampleIndex + 1));
-        currentSamples.set(maxSampleIndex, targetMatrix);
-        return new JMatrix(currentSamples, true);
+    private void getNextSample(TreeMap<Integer, Matrix> currentSample, Matrix keyTargetMatrix, Matrix velocityTargetMatrix, Matrix tickTargetMatrix, int numberOfInputs) {
+        for (int index = 0; index < 3; index++) {
+            int offset = index * numberOfInputs;
+            for (int index1 = 0; index1 < numberOfInputs; index1++) {
+                if (index1 < numberOfInputs - 1) currentSample.put(offset + index1, currentSample.get(offset + index1 + 1));
+                else currentSample.put(offset + index1, index == 0 ? keyTargetMatrix : index == 1 ? velocityTargetMatrix : tickTargetMatrix);
+            }
+        }
     }
+
 
     /**
      * Builds recurrent neural network (GRU) instance.
@@ -194,81 +223,162 @@ public class Music {
      * @param outputKeySize output key size (digits as one hot encoded in sequence).
      * @param outputVelocitySize output velocity size (digits as one hot encoded in sequence).
      * @param outputTickSize output tick size (digits as one hot encoded in sequence).
-     * @param hiddenSize hidden layer size of neural network.
      * @return neural network instance.
      * @throws DynamicParamException throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputKeySize, int inputVelocitySize, int inputTickSize, int outputKeySize, int outputVelocitySize, int outputTickSize, int hiddenSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
+    private static NeuralNetwork buildNeuralNetwork(int numberOfKeyInputs, int inputKeySize, int numberOfVelocityInputs, int inputVelocitySize, int numberOfTickInputs, int inputTickSize, int outputKeySize, int outputVelocitySize, int outputTickSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
-        // Layers for processing key value information.
-        int hiddenKeySize = 2 * inputKeySize;
-        neuralNetworkConfiguration.addInputLayer("width = " + inputKeySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenKeySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenKeySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenKeySize + ", reversedInput = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenKeySize + ", reversedInput = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = true");
-        neuralNetworkConfiguration.connectLayers(0, 1);
-        neuralNetworkConfiguration.connectLayers(0, 3);
-        neuralNetworkConfiguration.connectLayers(1, 2);
-        neuralNetworkConfiguration.connectLayers(3, 4);
-        neuralNetworkConfiguration.connectLayers(2, 5);
-        neuralNetworkConfiguration.connectLayers(4, 5);
-        neuralNetworkConfiguration.connectLayers(0, 5);
+        // Encoder and attention layers for processing key value information.
+        int keyAttentionLayerIndex = buildAttentionModule(neuralNetworkConfiguration, inputKeySize, inputKeySize, numberOfKeyInputs, 1);
+        // Encoder and attention layers for processing velocity value information.
+        int velocityAttentionLayerIndex = buildAttentionModule(neuralNetworkConfiguration, inputVelocitySize, inputVelocitySize, numberOfVelocityInputs, 1);
+        // Encoder and attention layers for processing tick value information.
+        int tickAttentionLayerIndex = buildAttentionModule(neuralNetworkConfiguration, inputTickSize, inputTickSize, numberOfTickInputs, 1);
 
-        // Layers for processing velocity value information.
-        int hiddenVelocitySize = 2 * inputVelocitySize;
-        neuralNetworkConfiguration.addInputLayer("width = " + inputVelocitySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenVelocitySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenVelocitySize + ", reversedInput = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = true");
-        neuralNetworkConfiguration.connectLayers(6, 7);
-        neuralNetworkConfiguration.connectLayers(6, 8);
-        neuralNetworkConfiguration.connectLayers(7, 9);
-        neuralNetworkConfiguration.connectLayers(8, 9);
-        neuralNetworkConfiguration.connectLayers(6, 9);
+        // Decoder modules for key, velocity and tick information
+//        int keyDecoderIndex = buildDecoderModule(neuralNetworkConfiguration, keyAttentionLayerIndex, outputKeySize, true);
+//        int velocityDecoderIndex = buildDecoderModule(neuralNetworkConfiguration, velocityAttentionLayerIndex, outputVelocitySize, true);
+//        int tickDecoderIndex = buildDecoderModule(neuralNetworkConfiguration, tickAttentionLayerIndex, outputTickSize, true);
 
-        // Layers for processing tick value information.
-        int hiddenTickSize = 2 * inputTickSize;
-        neuralNetworkConfiguration.addInputLayer("width = " + inputTickSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenTickSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenTickSize + ", reversedInput = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = true");
-        neuralNetworkConfiguration.connectLayers(10, 11);
-        neuralNetworkConfiguration.connectLayers(10, 12);
-        neuralNetworkConfiguration.connectLayers(11, 13);
-        neuralNetworkConfiguration.connectLayers(12, 13);
-        neuralNetworkConfiguration.connectLayers(10, 13);
+        // Final feedforward layers for key, velocity and tick information.
+        int keyHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputKeySize);
+        int velocityHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputVelocitySize);
+        int tickHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputTickSize);
+        neuralNetworkConfiguration.connectLayers(keyAttentionLayerIndex, keyHiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(velocityAttentionLayerIndex, velocityHiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(tickAttentionLayerIndex, tickHiddenLayerIndex);
 
-        // Layers connecting key, value and tick value information.
-        int hiddenConnectSize = hiddenKeySize + hiddenVelocitySize + hiddenTickSize;
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "width = " + hiddenConnectSize);
-        neuralNetworkConfiguration.connectLayers(5, 14);
-        neuralNetworkConfiguration.connectLayers(9, 14);
-        neuralNetworkConfiguration.connectLayers(13, 14);
+        // Output layers for key, velocity and tick information.
+        int keyOutputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        int velocityOutputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        int tickOutputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        neuralNetworkConfiguration.connectLayers(keyHiddenLayerIndex, keyOutputLayerIndex);
+        neuralNetworkConfiguration.connectLayers(velocityHiddenLayerIndex, velocityOutputLayerIndex);
+        neuralNetworkConfiguration.connectLayers(tickHiddenLayerIndex, tickOutputLayerIndex);
 
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputKeySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputVelocitySize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputTickSize);
-        neuralNetworkConfiguration.connectLayers(14, 15);
-        neuralNetworkConfiguration.connectLayers(14, 16);
-        neuralNetworkConfiguration.connectLayers(14, 17);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
-        neuralNetworkConfiguration.connectLayers(15, 18);
-        neuralNetworkConfiguration.connectLayers(16, 19);
-        neuralNetworkConfiguration.connectLayers(17, 20);
-
-        neuralNetwork.build(neuralNetworkConfiguration);
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         return neuralNetwork;
+    }
+
+    /**
+     * Builds bi-directional RNN module.
+     *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @param inputWidth input width
+     * @param hiddenWidth hidden width
+     * @param numberOfUnits number of units
+     * @return index of module output layer.
+     * @throws DynamicParamException throws exception if setting of neural network parameters fail.
+     * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static int buildInputEncoderModule(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputWidth, int hiddenWidth, int numberOfUnits, boolean biDirectional) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputWidth);
+        if (biDirectional) {
+            int[] hiddenLayerIndices = new int[2 * numberOfUnits];
+            for (int index = 0; index < numberOfUnits; index++) {
+                hiddenLayerIndices[2 * index] = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = " + hiddenWidth);
+                hiddenLayerIndices[2 * index + 1] = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = " + hiddenWidth + ", reversedInput = true");
+                neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndices[2 * index]);
+                neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndices[2 * index + 1]);
+            }
+            int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
+            for (int layerIndex : hiddenLayerIndices) {
+                neuralNetworkConfiguration.connectLayers(layerIndex, joinLayerIndex);
+            }
+            return joinLayerIndex;
+        }
+        else {
+            int[] hiddenLayerIndices = new int[numberOfUnits];
+            for (int index = 0; index < numberOfUnits; index++) {
+                hiddenLayerIndices[index] = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = " + hiddenWidth);
+                neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndices[index]);
+            }
+            if (hiddenLayerIndices.length > 1) {
+                int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
+                for (int layerIndex : hiddenLayerIndices) {
+                    neuralNetworkConfiguration.connectLayers(layerIndex, joinLayerIndex);
+                }
+                return joinLayerIndex;
+            }
+            else return hiddenLayerIndices[0];
+        }
+    }
+
+    /**
+     * Builds attention module
+     *
+     * @param neuralNetworkConfiguration neural network configuration
+     * @param inputSize input size
+     * @param hiddenSize hidden size
+     * @param numberOfInputs number of inputs
+     * @param numberOfUnits number of units
+     * @return attention layer index
+     * @throws DynamicParamException throws exception if setting of neural network parameters fail.
+     * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static int buildAttentionModule(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int hiddenSize, int numberOfInputs, int numberOfUnits) throws MatrixException, NeuralNetworkException, DynamicParamException {
+        // Encoder layers for input information.
+        int[] encoderIndices = new int[numberOfInputs];
+        for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
+            encoderIndices[inputIndex] = buildInputEncoderModule(neuralNetworkConfiguration, inputSize, hiddenSize, numberOfUnits, true);
+        }
+
+        // Attention layer for input information.
+        int combinedIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
+            neuralNetworkConfiguration.connectLayers(encoderIndices[inputIndex], combinedIndex);
+        }
+//        return combinedIndex;
+
+        // Normalization layer for input information.
+/*        int normLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
+        neuralNetworkConfiguration.connectLayers(combinedIndex, normLayerIndex);
+        return normLayerIndex; */
+
+        // Regularization layer for input information.
+        int regularizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DROPOUT, "probability = 0.1");
+        neuralNetworkConfiguration.connectLayers(combinedIndex, regularizationLayerIndex);
+        return regularizationLayerIndex;
+    }
+
+    /**
+     * Builds input module.
+     *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @param previousLayerIndex previous layer index
+     * @param hiddenWidth hidden width
+     * @return index of module output layer.
+     * @throws DynamicParamException throws exception if setting of neural network parameters fail.
+     * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    private static int buildDecoderModule(NeuralNetworkConfiguration neuralNetworkConfiguration, int previousLayerIndex, int hiddenWidth, boolean asBidirectional) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        if (asBidirectional) {
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = " + hiddenWidth);
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = " + hiddenWidth + ", reversedInput = true");
+            int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN, "width = " + hiddenWidth);
+            int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
+            neuralNetworkConfiguration.connectLayers(previousLayerIndex, hiddenLayerIndex1);
+            neuralNetworkConfiguration.connectLayers(previousLayerIndex, hiddenLayerIndex2);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex3);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndex3);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex4);
+            return hiddenLayerIndex4;
+        }
+        else {
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = " + hiddenWidth);
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
+            neuralNetworkConfiguration.connectLayers(previousLayerIndex, hiddenLayerIndex1);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
+            return hiddenLayerIndex2;
+        }
     }
 
 }
