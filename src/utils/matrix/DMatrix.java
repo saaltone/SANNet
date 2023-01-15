@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -40,7 +40,20 @@ public class DMatrix extends ComputableMatrix {
      * @param columns defines number of columns in matrix.
      */
     public DMatrix(int rows, int columns) {
-        super(rows, columns, false);
+        super(rows, columns);
+        matrix = new double[rows][columns];
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     */
+    public DMatrix(int rows, int columns, boolean isScalar) {
+        super(rows, columns, isScalar);
         matrix = new double[rows][columns];
         updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
@@ -64,10 +77,38 @@ public class DMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initialization type of initialization defined in class Init.
+     * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
+     * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
+     */
+    public DMatrix(int rows, int columns, boolean isScalar, Initialization initialization, int inputs, int outputs) {
+        this(rows, columns, isScalar);
+        initialize(initialization, inputs, outputs);
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param initialization type of initialization defined in class Init.
      */
     public DMatrix(int rows, int columns, Initialization initialization) {
         this(rows, columns);
+        initialize(initialization);
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initialization type of initialization defined in class Init.
+     */
+    public DMatrix(int rows, int columns, boolean isScalar, Initialization initialization) {
+        this(rows, columns, isScalar);
         initialize(initialization);
     }
 
@@ -86,10 +127,35 @@ public class DMatrix extends ComputableMatrix {
     /**
      * Constructor for dense matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initializer initializer.
+     */
+    public DMatrix(int rows, int columns, boolean isScalar, Matrix.Initializer initializer) {
+        this(rows, columns, isScalar);
+        initialize(initializer);
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
      * @param data clones matrix data from given matrix data.
      */
     public DMatrix(double[][] data) {
-        super(data.length, data[0].length, false);
+        super(data.length, data[0].length);
+        matrix = data.clone();
+        updateSliceDimensions(0, 0, data.length - 1, data[0].length - 1);
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
+     * @param data clones matrix data from given matrix data.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     */
+    public DMatrix(double[][] data, boolean isScalar) {
+        super(data.length, data[0].length, isScalar);
         matrix = data.clone();
         updateSliceDimensions(0, 0, data.length - 1, data[0].length - 1);
     }
@@ -98,10 +164,11 @@ public class DMatrix extends ComputableMatrix {
      * Constructor for dense matrix.
      *
      * @param data matrix data.
+     * @param isScalar true if matrix is scalar (size 1x1).
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    public DMatrix(double[][] data, boolean isTransposed) {
-        super(data.length, data[0].length, false, isTransposed);
+    public DMatrix(double[][] data, boolean isScalar, boolean isTransposed) {
+        super(data.length, data[0].length, isScalar, isTransposed);
         matrix = data;
         updateSliceDimensions(0, 0, data.length - 1, data[0].length - 1);
     }
@@ -111,10 +178,11 @@ public class DMatrix extends ComputableMatrix {
      *
      * @param data matrix data.
      * @param copyData if true matrix data is copied and if false referenced.
+     * @param isScalar true if matrix is scalar (size 1x1).
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    public DMatrix(double[][] data, boolean copyData, boolean isTransposed) {
-        super(data.length, data[0].length, false, isTransposed);
+    public DMatrix(double[][] data, boolean copyData, boolean isScalar, boolean isTransposed) {
+        super(data.length, data[0].length, isScalar, isTransposed);
         matrix = copyData ? data.clone() : data;
         updateSliceDimensions(0, 0, data.length - 1, data[0].length - 1);
     }
@@ -126,7 +194,7 @@ public class DMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
-        Matrix newMatrix = new DMatrix(matrix, true, false);
+        Matrix newMatrix = new DMatrix(matrix, isScalar(), false);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -138,7 +206,7 @@ public class DMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if cloning of mask fails.
      */
     public Matrix transpose() throws MatrixException {
-        Matrix newMatrix = new DMatrix(matrix, true);
+        Matrix newMatrix = new DMatrix(matrix, isScalar(), true);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -167,31 +235,6 @@ public class DMatrix extends ComputableMatrix {
      */
     private boolean isEqual(double[][] matrixData) {
         return Arrays.deepEquals(matrix, matrixData);
-    }
-
-    /**
-     * Makes current matrix data equal to other matrix data.
-     *
-     * @param other other matrix to be copied as data of this matrix.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    public void setEqualTo(Matrix other) throws MatrixException {
-        if (other instanceof DMatrix otherDMatrix) {
-            if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
-                throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
-            }
-            otherDMatrix.makeEqual(matrix);
-        }
-        else super.setEqualTo(other);
-    }
-
-    /**
-     * Makes matrix data equals to data of this matrix.
-     *
-     * @param matrixData matrix data
-     */
-    private void makeEqual(double[][] matrixData) {
-        matrix = matrixData.clone();
     }
 
     /**
