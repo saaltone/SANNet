@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -425,7 +425,7 @@ public class MMatrix implements Cloneable, Serializable {
         }
         else {
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
@@ -465,7 +465,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
@@ -506,7 +506,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
@@ -544,7 +544,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -579,7 +579,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -614,7 +614,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -649,7 +649,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -684,7 +684,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -719,7 +719,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -754,7 +754,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
@@ -789,7 +789,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
@@ -824,7 +824,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -859,7 +859,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             synchronizeProcedureFactory(other);
             result.setProcedureFactory(procedureFactory);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -952,7 +952,7 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix sum(Matrix result) throws MatrixException {
         if (!hasProcedureFactory()) return count(false, result);
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             count(false, result);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createSumExpression(expressionLock, this, result);
@@ -991,7 +991,7 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix mean(Matrix result) throws MatrixException {
         if (!hasProcedureFactory()) return count(true, result);
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             count(true, result);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createMeanExpression(expressionLock, this, result);
@@ -1071,7 +1071,7 @@ public class MMatrix implements Cloneable, Serializable {
             result.divide(getDepth(), result);
         }
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             for (Matrix matrix : matrices) {
                 result.add(matrix.subtract(meanMatrix).power(2), result);
             }
@@ -1142,7 +1142,7 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix standardDeviation(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
         if (!hasProcedureFactory()) variance(meanMatrix).multiply(getDepth()).divide(getDepth() - 1).apply(result, UnaryFunctionType.SQRT);
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             variance(meanMatrix).multiply(getDepth()).divide(getDepth() - 1).apply(result, UnaryFunctionType.SQRT);
             result.setProcedureFactory(procedureFactory);
             procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
