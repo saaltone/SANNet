@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -96,9 +96,9 @@ public class MultiNode extends AbstractNode {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public void reset() throws MatrixException {
-        if (getToNode() == null) matrices = new TreeMap<>();
-        gradients = new TreeMap<>();
         super.reset();
+        matrices = new TreeMap<>();
+        gradients = new TreeMap<>();
     }
 
     /**
