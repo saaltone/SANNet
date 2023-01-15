@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -107,7 +107,7 @@ public abstract class AbstractExpression implements Expression, Serializable {
      *
      * @return expression ID
      */
-    private int getExpressionID() {
+    public int getExpressionID() {
         return expressionID;
     }
 
@@ -130,12 +130,34 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
+     * Checks if argument matrix is defined for specific sample index.
+     *
+     * @param argument1 argument1
+     * @param sampleIndex sample index.
+     * @throws MatrixException throws exception if argument is not defined.
+     */
+    protected void checkArgument(Node argument1, int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(this + ": " + getExpressionName() + ": Argument 1 for operation is not defined for sample index " + sampleIndex);
+    }
+
+    /**
      * Returns result of expression.
      *
      * @return result of expression.
      */
     public Node getResult() {
         return result;
+    }
+
+    /**
+     * Checks if result gradient is defined for specific sample index.
+     *
+     * @param result result
+     * @param sampleIndex sample index.
+     * @throws MatrixException throws exception if argument is not defined.
+     */
+    protected void checkResultGradient(Node result, int sampleIndex) throws MatrixException {
+        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined for sample index" + sampleIndex);
     }
 
     /**
@@ -164,14 +186,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
     protected abstract boolean executeAsSingleStep();
 
     /**
-     * Resets expression.
-     *
-     */
-    public void reset() {
-        if (nextExpression != null) nextExpression.reset();
-    }
-
-    /**
      * Calculates entire expression chain including regulation.
      *
      * @param sampleIndex sample index
@@ -180,7 +194,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpressionStep(int sampleIndex, int firstSampleIndex) throws MatrixException, DynamicParamException {
-        updateExpressionDependency(sampleIndex);
         if (executeAsSingleStep() && sampleIndex == firstSampleIndex) calculateExpression();
         else calculateExpression(sampleIndex);
         if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndex, firstSampleIndex);
@@ -194,27 +207,9 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpressionStep(Set<Integer> sampleIndices) throws MatrixException, DynamicParamException {
-        if (executeAsSingleStep()) {
-            for (Integer sampleIndex : sampleIndices) updateExpressionDependency(sampleIndex);
-            calculateExpression();
-        }
-        else {
-            for (Integer sampleIndex : sampleIndices) {
-                updateExpressionDependency(sampleIndex);
-                calculateExpression(sampleIndex);
-            }
-        }
+        if (executeAsSingleStep()) calculateExpression();
+        else for (Integer sampleIndex : sampleIndices) calculateExpression(sampleIndex);
         if (nextExpression != null) nextExpression.calculateExpressionStep(sampleIndices);
-    }
-
-    /**
-     * Updates expression forward direction dependency.
-     *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
-     */
-    protected void updateExpressionDependency(int sampleIndex) throws MatrixException {
-        argument1.updateMatrixDependency(sampleIndex);
     }
 
     /**
@@ -242,7 +237,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradientStep(int sampleIndex, int lastSampleIndex) throws MatrixException, DynamicParamException {
-        updateGradientDependency(sampleIndex);
         if (executeAsSingleStep() && sampleIndex == lastSampleIndex) calculateGradient();
         else calculateGradient(sampleIndex);
         if (previousExpression != null) previousExpression.calculateGradientStep(sampleIndex, lastSampleIndex);
@@ -257,32 +251,15 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateGradientStep(Set<Integer> sampleIndices, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
-        int gradientStepCount = 0;
-        if (executeAsSingleStep()) {
-            for (Integer sampleIndex : sampleIndices) {
-                updateGradientDependency(sampleIndex);
-                if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
-            }
-            calculateGradient();
-        }
+        if (executeAsSingleStep()) calculateGradient();
         else {
+            int gradientStepCount = 0;
             for (Integer sampleIndex : sampleIndices) {
-                updateGradientDependency(sampleIndex);
                 calculateGradient(sampleIndex);
                 if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
             }
         }
         if (previousExpression != null) previousExpression.calculateGradientStep(sampleIndices, numberOfGradientSteps);
-    }
-
-    /**
-     * Updates gradient dependency to backward direction.
-     *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
-     */
-    protected void updateGradientDependency(int sampleIndex) throws MatrixException {
-        result.updateGradientDependency(sampleIndex);
     }
 
     /**
