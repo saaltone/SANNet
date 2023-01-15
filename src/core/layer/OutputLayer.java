@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -79,22 +79,20 @@ public class OutputLayer extends AbstractPlainLayer {
     }
 
     /**
-     * Initializes neural network layer dimensions.
-     *
-     */
-    public void initializeDimensions() {
-        setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
-        setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
-        setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
-    }
-
-    /**
      * Sets training flag.
      *
      * @param training if true layer is training otherwise false.
      */
     protected void setTraining(boolean training) {
         this.training = training;
+    }
+
+    /**
+     * Sets reset flag for procedure expression dependencies.
+     *
+     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
     }
 
     /**
