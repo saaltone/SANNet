@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -1556,84 +1556,46 @@ public interface Matrix {
     Matrix split(int position, boolean splitVertically) throws MatrixException;
 
     /**
-     * Concatenates this and other matrix vertically (not in place and not after).
+     * Joins two matrices either vertically or horizontally.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param other other matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @return joined matrix
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    Matrix concatenateVertical(Matrix other) throws MatrixException;
+    Matrix join(Matrix other, boolean joinedVertically) throws MatrixException;
 
     /**
-     * Concatenates this matrix and other value vertically (not in place and not after).
+     * Joins two matrices either vertically or horizontally.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param other other matrix
+     * @param result joined matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    Matrix concatenateVertical(double other) throws MatrixException;
+    void join(Matrix other, Matrix result, boolean joinedVertically) throws MatrixException;
 
     /**
-     * Concatenates this and other matrix vertically.
+     * Unjoins matrix at specific row and column.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @param unjoinRows unjoins specific number of rows.
+     * @param unjoinColumns unjoins specific number of column.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    Matrix concatenateVertical(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException;
+    Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinRows, int unjoinColumns) throws MatrixException;
 
     /**
-     * Concatenates this matrix and other value vertically.
+     * Unjoins matrix at specific row and column.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param result unjoined matrix
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    Matrix concatenateVertical(double other, boolean inplace, boolean concatenateAfter) throws MatrixException;
-
-    /**
-     * Concatenates this and other matrix horizontally (not in place and not after).
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    Matrix concatenateHorizontal(Matrix other) throws MatrixException;
-
-    /**
-     * Concatenates this matrix and other value horizontally (not in place and not after).
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    Matrix concatenateHorizontal(double other) throws MatrixException;
-
-    /**
-     * Concatenates this and other matrix horizontally.
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    Matrix concatenateHorizontal(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException;
-
-    /**
-     * Concatenates this matrix and other value horizontally.
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    Matrix concatenateHorizontal(double other, boolean inplace, boolean concatenateAfter) throws MatrixException;
+    void unjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException;
 
     /**
      * Prints matrix in row and column format.
