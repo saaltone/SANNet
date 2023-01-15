@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -57,15 +57,28 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     */
+    protected ComputableMatrix(int rows, int columns) {
+        super(rows, columns);
+        this.isScalar = (rows == 1 && columns == 1);
+    }
+
+    /**
+     * Constructor for computable matrix.<br>
+     * If rows and columns do not equal to 1 isScalar parameter is ignored.<br>
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar) {
         super(rows, columns);
-        this.isScalar = isScalar || (rows == 1 && columns == 1);
+        this.isScalar = isScalar && (rows == 1 && columns == 1);
     }
 
     /**
      * Constructor for computable matrix.
+     * If rows and columns do not equal to 1 isScalar parameter is ignored.<br>
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
@@ -74,7 +87,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     protected ComputableMatrix(int rows, int columns, boolean isScalar, boolean isTransposed) {
         super(rows, columns, isTransposed);
-        this.isScalar = isScalar || (rows == 1 && columns == 1);
+        this.isScalar = isScalar && (rows == 1 && columns == 1);
     }
 
     /**
@@ -268,7 +281,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
         }
 
-        new EqualMatrixOperation(getRows(), getColumns()).apply(this, other);
+        new EqualMatrixOperation(getRows(), getColumns()).apply(other, this);
     }
 
     /**
@@ -852,7 +865,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public static Matrix encodeToBitColumnVector(int value, int maxBits) throws MatrixException {
         String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
-        if (binaryCode.length() > maxBits) throw new MatrixException("Binary code length: " + binaryCode.length() + " is exceeding number of maximum bits: " + maxBits);
+        if (binaryCode.length() > maxBits) throw new MatrixException("Binary code: '" + binaryCode + "' has length " + binaryCode.length() + " exceeding number of maximum bits " + maxBits);
         Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
         int binaryCodeLength = binaryCode.length();
         for (int charIndex = 0; charIndex < binaryCodeLength; charIndex++) {
