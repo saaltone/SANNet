@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -17,6 +17,13 @@ import java.util.TreeMap;
  *
  */
 public interface Node {
+
+    /**
+     * Returns id of node.
+     *
+     * @return id of node.
+     */
+     int getId();
 
     /**
      * If true node is of type multi index.
@@ -55,34 +62,49 @@ public interface Node {
     int getColumns();
 
     /**
-     * Set dependency node backward.
+     * Sets backward dependent node.
      *
-     * @param fromNode from node.
+     * @param fromResultNode from node.
      */
-    void setFromNode(Node fromNode);
+    void setFromResultNode(Node fromResultNode);
 
     /**
-     * Set dependency node forward.
+     * Sets forward dependent node.
      *
-     * @param toNode to node.
+     * @param toArgumentNode to node.
      */
-    void setToNode(Node toNode);
+    void setToArgumentNode(Node toArgumentNode);
+
+    /**
+     * Sets reset flag for matrix dependencies.
+     *
+     * @param resetDependencies if true matrix dependencies are reset otherwise false.
+     */
+    void resetDependencies(boolean resetDependencies);
+
+    /**
+     * Updates dependencies.
+     *
+     * @param index index.
+     */
+    void updateDependencies(int index);
 
     /**
      * Updates matrix dependency to forward direction.
      *
      * @param index index
+     * @param previousIndex previous index
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    void updateMatrixDependency(int index) throws MatrixException;
+    void updateMatrixDependency(int index, int previousIndex) throws MatrixException;
 
     /**
      * Updates gradient dependency to backward direction.
      *
      * @param index index
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     * @param previousIndex previous index
      */
-    void updateGradientDependency(int index) throws MatrixException;
+    void updateGradientDependency(int index, int previousIndex);
 
     /**
      * Return name of node

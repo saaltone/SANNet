@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -34,16 +34,16 @@ public abstract class AbstractNode implements Node, Serializable {
     private final Matrix referenceMatrix;
 
     /**
-     * Sets dependency node backward.
+     * Set of dependent backward node.
      *
      */
-    private Node fromNode;
+    private Node fromResultNode = null;
 
     /**
-     * Sets dependency node forward.
+     * Set of dependent forward node.
      *
      */
-    private Node toNode;
+    private Node toArgumentNode = null;
 
     /**
      * Number of cumulated gradient entries.
@@ -56,6 +56,24 @@ public abstract class AbstractNode implements Node, Serializable {
      *
      */
     private boolean stopGradient = false;
+
+    /**
+     * If true resets matrix dependencies otherwise not.
+     *
+     */
+    private boolean resetDependencies = true;
+
+    /**
+     * Previous reset dependencies state.
+     *
+     */
+    private boolean previousResetDependencies = true;
+
+    /**
+     * Latest matrix.
+     *
+     */
+    private transient Matrix latestMatrix;
 
     /**
      * Constructor for abstract node.
@@ -108,50 +126,85 @@ public abstract class AbstractNode implements Node, Serializable {
     }
 
     /**
-     * Set dependency node backward.
+     * Sets backward dependent node.
      *
-     * @param fromNode from node.
+     * @param fromResultNode from result node.
      */
-    public void setFromNode(Node fromNode) {
-        this.fromNode = fromNode;
+    public void setFromResultNode(Node fromResultNode) {
+        this.fromResultNode = fromResultNode;
     }
 
     /**
-     * Set dependency node forward.
+     * Sets forward dependent node.
      *
-     * @param toNode to node.
+     * @param toArgumentNode to argument node.
      */
-    public void setToNode(Node toNode) {
-        this.toNode = toNode;
+    public void setToArgumentNode(Node toArgumentNode) {
+        this.toArgumentNode = toArgumentNode;
     }
 
     /**
-     * Returns to node.
+     * Checks if node has from result node.
      *
-     * @return to node.
+     * @return if node has from result node returns true otherwise returns false.
      */
-    public Node getToNode() {
-        return toNode;
+    protected boolean hasFromResultNode() {
+        return fromResultNode != null;
+    }
+
+    /**
+     * Checks if node has to argument node.
+     *
+     * @return if node has to argument node returns true otherwise returns false.
+     */
+    protected boolean hasToArgumentNode() {
+        return toArgumentNode != null;
+    }
+
+    /**
+     * Sets reset flag for matrix dependencies.
+     *
+     * @param resetDependencies if true matrix dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
+        this.resetDependencies = resetDependencies;
+        if (resetDependencies != previousResetDependencies) latestMatrix = null;
+        previousResetDependencies = resetDependencies;
+    }
+
+    /**
+     * Updates dependencies.
+     *
+     * @param index index.
+     */
+    public void updateDependencies(int index) {
+        if (hasFromResultNode() && !resetDependencies) latestMatrix = fromResultNode.getMatrix(index);
     }
 
     /**
      * Updates matrix dependency to forward direction.
      *
      * @param index index
+     * @param previousIndex previous index
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
      */
-    public void updateMatrixDependency(int index) throws MatrixException {
-        if (fromNode != null) setMatrix(index, fromNode.getMatrix(index - 1) != null ? fromNode.getMatrix(index - 1) : getNewMatrix());
+    public void updateMatrixDependency(int index, int previousIndex) throws MatrixException {
+        if (hasFromResultNode()) {
+            if (fromResultNode.getMatrix(previousIndex) != null) setMatrix(index, fromResultNode.getMatrix(previousIndex));
+            else setMatrix(index, latestMatrix != null ? latestMatrix : getNewMatrix());
+        }
     }
 
     /**
      * Updates gradient dependency to backward direction.
      *
      * @param index index
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     * @param previousIndex previous index
      */
-    public void updateGradientDependency(int index) throws MatrixException {
-        if (toNode != null) setGradient(index, toNode.getGradient(index + 1) != null ? toNode.getGradient(index + 1) : getNewMatrix());
+    public void updateGradientDependency(int index, int previousIndex) {
+        if (hasToArgumentNode()) {
+            if (toArgumentNode.getGradient(previousIndex) != null) setGradient(index, toArgumentNode.getGradient(previousIndex));
+        }
     }
 
     /**
@@ -230,6 +283,7 @@ public abstract class AbstractNode implements Node, Serializable {
      */
     public void setMatrix(Matrix matrix) throws MatrixException {
         if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
+        if (matrix.getRows() != referenceMatrix.getRows() || matrix.getColumns() != referenceMatrix.getColumns()) throw new MatrixException("Matrix dimensions (" + matrix.getRows() + "x" + matrix.getColumns() + ") are not matching with reference matrix dimensions (" + referenceMatrix.getRows() + "x" + referenceMatrix.getColumns() + ")");
     }
 
     /**
@@ -241,6 +295,7 @@ public abstract class AbstractNode implements Node, Serializable {
      */
     public void setMatrix(int index, Matrix matrix) throws MatrixException {
         if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
+        if (matrix.getRows() != referenceMatrix.getRows() || matrix.getColumns() != referenceMatrix.getColumns()) throw new MatrixException("Matrix dimensions (" + matrix.getRows() + "x" + matrix.getColumns() + ") are not matching with reference matrix dimensions (" + referenceMatrix.getRows() + "x" + referenceMatrix.getColumns() + ")");
     }
 
     /**
