@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.regularization;
@@ -127,7 +127,7 @@ public class Dropout extends AbstractRegularizationLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "Probability: " + probability + ", Monte Carlo: " + monte_carlo;
+        return "Probability: " + (1 - probability) + ", Monte Carlo: " + monte_carlo;
     }
 
 }
