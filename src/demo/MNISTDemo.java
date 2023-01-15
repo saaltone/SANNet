@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -113,8 +113,6 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
@@ -132,7 +130,8 @@ public class MNISTDemo {
         neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.COS_SIM);
         neuralNetworkConfiguration.connectLayersSerially();
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
         return neuralNetwork;
     }
