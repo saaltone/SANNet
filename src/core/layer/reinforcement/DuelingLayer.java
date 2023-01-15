@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
+ */
+
 package core.layer.reinforcement;
 
 import core.layer.AbstractExecutionLayer;
@@ -206,15 +211,6 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Returns true if input is joined otherwise returns false.
-     *
-     * @return true if input is joined otherwise returns false.
-     */
-    protected boolean isJoinedInput() {
-        return false;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -275,7 +271,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -284,7 +280,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 
