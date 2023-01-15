@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.network;
@@ -62,13 +62,16 @@ public class NeuralNetworkConfiguration {
      * Adds input layer to neural network.
      *
      * @param params parameters for input layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of input layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void addInputLayer(String params) throws NeuralNetworkException, DynamicParamException {
-        InputLayer inputLayer = new InputLayer(neuralNetworkLayerIndexCount++, params);
+    public int addInputLayer(String params) throws NeuralNetworkException, DynamicParamException {
+        int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
+        InputLayer inputLayer = new InputLayer(neuralNetworkLayerIndex, params);
         inputLayers.put(inputLayers.size(), inputLayer);
         neuralNetworkLayers.put(neuralNetworkLayers.size(), inputLayer);
+        return neuralNetworkLayerIndex;
     }
 
     /**
@@ -84,12 +87,13 @@ public class NeuralNetworkConfiguration {
      * Adds hidden layer to neural network. Layers are executed in order which they are added.
      *
      * @param layerType type of layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, null, null, null);
+    public int addHiddenLayer(LayerType layerType) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, null, null, null);
     }
 
     /**
@@ -97,12 +101,13 @@ public class NeuralNetworkConfiguration {
      *
      * @param layerType type of layer.
      * @param params parameters for layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, null, null, params);
+    public int addHiddenLayer(LayerType layerType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, null, null, params);
     }
 
     /**
@@ -110,12 +115,13 @@ public class NeuralNetworkConfiguration {
      *
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, activationFunction, null, null);
+    public int addHiddenLayer(LayerType layerType, ActivationFunction activationFunction) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, activationFunction, null, null);
     }
 
     /**
@@ -124,53 +130,13 @@ public class NeuralNetworkConfiguration {
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
      * @param params parameters for layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, activationFunction, null, params);
-    }
-
-    /**
-     * Adds hidden layer to neural network. Layers are executed in order which they are added.
-     *
-     * @param layerType type of layer.
-     * @param activationFunction activation function for layer.
-     * @param initialization layer parameter initialization function for layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, activationFunction, initialization, null);
-    }
-
-    /**
-     * Adds hidden layer to neural network. Layers are executed in order which they are added.
-     *
-     * @param layerType type of layer.
-     * @param initialization layer parameter initialization function for layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    public void addHiddenLayer(LayerType layerType, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, initialization, null);
-    }
-
-    /**
-     * Adds hidden layer to neural network. Layers are executed in order which they are added.
-     *
-     * @param layerType type of layer.
-     * @param initialization layer parameter initialization function for layer.
-     * @param params parameters for layer.
-     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    public void addHiddenLayer(LayerType layerType, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addHiddenLayer(layerType, null, initialization, params);
+    public int addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, activationFunction, null, params);
     }
 
     /**
@@ -179,15 +145,62 @@ public class NeuralNetworkConfiguration {
      * @param layerType type of layer.
      * @param activationFunction activation function for layer.
      * @param initialization layer parameter initialization function for layer.
-     * @param params parameters for layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        AbstractLayer hiddenLayer = LayerFactory.create(neuralNetworkLayerIndexCount++, layerType, activationFunction, initialization, params);
+    public int addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, activationFunction, initialization, null);
+    }
+
+    /**
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
+     *
+     * @param layerType type of layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addHiddenLayer(LayerType layerType, Initialization initialization) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, initialization, null);
+    }
+
+    /**
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
+     *
+     * @param layerType type of layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @param params parameters for layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addHiddenLayer(LayerType layerType, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addHiddenLayer(layerType, null, initialization, params);
+    }
+
+    /**
+     * Adds hidden layer to neural network. Layers are executed in order which they are added.
+     *
+     * @param layerType type of layer.
+     * @param activationFunction activation function for layer.
+     * @param initialization layer parameter initialization function for layer.
+     * @param params parameters for layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addHiddenLayer(LayerType layerType, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
+        AbstractLayer hiddenLayer = LayerFactory.create(neuralNetworkLayerIndex, layerType, activationFunction, initialization, params);
         hiddenLayers.put(hiddenLayers.size(), hiddenLayer);
         neuralNetworkLayers.put(neuralNetworkLayers.size(), hiddenLayer);
+        return neuralNetworkLayerIndex;
     }
 
     /**
@@ -203,12 +216,13 @@ public class NeuralNetworkConfiguration {
      * Adds output layer to neural network.
      *
      * @param lossFunctionType loss function type for output layer.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addOutputLayer(BinaryFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        addOutputLayer(lossFunctionType, null);
+    public int addOutputLayer(BinaryFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addOutputLayer(lossFunctionType, null);
     }
 
     /**
@@ -216,14 +230,26 @@ public class NeuralNetworkConfiguration {
      *
      * @param lossFunctionType loss function type for output layer.
      * @param params parameters for loss function.
+     * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
-    public void addOutputLayer(BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndexCount++, new LossFunction(lossFunctionType, params));
+    public int addOutputLayer(BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
+        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndex, new LossFunction(lossFunctionType, params));
         outputLayers.put(outputLayers.size(), outputLayer);
         neuralNetworkLayers.put(neuralNetworkLayers.size(), outputLayer);
+        return neuralNetworkLayerIndex;
+    }
+
+    /**
+     * Returns next neural network layer index.
+     *
+     * @return next neural network layer index.
+     */
+    private int getNextNeuralNetworkLayerIndex() {
+        return neuralNetworkLayerIndexCount++;
     }
 
     /**

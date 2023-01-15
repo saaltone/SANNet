@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.network;
@@ -218,19 +218,26 @@ public class NeuralNetwork implements Runnable, Serializable {
     private int verboseCycle;
 
     /**
-     * Constructor for neural network.
+     * Constructor for neural network.<br>
+     * Builds neural network based on neural network configuration.<br>
      *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
-    public NeuralNetwork() {
+    public NeuralNetwork(NeuralNetworkConfiguration neuralNetworkConfiguration) throws NeuralNetworkException {
+        build(neuralNetworkConfiguration);
     }
 
     /**
      * Constructor for neural network.
      *
+     * @param neuralNetworkConfiguration neural network configuration.
      * @param neuralNetworkName name for neural network instance.
+     * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
-    public NeuralNetwork(String neuralNetworkName) {
+    public NeuralNetwork(NeuralNetworkConfiguration neuralNetworkConfiguration, String neuralNetworkName) throws NeuralNetworkException {
         this.neuralNetworkName = neuralNetworkName;
+        build(neuralNetworkConfiguration);
     }
 
     /**
@@ -342,7 +349,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param neuralNetworkConfiguration neural network configuration.
      * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
-    public void build(NeuralNetworkConfiguration neuralNetworkConfiguration) throws NeuralNetworkException {
+    private void build(NeuralNetworkConfiguration neuralNetworkConfiguration) throws NeuralNetworkException {
         if (!neuralNetworkLayers.isEmpty()) throw new NeuralNetworkException("Neural network is already built.");
 
         neuralNetworkConfiguration.validate();
@@ -709,6 +716,16 @@ public class NeuralNetwork implements Runnable, Serializable {
     public long getTrainingTimeInSeconds() {
         waitToComplete();
         return trainingTime / 1000000000;
+    }
+
+    /**
+     * Sets reset flag for procedure expression dependencies.
+     *
+     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
+        waitToComplete();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.resetDependencies(resetDependencies);
     }
 
     /**
