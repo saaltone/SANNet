@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -92,6 +92,15 @@ public class JMatrix extends ComputableMatrix {
         }
 
         updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
+    }
+
+    /**
+     * Checks if matrix is joined vertically.
+     *
+     * @return true when matrices are joined vertically otherwise indicates that matrices are joined horizontally.
+     */
+    public boolean isJoinedVertically() {
+        return joinedVertically;
     }
 
     /**
