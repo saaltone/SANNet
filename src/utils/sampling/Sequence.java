@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.sampling;
@@ -368,7 +368,7 @@ public class Sequence implements Serializable {
      * @return joined sequence.
      * @throws MatrixException throws exception if joining of matrices fails.
      */
-    public static Sequence join(TreeMap<Integer, Sequence> sequences, boolean joinedVertically) throws MatrixException {
+    public static TreeMap<Integer, Sequence> join(TreeMap<Integer, Sequence> sequences, boolean joinedVertically) throws MatrixException {
         Sequence joinedSequence = new Sequence();
         for (Integer sampleIndex : sequences.get(0).keySet()) {
             MMatrix[] mMatrices = new MMatrix[sequences.size()];
@@ -377,7 +377,7 @@ public class Sequence implements Serializable {
             }
             joinedSequence.put(sampleIndex, MMatrix.join(mMatrices, joinedVertically));
         }
-        return joinedSequence;
+        return new TreeMap<>() {{ put(0, joinedSequence); }};
     }
 
     /**
