@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -116,18 +116,18 @@ public interface NeuralNetworkLayer {
     boolean worksWithRecurrentLayer();
 
     /**
-     * Check if layer input is reversed.
-     *
-     * @return if true input layer input is reversed otherwise not.
-     */
-    boolean isReversedInput();
-
-    /**
      * Initializes neural network layer dimensions.
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     void initializeDimensions() throws NeuralNetworkException;
+
+    /**
+     * Sets reset flag for procedure expression dependencies.
+     *
+     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     */
+    void resetDependencies(boolean resetDependencies);
 
     /**
      * Resets layer.
