@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.preprocess;
@@ -339,12 +339,7 @@ public class ReadMIDI {
      */
     public HashMap<Integer, HashMap<Integer, MMatrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, long minTickDelta, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
         HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
-        result.put(0, new HashMap<>());
-        result.put(1, new HashMap<>());
-        result.put(2, new HashMap<>());
-        result.put(3, new HashMap<>());
-        result.put(4, new HashMap<>());
-        result.put(5, new HashMap<>());
+        for (int index = 0; index < 3 * (numberOfInputs + 1); index++) result.put(index, new HashMap<>());
 
         ArrayList<Integer> keyDataAsInteger = new ArrayList<>();
         ArrayList<Integer> velocityDataAsInteger = new ArrayList<>();
@@ -421,37 +416,13 @@ public class ReadMIDI {
         ArrayList<HashMap<Integer, Matrix>> tickDataAsMatrix = scaleTickData(tickData, metadata);
 
         int pos = 0;
-        for (int dataIndex = 0; dataIndex < (keyDataAsMatrix.size() - (numberOfInputs + 1)); dataIndex++) {
-            ArrayList<Matrix> keyDataMatrices = new ArrayList<>();
-            ArrayList<Matrix> velocityDataMatrices = new ArrayList<>();
-            ArrayList<Matrix> tickDataMatrices = new ArrayList<>();
-            Matrix keyOutputMatrix = null;
-            Matrix velocityOutputMatrix = null;
-            Matrix tickOutputMatrix = null;
-            for (int entryIndex = 0; entryIndex < (numberOfInputs + 1); entryIndex++) {
-                if (entryIndex < numberOfInputs) {
-                    keyDataMatrices.add(keyDataAsMatrix.get(dataIndex + entryIndex).get(0));
-                    velocityDataMatrices.add(velocityDataAsMatrix.get(dataIndex + entryIndex).get(0));
-                    tickDataMatrices.add(tickDataAsMatrix.get(dataIndex + entryIndex).get(0));
-                }
-                else {
-                    keyOutputMatrix = keyDataAsMatrix.get(dataIndex + entryIndex).get(1);
-                    velocityOutputMatrix = velocityDataAsMatrix.get(dataIndex + entryIndex).get(1);
-                    tickOutputMatrix = tickDataAsMatrix.get(dataIndex + entryIndex).get(1);
-                }
+        int offSet = numberOfInputs + 1;
+        for (int dataIndex = 0; dataIndex < keyDataAsMatrix.size() - offSet; dataIndex++) {
+            for (int entryIndex = 0; entryIndex < offSet; entryIndex++) {
+                result.get(entryIndex).put(pos, new MMatrix(keyDataAsMatrix.get(dataIndex + entryIndex).get(1)));
+                result.get(offSet + entryIndex).put(pos, new MMatrix(velocityDataAsMatrix.get(dataIndex + entryIndex).get(1)));
+                result.get(2 * offSet + entryIndex).put(pos, new MMatrix(tickDataAsMatrix.get(dataIndex + entryIndex).get(1)));
             }
-            JMatrix joinedKeyInputMatrix = new JMatrix(keyDataMatrices, true);
-            JMatrix joinedVelocityInputMatrix = new JMatrix(velocityDataMatrices, true);
-            JMatrix joinedTickInputMatrix = new JMatrix(tickDataMatrices, true);
-
-            result.get(0).put(pos, new MMatrix(joinedKeyInputMatrix));
-            result.get(1).put(pos, new MMatrix(keyOutputMatrix));
-
-            result.get(2).put(pos, new MMatrix(joinedVelocityInputMatrix));
-            result.get(3).put(pos, new MMatrix(velocityOutputMatrix));
-
-            result.get(4).put(pos, new MMatrix(joinedTickInputMatrix));
-            result.get(5).put(pos, new MMatrix(tickOutputMatrix));
             pos++;
         }
 
