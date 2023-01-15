@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -114,8 +114,6 @@ public class AutoEncoder {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 3));
@@ -131,7 +129,7 @@ public class AutoEncoder {
         neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.COS_SIM);
         neuralNetworkConfiguration.connectLayersSerially();
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
 
