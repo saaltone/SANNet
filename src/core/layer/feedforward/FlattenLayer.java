@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.feedforward;
@@ -37,8 +37,10 @@ public class FlattenLayer extends AbstractExecutionLayer {
     /**
      * Initializes neural network layer dimensions.
      *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
-    public void initializeDimensions() {
+    public void initializeDimensions() throws NeuralNetworkException {
+        if (getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + (getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth()));
         setLayerWidth(getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth());
         setLayerHeight(1);
         setLayerDepth(1);
@@ -117,7 +119,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -126,7 +128,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 
