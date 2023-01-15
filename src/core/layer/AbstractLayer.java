@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -213,6 +213,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void initializeDimensions() throws NeuralNetworkException {
         if (getLayerWidth() == -1) {
+            if (getDefaultPreviousLayer().getLayerWidth() < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerWidth());
+            if (getDefaultPreviousLayer().getLayerHeight() < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerHeight());
+            if (getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerDepth());
             setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
             setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
             setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
@@ -265,13 +268,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @throws NeuralNetworkException throws exception if layer is of an unknown type.
      */
     protected abstract String getTypeByName() throws NeuralNetworkException;
-
-    /**
-     * Check if layer input is reversed.
-     *
-     * @return if true input layer input is reversed otherwise not.
-     */
-    public boolean isReversedInput() { return false; }
 
     /**
      * Adds reference to next neural network layer.
