@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.feedforward;
@@ -266,7 +266,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -275,7 +275,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 
