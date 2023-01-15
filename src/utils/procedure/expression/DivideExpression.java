@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -80,7 +80,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null || argument2.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArguments(argument1, argument2, sampleIndex);
         divideMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
@@ -98,7 +98,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, divideMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
         if (!argument2.isStopGradient()) {
             Matrix multiplyGradientResult = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix());

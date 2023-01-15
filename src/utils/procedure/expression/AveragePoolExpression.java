@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -71,7 +71,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         averagePoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
@@ -89,7 +89,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getNewMatrix()), false);
     }
 

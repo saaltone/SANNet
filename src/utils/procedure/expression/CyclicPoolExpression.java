@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -78,7 +78,7 @@ public class CyclicPoolExpression extends AbstractUnaryExpression implements Ser
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         if (inputPos == null) inputPos = new HashMap<>();
         inputPos.put(sampleIndex, new HashMap<>());
         cyclicPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
@@ -98,7 +98,7 @@ public class CyclicPoolExpression extends AbstractUnaryExpression implements Ser
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         HashMap<Integer, Integer> inputPosEntry = inputPos.get(sampleIndex);
         if (inputPosEntry == null) throw new MatrixException("Input positions for gradient calculation are not defined.");
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, cyclicPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPosEntry, argument1.getNewMatrix()), false);

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -30,7 +30,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     private final UnaryFunction unaryFunction;
 
     /**
-     * Binary matrix operation.
+     * Unary matrix operation.
      *
      */
     private final UnaryMatrixOperation unaryMatrixOperation;
@@ -94,7 +94,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + "Argument for operation not defined");
+        checkArgument(argument1, sampleIndex);
         unaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
@@ -112,7 +112,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, unaryMatrixOperation.applyGradient(result.getMatrix(sampleIndex), result.getGradient(sampleIndex)), false);
     }
 

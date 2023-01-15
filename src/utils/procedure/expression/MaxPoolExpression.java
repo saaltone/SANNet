@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -78,7 +78,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         if (maxPos == null) maxPos = new HashMap<>();
         maxPos.put(sampleIndex, new HashMap<>());
         maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
@@ -98,7 +98,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         HashMap<Integer, Integer> maxPosEntry = maxPos.get(sampleIndex);
         if (maxPosEntry == null) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, maxPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), maxPosEntry, argument1.getNewMatrix()), false);

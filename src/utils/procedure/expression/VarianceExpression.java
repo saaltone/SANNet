@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -70,7 +70,6 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
     public void reset() {
         mean = null;
         means = new HashMap<>();
-        super.reset();
     }
 
     /**
@@ -81,7 +80,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!executeAsSingleStep()) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
         mean = MMatrix.mean(argument1.getMatrices());
         result.setMatrix(MMatrix.variance(argument1.getMatrices(), mean));
     }
@@ -94,7 +93,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         Matrix mean = argument1.getMatrix(sampleIndex).meanAsMatrix();
         if (means == null) means = new HashMap<>();
         means.put(sampleIndex, mean);
@@ -108,7 +107,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateGradient() throws MatrixException {
         if (!executeAsSingleStep()) return;
-        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined");
         for (Map.Entry<Integer, Matrix> entry : argument1.entrySet()) {
             double argument1Size = argument1.size();
             if (!argument1.isStopGradient()) {
@@ -128,7 +127,7 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         Matrix varianceGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)argument1.getMatrix(sampleIndex).size());
         argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(varianceGradient), false);
         means.remove(sampleIndex);

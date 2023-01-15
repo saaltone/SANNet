@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -85,7 +85,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation fails.
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
     }
 
@@ -103,7 +103,7 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
      * @throws MatrixException throws exception if calculation of gradient fails.
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
             Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getNewMatrix());

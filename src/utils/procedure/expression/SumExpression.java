@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -54,7 +54,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateExpression() throws MatrixException {
         if (!executeAsSingleStep()) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
         result.setMatrix(MMatrix.sum(argument1.getMatrices()));
     }
 
@@ -66,7 +66,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments for operation not defined");
+        checkArgument(argument1, sampleIndex);
         result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).sumAsMatrix());
     }
 
@@ -77,7 +77,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateGradient() throws MatrixException {
         if (!executeAsSingleStep()) return;
-        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined");
         for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, result.getGradient(), false);
     }
 
@@ -89,7 +89,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         if (executeAsSingleStep()) return;
-        if (result.getGradient(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined.");
+        checkResultGradient(result, sampleIndex);
         if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
     }
 

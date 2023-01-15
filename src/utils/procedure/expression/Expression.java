@@ -13,6 +13,13 @@ import java.util.Set;
 public interface Expression {
 
     /**
+     * Returns expression ID
+     *
+     * @return expression ID
+     */
+    int getExpressionID();
+
+    /**
      * Returns first argument of expression.
      *
      * @return first argument of expression.
@@ -46,12 +53,6 @@ public interface Expression {
      * @param previousExpression previous expression.
      */
     void setPreviousExpression(Expression previousExpression);
-
-    /**
-     * Resets expression.
-     *
-     */
-    void reset();
 
     /**
      * Calculates entire expression chain including regulation.
