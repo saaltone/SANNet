@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -106,21 +106,19 @@ public class SimpleDemo {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayersSerially();
-        neuralNetworkConfiguration.connectLayers(1, 4);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
         return neuralNetwork;
