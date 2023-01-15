@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.expression;
@@ -47,14 +47,17 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     }
 
     /**
-     * Updates expression forward direction dependency.
+     * Check is argument matrices are defined for specific sample index.
      *
+     * @param argument1 argument 1
+     * @param argument2 argument 2
      * @param sampleIndex sample index
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching or node is of type multi-index.
+     * @throws MatrixException throws exception if one of both arguments are not defined.
      */
-    protected void updateExpressionDependency(int sampleIndex) throws MatrixException {
-        super.updateExpressionDependency(sampleIndex);
-        argument2.updateMatrixDependency(sampleIndex);
+    protected void checkArguments(Node argument1, Node argument2, int sampleIndex) throws MatrixException {
+        if (argument1.getMatrix(sampleIndex) == null && argument2.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Arguments 1 and 2 for operation are not defined for sample index " + sampleIndex);
+        checkArgument(argument1, sampleIndex);
+        if (argument2.getMatrix(sampleIndex) == null) throw new MatrixException(getExpressionName() + ": Argument 2 for operation is not defined for sample index " + sampleIndex);
     }
 
     /**
