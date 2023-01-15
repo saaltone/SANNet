@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -75,13 +75,14 @@ public class NodeRegister implements Serializable {
      * @param matrix reference to matrix
      * @param isSingleNode if true node is marked as single type
      * @param expressionID expression ID where node was created in
+     * @param nodeID node ID
      * @return node created or retrieved.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Node defineNode(Matrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
+    public Node defineNode(Matrix matrix, boolean isSingleNode, int expressionID, int nodeID) throws MatrixException {
         Node node = nodeMatrixMap.get(matrix);
         if (node == null) {
-            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix) : new MultiNode(getTotalSize() + 1, matrix);
+            node = isSingleNode ? new SingleNode(nodeID, matrix) : new MultiNode(nodeID, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMatrix.put(matrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
@@ -91,34 +92,46 @@ public class NodeRegister implements Serializable {
     }
 
     /**
+     * Checks if node corresponding matrix exists.
+     *
+     * @param matrix reference to matrix
+     * @return true if node corresponding matrix exists otherwise false.
+     */
+    public boolean nodeExists(Matrix matrix) {
+        return nodeMatrixMap.containsKey(matrix);
+    }
+
+    /**
      * Defines and returns node by matrix.<br>
      * If node is not existing creates node with unique expression ID.<br>
      *
-     * @param matrix reference to matrix
+     * @param mMatrix reference to multi-matrix
      * @param isSingleNode if true node is marked as single type
      * @param expressionID expression ID where node was created in
+     * @param nodeID node ID
      * @return node created or retrieved.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Node defineNode(MMatrix matrix, boolean isSingleNode, int expressionID) throws MatrixException {
-        Node node = nodeMMatrixMap.get(matrix);
+    public Node defineNode(MMatrix mMatrix, boolean isSingleNode, int expressionID, int nodeID) throws MatrixException {
+        Node node = nodeMMatrixMap.get(mMatrix);
         if (node == null)  {
-            node = isSingleNode ? new SingleNode(getTotalSize() + 1, matrix.getReferenceMatrix()) : new MultiNode(getTotalSize() + 1, matrix.getReferenceMatrix());
+            node = isSingleNode ? new SingleNode(nodeID, mMatrix.getReferenceMatrix()) : new MultiNode(nodeID, mMatrix.getReferenceMatrix());
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
-            entriesByMMatrix.put(matrix, nodeEntry);
+            entriesByMMatrix.put(mMatrix, nodeEntry);
             entriesByNode.put(node, nodeEntry);
-            nodeMMatrixMap.put(matrix, node);
+            nodeMMatrixMap.put(mMatrix, node);
         }
         return node;
     }
 
     /**
-     * Returns total size of node register.
+     * Checks if node corresponding matrix exists.
      *
-     * @return total size of node register.
+     * @param mMatrix reference to multi-matrix
+     * @return true if node corresponding matrix exists otherwise false.
      */
-    public int getTotalSize() {
-        return entriesByMatrix.size() + entriesByMMatrix.size();
+    public boolean nodeExists(MMatrix mMatrix) {
+        return nodeMMatrixMap.containsKey(mMatrix);
     }
 
     /**
@@ -139,17 +152,6 @@ public class NodeRegister implements Serializable {
      */
     public Node getNode(MMatrix matrix) {
         return entriesByMMatrix.get(matrix).node;
-    }
-
-    /**
-     * Returns expression ID corresponding the node.
-     *
-     * @param node node in question.
-     * @return expression ID corresponding the node.
-     */
-    public int getExpressionID(Node node) {
-        NodeRegister.NodeEntry nodeEntry = entriesByNode.get(node);
-        return nodeEntry != null ? nodeEntry.expressionID() : -1;
     }
 
     /**
