@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure.node;
@@ -94,8 +94,8 @@ public class SingleNode extends AbstractNode {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public void reset() throws MatrixException {
-        gradient = null;
         super.reset();
+        gradient = null;
     }
 
     /**
