@@ -1,17 +1,20 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
 
 import utils.configurable.DynamicParamException;
+import utils.matrix.operation.JoinMatrixOperation;
+import utils.matrix.operation.UnjoinMatrixOperation;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
  * Implements abstract matrix that implements common operations for matrices.<br>
@@ -497,7 +500,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) apply(result, unaryFunction.getFunction());
         else {
             synchronizeProcedureFactory(result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyFunction(result, unaryFunction);
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
@@ -585,7 +588,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi(other, result, binaryFunction.getFunction());
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyBi(other, result, binaryFunction.getFunction());
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
@@ -650,7 +653,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) Double::sum);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) Double::sum);
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -683,7 +686,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) add(other, result);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             add(other, result);
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -715,7 +718,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2);
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -748,7 +751,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) subtract(other, result);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             subtract(other, result);
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -780,7 +783,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -813,7 +816,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) multiply(other, result);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             multiply(other, result);
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -846,7 +849,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.POSITIVE_INFINITY);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyBi (other, result, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2);
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -881,7 +884,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) divide(other, result);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             divide(other, result);
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -1061,7 +1064,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyDot(other, result);
         else {
             synchronizeProcedureFactory(other, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyDot(other, result);
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
@@ -1113,7 +1116,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix sumAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(sum());
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             Matrix result = constantAsMatrix(sum());
             synchronizeProcedureFactory(result);
             procedureFactory.createSumExpression(expressionLock, this, result);
@@ -1131,7 +1134,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix meanAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(mean());
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             Matrix result = constantAsMatrix(mean());
             synchronizeProcedureFactory(result);
             procedureFactory.createMeanExpression(expressionLock, this, result);
@@ -1159,7 +1162,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix varianceAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(variance());
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             Matrix result = constantAsMatrix(variance());
             synchronizeProcedureFactory(result);
             procedureFactory.createVarianceExpression(expressionLock, this, result);
@@ -1200,7 +1203,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException {
         if (!hasProcedureFactory()) return constantAsMatrix(standardDeviation());
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             Matrix result = constantAsMatrix(standardDeviation());
             synchronizeProcedureFactory(result);
             procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
@@ -1231,7 +1234,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix normAsMatrix(int p) throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(norm(p));
         else {
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             Matrix result = constantAsMatrix(norm(p));
             synchronizeProcedureFactory(result);
             procedureFactory.createNormExpression(expressionLock, this, result, p);
@@ -1415,7 +1418,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyConvolve(filter, result);
         else {
             synchronizeProcedureFactory(filter, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyConvolve(filter, result);
             procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
@@ -1441,7 +1444,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyCrosscorrelate(filter, result);
         else {
             synchronizeProcedureFactory(filter, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyCrosscorrelate(filter, result);
             procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
@@ -1480,7 +1483,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result);
         else {
             synchronizeProcedureFactory(filter, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(filter, result);
             procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
@@ -1522,7 +1525,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
         else {
             synchronizeProcedureFactory(filter, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
             procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
         }
@@ -1560,7 +1563,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory() && !preprocessedFilter.hasProcedureFactory()) applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
         else {
             synchronizeProcedureFactory(preprocessedFilter, result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
             procedureFactory.createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation());
         }
@@ -1675,7 +1678,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) applyMaxPool(result, maxPos);
         else {
             synchronizeProcedureFactory(result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyMaxPool(result, maxPos);
             procedureFactory.createMaxPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
         }
@@ -1727,7 +1730,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) applyMaxPool(result, inputPos);
         else {
             synchronizeProcedureFactory(result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyRandomPool(result, inputPos);
             procedureFactory.createRandomPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
         }
@@ -1779,7 +1782,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) applyMaxPool(result, inputPos);
         else {
             synchronizeProcedureFactory(result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyCyclicPool(result, inputPos);
             procedureFactory.createCyclicPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
         }
@@ -1829,7 +1832,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         if (!hasProcedureFactory()) applyAveragePool(result);
         else {
             synchronizeProcedureFactory(result);
-            double expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = procedureFactory.startExpression(this);
             applyAveragePool(result);
             procedureFactory.createAveragePoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
         }
@@ -1909,158 +1912,93 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Concatenates this and other matrix vertically (not in place and not after).
+     * Joins two matrices either vertically or horizontally.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param other other matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @return joined matrix
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    public Matrix concatenateVertical(Matrix other) throws MatrixException {
-        return concatenateVertical(other, false, false);
+    public Matrix join(Matrix other, boolean joinedVertically) throws MatrixException {
+        Matrix result = new JMatrix(new TreeMap<>() {{ put(0, AbstractMatrix.this.getNewMatrix()); put(1, other.getNewMatrix()); }}, joinedVertically);
+        join(other, result, joinedVertically);
+        return result;
     }
 
     /**
-     * Concatenates this matrix and other value vertically (not in place and not after).
+     * Joins two matrices either vertically or horizontally.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param other other matrix
+     * @param result result matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    public Matrix concatenateVertical(double other) throws MatrixException {
-        return concatenateVertical(other, false, false);
-    }
-
-    /**
-     * Concatenates this and other matrix vertically in place.
-     *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
-     */
-    public Matrix concatenateVertical(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        int columns = getColumns();
-        int otherColumns = other.getColumns();
-        if (columns != otherColumns) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        int rows = getRows();
-        int otherRows = other.getRows();
-        Matrix newMatrix = getNewMatrix(rows + otherRows, columns);
-        int thisOffsetRow = concatenateAfter ? 0 : otherRows;
-        int otherOffsetRow = concatenateAfter ? rows : 0;
-        for (int column = 0; column < columns; column++) {
-            for (int row = 0; row < rows; row++) {
-                newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
-            }
-            for (int row = 0; row < otherRows; row++) {
-                newMatrix.setValue(otherOffsetRow + row, column, other.getValue(row, column));
-            }
+    public void join(Matrix other, Matrix result, boolean joinedVertically) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyJoin(other, result, joinedVertically);
+        else {
+            synchronizeProcedureFactory(other, result);
+            int expressionLock = procedureFactory.startExpression(this);
+            applyJoin(other, result, joinedVertically);
+            procedureFactory.createJoinExpression(expressionLock, this, other, result, joinedVertically);
         }
-        if (inplace) copyMatrixData(newMatrix);
-        return newMatrix;
     }
 
     /**
-     * Concatenates this matrix and other value vertically in place.
+     * Joins two matrices either vertically or horizontally.
      *
-     * @param other matrix to be concatenated to the end of this matrix vertically.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if column dimensions of this and other matrix are not matching.
+     * @param other other matrix
+     * @param result result matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    public Matrix concatenateVertical(double other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        int columns = getColumns();
-        if (columns != 1) throw new MatrixException("Merge Vertical: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
-        int rows = getRows();
-        Matrix newMatrix = getNewMatrix(rows + 1, columns);
-        int thisOffsetRow = concatenateAfter ? 0 : 1;
-        int otherOffsetRow = concatenateAfter ? rows : 0;
-        for (int column = 0; column < columns; column++) {
-            for (int row = 0; row < rows; row++) {
-                newMatrix.setValue(thisOffsetRow + row, column, getValue(row, column));
-            }
-            newMatrix.setValue(otherOffsetRow, column, other);
+    private void applyJoin(Matrix other, Matrix result, boolean joinedVertically) throws MatrixException {
+        new JoinMatrixOperation(result.getRows(), result.getColumns(), joinedVertically).apply(this, other, result);
+    }
+
+    /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @param unjoinRows unjoins specific number of rows.
+     * @param unjoinColumns unjoins specific number of column.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    public Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinRows, int unjoinColumns) throws MatrixException {
+        Matrix result = new DMatrix(unjoinRows, unjoinColumns);
+        unjoin(result, unjoinAtRow, unjoinAtColumn);
+        return result;
+    }
+
+    /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param result result matrix
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    public void unjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
+        if (!hasProcedureFactory()) applyUnjoin(result, unjoinAtRow, unjoinAtColumn);
+        else {
+            synchronizeProcedureFactory(result);
+            int expressionLock = procedureFactory.startExpression(this);
+            applyUnjoin(result, unjoinAtRow, unjoinAtColumn);
+            procedureFactory.createUnjoinExpression(expressionLock, this, result, unjoinAtRow, unjoinAtColumn);
         }
-        if (inplace) copyMatrixData(newMatrix);
-        return newMatrix;
     }
 
     /**
-     * Concatenates this and other matrix horizontally (not in place and not after).
+     * Unjoins matrix into resulting unjoined matrix and potentially unjoined matrices.
      *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
+     * @param result result matrix
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    public Matrix concatenateHorizontal(Matrix other) throws MatrixException {
-        return concatenateHorizontal(other, false, false);
-    }
-
-    /**
-     * Concatenates this matrix and other value horizontally (not in place and not after).
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    public Matrix concatenateHorizontal(double other) throws MatrixException {
-        return concatenateHorizontal(other, false, false);
-    }
-
-    /**
-     * Concatenates this and other matrix horizontally.
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    public Matrix concatenateHorizontal(Matrix other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        if (getRows() != other.getRows()) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        Matrix newMatrix = getNewMatrix(getRows(), getColumns() + other.getColumns());
-        int rows = getRows();
-        int columns = getColumns();
-        int otherColumns = other.getColumns();
-        int thisOffsetColumn = concatenateAfter ? 0 : other.getColumns();
-        int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
-            }
-            for (int column = 0; column < otherColumns; column++) {
-                newMatrix.setValue(row, otherOffsetColumn + column, other.getValue(row, column));
-            }
-        }
-        if (inplace) copyMatrixData(newMatrix);
-        return newMatrix;
-    }
-
-    /**
-     * Concatenates this matrix and other value horizontally.
-     *
-     * @param other matrix to be concatenated to the end of this matrix horizontally.
-     * @param inplace if true other matrix is concatenated to this matrix in place.
-     * @param concatenateAfter if true data of other matrix is concatenated after this matrix otherwise opposite is true.
-     * @return concatenated matrix.
-     * @throws MatrixException throws exception if row dimensions of this and other matrix are not matching.
-     */
-    public Matrix concatenateHorizontal(double other, boolean inplace, boolean concatenateAfter) throws MatrixException {
-        if (getRows() != 1) throw new MatrixException("Merge Horizontal: Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + "1 x 1");
-        Matrix newMatrix = getNewMatrix(getRows(), getColumns() + 1);
-        int rows = getRows();
-        int columns = getColumns();
-        int thisOffsetColumn = concatenateAfter ? 0 : 1;
-        int otherOffsetColumn = concatenateAfter ? getColumns() : 0;
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                newMatrix.setValue(row, thisOffsetColumn + column, getValue(row, column));
-            }
-            newMatrix.setValue(row, otherOffsetColumn, other);
-        }
-        if (inplace) copyMatrixData(newMatrix);
-        return newMatrix;
+    private void applyUnjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
+        new UnjoinMatrixOperation(result.getRows(), result.getColumns(), unjoinAtRow, unjoinAtColumn).apply(this, result);
     }
 
     /**
