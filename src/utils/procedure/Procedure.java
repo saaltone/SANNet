@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure;
@@ -25,6 +25,12 @@ public class Procedure implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 9207418704022664014L;
+
+    /**
+     * Name for procedure.
+     *
+     */
+    private final String name;
 
     /**
      * Input nodes.
@@ -57,10 +63,10 @@ public class Procedure implements Serializable {
     private final Expression gradientChain;
 
     /**
-     * True if procedure has dependent nodes.
+     * Dependent nodes.
      *
      */
-    private final boolean hasDependentNodes;
+    private final HashSet<Node> dependentNodes = new HashSet<>();
 
     /**
      * If true input is reversed otherwise not.
@@ -82,30 +88,50 @@ public class Procedure implements Serializable {
 
     /**
      * Constructor for procedure.
+     *
+     * @param name name of procedure.
      * @param inputNodes input nodes for procedure.
      * @param outputNodes input nodes for procedure.
      * @param nodes all nodes for procedure.
      * @param expressionChain chain of expressions describing procedure.
      * @param gradientChain chain of gradients for procedure.
-     * @param hasDependentNodes true if procedure has dependent nodes.
+     * @param dependentNodes dependent nodes.
      * @param parameterMatrices parameter matrices.
      * @param stopGradientMatrices matrices for which gradient is not updated.
      * @param reversedInput reversed input.
      * @param joinedInput if true inputs are joined otherwise not.
      * @throws MatrixException throws exception if node does not contain all constant and parameter matrices.
      */
-    public Procedure(TreeMap<Integer, Node> inputNodes, TreeMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, boolean hasDependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException {
+    public Procedure(String name, TreeMap<Integer, Node> inputNodes, TreeMap<Integer, Node> outputNodes, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, HashSet<Node> dependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException {
+        this.name = name;
         this.inputNodes.putAll(inputNodes);
         this.outputNodes.putAll(outputNodes);
         this.nodes.addAll(nodes);
         this.expressionChain = expressionChain;
         this.gradientChain = gradientChain;
-        this.hasDependentNodes = hasDependentNodes;
+        this.dependentNodes.addAll(dependentNodes);
         this.parameterMatrices = parameterMatrices;
         if (parameterMatrices != null) checkParameterMatrices();
         if (stopGradientMatrices != null) setStopGradient(stopGradientMatrices, true);
         this.reversedInput = reversedInput;
         this.joinedInput = joinedInput;
+    }
+
+    /**
+     * Returns name for procedure.
+     *
+     * @return name for procedure.
+     */
+    public String getName() {
+        return name;
+    }
+    /**
+     * Sets reset matrix dependencies flag.
+     *
+     * @param resetDependencies if true matrix dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
+        for (Node dependentNode : dependentNodes) dependentNode.resetDependencies(resetDependencies);
     }
 
     /**
@@ -115,7 +141,6 @@ public class Procedure implements Serializable {
      */
     public void reset() throws MatrixException {
         for (Node node : nodes) node.reset();
-        expressionChain.reset();
     }
 
     /**
@@ -153,99 +178,7 @@ public class Procedure implements Serializable {
      * @return returns true if there are dependencies otherwise returns false.
      */
     public boolean hasDependencies() {
-        return hasDependentNodes;
-    }
-
-    /**
-     * Calculates chain of forward expressions.
-     *
-     * @param inputSequences input sequences.
-     * @param outputSequence output sequence.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void calculateForwardExpression(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        if (inputSequences.size() == 1) {
-            calculateExpression(inputSequences.values().iterator().next(), outputSequence);
-        }
-        else {
-            if (joinedInput) calculateExpression(Sequence.join(inputSequences, true), outputSequence);
-            else calculateExpression(inputSequences, outputSequence);
-        }
-    }
-
-    /**
-     * Calculates chain of forward expressions.
-     *
-     * @param inputSequence input sequence.
-     * @param outputSequence output sequence.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void calculateExpression(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        if (hasDependencies()) calculateExpressionPerSample(inputSequence, outputSequence);
-        else calculateExpressionPerStep(inputSequence, outputSequence);
-    }
-
-    /**
-     * Calculates chain of forward expressions sample by sample.
-     *
-     * @param inputSequence input sequence.
-     * @param outputSequence output sequence.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void calculateExpressionPerSample(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
-
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix inputSample = entry.getValue();
-            setInputSample(sampleIndex, inputSample, getInputNodes());
-
-            expressionChain.calculateExpressionStep(sampleIndex, firstKey);
-
-            outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
-        }
-    }
-
-    /**
-     * Calculates chain of forward expressions for all samples.
-     *
-     * @param inputSequence input sequence.
-     * @param outputSequence output sequence.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void calculateExpressionPerStep(Sequence inputSequence, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
-
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix inputSample = entry.getValue();
-            setInputSample(sampleIndex, inputSample, getInputNodes());
-        }
-
-        expressionChain.calculateExpressionStep(inputKeySet);
-
-        for (Integer sampleIndex : inputKeySet) {
-            outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
-        }
-    }
-
-    /**
-     * Sets input sample.
-     *
-     * @param sampleIndex sample index
-     * @param inputSample input sample
-     * @param inputNodes input nodes
-     * @throws MatrixException throws exception if calculation fails.
-     */
-    private void setInputSample(int sampleIndex, MMatrix inputSample, TreeMap<Integer, Node> inputNodes) throws MatrixException {
-        int depth = inputSample.getDepth();
-        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-            setInputSample(sampleIndex, depthIndex, inputSample, inputNodes.get(depthIndex));
-        }
+        return !dependentNodes.isEmpty();
     }
 
     /**
@@ -257,6 +190,19 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpression(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
+        if (joinedInput) calculateExpressionForMultipleSequences(Sequence.join(inputSequences, true), outputSequence);
+        else calculateExpressionForMultipleSequences(inputSequences, outputSequence);
+    }
+
+    /**
+     * Calculates chain of forward expressions.
+     *
+     * @param inputSequences input sequences.
+     * @param outputSequence output sequence.
+     * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private void calculateExpressionForMultipleSequences(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
         if (hasDependencies()) calculateExpressionPerSample(inputSequences, outputSequence);
         else calculateExpressionPerStep(inputSequences, outputSequence);
     }
@@ -270,22 +216,26 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void calculateExpressionPerSample(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        for (Map.Entry<Integer, Sequence> entry : inputSequences.entrySet()) {
-            int depthIndex = entry.getKey();
-            Sequence inputSequence = entry.getValue();
+        Sequence inputSequence = inputSequences.get(inputSequences.firstKey());
 
-            int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
+        int firstKey = reversedInput ? inputSequence.lastKey() : inputSequence.firstKey();
+        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
 
-            for (Map.Entry<Integer, MMatrix> entry1 : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
-                int sampleIndex = entry1.getKey();
-                MMatrix inputSample = entry1.getValue();
-                setInputSample(sampleIndex, depthIndex, inputSample, getInputNodes().get(depthIndex));
+        int previousSampleIndex = -1;
+        for (Integer sampleIndex : inputKeySet) {
+            for (Node dependentNode : dependentNodes) dependentNode.updateMatrixDependency(sampleIndex, previousSampleIndex);
 
-                expressionChain.calculateExpressionStep(sampleIndex, firstKey);
+            setInputSamples(inputSequences, inputSequence, sampleIndex);
 
-                outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
-            }
+            expressionChain.calculateExpressionStep(sampleIndex, firstKey);
+
+            outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+
+            for (Node dependentNode : dependentNodes) dependentNode.updateDependencies(sampleIndex);
+
+            previousSampleIndex = sampleIndex;
         }
+
     }
 
     /**
@@ -297,42 +247,53 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void calculateExpressionPerStep(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
-        Set<Integer> inputKeySet = null;
-        for (Map.Entry<Integer, Sequence> entry : inputSequences.entrySet()) {
-            int depthIndex = entry.getKey();
-            Sequence inputSequence = entry.getValue();
+        Sequence inputSequence = inputSequences.get(inputSequences.firstKey());
 
-            inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
+        Set<Integer> inputKeySet = reversedInput ? inputSequence.descendingKeySet() : inputSequence.keySet();
 
-            for (Map.Entry<Integer, MMatrix> entry1 : reversedInput ? inputSequence.descendingEntrySet() : inputSequence.entrySet()) {
-                int sampleIndex = entry1.getKey();
-                MMatrix inputSample = entry1.getValue();
-                setInputSample(sampleIndex, 0, inputSample, getInputNodes().get(depthIndex));
+        for (Integer sampleIndex : inputKeySet) setInputSamples(inputSequences, inputSequence, sampleIndex);
+
+        expressionChain.calculateExpressionStep(inputKeySet);
+
+        for (Integer sampleIndex : inputKeySet) outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+    }
+
+    /**
+     * Sets input samples for expression chain.
+     *
+     * @param inputSequences input sequences
+     * @param inputSequence input sequence.
+     * @param sampleIndex sample index.
+     * @throws MatrixException throws exception if calculation fails.
+     */
+    private void setInputSamples(TreeMap<Integer, Sequence> inputSequences, Sequence inputSequence, int sampleIndex) throws MatrixException {
+        if (inputSequences.size() == 1) {
+            MMatrix inputSample = inputSequence.get(sampleIndex);
+            int depth = inputSample.getDepth();
+            for (int inputIndex = 0; inputIndex < depth; inputIndex++) {
+                setInputSample(sampleIndex, inputSample, getInputNodes().get(inputIndex), inputIndex);
             }
-
         }
-
-        if (inputKeySet != null) {
-            expressionChain.calculateExpressionStep(inputKeySet);
-
-            for (Integer sampleIndex : inputKeySet) {
-                outputSequence.put(sampleIndex, setOutputSample(sampleIndex));
+        else {
+            for (Map.Entry<Integer, Sequence> entry : inputSequences.entrySet()) {
+                int inputIndex = entry.getKey();
+                MMatrix inputSample = entry.getValue().get(sampleIndex);
+                setInputSample(sampleIndex, inputSample, getInputNodes().get(inputIndex), 0);
             }
         }
-
     }
 
     /**
      * Sets input sample.
      *
      * @param sampleIndex sample index
-     * @param depthIndex depth index
      * @param inputSample input sample
      * @param inputNode input node
+     * @param inputIndex input index
      * @throws MatrixException throws exception if calculation fails.
      */
-    private void setInputSample(int sampleIndex, int depthIndex, MMatrix inputSample, Node inputNode) throws MatrixException {
-        inputNode.setMatrix(sampleIndex, inputSample.get(depthIndex));
+    private void setInputSample(int sampleIndex, MMatrix inputSample, Node inputNode, int inputIndex) throws MatrixException {
+        inputNode.setMatrix(sampleIndex, inputSample.get(inputIndex));
     }
 
     /**
@@ -361,7 +322,11 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix calculateExpression(Matrix inputMatrix) throws MatrixException, DynamicParamException {
-        setInputSample(0, new MMatrix(inputMatrix), getInputNodes());
+        MMatrix inputSample = new MMatrix(inputMatrix);
+        int depth = inputSample.getDepth();
+        for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
+            setInputSample(0, inputSample, getInputNodes().get(depthIndex), depthIndex);
+        }
         expressionChain.calculateExpressionStep(0, 0);
         return getOutputNodes().get(0).getMatrix(0);
     }
@@ -375,68 +340,58 @@ public class Procedure implements Serializable {
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateBackwardGradient(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int steps) throws MatrixException, DynamicParamException {
-        if (inputGradientSequences.size() == 1) {
-            calculateGradient(outputGradientSequence, inputGradientSequences.values().iterator().next(), steps);
+    public void calculateGradient(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int steps) throws MatrixException, DynamicParamException {
+        if (joinedInput) {
+            TreeMap <Integer, Sequence> joinedInputGradientSequences = new TreeMap<>() {{ put(0, new Sequence()); }};
+            calculateGradientForMultipleInputs(outputGradientSequence, joinedInputGradientSequences, steps);
+            Sequence.unjoinAsMap(joinedInputGradientSequences.get(0), inputGradientSequences);
         }
-        else {
-            if (joinedInput) Sequence.unjoinAsMap(calculateGradient(outputGradientSequence, steps), inputGradientSequences);
-            else calculateGradient(outputGradientSequence, inputGradientSequences, steps);
-        }
+        else calculateGradientForMultipleInputs(outputGradientSequence, inputGradientSequences, steps);
     }
 
     /**
      * Calculates chain of backward expressions for multiple inputs per gradient expression step.
      *
-     * @param outputGradientSequence output gradients.
-     * @param steps number of steps calculated backwards.
-     * @return input gradients.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public Sequence calculateGradient(Sequence outputGradientSequence, int steps) throws MatrixException, DynamicParamException {
-        Sequence inputGradientSequence = new Sequence();
-        calculateGradient(outputGradientSequence, inputGradientSequence, steps);
-        return inputGradientSequence;
-    }
-
-    /**
-     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
-     *
-     * @param outputGradientSequence output gradients.
-     * @param inputGradientSequence input gradients.
+     * @param outputGradientSequence output gradient sequence.
+     * @param inputGradientSequences input gradient sequences.
      * @param steps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(Sequence outputGradientSequence, Sequence inputGradientSequence, int steps) throws MatrixException, DynamicParamException {
-        if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequence, steps);
-        else calculateGradientPerStep(outputGradientSequence, inputGradientSequence, steps);
+    private void calculateGradientForMultipleInputs(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int steps) throws MatrixException, DynamicParamException {
+        if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequences, steps);
+        else calculateGradientPerStep(outputGradientSequence, inputGradientSequences, steps);
     }
 
     /**
      * Calculates chain of backward expressions for multiple inputs per gradient expression step per sample.
      *
-     * @param outputGradientSequence output gradients.
-     * @param inputGradientSequence input gradients.
+     * @param outputGradientSequence output gradient sequence.
+     * @param inputGradientSequences input gradient sequences.
      * @param numberOfGradientSteps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientPerSample(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
-        int lastKey = reversedInput ? outputGradientSequence.firstKey() : outputGradientSequence.lastKey();
+    private void calculateGradientPerSample(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+        int lastKey = reversedInput ? outputGradientSequence.lastKey() : outputGradientSequence.firstKey();
 
+        int previousSampleIndex = -1;
         int gradientStepCount = 0;
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.entrySet() : outputGradientSequence.descendingEntrySet()) {
             int sampleIndex = entry.getKey();
+
+            for (Node dependentNode : dependentNodes) dependentNode.updateGradientDependency(sampleIndex, previousSampleIndex);
+
             MMatrix outputGradientSample = entry.getValue();
             setOutputSampleGradient(sampleIndex, outputGradientSample);
 
             gradientChain.calculateGradientStep(sampleIndex, lastKey);
 
-            inputGradientSequence.increment(sampleIndex, setInputSampleGradient(sampleIndex, getInputNodes()));
+            setInputSampleGradients(sampleIndex, inputNodes, inputGradientSequences);
 
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
+
+            previousSampleIndex = sampleIndex;
         }
 
     }
@@ -444,17 +399,17 @@ public class Procedure implements Serializable {
     /**
      * Calculates chain of backward expressions for multiple inputs per gradient expression step.
      *
-     * @param outputGradientSequence output gradients.
-     * @param inputGradientSequence input gradients.
+     * @param outputGradientSequence output gradient sequence.
+     * @param inputGradientSequences input gradient sequences.
      * @param numberOfGradientSteps number of steps calculated backwards.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void calculateGradientPerStep(Sequence outputGradientSequence, Sequence inputGradientSequence, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
+    private void calculateGradientPerStep(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
         Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
 
         int gradientStepCount = 0;
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
+        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.entrySet() : outputGradientSequence.descendingEntrySet()) {
             int sampleIndex = entry.getKey();
             MMatrix outputGradientSample = entry.getValue();
             setOutputSampleGradient(sampleIndex, outputGradientSample);
@@ -465,7 +420,7 @@ public class Procedure implements Serializable {
 
         gradientStepCount = 0;
         for (Integer sampleIndex : inputKeySet) {
-            inputGradientSequence.increment(sampleIndex, setInputSampleGradient(sampleIndex, getInputNodes()));
+            setInputSampleGradients(sampleIndex, inputNodes, inputGradientSequences);
             if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
         }
     }
@@ -484,101 +439,13 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Sets input sample gradient.
-     *
-     * @param sampleIndex input sample
-     * @param inputNodes input nodes
-     * @return inputSampleGradient input sample gradient
-     * @throws MatrixException throws exception if calculation fails.
-     */
-    private MMatrix setInputSampleGradient(int sampleIndex, TreeMap<Integer, Node> inputNodes) throws MatrixException {
-        MMatrix inputSampleGradient = new MMatrix(getInputNodes().size());
-        for (Map.Entry<Integer, Node> entry : inputNodes.entrySet()) {
-            int nodeIndex = entry.getKey();
-            Node node = entry.getValue();
-            inputSampleGradient.put(nodeIndex, node.getGradient(sampleIndex));
-        }
-        return inputSampleGradient;
-    }
-
-    /**
-     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
-     *
-     * @param outputGradientSequence output gradient sequence.
-     * @param inputGradientSequences input gradient sequences.
-     * @param steps number of steps calculated backwards.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void calculateGradient(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int steps) throws MatrixException, DynamicParamException {
-        if (hasDependencies()) calculateGradientPerSample(outputGradientSequence, inputGradientSequences, steps);
-        else calculateGradientPerStep(outputGradientSequence, inputGradientSequences, steps);
-    }
-
-    /**
-     * Calculates chain of backward expressions for multiple inputs per gradient expression step per sample.
-     *
-     * @param outputGradientSequence output gradient sequence.
-     * @param inputGradientSequences input gradient sequences.
-     * @param numberOfGradientSteps number of steps calculated backwards.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void calculateGradientPerSample(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
-        int lastKey = reversedInput ? outputGradientSequence.firstKey() : outputGradientSequence.lastKey();
-
-        int gradientStepCount = 0;
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix outputGradientSample = entry.getValue();
-            setOutputSampleGradient(sampleIndex, outputGradientSample);
-
-            gradientChain.calculateGradientStep(sampleIndex, lastKey);
-
-            setInputSampleGradient(sampleIndex, inputNodes, inputGradientSequences);
-
-            if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
-        }
-
-    }
-
-    /**
-     * Calculates chain of backward expressions for multiple inputs per gradient expression step.
-     *
-     * @param outputGradientSequence output gradient sequence.
-     * @param inputGradientSequences input gradient sequences.
-     * @param numberOfGradientSteps number of steps calculated backwards.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void calculateGradientPerStep(Sequence outputGradientSequence, TreeMap<Integer, Sequence> inputGradientSequences, int numberOfGradientSteps) throws MatrixException, DynamicParamException {
-        Set<Integer> inputKeySet = reversedInput ? outputGradientSequence.keySet() : outputGradientSequence.descendingKeySet();
-
-        int gradientStepCount = 0;
-        for (Map.Entry<Integer, MMatrix> entry : reversedInput ? outputGradientSequence.descendingEntrySet() : outputGradientSequence.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix outputGradientSample = entry.getValue();
-            setOutputSampleGradient(sampleIndex, outputGradientSample);
-            if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
-        }
-
-        gradientChain.calculateGradientStep(inputKeySet, numberOfGradientSteps);
-
-        gradientStepCount = 0;
-        for (Integer sampleIndex : inputKeySet) {
-            setInputSampleGradient(sampleIndex, inputNodes, inputGradientSequences);
-            if (numberOfGradientSteps > 0 && ++gradientStepCount >= numberOfGradientSteps) break;
-        }
-    }
-
-    /**
-     * Sets input sample gradient.
+     * Sets input sample gradients.
      *
      * @param sampleIndex input sample
      * @param inputNodes input nodes
      * @throws MatrixException throws exception if calculation fails.
      */
-    private void setInputSampleGradient(int sampleIndex, TreeMap<Integer, Node> inputNodes, TreeMap<Integer, Sequence> inputGradientSequences) throws MatrixException {
+    private void setInputSampleGradients(int sampleIndex, TreeMap<Integer, Node> inputNodes, TreeMap<Integer, Sequence> inputGradientSequences) throws MatrixException {
         for (Map.Entry<Integer, Node> entry : inputNodes.entrySet()) {
             inputGradientSequences.get(entry.getKey()).increment(sampleIndex, new MMatrix(entry.getValue().getGradient(sampleIndex)));
         }
