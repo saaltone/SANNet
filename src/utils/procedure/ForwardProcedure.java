@@ -1,14 +1,17 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure;
 
+import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -16,6 +19,14 @@ import java.util.TreeMap;
  *
  */
 public interface ForwardProcedure {
+
+    /**
+     * Returns name of forward procedure.
+     *
+     * @return name of forward procedure.
+     * @throws NeuralNetworkException throws exception if operation fails.
+     */
+    String getProcedureName() throws NeuralNetworkException;
 
     /**
      * Returns input matrix for procedure construction.
@@ -34,5 +45,40 @@ public interface ForwardProcedure {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     MMatrix getForwardProcedure() throws MatrixException, DynamicParamException;
+
+    /**
+     * Returns parameter matrices.
+     *
+     * @return parameter matrices.
+     */
+    HashSet<Matrix> getParameterMatrices();
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    HashSet<Matrix> getStopGradients();
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    HashSet<Matrix> getConstantMatrices();
+
+    /**
+     * Check if layer input is reversed.
+     *
+     * @return if true input layer input is reversed otherwise not.
+     */
+    boolean isReversedInput();
+
+    /**
+     * Returns true if input is joined otherwise returns false.
+     *
+     * @return true if input is joined otherwise returns false.
+     */
+    boolean isJoinedInput();
 
 }
