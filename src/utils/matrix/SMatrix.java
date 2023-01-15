@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -31,6 +31,7 @@ public class SMatrix extends ComputableMatrix {
     public SMatrix(double scalarValue) {
         super(1, 1, true);
         updateSliceDimensions(0, 0, 0, 0);
+        setValue(0, 0, scalarValue);
     }
 
     /**
@@ -40,7 +41,19 @@ public class SMatrix extends ComputableMatrix {
      * @param columns defines number of columns in matrix.
      */
     public SMatrix(int rows, int columns) {
-        super(rows, columns, false);
+        super(rows, columns);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     */
+    public SMatrix(int rows, int columns, boolean isScalar) {
+        super(rows, columns, isScalar);
         updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
@@ -63,6 +76,21 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initialization type of initialization defined in class Init.
+     * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
+     * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
+     */
+    public SMatrix(int rows, int columns, boolean isScalar, Initialization initialization, int inputs, int outputs) {
+        this(rows, columns, isScalar);
+        initialize(initialization, inputs, outputs);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param initialization type of initialization defined in class Init.
      */
     public SMatrix(int rows, int columns, Initialization initialization) {
@@ -75,10 +103,36 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initialization type of initialization defined in class Init.
+     */
+    public SMatrix(int rows, int columns, boolean isScalar, Initialization initialization) {
+        this(rows, columns, isScalar);
+        initialize(initialization);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param initializer initializer.
      */
     public SMatrix(int rows, int columns, Matrix.Initializer initializer) {
         this(rows, columns);
+        initialize(initializer);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param initializer initializer.
+     */
+    public SMatrix(int rows, int columns, boolean isScalar, Matrix.Initializer initializer) {
+        this(rows, columns, isScalar);
         initialize(initializer);
     }
 
@@ -103,11 +157,42 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param data clones matrix data from given matrix data.
+     */
+    public SMatrix(int rows, int columns, boolean isScalar, HashMap<Integer, Double> data) {
+        this(rows, columns, isScalar);
+        for (Map.Entry<Integer, Double> entry : data.entrySet()) {
+            int index = entry.getKey();
+            double value = entry.getValue();
+            matrix.put(index, value);
+        }
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
      * @param data matrix data.
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
     public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean isTransposed) {
         super(rows, columns, false, isTransposed);
+        matrix.putAll(data);
+        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param data matrix data.
+     */
+    public SMatrix(int rows, int columns, boolean isScalar, boolean isTransposed, HashMap<Integer, Double> data) {
+        super(rows, columns, isScalar, isTransposed);
         matrix.putAll(data);
         updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
@@ -119,7 +204,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
-        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), matrix, false);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), isScalar(), false, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -131,7 +216,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if cloning of mask fails.
      */
     public Matrix transpose() throws MatrixException {
-        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), matrix, true);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), isScalar(), true, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -195,6 +280,18 @@ public class SMatrix extends ComputableMatrix {
      */
     protected Matrix getNewMatrix(int rows, int columns) {
         return forceDMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
+    }
+
+    /**
+     * Returns matrix of given size (rows x columns)
+     *
+     * @param rows rows
+     * @param columns columns
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @return new matrix
+     */
+    protected Matrix getNewMatrix(int rows, int columns, boolean isScalar) {
+        return forceDMatrix ? new DMatrix(rows, columns, isScalar) : new SMatrix(rows, columns, isScalar);
     }
 
     /**
