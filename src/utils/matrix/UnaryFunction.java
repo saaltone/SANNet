@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.matrix;
@@ -311,7 +311,7 @@ public class UnaryFunction implements Serializable {
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / ((value - 1) * value);
             }
             case CUSTOM -> throw new MatrixException("Custom function cannot be defined with this constructor.");
-            default -> throw new MatrixException("Unknown unary function.");
+            default -> throw new MatrixException("Undefined unary function.");
         }
     }
 
