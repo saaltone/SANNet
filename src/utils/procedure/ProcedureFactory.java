@@ -1,10 +1,11 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package utils.procedure;
 
+import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.expression.*;
@@ -54,7 +55,7 @@ public class ProcedureFactory implements Serializable {
          * if true procedure has dependent nodes.
          *
          */
-        private boolean hasDependentNodes = false;
+        private final HashSet<Node> dependentNodes = new HashSet<>();
 
         /**
          * Input matrices.
@@ -110,19 +111,25 @@ public class ProcedureFactory implements Serializable {
      * Unique expression lock to reserve procedure factory.
      *
      */
-    private transient double expressionLock = 0;
+    private transient int expressionLock = 0;
+
+    /**
+     * Count for expression lock reservations.
+     *
+     */
+    private int expressionLockCount = 0;
+
+    /**
+     * Current node ID.
+     *
+     */
+    private int currentNodeID = 0;
 
     /**
      * If true silently continues creation of existing procedure even new one is attempted.
      *
      */
     private transient boolean silentlyContinue = false;
-
-    /**
-     * Random function.
-     *
-     */
-    private final Random random = new Random();
 
     /**
      * Default constructor for procedure factory.
@@ -135,18 +142,14 @@ public class ProcedureFactory implements Serializable {
      * Returns procedure
      *
      * @param forwardProcedure reference to class that defines forward procedure.
-     * @param parameterMatrices parameter matrices.
-     * @param constantMatrices constant matrices to be registered.
-     * @param stopGradientMatrices matrices for which gradient is not updated.
-     * @param reversedInput is reversed input.
-     * @param joinedInput if true inputs are joined otherwise not.
      * @return resulting procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if operation fails.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure, HashSet<Matrix> parameterMatrices, HashSet<Matrix> constantMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException, DynamicParamException {
-        registerConstantMatrices(parameterMatrices);
-        registerConstantMatrices(constantMatrices);
+    public Procedure getProcedure(ForwardProcedure forwardProcedure) throws MatrixException, DynamicParamException, NeuralNetworkException {
+        registerConstantMatrices(forwardProcedure.getParameterMatrices());
+        registerConstantMatrices(forwardProcedure.getConstantMatrices());
 
         ProcedureData previousProcedureData = new ProcedureData();
         newProcedure(previousProcedureData, forwardProcedure.getInputMatrices(true));
@@ -171,7 +174,7 @@ public class ProcedureFactory implements Serializable {
             previousExpression = expression;
         }
 
-        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.hasDependentNodes, parameterMatrices, stopGradientMatrices, reversedInput, joinedInput);
+        return new Procedure(forwardProcedure.getProcedureName(), nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.dependentNodes, forwardProcedure.getParameterMatrices(), forwardProcedure.getStopGradients(), forwardProcedure.isReversedInput(), forwardProcedure.isJoinedInput());
     }
 
     /**
@@ -223,10 +226,11 @@ public class ProcedureFactory implements Serializable {
      */
     private void defineGradientPath(ProcedureData procedureData) {
         Stack<Node> resultNodes = new Stack<>();
+        HashMap<Node, Expression> reverseExpressionMap = new HashMap<>(procedureData.reverseExpressionMap);
         for (Node outputNode : procedureData.outputNodes.values()) resultNodes.push(outputNode);
         while (!resultNodes.empty()) {
-            Expression expression = procedureData.reverseExpressionMap.get(resultNodes.pop());
-            if (expression != null && !procedureData.gradients.contains(expression)) {
+            Expression expression = reverseExpressionMap.remove(resultNodes.pop());
+            if (expression != null) {
                 procedureData.gradients.add(expression);
                 Node argument1 = expression.getArgument1();
                 if (argument1 != null) resultNodes.push(argument1);
@@ -241,29 +245,32 @@ public class ProcedureFactory implements Serializable {
      *
      */
     private void updateDependencies(ProcedureData previousProcedureData, ProcedureData nextProcedureData) {
-        int expressionIDSize = nextProcedureData.expressions.size() - 1;
+        int expressionIDSize = nextProcedureData.expressions.size();
         for (int expressionID = 0; expressionID < expressionIDSize; expressionID++) {
-            updateNodeLink(previousProcedureData, nextProcedureData, previousProcedureData.expressions.get(expressionID).getArgument1(), nextProcedureData.expressions.get(expressionID).getArgument1());
-            updateNodeLink(previousProcedureData, nextProcedureData, previousProcedureData.expressions.get(expressionID).getArgument2(), nextProcedureData.expressions.get(expressionID).getArgument2());
+            Expression previousExpression1 = previousProcedureData.reverseExpressionMap.get(nextProcedureData.expressions.get(expressionID).getArgument1());
+            if (previousExpression1 != null) {
+                updateNodeLink(nextProcedureData, nextProcedureData.expressions.get(previousExpression1.getExpressionID()).getResult(), nextProcedureData.expressions.get(expressionID).getArgument1());
+            }
+            Expression previousExpression2 = previousProcedureData.reverseExpressionMap.get(nextProcedureData.expressions.get(expressionID).getArgument2());
+            if (previousExpression2 != null) {
+                updateNodeLink(nextProcedureData, nextProcedureData.expressions.get(previousExpression2.getExpressionID()).getResult(), nextProcedureData.expressions.get(expressionID).getArgument2());
+            }
         }
     }
 
     /**
-     * Updates dependencies between previous (output) and current (input) node.<br>
-     * Records dependencies to respective nodes.<br>
+     * Records dependencies between previous time step result node and next time step argument nodes.<br>
      *
-     * @param previousArgumentNode previous node.
-     * @param nextArgumentNode current node.
+     * @param nextProcedureData next procedure data.
+     * @param fromResultNode from result node.
+     * @param toArgumentNode to argument node.
      */
-    private void updateNodeLink(ProcedureData previousProcedureData, ProcedureData nextProcedureData, Node previousArgumentNode, Node nextArgumentNode) {
-        int previousArgumentExpressionID = nodeRegister.getExpressionID(previousArgumentNode);
-        int nextArgumentExpressionID = nodeRegister.getExpressionID(nextArgumentNode);
-        if (previousArgumentExpressionID != nextArgumentExpressionID) {
-            Node previousResultNode = previousProcedureData.expressions.get(previousArgumentExpressionID).getResult();
-            nextProcedureData.hasDependentNodes = true;
-            nextArgumentNode.setFromNode(previousResultNode);
-            previousResultNode.setToNode(nextArgumentNode);
-        }
+    private void updateNodeLink(ProcedureData nextProcedureData, Node fromResultNode, Node toArgumentNode) {
+        fromResultNode.setToArgumentNode(toArgumentNode);
+        nextProcedureData.dependentNodes.add(fromResultNode);
+
+        toArgumentNode.setFromResultNode(fromResultNode);
+        nextProcedureData.dependentNodes.add(toArgumentNode);
     }
 
     /**
@@ -296,7 +303,9 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private Node defineNode(Matrix matrix, boolean asSingleNode) throws MatrixException {
-        Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID);
+        currentNodeID += nodeRegister.nodeExists(matrix) ? 0 : 1;
+
+        Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID, currentNodeID);
 
         attachMatrixToInputNode(currentProcedureData.inputMatrices, matrix, currentProcedureData.inputNodes, node);
 
@@ -344,7 +353,9 @@ public class ProcedureFactory implements Serializable {
             }
         }
 
-        Node node = nodeRegister.defineNode(mMatrix, isSingleNode, currentExpressionID);
+        currentNodeID += nodeRegister.nodeExists(mMatrix) ? 0 : 1;
+
+        Node node = nodeRegister.defineNode(mMatrix, isSingleNode, currentExpressionID, currentNodeID);
 
         attachMatrixToInputNode(currentProcedureData.inputMatrices, mMatrix, currentProcedureData.inputNodes, node);
 
@@ -375,7 +386,7 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if procedure factory is already reserved by another request
      * @return unique expression lock key.
      */
-    public double startExpression(Object originator) throws MatrixException {
+    public int startExpression(Object originator) throws MatrixException {
         return startExpression(originator, true);
     }
 
@@ -387,13 +398,13 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if procedure factory is already reserved by another request
      * @return unique expression lock key.
      */
-    public double startExpression(Object originator, boolean silentlyContinue) throws MatrixException {
-        if (expressionLock != 0) {
+    public int startExpression(Object originator, boolean silentlyContinue) throws MatrixException {
+        if (expressionLock > 0) {
             if (silentlyContinue) return 0;
             else throw new MatrixException("Procedure factory is reserved by: " + originator);
         }
         this.silentlyContinue = silentlyContinue;
-        expressionLock = random.nextDouble();
+        expressionLock = ++expressionLockCount;
         return expressionLock;
     }
 
@@ -934,6 +945,36 @@ public class ProcedureFactory implements Serializable {
     public void createBinaryFunctionExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new BinaryFunctionExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), binaryFunction));
+    }
+
+    /**
+     * Records join expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param argument2 second argument of expression.
+     * @param result result of expression.
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createJoinExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, boolean joinedVertically) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new JoinExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), joinedVertically));
+    }
+
+    /**
+     * Records unjoin expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createUnjoinExpression(double expressionLock, Matrix argument1, Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new UnjoinExpression(currentExpressionID++, defineNode(argument1), defineNode(result), unjoinAtRow, unjoinAtColumn));
     }
 
     /**
