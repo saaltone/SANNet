@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -186,9 +186,33 @@ public enum LayerType {
     WEIGHT_NOISING,
 
     /**
-     * Connector layer.
+     * Connect layer.
      *
      */
-    CONNECTOR
+    CONNECT,
+
+    /**
+     * Join layer.
+     *
+     */
+    JOIN,
+
+    /**
+     * Add layer.
+     *
+     */
+    ADD,
+
+    /**
+     * Element-wise multiply layer.
+     *
+     */
+    MULTIPLY,
+
+    /**
+     * Attention layer.
+     *
+     */
+    ATTENTION
 
 }

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -69,7 +69,11 @@ public class LayerFactory {
             case L2_REGULARIZATION -> new L2_Regularization(layerIndex, initialization, params);
             case Lp_REGULARIZATION -> new Lp_Regularization(layerIndex, initialization, params);
             case WEIGHT_NOISING -> new WeightNoising(layerIndex, initialization, params);
-            case CONNECTOR -> new ConnectorLayer(layerIndex, initialization, params);
+            case CONNECT -> new ConnectLayer(layerIndex, initialization, params);
+            case JOIN -> new JoinLayer(layerIndex, initialization, params);
+            case ADD -> new AddLayer(layerIndex, initialization, params);
+            case MULTIPLY -> new MultiplyLayer(layerIndex, initialization, params);
+            case ATTENTION -> new AttentionLayer(layerIndex, initialization, params);
         };
     }
 
@@ -110,7 +114,11 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return LayerType.L2_REGULARIZATION;
         if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return LayerType.Lp_REGULARIZATION;
         if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return LayerType.WEIGHT_NOISING;
-        if (neuralNetworkLayer.getClass().equals(ConnectorLayer.class)) return LayerType.CONNECTOR;
+        if (neuralNetworkLayer.getClass().equals(ConnectLayer.class)) return LayerType.CONNECT;
+        if (neuralNetworkLayer.getClass().equals(JoinLayer.class)) return LayerType.JOIN;
+        if (neuralNetworkLayer.getClass().equals(AddLayer.class)) return LayerType.ADD;
+        if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return LayerType.MULTIPLY;
+        if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return LayerType.ATTENTION;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -151,7 +159,11 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return "L2_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return "Lp_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return "WEIGHT_NOISING";
-        if (neuralNetworkLayer.getClass().equals(ConnectorLayer.class)) return "CONNECTOR";
+        if (neuralNetworkLayer.getClass().equals(ConnectLayer.class)) return "CONNECTOR";
+        if (neuralNetworkLayer.getClass().equals(JoinLayer.class)) return "JOIN";
+        if (neuralNetworkLayer.getClass().equals(AddLayer.class)) return "ADD";
+        if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return "MULTIPLY";
+        if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return "ATTENTION";
         throw new NeuralNetworkException("Unknown layer type");
     }
 
