@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -114,48 +114,12 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public boolean isReversedInput() { return reversedInput; }
 
     /**
-     * Returns true if input is joined otherwise returns false.
-     *
-     * @return true if input is joined otherwise returns false.
-     */
-    protected boolean isJoinedInput() {
-        return false;
-    }
-
-    /**
-     * Returns width of neural network layer.
-     *
-     * @return width of neural network layer.
-     */
-    public int getLayerWidth() {
-        return getInternalLayerWidth();
-    }
-
-    /**
-     * Returns internal width of neural network layer.
-     *
-     * @return internal width of neural network layer.
-     */
-    protected int getInternalLayerWidth() {
-        return super.getLayerWidth();
-    }
-
-    /**
      * Returns number of truncated steps for gradient calculation. -1 means no truncation.
      *
      * @return number of truncated steps.
      */
     protected int getTruncateSteps() {
         return truncateSteps;
-    }
-
-    /**
-     * Returns number of layer parameters.
-     *
-     * @return number of layer parameters.
-     */
-    protected int getNumberOfParameters() {
-        return getWeightSet().getNumberOfParameters();
     }
 
     /**

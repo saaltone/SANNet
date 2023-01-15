@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -232,7 +232,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        currentWeightSet = weightSet = new RecurrentWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet = new RecurrentWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**
@@ -245,7 +245,9 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
+        if (resetPreviousInput) {
+            previousOutput = new DMatrix(getLayerWidth(), 1);
+        }
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
@@ -256,7 +258,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        previousOutput.setName("PrevOutput");
+        previousOutput.setName("PreviousOutput");
 
         Matrix output = currentWeightSet.weight.dot(input).add(currentWeightSet.bias).add(currentWeightSet.recurrentWeight.dot(previousOutput));
 
@@ -276,7 +278,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -285,7 +287,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 

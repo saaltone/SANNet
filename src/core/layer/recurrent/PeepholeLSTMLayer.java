@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -379,7 +379,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        currentWeightSet = weightSet = new PeepholeLSTMWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet = new PeepholeLSTMWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**
@@ -392,7 +392,9 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        if (resetPreviousInput) previousCellState = new DMatrix(getInternalLayerWidth(), 1);
+        if (resetPreviousInput) {
+            previousCellState = new DMatrix(getLayerWidth(), 1);
+        }
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
@@ -446,7 +448,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -455,7 +457,7 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 

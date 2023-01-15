@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -294,7 +294,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        currentWeightSet = weightSet = new MinGRUWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet = new MinGRUWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**
@@ -307,7 +307,9 @@ public class MinGRULayer extends AbstractRecurrentLayer {
     public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        if (resetPreviousInput) previousOutput = new DMatrix(getInternalLayerWidth(), 1);
+        if (resetPreviousInput) {
+            previousOutput = new DMatrix(getLayerWidth(), 1);
+        }
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
 
@@ -318,7 +320,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        previousOutput.setName("PrevOutput");
+        previousOutput.setName("PreviousOutput");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
         Matrix f = currentWeightSet.Wf.dot(input).add(currentWeightSet.Uf.dot(previousOutput)).add(currentWeightSet.bf);
@@ -347,7 +349,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>() {{ add(currentWeightSet.ones); }};
     }
 
@@ -356,7 +358,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>() {{ add(currentWeightSet.ones); }};
     }
 

@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer.recurrent;
@@ -397,7 +397,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      */
     public void initializeWeights() {
-        currentWeightSet = weightSet = new LSTMWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getInternalLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
+        currentWeightSet = weightSet = new LSTMWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights, regulateRecurrentWeights);
     }
 
     /**
@@ -411,8 +411,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
         input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getInternalLayerWidth(), 1);
-            previousCellState = new DMatrix(getInternalLayerWidth(), 1);
+            previousOutput = new DMatrix(getLayerWidth(), 1);
+            previousCellState = new DMatrix(getLayerWidth(), 1);
         }
         return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
     }
@@ -424,8 +424,8 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public MMatrix getForwardProcedure() throws MatrixException {
-        previousOutput.setName("PrevOutput");
-        previousCellState.setName("PrevC");
+        previousOutput.setName("PreviousOutput");
+        previousCellState.setName("PreviousC");
 
         // i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate
         Matrix i = currentWeightSet.Wi.dot(input).add(currentWeightSet.Ui.dot(previousOutput)).add(currentWeightSet.bi);
@@ -470,7 +470,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      * @return matrices for which gradient is not calculated.
      */
-    protected HashSet<Matrix> getStopGradients() {
+    public HashSet<Matrix> getStopGradients() {
         return new HashSet<>();
     }
 
@@ -479,7 +479,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      * @return constant matrices.
      */
-    protected HashSet<Matrix> getConstantMatrices() {
+    public HashSet<Matrix> getConstantMatrices() {
         return new HashSet<>();
     }
 
