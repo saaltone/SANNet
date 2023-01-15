@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package core.layer;
@@ -67,6 +67,12 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     private transient boolean isTraining;
 
     /**
+     * If true procedure expression dependencies are reset otherwise false.
+     *
+     */
+    private boolean resetDependencies = true;
+
+    /**
      * Constructor for abstract execution layer.
      *
      * @param layerIndex layer index
@@ -122,11 +128,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected abstract void initializeWeights();
 
     /**
+     * Check if layer input is reversed.
+     *
+     * @return if true input layer input is reversed otherwise not.
+     */
+    public boolean isReversedInput() { return false; }
+
+    /**
      * Returns true if input is joined otherwise returns false.
      *
      * @return true if input is joined otherwise returns false.
      */
-    protected boolean isJoinedInput() {
+    public boolean isJoinedInput() {
         return false;
     }
 
@@ -138,22 +151,36 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
         if (procedure == null) initializeWeights();
-        procedure = new ProcedureFactory().getProcedure(this, getWeightSet() != null ? getWeightSet().getWeights() : null, getConstantMatrices(), getStopGradients(), isReversedInput(), isJoinedInput());
+        procedure = new ProcedureFactory().getProcedure(this);
     }
 
     /**
-     * Returns matrices for which gradient is not calculated.
+     * Returns name of forward procedure.
      *
-     * @return matrices for which gradient is not calculated.
+     * @return name of forward procedure.
+     * @throws NeuralNetworkException throws exception if operation fails.
      */
-    protected abstract HashSet<Matrix> getStopGradients();
+    public String getProcedureName() throws NeuralNetworkException {
+        return getLayerName();
+    }
 
     /**
-     * Returns constant matrices.
+     * Returns parameter matrices.
      *
-     * @return constant matrices.
+     * @return parameter matrices.
      */
-    protected abstract HashSet<Matrix> getConstantMatrices();
+    public HashSet<Matrix> getParameterMatrices() {
+        return getWeightSet() != null ? getWeightSet().getWeights() : null;
+    }
+
+    /**
+     * Sets reset flag for procedure expression dependencies.
+     *
+     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
+        this.resetDependencies = resetDependencies;
+    }
 
     /**
      * Resets layer.
@@ -163,6 +190,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     public void reset() throws MatrixException {
         super.reset();
         if (procedure != null) procedure.reset();
+        if (procedure != null) procedure.resetDependencies(isTraining() || resetDependencies);
     }
 
     /**
@@ -183,7 +211,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
         reset();
-        if (procedure != null) procedure.calculateForwardExpression(getInputSequences(), getLayerOutputs());
+        if (procedure != null) procedure.calculateExpression(getInputSequences(), getLayerOutputs());
     }
 
     /**
@@ -194,7 +222,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
-        if (procedure != null) procedure.calculateBackwardGradient(getLayerOutputGradients(), getInputGradientSequences(), getTruncateSteps());
+        if (procedure != null) procedure.calculateGradient(getLayerOutputGradients(), getInputGradientSequences(), getTruncateSteps());
     }
 
     /**
@@ -384,7 +412,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected String getLayerConnections() {
         ArrayList<Integer> inputLayerList = new ArrayList<>();
         for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) inputLayerList.add(previousLayer.getLayerIndex());
-        return "Connect from layers: " + (!inputLayerList.isEmpty() ? inputLayerList : "N/A") + ", Join previous layer inputs: " + (isJoinedInput() ? "Yes" : "No");
+        return "Connect from layers: " + (!inputLayerList.isEmpty() ? inputLayerList : "N/A");
     }
 
 }
