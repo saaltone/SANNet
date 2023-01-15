@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -831,42 +831,43 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        if (!policyGradient && applyDueling) neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
-        neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex7 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        int hiddenLayerIndex8 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex9 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        int hiddenLayerIndex10 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex11 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        int hiddenLayerIndex12 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        if (!policyGradient && applyDueling) {
+            int hiddenLayerIndex13 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+        }
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
-        neuralNetworkConfiguration.connectLayers(0, 2);
-        neuralNetworkConfiguration.connectLayers(0, 4);
-        neuralNetworkConfiguration.connectLayers(1, 4);
-        neuralNetworkConfiguration.connectLayers(0, 6);
-        neuralNetworkConfiguration.connectLayers(1, 6);
-        neuralNetworkConfiguration.connectLayers(3, 6);
-        neuralNetworkConfiguration.connectLayers(0, 8);
-        neuralNetworkConfiguration.connectLayers(1, 8);
-        neuralNetworkConfiguration.connectLayers(3, 8);
-        neuralNetworkConfiguration.connectLayers(5, 8);
-        neuralNetworkConfiguration.connectLayers(0, 10);
-        neuralNetworkConfiguration.connectLayers(1, 10);
-        neuralNetworkConfiguration.connectLayers(3, 10);
-        neuralNetworkConfiguration.connectLayers(5, 10);
-        neuralNetworkConfiguration.connectLayers(7, 10);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex2);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex4);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex5, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex5, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex7, hiddenLayerIndex10);
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         if (!policyGradient) neuralNetwork.verboseTraining(10);
         return neuralNetwork;
@@ -883,46 +884,45 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        NeuralNetwork neuralNetwork = new NeuralNetwork();
-
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECTOR, "joinInputs = false");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex7 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = " + 30);
+        int hiddenLayerIndex8 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex9 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 30);
+        int hiddenLayerIndex10 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
+        int hiddenLayerIndex11 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GELU), "width = " + 30);
+        int hiddenLayerIndex12 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
-        neuralNetworkConfiguration.connectLayers(0, 2);
-        neuralNetworkConfiguration.connectLayers(0, 4);
-        neuralNetworkConfiguration.connectLayers(1, 4);
-        neuralNetworkConfiguration.connectLayers(0, 6);
-        neuralNetworkConfiguration.connectLayers(1, 6);
-        neuralNetworkConfiguration.connectLayers(3, 6);
-        neuralNetworkConfiguration.connectLayers(0, 8);
-        neuralNetworkConfiguration.connectLayers(1, 8);
-        neuralNetworkConfiguration.connectLayers(3, 8);
-        neuralNetworkConfiguration.connectLayers(5, 8);
-        neuralNetworkConfiguration.connectLayers(0, 10);
-        neuralNetworkConfiguration.connectLayers(1, 10);
-        neuralNetworkConfiguration.connectLayers(3, 10);
-        neuralNetworkConfiguration.connectLayers(5, 10);
-        neuralNetworkConfiguration.connectLayers(7, 10);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex2);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex4);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex6);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex5, hiddenLayerIndex8);
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex5, hiddenLayerIndex10);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex7, hiddenLayerIndex10);
 
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
-        neuralNetworkConfiguration.connectLayers(11, 14);
-        neuralNetworkConfiguration.connectLayers(14, 15);
+        int hiddenLayerIndex14 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
+        int outputLayerIndex2 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex11, hiddenLayerIndex14);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex14, outputLayerIndex2);
 
-        neuralNetwork.build(neuralNetworkConfiguration);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
