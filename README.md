@@ -9,7 +9,7 @@ SANNet is written on Java and has been built from ground up starting from implem
 
 ## Layers, activation and loss functions
 Framework provides
-- feedforward / dense / activation / add / multiply layers,
+- feedforward / dense / activation / add / subtract / divide / dot / multiply / positional encoding layers,
 - connect and join layers to create connections from multiple previous layers,
 - recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers and attention layer,
 - convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer) and
