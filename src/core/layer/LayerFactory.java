@@ -72,8 +72,12 @@ public class LayerFactory {
             case CONNECT -> new ConnectLayer(layerIndex, initialization, params);
             case JOIN -> new JoinLayer(layerIndex, initialization, params);
             case ADD -> new AddLayer(layerIndex, initialization, params);
+            case SUBTRACT -> new SubtractLayer(layerIndex, initialization, params);
             case MULTIPLY -> new MultiplyLayer(layerIndex, initialization, params);
+            case DOT -> new DotLayer(layerIndex, initialization, params);
+            case DIVIDE -> new DivideLayer(layerIndex, initialization, params);
             case ATTENTION -> new AttentionLayer(layerIndex, initialization, params);
+            case POSITIONAL_ENCODING -> new PositionalEncodingLayer(layerIndex, initialization, params);
         };
     }
 
@@ -117,8 +121,12 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(ConnectLayer.class)) return LayerType.CONNECT;
         if (neuralNetworkLayer.getClass().equals(JoinLayer.class)) return LayerType.JOIN;
         if (neuralNetworkLayer.getClass().equals(AddLayer.class)) return LayerType.ADD;
+        if (neuralNetworkLayer.getClass().equals(SubtractLayer.class)) return LayerType.SUBTRACT;
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return LayerType.MULTIPLY;
+        if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return LayerType.DOT;
+        if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return LayerType.DIVIDE;
         if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return LayerType.ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return LayerType.POSITIONAL_ENCODING;
         throw new NeuralNetworkException("Unknown layer type");
     }
 
@@ -159,11 +167,15 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(L2_Regularization.class)) return "L2_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(Lp_Regularization.class)) return "Lp_REGULARIZATION";
         if (neuralNetworkLayer.getClass().equals(WeightNoising.class)) return "WEIGHT_NOISING";
-        if (neuralNetworkLayer.getClass().equals(ConnectLayer.class)) return "CONNECTOR";
+        if (neuralNetworkLayer.getClass().equals(ConnectLayer.class)) return "CONNECT";
         if (neuralNetworkLayer.getClass().equals(JoinLayer.class)) return "JOIN";
         if (neuralNetworkLayer.getClass().equals(AddLayer.class)) return "ADD";
+        if (neuralNetworkLayer.getClass().equals(SubtractLayer.class)) return "SUBTRACT";
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return "MULTIPLY";
+        if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return "DOT";
+        if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return "DIVIDE";
         if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return "ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return "POSITIONAL_ENCODING";
         throw new NeuralNetworkException("Unknown layer type");
     }
 

@@ -204,15 +204,39 @@ public enum LayerType {
     ADD,
 
     /**
+     * Subtract layer.
+     *
+     */
+    SUBTRACT,
+
+    /**
      * Element-wise multiply layer.
      *
      */
     MULTIPLY,
 
     /**
+     * Dot layer.
+     *
+     */
+    DOT,
+
+    /**
+     * Divide layer.
+     *
+     */
+    DIVIDE,
+
+    /**
      * Attention layer.
      *
      */
-    ATTENTION
+    ATTENTION,
+
+    /**
+     * Positional encoding layer.
+     *
+     */
+    POSITIONAL_ENCODING
 
 }
