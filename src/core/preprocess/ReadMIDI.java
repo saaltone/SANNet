@@ -11,6 +11,7 @@ import javax.sound.midi.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements functionality reading, encoding, playing and writing out MIDI file.<br>
@@ -411,17 +412,17 @@ public class ReadMIDI {
         System.out.println(tickDataDistribution);
         System.out.println();
 
-        ArrayList<HashMap<Integer, Matrix>> keyDataAsMatrix = encodeDataIntoMatrix(keyDataAsInteger, metadata.getMinKeyValue(), metadata.getKeyOutputSize());
-        ArrayList<HashMap<Integer, Matrix>> velocityDataAsMatrix = encodeDataIntoMatrix(velocityDataAsInteger, metadata.getMinVelocityValue(), metadata.getVelocityOutputSize());
-        ArrayList<HashMap<Integer, Matrix>> tickDataAsMatrix = scaleTickData(tickData, metadata);
+        ArrayList<Matrix> keyDataAsMatrix = encodeDataIntoMatrix(keyDataAsInteger, metadata.getMinKeyValue(), metadata.getKeyOutputSize());
+        ArrayList<Matrix> velocityDataAsMatrix = encodeDataIntoMatrix(velocityDataAsInteger, metadata.getMinVelocityValue(), metadata.getVelocityOutputSize());
+        ArrayList<Matrix> tickDataAsMatrix = scaleTickData(tickData, metadata);
 
         int pos = 0;
         int offSet = numberOfInputs + 1;
         for (int dataIndex = 0; dataIndex < keyDataAsMatrix.size() - offSet; dataIndex++) {
             for (int entryIndex = 0; entryIndex < offSet; entryIndex++) {
-                result.get(entryIndex).put(pos, new MMatrix(keyDataAsMatrix.get(dataIndex + entryIndex).get(1)));
-                result.get(offSet + entryIndex).put(pos, new MMatrix(velocityDataAsMatrix.get(dataIndex + entryIndex).get(1)));
-                result.get(2 * offSet + entryIndex).put(pos, new MMatrix(tickDataAsMatrix.get(dataIndex + entryIndex).get(1)));
+                result.get(entryIndex).put(pos, new MMatrix(keyDataAsMatrix.get(dataIndex + entryIndex)));
+                result.get(offSet + entryIndex).put(pos, new MMatrix(velocityDataAsMatrix.get(dataIndex + entryIndex)));
+                result.get(2 * offSet + entryIndex).put(pos, new MMatrix(tickDataAsMatrix.get(dataIndex + entryIndex)));
             }
             pos++;
         }
@@ -438,16 +439,10 @@ public class ReadMIDI {
      * @return encoded matrices.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private ArrayList<HashMap<Integer, Matrix>> encodeDataIntoMatrix(ArrayList<Integer> integerData, int minValue, int outputSize) throws MatrixException {
-        ArrayList<HashMap<Integer, Matrix>> dataAsMatrix = new ArrayList<>();
-        int numberOfBits = ComputableMatrix.numberOfBits(outputSize);
+    private ArrayList<Matrix> encodeDataIntoMatrix(ArrayList<Integer> integerData, int minValue, int outputSize) throws MatrixException {
+        ArrayList<Matrix> dataAsMatrix = new ArrayList<>();
         for (Integer integerDataItem : integerData) {
-            HashMap<Integer, Matrix> matrixEntries = new HashMap<>();
-            dataAsMatrix.add(matrixEntries);
-            matrixEntries.put(0, ComputableMatrix.encodeToBitColumnVector(metadata.encodeItem(integerDataItem, minValue), numberOfBits));
-            Matrix oneHotEncodedMatrix = new DMatrix(outputSize, 1);
-            oneHotEncodedMatrix.setValue(metadata.encodeItem(integerDataItem, minValue), 0, 1);
-            matrixEntries.put(1, oneHotEncodedMatrix);
+            dataAsMatrix.add(DMatrix.getOneHotVector(outputSize, metadata.encodeItem(integerDataItem, minValue)));
         }
         return dataAsMatrix;
     }
@@ -459,7 +454,7 @@ public class ReadMIDI {
      * @param metadata record data.
      * @return scaled tick data in matrix form.
      */
-    private ArrayList<HashMap<Integer, Matrix>> scaleTickData(ArrayList<Long> inputTickData, Metadata metadata) throws MatrixException {
+    private ArrayList<Matrix> scaleTickData(ArrayList<Long> inputTickData, Metadata metadata) throws MatrixException {
 
         class TickFrequency implements Comparable<TickFrequency> {
             int frequency = 1;
@@ -502,10 +497,9 @@ public class ReadMIDI {
             }
         }
 
-        ArrayList<HashMap<Integer, Matrix>> outputTickData = new ArrayList<>();
+        ArrayList<Matrix> outputTickData = new ArrayList<>();
 
         metadata.numberOfEncodedTicks = Math.min(metadata.getMaxNumberOfEncodedTicks(), updatedTickFrequencyMap.size());
-        int numberOfBits = ComputableMatrix.numberOfBits(metadata.numberOfEncodedTicks);
         for (Long inputTick : inputTickData) {
             long tick;
             if (updatedTickFrequencyMap.containsKey(inputTick)) tick = inputTick;
@@ -514,12 +508,7 @@ public class ReadMIDI {
                 long ceilingTick = updatedTickFrequencyMap.ceilingKey(inputTick) == null ? updatedTickFrequencyMap.lastKey() : updatedTickFrequencyMap.ceilingKey(inputTick);
                 tick = Math.abs(inputTick - floorTick) < Math.abs(inputTick - ceilingTick) ? floorTick : ceilingTick;
             }
-            HashMap<Integer, Matrix> matrixEntries = new HashMap<>();
-            outputTickData.add(matrixEntries);
-            matrixEntries.put(0, ComputableMatrix.encodeToBitColumnVector(tickOrder.indexOf(tick), numberOfBits));
-            Matrix oneHotEncodedMatrix = new DMatrix(metadata.numberOfEncodedTicks, 1);
-            oneHotEncodedMatrix.setValue(tickOrder.indexOf(tick), 0, 1);
-            matrixEntries.put(1, oneHotEncodedMatrix);
+            outputTickData.add(DMatrix.getOneHotVector(metadata.numberOfEncodedTicks, tickOrder.indexOf(tick)));
         }
 
         return outputTickData;
@@ -663,12 +652,8 @@ public class ReadMIDI {
 
         if (!wait) return sequencer;
 
-        int timeOut = 0;
         try {
-            while (sequencer.isRunning() && timeOut < playTime) {
-                Thread.sleep(1000);
-                timeOut++;
-            }
+            TimeUnit.SECONDS.sleep(playTime);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(exception);
