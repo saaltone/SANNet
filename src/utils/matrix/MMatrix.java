@@ -10,10 +10,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Implements multi-matrix class that can execute matrix operations with multiple matrices such as adding multiple matrices together element by element.<br>
@@ -1102,7 +1099,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices) throws MatrixException, DynamicParamException {
-        return MMatrix.variance(matrices, MMatrix.mean(matrices)).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
+        return Objects.requireNonNull(MMatrix.variance(matrices, MMatrix.mean(matrices))).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
     }
 
     /**
@@ -1115,7 +1112,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return MMatrix.variance(matrices, meanMatrix).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
+        return Objects.requireNonNull(MMatrix.variance(matrices, meanMatrix)).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
     }
 
     /**
