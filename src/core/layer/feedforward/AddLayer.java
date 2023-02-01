@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Implements layer that adds multiple inputs together.
+ * Implements layer that adds multiple inputs.
  *
  */
 public class AddLayer extends AbstractExecutionLayer {
