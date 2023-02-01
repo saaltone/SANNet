@@ -193,9 +193,7 @@ public class ReadTextFile {
                 for (Matrix matrix : encodedWordList) {
                     if (wordIndex++ < encodedWordList.size() - 1) inputMatrices.add(matrix);
                     else {
-                        Matrix outputMatrix = new DMatrix(dictionarySize, 1);
-                        outputMatrix.setValue(dictionaryBinaryIndexMapping.get(matrix), 0, 1);
-                        outputMatrices.add(outputMatrix);
+                        outputMatrices.add(DMatrix.getOneHotVector(dictionarySize, dictionaryBinaryIndexMapping.get(matrix)));
                     }
                 }
 
