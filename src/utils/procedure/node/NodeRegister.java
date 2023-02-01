@@ -44,12 +44,6 @@ public class NodeRegister implements Serializable {
     private final HashMap<MMatrix, NodeEntry> entriesByMMatrix = new HashMap<>();
 
     /**
-     * Map to maintain dependencies of nodes and node entries.
-     *
-     */
-    private final HashMap<Node, NodeEntry> entriesByNode = new HashMap<>();
-
-    /**
      * Map to maintain dependencies of matrices and node.
      *
      */
@@ -85,7 +79,6 @@ public class NodeRegister implements Serializable {
             node = isSingleNode ? new SingleNode(nodeID, matrix) : new MultiNode(nodeID, matrix);
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMatrix.put(matrix, nodeEntry);
-            entriesByNode.put(node, nodeEntry);
             nodeMatrixMap.put(matrix, node);
         }
         return node;
@@ -118,7 +111,6 @@ public class NodeRegister implements Serializable {
             node = isSingleNode ? new SingleNode(nodeID, mMatrix.getReferenceMatrix()) : new MultiNode(nodeID, mMatrix.getReferenceMatrix());
             NodeEntry nodeEntry = new NodeEntry(node, expressionID);
             entriesByMMatrix.put(mMatrix, nodeEntry);
-            entriesByNode.put(node, nodeEntry);
             nodeMMatrixMap.put(mMatrix, node);
         }
         return node;
