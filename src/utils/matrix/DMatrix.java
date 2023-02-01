@@ -308,4 +308,32 @@ public class DMatrix extends ComputableMatrix {
         return new DMatrix(constant);
     }
 
+    /**
+     * Return one-hot encoded column vector.
+     *
+     * @param size size of vector
+     * @param position position of one-hot encoded value
+     * @return one-hot encoded vector.
+     * @throws MatrixException throws exception if position of one-hot encoded value exceeds vector size.
+     */
+    public static Matrix getOneHotVector(int size, int position) throws MatrixException {
+        return getOneHotVector(size, position, true);
+    }
+
+    /**
+     * Return one-hot encoded vector.
+     *
+     * @param size size of vector
+     * @param position position of one-hot encoded value
+     * @param asColumnVector if true one-hot vector is column vector otherwise row vector
+     * @return one-hot encoded vector.
+     * @throws MatrixException throws exception if position of one-hot encoded value exceeds vector size.
+     */
+    public static Matrix getOneHotVector(int size, int position, boolean asColumnVector) throws MatrixException {
+        if (position > size - 1) throw new MatrixException("Position " + position + " cannot exceed vector size " + size);
+        Matrix oneHotVector = new DMatrix(asColumnVector ? size : 1, asColumnVector ? 1 : size);
+        oneHotVector.setValue(asColumnVector ? position : 0, asColumnVector ? 0 : position, 1);
+        return oneHotVector;
+    }
+
 }
