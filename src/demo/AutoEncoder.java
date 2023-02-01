@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2023 Simo Aaltonen
+ * Copyright (C) 2018 - 2022 Simo Aaltonen
  */
 
 package demo;
@@ -68,6 +68,24 @@ public class AutoEncoder {
             ClassificationMetric classificationMetric = new ClassificationMetric();
             classificationMetric.report(outputSequence, inputSequence);
             classificationMetric.printReport();
+
+            neuralNetwork.stop();
+
+            neuralNetwork.removePersistence();
+
+            System.out.println("Removing last hidden layers for decoder part.");
+            neuralNetwork.removeLastHiddenLayers(6);
+
+            neuralNetwork.start();
+            neuralNetwork.print();
+
+            numberOfTests = maxValue;
+            for (int index = 0; index < numberOfTests; index++) {
+                int inputValue = index;
+                Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, DMatrix.getOneHotVector(maxValue, inputValue)); }}).get(0);
+                System.out.println(neuralNetwork.getNeuralNetworkName() + " Input: " + index + ", Output:");
+                outputData.print();
+            }
 
             neuralNetwork.stop();
 
@@ -154,10 +172,7 @@ public class AutoEncoder {
 
         Random random = new Random();
         for (int i = 0; i < 100 * maxValue; i++) {
-            int inputValue = random.nextInt(maxValue);
-
-            Matrix inputData = new DMatrix(maxValue, 1);
-            inputData.setValue(inputValue, 0, 1);
+            Matrix inputData = DMatrix.getOneHotVector(maxValue, random.nextInt(maxValue));
             MMatrix inputs = new MMatrix(inputData);
             input.put(i, inputs);
             output.put(i, inputs);
