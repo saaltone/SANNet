@@ -184,11 +184,12 @@ public interface FunctionEstimator extends Configurable {
      * Predicts policy values corresponding to a state.
      *
      * @param stateTransition state.
+     * @param isAction true if prediction is for taking other otherwise false.
      * @return policy values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix predictPolicyValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws NeuralNetworkException, MatrixException;
 
     /**
      * Predicts state action values corresponding to a state.
