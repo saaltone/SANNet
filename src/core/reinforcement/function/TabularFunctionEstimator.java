@@ -20,6 +20,7 @@ import utils.matrix.MatrixException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements tabular based state action function estimator.<br>
@@ -248,10 +249,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Returns (predicts) state value corresponding to a state as stored by tabular function estimator.
      *
      * @param stateTransition state
+     * @param isAction true if prediction is for taking other otherwise false.
      * @return state value corresponding to a state
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predictPolicyValues(StateTransition stateTransition) throws MatrixException {
+    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws MatrixException {
         return getStateValue(stateTransition.environmentState.state());
     }
 
@@ -263,7 +265,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix predictStateActionValues(StateTransition stateTransition) throws MatrixException {
-        return predictPolicyValues(stateTransition);
+        return predictPolicyValues(stateTransition, true);
     }
 
     /**
@@ -301,7 +303,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
             StateTransition stateTransition = entry.getKey();
             Matrix stateValueEntry = entry.getValue();
-            Matrix stateValue = predictPolicyValues(stateTransition);
+            Matrix stateValue = predictPolicyValues(stateTransition, false);
             Matrix error = stateValue.subtract(stateValueEntry);
             Matrix stateError = stateErrors.get(stateValue);
             if (stateError == null) stateErrors.put(stateValue, error);
@@ -317,7 +319,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
         // Allows other threads to get execution time.
         try {
-            Thread.sleep(0, 1);
+            TimeUnit.NANOSECONDS.sleep(1);
         }
         catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
