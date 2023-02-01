@@ -185,6 +185,15 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
+     * Resets function estimator.
+     *
+     */
+    public void resetFunctionEstimator() {
+        super.resetFunctionEstimator();
+        if(getPreviousFunctionEstimator() != null) getPreviousFunctionEstimator().reset();
+    }
+
+    /**
      * Returns policy gradient value for update.
      *
      * @param stateTransition state transition.
@@ -193,8 +202,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        double currentActionValue = getValues(getFunctionEstimator(), stateTransition).getValue(stateTransition.action, 0);
-        double previousActionValue = getValues(getPreviousFunctionEstimator(), stateTransition).getValue(stateTransition.action, 0);
+        double currentActionValue = getValues(getFunctionEstimator(), stateTransition, false).getValue(stateTransition.action, 0);
+        double previousActionValue = getValues(getPreviousFunctionEstimator(), stateTransition, false).getValue(stateTransition.action, 0);
         double rValue = previousActionValue == 0 ? 1 : currentActionValue / previousActionValue;
         double clippedRValue = Math.min(Math.max(rValue, 1 - epsilon), 1 + epsilon);
         return -Math.min(rValue * stateTransition.advantage, clippedRValue * stateTransition.advantage);

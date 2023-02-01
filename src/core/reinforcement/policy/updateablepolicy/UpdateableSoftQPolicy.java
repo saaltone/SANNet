@@ -225,7 +225,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition);
+        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition, false);
         double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
         if (isAutoSoftAlpha()) incrementPolicyValues(currentPolicyValues, stateTransition.action, stateTransition.environmentState.availableActions().size());
         return getSoftAlpha() * Math.log(currentPolicyValue) - stateTransition.tdTarget;
@@ -249,6 +249,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void updateAlpha() throws MatrixException, DynamicParamException {
+        if (alphaLossGradientCount == 0) return;
         // https://raw.githubusercontent.com/BY571/Deep-Reinforcement-Learning-Algorithm-Collection/master/ContinousControl/SAC.ipynb
         // self.target_entropy = -action_size  # -dim(A)
         // alpha_loss = - (self.log_alpha * (log_pis + self.target_entropy).detach()).mean()
