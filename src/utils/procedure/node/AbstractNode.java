@@ -58,7 +58,7 @@ public abstract class AbstractNode implements Node, Serializable {
     private boolean stopGradient = false;
 
     /**
-     * If true resets matrix dependencies otherwise not.
+     * If true matrix dependencies will be reset otherwise not.
      *
      */
     private boolean resetDependencies = true;
