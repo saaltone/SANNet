@@ -59,6 +59,23 @@ public interface NeuralNetworkLayer {
     boolean hasNextLayers();
 
     /**
+     * Removes next neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
+     */
+    void removeNextLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException;
+
+    /**
+     * Replaces next neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @param newNeuralNetworkLayer new neural network layer.
+     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
+     */
+    void replaceNextLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException;
+
+    /**
      * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
@@ -79,6 +96,23 @@ public interface NeuralNetworkLayer {
      * @return true if layer has previous layer otherwise false.
      */
     boolean hasPreviousLayers();
+
+    /**
+     * Removes previous neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
+     */
+    void removePreviousLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException;
+
+    /**
+     * Replaces previous neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @param newNeuralNetworkLayer new neural network layer.
+     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
+     */
+    void replacePreviousLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException;
 
     /**
      * Returns width of neural network layer.
