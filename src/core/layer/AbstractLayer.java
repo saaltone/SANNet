@@ -13,6 +13,7 @@ import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -299,13 +300,37 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
+     * Removes next neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
+     */
+    public void removeNextLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
+        int nextLayerIndex = getLayerIndex(neuralNetworkLayer, nextLayers);
+        nextLayers.remove(nextLayerIndex);
+    }
+
+    /**
+     * Replaces next neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @param newNeuralNetworkLayer new neural network layer.
+     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
+     */
+    public void replaceNextLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException {
+        int nextLayerIndex = getLayerIndex(neuralNetworkLayer, nextLayers);
+        nextLayers.put(nextLayerIndex, newNeuralNetworkLayer);
+    }
+
+    /**
      * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
-     * @throws NeuralNetworkException throws exception if previous layer is attempted to be added to input layer.
+     * @throws NeuralNetworkException throws exception if previous layer is attempted to be added to input layer or layer cannot have multiple previous layers.
      */
     public void addPreviousLayer(NeuralNetworkLayer previousLayer) throws NeuralNetworkException {
         int previousLayerIndex = previousLayers.size();
+        if (!canHaveMultiplePreviousLayers() && previousLayerIndex > 1) throw new NeuralNetworkException("Layer cannot have multiple previous layers.");
         previousLayers.put(previousLayerIndex, previousLayer);
         inputSequences.put(previousLayerIndex, previousLayer.getLayerOutputs());
         inputGradientSequences.put(previousLayerIndex, previousLayer.getLayerOutputGradients());
@@ -326,7 +351,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * @return default previous layer.
      */
     protected NeuralNetworkLayer getDefaultPreviousLayer() {
-        return getPreviousLayers().get(0);
+        return getPreviousLayers().get(getPreviousLayers().firstKey());
     }
 
     /**
@@ -336,6 +361,48 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public boolean hasPreviousLayers() {
         return !previousLayers.isEmpty();
+    }
+
+    /**
+     * Removes previous neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
+     */
+    public void removePreviousLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException {
+        int previousLayerIndex = getLayerIndex(neuralNetworkLayer, previousLayers);
+        previousLayers.remove(previousLayerIndex);
+        inputSequences.remove(previousLayerIndex);
+        inputGradientSequences.remove(previousLayerIndex);
+    }
+
+    /**
+     * Replaces previous neural network layer
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @param newNeuralNetworkLayer new neural network layer.
+     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
+     */
+    public void replacePreviousLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException {
+        int previousLayerIndex = getLayerIndex(neuralNetworkLayer, previousLayers);
+        previousLayers.put(previousLayerIndex, newNeuralNetworkLayer);
+        inputSequences.put(previousLayerIndex, newNeuralNetworkLayer.getLayerOutputs());
+        inputGradientSequences.put(previousLayerIndex, newNeuralNetworkLayer.getLayerOutputGradients());
+    }
+
+    /**
+     * Return index of neural network layer.
+     *
+     * @param neuralNetworkLayer neural network layer.
+     * @param layers layers.
+     * @return index of neural network layer.
+     * @throws NeuralNetworkException throws exception if neural network layer is not found.
+     */
+    private int getLayerIndex(NeuralNetworkLayer neuralNetworkLayer, TreeMap<Integer, NeuralNetworkLayer> layers) throws NeuralNetworkException {
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : layers.entrySet()) {
+            if (entry.getValue() == neuralNetworkLayer) return entry.getKey();
+        }
+        throw new NeuralNetworkException("No layer found.");
     }
 
     /**
