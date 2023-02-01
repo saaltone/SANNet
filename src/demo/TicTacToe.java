@@ -280,16 +280,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * Game states.
      *
      */
-    private enum GameSlotType {
-        NOUGHT,
-        CROSS,
-        EMPTY
-    }
-
-    /**
-     * Game states.
-     *
-     */
     private enum GameStatus {
         ONGOING,
         NOUGHT_WON,
@@ -301,13 +291,29 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * Implements game board.
      *
      */
-    private class GameBoard {
+    private static class GameBoard {
+
+        /**
+         * Game states.
+         *
+         */
+        private enum BoardSlot {
+            NOUGHT,
+            CROSS,
+            EMPTY
+        }
+
+        /**
+         * First player.
+         *
+         */
+        private final PlayerRole firstPlayer;
 
         /**
          * Game board.
          *
          */
-        final GameSlotType[][] gameBoard;
+        final BoardSlot[][] gameBoard;
 
         /**
          * Current state.
@@ -325,10 +331,11 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * Initializes game board.
          *
          */
-        GameBoard() {
-            gameBoard = new GameSlotType[boardSize][boardSize];
-            for (GameSlotType[] gameSlotTypes : gameBoard) {
-                Arrays.fill(gameSlotTypes, GameSlotType.EMPTY);
+        GameBoard(PlayerRole firstPlayer) {
+            this.firstPlayer = firstPlayer;
+            gameBoard = new BoardSlot[boardSize][boardSize];
+            for (BoardSlot[] boardSlots : gameBoard) {
+                Arrays.fill(boardSlots, BoardSlot.EMPTY);
             }
         }
 
@@ -337,7 +344,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          *
          * @return game board.
          */
-        public GameSlotType[][] getGameBoard() {
+        public BoardSlot[][] getGameBoard() {
             return gameBoard;
         }
 
@@ -352,14 +359,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 for (int col = 0; col < gameBoard[row].length; col++) {
                     double positionValue = 0;
                     switch (gameBoard[row][col]) {
-                        case NOUGHT -> positionValue = -1;
-                        case CROSS -> positionValue = 1;
+                        case NOUGHT -> positionValue = firstPlayer == PlayerRole.NOUGHT ? -1 : 1;
+                        case CROSS -> positionValue = firstPlayer == PlayerRole.NOUGHT ? 1 : -1;
                         case EMPTY -> {
                             positionValue = 0;
                             availableMoves.add(getPos(row, col));
                         }
                     }
-                    if (canonicalGameBoard) positionValue = positionValue * (currentPlayerList.get(currentPlayer).getPlayerRole() == PlayerRole.NOUGHT ? 1 : -1);
                     state.setValue(getPos(row, col), 0, positionValue);
                 }
             }
@@ -416,7 +422,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          */
         public boolean isValidMove(int row, int col) {
             if (row < 0 || row > boardSize - 1 || col < 0 || col > boardSize - 1) return false;
-            else return gameBoard[row][col] == GameSlotType.EMPTY;
+            else return gameBoard[row][col] == BoardSlot.EMPTY;
         }
 
         /**
@@ -435,8 +441,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * @param row row of game board.
          * @param col column of game board.
          */
-        public void makeMove(Player player, int row, int col) {
-            gameBoard[row][col] = player.playerRole == PlayerRole.NOUGHT ? GameSlotType.NOUGHT : GameSlotType.CROSS;
+        public void makeMove(TicTacToe.Player player, int row, int col) {
+            gameBoard[row][col] = player.playerRole == PlayerRole.NOUGHT ? BoardSlot.NOUGHT : BoardSlot.CROSS;
         }
 
         /**
@@ -445,7 +451,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * @param player current player.
          * @param action action defined.
          */
-        public void makeMove(Player player, int action) {
+        public void makeMove(TicTacToe.Player player, int action) {
             int[] pos = getPos(action);
             makeMove(player, pos[0], pos[1]);
         }
@@ -456,10 +462,10 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * @param player current player.
          * @return return player if player has won otherwise returns false.
          */
-        private boolean checkWinner(Player player) {
+        private boolean checkWinner(TicTacToe.Player player) {
             int diagonalStatistics = 0;
             int adiagonalStatistics = 0;
-            GameSlotType gameSlotType = player.playerRole == PlayerRole.NOUGHT ? GameSlotType.NOUGHT : GameSlotType.CROSS;
+            BoardSlot gameSlotType = player.playerRole == PlayerRole.NOUGHT ? BoardSlot.NOUGHT : BoardSlot.CROSS;
             for (int row = 0; row < boardSize; row++) {
                 int rowStat = 0;
                 int colStat = 0;
@@ -482,7 +488,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * @param player current player.
          * @return state of game.
          */
-        public GameStatus updateGameStatus(Player player) {
+        public GameStatus updateGameStatus(TicTacToe.Player player) {
             if (checkWinner(player)) return player.playerRole == PlayerRole.NOUGHT ? GameStatus.NOUGHT_WON : GameStatus.CROSS_WON;
             else {
                 if (noAvailableMoves()) return GameStatus.DRAW;
@@ -502,7 +508,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * Game board for drawing maze.
          *
          */
-        private GameSlotType[][] gameBoard;
+        private GameBoard.BoardSlot[][] gameBoard;
 
         /**
          * Status of game.
@@ -531,7 +537,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          * @param gameBoard game board to be drawn.
          * @param gameStatus status of game.
          */
-        public void setGameBoard(GameSlotType[][] gameBoard, GameStatus gameStatus) {
+        public void setGameBoard(GameBoard.BoardSlot[][] gameBoard, GameStatus gameStatus) {
             this.gameBoard = gameBoard;
             this.gameStatus = gameStatus;
         }
@@ -559,8 +565,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 for (int col = 0; col < boardSize; col++) {
                     g.setFont(new Font("ARIAL", Font.PLAIN, 32));
                     if (gameBoard != null) {
-                        if (gameBoard[row][col] == GameSlotType.NOUGHT) g.drawString("O", col * tileSize + 40, row * tileSize + 60);
-                        if (gameBoard[row][col] == GameSlotType.CROSS) g.drawString("X", col * tileSize + 40, row * tileSize + 60);
+                        if (gameBoard[row][col] == GameBoard.BoardSlot.NOUGHT) g.drawString("O", col * tileSize + 40, row * tileSize + 60);
+                        if (gameBoard[row][col] == GameBoard.BoardSlot.CROSS) g.drawString("X", col * tileSize + 40, row * tileSize + 60);
                     }
                 }
             }
@@ -581,12 +587,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      *
      */
     private static final int boardSize = 3;
-
-    /**
-     * If true game board state is in canonical form i.e. game board of opposite layer is defined as reverse.
-     *
-     */
-    private static final boolean canonicalGameBoard = true;
 
     /**
      * Game count.
@@ -780,7 +780,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
 
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDQN;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
@@ -855,7 +855,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
 
@@ -1028,14 +1028,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 }
                 System.out.println();
                 if (game % 1000 == 0) {
-                    Player appendingPlayer = playerList.get(playerList.size() - 1);
-                    System.out.println("Append other players with " + appendingPlayer.getIndex());
-                    for (int index = 0; index < playerList.size() - 1; index++) {
-                        Player currentPlayer = playerList.get(index);
-                        if (currentPlayer != appendingPlayer) currentPlayer.getAgent().append(appendingPlayer.getAgent(), 1);
-                    }
-                }
-                if (game % 1000 == 0) {
                     for (Player player : playerList) {
                         player.getAgent().resetRewardMetrics();
                         player.resetCyclicalCounts();
@@ -1109,7 +1101,9 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             for (Player player : currentPlayerList) player.getAgent().disableLearning();
         }
 
-        gameBoard = new GameBoard();
+        Collections.shuffle(currentPlayerList);
+
+        gameBoard = new GameBoard(currentPlayerList.get(0).getPlayerRole());
         gameStatus = GameStatus.ONGOING;
 
         panelLock.lock();
@@ -1117,7 +1111,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
         panelLock.unlock();
 
-        currentPlayer = random.nextInt(currentPlayerList.size());
+        currentPlayer = 0;
 
         for (Player player : currentPlayerList) player.getAgent().newEpisode();
 
