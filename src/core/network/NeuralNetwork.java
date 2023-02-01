@@ -361,6 +361,51 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Removes last hidden layer.
+     *
+     * @throws NeuralNetworkException throws exception if removal of last hidden layer fails.
+     */
+    public void removeLastHiddenLayer() throws NeuralNetworkException {
+        waitToComplete();
+        if (isStarted()) throw new NeuralNetworkException("Cannot remove hidden layer when neural network is running");
+        int lastLayerIndex = hiddenLayers.lastKey();
+        int lastNeuralNetworkLayerIndex = -1;
+        NeuralNetworkLayer lastNeuralNetworkLayer = null;
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : neuralNetworkLayers.entrySet()) {
+            if (entry.getValue() == hiddenLayers.get(lastLayerIndex)) {
+                lastNeuralNetworkLayer = entry.getValue();
+                lastNeuralNetworkLayerIndex = entry.getKey();
+                break;
+            }
+        }
+        if (lastNeuralNetworkLayer == null) throw new NeuralNetworkException("No last neural network layer found.");
+
+        TreeMap<Integer, NeuralNetworkLayer> previousLayers = lastNeuralNetworkLayer.getPreviousLayers();
+        TreeMap<Integer, NeuralNetworkLayer> nextLayers = lastNeuralNetworkLayer.getNextLayers();
+        for (NeuralNetworkLayer previousLayer : previousLayers.values()) {
+            previousLayer.removeNextLayer(lastNeuralNetworkLayer);
+            for (NeuralNetworkLayer nextLayer : nextLayers.values()) previousLayer.addNextLayer(nextLayer);
+        }
+        for (NeuralNetworkLayer nextLayer : nextLayers.values()) {
+            nextLayer.removePreviousLayer(lastNeuralNetworkLayer);
+            for (NeuralNetworkLayer previousLayer : previousLayers.values()) nextLayer.addPreviousLayer(previousLayer);
+        }
+
+        hiddenLayers.remove(lastLayerIndex);
+        neuralNetworkLayers.remove(lastNeuralNetworkLayerIndex);
+    }
+
+    /**
+     * Removes last hidden layers.
+     *
+     * @param numberOfHiddenLayers number of hidden layers.
+     * @throws NeuralNetworkException throws exception if removal of last hidden layer fails.
+     */
+    public void removeLastHiddenLayers(int numberOfHiddenLayers) throws NeuralNetworkException {
+        for (int hiddenLayer = 0; hiddenLayer < numberOfHiddenLayers; hiddenLayer++) removeLastHiddenLayer();
+    }
+
+    /**
      * Sets persistence instance to neural network.<br>
      * Persistence is used to serialize neural network instance and store to file or deserialize neural network from file.<br>
      *
@@ -436,11 +481,22 @@ public class NeuralNetwork implements Runnable, Serializable {
         if (!isStarted()) return;
         waitToComplete();
         executeLock.lock();
-        for (InputLayer inputLayer : inputLayers.values()) inputLayer.stop();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.stop();
         executionState = ExecutionState.TERMINATED;
         executeLockCondition.signal();
-        neuralNetworkThread = null;
         executeLock.unlock();
+
+        try {
+            neuralNetworkThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        executeLock = null;
+        executeLockCondition = null;
+        completeLockCondition = null;
+        stopLock = null;
+        neuralNetworkThread = null;
     }
 
     /**
@@ -919,17 +975,12 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void run() {
         while (true) {
             executeLock.lock();
-            if (executionState == ExecutionState.IDLE) executeLockCondition.awaitUninterruptibly();
             try {
                 switch (executionState) {
                     case TRAIN -> trainIterations();
                     case PREDICT -> predictInput();
                     case VALIDATE -> validateInput(true);
                     case TERMINATED -> {
-                        for (InputLayer inputLayer : getInputLayers().values()) inputLayer.stop();
-                        neuralNetworkThread = null;
-                        completeLockCondition.signal();
-                        executeLock.unlock();
                         return;
                     }
                 }
