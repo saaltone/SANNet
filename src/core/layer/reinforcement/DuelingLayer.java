@@ -1,8 +1,3 @@
-/*
- * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2023 Simo Aaltonen
- */
-
 package core.layer.reinforcement;
 
 import core.layer.AbstractExecutionLayer;
