@@ -202,12 +202,13 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      *
      * @param functionEstimator function estimator.
      * @param stateTransition state.
+     * @param isAction true if prediction is for taking other otherwise false.
      * @return values for state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return functionEstimator.predictPolicyValues(stateTransition);
+    protected Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition, boolean isAction) throws MatrixException, NeuralNetworkException {
+        return functionEstimator.predictPolicyValues(stateTransition, isAction);
     }
 
     /**
@@ -216,7 +217,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      *
      */
     public void act(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition), stateTransition.environmentState.availableActions(), stateTransition.action);
+        getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition, true), stateTransition.environmentState.availableActions(), stateTransition.action);
     }
 
     /**
@@ -228,7 +229,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        stateTransition.action = getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
+        stateTransition.action = getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition, true), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
         if (isLearning()) getFunctionEstimator().add(stateTransition);
     }
 
