@@ -884,25 +884,35 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        String width = "width = " + (4 * inputSize);
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
-        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.SINACT) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int[] inputModuleIndices = new int[3];
+        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
+            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+            int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 2 * inputSize);
+            neuralNetworkConfiguration.connectLayers(inputLayerIndex, feedforwardLayerIndex);
+            inputModuleIndices[inputIndex] = feedforwardLayerIndex;
+        }
+
+        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
+        for (int inputModuleIndex : inputModuleIndices) {
+            neuralNetworkConfiguration.connectLayers(inputModuleIndex, joinLayerIndex);
+        }
+
+        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
+        neuralNetworkConfiguration.connectLayers(joinLayerIndex, normalizationLayerIndex);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
         if (!policyGradient && applyDueling) {
-            int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
+            hiddenLayerIndex = hiddenLayerIndex1;
         }
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
-        neuralNetworkConfiguration.connectLayersSerially();
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex2);
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex4);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
+
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
-        neuralNetwork.setOptimizer(OptimizationType.ADAM);
+        neuralNetwork.setOptimizer(OptimizationType.RADAM);
         if (!policyGradient) neuralNetwork.verboseTraining(10);
         return neuralNetwork;
     }
@@ -919,22 +929,31 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        String width = "width = " + (6 * inputSize);
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), width);
-        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
-        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
-        neuralNetworkConfiguration.connectLayersSerially();
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex2);
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex4);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
-        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
-        int outputLayerIndex2 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex4, hiddenLayerIndex6);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex6, outputLayerIndex2);
+        int[] inputModuleIndices = new int[3];
+        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
+            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+            int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 4 * inputSize);
+            neuralNetworkConfiguration.connectLayers(inputLayerIndex, feedforwardLayerIndex);
+            inputModuleIndices[inputIndex] = feedforwardLayerIndex;
+        }
+
+        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
+        for (int inputModuleIndex : inputModuleIndices) {
+            neuralNetworkConfiguration.connectLayers(inputModuleIndex, joinLayerIndex);
+        }
+
+        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
+        neuralNetworkConfiguration.connectLayers(joinLayerIndex, normalizationLayerIndex);
+
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
+
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 1");
+        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex1);
+        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, outputLayerIndex1);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
