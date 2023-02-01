@@ -14,6 +14,7 @@ Framework provides
 - recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers and attention layer,
 - convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer) and
 - flattening layer for convolutional layers.
+
 All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
 
 Framework supports multiple layer activation functions for hidden layers and loss functions for output layer. Multiple layer initialization methods for weight parameters like Xavier / He / LeCun uniform and normal initializations are available.
