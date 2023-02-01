@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Implements layer that multiplies multiple inputs element-wise together.
+ * Implements layer that multiplies multiple inputs element-wise.
  *
  */
 public class MultiplyLayer extends AbstractExecutionLayer {
