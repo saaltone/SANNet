@@ -167,10 +167,7 @@ public class MNISTDemo {
             int depth = sample.getDepth();
             MMatrix encodedSample = new MMatrix(depth);
             for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                int value = (int)sample.get(depthIndex).getValue(0,0);
-                Matrix output = new SMatrix(10, 1);
-                output.setValue(value, 0, 1);
-                encodedSample.put(depthIndex, output);
+                encodedSample.put(depthIndex, SMatrix.getOneHotVector(10, (int)sample.get(depthIndex).getValue(0,0)));
             }
             data.get(1).put(sampleIndex, encodedSample);
         }
