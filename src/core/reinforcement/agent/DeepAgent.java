@@ -31,13 +31,13 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
-     *     - nonEpisodicTrajectoryLength: trajectory length for non-episodic agent. Default value 5.<br>
+     *     - nonEpisodicTrajectoryHistorySize: moving historical trajectory size for non-episodic agent. Default value 11.<br>
      *
      */
     private final static String paramNameTypes = "(updateValuePerEpisode:BOOLEAN), " +
             "(agentUpdateCycle:INT), " +
             "(rewardTau:DOUBLE), " +
-            "(nonEpisodicTrajectoryLength:DOUBLE)";
+            "(nonEpisodicTrajectoryHistorySize:INT)";
 
     /**
      * Parameters for deep agent.
@@ -141,13 +141,19 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * Trajectory length count for non-episodic agent.
      *
      */
-    private int nonEpisodicTrajectoryCount = 0;
+    private int nonEpisodicTrajectoryCount;
 
     /**
      * Trajectory length for non-episodic agent.
      *
      */
-    private int nonEpisodicTrajectoryLength;
+    private int nonEpisodicTrajectoryHistorySize;
+
+    /**
+     * Last non-episodic state transition in history.
+     *
+     */
+    private StateTransition lastNonEpisodicStateTransition;
 
     /**
      * Episode ID when agent was last updated.
@@ -206,7 +212,8 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
         agentUpdateCycle = episodic ? 1 : 10;
         rewardTau = 0.9;
         rewardMovingAverageTau = 0.99;
-        nonEpisodicTrajectoryLength = 5;
+        nonEpisodicTrajectoryHistorySize = 11;
+        nonEpisodicTrajectoryCount = 0;
         agentLastUpdatedEpisodeID = 0;
     }
 
@@ -226,6 +233,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *     - updateValuePerEpisode: if true updates value after each episode is completed. Default value false.<br>
      *     - agentUpdateCycle: estimator update cycle. Default value 1.<br>
      *     - rewardTau: tau value for reward averaging in non-episodic learning. Default value 0.9.<br>
+     *     - nonEpisodicTrajectoryHistorySize: moving historical trajectory size for non-episodic agent. Default value 11.<br>
      *
      * @param params parameters used for deep agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -234,6 +242,7 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
         if (params.hasParam("updateValuePerEpisode")) updateValuePerEpisode = params.getValueAsBoolean("updateValuePerEpisode");
         if (params.hasParam("agentUpdateCycle")) agentUpdateCycle = params.getValueAsInteger("agentUpdateCycle");
         if (params.hasParam("rewardTau")) rewardTau = params.getValueAsDouble("rewardTau");
+        if (params.hasParam("nonEpisodicTrajectoryHistorySize")) nonEpisodicTrajectoryHistorySize = params.getValueAsInteger("nonEpisodicTrajectoryHistorySize");
     }
 
     /**
@@ -296,14 +305,17 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void newStep() throws MatrixException, DynamicParamException, NeuralNetworkException, AgentException, IOException, ClassNotFoundException {
-        if (!episodic) {
-            if (++nonEpisodicTrajectoryCount >= nonEpisodicTrajectoryLength) {
-                endEpisode();
-                stateTransition = null;
-                nonEpisodicTrajectoryCount = 0;
-            }
-        }
         stateTransition = stateTransition == null ? new StateTransition(environment.getState()) : stateTransition.getNextStateTransition(environment.getState());
+        if (!episodic) {
+            if (lastNonEpisodicStateTransition == null) lastNonEpisodicStateTransition = stateTransition;
+            if (nonEpisodicTrajectoryCount > nonEpisodicTrajectoryHistorySize - 1) {
+                if (lastNonEpisodicStateTransition != null && lastNonEpisodicStateTransition.nextStateTransition != null) {
+                    lastNonEpisodicStateTransition = lastNonEpisodicStateTransition.nextStateTransition;
+                    lastNonEpisodicStateTransition.previousStateTransition = null;
+                }
+            } else nonEpisodicTrajectoryCount++;
+            endEpisode();
+        }
     }
 
     /**
