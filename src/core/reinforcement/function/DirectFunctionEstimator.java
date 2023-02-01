@@ -124,9 +124,10 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Not used.
      *
      * @param stateTransition state
+     * @param isAction true if prediction is for taking other otherwise false.
      * @return policy values corresponding to a state
      */
-    public Matrix predictPolicyValues(StateTransition stateTransition) {
+    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) {
         return null;
     }
 
