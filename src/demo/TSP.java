@@ -842,7 +842,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
-        boolean singleFunctionEstimator = false;
+        boolean singleFunctionEstimator = true;
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
@@ -929,7 +929,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int[] inputModuleIndices = new int[3];
+        int[] inputModuleIndices = new int[5];
         for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
             int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
             int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 4 * inputSize);
