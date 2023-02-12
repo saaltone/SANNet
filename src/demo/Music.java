@@ -297,7 +297,7 @@ public class Music {
         }
 
         // Attention layer for input information.
-        int combinedIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        int combinedIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.INPUT_BASED_ATTENTION);
         for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
             neuralNetworkConfiguration.connectLayers(encoderIndices[inputIndex], combinedIndex);
         }
