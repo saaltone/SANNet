@@ -205,7 +205,7 @@ public class DMatrix extends ComputableMatrix {
      * @return transposed matrix.
      * @throws MatrixException throws exception if cloning of mask fails.
      */
-    public Matrix transpose() throws MatrixException {
+    protected Matrix applyTranspose() throws MatrixException {
         Matrix newMatrix = new DMatrix(matrix, isScalar(), true);
         super.setParameters(newMatrix);
         return newMatrix;
