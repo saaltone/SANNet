@@ -100,39 +100,6 @@ public class LossFunction extends BinaryFunction {
     }
 
     /**
-     * Returns error of loss function
-     *
-     * @param output predicted output
-     * @param target actual target
-     * @return error of loss function
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix getError(Matrix output, Matrix target) throws MatrixException {
-        switch (getType()) {
-            case DIRECT_GRADIENT -> {
-                return target;
-            }
-            case POLICY_VALUE -> {
-                Matrix error = target.getNewMatrix();
-                int targetRows = target.getRows();
-                for (int row = 0; row < targetRows; row++) {
-                    error.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(target.getValue(0, 0) - output.getValue(0, 0), 2)) : target.getValue(row, 0));
-                }
-                return error;
-            }
-            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
-            case COS_SIM -> {
-                double norm_output = output.norm(2);
-                double norm_target = target.norm(2);
-                return output.multiply(target).divide(norm_output * norm_target);
-            }
-            default -> {
-                return output.applyBi(target, getFunction());
-            }
-        }
-    }
-
-    /**
      * Returns mean error
      *
      * @param totalError total error
@@ -153,41 +120,6 @@ public class LossFunction extends BinaryFunction {
      */
     public double getAbsoluteError(Matrix error) throws MatrixException {
         return getType() == BinaryFunctionType.COS_SIM ? 1 - error.mean() * (double)error.size() : error.mean();
-    }
-
-    /**
-     * Returns gradient of loss function
-     *
-     * @param output predicted output
-     * @param target actual target
-     * @return gradient of loss function
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix getGradient(Matrix output, Matrix target) throws MatrixException {
-        switch (getType()) {
-            case DIRECT_GRADIENT -> {
-                return target;
-            }
-            case POLICY_VALUE -> {
-                Matrix gradient = target.getNewMatrix();
-                int targetRows = target.getRows();
-                for (int row = 0; row < targetRows; row++) {
-                    gradient.setValue(row, 0 , row == 0 ? (output.getValue(0, 0) - target.getValue(0, 0)) : target.getValue(row, 0));
-                }
-                return gradient;
-            }
-            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
-            case COS_SIM -> {
-                double norm_output = output.norm(2);
-                double norm_target = target.norm(2);
-                double norm_multiply = norm_output * norm_target;
-                Matrix cos_sim = output.multiply(target).divide(norm_multiply);
-                return output.divide(norm_multiply).subtract(target.divide(Math.pow(norm_output, 2)).multiply(cos_sim));
-            }
-            default -> {
-                return output.applyBi(target, getDerivative());
-            }
-        }
     }
 
 }
