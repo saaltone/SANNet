@@ -140,7 +140,7 @@ public class JMatrix extends ComputableMatrix {
      * @return transposed matrix.
      * @throws MatrixException throws exception if cloning of mask fails.
      */
-    public Matrix transpose() throws MatrixException {
+    public Matrix applyTranspose() throws MatrixException {
         ArrayList<Matrix> transposedSubMatrices = new ArrayList<>();
         ArrayList<Matrix> subMatrices = getSubMatrices();
         for (Matrix matrix : subMatrices) transposedSubMatrices.add(matrix.transpose());
