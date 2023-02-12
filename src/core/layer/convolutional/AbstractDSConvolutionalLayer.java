@@ -42,7 +42,7 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractExecutionLaye
     protected class DSConvolutionWeightSet implements WeightSet, Serializable {
 
         @Serial
-        private static final long serialVersionUID = -1987157248603388756L;
+        private static final long serialVersionUID = 8669829840637421343L;
 
         /**
          * Filter row size.
