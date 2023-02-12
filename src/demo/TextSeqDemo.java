@@ -102,7 +102,7 @@ public class TextSeqDemo {
         int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64, reversedInput = true");
         int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64, reversedInput = true");
         int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
-        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
         int hiddenLayerIndex7 = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
         int hiddenLayerIndex8 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
         int hiddenLayerIndex9 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
