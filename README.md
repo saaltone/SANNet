@@ -11,7 +11,8 @@ SANNet is written on Java and has been built from ground up starting from implem
 Framework provides
 - feedforward / dense / activation / add / subtract / divide / dot / multiply / positional encoding layers,
 - connect and join layers to create connections from multiple previous layers,
-- recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers and attention layer,
+- recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers,
+- attention layers (additive / dot with option for scaling / general / input based),
 - convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer) and
 - flattening layer for convolutional layers.
 
