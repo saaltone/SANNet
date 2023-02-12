@@ -88,7 +88,7 @@ public class UnaryFunction implements Serializable {
     private double gumbelSoftmaxTau = 1.5;
 
     /**
-     * Constructor for unary function to create custom function.
+     * Constructor for custom unary function.
      *
      * @param function function.
      * @param derivative derivative of function.
@@ -97,6 +97,17 @@ public class UnaryFunction implements Serializable {
         this.unaryFunctionType = UnaryFunctionType.CUSTOM;
         this.function = function;
         this.derivative = derivative;
+    }
+
+    /**
+     * Constructor for custom unary function.
+     *
+     * @param function function.
+     */
+    public UnaryFunction(Matrix.MatrixUnaryOperation function) {
+        this.unaryFunctionType = UnaryFunctionType.CUSTOM;
+        this.function = function;
+        this.derivative = null;
     }
 
     /**
@@ -309,6 +320,10 @@ public class UnaryFunction implements Serializable {
             case LOGIT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.log(value / (1 - value));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / ((value - 1) * value);
+            }
+            case TRANSPOSE -> {
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
             }
             case CUSTOM -> throw new MatrixException("Custom function cannot be defined with this constructor.");
             default -> throw new MatrixException("Undefined unary function.");
