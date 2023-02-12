@@ -294,8 +294,8 @@ public abstract class AbstractNode implements Node, Serializable {
      * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
      */
     public void setMatrix(int index, Matrix matrix) throws MatrixException {
-        if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
         if (matrix.getRows() != referenceMatrix.getRows() || matrix.getColumns() != referenceMatrix.getColumns()) throw new MatrixException("Matrix dimensions (" + matrix.getRows() + "x" + matrix.getColumns() + ") are not matching with reference matrix dimensions (" + referenceMatrix.getRows() + "x" + referenceMatrix.getColumns() + ")");
+        if (matrix.isScalar() != referenceMatrix.isScalar()) throw new MatrixException("Scalar type of node and matrix is not matching.");
     }
 
     /**
