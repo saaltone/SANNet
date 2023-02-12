@@ -754,7 +754,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        int numberfOfAgents = 4;
+        int numberfOfAgents = 2;
         boolean singleFunctionEstimator = false;
         boolean sharedPolicyFunctionEstimator = false;
         boolean sharedValueFunctionEstimator = false;
@@ -1120,11 +1120,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         while (gameStatus == GameStatus.ONGOING) {
             gameBoard.updateState();
             environmentState = new EnvironmentState(gameCount, ++timeStep, gameBoard.getState(), gameBoard.getAvailableMoves());
+
             panelLock.lock();
             ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
             panelLock.unlock();
             jFrame.revalidate();
             ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
+
             currentPlayerList.get(currentPlayer).getAgent().newStep();
             if (currentPlayerList.get(currentPlayer).isHuman()) {
                 lock.lock();
@@ -1149,7 +1151,6 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
         panelLock.unlock();
-
         jFrame.revalidate();
         ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
 
