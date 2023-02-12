@@ -39,7 +39,7 @@ public class L1_Regularization extends AbstractLx_Regularization {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyRegularization(Matrix weight, double lambda) throws MatrixException {
-        return weight.apply((value) -> lambda * Math.signum(value));
+        return weight.apply(new UnaryFunction(value -> lambda * Math.signum(value)));
     }
 
 }

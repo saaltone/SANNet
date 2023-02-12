@@ -11,6 +11,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunction;
 
 /**
  * Implements Lp regularization (experimental). P here is any norm higher or equal to 1.<br>
@@ -89,7 +90,7 @@ public class Lp_Regularization extends AbstractLx_Regularization {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyRegularization(Matrix weight, double lambda) throws MatrixException {
-        return weight.apply((value) -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0);
+        return weight.apply(new UnaryFunction(value -> value != 0 ? p * lambda * Math.pow(Math.abs(value), p - 1) / value : 0));
     }
 
     /**

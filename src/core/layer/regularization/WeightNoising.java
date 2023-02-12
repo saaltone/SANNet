@@ -12,6 +12,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunction;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -136,10 +137,11 @@ public class WeightNoising extends AbstractRegularizationLayer {
         super.forwardProcess();
 
         if (isTraining()) {
+            UnaryFunction unaryFunction = new UnaryFunction(value -> value + currentNoise * (1 - 2 * random.nextDouble()));
             for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
                 HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
                 for (Matrix weight : nextLayerNormalizedWeights) {
-                    weight.apply(value -> value + currentNoise * (1 - 2 * random.nextDouble()), true);
+                    weight.apply(unaryFunction, true);
                     if (currentNoise > minNoise) currentNoise *= noiseDecay;
                 }
             }
