@@ -7,10 +7,7 @@ package core.optimization;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunctionType;
+import utils.matrix.*;
 
 import java.util.HashMap;
 
@@ -85,12 +82,11 @@ public class ResilientPropagation extends AbstractOptimizer {
 
         Matrix dWDir = dMPrev.sgnmul(matrixGradient);
 
-        Matrix.MatrixBinaryOperation rpropRule = (value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2;
-        wPrev.put(matrix, WPrev = dWDir.applyBi(WPrev, rpropRule));
+        wPrev.put(matrix, WPrev = dWDir.applyBi(WPrev, new BinaryFunction((value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2)));
 
         matrix.subtract(matrixGradient.apply(UnaryFunctionType.SGN).multiply(WPrev), matrix);
 
-        dPrev.put(matrix, dWDir.applyBi(matrixGradient, (value1, value2) -> value1 == -1 ? 0 : value2));
+        dPrev.put(matrix, dWDir.applyBi(matrixGradient, new BinaryFunction((value1, value2) -> value1 == -1 ? 0 : value2)));
     }
 
 }
