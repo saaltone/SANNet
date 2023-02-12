@@ -228,6 +228,12 @@ public enum UnaryFunctionType {
     LOGIT,
 
     /**
+     * Matrix transpose.
+     *
+     */
+    TRANSPOSE,
+
+    /**
      * Custom (user definable) function
      *
      */
