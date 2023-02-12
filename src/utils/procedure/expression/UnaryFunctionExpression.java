@@ -63,24 +63,6 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
     }
 
     /**
-     * Returns unary function type.
-     *
-     * @return unary function type.
-     */
-    public UnaryFunctionType getUnaryFunctionType() {
-        return unaryFunctionType;
-    }
-
-    /**
-     * Returns UnaryFunction of expression.
-     *
-     * @return UnaryFunction of expression.
-     */
-    public UnaryFunction getUnaryFunction() {
-        return unaryFunction;
-    }
-
-    /**
      * Calculates expression.
      *
      */
