@@ -63,7 +63,7 @@ public class JoinExpression extends AbstractBinaryExpression implements Serializ
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        joinMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, joinMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**
@@ -81,8 +81,8 @@ public class JoinExpression extends AbstractBinaryExpression implements Serializ
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, joinMatrixOperation.applyGradient(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex), true), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, joinMatrixOperation.applyGradient(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex), false), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, joinMatrixOperation.applyGradient(result.getGradient(sampleIndex), true), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, joinMatrixOperation.applyGradient(result.getGradient(sampleIndex), false), false);
     }
 
     /**
