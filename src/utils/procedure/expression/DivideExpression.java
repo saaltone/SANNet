@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.BinaryFunction;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.BinaryMatrixOperation;
@@ -52,9 +53,9 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        divideMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2);
-        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
-        divideGradientMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / (value2 * value2));
+        divideMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2));
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
+        divideGradientMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / (value2 * value2)));
     }
 
     /**
@@ -81,7 +82,7 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        divideMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        divideMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**
@@ -99,10 +100,10 @@ public class DivideExpression extends AbstractBinaryExpression implements Serial
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, divideMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, divideMatrixOperation.applyFunction(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
         if (!argument2.isStopGradient()) {
-            Matrix multiplyGradientResult = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix());
-            Matrix divideGradientResult = divideGradientMatrixOperation.apply(multiplyGradientResult, argument2.getMatrix(sampleIndex), argument1.getNewMatrix());
+            Matrix multiplyGradientResult = multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix());
+            Matrix divideGradientResult = divideGradientMatrixOperation.applyFunction(multiplyGradientResult, argument2.getMatrix(sampleIndex), argument1.getNewMatrix());
             argument2.cumulateGradient(sampleIndex, divideGradientResult, true);
         }
     }

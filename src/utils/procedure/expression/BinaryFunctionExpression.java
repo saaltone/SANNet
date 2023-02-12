@@ -26,12 +26,6 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
     private final BinaryFunctionType binaryFunctionType;
 
     /**
-     * BinaryFunction used.
-     *
-     */
-    private final BinaryFunction binaryFunction;
-
-    /**
      * Binary matrix operation.
      *
      */
@@ -50,13 +44,12 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
     public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
         super("BINARY_FUNCTION", String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
         this.binaryFunctionType = binaryFunction.getType();
-        this.binaryFunction = binaryFunction;
 
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, binaryFunction.getFunction());
+        binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, binaryFunction);
     }
 
     /**
@@ -66,24 +59,6 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     protected boolean executeAsSingleStep() {
         return false;
-    }
-
-    /**
-     * Returns binary function type.
-     *
-     * @return binary function type.
-     */
-    public BinaryFunctionType getBinaryFunctionType() {
-        return binaryFunctionType;
-    }
-
-    /**
-     * Returns BinaryFunction of expression.
-     *
-     * @return BinaryFunction of expression.
-     */
-    public BinaryFunction getBinaryFunction() {
-        return binaryFunction;
     }
 
     /**

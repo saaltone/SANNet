@@ -58,8 +58,8 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         this.p = p;
 
         normMatrixOperation = new NormMatrixOperation(argument1.getRows(), argument1.getColumns(), p);
-        normGradientMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> Math.pow(Math.abs(value1) / value2, p - 1) * Math.signum(value1));
-        multiplyMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2);
+        normGradientMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> Math.pow(Math.abs(value1) / value2, p - 1) * Math.signum(value1)));
+        multiplyMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
     }
 
     /**
@@ -106,8 +106,8 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         checkResultGradient(result, sampleIndex);
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
-            Matrix normGradientMatrix = normGradientMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getNewMatrix());
-            Matrix resultMatrix = multiplyMatrixOperation.apply(result.getGradient(sampleIndex), normGradientMatrix, argument1.getNewMatrix());
+            Matrix normGradientMatrix = normGradientMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getNewMatrix());
+            Matrix resultMatrix = multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), normGradientMatrix, argument1.getNewMatrix());
             argument1.cumulateGradient(sampleIndex, resultMatrix, false);
         }
     }

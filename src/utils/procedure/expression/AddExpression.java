@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.BinaryFunction;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.BinaryMatrixOperation;
@@ -40,7 +41,7 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        addMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) Double::sum);
+        addMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) Double::sum));
     }
 
     /**
@@ -67,7 +68,7 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        addMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        addMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**

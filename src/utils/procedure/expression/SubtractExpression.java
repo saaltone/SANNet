@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.BinaryFunction;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.BinaryMatrixOperation;
@@ -40,7 +41,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        subtractMatrixOperation = new BinaryMatrixOperation(rows, columns, (Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2);
+        subtractMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2));
     }
 
     /**
@@ -67,7 +68,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        subtractMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        subtractMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
     }
 
     /**

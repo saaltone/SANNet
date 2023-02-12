@@ -117,7 +117,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
         for (Map.Entry<Integer, Matrix> entry : argument1.entrySet()) {
             int index = entry.getKey();
             Matrix argument1Matrix = entry.getValue();
-            Matrix standardDeviationGradient = argument1Matrix.subtract(mean).multiply(2 / argument1Size).apply(sqrtFunction.getDerivative());
+            Matrix standardDeviationGradient = argument1Matrix.subtract(mean).multiply(2 / argument1Size).apply(new UnaryFunction(sqrtFunction.getDerivative()));
             argument1.cumulateGradient(index, result.getGradient().multiply(standardDeviationGradient), false);
         }
     }
@@ -132,7 +132,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
         if (executeAsSingleStep()) return;
         checkResultGradient(result, sampleIndex);
         if (!argument1.isStopGradient()) {
-            Matrix standardDeviationGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)(result.getGradient(sampleIndex).size() - 1)).apply(sqrtFunction.getDerivative());
+            Matrix standardDeviationGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)(result.getGradient(sampleIndex).size() - 1)).apply(new UnaryFunction(sqrtFunction.getDerivative()));
             argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(standardDeviationGradient), false);
         }
         means.remove(sampleIndex);
