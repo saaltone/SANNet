@@ -833,7 +833,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             inputModuleIndices[inputIndex] = feedforwardLayerIndex;
         }
 
-        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ADDITIVE_ATTENTION);
         for (int inputModuleIndex : inputModuleIndices) {
             neuralNetworkConfiguration.connectLayers(inputModuleIndex, attentionLayerIndex);
         }
@@ -880,7 +880,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             inputModuleIndices[inputIndex] = feedforwardLayerIndex;
         }
 
-        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ADDITIVE_ATTENTION);
         for (int inputModuleIndex : inputModuleIndices) {
             neuralNetworkConfiguration.connectLayers(inputModuleIndex, attentionLayerIndex);
         }
