@@ -139,6 +139,138 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(Matrix first, Matrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param second second matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(Matrix first, Matrix second, Matrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory secondProcedureFactory = second.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (secondProcedureFactory != null) procedureFactories.add(secondProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        second.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(MMatrix first, MMatrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(MMatrix first, Matrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param second second matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(MMatrix first, MMatrix second, MMatrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory secondProcedureFactory = second.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (secondProcedureFactory != null) procedureFactories.add(secondProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        second.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
+     * Synchronizes procedure factories for matrices.
+     *
+     * @param first first matrix
+     * @param second second matrix
+     * @param result result matrix
+     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
+     */
+    public static void synchronize(MMatrix first, Matrix second, MMatrix result) throws MatrixException {
+        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
+        ProcedureFactory secondProcedureFactory = second.getProcedureFactory();
+        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
+        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
+        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
+        if (secondProcedureFactory != null) procedureFactories.add(secondProcedureFactory);
+        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
+        if (procedureFactories.size() == 0) return;
+        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
+        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
+        first.setProcedureFactory(procedureFactory);
+        second.setProcedureFactory(procedureFactory);
+        result.setProcedureFactory(procedureFactory);
+    }
+
+    /**
      * Returns procedure
      *
      * @param forwardProcedure reference to class that defines forward procedure.
@@ -243,8 +375,9 @@ public class ProcedureFactory implements Serializable {
     /**
      * Analyzes and records dependencies between previous procedure and current procedure.
      *
+     * @throws MatrixException throws exception if dimensions of from result node and to argument node are not matching.
      */
-    private void updateDependencies(ProcedureData previousProcedureData, ProcedureData nextProcedureData) {
+    private void updateDependencies(ProcedureData previousProcedureData, ProcedureData nextProcedureData) throws MatrixException {
         int expressionIDSize = nextProcedureData.expressions.size();
         for (int expressionID = 0; expressionID < expressionIDSize; expressionID++) {
             Expression previousExpression1 = previousProcedureData.reverseExpressionMap.get(nextProcedureData.expressions.get(expressionID).getArgument1());
@@ -264,8 +397,10 @@ public class ProcedureFactory implements Serializable {
      * @param nextProcedureData next procedure data.
      * @param fromResultNode from result node.
      * @param toArgumentNode to argument node.
+     * @throws MatrixException throws exception if dimensions of from result node and to argument node are not matching.
      */
-    private void updateNodeLink(ProcedureData nextProcedureData, Node fromResultNode, Node toArgumentNode) {
+    private void updateNodeLink(ProcedureData nextProcedureData, Node fromResultNode, Node toArgumentNode) throws MatrixException {
+        if (fromResultNode.getRows() != toArgumentNode.getRows() || fromResultNode.getColumns() != toArgumentNode.getColumns()) throw new MatrixException("Dimensions of from result node " + fromResultNode.getRows() + "x" + fromResultNode.getColumns() + " and to argument node " + toArgumentNode.getRows() + "x" + toArgumentNode.getColumns() + " are not matching.");
         fromResultNode.setToArgumentNode(toArgumentNode);
         nextProcedureData.dependentNodes.add(fromResultNode);
 
