@@ -139,7 +139,7 @@ public class TimeSeriesPrediction {
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndices[i]);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndices[i]);
         }
-        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ATTENTION);
+        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.GENERAL_ATTENTION);
         for (int i = 0; i < numberOfInputs; i++) neuralNetworkConfiguration.connectLayers(hiddenLayerIndices[i], joinLayerIndex);
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.TANH), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(joinLayerIndex, hiddenLayerIndex);
