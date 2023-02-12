@@ -228,10 +228,28 @@ public enum LayerType {
     DIVIDE,
 
     /**
-     * Attention layer.
+     * Additive Attention layer.
      *
      */
-    ATTENTION,
+    ADDITIVE_ATTENTION,
+
+    /**
+     * General Attention layer.
+     *
+     */
+    GENERAL_ATTENTION,
+
+    /**
+     * Dot Attention layer.
+     *
+     */
+    DOT_ATTENTION,
+
+    /**
+     * Input Based Attention layer.
+     *
+     */
+    INPUT_BASED_ATTENTION,
 
     /**
      * Positional encoding layer.

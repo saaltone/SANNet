@@ -5,6 +5,7 @@
 
 package core.layer;
 
+import core.layer.attention.*;
 import core.layer.normalization.BatchNormalization;
 import core.layer.normalization.LayerNormalization;
 import core.layer.normalization.WeightNormalization;
@@ -42,7 +43,7 @@ public class LayerFactory {
         return switch (layerType) {
             case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
             case DENSE -> new DenseLayer(layerIndex, initialization, params);
-            case DUELING -> new DuelingLayer(layerIndex, params);
+            case DUELING -> new DuelingLayer(layerIndex, activationFunction, initialization, params);
             case ACTIVATION -> new ActivationLayer(layerIndex, activationFunction, params);
             case FLATTEN -> new FlattenLayer(layerIndex, params);
             case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
@@ -76,7 +77,10 @@ public class LayerFactory {
             case MULTIPLY -> new MultiplyLayer(layerIndex, initialization, params);
             case DOT -> new DotLayer(layerIndex, initialization, params);
             case DIVIDE -> new DivideLayer(layerIndex, initialization, params);
-            case ATTENTION -> new AttentionLayer(layerIndex, initialization, params);
+            case ADDITIVE_ATTENTION -> new AdditiveAttentionLayer(layerIndex, initialization, params);
+            case GENERAL_ATTENTION -> new GeneralAttentionLayer(layerIndex, initialization, params);
+            case DOT_ATTENTION -> new DotAttentionLayer(layerIndex, initialization, params);
+            case INPUT_BASED_ATTENTION -> new InputBasedAttention(layerIndex, initialization, params);
             case POSITIONAL_ENCODING -> new PositionalEncodingLayer(layerIndex, initialization, params);
         };
     }
@@ -125,7 +129,10 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return LayerType.MULTIPLY;
         if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return LayerType.DOT;
         if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return LayerType.DIVIDE;
-        if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return LayerType.ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(AdditiveAttentionLayer.class)) return LayerType.ADDITIVE_ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(GeneralAttentionLayer.class)) return LayerType.GENERAL_ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(DotAttentionLayer.class)) return LayerType.DOT_ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(InputBasedAttention.class)) return LayerType.INPUT_BASED_ATTENTION;
         if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return LayerType.POSITIONAL_ENCODING;
         throw new NeuralNetworkException("Unknown layer type");
     }
@@ -174,7 +181,10 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return "MULTIPLY";
         if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return "DOT";
         if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return "DIVIDE";
-        if (neuralNetworkLayer.getClass().equals(AttentionLayer.class)) return "ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(AdditiveAttentionLayer.class)) return "ADDITIVE_ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(GeneralAttentionLayer.class)) return "GENERAL_ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(DotAttentionLayer.class)) return "DOT_ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(InputBasedAttention.class)) return "INPUT_BASED_ATTENTION";
         if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return "POSITIONAL_ENCODING";
         throw new NeuralNetworkException("Unknown layer type");
     }
