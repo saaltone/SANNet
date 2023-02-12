@@ -289,27 +289,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param matrixUnaryOperation single variable operation defined as lambda operator.
-     * @return matrix which stores operation result.
+     * @param unaryFunction unary function.
      * @throws MatrixException not thrown in any situation.
      */
-    public Matrix apply(Matrix result, Matrix.MatrixUnaryOperation matrixUnaryOperation) throws MatrixException {
-        if (result.getRows() != getRows() || result.getColumns() != getColumns()) {
-            throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
-        }
-        return new UnaryMatrixOperation(getRows(), getColumns(), matrixUnaryOperation).apply(this, result);
-    }
-
-    /**
-     * Applies single variable operation to this matrix and stores operation result into result matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param result matrix which stores operation result.
-     * @param unaryFunction unary function.
-     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
-     */
     protected void applyFunction(Matrix result, UnaryFunction unaryFunction) throws MatrixException {
-        if (result.getRows() != getRows() || result.getColumns() != getColumns()) {
+        if (result.getRows() != (unaryFunction.getType() != UnaryFunctionType.TRANSPOSE ? getRows() : getColumns()) || result.getColumns() != (unaryFunction.getType() != UnaryFunctionType.TRANSPOSE ? getColumns() : getRows())) {
             throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
         }
         new UnaryMatrixOperation(getRows(), getColumns(), unaryFunction).applyFunction(this, result);
@@ -323,11 +307,10 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param other matrix which acts as second variable in the operation.
      * @param result matrix which stores operation result.
-     * @param matrixBinaryOperation two variable operation defined as matrix binary operation.
-     * @return matrix which stores operation result.
+     * @param binaryFunction binary function.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
-    public Matrix applyBi(Matrix other, Matrix result, Matrix.MatrixBinaryOperation matrixBinaryOperation) throws MatrixException {
+    protected void applyBiFunction(Matrix other, Matrix result, BinaryFunction binaryFunction) throws MatrixException {
         if (!isScalar() && !other.isScalar() && (getRows() != other.getRows() || getColumns() != other.getColumns())) {
             throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
         }
@@ -337,7 +320,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !isScalar() ? getRows() : other.getRows();
         int columns = !isScalar() ? getColumns() : other.getColumns();
-        return new BinaryMatrixOperation(rows, columns, matrixBinaryOperation).apply(this, other, result);
+        new BinaryMatrixOperation(rows, columns, binaryFunction).applyFunction(this, other, result);
     }
 
     /**
@@ -499,7 +482,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         }
 
         final double maxValue = max();
-        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value - maxValue));
+        applyFunction(result, new UnaryFunction(value -> Math.exp(value - maxValue)));
         result.divide(result.sum(), result);
         return result;
     }
@@ -522,9 +505,9 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         }
 
         // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
-        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> (value + getGumbelNoise()) / gumbelSoftmaxTau);
+        applyFunction(result, new UnaryFunction(value -> (value + getGumbelNoise()) / gumbelSoftmaxTau));
         final double maxValue = max();
-        apply(result, (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.exp(value - maxValue));
+        applyFunction(result, new UnaryFunction(value -> Math.exp(value - maxValue)));
         result.divide(result.sum(), result);
         return result;
     }
