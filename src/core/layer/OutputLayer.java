@@ -11,6 +11,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.operation.BinaryMatrixOperation;
 import utils.sampling.Sequence;
 
 import java.util.ArrayList;
@@ -130,7 +131,7 @@ public class OutputLayer extends AbstractPlainLayer {
             for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
                 Matrix currentTarget = target.get(depthIndex);
                 Matrix currentOutput = output.get(depthIndex);
-                Matrix currentLoss = lossFunction.getError(currentOutput, currentTarget);
+                Matrix currentLoss = new BinaryMatrixOperation(currentOutput.getRows(), currentOutput.getColumns(), lossFunction).applyFunction(currentOutput, currentTarget, currentOutput.getNewMatrix());
                 loss = loss == null ? currentLoss : loss.add(currentLoss);
             }
         }
@@ -164,7 +165,7 @@ public class OutputLayer extends AbstractPlainLayer {
             for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
                 Matrix currentTarget = target.get(depthIndex);
                 Matrix currentOutput = output.get(depthIndex);
-                Matrix lossGradient = lossFunction.getGradient(currentOutput, currentTarget);
+                Matrix lossGradient = new BinaryMatrixOperation(currentOutput.getRows(), currentOutput.getColumns(), lossFunction).applyGradient(currentOutput, currentTarget);
                 if (importanceSamplingWeights != null) lossGradient.multiply(importanceSamplingWeights.get(depthIndex), lossGradient);
                 totalLossGradient.put(depthIndex, lossGradient);
             }
