@@ -9,6 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunction;
 import utils.sampling.Sequence;
 
 import java.io.Serial;
@@ -478,12 +479,10 @@ public class ClassificationMetric implements Metric, Serializable {
     private Matrix getClassification(Matrix predicted) throws MatrixException {
         if (!multiLabel) {
             double maxValue = predicted.max();
-            Matrix.MatrixUnaryOperation classification = (value) -> value != maxValue ? 0 : 1;
-            return predicted.apply(classification);
+            return predicted.apply(new UnaryFunction(value -> value != maxValue ? 0 : 1));
         }
         else {
-            Matrix.MatrixUnaryOperation classification = (value) -> value < multiLabelThreshold ? 0 : 1;
-            return predicted.apply(classification);
+            return predicted.apply(new UnaryFunction(value -> value < multiLabelThreshold ? 0 : 1));
         }
     }
 
