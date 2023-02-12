@@ -64,6 +64,17 @@ public class BinaryFunction implements Serializable {
     }
 
     /**
+     * Constructor for custom binary function.
+     *
+     * @param function function.
+     */
+    public BinaryFunction(Matrix.MatrixBinaryOperation function) {
+        this.binaryFunctionType = BinaryFunctionType.CUSTOM;
+        this.function = function;
+        this.derivative = null;
+    }
+
+    /**
      * Constructor for binary function.
      *
      * @param binaryFunctionType type of function to be used.
