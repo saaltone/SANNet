@@ -342,40 +342,6 @@ public class MMatrix implements Cloneable, Serializable {
     }
 
     /**
-     * Synchronizes this and other multi-matrix procedure factories.
-     *
-     * @param other other multi-matrix
-     * @throws MatrixException throws exception if his and other matrices have conflicting procedure factories.
-     */
-    private void synchronizeProcedureFactory(MMatrix other) throws MatrixException {
-        ProcedureFactory otherProcedureFactory = other.getProcedureFactory();
-        if (procedureFactory != otherProcedureFactory) {
-            if (procedureFactory == null) setProcedureFactory(otherProcedureFactory);
-            else {
-                if (otherProcedureFactory == null) other.setProcedureFactory(procedureFactory);
-                else throw new MatrixException("This and other matrices have conflicting procedure factories.");
-            }
-        }
-    }
-
-    /**
-     * Synchronizes this and other matrix procedure factories.
-     *
-     * @param other other matrix
-     * @throws MatrixException throws exception if his and other matrices have conflicting procedure factories.
-     */
-    private void synchronizeProcedureFactory(Matrix other) throws MatrixException {
-        ProcedureFactory otherProcedureFactory = other.getProcedureFactory();
-        if (procedureFactory != otherProcedureFactory) {
-            if (procedureFactory == null) setProcedureFactory(otherProcedureFactory);
-            else {
-                if (otherProcedureFactory == null) other.setProcedureFactory(procedureFactory);
-                else throw new MatrixException("This and other matrices have conflicting procedure factories.");
-            }
-        }
-    }
-
-    /**
      * Makes current multi-matrix data equal to other multi-matrix data.
      *
      * @param other other multi-matrix to be copied as data of this multi-matrix.
@@ -417,12 +383,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void apply(MMatrix result, UnaryFunction unaryFunction) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
         else {
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).apply(unaryFunction));
             procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
         }
@@ -456,13 +420,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void applyBi(MMatrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other.get(index), binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
@@ -497,13 +458,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void applyBi(Matrix other, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).applyBi(other, binaryFunction));
             procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
         }
@@ -535,13 +493,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void add(MMatrix other, MMatrix result) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).add(other.get(index)));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -570,13 +525,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void add(Matrix other, MMatrix result) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).add(other));
             procedureFactory.createAddExpression(expressionLock, this, other, result);
         }
@@ -605,13 +557,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void subtract(MMatrix other, MMatrix result) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other.get(index)));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -640,13 +589,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void subtract(Matrix other, MMatrix result) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).subtract(other));
             procedureFactory.createSubtractExpression(expressionLock, this, other, result);
         }
@@ -675,13 +621,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void multiply(MMatrix other, MMatrix result) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other.get(index)));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -710,13 +653,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void multiply(Matrix other, MMatrix result) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).multiply(other));
             procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
         }
@@ -745,13 +685,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void dot(MMatrix other, MMatrix result) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other.get(index)));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
@@ -780,13 +717,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void dot(Matrix other, MMatrix result) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).dot(other));
             procedureFactory.createDotExpression(expressionLock, this, other, result);
         }
@@ -815,13 +749,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void divide(MMatrix other, MMatrix result) throws MatrixException {
         if (getDepth() != other.getDepth() || getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other.get(index)));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -850,13 +781,10 @@ public class MMatrix implements Cloneable, Serializable {
     public void divide(Matrix other, MMatrix result) throws MatrixException {
         if (getDepth() != result.getDepth()) throw new MatrixException("Depth of matrices are not matching.");
         int depth = getDepth();
-        if (!hasProcedureFactory()) {
-            for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
-        }
+        if (!hasProcedureFactory()) for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
         else {
-            synchronizeProcedureFactory(other);
-            result.setProcedureFactory(procedureFactory);
             int expressionLock = procedureFactory.startExpression(this);
+            ProcedureFactory.synchronize(this, other, result);
             for (int index = 0; index < depth; index++) result.put(index, get(index).divide(other));
             procedureFactory.createDivideExpression(expressionLock, this, other, result);
         }
@@ -895,9 +823,7 @@ public class MMatrix implements Cloneable, Serializable {
      * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
      */
     public Matrix count(boolean asMean, Matrix result) throws MatrixException {
-        for (Matrix matrix : matrices) {
-            result.add(matrix, result);
-        }
+        for (Matrix matrix : matrices) result.add(matrix, result);
         return asMean ? result.divide(getDepth()) : result;
     }
 
@@ -951,7 +877,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             int expressionLock = procedureFactory.startExpression(this);
             count(false, result);
-            result.setProcedureFactory(procedureFactory);
+            ProcedureFactory.synchronize(this, result);
             procedureFactory.createSumExpression(expressionLock, this, result);
             return result;
         }
@@ -990,7 +916,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             int expressionLock = procedureFactory.startExpression(this);
             count(true, result);
-            result.setProcedureFactory(procedureFactory);
+            ProcedureFactory.synchronize(this, result);
             procedureFactory.createMeanExpression(expressionLock, this, result);
             return result;
         }
@@ -1062,18 +988,14 @@ public class MMatrix implements Cloneable, Serializable {
     public Matrix variance(Matrix meanMatrix, Matrix result) throws MatrixException, DynamicParamException {
         if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
         if (!hasProcedureFactory()) {
-            for (Matrix matrix : matrices) {
-                result.add(matrix.subtract(meanMatrix).power(2), result);
-            }
+            for (Matrix matrix : matrices) result.add(matrix.subtract(meanMatrix).power(2), result);
             result.divide(getDepth(), result);
         }
         else {
             int expressionLock = procedureFactory.startExpression(this);
-            for (Matrix matrix : matrices) {
-                result.add(matrix.subtract(meanMatrix).power(2), result);
-            }
+            for (Matrix matrix : matrices) result.add(matrix.subtract(meanMatrix).power(2), result);
             result.divide(getDepth(), result);
-            result.setProcedureFactory(procedureFactory);
+            ProcedureFactory.synchronize(this, result);
             procedureFactory.createVarianceExpression(expressionLock, this, result);
         }
         return result;
@@ -1141,7 +1063,7 @@ public class MMatrix implements Cloneable, Serializable {
         else {
             int expressionLock = procedureFactory.startExpression(this);
             variance(meanMatrix).multiply(getDepth()).divide(getDepth() - 1).apply(result, UnaryFunctionType.SQRT);
-            result.setProcedureFactory(procedureFactory);
+            ProcedureFactory.synchronize(this, result);
             procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
         }
         return result;
