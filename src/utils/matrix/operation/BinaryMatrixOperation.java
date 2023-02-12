@@ -56,19 +56,10 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
     private final Matrix.MatrixBinaryOperation matrixGradientBinaryOperation;
 
     /**
-     * Constructor for matrix binary operation.
+     * If true is applied as function otherwise as gradient.
      *
-     * @param rows number of rows for operation.
-     * @param columns number of columns for operation.
-     * @param matrixBinaryOperation matrix binary operation.
      */
-    public BinaryMatrixOperation(int rows, int columns, Matrix.MatrixBinaryOperation matrixBinaryOperation) {
-        super(rows, columns, true);
-        this.binaryFunction = null;
-        this.binaryFunctionType = null;
-        this.matrixBinaryOperation = matrixBinaryOperation;
-        this.matrixGradientBinaryOperation = null;
-    }
+    private boolean asFunction;
 
     /**
      * Constructor for matrix binary operation.
@@ -85,7 +76,6 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
         this.matrixGradientBinaryOperation = binaryFunction.getDerivative();
     }
 
-
     /**
      * Applies matrix operation.
      *
@@ -95,24 +85,68 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix first, Matrix second, Matrix result) throws MatrixException {
+    public Matrix applyFunction(Matrix first, Matrix second, Matrix result) throws MatrixException {
         this.first = first;
         this.second = second;
         this.result = result;
-        applyMatrixOperation();
+        asFunction = true;
+        switch (binaryFunctionType) {
+            case DIRECT_GRADIENT -> result.setEqualTo(second);
+            case POLICY_VALUE -> {
+                int rows = second.getRows();
+                for (int row = 0; row < rows; row++) {
+                    result.setValue(row, 0 , row == 0 ? (0.5 * Math.pow(second.getValue(0, 0) - first.getValue(0, 0), 2)) : second.getValue(row, 0));
+                }
+            }
+            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
+            case COS_SIM -> {
+                double norm_output = first.norm(2);
+                double norm_target = second.norm(2);
+                first.multiply(second).divide(norm_output * norm_target, result);
+            }
+            default -> applyMatrixOperation();
+        }
         return result;
     }
 
     /**
-     * Applies function to first and second matrix.
+     * Calculates gradient.
      *
      * @param first first matrix.
      * @param second second matrix.
-     * @param result result matrix.
+     * @return input gradient
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyFunction(Matrix first, Matrix second, Matrix result) throws MatrixException {
-        first.applyBi(second, result, matrixBinaryOperation);
+    public Matrix applyGradient(Matrix first, Matrix second) throws MatrixException {
+        this.first = first;
+        this.second = second;
+        asFunction = false;
+        switch (binaryFunctionType) {
+            case DIRECT_GRADIENT -> {
+                return result = second;
+            }
+            case POLICY_VALUE -> {
+                Matrix gradient = second.getNewMatrix();
+                int rows = second.getRows();
+                for (int row = 0; row < rows; row++) {
+                    gradient.setValue(row, 0 , row == 0 ? (first.getValue(0, 0) - second.getValue(0, 0)) : second.getValue(row, 0));
+                }
+                return result = gradient;
+            }
+            // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
+            case COS_SIM -> {
+                double norm_output = first.norm(2);
+                double norm_target = second.norm(2);
+                double norm_multiply = norm_output * norm_target;
+                Matrix cos_sim = first.multiply(second).divide(norm_multiply);
+                return result = first.divide(norm_multiply).subtract(second.divide(Math.pow(norm_output, 2)).multiply(cos_sim));
+            }
+            default -> {
+                result = first.getNewMatrix();
+                applyMatrixOperation();
+                return result;
+            }
+        }
     }
 
     /**
@@ -125,7 +159,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix first, Matrix second, Matrix outputGradient) throws MatrixException {
-        return outputGradient.multiply(first.applyBi(second, matrixGradientBinaryOperation));
+        return result = outputGradient.multiply(applyGradient(first, second));
     }
 
     /**
@@ -154,7 +188,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, double value) {
-        result.setValue(row, column, matrixBinaryOperation.execute(value, second.getValue(row, column)));
+        result.setValue(row, column, asFunction ? matrixBinaryOperation.execute(value, second.getValue(row, column)) : matrixGradientBinaryOperation.execute(value, second.getValue(row, column)));
     }
 
 }
