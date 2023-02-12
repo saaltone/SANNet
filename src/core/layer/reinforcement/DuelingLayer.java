@@ -1,5 +1,6 @@
 package core.layer.reinforcement;
 
+import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
@@ -139,6 +140,12 @@ public class DuelingLayer extends AbstractExecutionLayer {
     private boolean regulateDirectWeights;
 
     /**
+     * Activation function for activation layer.
+     *
+     */
+    protected final ActivationFunction activationFunction;
+
+    /**
      * Input matrix for procedure construction.
      *
      */
@@ -148,12 +155,16 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * Constructor for dueling layer.
      *
      * @param layerIndex layer index
+     * @param activationFunction activation function used.
+     * @param initialization initialization function for weight.
      * @param params parameters for dueling layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public DuelingLayer(int layerIndex, String params) throws NeuralNetworkException, DynamicParamException {
-        super (layerIndex, null, params);
+    public DuelingLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        super (layerIndex, initialization, params);
+        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
     }
 
     /**
@@ -248,9 +259,11 @@ public class DuelingLayer extends AbstractExecutionLayer {
     public MMatrix getForwardProcedure() throws MatrixException {
         Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0).get(0));
         valueOutput = valueOutput.add(weightSet.valueBias);
+        valueOutput = valueOutput.apply(activationFunction);
 
         Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0).get(0));
         actionOutput = actionOutput.add(weightSet.actionBias);
+        actionOutput = actionOutput.apply(activationFunction);
 
         Matrix output = valueOutput.add(actionOutput.subtract(actionOutput.meanAsMatrix()));
 
