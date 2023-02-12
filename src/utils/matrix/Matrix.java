@@ -328,34 +328,11 @@ public interface Matrix {
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param result matrix which stores operation result.
-     * @param matrixUnaryOperation single variable operation defined as lambda operator.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
-     */
-    Matrix apply(Matrix result, MatrixUnaryOperation matrixUnaryOperation) throws MatrixException;
-
-    /**
-     * Applies unaryFunction to this matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param matrixUnaryOperation single variable operation defined as lambda operator.
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    Matrix apply(MatrixUnaryOperation matrixUnaryOperation) throws MatrixException;
-
-    /**
-     * Applies unaryFunction to this matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param matrixUnaryOperation single variable operation defined as lambda operator.
+     * @param unaryFunction unary function.
      * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
      * @throws MatrixException not thrown in any situation.
      */
-    void apply(MatrixUnaryOperation matrixUnaryOperation, boolean inplace) throws MatrixException;
+    void apply(UnaryFunction unaryFunction, boolean inplace) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -402,31 +379,6 @@ public interface Matrix {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     Matrix apply(UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException;
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @param matrixBinaryOperation two variable operation defined as lambda operator.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     */
-    Matrix applyBi(Matrix other, Matrix result, Matrix.MatrixBinaryOperation matrixBinaryOperation) throws MatrixException;
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param matrixBinaryOperation two variable operation defined as lambda operator.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    Matrix applyBi(Matrix other, Matrix.MatrixBinaryOperation matrixBinaryOperation) throws MatrixException;
 
     /**
      * Applies two variable operation to this matrix.<br>
@@ -1564,16 +1516,6 @@ public interface Matrix {
      * @throws MatrixException throws matrix exception if joining fails.
      */
     Matrix join(Matrix other, boolean joinedVertically) throws MatrixException;
-
-    /**
-     * Joins two matrices either vertically or horizontally.
-     *
-     * @param other other matrix
-     * @param result joined matrix
-     * @param joinedVertically if true joined vertically otherwise horizontally
-     * @throws MatrixException throws matrix exception if joining fails.
-     */
-    void join(Matrix other, Matrix result, boolean joinedVertically) throws MatrixException;
 
     /**
      * Unjoins matrix at specific row and column.
