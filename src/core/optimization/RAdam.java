@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements Rectified Adam optimizer.<br>
  * <br>
- * Reference: https://arxiv.org/abs/1908.03265 <br>
+ * Reference: <a href="https://arxiv.org/abs/1908.03265">...</a> <br>
  *
  */
 public class RAdam extends AbstractOptimizer {
@@ -145,15 +145,13 @@ public class RAdam extends AbstractOptimizer {
         int iteration;
         iterations.put(matrix, iteration = iterations.getOrDefault(matrix, 0) + 1);
 
-        Matrix vM = v.get(matrix);
-
         Matrix mM = m.get(matrix);
-
-        vM = vM == null ? matrixGradient.power(2).multiply(1 - beta2) : vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
-        v.put(matrix, vM);
-
         mM = mM == null ? matrixGradient.multiply(1 - beta1) : mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1));
-        m.put(matrix, mM);
+        setParameterMatrix(m, matrix, mM);
+
+        Matrix vM = v.get(matrix);
+        vM = vM == null ? matrixGradient.power(2).multiply(1 - beta2) : vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
+        setParameterMatrix(v, matrix, vM);
 
         double beta1Iteration = Math.pow(beta1, iteration);
         double beta2Iteration = Math.pow(beta2, iteration);
@@ -165,10 +163,10 @@ public class RAdam extends AbstractOptimizer {
         if (pt > 4) {
             stepSize *=  Math.sqrt((1 - beta2Iteration) * ((pt - 4) * (pt - 2) * pinf) / ((pinf - 4) * (pinf - 2) * pt));
             double epsilon = 10E-8;
-            matrix.subtract(mMhat.divide(vM.apply(UnaryFunctionType.SQRT).add(epsilon)).multiply(stepSize), matrix);
+            matrix.subtractBy(mMhat.divide(vM.apply(UnaryFunctionType.SQRT).add(epsilon)).multiply(stepSize));
         }
         else {
-            matrix.subtract(mMhat.multiply(stepSize), matrix);
+            matrix.subtractBy(mMhat.multiply(stepSize));
         }
     }
 

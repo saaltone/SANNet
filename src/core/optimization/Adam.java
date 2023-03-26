@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements Adam optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class Adam extends AbstractOptimizer {
@@ -137,14 +137,15 @@ public class Adam extends AbstractOptimizer {
         int iteration;
         iterations.put(matrix, iteration = iterations.getOrDefault(matrix, 0) + 1);
 
-        Matrix mM = getParameterMatrix(m, matrix);
-        Matrix vM = getParameterMatrix(v, matrix);
-
         // mt = β1*mt − 1 + (1 − β1)*gt
-        mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);
+        Matrix mM = getParameterMatrix(m, matrix);
+        mM = mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1));
+        setParameterMatrix(m, matrix, mM);
 
         // vt = β2*vt − 1 + (1 − β2)*g2t
-        vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2), vM);
+        Matrix vM = getParameterMatrix(v, matrix);
+        vM = vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
+        setParameterMatrix(v, matrix, vM);
 
         // mt = mt / (1 − βt1)
         Matrix mM_hat = mM.divide(1 - Math.pow(beta1, iteration));
@@ -154,7 +155,7 @@ public class Adam extends AbstractOptimizer {
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
-        matrix.subtract(mM_hat.divide(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+        matrix.subtractBy(mM_hat.divide(vM_hat.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate));
     }
 
 }

@@ -15,7 +15,7 @@ import java.util.HashMap;
  * Implements Resilient Propagation optimizer.<br>
  * Resilient Propagation is full batch algorithm.<br>
  * <br>
- * Reference: http://130.243.105.49/~lilien/ml/seminars/2007_03_12c-Markus_Ingvarsson-RPROP.pdf <br>
+ * Reference: <a href="http://130.243.105.49/~lilien/ml/seminars/2007_03_12c-Markus_Ingvarsson-RPROP.pdf">...</a> <br>
  *
  */
 public class ResilientPropagation extends AbstractOptimizer {
@@ -75,18 +75,19 @@ public class ResilientPropagation extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        Matrix dMPrev = dPrev.computeIfAbsent(matrix, k -> matrixGradient);
-
         Matrix WPrev = wPrev.get(matrix);
-        if (WPrev == null) wPrev.put(matrix, WPrev = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        if (WPrev == null) wPrev.put(matrix, WPrev = new DMatrix(matrix.getRows(), matrix.getColumns(), matrix.getDepth()));
 
+        Matrix dMPrev = dPrev.computeIfAbsent(matrix, k -> matrixGradient);
         Matrix dWDir = dMPrev.sgnmul(matrixGradient);
 
-        wPrev.put(matrix, WPrev = dWDir.applyBi(WPrev, new BinaryFunction((value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2)));
+        WPrev = dWDir.applyBi(WPrev, new BinaryFunction((value1, value2) -> value1 == -1 ? Math.max(0.5 * value2, 10E-6) : value1 == 1 ? Math.min(1.2 * value2, 50) : value2));
+        setParameterMatrix(wPrev, matrix, WPrev);
 
-        matrix.subtract(matrixGradient.apply(UnaryFunctionType.SGN).multiply(WPrev), matrix);
+        matrix.subtractBy(matrixGradient.apply(UnaryFunctionType.SGN).multiply(WPrev));
 
-        dPrev.put(matrix, dWDir.applyBi(matrixGradient, new BinaryFunction((value1, value2) -> value1 == -1 ? 0 : value2)));
+        dWDir = dWDir.applyBi(matrixGradient, new BinaryFunction((value1, value2) -> value1 == -1 ? 0 : value2));
+        setParameterMatrix(dPrev, matrix, dWDir);
     }
 
 }

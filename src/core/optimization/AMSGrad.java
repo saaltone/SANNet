@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements AMSGrad optimizer.<br>
  * <br>
- * Reference: https://towardsdatascience.com/10-gradient-descent-optimisation-algorithms-86989510b5e9 <br>
+ * Reference: <a href="https://towardsdatascience.com/10-gradient-descent-optimisation-algorithms-86989510b5e9">...</a> <br>
  *
  */
 public class AMSGrad extends AbstractOptimizer {
@@ -127,21 +127,21 @@ public class AMSGrad extends AbstractOptimizer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
-        Matrix mM = getParameterMatrix(m, matrix);
-        Matrix vM = getParameterMatrix(v, matrix);
-
         // mt = β1*mt − 1 + (1 − β1)*gt
-        mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1), mM);
+        Matrix mM = getParameterMatrix(m, matrix);
+        mM = mM.multiply(beta1).add(matrixGradient.multiply(1 - beta1));
+        setParameterMatrix(m, matrix, mM);
 
         // vt = β2*vt − 1 + (1 − β2)*g2t
+        Matrix vM = getParameterMatrix(v, matrix);
         Matrix vM_temp = vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
-
         // vt = max(vt, vt-1)
-        vM_temp.max(v.get(matrix), vM);
+        vM = vM_temp.max(v.get(matrix));
+        setParameterMatrix(v, matrix, vM);
 
         // θt+1 = θt − η / (√^vt + ϵ) * mt
         double epsilon = 10E-8;
-        matrix.subtract(mM.divide(vM.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+        matrix.subtractBy(mM.divide(vM.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate));
     }
 
 }

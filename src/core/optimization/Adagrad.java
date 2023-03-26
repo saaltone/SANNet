@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements Adagrad optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class Adagrad extends AbstractOptimizer {
@@ -100,10 +100,10 @@ public class Adagrad extends AbstractOptimizer {
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
         Matrix dM2Sum = getParameterMatrix(m2Sum, matrix);
 
-        dM2Sum.add(matrixGradient.multiply(matrixGradient), dM2Sum);
+        dM2Sum.addBy(matrixGradient.multiply(matrixGradient));
 
         double epsilon = 10E-8;
-        matrix.subtract(matrixGradient.divide(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+        matrix.subtractBy(matrixGradient.divide(dM2Sum.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate));
     }
 
 }

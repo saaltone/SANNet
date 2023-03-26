@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements Adadelta optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class Adadelta extends AbstractOptimizer {
@@ -117,17 +117,16 @@ public class Adadelta extends AbstractOptimizer {
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
         Matrix mEg2 = getParameterMatrix(eg2, matrix);
-        Matrix mEd2 = getParameterMatrix(ed2, matrix);
-
         mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma));
+        setParameterMatrix(eg2, matrix, mEg2);
 
-        double epsilon = 10E-8;
+        final double epsilon = 10E-8;
+        Matrix mEd2 = getParameterMatrix(ed2, matrix);
         Matrix Ed = mEd2.add(epsilon).apply(UnaryFunctionType.SQRT).divide(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(matrixGradient);
-        matrix.subtract(Ed.multiply(learningRate), matrix);
-        mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
+        matrix.subtractBy(Ed.multiply(learningRate));
 
-        eg2.put(matrix, mEg2);
-        ed2.put(matrix, mEd2);
+        mEd2 = mEd2.multiply(gamma).add(Ed.power(2).multiply(1 - gamma));
+        setParameterMatrix(ed2, matrix, mEd2);
     }
 
 }

@@ -15,7 +15,7 @@ import java.util.HashMap;
 /**
  * Implements Gradient Descent with Momentum optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class MomentumGradientDescent extends AbstractOptimizer {
@@ -107,16 +107,13 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
-        Matrix dMPrev = getParameterMatrix(dPrev, matrix);
-
         // θt+1=θt+μtvt−εt∇f(θt)
-        Matrix dMDelta = dMPrev.multiply(mu).subtract(matrixGradient.multiply(learningRate));
-
-        matrix.add(dMDelta, matrix);
-
+        Matrix dMPrev = getParameterMatrix(dPrev, matrix);
+        dMPrev = dMPrev.multiply(mu).subtract(matrixGradient.multiply(learningRate));
         // vt+1=μtvt−εt∇f(θt)
-        dPrev.put(matrix, dMDelta);
+        setParameterMatrix(dPrev, matrix, dMPrev);
 
+        matrix.addBy(dMPrev);
     }
 
 }

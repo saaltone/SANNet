@@ -13,7 +13,7 @@ import utils.matrix.MatrixException;
 /**
  * Implements vanilla Gradient Descent optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class GradientDescent extends AbstractOptimizer {
@@ -86,7 +86,7 @@ public class GradientDescent extends AbstractOptimizer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
-        matrix.subtract(matrixGradient.multiply(learningRate), matrix);
+        matrix.subtractBy(matrixGradient.multiply(learningRate));
     }
 
 }

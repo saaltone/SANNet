@@ -15,7 +15,7 @@ import java.util.HashMap;
 /**
  * Implements Nesterov's Accelerated Gradient Descent optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class NesterovAcceleratedGradient extends AbstractOptimizer {
@@ -115,16 +115,14 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      */
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException {
         Matrix dMPrev = getParameterMatrix(dPrev, matrix);
-        Matrix vMPrev = getParameterMatrix(vPrev, matrix);
+        setParameterMatrix(dPrev, matrix, matrixGradient);
 
         // vt=μvt−1−ϵ∇f(θt−1+μvt−1)
-        Matrix vM = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));
+        Matrix vMPrev = getParameterMatrix(vPrev, matrix);
+        vMPrev = vMPrev.multiply(mu).subtract(dMPrev.add(vMPrev.multiply(mu)).multiply(learningRate));
+        setParameterMatrix(vPrev, matrix, vMPrev);
 
-        matrix.add(vM, matrix);
-
-        dPrev.put(matrix, matrixGradient);
-        vPrev.put(matrix, vM);
-
+        matrix.addBy(vMPrev);
     }
 
 }

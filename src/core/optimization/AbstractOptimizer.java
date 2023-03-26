@@ -99,8 +99,19 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
      */
     protected Matrix getParameterMatrix(HashMap<Matrix, Matrix> parameterMatrices, Matrix matrix) {
         Matrix parameterMatrix = parameterMatrices.get(matrix);
-        if (parameterMatrix == null)  parameterMatrices.put(matrix, parameterMatrix = new DMatrix(matrix.getRows(), matrix.getColumns()));
+        if (parameterMatrix == null)  parameterMatrices.put(matrix, parameterMatrix = new DMatrix(matrix.getRows(), matrix.getColumns(), matrix.getDepth()));
         return parameterMatrix;
+    }
+
+    /**
+     * Set value to specific matrix.
+     *
+     * @param parameterMatrices parameter matrices.
+     * @param matrix matrix
+     * @param value value.
+     */
+    protected void setParameterMatrix(HashMap<Matrix, Matrix> parameterMatrices, Matrix matrix, Matrix value) {
+        parameterMatrices.put(matrix, value);
     }
 
 }

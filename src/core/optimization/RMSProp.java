@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * Implements RMSProp optimizer.<br>
  * <br>
- * Reference: http://ruder.io/optimizing-gradient-descent/ <br>
+ * Reference: <a href="http://ruder.io/optimizing-gradient-descent/">...</a> <br>
  *
  */
 public class RMSProp extends AbstractOptimizer {
@@ -111,10 +111,11 @@ public class RMSProp extends AbstractOptimizer {
     public void optimize(Matrix matrix, Matrix matrixGradient) throws MatrixException, DynamicParamException {
         Matrix mEg2 = getParameterMatrix(eg2, matrix);
 
-        eg2.put(matrix, mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma)));
+        mEg2 = mEg2.multiply(gamma).add(matrixGradient.power(2).multiply(1 - gamma));
+        setParameterMatrix(eg2, matrix, mEg2);
 
         double epsilon = 10E-8;
-        matrix.subtract(matrixGradient.divide(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate), matrix);
+        matrix.subtractBy(matrixGradient.divide(mEg2.add(epsilon).apply(UnaryFunctionType.SQRT)).multiply(learningRate));
     }
 
 }
