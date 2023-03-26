@@ -41,8 +41,8 @@ public class AutoEncoder {
 
             int maxValue = 10;
 
-            HashMap<Integer, HashMap<Integer, MMatrix>> data = getTestData(maxValue);
-            NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows());
+            HashMap<Integer, HashMap<Integer, Matrix>> data = getTestData(maxValue);
+            NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows());
             initializeNeuralNetwork(neuralNetwork, data);
 
             neuralNetwork.train(true, false);
@@ -55,13 +55,14 @@ public class AutoEncoder {
             for (int index = 0; index < numberOfTests; index++) {
                 int inputValue = random.nextInt(maxValue);
 
-                Matrix inputData = new DMatrix(maxValue, 1);
-                inputSequence.put(index, new MMatrix(inputData));
-                inputData.setValue(inputValue, 0, 1);
+                Matrix inputData = new DMatrix(maxValue, 1, 1);
+                inputSequence.put(index, inputData);
+                inputData.setValue(inputValue, 0, 0, 1);
 
                 Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, inputData); }}).get(0);
-                outputSequence.put(index, new MMatrix(outputData));
+                outputSequence.put(index, outputData);
                 int predictedOutput = outputData.argmax()[0];
+
                 System.out.println(neuralNetwork.getNeuralNetworkName() + " Input: " + inputValue + ", Output: " + predictedOutput);
             }
 
@@ -81,8 +82,8 @@ public class AutoEncoder {
 
             numberOfTests = maxValue;
             for (int index = 0; index < numberOfTests; index++) {
-                int inputValue = index;
-                Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, DMatrix.getOneHotVector(maxValue, inputValue)); }}).get(0);
+                int finalIndex = index;
+                Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, DMatrix.getOneHotVector(maxValue, finalIndex)); }}).get(0);
                 System.out.println(neuralNetwork.getNeuralNetworkName() + " Input: " + index + ", Output:");
                 outputData.print();
             }
@@ -105,7 +106,7 @@ public class AutoEncoder {
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, MMatrix>> data) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, Matrix>> data) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + 1);
         neuralNetwork.setAsClassification();
         neuralNetwork.verboseTraining(10);
@@ -163,19 +164,18 @@ public class AutoEncoder {
      * @throws NeuralNetworkException throws exception if creation of samples fail.
      * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTestData(int maxValue) throws NeuralNetworkException, MatrixException {
-        HashMap<Integer, HashMap<Integer, MMatrix>> data = new HashMap<>();
-        HashMap<Integer, MMatrix> input = new HashMap<>();
-        HashMap<Integer, MMatrix> output = new HashMap<>();
+    private static HashMap<Integer, HashMap<Integer, Matrix>> getTestData(int maxValue) throws NeuralNetworkException, MatrixException {
+        HashMap<Integer, HashMap<Integer, Matrix>> data = new HashMap<>();
+        HashMap<Integer, Matrix> input = new HashMap<>();
+        HashMap<Integer, Matrix> output = new HashMap<>();
         data.put(0, input);
         data.put(1, output);
 
         Random random = new Random();
         for (int i = 0; i < 100 * maxValue; i++) {
             Matrix inputData = DMatrix.getOneHotVector(maxValue, random.nextInt(maxValue));
-            MMatrix inputs = new MMatrix(inputData);
-            input.put(i, inputs);
-            output.put(i, inputs);
+            input.put(i, inputData);
+            output.put(i, inputData);
         }
         data = DataSplitter.split(data, 0.3, false);
         return data;

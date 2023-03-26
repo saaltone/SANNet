@@ -351,12 +351,6 @@ public class TSP implements Environment, AgentFunctionEstimator {
     private final Tour tour;
 
     /**
-     * Count for how many times distance was same between tours.
-     *
-     */
-    private int unchangedDistanceCount = 0;
-
-    /**
      * Episode ID
      *
      */
@@ -422,21 +416,21 @@ public class TSP implements Environment, AgentFunctionEstimator {
     private void updateState() {
         Matrix state;
         if (compactState) {
-            state = new DMatrix(2 * tour.cities.size(), 1);
+            state = new DMatrix(2 * tour.cities.size(), 1, 1);
             for (Integer index : tour.cities.keySet()) {
                 City city = tour.cities.get(index);
                 boolean visited = tour.visitedCities.contains(index);
-                state.setValue(2 * index, 0, city.xNormalized * (visited ? -1 : 1));
-                state.setValue(2 * index + 1, 0, city.yNormalized * (visited ? -1 : 1));
+                state.setValue(2 * index, 0, 0, city.xNormalized * (visited ? -1 : 1));
+                state.setValue(2 * index + 1, 0, 0, city.yNormalized * (visited ? -1 : 1));
             }
         }
         else {
-            state = new DMatrix(4 * tour.cities.size(), 1);
+            state = new DMatrix(4 * tour.cities.size(), 1, 1);
             for (Integer index : tour.cities.keySet()) {
                 City city = tour.cities.get(index);
                 int visited = tour.visitedCities.contains(index) ? 0 : tour.cities.size();
-                state.setValue(visited + 2 * index, 0, city.xNormalized);
-                state.setValue(visited + 2 * index + 1, 0, city.yNormalized);
+                state.setValue(visited + 2 * index, 0, 0, city.xNormalized);
+                state.setValue(visited + 2 * index + 1, 0, 0, city.yNormalized);
             }
         }
 
@@ -534,9 +528,9 @@ public class TSP implements Environment, AgentFunctionEstimator {
     }
 
     /**
-     * Returns list of cities added into hashmap by indices starting from zero.
+     * Returns map of cities added into hashmap by indices starting from zero.
      *
-     * @return list of cities.
+     * @return map of cities.
      */
     public HashMap<Integer, City> getCities() {
         return tour.cities;
@@ -777,9 +771,6 @@ public class TSP implements Environment, AgentFunctionEstimator {
         }
         getAgent().endEpisode();
 
-        if (tour.lastDistance > 0 && tour.lastDistance == getTotalDistance()) unchangedDistanceCount++;
-        else unchangedDistanceCount = 0;
-
         if (redraw) {
             jFrame.remove(tspPanel);
             tspPanel = new TSPPanel();
@@ -842,7 +833,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         }
-        boolean singleFunctionEstimator = true;
+        boolean singleFunctionEstimator = false;
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
@@ -899,7 +890,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
         neuralNetworkConfiguration.connectLayers(joinLayerIndex, normalizationLayerIndex);
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.GELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
         if (!policyGradient && applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);

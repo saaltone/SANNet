@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Implements maze where agent takes journeys trying to find way out of maze.<br>
  *
- * Reference: https://rosettacode.org/wiki/Maze_generation<br>
+ * Reference: <a href="https://rosettacode.org/wiki/Maze_generation">...</a><br>
  *
  */
 public class Maze implements AgentFunctionEstimator, Environment, ActionListener {
@@ -583,15 +583,17 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      *
      */
     public void initMaze() {
-        boolean initialized = false;
         for (Cell[] cells : maze) {
             for (Cell cell : cells) {
                 cell.visitCount = 0;
             }
         }
+
         int x = size / 2;
         int y = size / 2;
         mazeAgentHistory.clear();
+
+        boolean initialized = false;
         while (!initialized) {
             if (maze[x][y].isOpen()) {
                 MazeAgent mazeAgent = new MazeAgent(x, y, -1);
@@ -604,6 +606,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             x = random.nextInt(size);
             y = random.nextInt(size);
         }
+
         updateState();
     }
 
@@ -676,11 +679,11 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     private void updateState() {
         Cell mazeCell = maze[mazeAgentCurrent.x][mazeAgentCurrent.y];
-        Matrix state = new DMatrix(stateSize, 1);
-        state.setValue(0, 0, mazeCell.isConnected(0) ? -1 : 0);
-        state.setValue(1, 0, mazeCell.isConnected(1) ? -1 : 0);
-        state.setValue(2, 0, mazeCell.isConnected(2) ? -1 : 0);
-        state.setValue(3, 0, mazeCell.isConnected(3) ? -1 : 0);
+        Matrix state = new DMatrix(stateSize, 1, 1);
+        state.setValue(0, 0, 0, mazeCell.isConnected(0) ? -1 : 0);
+        state.setValue(1, 0, 0, mazeCell.isConnected(1) ? -1 : 0);
+        state.setValue(2, 0, 0, mazeCell.isConnected(2) ? -1 : 0);
+        state.setValue(3, 0, 0, mazeCell.isConnected(3) ? -1 : 0);
 
         HashSet<Integer> availableActions = new HashSet<>();
         Cell cell = maze[mazeAgentCurrent.x][mazeAgentCurrent.y];
@@ -707,12 +710,15 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 2 -> y--;
             case 3 -> y++;
         }
+
         mazeAgentCurrent = new MazeAgent(x, y, action);
         if (mazeAgentHistory.size() == agentHistorySize) mazeAgentHistory.pollFirst();
         mazeAgentHistory.addLast(mazeAgentCurrent);
         maze[x][y].updateCellTimeStep(++timeStep);
         maze[x][y].incrementCount();
+
         updateState();
+
         setReward(agent);
     }
 

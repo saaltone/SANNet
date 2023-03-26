@@ -353,7 +353,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
          *
          */
         public void updateState() {
-            state = new DMatrix(getInputSize(), 1);
+            state = new DMatrix(getInputSize(), 1, 1);
             availableMoves = new HashSet<>();
             for (int row = 0; row < gameBoard.length; row++) {
                 for (int col = 0; col < gameBoard[row].length; col++) {
@@ -366,7 +366,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                             availableMoves.add(getPos(row, col));
                         }
                     }
-                    state.setValue(getPos(row, col), 0, positionValue);
+                    state.setValue(getPos(row, col), 0, 0, positionValue);
                 }
             }
         }
@@ -467,13 +467,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             int adiagonalStatistics = 0;
             BoardSlot gameSlotType = player.playerRole == PlayerRole.NOUGHT ? BoardSlot.NOUGHT : BoardSlot.CROSS;
             for (int row = 0; row < boardSize; row++) {
-                int rowStat = 0;
-                int colStat = 0;
+                int rowStatistics = 0;
+                int columnStatatistics = 0;
                 for (int col = 0; col < boardSize; col++) {
-                    if (gameBoard[row][col] == gameSlotType) rowStat++; else rowStat = 0;
-                    if (gameBoard[col][row] == gameSlotType) colStat++; else colStat = 0;
+                    if (gameBoard[row][col] == gameSlotType) rowStatistics++; else rowStatistics = 0;
+                    if (gameBoard[col][row] == gameSlotType) columnStatatistics++; else columnStatatistics = 0;
                 }
-                if (rowStat == boardSize || colStat == boardSize) return true;
+                if (rowStatistics == boardSize || columnStatatistics == boardSize) return true;
 
                 if (gameBoard[row][row] == gameSlotType) diagonalStatistics++; else diagonalStatistics = 0;
                 if (gameBoard[row][boardSize - 1 - row] == gameSlotType) adiagonalStatistics++; else adiagonalStatistics = 0;
@@ -754,7 +754,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        int numberfOfAgents = 2;
+        int numberfOfAgents = 4;
         boolean singleFunctionEstimator = false;
         boolean sharedPolicyFunctionEstimator = false;
         boolean sharedValueFunctionEstimator = false;
@@ -1195,10 +1195,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         gameStatus = gameBoard.updateGameStatus(currentPlayerList.get(currentPlayer));
 
         switch (gameStatus) {
-            case ONGOING:
-                currentPlayerList.get(currentPlayer).getAgent().respond(rewardStructure.MOVE);
-                break;
-            case NOUGHT_WON:
+            case ONGOING -> currentPlayerList.get(currentPlayer).getAgent().respond(rewardStructure.MOVE);
+            case NOUGHT_WON -> {
                 for (Player player : currentPlayerList) {
                     if (!player.isHuman()) {
                         if (player.getPlayerRole() == PlayerRole.NOUGHT) {
@@ -1211,8 +1209,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                         }
                     }
                 }
-                break;
-            case CROSS_WON:
+            }
+            case CROSS_WON -> {
                 for (Player player : currentPlayerList) {
                     if (!player.isHuman()) {
                         if (player.getPlayerRole() == PlayerRole.CROSS) {
@@ -1225,17 +1223,17 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                         }
                     }
                 }
-                break;
-            case DRAW:
+            }
+            case DRAW -> {
                 for (Player player : currentPlayerList) {
                     if (!player.isHuman()) {
                         player.draw();
                         player.getAgent().respond(rewardStructure.DRAW);
                     }
                 }
-                break;
-            default:
-                break;
+            }
+            default -> {
+            }
         }
     }
 

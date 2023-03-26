@@ -35,13 +35,13 @@ public class TimeSeriesPrediction {
             int numberOfInputs = 5;
             double scalingFactor = 10;
 
-            HashMap<Integer, HashMap<Integer, MMatrix>> trainingInputs = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, MMatrix>> trainingOutputs = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, MMatrix>> validationInputs = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, MMatrix>> validationOutputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, Matrix>> trainingInputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, Matrix>> trainingOutputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, Matrix>> validationInputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, Matrix>> validationOutputs = new HashMap<>();
 
             getTimeSeriesData(trainingInputs, trainingOutputs, validationInputs, validationOutputs, numberOfInputs, sampleAmount, scalingFactor);
-            NeuralNetwork neuralNetwork = buildNeuralNetwork(trainingInputs.size(), trainingInputs.get(0).get(0).get(0).getRows(), trainingOutputs.get(0).get(0).get(0).getRows());
+            NeuralNetwork neuralNetwork = buildNeuralNetwork(trainingInputs.size(), trainingInputs.get(0).get(0).getRows(), trainingOutputs.get(0).get(0).getRows());
             initializeNeuralNetwork(neuralNetwork, trainingInputs, trainingOutputs, validationInputs, validationOutputs);
 
             neuralNetwork.resetDependencies(false);
@@ -49,30 +49,29 @@ public class TimeSeriesPrediction {
             neuralNetwork.train(false, false);
             neuralNetwork.waitToComplete();
 
-            double step = 1 / (double)sampleAmount;
+            double timeStep = 1 / (double)sampleAmount;
             ArrayDeque<Double> currentYs = new ArrayDeque<>();
             for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
-                currentYs.addLast(TimeSeriesPrediction.getTimeSeriesValue(step * (double)inputIndex, scalingFactor));
+                currentYs.addLast(TimeSeriesPrediction.getTimeSeriesValue(timeStep * (double)inputIndex, scalingFactor));
             }
 
             for (double inputIndex = 0; inputIndex < 1000; inputIndex++) {
-                double nextT = step * inputIndex;
-                double currentY = TimeSeriesPrediction.getTimeSeriesValue(nextT, scalingFactor);
+                double currentY = TimeSeriesPrediction.getTimeSeriesValue(timeStep * inputIndex, scalingFactor);
 
                 TreeMap<Integer, Matrix> inputs = new TreeMap<>();
                 int inputOffset = 0;
                 for (Double thisCurrentY : currentYs) {
                     System.out.print(thisCurrentY + " ");
-                    Matrix inputData = new DMatrix(1, 1);
-                    inputData.setValue(0, 0, thisCurrentY);
+                    Matrix inputData = new DMatrix(1, 1, 1);
+                    inputData.setValue(0, 0, 0, thisCurrentY);
                     inputs.put(inputOffset++, inputData);
                 }
                 System.out.println();
 
                 Matrix outputData = neuralNetwork.predictMatrix(inputs).get(0);
-                double predictedY = outputData.getValue(0, 0);
+                double predictedY = outputData.getValue(0, 0, 0);
 
-                System.out.println(neuralNetwork.getNeuralNetworkName() + ": Current Y: " + currentY + ", Next T: " + nextT + ", Predicted Y " + predictedY + " (delta: " + (predictedY - currentY) + ")");
+                System.out.println(neuralNetwork.getNeuralNetworkName() + ": Current Y: " + currentY + ", Next T: " + timeStep * inputIndex + ", Predicted Y " + predictedY + " (delta: " + (predictedY - currentY) + ")");
 
                 currentYs.removeFirst();
                 currentYs.add(predictedY);
@@ -100,7 +99,7 @@ public class TimeSeriesPrediction {
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, MMatrix>> trainingInputs, HashMap<Integer, HashMap<Integer, MMatrix>> trainingOutputs, HashMap<Integer, HashMap<Integer, MMatrix>> validationInputs, HashMap<Integer, HashMap<Integer, MMatrix>> validationOutputs) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, Matrix>> trainingInputs, HashMap<Integer, HashMap<Integer, Matrix>> trainingOutputs, HashMap<Integer, HashMap<Integer, Matrix>> validationInputs, HashMap<Integer, HashMap<Integer, Matrix>> validationOutputs) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network");
         neuralNetwork.setAsRegression();
         neuralNetwork.verboseTraining(10);
@@ -139,7 +138,7 @@ public class TimeSeriesPrediction {
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndices[i]);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndices[i]);
         }
-        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.GENERAL_ATTENTION);
+        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
         for (int i = 0; i < numberOfInputs; i++) neuralNetworkConfiguration.connectLayers(hiddenLayerIndices[i], joinLayerIndex);
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.TANH), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(joinLayerIndex, hiddenLayerIndex);
@@ -163,16 +162,15 @@ public class TimeSeriesPrediction {
      * @param numberOfInputs number of input
      * @param sampleAmount amount of samples
      * @param scalingFactor scaling factor
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static void getTimeSeriesData(HashMap<Integer, HashMap<Integer, MMatrix>> trainingInputs, HashMap<Integer, HashMap<Integer, MMatrix>> trainingOutputs, HashMap<Integer, HashMap<Integer, MMatrix>> validationInputs, HashMap<Integer, HashMap<Integer, MMatrix>> validationOutputs, int numberOfInputs, int sampleAmount, double scalingFactor) throws MatrixException {
+    private static void getTimeSeriesData(HashMap<Integer, HashMap<Integer, Matrix>> trainingInputs, HashMap<Integer, HashMap<Integer, Matrix>> trainingOutputs, HashMap<Integer, HashMap<Integer, Matrix>> validationInputs, HashMap<Integer, HashMap<Integer, Matrix>> validationOutputs, int numberOfInputs, int sampleAmount, double scalingFactor) {
         ArrayList<Double> values = getTimeSeriesValues(sampleAmount, scalingFactor);
 
-        ArrayList<MMatrix> dataSet = new ArrayList<>();
+        ArrayList<Matrix> dataSet = new ArrayList<>();
         for (int i = 0; i < sampleAmount; i++) {
-            Matrix inputData = new DMatrix(1, 1);
-            inputData.setValue(0, 0, values.get(i));
-            dataSet.add(new MMatrix(inputData));
+            Matrix inputData = new DMatrix(1, 1, 1);
+            inputData.setValue(0, 0, 0, values.get(i));
+            dataSet.add(inputData);
         }
 
         for (int i = 0; i < numberOfInputs; i++) {

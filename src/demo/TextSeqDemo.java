@@ -41,8 +41,8 @@ public class TextSeqDemo {
         try {
             String persistenceName = "<PATH>/TextSeqNN";
             HashMap<Integer, String> dictionaryIndexMapping = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, MMatrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
-            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
+            HashMap<Integer, HashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
+            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
@@ -56,7 +56,7 @@ public class TextSeqDemo {
             while (neuralNetwork.getTotalIterations() < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
-                Matrix input = data.get(0).get(1).get(0);
+                Matrix input = data.get(0).get(1);
                 ArrayList<Matrix> encodedWords = input.getSubMatrices();
                 int inputSize = encodedWords.get(0).size();
                 for (int pos = 0; pos < 1000; pos++) {
@@ -134,7 +134,7 @@ public class TextSeqDemo {
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+    private static HashMap<Integer, HashMap<Integer, Matrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
         return ReadTextFile.readFileAsBinaryEncoded("<PATH>/lorem_ipsum.txt", numOfInputs, 0, dictionaryIndexMapping);
     }
 

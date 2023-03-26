@@ -53,17 +53,19 @@ public class Music {
 
             int numberOfInputs = 10;
             boolean encodeNoteOffs = false;
-            long minTickDelta = 120;
+            long minTickDelta = 60;
             int maxEncodedTicks = 50;
+            double tickScalingConstant = 0.5;
+            int numberOfGeneratedSamples = 500;
             String path = "<PATH>/";
             ArrayList<String> fileNames = new ArrayList<>();
             fileNames.add(path + "Jesu-Joy-Of-Man-Desiring.mid");
 
             ReadMIDI readMIDI = new ReadMIDI();
-            HashMap<Integer, HashMap<Integer, MMatrix>> data = readMIDI.readFile(fileNames, numberOfInputs, encodeNoteOffs, minTickDelta, maxEncodedTicks);
+            HashMap<Integer, HashMap<Integer, Matrix>> data = readMIDI.readFile(fileNames, numberOfInputs, encodeNoteOffs, minTickDelta, maxEncodedTicks);
             ReadMIDI.Metadata metadata = readMIDI.getMetadata();
 
-            Sequence sequence = readMIDI.getSequenceAsMMatrix(data.get((numberOfInputs + 1) - 1), data.get(2 * (numberOfInputs + 1) - 1), data.get(3 * (numberOfInputs + 1) - 1), false, metadata);
+            Sequence sequence = readMIDI.getSequenceAsMatrix(data.get((numberOfInputs + 1) - 1), data.get(2 * (numberOfInputs + 1) - 1), data.get(3 * (numberOfInputs + 1) - 1), false, metadata, tickScalingConstant);
             readMIDI.play(sequence, 30, true);
 
             String persistenceName = "<PATH>/MusicNN";
@@ -71,12 +73,12 @@ public class Music {
             boolean restore = false;
             NeuralNetwork neuralNetwork;
             if (!restore) {
-                int keyInputSize = data.get(0).get(0).get(0).getRows();
-                int velocityInputSize = data.get((numberOfInputs + 1)).get(0).get(0).getRows();
-                int tickInputSize = data.get(2 * (numberOfInputs + 1)).get(0).get(0).getRows();
-                int keyOutputSize = data.get((numberOfInputs + 1) - 1).get(0).get(0).getRows();
-                int velocityOutputSize = data.get(2 * (numberOfInputs + 1) - 1).get(0).get(0).getRows();
-                int tickOutputSize = data.get(3 * (numberOfInputs + 1) - 1).get(0).get(0).getRows();
+                int keyInputSize = data.get(0).get(0).getRows();
+                int velocityInputSize = data.get((numberOfInputs + 1)).get(0).getRows();
+                int tickInputSize = data.get(2 * (numberOfInputs + 1)).get(0).getRows();
+                int keyOutputSize = data.get((numberOfInputs + 1) - 1).get(0).getRows();
+                int velocityOutputSize = data.get(2 * (numberOfInputs + 1) - 1).get(0).getRows();
+                int tickOutputSize = data.get(3 * (numberOfInputs + 1) - 1).get(0).getRows();
                 neuralNetwork = buildNeuralNetwork(numberOfInputs, keyInputSize, numberOfInputs, velocityInputSize, numberOfInputs, tickInputSize, keyOutputSize, velocityOutputSize, tickOutputSize);
                 neuralNetwork.setNeuralNetworkName("MIDI NN");
             }
@@ -98,9 +100,9 @@ public class Music {
             neuralNetwork.printExpressions();
             neuralNetwork.printGradients();
 
-            String params = "randomOrder = true, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 32, numberOfIterations = 100";
-            HashMap<Integer, HashMap<Integer, MMatrix>> trainingInputs = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, MMatrix>> trainingOutputs = new HashMap<>();
+            String params = "randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 48, numberOfIterations = 100";
+            HashMap<Integer, HashMap<Integer, Matrix>> trainingInputs = new HashMap<>();
+            HashMap<Integer, HashMap<Integer, Matrix>> trainingOutputs = new HashMap<>();
             int trainInputPos = 0;
             int trainOutputPos = 0;
             for (int index = 0; index < 3; index++) {
@@ -133,11 +135,11 @@ public class Music {
                 int predictInputPos = 0;
                 for (int index = 0; index < 3; index++) {
                     for (int index1 = 0; index1 < numberOfInputs + 1; index1++) {
-                        if (index1 < numberOfInputs) currentSample.put(predictInputPos++, data.get(index * (numberOfInputs + 1) + index1).get(0).get(0));
+                        if (index1 < numberOfInputs) currentSample.put(predictInputPos++, data.get(index * (numberOfInputs + 1) + index1).get(0));
                     }
                 }
 
-                for (int sampleIndex = 0; sampleIndex < 500; sampleIndex++) {
+                for (int sampleIndex = 0; sampleIndex < numberOfGeneratedSamples; sampleIndex++) {
 
                     TreeMap<Integer, Matrix> targetMatrices = predictNextSample(sampleIndex, neuralNetworkForPrediction, currentSample, result);
                     int targetKey = targetMatrices.get(0).argmax()[0];
@@ -157,7 +159,7 @@ public class Music {
                 neuralNetworkForPrediction.stop();
 
                 System.out.println("Get MIDI sequence...");
-                Sequence resultSequence = readMIDI.getSequence(result.get(0), result.get(1), result.get(2), metadata.resolution, false);
+                Sequence resultSequence = readMIDI.getSequence(result.get(0), result.get(1), result.get(2), metadata.resolution, false, tickScalingConstant);
                 readMIDI.writeMIDI(resultSequence, path + "Result", ++fileVersion);
                 System.out.println("Play MIDI...");
                 Sequencer sequencer = readMIDI.play(resultSequence, 30, false);
@@ -183,10 +185,9 @@ public class Music {
      * @param currentSample current sample
      * @param result result
      * @return next value
-     * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private TreeMap<Integer, Matrix> predictNextSample(int sampleIndex, NeuralNetwork neuralNetwork, TreeMap<Integer, Matrix> currentSample, HashMap<Integer, HashMap<Integer, Matrix>> result) throws MatrixException, NeuralNetworkException {
+    private TreeMap<Integer, Matrix> predictNextSample(int sampleIndex, NeuralNetwork neuralNetwork, TreeMap<Integer, Matrix> currentSample, HashMap<Integer, HashMap<Integer, Matrix>> result) throws NeuralNetworkException {
         TreeMap<Integer, Matrix> targetSample = neuralNetwork.predictMatrix(new TreeMap<>() {{ putAll(currentSample); }});
         for (Map.Entry<Integer, Matrix> entry : targetSample.entrySet()) result.get(entry.getKey()).put(sampleIndex,entry.getValue());
         return targetSample;
@@ -203,9 +204,9 @@ public class Music {
     private void getNextSample(TreeMap<Integer, Matrix> currentSample, Matrix keyTargetMatrix, Matrix velocityTargetMatrix, Matrix tickTargetMatrix, int numberOfInputs) {
         for (int index = 0; index < 3; index++) {
             int offset = index * numberOfInputs;
-            for (int index1 = 0; index1 < numberOfInputs; index1++) {
-                if (index1 < numberOfInputs - 1) currentSample.put(offset + index1, currentSample.get(offset + index1 + 1));
-                else currentSample.put(offset + index1, index == 0 ? keyTargetMatrix : index == 1 ? velocityTargetMatrix : tickTargetMatrix);
+            for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
+                if (inputIndex < numberOfInputs - 1) currentSample.put(offset + inputIndex, currentSample.get(offset + inputIndex + 1));
+                else currentSample.put(offset + inputIndex, index == 0 ? keyTargetMatrix : index == 1 ? velocityTargetMatrix : tickTargetMatrix);
             }
         }
     }
@@ -234,8 +235,8 @@ public class Music {
         int tickAttentionLayerIndex = buildAttentionModule(neuralNetworkConfiguration, inputTickSize, numberOfTickInputs);
 
         // Final feedforward layers for key, velocity and tick information.
-        int keyHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputKeySize);
-        int velocityHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputVelocitySize);
+        int keyHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX, "tau = 1.25"), "width = " + outputKeySize);
+        int velocityHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX, "tau = 3.1"), "width = " + outputVelocitySize);
         int tickHiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputTickSize);
         neuralNetworkConfiguration.connectLayers(keyAttentionLayerIndex, keyHiddenLayerIndex);
         neuralNetworkConfiguration.connectLayers(velocityAttentionLayerIndex, velocityHiddenLayerIndex);
@@ -297,7 +298,7 @@ public class Music {
         }
 
         // Attention layer for input information.
-        int combinedIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.INPUT_BASED_ATTENTION);
+        int combinedIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
         for (int inputIndex = 0; inputIndex < numberOfInputs; inputIndex++) {
             neuralNetworkConfiguration.connectLayers(encoderIndices[inputIndex], combinedIndex);
         }

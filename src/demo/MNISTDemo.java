@@ -38,10 +38,10 @@ public class MNISTDemo {
 
         NeuralNetwork neuralNetwork;
         try {
-            HashMap<Integer, HashMap<Integer, MMatrix>> trainMNIST = getMNISTData(true);
-            HashMap<Integer, HashMap<Integer, MMatrix>> testMNIST = getMNISTData(false);
+            HashMap<Integer, HashMap<Integer, Matrix>> trainMNIST = getMNISTData(true);
+            HashMap<Integer, HashMap<Integer, Matrix>> testMNIST = getMNISTData(false);
 
-            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).get(0).getRows(), trainMNIST.get(1).get(0).get(0).getRows());
+            neuralNetwork = buildNeuralNetwork(trainMNIST.get(0).get(0).getRows(), trainMNIST.get(1).get(0).getRows());
 
             String persistenceName = "<PATH>/MNIST_NN";
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
@@ -81,8 +81,8 @@ public class MNISTDemo {
                 if (index == 0) {
                     System.out.println("Printing out first 100 predictions...");
                     for (int index1 = 0; index1 < 100; index1++) {
-                        int[] trueIndex = output.get(index1).get(0).argmax();
-                        int[] predictIndex = predict.get(index1).get(0).argmax();
+                        int[] trueIndex = output.get(index1).argmax();
+                        int[] predictIndex = predict.get(index1).argmax();
                         System.out.println("True label: " + trueIndex[0] + ", Predicted label: " + predictIndex[0]);
                     }
                 }
@@ -115,25 +115,28 @@ public class MNISTDemo {
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, isDepthSeparable = true");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 1, isDepthSeparable = false");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.MAX_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, isDepthSeparable = true");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 1, isDepthSeparable = false");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.MAX_POOLING, "filterSize = 2, stride = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.FLATTEN);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 100");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.COS_SIM);
+        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
         neuralNetworkConfiguration.connectLayersSerially();
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
         return neuralNetwork;
+
     }
 
     /**
@@ -147,28 +150,20 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws FileNotFoundException throws exception if matrix cannot be read.
      */
-    private static HashMap<Integer, HashMap<Integer, MMatrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
+    private static HashMap<Integer, HashMap<Integer, Matrix>> getMNISTData(boolean trainSet) throws MatrixException, FileNotFoundException {
         System.out.print("Loading " + (trainSet ? "training" : "test") + " data... ");
         HashSet<Integer> inputCols = new HashSet<>();
         HashSet<Integer> outputCols = new HashSet<>();
         for (int i = 1; i < 785; i++) inputCols.add(i);
         outputCols.add(0);
         String fileName = trainSet ? "<PATH>/mnist_train.csv" : "<PATH>/mnist_test.csv";
-        HashMap<Integer, HashMap<Integer, MMatrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
-        for (MMatrix sample : data.get(0).values()) {
-            int matrixDepth = sample.getDepth();
-            for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
-                Matrix entry = sample.get(inputDepth);
-                entry.divide(255, entry);
-            }
+        HashMap<Integer, HashMap<Integer, Matrix>> data = ReadCSVFile.readFile(fileName, ",", inputCols, outputCols, 0, true, true, 28, 28, false, 0, 0);
+        for (Matrix sample : data.get(0).values()) {
+            sample.divideBy(255);
         }
         for (Integer sampleIndex : data.get(1).keySet()) {
-            MMatrix sample = data.get(1).get(sampleIndex);
-            int depth = sample.getDepth();
-            MMatrix encodedSample = new MMatrix(depth);
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                encodedSample.put(depthIndex, SMatrix.getOneHotVector(10, (int)sample.get(depthIndex).getValue(0,0)));
-            }
+            Matrix sample = data.get(1).get(sampleIndex);
+            Matrix encodedSample = SMatrix.getOneHotVector(10, (int)sample.getValue(0,0, 0));
             data.get(1).put(sampleIndex, encodedSample);
         }
 

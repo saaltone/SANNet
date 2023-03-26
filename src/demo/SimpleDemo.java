@@ -40,10 +40,10 @@ public class SimpleDemo {
         try {
 
             int numberOfNeuralNetworks = 2;
-            HashMap<Integer, HashMap<Integer, MMatrix>> data = getTestData();
+            HashMap<Integer, HashMap<Integer, Matrix>> data = getTestData();
             ArrayList<NeuralNetwork> neuralNetworks = new ArrayList<>();
             for (int index = 0; index < numberOfNeuralNetworks; index++) {
-                NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).get(0).getRows(), data.get(1).get(0).get(0).getRows());
+                NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
                 neuralNetworks.add(neuralNetwork);
                 initializeNeuralNetwork(neuralNetwork, index + 1, data, index == 0);
             }
@@ -57,13 +57,13 @@ public class SimpleDemo {
                 int input2 = random.nextInt(100 - input1);
                 int result = input1 + input2;
 
-                Matrix inputData = new DMatrix(2, 1);
-                inputData.setValue(0, 0, (double)input1 / 100);
-                inputData.setValue(1, 0, (double)input2 / 100);
+                Matrix inputData = new DMatrix(2, 1, 1);
+                inputData.setValue(0, 0, 0, (double)input1 / 100);
+                inputData.setValue(1, 0, 0, (double)input2 / 100);
 
                 for (NeuralNetwork neuralNetwork : neuralNetworks) {
                     Matrix outputData = neuralNetwork.predictMatrix(new TreeMap<>() {{ put(0, inputData); }}).get(0);
-                    int predictedOutput = (int)(outputData.getValue(0, 0) * 100);
+                    int predictedOutput = (int)(outputData.getValue(0, 0, 0) * 100);
                     System.out.println(neuralNetwork.getNeuralNetworkName() + ": " + input1 + " + " + input2 + " = " + result + " (predicted result: " + predictedOutput + "), delta: " + (result - predictedOutput));
                 }
             }
@@ -77,7 +77,7 @@ public class SimpleDemo {
         }
     }
 
-    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, HashMap<Integer, MMatrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, HashMap<Integer, Matrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + id);
         neuralNetwork.setAsRegression();
         neuralNetwork.verboseTraining(10);
@@ -131,12 +131,11 @@ public class SimpleDemo {
      *
      * @return created training and testing samples.
      * @throws NeuralNetworkException throws exception if creation of samples fail.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    private static HashMap<Integer, HashMap<Integer, MMatrix>> getTestData() throws NeuralNetworkException, MatrixException {
-        HashMap<Integer, HashMap<Integer, MMatrix>> data = new HashMap<>();
-        HashMap<Integer, MMatrix> input = new HashMap<>();
-        HashMap<Integer, MMatrix> output = new HashMap<>();
+    private static HashMap<Integer, HashMap<Integer, Matrix>> getTestData() throws NeuralNetworkException {
+        HashMap<Integer, HashMap<Integer, Matrix>> data = new HashMap<>();
+        HashMap<Integer, Matrix> input = new HashMap<>();
+        HashMap<Integer, Matrix> output = new HashMap<>();
         data.put(0, input);
         data.put(1, output);
 
@@ -147,13 +146,13 @@ public class SimpleDemo {
             int input2 = random.nextInt(100 - input1);
             int result = input1 + input2;
 
-            Matrix inputData = new DMatrix(2, 1);
-            Matrix outputData = new DMatrix(1, 1);
-            inputData.setValue(0, 0, (double)input1 / 100);
-            inputData.setValue(1, 0, (double)input2 / 100);
-            input.put(i, new MMatrix(inputData));
-            outputData.setValue(0, 0, (double)result / 100);
-            output.put(i, new MMatrix(outputData));
+            Matrix inputData = new DMatrix(2, 1, 1);
+            Matrix outputData = new DMatrix(1, 1, 1);
+            inputData.setValue(0, 0, 0, (double)input1 / 100);
+            inputData.setValue(1, 0, 0, (double)input2 / 100);
+            input.put(i, inputData);
+            outputData.setValue(0, 0, 0, (double)result / 100);
+            output.put(i, outputData);
         }
         data = DataSplitter.split(data, 0.3, false);
         return data;
