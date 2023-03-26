@@ -104,67 +104,65 @@ public class DynamicParam implements Serializable {
          */
         TypeValue(String param, ParamType type, String newValue) throws DynamicParamException {
             switch (type) {
-                case INT:
+                case INT -> {
                     try {
                         int val = Integer.parseInt(newValue);
                         this.type = type;
                         this.value = val;
-                    }
-                    catch (NumberFormatException exception) {
+                    } catch (NumberFormatException exception) {
                         throw new IllegalArgumentException("Parameter: " + param + ": Cannot convert value to Integer");
                     }
-                    break;
-                case LONG:
+                }
+                case LONG -> {
                     try {
                         long val = Long.parseLong(newValue);
                         this.type = type;
                         this.value = val;
-                    }
-                    catch (NumberFormatException exception) {
+                    } catch (NumberFormatException exception) {
                         throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Long");
                     }
-                    break;
-                case FLOAT:
+                }
+                case FLOAT -> {
                     try {
                         float val = Float.parseFloat(newValue);
                         this.type = type;
                         this.value = val;
-                    }
-                    catch (NumberFormatException exception) {
+                    } catch (NumberFormatException exception) {
                         throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Float");
                     }
-                    break;
-                case DOUBLE:
+                }
+                case DOUBLE -> {
                     try {
                         double val = Double.parseDouble(newValue);
                         this.type = type;
                         this.value = val;
-                    }
-                    catch (NumberFormatException exception) {
+                    } catch (NumberFormatException exception) {
                         throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Double");
                     }
-                    break;
-                case CHAR:
-                    if (newValue.length() != 1) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Character");
+                }
+                case CHAR -> {
+                    if (newValue.length() != 1)
+                        throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Character");
                     char val = newValue.charAt(0);
                     this.type = type;
                     this.value = val;
-                    break;
-                case STRING:
+                }
+                case STRING -> {
                     this.type = type;
                     this.value = newValue;
-                    break;
-                case BOOLEAN:
+                }
+                case BOOLEAN -> {
                     if (newValue.equalsIgnoreCase("TRUE")) this.value = true;
                     else if (newValue.equalsIgnoreCase("FALSE")) this.value = false;
                     else throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to Boolean");
                     this.type = type;
-                    break;
-                case LIST:
+                }
+                case LIST -> {
                     this.type = type;
-                    if (!newValue.startsWith("[") && !newValue.startsWith("]")) throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to List");
+                    if (!newValue.startsWith("[") && !newValue.startsWith("]"))
+                        throw new DynamicParamException("Parameter: " + param + ": Cannot convert value to List");
                     this.value = newValue.replace("[", "").replace("]", "").replace(" ", "").split(";");
-                    break;
+                }
             }
         }
 
