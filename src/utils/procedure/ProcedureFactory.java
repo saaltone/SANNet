@@ -61,19 +61,19 @@ public class ProcedureFactory implements Serializable {
          * Input matrices.
          *
          */
-        private TreeMap<Integer, MMatrix> inputMatrices;
+        private TreeMap<Integer, Matrix> inputMatrices;
 
         /**
          * Input nodes.
          *
          */
-        private final TreeMap<Integer, Node> inputNodes = new TreeMap<>();
+        private final HashMap<Integer, Node> inputNodes = new HashMap<>();
 
         /**
-         * Output nodes.
+         * Output node.
          *
          */
-        private final TreeMap<Integer, Node> outputNodes = new TreeMap<>();
+        private Node outputNode;
 
         /**
          * Nodes of procedure.
@@ -183,94 +183,6 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Synchronizes procedure factories for matrices.
-     *
-     * @param first first matrix
-     * @param result result matrix
-     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
-     */
-    public static void synchronize(MMatrix first, MMatrix result) throws MatrixException {
-        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
-        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
-        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
-        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
-        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
-        if (procedureFactories.size() == 0) return;
-        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
-        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
-        first.setProcedureFactory(procedureFactory);
-        result.setProcedureFactory(procedureFactory);
-    }
-
-    /**
-     * Synchronizes procedure factories for matrices.
-     *
-     * @param first first matrix
-     * @param result result matrix
-     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
-     */
-    public static void synchronize(MMatrix first, Matrix result) throws MatrixException {
-        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
-        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
-        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
-        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
-        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
-        if (procedureFactories.size() == 0) return;
-        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
-        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
-        first.setProcedureFactory(procedureFactory);
-        result.setProcedureFactory(procedureFactory);
-    }
-
-    /**
-     * Synchronizes procedure factories for matrices.
-     *
-     * @param first first matrix
-     * @param second second matrix
-     * @param result result matrix
-     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
-     */
-    public static void synchronize(MMatrix first, MMatrix second, MMatrix result) throws MatrixException {
-        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
-        ProcedureFactory secondProcedureFactory = second.getProcedureFactory();
-        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
-        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
-        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
-        if (secondProcedureFactory != null) procedureFactories.add(secondProcedureFactory);
-        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
-        if (procedureFactories.size() == 0) return;
-        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
-        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
-        first.setProcedureFactory(procedureFactory);
-        second.setProcedureFactory(procedureFactory);
-        result.setProcedureFactory(procedureFactory);
-    }
-
-    /**
-     * Synchronizes procedure factories for matrices.
-     *
-     * @param first first matrix
-     * @param second second matrix
-     * @param result result matrix
-     * @throws MatrixException throws exception if matrices has conflicting procedure factories.
-     */
-    public static void synchronize(MMatrix first, Matrix second, MMatrix result) throws MatrixException {
-        ProcedureFactory firstProcedureFactory = first.getProcedureFactory();
-        ProcedureFactory secondProcedureFactory = second.getProcedureFactory();
-        ProcedureFactory resultProcedureFactory = result.getProcedureFactory();
-        HashSet<ProcedureFactory> procedureFactories = new HashSet<>();
-        if (firstProcedureFactory != null) procedureFactories.add(firstProcedureFactory);
-        if (secondProcedureFactory != null) procedureFactories.add(secondProcedureFactory);
-        if (resultProcedureFactory != null) procedureFactories.add(resultProcedureFactory);
-        if (procedureFactories.size() == 0) return;
-        if (procedureFactories.size() > 1) throw new MatrixException("Matrices have conflicting procedure factories.");
-        ProcedureFactory procedureFactory = (ProcedureFactory)procedureFactories.toArray()[0];
-        first.setProcedureFactory(procedureFactory);
-        second.setProcedureFactory(procedureFactory);
-        result.setProcedureFactory(procedureFactory);
-    }
-
-    /**
      * Returns procedure
      *
      * @param forwardProcedure reference to class that defines forward procedure.
@@ -300,13 +212,14 @@ public class ProcedureFactory implements Serializable {
             if (previousExpression != null) previousExpression.setNextExpression(expression);
             previousExpression = expression;
         }
+
         previousExpression = null;
         for (Expression expression : nextProcedureData.gradients) {
             if (previousExpression != null) previousExpression.setPreviousExpression(expression);
             previousExpression = expression;
         }
 
-        return new Procedure(forwardProcedure.getProcedureName(), nextProcedureData.inputNodes, nextProcedureData.outputNodes, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.dependentNodes, forwardProcedure.getParameterMatrices(), forwardProcedure.getStopGradients(), forwardProcedure.isReversedInput(), forwardProcedure.isJoinedInput());
+        return new Procedure(forwardProcedure.getProcedureName(), nextProcedureData.inputNodes, nextProcedureData.outputNode, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.dependentNodes, forwardProcedure.getParameterMatrices(), forwardProcedure.getStopGradients(), forwardProcedure.isReversedInput(), forwardProcedure.isJoinedInput());
     }
 
     /**
@@ -325,9 +238,9 @@ public class ProcedureFactory implements Serializable {
      *
      * @param inputMatrices input matrices.
      */
-    private void newProcedure(ProcedureData procedureData, TreeMap<Integer, MMatrix> inputMatrices) {
+    private void newProcedure(ProcedureData procedureData, TreeMap<Integer, Matrix> inputMatrices) {
         procedureData.inputMatrices = inputMatrices;
-        for (MMatrix mMatrix : inputMatrices.values()) mMatrix.setProcedureFactory(this, true);
+        for (Matrix matrix : inputMatrices.values()) matrix.setProcedureFactory(this);
         currentExpressionID = 0;
         currentProcedureData = procedureData;
     }
@@ -335,18 +248,12 @@ public class ProcedureFactory implements Serializable {
     /**
      * Finalizes building current procedure.
      *
-     * @param outputMatrices output matrices.
+     * @param outputMatrix output matrix.
      * @throws MatrixException throws exception if setting of output matrix and node fails.
      */
-    private void endProcedure(ProcedureData procedureData, MMatrix outputMatrices) throws MatrixException {
-        if (!nodeRegister.contains(outputMatrices)) {
-            int depth = outputMatrices.getDepth();
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                Matrix matrix = outputMatrices.get(depthIndex);
-                if (!nodeRegister.contains(matrix)) throw new MatrixException("Setting of output node failed. No node corresponding output matrix is found.");
-                procedureData.outputNodes.put(depthIndex, nodeRegister.getNode(matrix));
-            }
-        } else procedureData.outputNodes.put(0, nodeRegister.getNode(outputMatrices));
+    private void endProcedure(ProcedureData procedureData, Matrix outputMatrix) throws MatrixException {
+        if (!nodeRegister.contains(outputMatrix)) throw new MatrixException("Setting of output node failed. No node corresponding output matrix is found.");
+        procedureData.outputNode = nodeRegister.getNode(outputMatrix);
         defineGradientPath(procedureData);
         currentProcedureData = null;
     }
@@ -359,7 +266,7 @@ public class ProcedureFactory implements Serializable {
     private void defineGradientPath(ProcedureData procedureData) {
         Stack<Node> resultNodes = new Stack<>();
         HashMap<Node, Expression> reverseExpressionMap = new HashMap<>(procedureData.reverseExpressionMap);
-        for (Node outputNode : procedureData.outputNodes.values()) resultNodes.push(outputNode);
+        resultNodes.push(procedureData.outputNode);
         while (!resultNodes.empty()) {
             Expression expression = reverseExpressionMap.remove(resultNodes.pop());
             if (expression != null) {
@@ -401,6 +308,7 @@ public class ProcedureFactory implements Serializable {
      */
     private void updateNodeLink(ProcedureData nextProcedureData, Node fromResultNode, Node toArgumentNode) throws MatrixException {
         if (fromResultNode.getRows() != toArgumentNode.getRows() || fromResultNode.getColumns() != toArgumentNode.getColumns()) throw new MatrixException("Dimensions of from result node " + fromResultNode.getRows() + "x" + fromResultNode.getColumns() + " and to argument node " + toArgumentNode.getRows() + "x" + toArgumentNode.getColumns() + " are not matching.");
+
         fromResultNode.setToArgumentNode(toArgumentNode);
         nextProcedureData.dependentNodes.add(fromResultNode);
 
@@ -437,10 +345,10 @@ public class ProcedureFactory implements Serializable {
      * @return defined node.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private Node defineNode(Matrix matrix, boolean asSingleNode) throws MatrixException {
+    private Node defineNode(Matrix matrix, boolean isSingleNode) throws MatrixException {
         currentNodeID += nodeRegister.nodeExists(matrix) ? 0 : 1;
 
-        Node node = nodeRegister.defineNode(matrix, asSingleNode || constantMatrices.contains(matrix), currentExpressionID, currentNodeID);
+        Node node = nodeRegister.defineNode(matrix, isSingleNode || constantMatrices.contains(matrix), currentNodeID);
 
         attachMatrixToInputNode(currentProcedureData.inputMatrices, matrix, currentProcedureData.inputNodes, node);
 
@@ -457,60 +365,9 @@ public class ProcedureFactory implements Serializable {
      * @param inputNodes input nodes.
      * @param node node.
      */
-    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, Matrix matrix, TreeMap<Integer, Node> inputNodes, Node node) {
-        for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            MMatrix inputMMatrix = entry.getValue();
-            if (inputMMatrix.contains(matrix)) inputNodes.put(depthIndex, node);
-            int depth = inputMMatrix.getDepth();
-            for (int depthIndex1 = 0; depthIndex1 < depth; depthIndex1++) {
-                Matrix inputMatrix = inputMMatrix.get(depthIndex1);
-                if (inputMatrix == matrix) inputNodes.put(depthIndex, node);
-            }
-        }
-    }
-
-    /**
-     * Defines node for procedure. Sets input and result nodes as non-constant nodes.
-     *
-     * @param mMatrix multi-matrix for node.
-     * @return defined node.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    private Node defineNode(MMatrix mMatrix) throws MatrixException {
-        boolean isSingleNode = false;
-
-        int matrixDepth = mMatrix.getDepth();
-        for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
-            if (constantMatrices.contains(mMatrix.get(inputDepth))) {
-                isSingleNode = true;
-                break;
-            }
-        }
-
-        currentNodeID += nodeRegister.nodeExists(mMatrix) ? 0 : 1;
-
-        Node node = nodeRegister.defineNode(mMatrix, isSingleNode, currentExpressionID, currentNodeID);
-
-        attachMatrixToInputNode(currentProcedureData.inputMatrices, mMatrix, currentProcedureData.inputNodes, node);
-
-        currentProcedureData.nodes.add(node);
-
-        return node;
-    }
-
-    /**
-     * Attaches multi-matrix to input node.
-     *
-     * @param inputMatrices input matrices
-     * @param mMatrix multi-matrix to be attached to input node.
-     * @param node node.
-     */
-    private void attachMatrixToInputNode(TreeMap<Integer, MMatrix> inputMatrices, MMatrix mMatrix, TreeMap<Integer, Node> inputNodes, Node node) {
-        for (Map.Entry<Integer, MMatrix> entry : inputMatrices.entrySet()) {
-            int depthIndex = entry.getKey();
-            MMatrix inputMMatrix = entry.getValue();
-            if (inputMMatrix == mMatrix) inputNodes.put(depthIndex, node);
+    private void attachMatrixToInputNode(TreeMap<Integer, Matrix> inputMatrices, Matrix matrix, HashMap<Integer, Node> inputNodes, Node node) {
+        for (Map.Entry<Integer, Matrix> entry : inputMatrices.entrySet()) {
+            if (entry.getValue() == matrix) inputNodes.put(entry.getKey(), node);
         }
     }
 
@@ -582,34 +439,6 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records add expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createAddExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new AddExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records add expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createAddExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new AddExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
      * Records subtract expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
@@ -619,34 +448,6 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if adding of expression fails.
      */
     public void createSubtractExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new SubtractExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records subtract expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createSubtractExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new SubtractExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records subtract expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createSubtractExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new SubtractExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
     }
@@ -666,34 +467,6 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records dot expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createDotExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new DotExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records dot expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createDotExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new DotExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
      * Records multiply expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
@@ -703,34 +476,6 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if adding of expression fails.
      */
     public void createMultiplyExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MultiplyExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records multiply expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createMultiplyExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MultiplyExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records multiply expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createMultiplyExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new MultiplyExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
     }
@@ -750,34 +495,6 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records divide expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createDivideExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new DivideExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
-     * Records divide expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createDivideExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new DivideExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result)));
-    }
-
-    /**
      * Records convolve expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
@@ -786,11 +503,12 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride of convolution operation.
      * @param dilation dilation step size.
+     * @param isDepthSeparable if true convolution is depth separable
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation) throws MatrixException {
+    public void createConvolveExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, boolean isDepthSeparable) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new ConvolveExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), stride, dilation));
+        storeExpression(new ConvolveExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), stride, dilation, isDepthSeparable));
     }
 
     /**
@@ -802,11 +520,12 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param stride stride for operation.
      * @param dilation dilation step size.
+     * @param isDepthSeparable if true convolution is depth separable
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation) throws MatrixException {
+    public void createCrosscorrelateExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, int stride, int dilation, boolean isDepthSeparable) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new CrosscorrelateExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), stride, dilation));
+        storeExpression(new CrosscorrelateExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), stride, dilation, isDepthSeparable));
     }
 
     /**
@@ -908,11 +627,12 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createSumExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException {
+    public void createSumExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), true));
+        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineNode(result), executeAsSingleStep));
     }
 
     /**
@@ -934,11 +654,12 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMeanExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException {
+    public void createMeanExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), true));
+        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), executeAsSingleStep));
     }
 
     /**
@@ -960,11 +681,27 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createVarianceExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException {
+    public void createVarianceExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), true));
+        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep));
+    }
+
+    /**
+     * Records standard deviation expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @throws MatrixException throws exception if adding of expression fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException, DynamicParamException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep));
     }
 
     /**
@@ -979,20 +716,6 @@ public class ProcedureFactory implements Serializable {
     public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException, DynamicParamException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false));
-    }
-
-    /**
-     * Records standard deviation expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param result result of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void createStandardDeviationExpression(double expressionLock, MMatrix argument1, Matrix result) throws MatrixException, DynamicParamException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), true));
     }
 
     /**
@@ -1024,20 +747,6 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
-     * Records unary (single argument) expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param result result of expression.
-     * @param unaryFunction UnaryFunction of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createUnaryFunctionExpression(double expressionLock, MMatrix argument1, MMatrix result, UnaryFunction unaryFunction) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new UnaryFunctionExpression(currentExpressionID++, defineNode(argument1), defineNode(result), unaryFunction));
-    }
-
-    /**
      * Records binary (two argument) expression to procedure factory.
      *
      * @param expressionLock unique expression lock key.
@@ -1048,36 +757,6 @@ public class ProcedureFactory implements Serializable {
      * @throws MatrixException throws exception if adding of expression fails.
      */
     public void createBinaryFunctionExpression(double expressionLock, Matrix argument1, Matrix argument2, Matrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new BinaryFunctionExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), binaryFunction));
-    }
-
-    /**
-     * Records binary (two argument) expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @param binaryFunction BinaryFunction of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createBinaryFunctionExpression(double expressionLock, MMatrix argument1, Matrix argument2, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new BinaryFunctionExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), binaryFunction));
-    }
-
-    /**
-     * Records binary (two argument) expression to procedure factory.
-     *
-     * @param expressionLock unique expression lock key.
-     * @param argument1 first argument of expression.
-     * @param argument2 second argument of expression.
-     * @param result result of expression.
-     * @param binaryFunction BinaryFunction of expression.
-     * @throws MatrixException throws exception if adding of expression fails.
-     */
-    public void createBinaryFunctionExpression(double expressionLock, MMatrix argument1, MMatrix argument2, MMatrix result, BinaryFunction binaryFunction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new BinaryFunctionExpression(currentExpressionID++, defineNode(argument1), defineNode(argument2), defineNode(result), binaryFunction));
     }
@@ -1105,11 +784,12 @@ public class ProcedureFactory implements Serializable {
      * @param result result of expression.
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createUnjoinExpression(double expressionLock, Matrix argument1, Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
+    public void createUnjoinExpression(double expressionLock, Matrix argument1, Matrix result, int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new UnjoinExpression(currentExpressionID++, defineNode(argument1), defineNode(result), unjoinAtRow, unjoinAtColumn));
+        storeExpression(new UnjoinExpression(currentExpressionID++, defineNode(argument1), defineNode(result), unjoinAtRow, unjoinAtColumn, unjoinAtDepth));
     }
 
     /**

@@ -7,7 +7,6 @@ package utils.procedure;
 
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -35,7 +34,7 @@ public interface ForwardProcedure {
      * @return input matrices for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException;
+    TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException;
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
@@ -44,7 +43,7 @@ public interface ForwardProcedure {
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    MMatrix getForwardProcedure() throws MatrixException, DynamicParamException;
+    Matrix getForwardProcedure() throws MatrixException, DynamicParamException;
 
     /**
      * Returns parameter matrices.
