@@ -311,18 +311,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Replaces next neural network layer
-     *
-     * @param neuralNetworkLayer neural network layer.
-     * @param newNeuralNetworkLayer new neural network layer.
-     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
-     */
-    public void replaceNextLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException {
-        int nextLayerIndex = getLayerIndex(neuralNetworkLayer, nextLayers);
-        nextLayers.put(nextLayerIndex, newNeuralNetworkLayer);
-    }
-
-    /**
      * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
@@ -374,20 +362,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
         previousLayers.remove(previousLayerIndex);
         inputSequences.remove(previousLayerIndex);
         inputGradientSequences.remove(previousLayerIndex);
-    }
-
-    /**
-     * Replaces previous neural network layer
-     *
-     * @param neuralNetworkLayer neural network layer.
-     * @param newNeuralNetworkLayer new neural network layer.
-     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
-     */
-    public void replacePreviousLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException {
-        int previousLayerIndex = getLayerIndex(neuralNetworkLayer, previousLayers);
-        previousLayers.put(previousLayerIndex, newNeuralNetworkLayer);
-        inputSequences.put(previousLayerIndex, newNeuralNetworkLayer.getLayerOutputs());
-        inputGradientSequences.put(previousLayerIndex, newNeuralNetworkLayer.getLayerOutputGradients());
     }
 
     /**
@@ -487,9 +461,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Sets layer outputs.
      *
      * @param newLayerOutputs layer outputs.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    protected void setLayerOutputs(Sequence newLayerOutputs) throws MatrixException {
+    protected void setLayerOutputs(Sequence newLayerOutputs) {
         layerOutputs.reset();
         layerOutputs.putAll(newLayerOutputs);
     }
@@ -517,9 +490,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Sets layer input gradients.
      *
      * @param newLayerInputGradients layer input gradients.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    protected void setLayerOutputGradients(Sequence newLayerInputGradients) throws MatrixException {
+    protected void setLayerOutputGradients(Sequence newLayerInputGradients) {
         layerOutputGradients.reset();
         layerOutputGradients.putAll(newLayerInputGradients);
     }
@@ -605,9 +577,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Executes training step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs training inputs for layer.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public void train(Sequence inputs) throws MatrixException {
+    public void train(Sequence inputs) {
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
         train();
@@ -627,9 +598,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      * Executes predict step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs predict inputs for layer.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    public void predict(Sequence inputs) throws MatrixException {
+    public void predict(Sequence inputs) {
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
         predict();

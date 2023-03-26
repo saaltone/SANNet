@@ -189,8 +189,10 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public void reset() throws MatrixException {
         super.reset();
-        if (procedure != null) procedure.reset();
-        if (procedure != null) procedure.resetDependencies(isTraining() || resetDependencies);
+        if (procedure != null) {
+            procedure.reset();
+            procedure.resetDependencies(isTraining() || resetDependencies);
+        }
     }
 
     /**
@@ -331,7 +333,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException {
         HashMap<Integer, Matrix> otherNeuralNetworkWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
         for (Map.Entry<Integer, Matrix> entry : weightsMap.entrySet()) {
-            entry.getValue().multiply(1 - tau).add(otherNeuralNetworkWeightsMap.get(entry.getKey()).multiply(tau), entry.getValue());
+            entry.getValue().multiply(1 - tau).addBy(otherNeuralNetworkWeightsMap.get(entry.getKey()).multiply(tau));
         }
     }
 
