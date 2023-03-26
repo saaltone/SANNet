@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * Implements Deep Deterministic Policy Gradient (DDPG) algorithm.<br>
- * Reference: https://towardsdatascience.com/deep-deterministic-policy-gradient-ddpg-theory-and-implementation-747a3010e82f <br>
+ * Reference: <a href="https://towardsdatascience.com/deep-deterministic-policy-gradient-ddpg-theory-and-implementation-747a3010e82f">...</a> <br>
  *
  */
 public class DDPG extends AbstractPolicyGradient {

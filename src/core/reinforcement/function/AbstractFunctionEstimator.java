@@ -404,7 +404,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @return max value of state.
      */
     public double min(Matrix stateValues) {
-        return stateValues.getValue(argmin(stateValues), 0);
+        return stateValues.getValue(argmin(stateValues), 0, 0);
     }
 
     /**
@@ -415,7 +415,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @return min value of state.
      */
     public double min(Matrix stateValues, HashSet<Integer> availableActions) {
-        return stateValues.getValue(argmin(stateValues, availableActions), 0);
+        return stateValues.getValue(argmin(stateValues, availableActions), 0, 0);
     }
 
     /**
@@ -427,8 +427,9 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     public int argmin(Matrix stateValues) {
         int minAction = -1;
         double minValue = Double.POSITIVE_INFINITY;
-        for (int action = 0; action < getNumberOfActions(); action++) {
-            double actionValue = stateValues.getValue(action, 0);
+        int numberOfActions = getNumberOfActions();
+        for (int action = 0; action < numberOfActions; action++) {
+            double actionValue = stateValues.getValue(action, 0, 0);
             if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
                 minValue = actionValue;
                 minAction = action;
@@ -448,7 +449,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
         int minAction = -1;
         double minValue = Double.POSITIVE_INFINITY;
         for (int action : availableActions) {
-            double actionValue = stateValues.getValue(action, 0);
+            double actionValue = stateValues.getValue(action, 0, 0);
             if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
                 minValue = actionValue;
                 minAction = action;
@@ -464,7 +465,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @return max value of state.
      */
     public double max(Matrix stateValues) {
-        return stateValues.getValue(argmax(stateValues), 0);
+        return stateValues.getValue(argmax(stateValues), 0, 0);
     }
 
     /**
@@ -475,7 +476,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @return max value of state.
      */
     public double max(Matrix stateValues, HashSet<Integer> availableActions) {
-        return stateValues.getValue(argmax(stateValues, availableActions), 0);
+        return stateValues.getValue(argmax(stateValues, availableActions), 0, 0);
     }
 
     /**
@@ -487,8 +488,9 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     public int argmax(Matrix stateValues) {
         int maxAction = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
-        for (int action = 0; action < getNumberOfActions(); action++) {
-            double actionValue = stateValues.getValue(action, 0);
+        int numberOfActions = getNumberOfActions();
+        for (int action = 0; action < numberOfActions; action++) {
+            double actionValue = stateValues.getValue(action, 0, 0);
             if (maxValue == Double.NEGATIVE_INFINITY || maxValue < actionValue) {
                 maxValue = actionValue;
                 maxAction = action;
@@ -508,7 +510,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
         int maxAction = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
         for (int action : availableActions) {
-            double actionValue = stateValues.getValue(action, 0);
+            double actionValue = stateValues.getValue(action, 0, 0);
             if (maxValue == Double.NEGATIVE_INFINITY || maxValue < actionValue) {
                 maxValue = actionValue;
                 maxAction = action;

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Implements tabular based state action function estimator.<br>
- * Reference for polynomial learning rate: https://www.jmlr.org/papers/volume5/evendar03a/evendar03a.pdf <br>
+ * Reference for polynomial learning rate: <a href="https://www.jmlr.org/papers/volume5/evendar03a/evendar03a.pdf">...</a> <br>
  *
  */
 public class TabularFunctionEstimator extends AbstractFunctionEstimator {
@@ -185,9 +185,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private void setStateValues(HashMap<Matrix, Matrix> newStateValues) throws MatrixException {
         stateValues.clear();
         for (Map.Entry<Matrix, Matrix> entry : newStateValues.entrySet()) {
-            Matrix currentState = entry.getKey();
-            Matrix stateValue = entry.getValue();
-            stateValues.put(currentState.copy(), stateValue.copy());
+            stateValues.put(entry.getKey().copy(), entry.getValue().copy());
         }
     }
 
@@ -209,11 +207,9 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     private Matrix getStateValue(Matrix state) throws MatrixException {
         for (Map.Entry<Matrix, Matrix> entry : stateValues.entrySet()) {
-            Matrix currentState = entry.getKey();
-            Matrix stateValue = entry.getValue();
-            if (state.equals(currentState)) return stateValue;
+            if (state.equals(entry.getKey())) return entry.getValue();
         }
-        Matrix stateValue = new DMatrix(numberOfActions, 1, Initialization.RANDOM);
+        Matrix stateValue = new DMatrix(numberOfActions, 1, 1, Initialization.RANDOM);
         stateValues.put(state.copy(), stateValue);
         return stateValue;
     }
@@ -301,13 +297,11 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     public void update() throws MatrixException, AgentException, DynamicParamException, NeuralNetworkException, IOException, ClassNotFoundException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
         for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
-            StateTransition stateTransition = entry.getKey();
-            Matrix stateValueEntry = entry.getValue();
-            Matrix stateValue = predictPolicyValues(stateTransition, false);
-            Matrix error = stateValue.subtract(stateValueEntry);
+            Matrix stateValue = predictPolicyValues(entry.getKey(), false);
+            Matrix error = stateValue.subtract(entry.getValue());
             Matrix stateError = stateErrors.get(stateValue);
             if (stateError == null) stateErrors.put(stateValue, error);
-            else stateError.add(error, stateError);
+            else stateError.addBy(error);
         }
         for (Map.Entry<Matrix, Matrix> entry : stateErrors.entrySet()) {
             Matrix stateValue = entry.getKey();

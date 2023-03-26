@@ -17,10 +17,10 @@ import java.util.*;
 /**
  * Implements MCTS policy.<br>
  * <br>
- * Reference: https://medium.com/@jonathan_hui/monte-carlo-tree-search-mcts-in-alphago-zero-8a403588276a <br>
- * Reference: https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5 <br>
- * Reference: https://lczero.org/blog/2018/12/alphazero-paper-and-lc0-v0191/ <br>
- * Reference: https://github.com/suragnair/alpha-zero-general/blob/master/MCTS.py <br>
+ * Reference: <a href="https://medium.com/@jonathan_hui/monte-carlo-tree-search-mcts-in-alphago-zero-8a403588276a">...</a> <br>
+ * Reference: <a href="https://medium.com/oracledevs/lessons-from-alphazero-part-3-parameter-tweaking-4dceb78ed1e5">...</a> <br>
+ * Reference: <a href="https://lczero.org/blog/2018/12/alphazero-paper-and-lc0-v0191/">...</a> <br>
+ * Reference: <a href="https://github.com/suragnair/alpha-zero-general/blob/master/MCTS.py">...</a> <br>
  *
  */
 public class MCTSPolicy implements ExecutablePolicy, Serializable {
@@ -369,7 +369,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
 
         /**
          * Returns Dirichlet distribution.<br>
-         * Reference: https://stats.stackexchange.com/questions/69210/drawing-from-dirichlet-distribution<br>
+         * Reference: <a href="https://stats.stackexchange.com/questions/69210/drawing-from-dirichlet-distribution">...</a><br>
          *
          * @param shape shape parameter.
          * @param availableActions available actions.
@@ -394,7 +394,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
 
         /**
          * Samples random variable from gamma distribution.<br>
-         * Reference: https://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/
+         * Reference: <a href="https://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/">...</a>
          *
          * @param shape shape (alpha) parameter
          * @param scale scale (beta) parameter
@@ -424,9 +424,9 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          */
         private void updateActionProbabilities(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
             for (Integer action : availableActions) {
-                double actionValue = policyValueMatrix.getValue(action, 0);
+                double actionValue = policyValueMatrix.getValue(action, 0, 0);
                 MCTSPolicy.Action mctsAction = actions.get(action);
-                if (mctsAction != null) actions.get(action).setActionProbability(actionValue);
+                if (mctsAction != null) mctsAction.setActionProbability(actionValue);
                 else actions.put(action, new Action(this, action, actionValue));
             }
             double cumulativeValue = 0;

@@ -158,8 +158,8 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     private Matrix getPolicyValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1);
-        policyValues.setValue(stateTransition.action, 0, getPolicyValue(stateTransition));
+        Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        policyValues.setValue(stateTransition.action, 0, 0, getPolicyValue(stateTransition));
         return policyValues;
     }
 

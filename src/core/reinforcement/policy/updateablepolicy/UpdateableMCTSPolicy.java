@@ -114,7 +114,7 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @return policy value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        return -stateTransition.value * Math.log(getValues(getFunctionEstimator(), stateTransition, false).getValue(stateTransition.action, 0) + 10E-6);
+        return -stateTransition.value * Math.log(getValues(getFunctionEstimator(), stateTransition, false).getValue(stateTransition.action, 0, 0) + 10E-6);
     }
 
 }

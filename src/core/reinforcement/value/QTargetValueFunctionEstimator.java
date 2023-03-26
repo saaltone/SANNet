@@ -107,7 +107,7 @@ public class QTargetValueFunctionEstimator extends AbstractActionValueFunctionEs
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
-        return getValues(getFunctionEstimator().getTargetFunctionEstimator(), nextStateTransition).getValue(getFunctionEstimator().argmax(getValues(getFunctionEstimator(), nextStateTransition), nextStateTransition.environmentState.availableActions()), 0);
+        return getValues(getFunctionEstimator().getTargetFunctionEstimator(), nextStateTransition).getValue(getFunctionEstimator().argmax(getValues(getFunctionEstimator(), nextStateTransition), nextStateTransition.environmentState.availableActions()), 0, 0);
     }
 
     /**

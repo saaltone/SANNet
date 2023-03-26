@@ -133,7 +133,7 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         TreeSet<ActionValueTuple> stateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
         for (Integer action : availableActions) {
-            stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? policyValueMatrix.getValue(action, 0) : Math.exp(policyValueMatrix.getValue(action, 0))));
+            stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? policyValueMatrix.getValue(action, 0, 0) : Math.exp(policyValueMatrix.getValue(action, 0, 0))));
         }
         return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
     }

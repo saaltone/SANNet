@@ -291,7 +291,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      */
     private void updateTargetValues(FunctionEstimator currentFunctionEstimator, StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         Matrix targetValues = getValues(currentFunctionEstimator, stateTransition);
-        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
+        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, 0, stateTransition.tdTarget);
         currentFunctionEstimator.storeStateActionValues(stateTransition, targetValues);
     }
 
@@ -306,7 +306,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
     public double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetPolicyValues = getValues(getPolicyFunctionEstimator(), nextStateTransition);
         int targetAction = getPolicyFunctionEstimator().argmax(targetPolicyValues, nextStateTransition.environmentState.availableActions());
-        return (getFunctionEstimator2() != null ? getClippedValue(nextStateTransition, targetAction) : getTargetValue(getFunctionEstimator(), nextStateTransition, targetAction)) - softQAlphaMatrix.getValue(0, 0) * Math.log(targetPolicyValues.getValue(targetAction, 0));
+        return (getFunctionEstimator2() != null ? getClippedValue(nextStateTransition, targetAction) : getTargetValue(getFunctionEstimator(), nextStateTransition, targetAction)) - softQAlphaMatrix.getValue(0, 0, 0) * Math.log(targetPolicyValues.getValue(targetAction, 0, 0));
     }
 
     /**
@@ -335,7 +335,7 @@ public class SoftQValueFunctionEstimator extends AbstractActionValueFunctionEsti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private double getTargetValue(FunctionEstimator currentFunctionEstimator, StateTransition nextStateTransition, int targetAction) throws MatrixException, NeuralNetworkException {
-        return getValues(currentFunctionEstimator.getTargetFunctionEstimator(), nextStateTransition).getValue(targetAction, 0);
+        return getValues(currentFunctionEstimator.getTargetFunctionEstimator(), nextStateTransition).getValue(targetAction, 0, 0);
     }
 
     /**

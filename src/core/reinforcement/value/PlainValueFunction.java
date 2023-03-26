@@ -226,13 +226,11 @@ public class PlainValueFunction extends AbstractValueFunction {
         double mean = 0;
         for (StateTransition stateTransition : stateTransitions) mean += stateTransition.tdTarget;
         mean /= size;
-
         averageMean = averageMean == Double.MIN_VALUE ? mean : tau * averageMean + (1 - tau) * mean;
 
         double std = 0;
         for (StateTransition stateTransition : stateTransitions) std += Math.pow(stateTransition.tdTarget - mean, 2);
         std = Math.sqrt(std / (size - 1));
-
         averageStandardDeviation = averageStandardDeviation == Double.MIN_VALUE ? std : tau * averageStandardDeviation + (1 - tau) * std;
 
         for (StateTransition stateTransition : stateTransitions) {

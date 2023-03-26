@@ -12,7 +12,6 @@ import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParamException;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -92,9 +91,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition, false);
-        double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
-        return Math.log(currentPolicyValue) * stateTransition.advantage;
+        return Math.log(getValues(getFunctionEstimator(), stateTransition, false).getValue(stateTransition.action, 0, 0)) * stateTransition.advantage;
     }
 
 }

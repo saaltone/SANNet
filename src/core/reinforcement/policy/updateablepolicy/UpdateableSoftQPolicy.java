@@ -113,7 +113,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
         super(executablePolicyType, functionEstimator, params);
         if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
         this.softQAlphaMatrix = softQAlphaMatrix;
-        this.softQAlphaMatrix.setValue(0, 0, softQAlpha);
+        this.softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
     }
 
     /**
@@ -226,9 +226,8 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
         Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition, false);
-        double currentPolicyValue = currentPolicyValues.getValue(stateTransition.action, 0);
         if (isAutoSoftAlpha()) incrementPolicyValues(currentPolicyValues, stateTransition.action, stateTransition.environmentState.availableActions().size());
-        return getSoftAlpha() * Math.log(currentPolicyValue) - stateTransition.tdTarget;
+        return getSoftAlpha() * Math.log(currentPolicyValues.getValue(stateTransition.action, 0, 0)) - stateTransition.tdTarget;
     }
 
     /**
@@ -238,7 +237,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @param action action.
      */
     private void incrementPolicyValues(Matrix policyValues, int action, int actionsAvailable) {
-        alphaLossGradient += -Math.log(policyValues.getValue(action, 0)) - 0.98 * Math.log(actionsAvailable);
+        alphaLossGradient += -Math.log(policyValues.getValue(action, 0, 0)) - 0.98 * Math.log(actionsAvailable);
         alphaLossGradientCount++;
     }
 
@@ -253,9 +252,9 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
         // https://raw.githubusercontent.com/BY571/Deep-Reinforcement-Learning-Algorithm-Collection/master/ContinousControl/SAC.ipynb
         // self.target_entropy = -action_size  # -dim(A)
         // alpha_loss = - (self.log_alpha * (log_pis + self.target_entropy).detach()).mean()
-        softQAlphaMatrix.setValue(0,0, softQAlpha);
+        softQAlphaMatrix.setValue(0,0, 0, softQAlpha);
         optimizer.optimize(softQAlphaMatrix, new DMatrix(-alphaLossGradient / (double)alphaLossGradientCount));
-        softQAlpha = softQAlphaMatrix.getValue(0,0);
+        softQAlpha = softQAlphaMatrix.getValue(0,0, 0);
         if (++softQAlphaVerboseCount == softQAlphaVerboseInterval && softQAlphaVerboseInterval > 0) {
             System.out.println("Soft Q alpha: " + softQAlpha);
             softQAlphaVerboseCount = 0;

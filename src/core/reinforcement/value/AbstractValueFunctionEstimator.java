@@ -151,7 +151,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        stateTransition.value = getValues(getFunctionEstimator(), stateTransition).getValue(getValueFunctionIndex(stateTransition), 0);
+        stateTransition.value = getValues(getFunctionEstimator(), stateTransition).getValue(getValueFunctionIndex(stateTransition), 0, 0);
     }
 
     /**
@@ -249,7 +249,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      */
     private Matrix getTargetValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         Matrix targetValues = getValues(getFunctionEstimator(), stateTransition).copy();
-        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, stateTransition.tdTarget);
+        targetValues.setValue(getValueFunctionIndex(stateTransition), 0, 0, stateTransition.tdTarget);
         return targetValues;
     }
 

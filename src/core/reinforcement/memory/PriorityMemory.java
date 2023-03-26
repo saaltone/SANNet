@@ -17,7 +17,7 @@ import java.util.TreeSet;
 /**
  * Implements prioritized replay memory based on search tree structure.<br>
  * <br>
- * Reference: https://arxiv.org/pdf/1511.05952.pdf<br>
+ * Reference: <a href="https://arxiv.org/pdf/1511.05952.pdf">...</a><br>
  *
  */
 public class PriorityMemory implements Memory, Serializable {
