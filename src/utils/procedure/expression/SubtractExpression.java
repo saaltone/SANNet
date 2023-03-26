@@ -17,7 +17,7 @@ import java.io.Serializable;
  * Implements expression for subtraction operation.<br>
  *
  */
-public class SubtractExpression extends AbstractBinaryExpression implements Serializable {
+public class SubtractExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to subtract matrix operation.
@@ -41,7 +41,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        subtractMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2));
+        subtractMatrixOperation = new BinaryMatrixOperation(rows, columns, argument1.getDepth(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2));
     }
 
     /**
@@ -68,7 +68,7 @@ public class SubtractExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        subtractMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, subtractMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**

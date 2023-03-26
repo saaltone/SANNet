@@ -10,13 +10,11 @@ import utils.matrix.operation.AveragePoolGradientMatrixOperation;
 import utils.matrix.operation.AveragePoolMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for average pooling operation.<br>
  *
  */
-public class AveragePoolExpression extends AbstractUnaryExpression implements Serializable {
+public class AveragePoolExpression extends AbstractUnaryExpression {
 
     /**
      * Reference to average pool matrix operation.
@@ -44,8 +42,8 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
     public AveragePoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("AVERAGE_POOL", "AVERAGE_POOL", expressionID, argument1, result);
 
-        averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(),filterRowSize, filterColumnSize, stride);
-        averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), filterRowSize, filterColumnSize, stride);
+        averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
+        averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
     }
 
     /**
@@ -72,7 +70,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression implements Se
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        averagePoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, averagePoolMatrixOperation.apply(argument1.getMatrix(sampleIndex)));
     }
 
     /**

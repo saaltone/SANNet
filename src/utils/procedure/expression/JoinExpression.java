@@ -9,13 +9,11 @@ import utils.matrix.MatrixException;
 import utils.matrix.operation.JoinMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for join function.<br>
  *
  */
-public class JoinExpression extends AbstractBinaryExpression implements Serializable {
+public class JoinExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to join matrix operation.
@@ -36,7 +34,7 @@ public class JoinExpression extends AbstractBinaryExpression implements Serializ
     public JoinExpression(int expressionID, Node argument1, Node argument2, Node result, boolean joinedVertically) throws MatrixException {
         super("JOIN", joinedVertically ? "VERTICALLY" : "HORIZONTALLY", expressionID, argument1, argument2, result);
 
-        joinMatrixOperation = new JoinMatrixOperation(result.getRows(), result.getColumns(), joinedVertically);
+        joinMatrixOperation = new JoinMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), joinedVertically);
     }
 
     /**

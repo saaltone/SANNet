@@ -9,7 +9,6 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +16,7 @@ import java.util.Map;
  * Implements expression for standard deviation operation.<br>
  *
  */
-public class StandardDeviationExpression extends AbstractUnaryExpression implements Serializable {
+public class StandardDeviationExpression extends AbstractUnaryExpression {
 
     /**
      * True if calculation is done as single step otherwise false.
@@ -86,8 +85,8 @@ public class StandardDeviationExpression extends AbstractUnaryExpression impleme
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
-        mean = MMatrix.mean(argument1.getMatrices());
-        result.setMatrix(MMatrix.standardDeviation(argument1.getMatrices(), mean));
+        mean = AbstractMatrix.mean(argument1.getMatrices());
+        result.setMatrix(AbstractMatrix.standardDeviation(argument1.getMatrices(), mean));
     }
 
     /**

@@ -9,13 +9,11 @@ import utils.matrix.MatrixException;
 import utils.matrix.operation.UnjoinMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for unjoin function.<br>
  *
  */
-public class UnjoinExpression extends AbstractUnaryExpression implements Serializable {
+public class UnjoinExpression extends AbstractUnaryExpression {
 
     /**
      * Unjoins at defined row.
@@ -43,15 +41,16 @@ public class UnjoinExpression extends AbstractUnaryExpression implements Seriali
      * @param result result.
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public UnjoinExpression(int expressionID, Node argument1, Node result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
+    public UnjoinExpression(int expressionID, Node argument1, Node result, int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth) throws MatrixException {
         super("UNARY_FUNCTION", "", expressionID, argument1, result);
 
         this.unjoinAtRow = unjoinAtRow;
         this.unjoinAtColumn = unjoinAtColumn;
 
-        unjoinMatrixOperation = new UnjoinMatrixOperation(result.getRows(), result.getColumns(), unjoinAtRow, unjoinAtColumn);
+        unjoinMatrixOperation = new UnjoinMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), unjoinAtRow, unjoinAtColumn, unjoinAtDepth);
     }
 
     /**
@@ -78,7 +77,7 @@ public class UnjoinExpression extends AbstractUnaryExpression implements Seriali
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        unjoinMatrixOperation.apply(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, unjoinMatrixOperation.apply(argument1.getMatrix(sampleIndex)));
     }
 
     /**

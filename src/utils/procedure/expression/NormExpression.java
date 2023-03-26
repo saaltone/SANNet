@@ -16,7 +16,7 @@ import java.io.Serializable;
  * Implements norm expression.<br>
  *
  */
-public class NormExpression extends AbstractUnaryExpression implements Serializable {
+public class NormExpression extends AbstractUnaryExpression {
 
     /**
      * Reference to norm matrix operation.
@@ -57,9 +57,9 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         if (p < 2) throw new MatrixException("Norm p value must be at least 2.");
         this.p = p;
 
-        normMatrixOperation = new NormMatrixOperation(argument1.getRows(), argument1.getColumns(), p);
-        normGradientMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> Math.pow(Math.abs(value1) / value2, p - 1) * Math.signum(value1)));
-        multiplyMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
+        normMatrixOperation = new NormMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth(), p);
+        normGradientMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> Math.pow(Math.abs(value1) / value2, p - 1) * Math.signum(value1)));
+        multiplyMatrixOperation = new BinaryMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
     }
 
     /**
@@ -106,8 +106,8 @@ public class NormExpression extends AbstractUnaryExpression implements Serializa
         checkResultGradient(result, sampleIndex);
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
-            Matrix normGradientMatrix = normGradientMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex), argument1.getNewMatrix());
-            Matrix resultMatrix = multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), normGradientMatrix, argument1.getNewMatrix());
+            Matrix normGradientMatrix = normGradientMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex));
+            Matrix resultMatrix = multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), normGradientMatrix);
             argument1.cumulateGradient(sampleIndex, resultMatrix, false);
         }
     }

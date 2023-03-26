@@ -5,17 +5,15 @@
 
 package utils.procedure.expression;
 
-import utils.matrix.MMatrix;
+import utils.matrix.AbstractMatrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
-
-import java.io.Serializable;
 
 /**
  * Implements expression for sum operation.<br>
  *
  */
-public class SumExpression extends AbstractUnaryExpression implements Serializable {
+public class SumExpression extends AbstractUnaryExpression {
 
     /**
      * True if calculation is done as single step otherwise false.
@@ -55,7 +53,7 @@ public class SumExpression extends AbstractUnaryExpression implements Serializab
     public void calculateExpression() throws MatrixException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
-        result.setMatrix(MMatrix.sum(argument1.getMatrices()));
+        result.setMatrix(AbstractMatrix.sum(argument1.getMatrices()));
     }
 
     /**

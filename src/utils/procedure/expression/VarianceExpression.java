@@ -6,12 +6,11 @@
 package utils.procedure.expression;
 
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
+import utils.matrix.AbstractMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +18,7 @@ import java.util.Map;
  * Implements expression for variance operation.<br>
  *
  */
-public class VarianceExpression extends AbstractUnaryExpression implements Serializable {
+public class VarianceExpression extends AbstractUnaryExpression {
 
     /**
      * True if calculation is done as single step otherwise false.
@@ -81,8 +80,8 @@ public class VarianceExpression extends AbstractUnaryExpression implements Seria
     public void calculateExpression() throws MatrixException, DynamicParamException {
         if (!executeAsSingleStep()) return;
         if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
-        mean = MMatrix.mean(argument1.getMatrices());
-        result.setMatrix(MMatrix.variance(argument1.getMatrices(), mean));
+        mean = AbstractMatrix.mean(argument1.getMatrices());
+        result.setMatrix(AbstractMatrix.variance(argument1.getMatrices(), mean));
     }
 
     /**

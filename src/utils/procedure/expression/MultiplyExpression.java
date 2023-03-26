@@ -17,7 +17,7 @@ import java.io.Serializable;
  * Implements expression for multiply operation.<br>
  *
  */
-public class MultiplyExpression extends AbstractBinaryExpression implements Serializable {
+public class MultiplyExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to multiply matrix operation.
@@ -41,7 +41,7 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, argument1.getDepth(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
     }
 
     /**
@@ -68,7 +68,7 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        multiplyMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, multiplyMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**
@@ -86,8 +86,8 @@ public class MultiplyExpression extends AbstractBinaryExpression implements Seri
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, multiplyMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex), argument2.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex)), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, multiplyMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getGradient(sampleIndex)), false);
 
     }
 

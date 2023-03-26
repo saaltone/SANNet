@@ -17,7 +17,7 @@ import java.io.Serializable;
  * Implements expression for add operation.<br>
  *
  */
-public class AddExpression extends AbstractBinaryExpression implements Serializable {
+public class AddExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to add matrix operation.
@@ -41,7 +41,7 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        addMatrixOperation = new BinaryMatrixOperation(rows, columns, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) Double::sum));
+        addMatrixOperation = new BinaryMatrixOperation(rows, columns, argument1.getDepth(), new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) Double::sum));
     }
 
     /**
@@ -68,7 +68,7 @@ public class AddExpression extends AbstractBinaryExpression implements Serializa
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        addMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, addMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**

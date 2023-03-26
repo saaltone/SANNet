@@ -10,14 +10,13 @@ import utils.matrix.operation.CyclicPoolGradientMatrixOperation;
 import utils.matrix.operation.CyclicPoolMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
  * Implements expression for cyclic pool operation.
  *
  */
-public class CyclicPoolExpression extends AbstractUnaryExpression implements Serializable {
+public class CyclicPoolExpression extends AbstractUnaryExpression {
 
     /**
      * Reference to cyclic pool matrix operation.
@@ -51,8 +50,8 @@ public class CyclicPoolExpression extends AbstractUnaryExpression implements Ser
     public CyclicPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("RANDOM_POOL", "RANDOM_POOL", expressionID, argument1, result);
 
-        cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
-        cyclicPoolGradientMatrixOperation = new CyclicPoolGradientMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), stride);
+        cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
+        cyclicPoolGradientMatrixOperation = new CyclicPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
     }
 
     /**
@@ -79,9 +78,9 @@ public class CyclicPoolExpression extends AbstractUnaryExpression implements Ser
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        if (inputPos == null) inputPos = new HashMap<>();
+        inputPos = new HashMap<>();
         inputPos.put(sampleIndex, new HashMap<>());
-        cyclicPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, cyclicPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex)));
     }
 
     /**
@@ -101,8 +100,7 @@ public class CyclicPoolExpression extends AbstractUnaryExpression implements Ser
         checkResultGradient(result, sampleIndex);
         HashMap<Integer, Integer> inputPosEntry = inputPos.get(sampleIndex);
         if (inputPosEntry == null) throw new MatrixException("Input positions for gradient calculation are not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, cyclicPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPosEntry, argument1.getNewMatrix()), false);
-        inputPos.remove(sampleIndex);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, cyclicPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), inputPosEntry), false);
     }
 
     /**

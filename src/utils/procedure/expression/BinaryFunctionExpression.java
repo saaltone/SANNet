@@ -11,13 +11,11 @@ import utils.matrix.MatrixException;
 import utils.matrix.operation.BinaryMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for binary function.<br>
  *
  */
-public class BinaryFunctionExpression extends AbstractBinaryExpression implements Serializable {
+public class BinaryFunctionExpression extends AbstractBinaryExpression {
 
     /**
      * Binary function type.
@@ -49,7 +47,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
         int columns = !argument1.isScalar() ? argument1.getColumns() : argument2.getColumns();
 
-        binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, binaryFunction);
+        binaryMatrixOperation = new BinaryMatrixOperation(rows, columns, argument1.getDepth(), binaryFunction);
     }
 
     /**
@@ -76,7 +74,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression implement
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        binaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, binaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**

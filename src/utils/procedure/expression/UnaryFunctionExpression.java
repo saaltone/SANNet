@@ -9,13 +9,11 @@ import utils.matrix.*;
 import utils.matrix.operation.UnaryMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for unary function.<br>
  *
  */
-public class UnaryFunctionExpression extends AbstractUnaryExpression implements Serializable {
+public class UnaryFunctionExpression extends AbstractUnaryExpression {
 
     /**
      * Unary function type.
@@ -27,6 +25,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      * UnaryFunction used.
      *
      */
+    @SuppressWarnings("FieldCanBeLocal")
     private final UnaryFunction unaryFunction;
 
     /**
@@ -50,7 +49,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
 
-        unaryMatrixOperation = new UnaryMatrixOperation(argument1.getRows(), argument1.getColumns(), unaryFunction);
+        unaryMatrixOperation = new UnaryMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth(), unaryFunction);
     }
 
     /**
@@ -77,7 +76,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression implements 
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        unaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, unaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex)));
     }
 
     /**

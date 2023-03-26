@@ -9,13 +9,11 @@ import utils.matrix.MatrixException;
 import utils.matrix.operation.DotMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for dot operation.<br>
  *
  */
-public class DotExpression extends AbstractBinaryExpression implements Serializable {
+public class DotExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to dot matrix operation.
@@ -47,9 +45,9 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
         super("DOT", "x", expressionID, argument1, argument2, result);
 
-        dotMatrixOperation = new DotMatrixOperation(argument1.getRows(), argument2.getColumns());
-        dotGradient1MatrixOperation = new DotMatrixOperation(result.getRows(), argument2.getRows());
-        dotGradient2MatrixOperation = new DotMatrixOperation(argument1.getColumns(), result.getColumns());
+        dotMatrixOperation = new DotMatrixOperation(argument1.getRows(), argument2.getColumns(), argument1.getDepth());
+        dotGradient1MatrixOperation = new DotMatrixOperation(result.getRows(), argument2.getRows(), argument2.getDepth());
+        dotGradient2MatrixOperation = new DotMatrixOperation(argument1.getColumns(), result.getColumns(), argument1.getDepth());
     }
 
     /**
@@ -76,7 +74,7 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        dotMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, dotMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**
@@ -94,8 +92,8 @@ public class DotExpression extends AbstractBinaryExpression implements Serializa
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, dotGradient1MatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex).transpose(), argument1.getNewMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, dotGradient2MatrixOperation.apply(argument1.getMatrix(sampleIndex).transpose(), result.getGradient(sampleIndex), argument2.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, dotGradient1MatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex).transpose()), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, dotGradient2MatrixOperation.apply(argument1.getMatrix(sampleIndex).transpose(), result.getGradient(sampleIndex)), false);
     }
 
     /**

@@ -10,14 +10,13 @@ import utils.matrix.operation.MaxPoolGradientMatrixOperation;
 import utils.matrix.operation.MaxPoolMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
  * Implements expression for max pooling operation.<br>
  *
  */
-public class MaxPoolExpression extends AbstractUnaryExpression implements Serializable {
+public class MaxPoolExpression extends AbstractUnaryExpression {
 
     /**
      * Reference to max pool matrix operation.
@@ -51,8 +50,8 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("MAX_POOL", "MAX_POOL", expressionID, argument1, result);
 
-        maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
-        maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(result.getRows(), result.getColumns(), argument1.getColumns(), stride);
+        maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
+        maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
     }
 
     /**
@@ -79,9 +78,9 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        if (maxPos == null) maxPos = new HashMap<>();
+        maxPos = new HashMap<>();
         maxPos.put(sampleIndex, new HashMap<>());
-        maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex)));
     }
 
     /**
@@ -101,8 +100,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression implements Serial
         checkResultGradient(result, sampleIndex);
         HashMap<Integer, Integer> maxPosEntry = maxPos.get(sampleIndex);
         if (maxPosEntry == null) throw new MatrixException("Maximum positions for gradient calculation are not defined.");
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, maxPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), maxPosEntry, argument1.getNewMatrix()), false);
-        maxPos.remove(sampleIndex);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, maxPoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), maxPosEntry), false);
     }
 
     /**

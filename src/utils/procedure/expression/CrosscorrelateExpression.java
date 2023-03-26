@@ -11,13 +11,11 @@ import utils.matrix.operation.CrosscorrelationInputGradientMatrixOperation;
 import utils.matrix.operation.CrosscorrelationMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for crosscorrelation operation.<br>
  *
  */
-public class CrosscorrelateExpression extends AbstractBinaryExpression implements Serializable {
+public class CrosscorrelateExpression extends AbstractBinaryExpression {
 
     /**
      * Reference to crosscorrelation matrix operation.
@@ -46,14 +44,15 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      * @param result result of expression.
      * @param stride stride of crosscorrelation operation.
      * @param dilation dilation step size for crosscorrelation operation.
+     * @param isDepthSeparable if true convolution is depth separable
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
+    public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, boolean isDepthSeparable) throws MatrixException {
         super("CROSSCORRELATE", "CROSSCORRELATE", expressionID, argument1, argument2, result);
 
-        crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
-        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
-        crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
+        crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
+        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
+        crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
     }
 
     /**
@@ -80,7 +79,7 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
-        crosscorrelationMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, crosscorrelationMatrixOperation.apply(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
     }
 
     /**
@@ -98,8 +97,8 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression implement
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex)), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex)), false);
     }
 
     /**

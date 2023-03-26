@@ -13,13 +13,11 @@ import utils.matrix.operation.CrosscorrelationInputGradientMatrixOperation;
 import utils.matrix.operation.WinogradConvolutionMatrixOperation;
 import utils.procedure.node.Node;
 
-import java.io.Serializable;
-
 /**
  * Implements expression for Winograd convolution operation.<br>
  *
  */
-public class WinogradConvolutionExpression extends AbstractBinaryExpression implements Serializable {
+public class WinogradConvolutionExpression extends AbstractBinaryExpression {
 
     /**
      * G matrix for Winograd convolution.
@@ -71,57 +69,57 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
     public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("WINOGRAD_CONVOLUTION", "WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
 
-        Matrix AT = new DMatrix(2, 4);
-        AT.setValue(0, 0, 1);
-        AT.setValue(0, 1, 1);
-        AT.setValue(0, 2, 1);
-        AT.setValue(0, 3, 0);
-        AT.setValue(1, 0, 0);
-        AT.setValue(1, 1, 1);
-        AT.setValue(1, 2, -1);
-        AT.setValue(1, 3, -1);
+        Matrix AT = new DMatrix(2, 4, 1);
+        AT.setValue(0, 0, 0, 1);
+        AT.setValue(0, 1, 0, 1);
+        AT.setValue(0, 2, 0, 1);
+        AT.setValue(0, 3, 0, 0);
+        AT.setValue(1, 0, 0, 0);
+        AT.setValue(1, 1, 0, 1);
+        AT.setValue(1, 2, 0, -1);
+        AT.setValue(1, 3, 0, -1);
         maskZeros(AT);
         Matrix a = AT.transpose();
 
-        Matrix c = new DMatrix(4, 4);
-        c.setValue(0, 0, 1);
-        c.setValue(0, 1, 0);
-        c.setValue(0, 2, -1);
-        c.setValue(0, 3, 0);
-        c.setValue(1, 0, 0);
-        c.setValue(1, 1, 1);
-        c.setValue(1, 2, 1);
-        c.setValue(1, 3, 0);
-        c.setValue(2, 0, 0);
-        c.setValue(2, 1, -1);
-        c.setValue(2, 2, 1);
-        c.setValue(2, 3, 0);
-        c.setValue(3, 0, 0);
-        c.setValue(3, 1, 1);
-        c.setValue(3, 2, 0);
-        c.setValue(3, 3, -1);
+        Matrix c = new DMatrix(4, 4, 1);
+        c.setValue(0, 0, 0, 1);
+        c.setValue(0, 1, 0, 0);
+        c.setValue(0, 2, 0, -1);
+        c.setValue(0, 3, 0, 0);
+        c.setValue(1, 0, 0, 0);
+        c.setValue(1, 1, 0, 1);
+        c.setValue(1, 2, 0, 1);
+        c.setValue(1, 3, 0, 0);
+        c.setValue(2, 0, 0, 0);
+        c.setValue(2, 1, 0, -1);
+        c.setValue(2, 2, 0, 1);
+        c.setValue(2, 3, 0, 0);
+        c.setValue(3, 0, 0, 0);
+        c.setValue(3, 1, 0, 1);
+        c.setValue(3, 2, 0, 0);
+        c.setValue(3, 3, 0, -1);
         maskZeros(c);
         Matrix CT = c.transpose();
 
-        G = new DMatrix(4, 3);
-        G.setValue(0, 0, 1);
-        G.setValue(0, 1, 0);
-        G.setValue(0, 2, 0);
-        G.setValue(1, 0, 1/(double)2);
-        G.setValue(1, 1, 1/(double)2);
-        G.setValue(1, 2, 1/(double)2);
-        G.setValue(2, 0, 1/(double)2);
-        G.setValue(2, 1, -1/(double)2);
-        G.setValue(2, 2, 1/(double)2);
-        G.setValue(3, 0, 0);
-        G.setValue(3, 1, 0);
-        G.setValue(3, 2, 1);
+        G = new DMatrix(4, 3, 1);
+        G.setValue(0, 0, 0, 1);
+        G.setValue(0, 1, 0, 0);
+        G.setValue(0, 2, 0, 0);
+        G.setValue(1, 0, 0, 1/(double)2);
+        G.setValue(1, 1, 0, 1/(double)2);
+        G.setValue(1, 2, 0, 1/(double)2);
+        G.setValue(2, 0, 0, 1/(double)2);
+        G.setValue(2, 1, 0, -1/(double)2);
+        G.setValue(2, 2, 0, 1/(double)2);
+        G.setValue(3, 0, 0, 0);
+        G.setValue(3, 1, 0, 0);
+        G.setValue(3, 2, 0, 1);
         maskZeros(G);
         GT = G.transpose();
 
-        winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), a, AT, c, CT);
-        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
-        crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), argument2.getRows(), argument2.getColumns(), dilation, stride);
+        winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), a, AT, c, CT);
+        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
+        crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
     }
 
     /**
@@ -133,9 +131,12 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
         matrix.setMask();
         int rows = matrix.getRows();
         int columns = matrix.getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                if (matrix.getValue(row, column) == 0) matrix.getMask().setMask(row, column, true);
+        int totalDepth = matrix.getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    if (matrix.getValue(row, column, depth) == 0) matrix.getMask().setMask(row, column, depth, true);
+                }
             }
         }
     }
@@ -165,7 +166,7 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArguments(argument1, argument2, sampleIndex);
         if (preprocessedFilter == null) preprocessedFilter = G.dot(argument2.getMatrix(sampleIndex)).dot(GT);
-        winogradConvolutionMatrixOperation.apply(argument1.getMatrix(sampleIndex), preprocessedFilter, result.getNewMatrix(sampleIndex));
+        result.setMatrix(sampleIndex, winogradConvolutionMatrixOperation.apply(argument1.getMatrix(sampleIndex), preprocessedFilter));
     }
 
     /**
@@ -183,8 +184,8 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression impl
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex), argument1.getNewMatrix()), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex), argument2.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, crosscorrelationInputGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument2.getMatrix(sampleIndex)), false);
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, crosscorrelationFilterGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getMatrix(sampleIndex)), false);
         preprocessedFilter = null;
     }
 
