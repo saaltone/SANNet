@@ -74,13 +74,13 @@ public class DuelingLayer extends AbstractExecutionLayer {
          * @param regulateDirectWeights if true direct weights are regulated.
          */
         DuelingWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
-            valueWeight = new DMatrix(1, previousLayerWidth, initialization);
+            valueWeight = new DMatrix(1, previousLayerWidth, 1, initialization);
             valueWeight.setName("ValueWeight");
-            valueBias = new DMatrix(layerWidth, 1);
+            valueBias = new DMatrix(layerWidth, 1, 1);
             valueWeight.setName("ValueBias");
-            actionWeight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            actionWeight = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             valueWeight.setName("ActionWeight");
-            actionBias = new DMatrix(layerWidth, 1);
+            actionBias = new DMatrix(layerWidth, 1, 1);
             valueWeight.setName("ActionBias");
 
             weights.add(valueWeight);
@@ -149,7 +149,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * Input matrix for procedure construction.
      *
      */
-    private TreeMap<Integer, MMatrix> inputs;
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for dueling layer.
@@ -238,14 +238,13 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         inputs = new TreeMap<>();
 
-        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        inputs.put(0, new MMatrix(input));
+        inputs.put(0, input);
 
         return inputs;
     }
@@ -256,21 +255,19 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
-        Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0).get(0));
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0));
         valueOutput = valueOutput.add(weightSet.valueBias);
         valueOutput = valueOutput.apply(activationFunction);
 
-        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0).get(0));
+        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0));
         actionOutput = actionOutput.add(weightSet.actionBias);
         actionOutput = actionOutput.apply(activationFunction);
 
         Matrix output = valueOutput.add(actionOutput.subtract(actionOutput.meanAsMatrix()));
 
         output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
 
     }
 
