@@ -5,8 +5,6 @@
 
 package utils.sampling;
 
-import utils.matrix.MatrixException;
-
 import java.util.TreeMap;
 
 /**
@@ -33,8 +31,7 @@ public interface Sampler {
      *
      * @param inputSequences sampled input sequences.
      * @param outputSequences sampled output sequences.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void getSamples(TreeMap<Integer, Sequence> inputSequences, TreeMap<Integer, Sequence>  outputSequences) throws MatrixException;
+    void getSamples(TreeMap<Integer, Sequence> inputSequences, TreeMap<Integer, Sequence>  outputSequences);
 
 }

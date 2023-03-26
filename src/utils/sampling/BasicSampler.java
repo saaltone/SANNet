@@ -9,8 +9,7 @@ import core.network.NeuralNetworkException;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
-import utils.matrix.MatrixException;
+import utils.matrix.Matrix;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -60,13 +59,13 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * Input sample set for sampling.
      *
      */
-    private final HashMap<Integer, HashMap<Integer, MMatrix>> inputs = new HashMap<>();
+    private final HashMap<Integer, HashMap<Integer, Matrix>> inputs = new HashMap<>();
 
     /**
      * Output sample set for sampling.
      *
      */
-    private final HashMap<Integer, HashMap<Integer, MMatrix>> outputs = new HashMap<>();
+    private final HashMap<Integer, HashMap<Integer, Matrix>> outputs = new HashMap<>();
 
     /**
      * Input sample set for sampling.
@@ -171,36 +170,29 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * @param outputs output set for sampling.
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      */
-    public BasicSampler(HashMap<Integer, HashMap<Integer, MMatrix>> inputs, HashMap<Integer, HashMap<Integer, MMatrix>> outputs) throws NeuralNetworkException {
+    public BasicSampler(HashMap<Integer, HashMap<Integer, Matrix>> inputs, HashMap<Integer, HashMap<Integer, Matrix>> outputs) throws NeuralNetworkException {
         initializeDefaultParams();
         if (inputs == null || outputs == null) throw new NeuralNetworkException("Inputs or outputs are not defined.");
         if (inputs.isEmpty() || outputs.isEmpty()) throw new NeuralNetworkException("Input and output data sets cannot be empty.");
         Set<Integer> sampleIndexSet = null;
 
-        int sampleDepth = -1;
-        for (Map.Entry<Integer, HashMap<Integer, MMatrix>> entry : inputs.entrySet()) {
-            HashMap<Integer, MMatrix> currentInputMap = new HashMap<>();
+        for (Map.Entry<Integer, HashMap<Integer, Matrix>> entry : inputs.entrySet()) {
+            HashMap<Integer, Matrix> currentInputMap = new HashMap<>();
             this.inputs.put(entry.getKey(), currentInputMap);
-            HashMap<Integer, MMatrix> inputsMap = entry.getValue();
+            HashMap<Integer, Matrix> inputsMap = entry.getValue();
             if (sampleIndexSet == null) sampleIndexSet = inputsMap.keySet();
             if (sampleIndexSet.size() != inputsMap.keySet().size()) throw new NeuralNetworkException("Number of samples is not matching");
-            for (Map.Entry<Integer, MMatrix> entry1 : inputsMap.entrySet()) {
-                MMatrix inputMMatrix = entry1.getValue();
-                if (sampleDepth == -1) sampleDepth = inputMMatrix.getDepth();
-                if (sampleDepth != inputMMatrix.getDepth()) throw new NeuralNetworkException("Sample depth must be all for all samples.");
-                currentInputMap.put(entry1.getKey(), inputMMatrix);
-            }
+            currentInputMap.putAll(inputsMap);
         }
 
-        for (Map.Entry<Integer, HashMap<Integer, MMatrix>> entry : outputs.entrySet()) {
-            HashMap<Integer, MMatrix> currentOutputMap = new HashMap<>();
+        for (Map.Entry<Integer, HashMap<Integer, Matrix>> entry : outputs.entrySet()) {
+            HashMap<Integer, Matrix> currentOutputMap = new HashMap<>();
             this.outputs.put(entry.getKey(), currentOutputMap);
-            HashMap<Integer, MMatrix> outputsMap = entry.getValue();
+            HashMap<Integer, Matrix> outputsMap = entry.getValue();
             if (sampleIndexSet.size() != outputsMap.keySet().size()) throw new NeuralNetworkException("Number of samples is not matching");
-            for (Map.Entry<Integer, MMatrix> entry1 : outputsMap.entrySet()) {
-                MMatrix outputMMatrix = entry1.getValue();
-                if (sampleDepth != outputMMatrix.getDepth()) throw new NeuralNetworkException("Sample depth must be all for all samples.");
-                currentOutputMap.put(entry1.getKey(), outputMMatrix);
+            for (Map.Entry<Integer, Matrix> entry1 : outputsMap.entrySet()) {
+                Matrix outputMatrix = entry1.getValue();
+                currentOutputMap.put(entry1.getKey(), outputMatrix);
             }
         }
         sampleAt = 0;
@@ -215,7 +207,7 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      * @throws NeuralNetworkException throws exception if input and output set sizes are not equal or not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public BasicSampler(HashMap<Integer, HashMap<Integer, MMatrix>> inputs, HashMap<Integer, HashMap<Integer, MMatrix>> outputs, String params) throws NeuralNetworkException, DynamicParamException {
+    public BasicSampler(HashMap<Integer, HashMap<Integer, Matrix>> inputs, HashMap<Integer, HashMap<Integer, Matrix>> outputs, String params) throws NeuralNetworkException, DynamicParamException {
         this(inputs, outputs);
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -314,18 +306,17 @@ public class BasicSampler implements Sampler, Configurable, Serializable {
      *
      * @param inputSequences sampled input sequence.
      * @param outputSequences sampled output sequence.
-     * @throws MatrixException throws exception if depth of sample is not matching depth of sequence.
      */
-    public void getSamples(TreeMap<Integer, Sequence>  inputSequences, TreeMap<Integer, Sequence>  outputSequences) throws MatrixException {
+    public void getSamples(TreeMap<Integer, Sequence>  inputSequences, TreeMap<Integer, Sequence>  outputSequences) {
         ArrayList<Integer> sampleIndices = getSampleIndices();
         for (Integer inputIndex : inputs.keySet()) inputSequences.put(inputIndex, new Sequence());
         for (Integer outputIndex : outputs.keySet()) outputSequences.put(outputIndex, new Sequence());
 
         for (Integer sampleIndex : sampleIndices) {
-            for (Map.Entry<Integer, HashMap<Integer, MMatrix>> entry : inputs.entrySet()) {
+            for (Map.Entry<Integer, HashMap<Integer, Matrix>> entry : inputs.entrySet()) {
                 inputSequences.get(entry.getKey()).put(sampleIndex, inputs.get(entry.getKey()).get(sampleIndex));
             }
-            for (Map.Entry<Integer, HashMap<Integer, MMatrix>> entry : outputs.entrySet()) {
+            for (Map.Entry<Integer, HashMap<Integer, Matrix>> entry : outputs.entrySet()) {
                 outputSequences.get(entry.getKey()).put(sampleIndex, outputs.get(entry.getKey()).get(sampleIndex));
             }
         }
