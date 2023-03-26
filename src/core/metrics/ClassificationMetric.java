@@ -6,7 +6,6 @@
 package core.metrics;
 
 import core.network.NeuralNetworkException;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
@@ -254,9 +253,9 @@ public class ClassificationMetric implements Metric, Serializable {
         int predictedRows = predicted.getRows();
         for (int predictedRow = 0; predictedRow < predictedRows; predictedRow++) {
             features.add(predictedRow);
-            double actualValue = actual.getValue(predictedRow, 0);
+            double actualValue = actual.getValue(predictedRow, 0, 0);
             for (int actualRow = 0; actualRow < actualRows; actualRow++) {
-                double predictedValue = predicted.getValue(actualRow, 0);
+                double predictedValue = predicted.getValue(actualRow, 0, 0);
                 if (actualValue == 1 && predictedValue == 1) incrementConfusion(predictedRow, actualRow);
                 if (predictedRow == actualRow) {
                     if (actualValue == 1 && predictedValue == 1) incrementTP(predictedRow);
@@ -326,14 +325,8 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param actual actual (true) samples.
      */
     public void update(Sequence predicted, Sequence actual) {
-        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix predictedSample = entry.getValue();
-            MMatrix actualSample = actual.get(sampleIndex);
-            int depth = predictedSample.getDepth();
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
-            }
+        for (Map.Entry<Integer, Matrix> entry : predicted.entrySet()) {
+            update(entry.getValue(), actual.get(entry.getKey()));
         }
     }
 
@@ -496,15 +489,8 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     private Sequence getClassification(Sequence predicted) throws MatrixException {
         Sequence classified = new Sequence();
-        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix predictedSample = entry.getValue();
-            int depth = predictedSample.getDepth();
-            MMatrix classifiedSample = new MMatrix(depth);
-            classified.put(sampleIndex, classifiedSample);
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                classifiedSample.put(depthIndex, getClassification(predictedSample.get(depthIndex)));
-            }
+        for (Map.Entry<Integer, Matrix> entry : predicted.entrySet()) {
+            classified.put(entry.getKey(), getClassification(entry.getValue()));
         }
         return classified;
     }
@@ -519,8 +505,7 @@ public class ClassificationMetric implements Metric, Serializable {
      */
     private void updateConfusion(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
         if (actual.sampleSize() == 0) throw new NeuralNetworkException("Nothing to classify");
-        predicted = getClassification(predicted);
-        update(predicted, actual);
+        update(getClassification(predicted), actual);
     }
 
     /**

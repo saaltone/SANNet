@@ -138,12 +138,12 @@ public class RegressionMetric implements Metric, Serializable {
         Matrix absoluteError = getAbsoluteError(predicted, actual);
         absoluteErrors.put(errorCount, absoluteError);
         if (cumulativeAbsoluteError == null) cumulativeAbsoluteError = absoluteError.getNewMatrix();
-        cumulativeAbsoluteError.add(absoluteError, cumulativeAbsoluteError);
+        cumulativeAbsoluteError.addBy(absoluteError);
 
         Matrix squaredError = getSquaredError(absoluteError);
         squaredErrors.put(errorCount, squaredError);
         if (cumulativeSquaredError == null) cumulativeSquaredError = squaredError.getNewMatrix();
-        cumulativeAbsoluteError.add(squaredError, cumulativeSquaredError);
+        cumulativeAbsoluteError.addBy(squaredError);
 
         errorCount++;
     }
@@ -157,14 +157,8 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
-        for (Map.Entry<Integer, MMatrix> entry : predicted.entrySet()) {
-            int sampleIndex = entry.getKey();
-            MMatrix predictedSample = entry.getValue();
-            MMatrix actualSample = actual.get(sampleIndex);
-            int depth = predictedSample.getDepth();
-            for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                update(predictedSample.get(depthIndex), actualSample.get(depthIndex));
-            }
+        for (Map.Entry<Integer, Matrix> entry : predicted.entrySet()) {
+            update(entry.getValue(), actual.get(entry.getKey()));
         }
     }
 
@@ -226,7 +220,7 @@ public class RegressionMetric implements Metric, Serializable {
         for (Integer index : actuals.descendingKeySet()) {
             Matrix absoluteError = absoluteErrors.get(index);
             if (lastNCumulativeAbsoluteError == null) lastNCumulativeAbsoluteError = absoluteError.getNewMatrix();
-            lastNCumulativeAbsoluteError.add(absoluteError, lastNCumulativeAbsoluteError);
+            lastNCumulativeAbsoluteError.addBy(absoluteError);
             if (++lastNCount == lastN) break;
         }
         return lastNCumulativeAbsoluteError == null ? null : lastNCumulativeAbsoluteError.apply(UnaryFunctionType.SQRT).divide(lastN);
@@ -281,7 +275,7 @@ public class RegressionMetric implements Metric, Serializable {
         for (Integer index : actuals.descendingKeySet()) {
             Matrix squaredError = squaredErrors.get(index);
             if (lastNCumulativeSquaredError == null) lastNCumulativeSquaredError = squaredError.getNewMatrix();
-            lastNCumulativeSquaredError.add(squaredError, lastNCumulativeSquaredError);
+            lastNCumulativeSquaredError.addBy(squaredError);
             if (++lastNCount == lastN) break;
         }
         return lastNCumulativeSquaredError == null ? null : lastNCumulativeSquaredError.apply(UnaryFunctionType.SQRT).divide(lastN);
@@ -316,12 +310,12 @@ public class RegressionMetric implements Metric, Serializable {
             Matrix prediction = predictions.get(index);
             Matrix SSResEntry = actual.subtract(prediction).power(2);
             if (SSRes == null) SSRes = SSResEntry.getNewMatrix();
-            SSRes.add(SSResEntry, SSRes);
+            SSRes.addBy(SSResEntry);
             Matrix SSTotEntry = actual.subtract(meanActualValue).power(2);
             if (SSTot == null) SSTot = SSTotEntry.getNewMatrix();
-            SSTot.add(SSTotEntry, SSTot);
+            SSTot.addBy(SSTotEntry);
         }
-        Matrix ones = new DMatrix(meanActualValue.getRows(), meanActualValue.getColumns());
+        Matrix ones = new DMatrix(meanActualValue.getRows(), meanActualValue.getColumns(), meanActualValue.getDepth());
         ones.initializeToValue(1);
         return SSTot == null ? null : ones.subtract(SSRes.divide(SSTot));
     }
@@ -336,9 +330,9 @@ public class RegressionMetric implements Metric, Serializable {
         Matrix meanActualValue = null;
         for (Matrix actual : actuals.values()) {
             if (meanActualValue == null) meanActualValue = actual.getNewMatrix();
-            meanActualValue.add(actual, meanActualValue);
+            meanActualValue.addBy(actual);
         }
-        if (meanActualValue != null) meanActualValue.divide(actuals.size(), meanActualValue);
+        if (meanActualValue != null) meanActualValue.divideBy(actuals.size());
         return meanActualValue;
     }
 
