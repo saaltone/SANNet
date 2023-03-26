@@ -60,13 +60,15 @@ public class LayerNormalization extends AbstractExecutionLayer {
 
         /**
          * Constructor for weight set
-         *  @param previousLayerWidth width of previous layer.
+         *
+         * @param previousLayerWidth  width of previous layer.
          * @param previousLayerHeight height of previous layer.
+         * @param previousLayerDepth depth of previous layer.
          */
-        LayerNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight) {
-            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1);
+        LayerNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight, int previousLayerDepth) {
+            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth, (row, col) -> new Random().nextGaussian() * 0.1);
             gamma.setName("Gamma");
-            beta = new DMatrix(previousLayerWidth, previousLayerHeight);
+            beta = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
             beta.setName("Beta");
 
             weights.add(gamma);
@@ -209,36 +211,33 @@ public class LayerNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new LayerNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight());
+        weightSet = new LayerNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth());
     }
 
     /**
      * Returns input matrices for procedure construction.
      *
      * @param resetPreviousInput if true resets also previous input.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
      * @return output of forward procedure.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException       throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
+    public Matrix getForwardProcedure() throws MatrixException, DynamicParamException {
         Matrix output = !meanOnly ? input.subtract(input.meanAsMatrix()).divide(input.varianceAsMatrix().add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta) : input.subtract(input.meanAsMatrix()).multiply(weightSet.gamma).add(weightSet.beta);
         output.setName("Output");
 
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
     }
 
     /**

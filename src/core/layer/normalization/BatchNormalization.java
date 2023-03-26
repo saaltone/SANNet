@@ -61,13 +61,15 @@ public class BatchNormalization extends AbstractExecutionLayer {
 
         /**
          * Constructor for weight set
-         *  @param previousLayerWidth width of previous layer.
+         *
+         * @param previousLayerWidth  width of previous layer.
          * @param previousLayerHeight height of previous layer.
+         * @param previousLayerDepth depth of previous layer.
          */
-        BatchNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight) {
-            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, (row, col) -> new Random().nextGaussian() * 0.1);
+        BatchNormalizationWeightSet(int previousLayerWidth, int previousLayerHeight, int previousLayerDepth) {
+            gamma = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth, (row, col) -> new Random().nextGaussian() * 0.1);
             gamma.setName("Gamma");
-            beta = new DMatrix(previousLayerWidth, previousLayerHeight);
+            beta = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
             beta.setName("Beta");
 
             weights.add(gamma);
@@ -121,10 +123,10 @@ public class BatchNormalization extends AbstractExecutionLayer {
     private boolean meanOnly;
 
     /**
-     * Input matrix for procedure construction.
+     * Input matrices for procedure construction.
      *
      */
-    private MMatrix inputs;
+    private TreeMap<Integer, Matrix> inputMap;
 
     /**
      * Matrix for epsilon value.
@@ -264,7 +266,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new BatchNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight());
+        weightSet = new BatchNormalizationWeightSet(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth());
     }
 
     /**
@@ -273,12 +275,12 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        inputs = new MMatrix(1, "Inputs");
-        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        inputMap = new TreeMap<>();
+        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        inputs.put(0, input);
-        return new TreeMap<>() {{ put(0, inputs); }};
+        inputMap.put(0, input);
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -299,22 +301,24 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * Builds forward procedure and implicitly builds backward procedure.
      *
      * @return output of forward procedure.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException       throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException, DynamicParamException {
-        mean = inputs.mean();
+    public Matrix getForwardProcedure() throws MatrixException, DynamicParamException {
+        mean = AbstractMatrix.mean(inputMap);
 
-        MMatrix outputs;
-        MMatrix meanNormalizedInput = inputs.subtract(mean);
+        TreeMap<Integer, Matrix> outputMap;
+        TreeMap<Integer, Matrix> meanNormalizedInputMap = AbstractMatrix.subtract(inputMap, mean);
         if (!meanOnly) {
-            variance = inputs.variance(mean);
-            outputs = meanNormalizedInput.divide(variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT)).multiply(weightSet.gamma).add(weightSet.beta);
+            variance = AbstractMatrix.variance(inputMap, mean);
+            outputMap = AbstractMatrix.add(AbstractMatrix.multiply(AbstractMatrix.divide(meanNormalizedInputMap, variance.add(epsilonMatrix).apply(UnaryFunctionType.SQRT)), weightSet.gamma), weightSet.beta);
         }
-        else outputs = meanNormalizedInput.multiply(weightSet.gamma).add(weightSet.beta);
-        outputs.setName("Output", true);
+        else {
+            TreeMap<Integer, Matrix> result1 = AbstractMatrix.multiply(meanNormalizedInputMap, weightSet.gamma);
+            outputMap = AbstractMatrix.add(result1, weightSet.beta);
+        }
 
-        return outputs;
+        return outputMap.get(outputMap.firstKey());
     }
 
     /**
@@ -366,27 +370,18 @@ public class BatchNormalization extends AbstractExecutionLayer {
             Sequence layerOutputs = new Sequence();
             if (!meanOnly) {
                 Matrix averageStandardDeviation = averageVariance.multiply(batchSize / (batchSize - 1)).add(epsilonMatrix).apply(UnaryFunctionType.SQRT);
-                for (Map.Entry<Integer, MMatrix> entry : inputSequence.entrySet()) {
+                for (Map.Entry<Integer, Matrix> entry : inputSequence.entrySet()) {
                     int sampleIndex = entry.getKey();
-                    MMatrix inputSample = entry.getValue();
-                    int depth = inputSample.getDepth();
-                    MMatrix outputSample = new MMatrix(depth);
-                    layerOutputs.put(sampleIndex, outputSample);
-                    for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
-                    }
+                    Matrix inputSample = entry.getValue();
+                    layerOutputs.put(sampleIndex, inputSample.subtract(averageMean).divide(averageStandardDeviation).multiply(weightSet.gamma).add(weightSet.beta));
                 }
             }
             else {
-                for (Map.Entry<Integer, MMatrix> entry : inputSequence.entrySet()) {
+                for (Map.Entry<Integer, Matrix> entry : inputSequence.entrySet()) {
                     int sampleIndex = entry.getKey();
-                    MMatrix inputSample = entry.getValue();
-                    MMatrix outputSample = new MMatrix(inputSequence.get(sampleIndex).getDepth());
-                    layerOutputs.put(sampleIndex, outputSample);
-                    int depth = inputSample.getDepth();
-                    for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                        outputSample.put(depthIndex, inputSample.get(depthIndex).subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
-                    }
+                    Matrix inputSample = entry.getValue();
+                    inputSequence.get(sampleIndex);
+                    layerOutputs.put(sampleIndex, inputSample.subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                 }
             }
             setLayerOutputs(layerOutputs);

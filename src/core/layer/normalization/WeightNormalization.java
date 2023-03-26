@@ -85,7 +85,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
         g = 1;
         gMatrix = new DMatrix(g);
         gMatrix.setName("g");
-        gMatrix.setValue(0, 0, g);
     }
 
     /**
@@ -111,7 +110,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
         super.setParams(params);
         if (params.hasParam("g")) {
             g = params.getValueAsInteger("g");
-            gMatrix.setValue(0, 0, g);
+            gMatrix.setValue(0, 0, 0, g);
         }
     }
 
@@ -152,10 +151,9 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -183,12 +181,10 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
-        MMatrix outputs = new MMatrix(1, "Output");
+    public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = input.multiply(gMatrix).divide(input.normAsMatrix(2));
         output.setName("Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
     }
 
     /**
