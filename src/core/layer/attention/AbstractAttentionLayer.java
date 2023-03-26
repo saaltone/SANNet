@@ -19,9 +19,9 @@ import java.util.TreeMap;
 /**
  * Implements abstract attention layer.<br>
  *
- * Reference: https://machinelearningmastery.com/adding-a-custom-attention-layer-to-recurrent-neural-network-in-keras/<br>
- * Reference: https://www.analyticsvidhya.com/blog/2019/11/comprehensive-guide-attention-mechanism-deep-learning/<br>
- * Reference: https://analyticsindiamag.com/a-beginners-guide-to-using-attention-layer-in-neural-networks/<br>
+ * Reference: <a href="https://machinelearningmastery.com/adding-a-custom-attention-layer-to-recurrent-neural-network-in-keras/">...</a><<a href="br>
+ ">* Reference: https://www.analyticsvidhya.com/blog/2019/11/comprehensive-guide-attention-mechan</a>ism-deep-learning/<<a href="br>
+ ">* Reference: https://analyticsindiamag.com/a-beginners-guide-to-using-attention-layer-i</a>n-neural-networks/<br>
  */
 public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
 
@@ -35,7 +35,7 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    protected TreeMap<Integer, MMatrix> inputs;
+    protected TreeMap<Integer, Matrix> inputs;
 
     /**
      * Matrix to store previous output.
@@ -103,7 +103,7 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
         TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
@@ -111,17 +111,17 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
             if (layerWidth == -1) layerWidth = entry.getValue().getLayerWidth();
             else if (layerWidth != entry.getValue().getLayerWidth()) throw new MatrixException("All inputs must have same width.");
-            Matrix input = new DMatrix(layerWidth, 1, Initialization.ONE);
+            Matrix input = new DMatrix(layerWidth, 1, 1, Initialization.ONE);
             input.setName("Input" + entry.getValue().getLayerIndex());
             inputMatrices.put(entry.getKey(), input);
         }
 
         for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
-            inputs.put(inputIndex, new MMatrix(inputMatrices.get(inputIndex)));
+            inputs.put(inputIndex, inputMatrices.get(inputIndex));
         }
 
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1, Initialization.ONE);
+            previousOutput = new DMatrix(getLayerWidth(), 1, 1, Initialization.ONE);
         }
 
         return inputs;
@@ -133,12 +133,12 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PreviousOutput");
 
         Matrix totalScoreMatrix = null;
-        for (Map.Entry<Integer, MMatrix> entry : inputs.entrySet()) {
-            Matrix scoreMatrix = getScoreMatrix(entry.getValue().get(0), entry.getKey(), previousOutput);
+        for (Map.Entry<Integer, Matrix> entry : inputs.entrySet()) {
+            Matrix scoreMatrix = getScoreMatrix(entry.getValue(), entry.getKey(), previousOutput);
             totalScoreMatrix = totalScoreMatrix == null ? scoreMatrix : totalScoreMatrix.join(scoreMatrix, true);
         }
 
@@ -147,19 +147,17 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
         weightMatrix.setName("Weights");
 
         Matrix contextMatrix = null;
-        for (Map.Entry<Integer, MMatrix> entry : inputs.descendingMap().entrySet()) {
-            Matrix singleWeightMatrix =  weightMatrix.unjoin(entry.getKey(), 0, 1, 1);
+        for (Map.Entry<Integer, Matrix> entry : inputs.descendingMap().entrySet()) {
+            Matrix singleWeightMatrix =  weightMatrix.unjoin(entry.getKey(), 0, 0, 1, 1, 1);
             singleWeightMatrix.setName("Weight" + entry.getKey());
-            contextMatrix = contextMatrix == null ? entry.getValue().get(0).multiply(singleWeightMatrix) : contextMatrix.add(entry.getValue().get(0).multiply(singleWeightMatrix));
+            contextMatrix = contextMatrix == null ? entry.getValue().multiply(singleWeightMatrix) : contextMatrix.add(entry.getValue().multiply(singleWeightMatrix));
         }
 
         previousOutput = contextMatrix;
 
         assert contextMatrix != null;
         contextMatrix.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, contextMatrix);
-        return outputs;
+        return contextMatrix;
 
     }
 

@@ -67,11 +67,11 @@ public class GeneralAttentionLayer extends AbstractAttentionLayer {
          */
         GeneralAttentionWeightSet(Initialization initialization, int layerWidth, TreeMap<Integer, NeuralNetworkLayer> previousLayers) {
             int previousLayerWidth = previousLayers.get(previousLayers.firstKey()).getLayerWidth();
-            attentionWeight = new DMatrix(layerWidth, 2 * previousLayerWidth, initialization);
+            attentionWeight = new DMatrix(layerWidth, 2 * previousLayerWidth, 1, initialization);
             attentionWeight.setName("AttentionWeight");
-            attentionBias = new DMatrix(layerWidth, 1);
+            attentionBias = new DMatrix(layerWidth, 1, 1);
             attentionBias.setName("AttentionBias");
-            v = new DMatrix(1, layerWidth);
+            v = new DMatrix(1, layerWidth, 1);
             v.setName("vMatrix");
 
             weights.add(attentionWeight);

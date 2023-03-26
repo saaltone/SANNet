@@ -51,7 +51,7 @@ public class InputBasedAttention extends AbstractAttentionLayer {
          */
         InputBasedAttentionWeightSet(Initialization initialization, TreeMap<Integer, NeuralNetworkLayer> previousLayers) {
             int previousLayerWidth = previousLayers.get(previousLayers.firstKey()).getLayerWidth();
-            attentionWeight = new DMatrix(1, previousLayerWidth, initialization);
+            attentionWeight = new DMatrix(1, previousLayerWidth, 1, initialization);
             attentionWeight.setName("AttentionWeight");
 
             weights.add(attentionWeight);
