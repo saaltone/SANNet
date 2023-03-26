@@ -67,15 +67,6 @@ public interface NeuralNetworkLayer {
     void removeNextLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException;
 
     /**
-     * Replaces next neural network layer
-     *
-     * @param neuralNetworkLayer neural network layer.
-     * @param newNeuralNetworkLayer new neural network layer.
-     * @throws NeuralNetworkException throws exception if next neural network layer is not found.
-     */
-    void replaceNextLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException;
-
-    /**
      * Adds reference to previous neural network layer.
      *
      * @param previousLayer reference to previous neural network layer.
@@ -104,15 +95,6 @@ public interface NeuralNetworkLayer {
      * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
      */
     void removePreviousLayer(NeuralNetworkLayer neuralNetworkLayer) throws NeuralNetworkException;
-
-    /**
-     * Replaces previous neural network layer
-     *
-     * @param neuralNetworkLayer neural network layer.
-     * @param newNeuralNetworkLayer new neural network layer.
-     * @throws NeuralNetworkException throws exception if previous neural network layer is not found.
-     */
-    void replacePreviousLayer(NeuralNetworkLayer neuralNetworkLayer, NeuralNetworkLayer newNeuralNetworkLayer) throws NeuralNetworkException;
 
     /**
      * Returns width of neural network layer.
@@ -233,9 +215,8 @@ public interface NeuralNetworkLayer {
      * Executes training step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs training inputs for layer.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    void train(Sequence inputs) throws MatrixException;
+    void train(Sequence inputs);
 
     /**
      * Executes training step for neural network layer and propagates procedure to next layer.<br>
@@ -248,9 +229,8 @@ public interface NeuralNetworkLayer {
      * Executes predict step for neural network layer and propagates procedure to next layer.
      *
      * @param inputs predict inputs for layer.
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    void predict(Sequence inputs) throws MatrixException;
+    void predict(Sequence inputs);
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
