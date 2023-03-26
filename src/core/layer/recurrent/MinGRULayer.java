@@ -20,7 +20,7 @@ import java.util.TreeMap;
 /**
  * Implements minimal gated recurrent unit (GRU).<br>
  * <br>
- * Reference: https://en.wikipedia.org/wiki/Gated_recurrent_unit<br>
+ * Reference: <a href="https://en.wikipedia.org/wiki/Gated_recurrent_unit">...</a><br>
  * <br>
  * Equations applied for forward operation:<br>
  *     f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate<br>
@@ -106,19 +106,19 @@ public class MinGRULayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         MinGRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wf = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wf.setName("Wf");
-            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wh = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wh.setName("Wh");
 
-            Uf = new DMatrix(layerWidth, layerWidth, initialization);
+            Uf = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uf.setName("Uf");
-            Uh = new DMatrix(layerWidth, layerWidth, initialization);
+            Uh = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uh.setName("Uh");
 
-            bf = new DMatrix(layerWidth, 1);
+            bf = new DMatrix(layerWidth, 1, 1);
             bf.setName("bf");
-            bh = new DMatrix(layerWidth, 1);
+            bh = new DMatrix(layerWidth, 1, 1);
             bh.setName("bh");
 
             weights.add(Wf);
@@ -139,7 +139,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
             registerWeight(bf, false, false);
             registerWeight(bh, false, false);
 
-            ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
+            ones = (ones == null) ? new DMatrix(layerWidth, 1, 1, Initialization.ONE) : ones;
             ones.setName("1");
         }
 
@@ -302,15 +302,14 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1);
+            previousOutput = new DMatrix(getLayerWidth(), 1, 1);
         }
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -319,7 +318,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PreviousOutput");
 
         // f = sigmoid(Wf * x + Uf * out(t-1) + bf) → Forget gate
@@ -338,9 +337,7 @@ public class MinGRULayer extends AbstractRecurrentLayer {
 
         previousOutput = s;
 
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, s);
-        return outputs;
+        return s;
 
     }
 

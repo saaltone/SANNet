@@ -20,7 +20,7 @@ import java.util.TreeMap;
 /**
  * Implements Long Short Term Memory (LSTM)<br>
  * <br>
- * Reference: https://en.wikipedia.org/wiki/Long_short-term_memory<br>
+ * Reference: <a href="https://en.wikipedia.org/wiki/Long_short-term_memory">...</a><br>
  * <br>
  * Equations applied for forward operation:<br>
  *   i = sigmoid(Wi * x + Ui * out(t-1) + bi) → Input gate<br>
@@ -141,31 +141,31 @@ public class LSTMLayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         LSTMWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wi = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wi = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wi.setName("Wi");
-            Wf = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wf = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wf.setName("Wf");
-            Wo = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wo = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wo.setName("Wo");
-            Ws = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Ws = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Ws.setName("Ws");
 
-            Ui = new DMatrix(layerWidth, layerWidth, initialization);
+            Ui = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Ui.setName("Ui");
-            Uf = new DMatrix(layerWidth, layerWidth, initialization);
+            Uf = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uf.setName("Uf");
-            Uo = new DMatrix(layerWidth, layerWidth, initialization);
+            Uo = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uo.setName("Uo");
-            Us = new DMatrix(layerWidth, layerWidth, initialization);
+            Us = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Us.setName("Us");
 
-            bi = new DMatrix(layerWidth, 1);
+            bi = new DMatrix(layerWidth, 1, 1);
             bi.setName("bi");
-            bf = new DMatrix(layerWidth, 1);
+            bf = new DMatrix(layerWidth, 1, 1);
             bf.setName("bf");
-            bo = new DMatrix(layerWidth, 1);
+            bo = new DMatrix(layerWidth, 1, 1);
             bo.setName("bo");
-            bs = new DMatrix(layerWidth, 1);
+            bs = new DMatrix(layerWidth, 1, 1);
             bs.setName("bs");
 
             weights.add(Wi);
@@ -405,16 +405,15 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1);
-            previousCellState = new DMatrix(getLayerWidth(), 1);
+            previousOutput = new DMatrix(getLayerWidth(), 1, 1);
+            previousCellState = new DMatrix(getLayerWidth(), 1, 1);
         }
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -423,7 +422,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PreviousOutput");
         previousCellState.setName("PreviousC");
 
@@ -459,9 +458,7 @@ public class LSTMLayer extends AbstractRecurrentLayer {
 
         previousOutput = h;
 
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, h);
-        return outputs;
+        return h;
 
     }
 

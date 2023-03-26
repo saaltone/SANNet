@@ -20,7 +20,7 @@ import java.util.TreeMap;
 /**
  * Implements gated recurrent unit (GRU).<br>
  * <br>
- * Reference: https://en.wikipedia.org/wiki/Gated_recurrent_unit and https://github.com/erikvdplas/gru-rnn<br>
+ * Reference: <a href="https://en.wikipedia.org/wiki/Gated_recurrent_<a href="unit">...</a>">and https://github.com/</a>erikvdplas/gru-rnn<br>
  * <br>
  * Equations applied for forward operation:<br>
  *     z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate<br>
@@ -125,25 +125,25 @@ public class GRULayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         GRUWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            Wz = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wz = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wz.setName("Wz");
-            Wr = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wr = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wr.setName("Wr");
-            Wh = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            Wh = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             Wh.setName("Wh");
 
-            Uz = new DMatrix(layerWidth, layerWidth, initialization);
+            Uz = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uz.setName("Uz");
-            Ur = new DMatrix(layerWidth, layerWidth, initialization);
+            Ur = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Ur.setName("Ur");
-            Uh = new DMatrix(layerWidth, layerWidth, initialization);
+            Uh = new DMatrix(layerWidth, layerWidth, 1, initialization);
             Uh.setName("Uh");
 
-            bz = new DMatrix(layerWidth, 1);
+            bz = new DMatrix(layerWidth, 1, 1);
             bz.setName("bz");
-            br = new DMatrix(layerWidth, 1);
+            br = new DMatrix(layerWidth, 1, 1);
             br.setName("br");
-            bh = new DMatrix(layerWidth, 1);
+            bh = new DMatrix(layerWidth, 1, 1);
             bh.setName("bh");
 
             weights.add(Wz);
@@ -170,7 +170,7 @@ public class GRULayer extends AbstractRecurrentLayer {
             registerWeight(br, false, false);
             registerWeight(bh, false, false);
 
-            ones = (ones == null) ? new DMatrix(layerWidth, 1, Initialization.ONE) : ones;
+            ones = (ones == null) ? new DMatrix(layerWidth, 1, 1, Initialization.ONE) : ones;
             ones.setName("1");
         }
 
@@ -337,15 +337,14 @@ public class GRULayer extends AbstractRecurrentLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1);
+            previousOutput = new DMatrix(getLayerWidth(), 1, 1);
         }
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -354,7 +353,7 @@ public class GRULayer extends AbstractRecurrentLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PreviousOutput");
 
         // z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate
@@ -378,9 +377,7 @@ public class GRULayer extends AbstractRecurrentLayer {
 
         previousOutput = s;
 
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, s);
-        return outputs;
+        return s;
 
     }
 

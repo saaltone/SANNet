@@ -76,11 +76,11 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
          * @param regulateRecurrentWeights if true recurrent weight are regulated.
          */
         RecurrentWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights, boolean regulateRecurrentWeights) {
-            weight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+            weight = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
             weight.setName("Weight");
-            recurrentWeight = new DMatrix(layerWidth, layerWidth, initialization);
+            recurrentWeight = new DMatrix(layerWidth, layerWidth, 1, initialization);
             recurrentWeight.setName("RecurrentWeight");
-            bias = new DMatrix(layerWidth, 1);
+            bias = new DMatrix(layerWidth, 1, 1);
             bias.setName("Bias");
 
             weights.add(weight);
@@ -240,15 +240,14 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         if (resetPreviousInput) {
-            previousOutput = new DMatrix(getLayerWidth(), 1);
+            previousOutput = new DMatrix(getLayerWidth(), 1, 1);
         }
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -257,7 +256,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         previousOutput.setName("PreviousOutput");
 
         Matrix output = currentWeightSet.weight.dot(input).add(currentWeightSet.bias).add(currentWeightSet.recurrentWeight.dot(previousOutput));
@@ -267,9 +266,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
         previousOutput = output;
 
         output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
 
     }
 
