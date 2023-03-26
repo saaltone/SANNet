@@ -13,7 +13,6 @@ import core.metrics.SingleRegressionMetric;
 import core.optimization.OptimizationType;
 import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.Sampler;
@@ -335,9 +334,9 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns list of neural network layers.
+     * Returns map of neural network layers.
      *
-     * @return list of neural network layers.
+     * @return map of neural network layers.
      */
     public TreeMap<Integer, NeuralNetworkLayer> getNeuralNetworkLayers() {
         return neuralNetworkLayers;
@@ -800,27 +799,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param inputs inputs for prediction.
      * @return predicted values (neural network outputs).
      * @throws NeuralNetworkException throws exception if prediction fails.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
      */
-    public TreeMap<Integer, Matrix> predictMatrix(TreeMap<Integer, Matrix> inputs) throws NeuralNetworkException, MatrixException {
+    public TreeMap<Integer, Matrix> predictMatrix(TreeMap<Integer, Matrix> inputs) throws NeuralNetworkException {
         if (inputs.isEmpty()) throw new NeuralNetworkException("No prediction inputs set");
         TreeMap<Integer, Matrix> outputs = new TreeMap<>();
-        for (Map.Entry<Integer, Sequence> entry : predict(Sequence.getSequencesFromMatrices(inputs), true).entrySet()) outputs.put(entry.getKey(), entry.getValue().get(0).get(0));
-        return outputs;
-    }
-
-    /**
-     * Predicts values based on given input.
-     *
-     * @param inputs inputs for prediction.
-     * @return predicted values (neural network outputs).
-     * @throws NeuralNetworkException throws exception if prediction fails.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     */
-    public TreeMap<Integer, MMatrix> predictMMatrix(TreeMap<Integer, MMatrix> inputs) throws NeuralNetworkException, MatrixException {
-        if (inputs.isEmpty()) throw new NeuralNetworkException("No prediction inputs set");
-        TreeMap<Integer, MMatrix> outputs = new TreeMap<>();
-        for (Map.Entry<Integer, Sequence> entry : predict(Sequence.getSequencesFromMMatrices(inputs), true).entrySet()) outputs.put(entry.getKey(), entry.getValue().get(0));
+        for (Map.Entry<Integer, Sequence> entry : predict(Sequence.getSequencesFromMatrices(inputs), true).entrySet()) outputs.put(entry.getKey(), entry.getValue().get(0));
         return outputs;
     }
 
@@ -1069,9 +1052,8 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Predicts using given test set inputs.
      *
-     * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
      */
-    private void predictInput() throws MatrixException {
+    private void predictInput() {
         for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().predict(predictInputs.get(entry.getKey()));
         stateCompleted();
     }

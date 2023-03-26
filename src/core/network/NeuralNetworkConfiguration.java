@@ -262,9 +262,9 @@ public class NeuralNetworkConfiguration {
     }
 
     /**
-     * Returns list of neural network layers.
+     * Returns map of neural network layers.
      *
-     * @return list of neural network layers.
+     * @return map of neural network layers.
      */
     public TreeMap<Integer, NeuralNetworkLayer> getNeuralNetworkLayers() {
         return new TreeMap<>() {{ putAll(neuralNetworkLayers); }};

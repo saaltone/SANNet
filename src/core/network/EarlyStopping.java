@@ -21,7 +21,7 @@ import java.util.Deque;
  * Implements early stopping method for neural network.<br>
  * This class seeks ideas for underlying implementation from below referenced paper.<br>
  * <br>
- * Reference: https://www.researchgate.net/publication/2874749_Early_Stopping_-_But_When<br>
+ * Reference: <a href="https://www.researchgate.net/publication/2874749_Early_Stopping_-_But_When">...</a><br>
  *
  */
 public class EarlyStopping implements Configurable, Serializable {
