@@ -130,18 +130,20 @@ public interface Matrix {
      *
      * @param row row of value to be set.
      * @param column column of value to be set.
+     * @param depth depth of value to be set.
      * @param value new value to be set.
      */
-    void setValue(int row, int column, double value);
+    void setValue(int row, int column, int depth, double value);
 
     /**
      * Returns value of matrix at specific row and column.
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.
+     * @param depth depth of value to be returned.
      * @return value of row and column.
      */
-    double getValue(int row, int column);
+    double getValue(int row, int column, int depth);
 
     /**
      * Returns total number of rows defined for matrix.
@@ -158,9 +160,16 @@ public interface Matrix {
     int getTotalColumns();
 
     /**
-     * Returns size (rows * columns) of matrix effectively with slicing considered.<br>
+     * Returns total depth defined for matrix.
      *
-     * @return size (rows * columns) of matrix effectively with slicing considered.
+     * @return total depth defined for matrix.
+     */
+    int getTotalDepth();
+
+    /**
+     * Returns size (rows * columns * depth) of matrix effectively with slicing considered.<br>
+     *
+     * @return size (rows * columns * depth) of matrix effectively with slicing considered.
      */
     int size();
 
@@ -179,40 +188,62 @@ public interface Matrix {
     int getColumns();
 
     /**
-     * Increment value of specific row and column.
+     * Returns depth of matrix effectively with slicing considered.<br>
+     *
+     * @return depth of matrix effectively with slicing considered.
+     */
+    int getDepth();
+
+    /**
+     * Increment value of specific row, column and depth.
      *
      * @param row row of value to be added.
      * @param column column of value to be added.
+     * @param depth depth of value to be added.
      * @param value to be added.
      */
-    void incrementByValue(int row, int column, double value);
+    void addByValue(int row, int column, int depth, double value);
 
     /**
-     * Decrease value of specific row and column.
+     * Decrease value of specific row, column and depth.
      *
      * @param row row of value to be decreased.
      * @param column column of value to be decreased.
+     * @param depth depth of value to be decreased.
      * @param value to be decreased.
      */
-    void decrementByValue(int row, int column, double value);
+    void subtractByValue(int row, int column, int depth, double value);
 
     /**
-     * Multiply value of specific row and column.
+     * Multiply value of specific row, column and depth.
      *
      * @param row row of value to be multiplied.
      * @param column column of value to be multiplied.
+     * @param depth depth of value to be multiplied.
      * @param value to be multiplied.
      */
-    void multiplyByValue(int row, int column, double value);
+    void multiplyByValue(int row, int column, int depth, double value);
 
     /**
-     * Divide value of specific row and column.
+     * Divide value of specific row, column and depth.
      *
      * @param row row of value to be divided.
      * @param column column of value to be divided.
+     * @param depth depth of value to be divided.
      * @param value to be divided.
      */
-    void divideByValue(int row, int column, double value);
+    void divideByValue(int row, int column, int depth, double value);
+
+    /**
+     * Returns matrix of given size (rows x columns)
+     *
+     * @param rows rows
+     * @param columns columns
+     * @param depth depth
+     * @return new matrix
+     * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
+     */
+    Matrix getNewMatrix(int rows, int columns, int depth) throws MatrixException;
 
     /**
      * Returns new matrix of same dimensions.
@@ -227,16 +258,9 @@ public interface Matrix {
      *
      * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
      * @return new matrix of same dimensions.
+     * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
-    Matrix getNewMatrix(boolean asTransposed);
-
-    /**
-     * Copies new matrix data inside this matrix same dimensions.<br>
-     *
-     * @param newMatrix new matrix to be copied inside this matrix.
-     * @throws MatrixException throws exception if this and new matrix dimensions are not matching.
-     */
-    void copyMatrixData(Matrix newMatrix) throws MatrixException;
+    Matrix getNewMatrix(boolean asTransposed) throws MatrixException;
 
     /**
      * Creates new matrix with object reference to the matrix data of this matrix.
@@ -259,11 +283,13 @@ public interface Matrix {
      *
      * @param startRow start row of slice.
      * @param startColumn start column of slice.
+     * @param startDepth start depth of slice.
      * @param endRow  end row of slice.
      * @param endColumn  end column of slice.
+     * @param endDepth  end depth of slice.
      * @throws MatrixException throws exception if slicing fails.
      */
-    void slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException;
+    void slice(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) throws MatrixException;
 
     /**
      * Removes slicing of matrix.
@@ -330,20 +356,10 @@ public interface Matrix {
      *
      * @param unaryFunction unary function.
      * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
-    void apply(UnaryFunction unaryFunction, boolean inplace) throws MatrixException;
-
-    /**
-     * Applies unaryFunction to this matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param result result matrix.
-     * @param unaryFunction unaryFunction to be applied.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void apply(Matrix result, UnaryFunction unaryFunction) throws MatrixException;
+    Matrix apply(UnaryFunction unaryFunction, boolean inplace) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -361,12 +377,13 @@ public interface Matrix {
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param result result matrix
      * @param unaryFunctionType unaryFunction type to be applied.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void apply(Matrix result, UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException;
+    Matrix apply(UnaryFunctionType unaryFunctionType, boolean inplace) throws MatrixException, DynamicParamException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -386,11 +403,12 @@ public interface Matrix {
      * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
-     * @param result result matrix.
      * @param binaryFunction binaryFunction to be applied.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void applyBi(Matrix other, Matrix result, BinaryFunction binaryFunction) throws MatrixException;
+    Matrix applyBi(Matrix other, BinaryFunction binaryFunction, boolean inplace) throws MatrixException;
 
     /**
      * Applies two variable operation to this matrix.<br>
@@ -409,37 +427,13 @@ public interface Matrix {
      * Example of operation can be subtraction of other matrix from this matrix.<br>
      * Applies masking element wise if either matrix is masked.<br>
      *
-     * @param other other matrix
-     * @param result result matrix.
+     * @param other              other matrix
      * @param binaryFunctionType binaryFunction type to be applied.
      * @return matrix which stores operation result.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    Matrix applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException;
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other other matrix
-     * @param binaryFunctionType binaryFunction type to be applied.
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
+     * @throws MatrixException       throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     Matrix applyBi(Matrix other, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException;
-
-    /**
-     * Adds other matrix to this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void add(Matrix other, Matrix result) throws MatrixException;
 
     /**
      * Adds other matrix to this matrix.<br>
@@ -456,30 +450,10 @@ public interface Matrix {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant contains constant value to be added.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    void add(double constant, Matrix result) throws MatrixException;
-
-    /**
-     * Adds constant number to this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant contains constant value to be added.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     Matrix add(double constant) throws MatrixException;
-
-    /**
-     * Subtracts other matrix from this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void subtract(Matrix other, Matrix result) throws MatrixException;
 
     /**
      * Subtracts other matrix from this matrix.<br>
@@ -496,30 +470,10 @@ public interface Matrix {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant contains constant value to be subtracted.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    void subtract(double constant, Matrix result) throws MatrixException;
-
-    /**
-     * Subtracts constant number from this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant contains constant value to be subtracted.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
     Matrix subtract(double constant) throws MatrixException;
-
-    /**
-     * Multiplies other matrix element wise with this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void multiply(Matrix other, Matrix result) throws MatrixException;
 
     /**
      * Multiplies other matrix element wise with this matrix.<br>
@@ -536,16 +490,6 @@ public interface Matrix {
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant contains constant value to be multiplied.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    void multiply(double constant, Matrix result) throws MatrixException;
-
-    /**
-     * Multiplies constant number with this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant contains constant value to be multiplied.
      * @return matrix which stores operation result.
      * @throws MatrixException not thrown in any situation.
      */
@@ -553,18 +497,6 @@ public interface Matrix {
 
     /**
      * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     */
-    void divide(Matrix other, Matrix result) throws MatrixException;
-
-    /**
-     * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
@@ -575,18 +507,6 @@ public interface Matrix {
 
     /**
      * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param constant constant used as divider value.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
-     */
-    void divide(double constant, Matrix result) throws MatrixException;
-
-    /**
-     * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant constant used as divider value.
@@ -596,36 +516,68 @@ public interface Matrix {
     Matrix divide(double constant) throws MatrixException;
 
     /**
-     * Increments matrix by other matrix.
+     * Adds this matrix by other matrix.
      *
-     * @param otherMatrix other matrix.
+     * @param other other matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    void incrementBy(Matrix otherMatrix) throws MatrixException;
+    void addBy(Matrix other) throws MatrixException;
 
     /**
-     * Decrements matrix by other matrix.
+     * Adds this matrix by constant.
      *
-     * @param otherMatrix other matrix.
+     * @param constant constant.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    void decrementBy(Matrix otherMatrix) throws MatrixException;
+    void addBy(double constant) throws MatrixException;
 
     /**
-     * Multiplies matrix by other matrix.
+     * Subtracts this matrix by other matrix.
      *
-     * @param otherMatrix other matrix.
+     * @param other other matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    void multiplyBy(Matrix otherMatrix) throws MatrixException;
+    void subtractBy(Matrix other) throws MatrixException;
 
     /**
-     * Divides matrix by other matrix.
+     * Subtracts this matrix by constant.
      *
-     * @param otherMatrix other matrix.
+     * @param constant constant.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    void divideBy(Matrix otherMatrix) throws MatrixException;
+    void subtractBy(double constant) throws MatrixException;
+
+    /**
+     * Multiplies this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void multiplyBy(Matrix other) throws MatrixException;
+
+    /**
+     * Multiplies this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void multiplyBy(double constant) throws MatrixException;
+
+    /**
+     * Divides this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void divideBy(Matrix other) throws MatrixException;
+
+    /**
+     * Divides this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void divideBy(double constant) throws MatrixException;
 
     /**
      * Raises this matrix element wise to the power of value power.<br>
@@ -639,28 +591,6 @@ public interface Matrix {
     Matrix power(double power) throws MatrixException, DynamicParamException;
 
     /**
-     * Raises this matrix element wise to the power of value power.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param power value of power.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void power(double power, Matrix result) throws MatrixException, DynamicParamException;
-
-    /**
-     * Takes element wise max value of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void max(Matrix other, Matrix result) throws MatrixException, DynamicParamException;
-
-    /**
      * Takes element wise max value of this and other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -670,17 +600,6 @@ public interface Matrix {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     Matrix max(Matrix other) throws MatrixException, DynamicParamException;
-
-    /**
-     * Takes element wise min value of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void min(Matrix other, Matrix result) throws MatrixException, DynamicParamException;
 
     /**
      * Takes element wise min value of this and other matrix.<br>
@@ -699,34 +618,11 @@ public interface Matrix {
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void sgnmul(Matrix other, Matrix result) throws MatrixException, DynamicParamException;
-
-    /**
-     * Takes element wise signum over multiplication of this and other matrix.<br>
-     * Applies first sign operation to each value and then multiplies them.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     Matrix sgnmul(Matrix other) throws MatrixException, DynamicParamException;
-
-    /**
-     * Takes matrix dot product of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
-     */
-    Matrix dot(Matrix other, Matrix result) throws MatrixException;
 
     /**
      *
@@ -1006,40 +902,10 @@ public interface Matrix {
     /**
      * Returns softmax of this matrix.
      *
-     * @param result result matrix.
-     * @return softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix softmax(Matrix result) throws MatrixException;
-
-    /**
-     * Returns softmax of this matrix.
-     *
      * @return softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
     Matrix softmax() throws MatrixException;
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @param result result matrix.
-     * @return softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix gumbelSoftmax(Matrix result) throws MatrixException;
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @param result result matrix.
-     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @return Gumbel softmax matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix gumbelSoftmax(Matrix result, double gumbelSoftmaxTau) throws MatrixException;
 
     /**
      * Returns Gumbel softmax of this matrix.<br>
@@ -1059,16 +925,6 @@ public interface Matrix {
      * @throws MatrixException thrown if index dimensions do not match.
      */
     Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException;
-
-    /**
-     * Returns softmax gradient of this matrix.<br>
-     * Assumes that input matrix is softmax result.<br>
-     *
-     * @param result result matrix.
-     * @return softmax gradient of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix softmaxGrad(Matrix result) throws MatrixException;
 
     /**
      * Returns softmax gradient of this matrix.
@@ -1135,6 +991,20 @@ public interface Matrix {
     int getFilterColumnSize();
 
     /**
+     * Sets if convolution is depth separable.
+     *
+     * @param isDepthSeparable is true convolution is depth separable.
+     */
+    void setIsDepthSeparable(boolean isDepthSeparable);
+
+    /**
+     * Returns if convolution is depth separable.
+     *
+     * @return if true convolution is depth separable.
+     */
+    boolean getIsDepthSeparable();
+
+    /**
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
@@ -1142,15 +1012,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix convolve(Matrix filter) throws MatrixException;
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated value of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void convolve(Matrix filter, Matrix result) throws MatrixException;
 
     /**
      * Calculates crosscorrelation between this matrix and filter matrix.
@@ -1162,15 +1023,6 @@ public interface Matrix {
     Matrix crosscorrelate(Matrix filter) throws MatrixException;
 
     /**
-     * Calculates crosscorrelate between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated value of crosscorrelate.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void crosscorrelate(Matrix filter, Matrix result) throws MatrixException;
-
-    /**
      * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
@@ -1178,15 +1030,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix winogradConvolve(Matrix filter) throws MatrixException;
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated value of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void winogradConvolve(Matrix filter, Matrix result) throws MatrixException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1206,21 +1049,6 @@ public interface Matrix {
     /**
      * Calculates convolution between this matrix and filter matrix.
      *
-     * @param filter filter matrix.
-     * @param result calculated value of convolution.
-     * @param A A matrix
-     * @param AT A transposed matrix
-     * @param C C matrix
-     * @param CT C transposed matrix
-     * @param G G matrix
-     * @param GT G transposed matrix
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void winogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
      * @param preprocessedFilter preprocessed filter matrix.
      * @param A A matrix
      * @param AT A transposed matrix
@@ -1232,91 +1060,6 @@ public interface Matrix {
     Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param preprocessedFilter preprocessed filter matrix.
-     * @param result calculated value of convolution.
-     * @param A A matrix
-     * @param AT A transposed matrix
-     * @param C C matrix
-     * @param CT C transposed matrix
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void winogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
-
-    /**
-     * Calculates gradient of convolution for output.
-     *
-     * @param filter filter for convolutional operator.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix convolveInputGradient(Matrix filter) throws MatrixException;
-
-    /**
-     * Calculates gradient of crosscorrelation for output.
-     *
-     * @param filter filter for crosscorrelation operator.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix crosscorrelateInputGradient(Matrix filter) throws MatrixException;
-
-    /**
-     * Calculates gradient of convolution for input.
-     *
-     * @param filter filter for convolutional operator.
-     * @param inputGradient input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void convolveInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException;
-
-    /**
-     * Calculates gradient of crosscorrelation for input.
-     *
-     * @param filter filter for crosscorrelation operator.
-     * @param inputGradient input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException;
-
-    /**
-     * Calculates gradient of convolution for filter.
-     *
-     * @param input input for convolutional operator.
-     * @return filter gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix convolveFilterGradient(Matrix input) throws MatrixException;
-
-    /**
-     * Calculates gradient of crosscorrelation for filter.
-     *
-     * @param input input for crosscorrelation operator.
-     * @return filter gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix crosscorrelateFilterGradient(Matrix input) throws MatrixException;
-
-    /**
-     * Calculates gradient of convolution for filter.
-     *
-     * @param input input for convolutional operator.
-     * @param filterGradient filter gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void convolveFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException;
-
-    /**
-     * Calculates gradient of crosscorrelation for filter.
-     *
-     * @param input input for crosscorrelation operator.
-     * @param filterGradient filter gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException;
-
-    /**
      * Calculates max pooling operation for this matrix.
      *
      * @param maxPos maximum positions for each row and col value.
@@ -1324,33 +1067,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException;
-
-    /**
-     * Calculates max pooling operation for this matrix and returns max arguments.
-     *
-     * @param result result matrix.
-     * @param maxPos maximum positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void maxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of max pooling operation for this matrix.
-     *
-     * @param maxPos maximum positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) throws MatrixException;
-
-    /**
-     * Calculates gradient for max pool operation.
-     *
-     * @param inputGradient input gradient.
-     * @param maxPos maximum positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates random pooling operation for this matrix.
@@ -1362,33 +1078,6 @@ public interface Matrix {
     Matrix randomPool(HashMap<Integer, Integer> inputPos) throws MatrixException;
 
     /**
-     * Calculates random pooling operation for this matrix and returns max arguments.
-     *
-     * @param result result matrix.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void randomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of random pooling operation for this matrix.
-     *
-     * @param inputPos input positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix randomPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient for random pool operation.
-     *
-     * @param inputGradient input gradient.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void randomPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
      * Calculates cyclic pooling operation for this matrix.
      *
      * @param inputPos input positions for each row and col value.
@@ -1398,63 +1087,12 @@ public interface Matrix {
     Matrix cyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException;
 
     /**
-     * Calculates cyclic pooling operation for this matrix and returns max arguments.
-     *
-     * @param result result matrix.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void cyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of cyclic pooling operation for this matrix.
-     *
-     * @param inputPos input positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix cyclicPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient for cyclic pool operation.
-     *
-     * @param inputGradient input gradient.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void cyclicPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
      * Calculates average pooling operation for this matrix.
      *
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix averagePool() throws MatrixException;
-
-    /**
-     * Calculates average pooling operation for this matrix.
-     *
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void averagePool(Matrix result) throws MatrixException;
-
-    /**
-     * Calculates gradient of average pooling operation for this matrix.
-     *
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix averagePoolGradient() throws MatrixException;
-
-    /**
-     * Calculates gradient of average pooling operation for this matrix.
-     *
-     * @param inputGradient input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void averagePoolGradient(Matrix inputGradient) throws MatrixException;
 
     /**
      * Transposes matrix.
@@ -1522,22 +1160,31 @@ public interface Matrix {
      *
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
      * @param unjoinRows unjoins specific number of rows.
      * @param unjoinColumns unjoins specific number of column.
+     * @param unjoinDepth unjoins specific depth.
      * @return result matrix.
      * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinRows, int unjoinColumns) throws MatrixException;
+    Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException;
 
     /**
-     * Unjoins matrix at specific row and column.
+     * Flattens matrix into one dimensional column vector (matrix)
      *
-     * @param result unjoined matrix
-     * @param unjoinAtRow unjoins at row.
-     * @param unjoinAtColumn unjoins at column.
-     * @throws MatrixException throws matrix exception if unjoining fails.
+     * @return flattened matrix
      */
-    void unjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException;
+    Matrix flatten();
+
+    /**
+     * Returns unflattened matrix i.e. samples that have been unflattened from single column vector.
+     *
+     * @param rows rows of unflattened matrix.
+     * @param columns columns of unflattened matrix.
+     * @param depth depth of unflattened matrix.
+     * @return unflattened matrix.
+     */
+    Matrix unflatten(int rows, int columns, int depth);
 
     /**
      * Prints matrix in row and column format.
@@ -1583,8 +1230,9 @@ public interface Matrix {
      *
      * @param row specific row.
      * @param column specific column.
+     * @param depth specific depth.
      * @return if true mask exists and is masked at specific position (row + column).
      */
-    boolean hasMaskAt(int row, int column);
+    boolean hasMaskAt(int row, int column, int depth);
 
 }

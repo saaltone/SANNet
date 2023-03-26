@@ -13,7 +13,7 @@ import utils.matrix.MatrixException;
 /**
  * Implements F(2x2, 3x3) Winograd convolution.<br>
  *
- * Reference: http://cs231n.stanford.edu/reports/2016/pdfs/117_Report.pdf <br>
+ * Reference: <a href="http://cs231n.stanford.edu/reports/2016/pdfs/117_Report.pdf">...</a> <br>
  *
  */
 public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation {
@@ -77,55 +77,56 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param rows rows
      * @param columns columns
+     * @param depth depth.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public WinogradConvolutionMatrixOperation(int rows, int columns) throws MatrixException {
-        super(rows, columns, false, 2);
-        AT = new DMatrix(2, 4);
-        AT.setValue(0, 0, 1);
-        AT.setValue(0, 1, 1);
-        AT.setValue(0, 2, 1);
-        AT.setValue(0, 3, 0);
-        AT.setValue(1, 0, 0);
-        AT.setValue(1, 1, 1);
-        AT.setValue(1, 2, -1);
-        AT.setValue(1, 3, -1);
+    public WinogradConvolutionMatrixOperation(int rows, int columns, int depth) throws MatrixException {
+        super(rows, columns, depth, false, 2);
+        AT = new DMatrix(2, 4, 1);
+        AT.setValue(0, 0, 0, 1);
+        AT.setValue(0, 1, 0, 1);
+        AT.setValue(0, 2, 0, 1);
+        AT.setValue(0, 3, 0, 0);
+        AT.setValue(1, 0, 0, 0);
+        AT.setValue(1, 1, 0, 1);
+        AT.setValue(1, 2, 0, -1);
+        AT.setValue(1, 3, 0, -1);
         maskZeros(AT);
         A = AT.transpose();
 
-        C = new DMatrix(4, 4);
-        C.setValue(0, 0, 1);
-        C.setValue(0, 1, 0);
-        C.setValue(0, 2, -1);
-        C.setValue(0, 3, 0);
-        C.setValue(1, 0, 0);
-        C.setValue(1, 1, 1);
-        C.setValue(1, 2, 1);
-        C.setValue(1, 3, 0);
-        C.setValue(2, 0, 0);
-        C.setValue(2, 1, -1);
-        C.setValue(2, 2, 1);
-        C.setValue(2, 3, 0);
-        C.setValue(3, 0, 0);
-        C.setValue(3, 1, 1);
-        C.setValue(3, 2, 0);
-        C.setValue(3, 3, -1);
+        C = new DMatrix(4, 4, 1);
+        C.setValue(0, 0, 0, 1);
+        C.setValue(0, 1, 0, 0);
+        C.setValue(0, 2, 0, -1);
+        C.setValue(0, 3, 0, 0);
+        C.setValue(1, 0, 0, 0);
+        C.setValue(1, 1, 0, 1);
+        C.setValue(1, 2, 0, 1);
+        C.setValue(1, 3, 0, 0);
+        C.setValue(2, 0, 0, 0);
+        C.setValue(2, 1, 0, -1);
+        C.setValue(2, 2, 0, 1);
+        C.setValue(2, 3, 0, 0);
+        C.setValue(3, 0, 0, 0);
+        C.setValue(3, 1, 0, 1);
+        C.setValue(3, 2, 0, 0);
+        C.setValue(3, 3, 0, -1);
         maskZeros(C);
         CT = C.transpose();
 
-        G = new DMatrix(4, 3);
-        G.setValue(0, 0, 1);
-        G.setValue(0, 1, 0);
-        G.setValue(0, 2, 0);
-        G.setValue(1, 0, 1/(double)2);
-        G.setValue(1, 1, 1/(double)2);
-        G.setValue(1, 2, 1/(double)2);
-        G.setValue(2, 0, 1/(double)2);
-        G.setValue(2, 1, -1/(double)2);
-        G.setValue(2, 2, 1/(double)2);
-        G.setValue(3, 0, 0);
-        G.setValue(3, 1, 0);
-        G.setValue(3, 2, 1);
+        G = new DMatrix(4, 3, 1);
+        G.setValue(0, 0, 0, 1);
+        G.setValue(0, 1, 0, 0);
+        G.setValue(0, 2, 0, 0);
+        G.setValue(1, 0, 0, 1/(double)2);
+        G.setValue(1, 1, 0, 1/(double)2);
+        G.setValue(1, 2, 0, 1/(double)2);
+        G.setValue(2, 0, 0, 1/(double)2);
+        G.setValue(2, 1, 0, -1/(double)2);
+        G.setValue(2, 2, 0, 1/(double)2);
+        G.setValue(3, 0, 0, 0);
+        G.setValue(3, 1, 0, 0);
+        G.setValue(3, 2, 0, 1);
         maskZeros(G);
         GT = G.transpose();
     }
@@ -135,6 +136,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param rows rows
      * @param columns columns
+     * @param depth depth.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
@@ -142,8 +144,8 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @param G G matrix
      * @param GT G transposed matrix
      */
-    public WinogradConvolutionMatrixOperation(int rows, int columns, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) {
-        super(rows, columns, false, 2);
+    public WinogradConvolutionMatrixOperation(int rows, int columns, int depth, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) {
+        super(rows, columns, depth, false, 2);
         this.A = A;
         this.AT = AT;
         this.C = C;
@@ -157,13 +159,14 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param rows rows
      * @param columns columns
+     * @param depth depth.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
      * @param CT C transposed matrix
      */
-    public WinogradConvolutionMatrixOperation(int rows, int columns, Matrix A, Matrix AT, Matrix C, Matrix CT) {
-        super(rows, columns, false, 2);
+    public WinogradConvolutionMatrixOperation(int rows, int columns, int depth, Matrix A, Matrix AT, Matrix C, Matrix CT) {
+        super(rows, columns, depth, false, 2);
         this.A = A;
         this.AT = AT;
         this.C = C;
@@ -181,10 +184,13 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
         matrix.setMask();
         int matrixRows = matrix.getRows();
         int matrixColumns = matrix.getColumns();
+        int matrixDepth = matrix.getDepth();
         Mask matrixMask = matrix.getMask();
-        for (int row = 0; row < matrixRows; row++) {
-            for (int column = 0; column < matrixColumns; column++) {
-                if (matrix.getValue(row, column) == 0) matrixMask.setMask(row, column, true);
+        for (int depth = 0; depth < matrixDepth; depth++) {
+            for (int row = 0; row < matrixRows; row++) {
+                for (int column = 0; column < matrixColumns; column++) {
+                    if (matrix.getValue(row, column, depth) == 0) matrixMask.setMask(row, column, depth, true);
+                }
             }
         }
     }
@@ -194,14 +200,15 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param input input matrix.
      * @param filter filter matrix.
-     * @param result result matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(Matrix input, Matrix filter, Matrix result) throws MatrixException {
+    public Matrix apply(Matrix input, Matrix filter) throws MatrixException {
         this.input = input;
         this.filter = filter;
-        this.result = result;
+        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth());
         applyMatrixOperation();
+        return result;
     }
 
     /**
@@ -218,7 +225,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -227,28 +234,24 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) throws MatrixException {
-        final Matrix G1 = new DMatrix(4, 3);
-        Matrix Gprime = new DMatrix(4, 4);
-        final Matrix C1 = new DMatrix(4, 4);
-        final Matrix Crime = new DMatrix(4, 4);
-        final Matrix GCprime = new DMatrix(4, 4);
-        final Matrix AT1 = new DMatrix(2, 4);
-        input.slice(row, column, row + 3, column + 3);
+    public void apply(int row, int column, int depth, double value) throws MatrixException {
+        input.slice(row, column, depth, row + 3, column + 3, depth);
+        Matrix Gprime;
         if (G != null) {
-            G.dot(filter, G1);
-            G1.dot(GT, Gprime);
+            Matrix G1 = G.dot(filter);
+            Gprime = G1.dot(GT);
         }
         else Gprime = filter;
-        CT.dot(input, C1);
-        C1.dot(C, Crime);
-        Gprime.dot(Crime, GCprime);
-        AT.dot(GCprime, AT1);
-        result.slice(row, column, row + 1, column + 1);
-        AT1.dot(A, result);
+        Matrix C1 = CT.dot(input);
+        Matrix CPrime = C1.dot(C);
+        Matrix GCprime = Gprime.dot(CPrime);
+        Matrix AT1 = AT.dot(GCprime);
+        result.slice(row, column, depth, row + 1, column + 1, depth);
+        result.setEqualTo(AT1.dot(A));
         input.unslice();
         result.unslice();
     }

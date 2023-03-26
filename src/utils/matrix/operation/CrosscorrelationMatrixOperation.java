@@ -5,8 +5,6 @@
 
 package utils.matrix.operation;
 
-import utils.matrix.MatrixException;
-
 /**
  * Implements crosscorrelation matrix operation.
  *
@@ -16,57 +14,37 @@ public class CrosscorrelationMatrixOperation extends AbstractConvolutionMatrixOp
     /**
      * Constructor for crosscorrelation matrix operation.
      *
-     * @param rows number of rows for operation.
-     * @param columns number of columns for operation.
-     * @param filterRowSize filter row size
+     * @param rows             number of rows for operation.
+     * @param columns          number of columns for operation.
+     * @param depth            depth for operation.
+     * @param filterRowSize    filter row size
      * @param filterColumnSize filter column size.
-     * @param dilation dilation step
-     * @param stride stride step
+     * @param dilation         dilation step
+     * @param stride           stride step
+     * @param isDepthSeparable if true convolution is depth separable
      */
-    public CrosscorrelationMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int dilation, int stride) {
-        super(rows, columns, filterRowSize, filterColumnSize, dilation, stride);
+    public CrosscorrelationMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable);
     }
 
     /**
-     * Applies operation.
+     * Returns filter row.
      *
-     * @param row current row.
-     * @param column current column.
-     * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param filterRow filter row.
+     * @return filter row.
      */
-    public void apply(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
-        double resultValue = 0;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                resultValue += input.getValue(filterRow, filterColumn) * filter.getValue(filterRow, filterColumn);
-            }
-        }
-        result.setValue(row, column, resultValue);
-        input.unslice();
+    protected int getFilterRow(int filterRow) {
+        return filterRow;
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Returns filter column.
      *
-     * @param row current row.
-     * @param column current column.
-     * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param filterColumn filter column.
+     * @return filter column.
      */
-    public void applyMask(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
-        double resultValue = 0;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                if (!hasMaskAt(filterRow, filterColumn, input, filter)) {
-                    resultValue += input.getValue(filterRow, filterColumn) * filter.getValue(filterRow, filterColumn);
-                }
-            }
-        }
-        result.setValue(row, column, resultValue);
-        input.unslice();
+    protected int getFilterColumn(int filterColumn) {
+        return filterColumn;
     }
 
 }

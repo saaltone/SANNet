@@ -43,11 +43,12 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
      * @param mean mean for normalize operation.
      * @param variance variance for normalize operation.
      */
-    public NormalizeMatrixOperation(int rows, int columns, double mean, double variance) {
-        super(rows, columns, true);
+    public NormalizeMatrixOperation(int rows, int columns, int depth, double mean, double variance) {
+        super(rows, columns, depth, true);
         this.mean = mean;
         this.variance = variance;
     }
@@ -81,7 +82,7 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -108,10 +109,11 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      */
-    public void apply(int row, int column, double value) {
-        result.setValue(row, column, (value - mean) / variance);
+    public void apply(int row, int column, int depth, double value) {
+        result.setValue(row, column, depth, (value - mean) / variance);
     }
 
 }

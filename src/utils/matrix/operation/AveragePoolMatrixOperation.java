@@ -49,12 +49,13 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
      * @param stride stride step
      */
-    public AveragePoolMatrixOperation(int rows, int columns, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, false, stride);
+    public AveragePoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
+        super(rows, columns, depth, false, stride);
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
@@ -64,13 +65,14 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      * Applies matrix operation.
      *
      * @param input input matrix.
-     * @param result result matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(Matrix input, Matrix result) throws MatrixException {
+    public Matrix apply(Matrix input) throws MatrixException {
         this.input = input;
-        this.result = result;
+        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth());
         applyMatrixOperation();
+        return result;
     }
 
     /**
@@ -87,7 +89,7 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -96,19 +98,17 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+    public void apply(int row, int column, int depth, double value) {
         double sumValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                sumValue += input.getValue(filterRow, filterColumn);
+                sumValue += input.getValue(row + filterRow, column + filterColumn, depth);
             }
         }
-        result.setValue(row, column, sumValue * invertedFilterSize);
-        input.unslice();
+        result.setValue(row, column, depth, sumValue * invertedFilterSize);
     }
 
     /**
@@ -116,21 +116,19 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyMask(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
+    public void applyMask(int row, int column, int depth, double value) {
         double sumValue = 0;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                if (!hasMaskAt(filterRow, filterColumn, input)) {
-                    sumValue += input.getValue(filterRow, filterColumn);
+                if (!hasMaskAt(row + filterRow, column + filterColumn, depth, input)) {
+                    sumValue += input.getValue(row + filterRow, column + filterColumn, depth);
                 }
             }
         }
-        result.setValue(row, column, sumValue * invertedFilterSize);
-        input.unslice();
+        result.setValue(row, column, depth, sumValue * invertedFilterSize);
     }
 
 }

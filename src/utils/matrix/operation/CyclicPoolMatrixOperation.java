@@ -5,53 +5,24 @@
 
 package utils.matrix.operation;
 
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-
-import java.util.HashMap;
-
 /**
  * Implements cyclic pooling matrix operation.<br>
  * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
  *
  */
-public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
+public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOperation {
 
     /**
-     * Input matrix.
+     * Current input row.
      *
      */
-    private Matrix input;
+    private int inputRow;
 
     /**
-     * Number of inputs columns.
+     * Current input column.
      *
      */
-    private final int inputColumnSize;
-
-    /**
-     * Result.
-     *
-     */
-    private Matrix result;
-
-    /**
-     * Number of rows in filter.
-     *
-     */
-    private final int filterRowSize;
-
-    /**
-     * Number of columns in filter.
-     *
-     */
-    private final int filterColumnSize;
-
-    /**
-     * Input position for each resulting row and column.
-     *
-     */
-    private HashMap<Integer, Integer> inputPos;
+    private int inputColumn;
 
     /**
      * Current row of filter.
@@ -70,49 +41,15 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
+     * @param inputRowSize number of input rows.
      * @param inputColumnSize number of input columns.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
      * @param stride stride step
      */
-    public CyclicPoolMatrixOperation(int rows, int columns, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, false, stride);
-        this.inputColumnSize = inputColumnSize;
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
-    }
-
-    /**
-     * Applies matrix operation.
-     *
-     * @param input input matrix.
-     * @param inputPos input positions.
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void apply(Matrix input, HashMap<Integer, Integer> inputPos, Matrix result) throws MatrixException {
-        this.input = input;
-        this.inputPos = inputPos;
-        this.result = result;
-        applyMatrixOperation();
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getAnother() {
-        return null;
+    public CyclicPoolMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
+        super(rows, columns, depth, inputRowSize, inputColumnSize, filterRowSize, filterColumnSize, stride);
     }
 
     /**
@@ -120,22 +57,17 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
-     * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param depth current depth.
      */
-    public void apply(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
-        int filterRow = currentRow;
-        int filterColumn = currentColumn;
-        double inputValue = input.getValue(filterRow, filterColumn);
-        result.setValue(row, column, inputValue);
-        inputPos.put(2 * (row * inputColumnSize + column), row + filterRow);
-        inputPos.put(2 * (row * inputColumnSize + column) + 1, column + filterColumn);
+    public void executeApply(int row, int column, int depth) {
+        inputRow = row + currentRow;
+        inputColumn = column + currentColumn;
+        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
+
         if(++currentRow >= filterRowSize) {
             currentRow = 0;
             if(++currentColumn >= filterColumnSize) currentColumn = 0;
         }
-        input.unslice();
     }
 
     /**
@@ -143,28 +75,42 @@ public class CyclicPoolMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
-     * @param value current value.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param depth current depth.
      */
-    public void applyMask(int row, int column, double value) throws MatrixException {
-        input.slice(row, column, row + filterRowSize - 1, column + filterColumnSize - 1);
-        while (hasMaskAt(currentRow, currentColumn, input)) {
+    public void executeApplyMask(int row, int column, int depth) {
+        while (hasMaskAt(currentRow, currentColumn, 0, input)) {
             if(++currentRow >= filterRowSize) {
                 currentRow = 0;
                 if(++currentColumn >= filterColumnSize) currentColumn = 0;
             }
         }
-        int filterRow = currentRow;
-        int filterColumn = currentColumn;
-        double inputValue = input.getValue(filterRow, filterColumn);
-        result.setValue(row, column, inputValue);
-        inputPos.put(2 * (row * inputColumnSize + column), row + filterRow);
-        inputPos.put(2 * (row * inputColumnSize + column) + 1, column + filterColumn);
+
+        inputRow = row + currentRow;
+        inputColumn = column + currentColumn;
+        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
+
         if(++currentRow >= filterRowSize) {
             currentRow = 0;
             if(++currentColumn >= filterColumnSize) currentColumn = 0;
         }
-        input.unslice();
+    }
+
+    /**
+     * Returns input row.
+     *
+     * @return input row.
+     */
+    protected int getInputRow() {
+        return inputRow;
+    }
+
+    /**
+     * Returns input column.
+     *
+     * @return input column.
+     */
+    protected int getInputColumn() {
+        return inputColumn;
     }
 
 }

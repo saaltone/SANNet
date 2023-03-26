@@ -12,8 +12,7 @@ import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Implements abstract matrix that implements common operations for matrices.<br>
@@ -43,6 +42,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private final int columns;
 
     /**
+     * Depth og matrix.
+     *
+     */
+    private final int depth;
+
+    /**
      * Slice start row.
      *
      */
@@ -53,6 +58,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     private int sliceStartColumn;
+
+    /**
+     * Slice start depth.
+     *
+     */
+    private int sliceStartDepth;
 
     /**
      * Number of rows in slice.
@@ -67,7 +78,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private int sliceColumns;
 
     /**
-     * Size of slice (sliceRows * sliceColumns)
+     * Depth of slice.
+     *
+     */
+    private int sliceDepth;
+
+    /**
+     * Size of slice (sliceRows * sliceColumns * sliceDepth)
      *
      */
     private int sliceSize;
@@ -102,9 +119,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      */
-    protected AbstractMatrix(int rows, int columns) {
-        this(rows, columns, false);
+    protected AbstractMatrix(int rows, int columns, int depth) {
+        this(rows, columns, depth, false);
     }
 
     /**
@@ -112,12 +130,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    protected AbstractMatrix(int rows, int columns, boolean isTransposed) {
+    protected AbstractMatrix(int rows, int columns, int depth, boolean isTransposed) {
         this.rows = rows;
         this.columns = columns;
+        this.depth = depth;
         this.isTransposed = isTransposed;
+        updateSliceDimensions(0, 0, 0, rows - 1, columns - 1, depth -1);
     }
 
     /**
@@ -128,7 +149,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     protected void setParameters(Matrix matrix) throws MatrixException {
         matrix.setName(name);
-        if (getMask() != null) matrix.setMask(!matrix.isTransposed() ? getMask().reference() : getMask().transpose());
     }
 
     /**
@@ -150,6 +170,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns total depth defined for matrix without considering transposing.
+     *
+     * @return total depth defined for matrix without considering transposing.
+     */
+    protected int getPureDepth() {
+        return depth;
+    }
+
+    /**
      * Returns total number of rows defined for matrix.
      *
      * @return total number of rows defined for matrix.
@@ -168,18 +197,44 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns total depth defined for matrix.
+     *
+     * @return total depth defined for matrix.
+     */
+    public int getTotalDepth() {
+        return getPureDepth();
+    }
+
+    /**
+     * Returns array index based on row and column
+     *
+     * @param row row
+     * @param column column
+     * @param depth depth
+     * @return array index
+     */
+    protected int getArrayIndex(int row, int column, int depth) {
+        if (isScalar()) return 0;
+        else return (getPureDepth() > 1 ? (getSliceStartDepth() + depth) * getPureRows() * getPureColumns() : 0) + (getPureColumns() > 1 ? (getSliceStartColumn() + (!isTransposed() ? column : row)) * getPureRows() : 0) + getSliceStartRow() + (!isTransposed() ? row : column);
+    }
+
+    /**
      * Updates slice dimensions.
      *
      * @param startRow slice start row
      * @param startColumn slice start columns
+     * @param startDepth slice start depth
      * @param endRow slice end row
      * @param endColumn slide end column
+     * @param endDepth slide end depth
      */
-    protected void updateSliceDimensions(int startRow, int startColumn, int endRow, int endColumn) {
+    protected void updateSliceDimensions(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) {
         sliceStartRow = startRow;
         sliceStartColumn = startColumn;
+        sliceStartDepth = startDepth;
         sliceRows = endRow - sliceStartRow + 1;
         sliceColumns = endColumn - sliceStartColumn + 1;
+        sliceDepth = endDepth - sliceStartDepth + 1;
         sliceSize = sliceRows * sliceColumns;
     }
 
@@ -202,6 +257,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns slice start depth.
+     *
+     * @return slice start depth.
+     */
+    protected int getSliceStartDepth() {
+        return sliceStartDepth;
+    }
+
+    /**
      * Returns number of slice rows.
      *
      * @return number of slice rows.
@@ -220,19 +284,30 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Returns depth of slice.
+     *
+     * @return depth of slice.
+     */
+    protected int getSliceDepth() {
+        return sliceDepth;
+    }
+
+    /**
      * Slices matrix.
      *
      * @param startRow start row of slice.
      * @param startColumn start column of slice.
+     * @param startDepth start column of slice.
      * @param endRow  end row of slice.
      * @param endColumn  end column of slice.
+     * @param endDepth  end column of slice.
      * @throws MatrixException throws exception if slicing fails.
      */
-    public void slice(int startRow, int startColumn, int endRow, int endColumn) throws MatrixException {
-        if (startRow < 0 || startColumn < 0 || (!isTransposed() ? endRow : endColumn) > getPureRows() -1 || (!isTransposed() ? endColumn : endRow) > getPureColumns() - 1) {
-            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " do not match matrix dimensions: " + getTotalRows() + "x" + getTotalColumns());
+    public void slice(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) throws MatrixException {
+        if (startRow < 0 || startColumn < 0 || startDepth < 0 || (!isTransposed() ? endRow : endColumn) > getPureRows() -1 || (!isTransposed() ? endColumn : endRow) > getPureColumns() - 1 || (endDepth > getPureDepth() - 1)) {
+            throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " and slice depth: " + startDepth + " - " + endDepth + " do not match matrix dimensions: " + getTotalRows() + "x" + getTotalColumns() + "x" + getTotalDepth());
         }
-        else updateSliceDimensions(startRow, startColumn, (!isTransposed() ? endRow : endColumn), (!isTransposed() ? endColumn : endRow));
+        else updateSliceDimensions(startRow, startColumn, startDepth, (!isTransposed() ? endRow : endColumn), (!isTransposed() ? endColumn : endRow), endDepth);
     }
 
     /**
@@ -240,7 +315,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      */
     public void unslice() {
-        updateSliceDimensions(0, 0, getPureRows() - 1, getPureColumns() - 1);
+        updateSliceDimensions(0, 0, 0, getPureRows() - 1, getPureColumns() - 1, getPureDepth() - 1);
     }
 
     /**
@@ -268,6 +343,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public int getColumns() {
         return !isTransposed() ? getSliceColumns() : getSliceRows();
+    }
+
+    /**
+     * Returns depth of matrix.
+     *
+     * @return depth of matrix.
+     */
+    public int getDepth() {
+        return getSliceDepth();
     }
 
     /**
@@ -322,31 +406,13 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Copies new matrix data into this matrix. Assumes equal dimensions for both matrices.
-     *
-     * @param newMatrix new matrix to be copied inside this matrix.
-     * @throws MatrixException throws exception if this and new matrix dimensions are not matching.
-     */
-    public void copyMatrixData(Matrix newMatrix) throws MatrixException {
-        if (getPureRows() != newMatrix.getRows() || getPureColumns() != newMatrix.getColumns()) throw new MatrixException("Size of this matrix " + getPureRows() + "x" + getPureColumns() + " is not matching with dimensions of new matrix + " + newMatrix.getRows() + " x " + newMatrix.getColumns());
-        resetMatrix();
-        int rows = getPureRows();
-        int columns = getPureColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                setValue(row, column, newMatrix.getValue(row, column));
-            }
-        }
-    }
-
-    /**
      * Checks if this matrix and other matrix are equal in dimensions (rows x columns).
      *
      * @param other other matrix to be compared against.
      * @return true if matrices are of same size otherwise false.
      */
     public boolean hasEqualSize(Matrix other) {
-        return other.getRows() == getRows() && other.getColumns() == getColumns();
+        return other.getRows() == getRows() && other.getColumns() == getColumns() && other.getDepth() == getDepth();
     }
 
     /**
@@ -385,15 +451,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns matrix of given size (rows x columns)
-     *
-     * @param rows rows
-     * @param columns columns
-     * @return new matrix
-     */
-    protected abstract Matrix getNewMatrix(int rows, int columns);
-
-    /**
      * Returns constant matrix
      *
      * @param constant constant
@@ -416,20 +473,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param asTransposed if true returns new matrix as transposed otherwise with unchanged dimensions.
      * @return new matrix of same dimensions.
+     * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
-    public Matrix getNewMatrix(boolean asTransposed) {
-        return isScalar() ? getNewMatrix(0) : !asTransposed ? getNewMatrix(getRows(), getColumns()) :  getNewMatrix(getColumns(), getRows());
-    }
-
-    /**
-     * Returns placeholder for result matrix.
-     *
-     * @param other other matrix.
-     * @return result matrix placeholder.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    private Matrix getResultMatrix(Matrix other) throws MatrixException {
-        return !isScalar() ? getNewMatrix() : other.getNewMatrix();
+    public Matrix getNewMatrix(boolean asTransposed) throws MatrixException {
+        return isScalar() ? getNewMatrix(0) : !asTransposed ? getNewMatrix(getRows(), getColumns(), getDepth()) :  getNewMatrix(getColumns(), getRows(), getDepth());
     }
 
     /**
@@ -439,40 +486,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param unaryFunction unary function.
      * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return result matrix.
      * @throws MatrixException not thrown in any situation.
      */
-    public void apply(UnaryFunction unaryFunction, boolean inplace) throws MatrixException {
-        apply(inplace ? this : getNewMatrix(unaryFunction.getType() == UnaryFunctionType.TRANSPOSE), unaryFunction);
-    }
-
-    /**
-     * Applies unaryFunction to this matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param result result matrix.
-     * @param unaryFunction unaryFunction to be applied.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void apply(Matrix result, UnaryFunction unaryFunction) throws MatrixException {
-        if (!hasProcedureFactory()) applyFunction(result, unaryFunction);
+    public Matrix apply(UnaryFunction unaryFunction, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory()) return applyFunction(unaryFunction, inplace);
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyFunction(unaryFunction, inplace);
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyFunction(result, unaryFunction);
-            procedureFactory.createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
+            getProcedureFactory().createUnaryFunctionExpression(expressionLock, this, result, unaryFunction);
+            return result;
         }
     }
-    /**
-     * Applies unaryFunction to this matrix.<br>
-     * Example of operation can be applying square root operation to this matrix.<br>
-     * Applies masking if matrix is masked.<br>
-     *
-     * @param result result.
-     * @param unaryFunction unary function.
-     * @throws MatrixException not thrown in any situation.
-     */
-    protected abstract void applyFunction(Matrix result, UnaryFunction unaryFunction) throws MatrixException;
 
     /**
      * Applies unaryFunction to this matrix.<br>
@@ -484,9 +510,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix apply(UnaryFunction unaryFunction) throws MatrixException {
-        Matrix result = unaryFunction.getType() != UnaryFunctionType.TRANSPOSE ? getNewMatrix() : getNewMatrix().transpose();
-        apply(result, unaryFunction);
-        return result;
+        return apply(unaryFunction, false);
     }
 
     /**
@@ -494,13 +518,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Example of operation can be applying square root operation to this matrix.<br>
      * Applies masking if matrix is masked.<br>
      *
-     * @param result result matrix.
      * @param unaryFunctionType unaryFunction type to be applied.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void apply(Matrix result, UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException {
-        apply(result, new UnaryFunction(unaryFunctionType));
+    public Matrix apply(UnaryFunctionType unaryFunctionType, boolean inplace) throws MatrixException, DynamicParamException {
+        return apply(new UnaryFunction(unaryFunctionType), inplace);
     }
 
     /**
@@ -514,8 +539,20 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix apply(UnaryFunctionType unaryFunctionType) throws MatrixException, DynamicParamException {
-        return apply(new UnaryFunction(unaryFunctionType));
+        return apply(unaryFunctionType, false);
     }
+
+    /**
+     * Applies unaryFunction to this matrix.<br>
+     * Example of operation can be applying square root operation to this matrix.<br>
+     * Applies masking if matrix is masked.<br>
+     *
+     * @param unaryFunction unary function.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return result matrix.
+     * @throws MatrixException not thrown in any situation.
+     */
+    protected abstract Matrix applyFunction(UnaryFunction unaryFunction, boolean inplace) throws MatrixException;
 
     /**
      * Applies two variable operation to this matrix.<br>
@@ -523,18 +560,49 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other other matrix
-     * @param result result matrix.
      * @param binaryFunction binaryFunction to be applied.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyBi(Matrix other, Matrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBiFunction(other, result, binaryFunction);
+    public Matrix applyBi(Matrix other, BinaryFunction binaryFunction) throws MatrixException {
+        return applyBi(other, binaryFunction, false);
+    }
+
+    /**
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
+     *
+     * @param other          other matrix
+     * @param binaryFunction binaryFunction to be applied.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix applyBi(Matrix other, BinaryFunction binaryFunction, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyBiFunction(other, binaryFunction, inplace);
         else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyBiFunction(other, binaryFunction, inplace);
             ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyBiFunction(other, result, binaryFunction);
-            procedureFactory.createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+            getProcedureFactory().createBinaryFunctionExpression(expressionLock, this, other, result, binaryFunction);
+            return result;
         }
+    }
+
+    /**
+     * Applies two variable operation to this matrix.<br>
+     * Example of operation can be subtraction of other matrix from this matrix.<br>
+     * Applies masking element wise if either matrix is masked.<br>
+     *
+     * @param other              other matrix
+     * @param binaryFunctionType binaryFunction type to be applied.
+     * @throws MatrixException       throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Matrix applyBi(Matrix other, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
+        return applyBi(other, new BinaryFunction(binaryFunctionType));
     }
 
     /**
@@ -544,76 +612,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
      * @param binaryFunction binary function.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
-    protected abstract void applyBiFunction(Matrix other, Matrix result, BinaryFunction binaryFunction) throws MatrixException;
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other other matrix
-     * @param binaryFunction binaryFunction to be applied.
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     */
-    public Matrix applyBi(Matrix other, BinaryFunction binaryFunction) throws MatrixException {
-        Matrix result = getResultMatrix(other);
-        applyBi(other, result, binaryFunction);
-        return result;
-    }
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other other matrix
-     * @param result result matrix.
-     * @param binaryFunctionType binaryFunction type to be applied.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public Matrix applyBi(Matrix other, Matrix result, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
-        applyBi(other, result, new BinaryFunction(binaryFunctionType));
-        return result;
-    }
-
-    /**
-     * Applies two variable operation to this matrix.<br>
-     * Example of operation can be subtraction of other matrix from this matrix.<br>
-     * Applies masking element wise if either matrix is masked.<br>
-     *
-     * @param other other matrix
-     * @param binaryFunctionType binaryFunction type to be applied.
-     * @return matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public Matrix applyBi(Matrix other, BinaryFunctionType binaryFunctionType) throws MatrixException, DynamicParamException {
-        return applyBi(other, new BinaryFunction(binaryFunctionType));
-    }
-
-    /**
-     * Adds other matrix to this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    public void add(Matrix other, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) Double::sum));
-        else {
-            ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) Double::sum));
-            procedureFactory.createAddExpression(expressionLock, this, other, result);
-        }
-    }
+    protected abstract Matrix applyBiFunction(Matrix other, BinaryFunction binaryFunction, boolean inplace) throws MatrixException;
 
     /**
      * Adds other matrix to this matrix.<br>
@@ -624,28 +628,68 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix add(Matrix other) throws MatrixException {
-        Matrix result = getResultMatrix(other);
-        add(other, result);
-        return result;
+        return add(other, false);
     }
 
     /**
-     * Adds constant number to this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Adds other matrix to this matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
      *
-     * @param constant contains constant value to be added.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
+     * @param other matrix which acts as second variable in the operation.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void add(double constant, Matrix result) throws MatrixException {
-        Matrix other = getNewMatrix(constant);
-        if (!hasProcedureFactory()) add(other, result);
+    private Matrix add(Matrix other, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) Double::sum), inplace);
         else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) Double::sum), inplace);
             ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            add(other, result);
-            procedureFactory.createAddExpression(expressionLock, this, other, result);
+            getProcedureFactory().createAddExpression(expressionLock, this, other, result);
+            return result;
         }
+    }
+
+    /**
+     * Adds first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return matrices which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public static TreeMap<Integer, Matrix> add(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        Matrix firstMatrix = firstMatrices.get(firstMatrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory() && !secondMatrix.hasProcedureFactory()) return AbstractMatrix.applyAdd (firstMatrices, secondMatrix);
+        else {
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix);
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            TreeMap<Integer, Matrix> resultMatrices = AbstractMatrix.applyAdd (firstMatrices, secondMatrix);
+            Matrix resultMatrix = resultMatrices.get(resultMatrices.firstKey());
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix, resultMatrix);
+            firstMatrix.getProcedureFactory().createAddExpression(expressionLock, firstMatrix, secondMatrix, resultMatrix);
+            return resultMatrices;
+        }
+    }
+
+    /**
+     * Adds first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return result matrices
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public static TreeMap<Integer, Matrix> applyAdd(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        TreeMap<Integer, Matrix> resultMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, Matrix> entry : firstMatrices.entrySet()) {
+            resultMatrices.put(entry.getKey(), entry.getValue().add(secondMatrix));
+        }
+        return resultMatrices;
     }
 
     /**
@@ -657,27 +701,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix add(double constant) throws MatrixException {
-        Matrix result = getNewMatrix();
-        add(constant, result);
-        return result;
-    }
-
-    /**
-     * Subtracts other matrix from this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    public void subtract(Matrix other, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2));
-        else {
-            ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2));
-            procedureFactory.createSubtractExpression(expressionLock, this, other, result);
-        }
+        return add(getNewMatrix(constant));
     }
 
     /**
@@ -689,28 +713,68 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix subtract(Matrix other) throws MatrixException {
-        Matrix result = getResultMatrix(other);
-        subtract(other, result);
-        return result;
+        return subtract(other, false);
     }
 
     /**
-     * Subtracts constant number from this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Subtracts other matrix from this matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
      *
-     * @param constant contains constant value to be subtracted.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
+     * @param other matrix which acts as second variable in the operation.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void subtract(double constant, Matrix result) throws MatrixException {
-        Matrix other = getNewMatrix(constant);
-        if (!hasProcedureFactory()) subtract(other, result);
+    private Matrix subtract(Matrix other, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2), inplace);
         else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 - value2), inplace);
             ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            subtract(other, result);
-            procedureFactory.createSubtractExpression(expressionLock, this, other, result);
+            getProcedureFactory().createSubtractExpression(expressionLock, this, other, result);
+            return result;
         }
+    }
+
+    /**
+     * Subtracts first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return matrices which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public static TreeMap<Integer, Matrix> subtract(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        Matrix firstMatrix = firstMatrices.get(firstMatrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory() && !secondMatrix.hasProcedureFactory()) return AbstractMatrix.applySubtract (firstMatrices, secondMatrix);
+        else {
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix);
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            TreeMap<Integer, Matrix> resultMatrices = AbstractMatrix.applySubtract (firstMatrices, secondMatrix);
+            Matrix resultMatrix = resultMatrices.get(resultMatrices.firstKey());
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix, resultMatrix);
+            firstMatrix.getProcedureFactory().createSubtractExpression(expressionLock, firstMatrix, secondMatrix, resultMatrix);
+            return resultMatrices;
+        }
+    }
+
+    /**
+     * Subtracts first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return result matrices
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    private static TreeMap<Integer, Matrix> applySubtract(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        TreeMap<Integer, Matrix> resultMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, Matrix> entry : firstMatrices.entrySet()) {
+            resultMatrices.put(entry.getKey(), entry.getValue().subtract(secondMatrix));
+        }
+        return resultMatrices;
     }
 
     /**
@@ -722,27 +786,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix subtract(double constant) throws MatrixException {
-        Matrix result = getNewMatrix();
-        subtract(constant, result);
-        return result;
-    }
-
-    /**
-     * Multiplies other matrix element wise with this matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    public void multiply(Matrix other, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
-        else {
-            ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
-            procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
-        }
+        return subtract(getNewMatrix(constant));
     }
 
     /**
@@ -754,28 +798,68 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix multiply(Matrix other) throws MatrixException {
-        Matrix result = getResultMatrix(other);
-        multiply(other, result);
-        return result;
+        return multiply(other, false);
     }
 
     /**
-     * Multiplies constant number with this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Multiplies other matrix element wise with this matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
      *
-     * @param constant contains constant value to be multiplied.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
+     * @param other matrix which acts as second variable in the operation.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void multiply(double constant, Matrix result) throws MatrixException {
-        Matrix other = getNewMatrix(constant);
-        if (!hasProcedureFactory()) multiply(other, result);
+    private Matrix multiply(Matrix other, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2), inplace);
         else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2), inplace);
             ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            multiply(other, result);
-            procedureFactory.createMultiplyExpression(expressionLock, this, other, result);
+            getProcedureFactory().createMultiplyExpression(expressionLock, this, other, result);
+            return result;
         }
+    }
+
+    /**
+     * Multiplies first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return matrices which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public static TreeMap<Integer, Matrix> multiply(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        Matrix firstMatrix = firstMatrices.get(firstMatrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory() && !secondMatrix.hasProcedureFactory()) return AbstractMatrix.applyMultiply (firstMatrices, secondMatrix);
+        else {
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix);
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            TreeMap<Integer, Matrix> resultMatrices = AbstractMatrix.applyMultiply (firstMatrices, secondMatrix);
+            Matrix resultMatrix = resultMatrices.get(resultMatrices.firstKey());
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix, resultMatrix);
+            firstMatrix.getProcedureFactory().createMultiplyExpression(expressionLock, firstMatrix, secondMatrix, resultMatrix);
+            return resultMatrices;
+        }
+    }
+
+    /**
+     * Multiplies first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return result matrices
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    private static TreeMap<Integer, Matrix> applyMultiply(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        TreeMap<Integer, Matrix> resultMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, Matrix> entry : firstMatrices.entrySet()) {
+            resultMatrices.put(entry.getKey(), entry.getValue().multiply(secondMatrix));
+        }
+        return resultMatrices;
     }
 
     /**
@@ -787,33 +871,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix multiply(double constant) throws MatrixException {
-        Matrix result = getNewMatrix();
-        multiply(constant, result);
-        return result;
+        return multiply(getNewMatrix(constant));
     }
 
     /**
      * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     */
-    public void divide(Matrix other, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value2 != 0 ? value1 / value2 : Double.POSITIVE_INFINITY));
-        else {
-            ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyBi (other, result, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2));
-            procedureFactory.createDivideExpression(expressionLock, this, other, result);
-        }
-    }
-
-    /**
-     * Divides this matrix element wise with other matrix.<br>
-     * In case any element value of other matrix is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
@@ -821,34 +883,72 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public Matrix divide(Matrix other) throws MatrixException {
-        Matrix result = getResultMatrix(other);
-        divide(other, result);
-        return result;
+        return divide(other, false);
     }
 
     /**
-     * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
-     * Applies masking element wise if this matrix is masked.<br>
+     * Divides this matrix element wise with other matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
      *
-     * @param constant constant used as divider value.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this and result matrix are not of equal dimensions.
+     * @param other matrix which acts as second variable in the operation.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void divide(double constant, Matrix result) throws MatrixException {
-        Matrix other = getNewMatrix(constant);
-        if (!hasProcedureFactory()) divide(other, result);
+    private Matrix divide(Matrix other, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2), inplace);
         else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyBi (other, new BinaryFunction((MatrixBinaryOperation & Serializable) (value1, value2) -> value1 / value2), inplace);
             ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            divide(other, result);
-            procedureFactory.createDivideExpression(expressionLock, this, other, result);
+            getProcedureFactory().createDivideExpression(expressionLock, this, other, result);
+            return result;
         }
     }
 
     /**
+     * Divides matrices element wise with other matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return matrices which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public static TreeMap<Integer, Matrix> divide(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        Matrix firstMatrix = firstMatrices.get(firstMatrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory() && !secondMatrix.hasProcedureFactory()) return AbstractMatrix.applyDivide (firstMatrices, secondMatrix);
+        else {
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix);
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            TreeMap<Integer, Matrix> resultMatrices = AbstractMatrix.applyDivide (firstMatrices, secondMatrix);
+            Matrix resultMatrix = resultMatrices.get(resultMatrices.firstKey());
+            ProcedureFactory.synchronize(firstMatrix, secondMatrix, resultMatrix);
+            firstMatrix.getProcedureFactory().createDivideExpression(expressionLock, firstMatrix, secondMatrix, resultMatrix);
+            return resultMatrices;
+        }
+    }
+
+    /**
+     * Divides first matrices element wise with second matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param firstMatrices first matrices for operation.
+     * @param secondMatrix second matrix for operation.
+     * @return result matrices
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    private static TreeMap<Integer, Matrix> applyDivide(TreeMap<Integer, Matrix> firstMatrices, Matrix secondMatrix) throws MatrixException {
+        TreeMap<Integer, Matrix> resultMatrices = new TreeMap<>();
+        for (Map.Entry<Integer, Matrix> entry : firstMatrices.entrySet()) {
+            resultMatrices.put(entry.getKey(), entry.getValue().divide(secondMatrix));
+        }
+        return resultMatrices;
+    }
+
+    /**
      * Divides this matrix element wise with constant.<br>
-     * In case constant is zero result is treated as Double MAX value to avoid NaN condition.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
      * @param constant constant used as divider value.
@@ -856,49 +956,87 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException not thrown in any situation.
      */
     public Matrix divide(double constant) throws MatrixException {
-        Matrix result = getNewMatrix();
-        divide(constant, result);
-        return result;
+        return divide(getNewMatrix(constant));
     }
 
     /**
-     * Increments matrix by other matrix.
+     * Adds this matrix by other matrix.
      *
-     * @param otherMatrix other matrix.
+     * @param other other matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void incrementBy(Matrix otherMatrix) throws MatrixException {
-        add(otherMatrix, this);
+    public void addBy(Matrix other) throws MatrixException {
+        add(other, true);
     }
 
     /**
-     * Decrements matrix by other matrix.
+     * Adds this matrix by constant.
      *
-     * @param otherMatrix other matrix.
+     * @param constant constant.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void decrementBy(Matrix otherMatrix) throws MatrixException {
-        subtract(otherMatrix, this);
+    public void addBy(double constant) throws MatrixException {
+        add(getNewMatrix(constant), true);
     }
 
     /**
-     * Multiplies matrix by other matrix.
+     * Subtracts this matrix by other matrix.
      *
-     * @param otherMatrix other matrix.
+     * @param other other matrix.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void multiplyBy(Matrix otherMatrix) throws MatrixException {
-        multiply(otherMatrix, this);
+    public void subtractBy(Matrix other) throws MatrixException {
+        subtract(other, true);
     }
 
     /**
-     * Divides matrix by other matrix.
+     * Subtracts this matrix by constant.
      *
-     * @param otherMatrix other matrix.
+     * @param constant constant.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
-    public void divideBy(Matrix otherMatrix) throws MatrixException {
-        divide(otherMatrix, this);
+    public void subtractBy(double constant) throws MatrixException {
+        subtract(getNewMatrix(constant), true);
+    }
+
+    /**
+     * Multiplies this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void multiplyBy(Matrix other) throws MatrixException {
+        multiply(other, true);
+    }
+
+    /**
+     * Multiplies this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void multiplyBy(double constant) throws MatrixException {
+        multiply(getNewMatrix(constant), true);
+    }
+
+    /**
+     * Divides this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void divideBy(Matrix other) throws MatrixException {
+        divide(other, true);
+    }
+
+    /**
+     * Divides this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    public void divideBy(double constant) throws MatrixException {
+        divide(getNewMatrix(constant), true);
     }
 
     /**
@@ -915,32 +1053,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Raises this matrix element wise to the power of value power.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param power power value to which elements are to be raised.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException not thrown in any situation.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void power(double power, Matrix result) throws MatrixException, DynamicParamException {
-        applyBi (constantAsMatrix(power), result, BinaryFunctionType.POW);
-    }
-
-    /**
-     * Takes element wise max value of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void max(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
-        applyBi (other, result, BinaryFunctionType.MAX);
-    }
-
-    /**
      * Takes element wise max value of this and other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -951,19 +1063,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix max(Matrix other) throws MatrixException, DynamicParamException {
         return applyBi (other, BinaryFunctionType.MAX);
-    }
-
-    /**
-     * Takes element wise min value of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void min(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
-        applyBi (other, result, BinaryFunctionType.MIN);
     }
 
     /**
@@ -985,20 +1084,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void sgnmul(Matrix other, Matrix result) throws MatrixException, DynamicParamException {
-        apply(UnaryFunctionType.SGN).multiply(other.apply(UnaryFunctionType.SGN), result);
-    }
-
-    /**
-     * Takes element wise signum over multiplication of this and other matrix.<br>
-     * Applies first sign operation to each value and then multiplies them.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
      * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -1006,36 +1091,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix sgnmul(Matrix other) throws MatrixException, DynamicParamException {
         return apply(UnaryFunctionType.SGN).multiply(other.apply(UnaryFunctionType.SGN));
     }
-
-    /**
-     * Takes matrix dot product of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
-     */
-    public Matrix dot(Matrix other, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !other.hasProcedureFactory()) applyDot(other, result);
-        else {
-            ProcedureFactory.synchronize(this, other, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyDot(other, result);
-            procedureFactory.createDotExpression(expressionLock, this, other, result);
-        }
-        return result;
-    }
-
-    /**
-     * Takes matrix dot product of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
-     */
-    protected abstract void applyDot(Matrix other, Matrix result) throws MatrixException;
 
     /**
      *
@@ -1047,8 +1102,26 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching are not matching.
      */
     public Matrix dot(Matrix other) throws MatrixException {
-        return dot(other, getNewMatrix(getRows(), other.getColumns()));
+        if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyDot(other);
+        else {
+            ProcedureFactory.synchronize(this, other);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyDot(other);
+            ProcedureFactory.synchronize(this, other, result);
+            getProcedureFactory().createDotExpression(expressionLock, this, other, result);
+            return result;
+        }
     }
+
+    /**
+     * Takes matrix dot product of this and other matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param other matrix which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
+     */
+    protected abstract Matrix applyDot(Matrix other) throws MatrixException;
 
     /**
      * Returns constant as matrix.
@@ -1058,7 +1131,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix constantAsMatrix(double constant) {
         Matrix constantMatrix = getNewMatrix(constant);
-        constantMatrix.setValue(0, 0, constant);
+        constantMatrix.setValue(0, 0, 0, constant);
         return constantMatrix;
     }
 
@@ -1072,10 +1145,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix sumAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(sum());
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = constantAsMatrix(sum());
             ProcedureFactory.synchronize(this, result);
-            procedureFactory.createSumExpression(expressionLock, this, result);
+            getProcedureFactory().createSumExpression(expressionLock, this, result);
             return result;
         }
     }
@@ -1090,12 +1163,89 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix meanAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(mean());
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = constantAsMatrix(mean());
             ProcedureFactory.synchronize(this, result);
-            procedureFactory.createMeanExpression(expressionLock, this, result);
+            getProcedureFactory().createMeanExpression(expressionLock, this, result);
             return result;
         }
+    }
+
+    /**
+     * Calculates sum or mean.
+     *
+     * @param matrices matrices.
+     * @param asMean if true returns mean otherwise sum.
+     * @return result of sum or mean
+     * @throws MatrixException throws exception if row or column vectors are incorrectly provided.
+     */
+    public static Matrix count(TreeMap<Integer, Matrix> matrices, boolean asMean) throws MatrixException {
+        Matrix result = null;
+        for (Matrix matrix : matrices.values()) {
+            if (result == null) result = matrix.getNewMatrix();
+            result.addBy(matrix);
+        }
+        return asMean ? result == null ? null : result.divide(matrices.size()) : result;
+    }
+
+    /**
+     * Calculates sum.
+     *
+     * @param matrices matrices.
+     * @return resulting sum
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix sum(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        Matrix firstMatrix = matrices.get(matrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory()) return applySum(matrices);
+        else {
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            Matrix result = applySum(matrices);
+            ProcedureFactory.synchronize(firstMatrix, result);
+            firstMatrix.getProcedureFactory().createSumExpression(expressionLock, firstMatrix, result, true);
+            return result;
+        }
+    }
+
+    /**
+     * Calculates sum.
+     *
+     * @param matrices matrices.
+     * @return resulting sum
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix applySum(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        return AbstractMatrix.sum(matrices);
+    }
+
+    /**
+     * Calculates mean.
+     *
+     * @param matrices matrices.
+     * @return resulting mean
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix mean(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        Matrix firstMatrix = matrices.get(matrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory()) return applyMean(matrices);
+        else {
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            Matrix result = applyMean(matrices);
+            ProcedureFactory.synchronize(firstMatrix, result);
+            firstMatrix.getProcedureFactory().createMeanExpression(expressionLock, firstMatrix, result, true);
+            return result;
+        }
+    }
+
+    /**
+     * Calculates mean.
+     *
+     * @param matrices matrices.
+     * @return resulting mean
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     */
+    public static Matrix applyMean(TreeMap<Integer, Matrix> matrices) throws MatrixException {
+        return AbstractMatrix.count(matrices, true);
     }
 
     /**
@@ -1118,10 +1268,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix varianceAsMatrix() throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(variance());
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = constantAsMatrix(variance());
             ProcedureFactory.synchronize(this, result);
-            procedureFactory.createVarianceExpression(expressionLock, this, result);
+            getProcedureFactory().createVarianceExpression(expressionLock, this, result);
             return result;
         }
     }
@@ -1134,7 +1284,49 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return variance of matrix.
      */
     public Matrix varianceAsMatrix(Matrix mean) throws MatrixException {
-        return constantAsMatrix(variance(mean.getValue(0, 0)));
+        return constantAsMatrix(variance(mean.getValue(0, 0, 0)));
+    }
+
+    /**
+     * Calculates variance.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix variance(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        Matrix firstMatrix = matrices.get(matrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory()) return applyVariance(matrices, meanMatrix);
+        else {
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            Matrix result = applyVariance(matrices, meanMatrix);
+            if (result != null) {
+                ProcedureFactory.synchronize(firstMatrix, result);
+            }
+            firstMatrix.getProcedureFactory().createVarianceExpression(expressionLock, firstMatrix, result, true);
+            return result;
+        }
+    }
+
+    /**
+     * Calculates variance.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @return resulting variance
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private static Matrix applyVariance(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
+        Matrix result = null;
+        for (Matrix matrix : matrices.values()) {
+            if (result == null) result = matrix.getNewMatrix();
+            result.addBy(matrix.subtract(meanMatrix).power(2));
+        }
+        return result == null ? null : result.divide(matrices.size());
     }
 
     /**
@@ -1149,6 +1341,48 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Calculates standard deviation.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for standard deviation calculation.
+     * @return resulting standard deviation
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public static Matrix standardDeviation(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        Matrix firstMatrix = matrices.get(matrices.firstKey());
+        if (!firstMatrix.hasProcedureFactory()) return applyStandardDeviation(matrices, meanMatrix);
+        else {
+            int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
+            Matrix result = applyStandardDeviation(matrices, meanMatrix);
+            if (result != null) {
+                ProcedureFactory.synchronize(firstMatrix, result);
+            }
+            firstMatrix.getProcedureFactory().createStandardDeviationExpression(expressionLock, firstMatrix, result, true);
+            return result;
+        }
+    }
+
+    /**
+     * Calculates standard deviation.
+     *
+     * @param matrices matrices.
+     * @param meanMatrix matrix containing mean values for variance calculation.
+     * @return resulting standard deviation.
+     * @throws MatrixException throws exception if matrices are incorrectly provided.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private static Matrix applyStandardDeviation(TreeMap<Integer, Matrix> matrices, Matrix meanMatrix) throws MatrixException, DynamicParamException {
+        if (meanMatrix == null) throw new MatrixException("Mean matrix is not defined");
+        Matrix result = null;
+        for (Matrix matrix : matrices.values()) {
+            if (result == null) result = matrix.getNewMatrix();
+            result.addBy(matrix.subtract(meanMatrix).power(2));
+        }
+        return result == null ? null : result.divide(matrices.size()).multiply(matrices.size()).divide(matrices.size() - 1).apply(UnaryFunctionType.SQRT);
+    }
+
+    /**
      * Takes standard deviation of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
@@ -1159,10 +1393,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException {
         if (!hasProcedureFactory()) return constantAsMatrix(standardDeviation());
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = constantAsMatrix(standardDeviation());
             ProcedureFactory.synchronize(this, result);
-            procedureFactory.createStandardDeviationExpression(expressionLock, this, result);
+            getProcedureFactory().createStandardDeviationExpression(expressionLock, this, result);
             return result;
         }
     }
@@ -1176,7 +1410,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix standardDeviationAsMatrix(Matrix mean) throws MatrixException {
-        return constantAsMatrix(standardDeviation(mean.getValue(0, 0)));
+        return constantAsMatrix(standardDeviation(mean.getValue(0, 0, 0)));
     }
 
     /**
@@ -1190,10 +1424,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix normAsMatrix(int p) throws MatrixException {
         if (!hasProcedureFactory()) return constantAsMatrix(norm(p));
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = constantAsMatrix(norm(p));
             ProcedureFactory.synchronize(this, result);
-            procedureFactory.createNormExpression(expressionLock, this, result, p);
+            getProcedureFactory().createNormExpression(expressionLock, this, result, p);
             return result;
         }
     }
@@ -1283,28 +1517,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns softmax of this matrix.
-     *
-     * @return softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    public Matrix softmax() throws MatrixException {
-        return softmax(getNewMatrix());
-    }
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @param result result matrix.
-     * @return Gumbel softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    public Matrix gumbelSoftmax(Matrix result) throws MatrixException {
-        return gumbelSoftmax(result, 1);
-    }
-
-    /**
      * Returns Gumbel softmax of this matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
@@ -1312,29 +1524,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax() throws MatrixException {
-        return gumbelSoftmax(getNewMatrix(), 1);
-    }
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
-     * @return Gumbel softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
-        return gumbelSoftmax(getNewMatrix(), gumbelSoftmaxTau);
-    }
-
-    /**
-     * Returns softmax gradient of this matrix.
-     *
-     * @return softmax gradient of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    public Matrix softmaxGrad() throws MatrixException {
-        return softmaxGrad(getNewMatrix(getRows(), getRows()));
+        return gumbelSoftmax(1);
     }
 
     /**
@@ -1345,10 +1535,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix convolve(Matrix filter) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        convolve(filter, result);
-        return result;
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) return applyConvolve(filter);
+        else {
+            ProcedureFactory.synchronize(this, filter);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyConvolve(filter);
+            ProcedureFactory.synchronize(this, filter, result);
+            getProcedureFactory().createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation(), getIsDepthSeparable());
+            return result;
+        }
     }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract Matrix applyConvolve(Matrix filter) throws MatrixException;
 
     /**
      * Calculates crosscorrelation between this matrix and filter matrix.
@@ -1358,51 +1563,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix crosscorrelate(Matrix filter) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        crosscorrelate(filter, result);
-        return result;
-    }
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void convolve(Matrix filter, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyConvolve(filter, result);
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) return applyCrosscorrelate(filter);
         else {
+            ProcedureFactory.synchronize(this, filter);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyCrosscorrelate(filter);
             ProcedureFactory.synchronize(this, filter, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyConvolve(filter, result);
-            procedureFactory.createConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
-        }
-    }
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract void applyConvolve(Matrix filter, Matrix result) throws MatrixException;
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void crosscorrelate(Matrix filter, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyCrosscorrelate(filter, result);
-        else {
-            ProcedureFactory.synchronize(this, filter, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyCrosscorrelate(filter, result);
-            procedureFactory.createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation());
+            getProcedureFactory().createCrosscorrelateExpression(expressionLock, this, filter, result, getStride(), getDilation(), getIsDepthSeparable());
+            return result;
         }
     }
 
@@ -1410,10 +1578,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Calculates crosscorrelation between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated result of crosscorrelation.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyCrosscorrelate(Matrix filter, Matrix result) throws MatrixException;
+    protected abstract Matrix applyCrosscorrelate(Matrix filter) throws MatrixException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1423,27 +1591,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix filter) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        winogradConvolve(filter, result);
-        return result;
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) return applyWinogradConvolve(filter);
+        else {
+            ProcedureFactory.synchronize(this, filter);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyWinogradConvolve(filter);
+            ProcedureFactory.synchronize(this, filter, result);
+            getProcedureFactory().createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
+            return result;
+        }
     }
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
+     * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void winogradConvolve(Matrix filter, Matrix result) throws MatrixException {
-        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result);
-        else {
-            ProcedureFactory.synchronize(this, filter, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyWinogradConvolve(filter, result);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
-        }
-    }
+    protected abstract Matrix applyWinogradConvolve(Matrix filter) throws MatrixException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1459,33 +1625,31 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        winogradConvolve(filter, result, A, AT, C, CT, G, GT);
-        return result;
+        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) return applyWinogradConvolve(filter, A, AT, C, CT, G, GT);
+        else {
+            ProcedureFactory.synchronize(this, filter);
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyWinogradConvolve(filter, A, AT, C, CT, G, GT);
+            ProcedureFactory.synchronize(this, filter, result);
+            getProcedureFactory().createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
+            return result;
+        }
     }
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
+     * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated value of convolution.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
      * @param CT C transposed matrix
      * @param G G matrix
      * @param GT G transposed matrix
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void winogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        if (!hasProcedureFactory() && !filter.hasProcedureFactory()) applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
-        else {
-            ProcedureFactory.synchronize(this, filter, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyWinogradConvolve(filter, result, A, AT, C, CT, G, GT);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, filter, result, getStride(), getDilation());
-        }
-    }
+    protected abstract Matrix applyWinogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1499,116 +1663,29 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        winogradConvolve(preprocessedFilter, result, A, AT, C, CT);
-        return result;
-    }
-
-    /**
-     * Calculates convolution between this matrix and filter matrix.
-     *
-     * @param preprocessedFilter preprocessed filter matrix.
-     * @param result calculated value of convolution.
-     * @param A A matrix
-     * @param AT A transposed matrix
-     * @param C C matrix
-     * @param CT C transposed matrix
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void winogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        if (!hasProcedureFactory() && !preprocessedFilter.hasProcedureFactory()) applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
+        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth());
+        if (!hasProcedureFactory() && !preprocessedFilter.hasProcedureFactory()) return applyWinogradConvolve(preprocessedFilter, A, AT, C, CT);
         else {
             ProcedureFactory.synchronize(this, preprocessedFilter, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyWinogradConvolve(preprocessedFilter, result, A, AT, C, CT);
-            procedureFactory.createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation());
+            int expressionLock = getProcedureFactory().startExpression(this);
+            applyWinogradConvolve(preprocessedFilter, A, AT, C, CT);
+            getProcedureFactory().createWinogradConvolveExpression(expressionLock, this, preprocessedFilter, result, getStride(), getDilation());
+            return result;
         }
     }
 
     /**
      * Calculates Winograd convolution between this matrix and filter matrix.
      *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract void applyWinogradConvolve(Matrix filter, Matrix result) throws MatrixException;
-
-    /**
-     * Calculates Winograd convolution between this matrix and filter matrix.
-     *
-     * @param filter filter matrix.
-     * @param result calculated result of convolution.
-     * @param A A matrix
-     * @param AT A transposed matrix
-     * @param C C matrix
-     * @param CT C transposed matrix
-     * @param G G matrix
-     * @param GT G transposed matrix
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract void applyWinogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
-
-    /**
-     * Calculates Winograd convolution between this matrix and filter matrix.
-     *
      * @param preprocessedFilter preprocessed filter matrix.
-     * @param result calculated result of convolution.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
      * @param CT C transposed matrix
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyWinogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
-
-    /**
-     * Calculates gradient of convolution for input.
-     *
-     * @param filter filter for convolutional operator.
-     * @return input gradient.
-     */
-    public Matrix convolveInputGradient(Matrix filter) throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        convolveInputGradient(filter, inputGradient);
-        return inputGradient;
-    }
-
-    /**
-     * Calculates gradient of crosscorrelation for input.
-     *
-     * @param filter filter for crosscorrelation operator.
-     * @return input gradient.
-     */
-    public Matrix crosscorrelateInputGradient(Matrix filter) throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        crosscorrelateInputGradient(filter, inputGradient);
-        return inputGradient;
-    }
-
-    /**
-     * Calculates gradient of convolution for filter.
-     *
-     * @param input input for convolutional operator.
-     * @return filter gradient.
-     */
-    public Matrix convolveFilterGradient(Matrix input) throws MatrixException {
-        Matrix filterGradient = getNewMatrix(getFilterRowSize(), getFilterColumnSize());
-        convolveFilterGradient(input, filterGradient);
-        return filterGradient;
-    }
-
-    /**
-     * Calculates gradient of crosscorrelation for filter.
-     *
-     * @param input input for crosscorrelation operator.
-     * @return filter gradient.
-     */
-    public Matrix crosscorrelateFilterGradient(Matrix input) throws MatrixException {
-        Matrix filterGradient = getNewMatrix(getFilterRowSize(), getFilterColumnSize());
-        crosscorrelateFilterGradient(input, filterGradient);
-        return filterGradient;
-    }
+    protected abstract Matrix applyWinogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
 
     /**
      * Calculates max pooling operation for this matrix.
@@ -1618,49 +1695,24 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix maxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        maxPool(result, maxPos);
-        return result;
-    }
-
-    /**
-     * Calculates max pooling operation for this matrix and returns max arguments.
-     *
-     * @param result result matrix.
-     * @param maxPos maximum positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void maxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException {
-        if (!hasProcedureFactory()) applyMaxPool(result, maxPos);
+        if (!hasProcedureFactory()) return applyMaxPool(maxPos);
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyMaxPool(maxPos);
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyMaxPool(result, maxPos);
-            procedureFactory.createMaxPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createMaxPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            return result;
         }
     }
 
     /**
      * Calculates max pooling operation for this matrix and returns max arguments.
      *
-     * @param result result matrix.
      * @param maxPos maximum positions for each row and col value.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of max pooling operation for this matrix.
-     *
-     * @param maxPos maximum positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix maxPoolGradient(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        maxPoolGradient(inputGradient, maxPos);
-        return inputGradient;
-    }
+    protected abstract Matrix applyMaxPool(HashMap<Integer, Integer> maxPos) throws MatrixException;
 
     /**
      * Calculates random pooling operation for this matrix.
@@ -1670,49 +1722,24 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix randomPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        randomPool(result, inputPos);
-        return result;
-    }
-
-    /**
-     * Calculates random pooling operation for this matrix and returns input positions.
-     *
-     * @param result result matrix.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void randomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        if (!hasProcedureFactory()) applyMaxPool(result, inputPos);
+        if (!hasProcedureFactory()) return applyRandomPool(inputPos);
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyRandomPool(inputPos);
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyRandomPool(result, inputPos);
-            procedureFactory.createRandomPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createRandomPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            return result;
         }
     }
 
     /**
      * Calculates random pooling operation for this matrix and returns input positions.
      *
-     * @param result result matrix.
      * @param inputPos input positions for each row and col value.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyRandomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of random pooling operation for this matrix.
-     *
-     * @param inputPos input positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix randomPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        randomPoolGradient(inputGradient, inputPos);
-        return inputGradient;
-    }
+    protected abstract Matrix applyRandomPool(HashMap<Integer, Integer> inputPos) throws MatrixException;
 
     /**
      * Calculates cyclic pooling operation for this matrix.
@@ -1722,49 +1749,24 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix cyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        cyclicPool(result, inputPos);
-        return result;
-    }
-
-    /**
-     * Calculates cyclic pooling operation for this matrix and returns input positions.
-     *
-     * @param result result matrix.
-     * @param inputPos input positions for each row and col value.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void cyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        if (!hasProcedureFactory()) applyMaxPool(result, inputPos);
+        if (!hasProcedureFactory()) return applyCyclicPool(inputPos);
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyCyclicPool(inputPos);
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyCyclicPool(result, inputPos);
-            procedureFactory.createCyclicPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createCyclicPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            return result;
         }
     }
 
     /**
      * Calculates cyclic pooling operation for this matrix and returns input positions.
      *
-     * @param result result matrix.
      * @param inputPos input positions for each row and col value.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyCyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException;
-
-    /**
-     * Calculates gradient of cyclic pooling operation for this matrix.
-     *
-     * @param inputPos input positions for each row and col value.
-     * @return input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public Matrix cyclicPoolGradient(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        cyclicPoolGradient(inputGradient, inputPos);
-        return inputGradient;
-    }
+    protected abstract Matrix applyCyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException;
 
     /**
      * Calculates average pooling operation for this matrix.
@@ -1773,45 +1775,23 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix averagePool() throws MatrixException {
-        Matrix result = getNewMatrix(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1);
-        averagePool(result);
-        return result;
-    }
-
-    /**
-     * Calculates average pooling operation for this matrix.
-     *
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void averagePool(Matrix result) throws MatrixException {
-        if (!hasProcedureFactory()) applyAveragePool(result);
+        if (!hasProcedureFactory()) return applyAveragePool();
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyAveragePool();
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyAveragePool(result);
-            procedureFactory.createAveragePoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createAveragePoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            return result;
         }
     }
 
     /**
      * Calculates average pooling operation for this matrix.
      *
-     * @param inputGradient input gradient.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void applyAveragePool(Matrix inputGradient) throws MatrixException;
-
-    /**
-     * Calculates gradient of average pooling operation for this matrix.
-     *
-     * @return input gradient.
-     */
-    public Matrix averagePoolGradient() throws MatrixException {
-        Matrix inputGradient = getNewMatrix(getRows() + getFilterRowSize() - 1, getColumns() + getFilterColumnSize() - 1);
-        averagePoolGradient(inputGradient);
-        return inputGradient;
-    }
+    protected abstract Matrix applyAveragePool() throws MatrixException;
 
 
     /**
@@ -1861,25 +1841,30 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
         Matrix matrix2;
         int rows = getTotalRows();
         int columns = getTotalColumns();
+        int totalDepth = getTotalDepth();
         if (splitVertically) {
             if (position < 1 || position > rows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(position, columns);
-            matrix2 = getNewMatrix(rows - matrix1.getTotalRows(), columns);
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
-                    if (row < position) matrix1.setValue(row, column, getValue(row, column));
-                    else matrix2.setValue(row - position, column, getValue(row, column));
+            matrix1 = getNewMatrix(position, columns, totalDepth);
+            matrix2 = getNewMatrix(rows - matrix1.getTotalRows(), columns, totalDepth);
+            for (int depth = 0; depth < totalDepth; depth++) {
+                for (int row = 0; row < rows; row++) {
+                    for (int column = 0; column < columns; column++) {
+                        if (row < position) matrix1.setValue(row, column, depth, getValue(row, column, depth));
+                        else matrix2.setValue(row - position, column, depth, getValue(row, column, depth));
+                    }
                 }
             }
         }
         else {
             if (position < 1 || position > columns - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(rows, position);
-            matrix2 = getNewMatrix(rows, columns - matrix1.getTotalColumns());
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
-                    if (column < position) matrix1.setValue(row, column, getValue(row, column));
-                    else matrix2.setValue(row, column - position, getValue(row, column));
+            matrix1 = getNewMatrix(rows, position, totalDepth);
+            matrix2 = getNewMatrix(rows, columns - matrix1.getTotalColumns(), totalDepth);
+            for (int depth = 0; depth < totalDepth; depth++) {
+                for (int row = 0; row < rows; row++) {
+                    for (int column = 0; column < columns; column++) {
+                        if (column < position) matrix1.setValue(row, column, depth, getValue(row, column, depth));
+                        else matrix2.setValue(row, column - position, depth, getValue(row, column, depth));
+                    }
                 }
             }
         }
@@ -1902,10 +1887,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public Matrix join(Matrix other, boolean joinedVertically) throws MatrixException {
         if (!hasProcedureFactory() && !other.hasProcedureFactory()) return applyJoin(other, joinedVertically);
         else {
-            int expressionLock = procedureFactory.startExpression(this);
+            int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = applyJoin(other, joinedVertically);
             ProcedureFactory.synchronize(this, other, result);
-            procedureFactory.createJoinExpression(expressionLock, this, other, result, joinedVertically);
+            getProcedureFactory().createJoinExpression(expressionLock, this, other, result, joinedVertically);
             return result;
         }
     }
@@ -1919,7 +1904,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws matrix exception if joining fails.
      */
     private Matrix applyJoin(Matrix other, boolean joinedVertically) throws MatrixException {
-        return new JoinMatrixOperation(getRows() + other.getRows(), getColumns() + other.getColumns(), joinedVertically).apply(this, other);
+        return new JoinMatrixOperation(getRows() + other.getRows(), getColumns() + other.getColumns(), getDepth(), joinedVertically).apply(this, other);
     }
 
     /**
@@ -1927,45 +1912,120 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
      * @param unjoinRows unjoins specific number of rows.
      * @param unjoinColumns unjoins specific number of column.
+     * @param unjoinDepth unjoins specific amount of depth.
      * @return result matrix.
      * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    public Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinRows, int unjoinColumns) throws MatrixException {
-        Matrix result = new DMatrix(unjoinRows, unjoinColumns);
-        unjoin(result, unjoinAtRow, unjoinAtColumn);
-        return result;
-    }
-
-    /**
-     * Unjoins matrix at specific row and column.
-     *
-     * @param result result matrix
-     * @param unjoinAtRow unjoins at row.
-     * @param unjoinAtColumn unjoins at column.
-     * @throws MatrixException throws matrix exception if unjoining fails.
-     */
-    public void unjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
-        if (!hasProcedureFactory()) applyUnjoin(result, unjoinAtRow, unjoinAtColumn);
+    public Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException {
+        if (!hasProcedureFactory()) return applyUnjoin(unjoinAtRow, unjoinAtColumn, unjoinAtDepth, unjoinRows, unjoinColumns, unjoinDepth);
         else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyUnjoin(unjoinAtRow, unjoinAtColumn, unjoinAtDepth, unjoinRows, unjoinColumns, unjoinDepth);
             ProcedureFactory.synchronize(this, result);
-            int expressionLock = procedureFactory.startExpression(this);
-            applyUnjoin(result, unjoinAtRow, unjoinAtColumn);
-            procedureFactory.createUnjoinExpression(expressionLock, this, result, unjoinAtRow, unjoinAtColumn);
+            getProcedureFactory().createUnjoinExpression(expressionLock, this, result, unjoinAtRow, unjoinAtColumn, unjoinAtDepth);
+            return result;
         }
     }
 
     /**
      * Unjoins matrix into resulting unjoined matrix and potentially unjoined matrices.
      *
-     * @param result result matrix
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
+     * @param unjoinRows unjoins specific number of rows.
+     * @param unjoinColumns unjoins specific number of column.
+     * @param unjoinDepth unjoins specific amount of depth.
+     * @return result matrix.
      * @throws MatrixException throws matrix exception if unjoining fails.
      */
-    private void applyUnjoin(Matrix result, int unjoinAtRow, int unjoinAtColumn) throws MatrixException {
-        new UnjoinMatrixOperation(result.getRows(), result.getColumns(), unjoinAtRow, unjoinAtColumn).apply(this, result);
+    private Matrix applyUnjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException {
+        return new UnjoinMatrixOperation(unjoinRows, unjoinColumns, unjoinDepth, unjoinAtRow, unjoinAtColumn, unjoinAtDepth).apply(this);
+    }
+
+    /**
+     * Joins matrices.
+     *
+     * @param matrices matrices.
+     * @param joinedVertically if true MMatrices are joint vertically otherwise horizontally.
+     * @return joint matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Matrix join(Matrix[] matrices, boolean joinedVertically) throws MatrixException {
+        ArrayList<Matrix> subMatrices = new ArrayList<>();
+        Collections.addAll(subMatrices, matrices);
+        return subMatrices.isEmpty() ? null : new JMatrix(subMatrices, joinedVertically);
+    }
+
+    /**
+     * Unjoins matrix.
+     *
+     * @param matrix matrix.
+     * @return unjoined matrices.
+     */
+    public static Matrix[] unjoin(Matrix matrix) {
+        ArrayList<Matrix> subMatrices = matrix.getSubMatrices();
+        int subMatricesSize = subMatrices.size();
+        Matrix[] unjoinedMatrices = new Matrix[subMatricesSize];
+        for (int subMatrixIndex = 0; subMatrixIndex < subMatricesSize; subMatrixIndex++) unjoinedMatrices[subMatrixIndex] = subMatrices.get(subMatrixIndex);
+        return unjoinedMatrices;
+    }
+
+    /**
+     * Flattens matrix into one dimensional column vector (matrix)
+     *
+     * @return flattened matrix
+     */
+    public Matrix flatten() {
+        int rows = getRows();
+        int columns = getColumns();
+        int totalDepth = getDepth();
+        Matrix flattenedMatrix = new DMatrix(rows * columns * totalDepth, 1, 1);
+        for (int currentDepth = 0; currentDepth < totalDepth; currentDepth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    flattenedMatrix.setValue(getPosition(rows, columns, row, column, currentDepth), 0, 0, getValue(row, column, currentDepth));
+                }
+            }
+        }
+        return flattenedMatrix;
+    }
+
+    /**
+     * Returns unflattened matrix i.e. samples that have been unflattened from single column vector.
+     *
+     * @param rows rows of unflattened matrix.
+     * @param columns columns of unflattened matrix.
+     * @param depth depth of unflattened matrix.
+     * @return unflattened matrix.
+     */
+    public Matrix unflatten(int rows, int columns, int depth) {
+        Matrix unflattenedMatrix = new DMatrix(rows, columns, depth);
+        for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    unflattenedMatrix.setValue(row, column, currentDepth, getValue(getPosition(rows, columns, row, column, currentDepth), 0, 0));
+                }
+            }
+        }
+        return unflattenedMatrix;
+    }
+
+    /**
+     * Returns one dimensional index calculated based on width, height and depth.
+     *
+     * @param rows number of rows in unflattened matrix
+     * @param columns number of columns in unflattened matrix
+     * @param row current row
+     * @param column current column
+     * @param depth current depth
+     * @return one dimensional index
+     */
+    private int getPosition(int rows, int columns, int row, int column, int depth) {
+        return row + rows * column + rows * columns * depth;
     }
 
     /**
@@ -1975,22 +2035,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     public void print() {
         int rows = getRows();
         int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            System.out.print("[");
-            for (int column = 0; column < columns; column++) {
-                System.out.print(getValue(row, column));
-                if (column < columns - 1) System.out.print(" ");
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                System.out.print("[");
+                for (int column = 0; column < columns; column++) {
+                    System.out.print(getValue(row, column, depth));
+                    if (column < columns - 1) System.out.print(" ");
+                }
+                System.out.println("]");
             }
-            System.out.println("]");
         }
     }
 
     /**
-     * Prints size (rows x columns) of matrix.
+     * Prints size (rows x columns x depth) of matrix.
      *
      */
     public void printSize() {
-        System.out.println("Matrix size: " + getRows() + "x" + getColumns());
+        System.out.println("Matrix size: " + getRows() + "x" + getColumns() + "x" + getDepth());
     }
 
     /**
@@ -2000,7 +2063,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
     public void setMask(Mask newMask) throws MatrixException {
-        if (getRows() != newMask.getRows() || getColumns() != newMask.getColumns()) throw new MatrixException("Dimensions of new mask are not matching with matrix dimensions.");
+        if (getRows() != newMask.getRows() || getColumns() != newMask.getColumns() || getDepth() != newMask.getDepth()) throw new MatrixException("Dimensions of new mask are not matching with matrix dimensions.");
         if ((this instanceof DMatrix) && !((newMask instanceof DMask))) throw new MatrixException("New mask is of type DMask which is not matching type of matrix (DMatrix)");
         if ((this instanceof SMatrix) && !((newMask instanceof SMask))) throw new MatrixException("New mask is of type SMask which is not matching type of matrix (SMatrix)");
         mask = newMask;
@@ -2036,10 +2099,11 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      *
      * @param row specific row.
      * @param column specific column.
+     * @param depth specific depth.
      * @return if true mask exists and is masked at specific position (row + column).
      */
-    public boolean hasMaskAt(int row, int column) {
-        return getMask() != null && getMask().getMask(row, column);
+    public boolean hasMaskAt(int row, int column, int depth) {
+        return getMask() != null && getMask().getMask(row, column, depth);
     }
 
     /**

@@ -47,6 +47,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     private int filterColumnSize;
 
     /**
+     * If true convolution is depth separable.
+     *
+     */
+    private boolean isDepthSeparable;
+
+    /**
      * Random function for matrix class.
      *
      */
@@ -57,10 +63,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      */
-    protected ComputableMatrix(int rows, int columns) {
-        super(rows, columns);
-        this.isScalar = (rows == 1 && columns == 1);
+    protected ComputableMatrix(int rows, int columns, int depth) {
+        super(rows, columns, depth);
+        this.isScalar = (rows == 1 && columns == 1 && depth == 1);
     }
 
     /**
@@ -69,11 +76,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      */
-    protected ComputableMatrix(int rows, int columns, boolean isScalar) {
-        super(rows, columns);
-        this.isScalar = isScalar && (rows == 1 && columns == 1);
+    protected ComputableMatrix(int rows, int columns, int depth, boolean isScalar) {
+        super(rows, columns, depth);
+        this.isScalar = isScalar && (rows == 1 && columns == 1 && depth == 1);
     }
 
     /**
@@ -82,12 +90,13 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    protected ComputableMatrix(int rows, int columns, boolean isScalar, boolean isTransposed) {
-        super(rows, columns, isTransposed);
-        this.isScalar = isScalar && (rows == 1 && columns == 1);
+    protected ComputableMatrix(int rows, int columns, int depth, boolean isScalar, boolean isTransposed) {
+        super(rows, columns, depth, isTransposed);
+        this.isScalar = isScalar && (rows == 1 && columns == 1 && depth == 1);
     }
 
     /**
@@ -180,9 +189,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public void initialize(Matrix.Initializer initializer) {
         int rows = getRows();
         int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                setValue(row, column, initializer.value(row, column));
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    setValue(row, column, depth, initializer.value(row, column));
+                }
             }
         }
     }
@@ -195,55 +207,62 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public void initializeToValue(double value) {
         int rows = getRows();
         int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                setValue(row, column, value);
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    setValue(row, column, depth, value);
+                }
             }
         }
     }
 
     /**
-     * Increment value of specific row and column.
+     * Increment value of specific row, column and depth.
      *
      * @param row row of value to be added.
      * @param column column of value to be added.
+     * @param depth depth of value to be added.
      * @param value to be added.
      */
-    public void incrementByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) + value);
+    public void addByValue(int row, int column, int depth, double value) {
+        setValue(row, column, depth, getValue(row, column, depth) + value);
     }
 
     /**
-     * Decrease value of specific row and column.
+     * Decrease value of specific row, column and depth.
      *
      * @param row row of value to be decreased.
      * @param column column of value to be decreased.
+     * @param depth depth of value to be decreaeed.
      * @param value to be decreased.
      */
-    public void decrementByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) - value);
+    public void subtractByValue(int row, int column, int depth, double value) {
+        setValue(row, column, depth, getValue(row, column, depth) - value);
     }
 
     /**
-     * Multiply value of specific row and column.
+     * Multiply value of specific row, column and depth.
      *
      * @param row row of value to be multiplied.
      * @param column column of value to be multiplied.
+     * @param depth depth of value to be multiplied.
      * @param value to be multiplied.
      */
-    public void multiplyByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) * value);
+    public void multiplyByValue(int row, int column, int depth, double value) {
+        setValue(row, column, depth, getValue(row, column, depth) * value);
     }
 
     /**
-     * Divide value of specific row and column.
+     * Divide value of specific row, column and depth.
      *
      * @param row row of value to be divided.
      * @param column column of value to be divided.
+     * @param depth depth of value to be divided.
      * @param value to be divided.
      */
-    public void divideByValue(int row, int column, double value) {
-        setValue(row, column, getValue(row, column) / value);
+    public void divideByValue(int row, int column, int depth, double value) {
+        setValue(row, column, depth, getValue(row, column, depth) / value);
     }
 
     /**
@@ -256,15 +275,19 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public boolean equals(Matrix other) throws MatrixException {
         int rows = getRows();
         int columns = getColumns();
+        int totalDepth = getDepth();
         int otherRows = other.getRows();
         int otherColumns = other.getColumns();
-        if (otherRows != rows || other.getColumns() != columns) {
-            throw new MatrixException("Incompatible target matrix size: " + otherRows + "x" + otherColumns);
+        int otherTotalDepth = other.getDepth();
+        if (otherRows != rows || otherColumns != columns || otherTotalDepth != totalDepth) {
+            throw new MatrixException("Incompatible target matrix size: " + otherRows + "x" + otherColumns + "x" + otherTotalDepth);
         }
 
-        for (int row = 0; row < otherRows; row++) {
-            for (int column = 0; column < otherColumns; column++) {
-                if (getValue(row, column) != other.getValue(row, column)) return false;
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < otherRows; row++) {
+                for (int column = 0; column < otherColumns; column++) {
+                    if (getValue(row, column, depth) != other.getValue(row, column, depth)) return false;
+                }
             }
         }
         return true;
@@ -277,11 +300,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void setEqualTo(Matrix other) throws MatrixException {
-        if (other.getRows() != getRows() || other.getColumns() != getColumns()) {
-            throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns());
+        if (other.getRows() != getRows() || other.getColumns() != getColumns() || other.getDepth() != getDepth()) {
+            throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
         }
 
-        new EqualMatrixOperation(getRows(), getColumns()).apply(other, this);
+        new EqualMatrixOperation(getRows(), getColumns(), getDepth()).apply(other, this);
     }
 
     /**
@@ -290,13 +313,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking if matrix is masked.<br>
      *
      * @param unaryFunction unary function.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return result matrix.
      * @throws MatrixException not thrown in any situation.
      */
-    protected void applyFunction(Matrix result, UnaryFunction unaryFunction) throws MatrixException {
-        if (result.getRows() != (unaryFunction.getType() != UnaryFunctionType.TRANSPOSE ? getRows() : getColumns()) || result.getColumns() != (unaryFunction.getType() != UnaryFunctionType.TRANSPOSE ? getColumns() : getRows())) {
-            throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
-        }
-        new UnaryMatrixOperation(getRows(), getColumns(), unaryFunction).applyFunction(this, result);
+    protected Matrix applyFunction(UnaryFunction unaryFunction, boolean inplace) throws MatrixException {
+        return new UnaryMatrixOperation(getRows(), getColumns(), getDepth(), unaryFunction).applyFunction(this, inplace);
     }
 
     /**
@@ -306,21 +328,19 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if either matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
      * @param binaryFunction binary function.
+     * @param inplace if true operation is applied in place otherwise result is returned as new matrix.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
-    protected void applyBiFunction(Matrix other, Matrix result, BinaryFunction binaryFunction) throws MatrixException {
-        if (!isScalar() && !other.isScalar() && (getRows() != other.getRows() || getColumns() != other.getColumns())) {
-            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
-        }
-        if (!isScalar() && !result.isScalar() && (getRows() != result.getRows() || getColumns() != result.getColumns())) {
-            throw new MatrixException("Incompatible result matrix sizes: " + result.getRows() + "x" + result.getColumns());
+    protected Matrix applyBiFunction(Matrix other, BinaryFunction binaryFunction, boolean inplace) throws MatrixException {
+        if (!isScalar() && !other.isScalar() && (getRows() != other.getRows() || getColumns() != other.getColumns() || getDepth() != other.getDepth())) {
+            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + "x" + getDepth() + " by " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
         }
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !isScalar() ? getRows() : other.getRows();
         int columns = !isScalar() ? getColumns() : other.getColumns();
-        new BinaryMatrixOperation(rows, columns, binaryFunction).applyFunction(this, other, result);
+        return new BinaryMatrixOperation(rows, columns, getDepth(), binaryFunction).applyFunction(this, other, inplace);
     }
 
     /**
@@ -328,17 +348,14 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Applies masking element wise if this or other matrix is masked.<br>
      *
      * @param other matrix which acts as second variable in the operation.
-     * @param result matrix which stores operation result.
+     * @return matrix which stores operation result.
      * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
      */
-    protected void applyDot(Matrix other, Matrix result) throws MatrixException {
-        if (getColumns() != other.getRows()) {
-            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + " by " + other.getRows() + "x" + other.getColumns());
+    protected Matrix applyDot(Matrix other) throws MatrixException {
+        if (getColumns() != other.getRows() || getDepth() != other.getDepth()) {
+            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + "x" + getDepth() + " by " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
         }
-        if (getRows() != result.getRows() || other.getColumns() != result.getColumns()) {
-            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
-        }
-        new DotMatrixOperation(getRows(), other.getColumns()).apply(this, other, result);
+        return new DotMatrixOperation(getRows(), other.getColumns(), getDepth()).apply(this, other);
     }
 
     /**
@@ -349,7 +366,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return sum of matrix.
      */
     public double sum() throws MatrixException {
-        return new SumMatrixOperation(getRows(), getColumns()).applySum(this);
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth()).applySum(this);
     }
 
     /**
@@ -360,7 +377,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return mean of matrix.
      */
     public double mean() throws MatrixException {
-        return new SumMatrixOperation(getRows(), getColumns()).applyMean(this);
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth()).applyMean(this);
     }
 
     /**
@@ -372,7 +389,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return variance of matrix.
      */
     public double variance(double mean) throws MatrixException {
-        return new VarianceMatrixOperation(getRows(), getColumns(), mean).applyVariance(this);
+        return new VarianceMatrixOperation(getRows(), getColumns(), getDepth(), mean).applyVariance(this);
     }
 
     /**
@@ -384,7 +401,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return standard deviation of matrix.
      */
     public double standardDeviation(double mean) throws MatrixException {
-        return new VarianceMatrixOperation(getRows(), getColumns(), mean).applyStandardDeviation(this);
+        return new VarianceMatrixOperation(getRows(), getColumns(), getDepth(), mean).applyStandardDeviation(this);
     }
 
     /**
@@ -396,7 +413,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return norm of matrix.
      */
     public double norm(int p) throws MatrixException {
-        return new NormMatrixOperation(getRows(), getColumns(), p).apply(this);
+        return new NormMatrixOperation(getRows(), getColumns(), getDepth(), p).apply(this);
     }
 
     /**
@@ -408,7 +425,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return normalized matrix.
      */
     public Matrix normalize(boolean inplace) throws MatrixException {
-        return new NormalizeMatrixOperation(getRows(), getColumns(), mean(), variance()).apply(this, inplace ? this : getNewMatrix());
+        return new NormalizeMatrixOperation(getRows(), getColumns(), getDepth(), mean(), variance()).apply(this, inplace ? this : getNewMatrix());
     }
 
     /**
@@ -419,7 +436,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return minimum value of matrix.
      */
     public double min() throws MatrixException {
-        return new MinMatrixOperation(getRows(), getColumns()).applyMin(this);
+        return new MinMatrixOperation(getRows(), getColumns(), getDepth()).applyMin(this);
     }
 
     /**
@@ -430,7 +447,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return array containing row and column in this order that points to minimum value of matrix.
      */
     public int[] argmin() throws MatrixException {
-        return new MinMatrixOperation(getRows(), getColumns()).applyArgMin(this);
+        return new MinMatrixOperation(getRows(), getColumns(), getDepth()).applyArgMin(this);
     }
 
     /**
@@ -441,7 +458,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return maximum value of matrix.
      */
     public double max() throws MatrixException {
-        return new MaxMatrixOperation(getRows(), getColumns()).applyMax(this);
+        return new MaxMatrixOperation(getRows(), getColumns(), getDepth()).applyMax(this);
     }
 
     /**
@@ -452,7 +469,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return array containing row and column in this order that points to maximum value of matrix.
      */
     public int[] argmax() throws MatrixException {
-        return new MaxMatrixOperation(getRows(), getColumns()).applyArgMax(this);
+        return new MaxMatrixOperation(getRows(), getColumns(), getDepth()).applyArgMax(this);
     }
 
     /**
@@ -463,27 +480,21 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return sum of matrix.
      */
     public double entropy() throws MatrixException {
-        return new EntropyMatrixOperation(getRows(), getColumns()).applyEntropy(this);
+        return new EntropyMatrixOperation(getRows(), getColumns(), getDepth()).applyEntropy(this);
     }
 
     /**
      * Returns softmax of matrix.
      *
-     * @param result result matrix.
      * @return softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    public Matrix softmax(Matrix result) throws MatrixException {
-        if (getColumns() != 1) {
-            throw new MatrixException("Matrix must be a column vector.");
-        }
-        if (getRows() != result.getRows() || getColumns() != result.getColumns()) {
-            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
-        }
+    public Matrix softmax() throws MatrixException {
+        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
         final double maxValue = max();
-        applyFunction(result, new UnaryFunction(value -> Math.exp(value - maxValue)));
-        result.divide(result.sum(), result);
+        Matrix result = applyFunction(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
+        result.divideBy(result.sum());
         return result;
     }
 
@@ -491,24 +502,18 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns Gumbel softmax of matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
-     * @param result result matrix.
      * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
      * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    public Matrix gumbelSoftmax(Matrix result, double gumbelSoftmaxTau) throws MatrixException {
-        if (getColumns() != 1) {
-            throw new MatrixException("Matrix must be a column vector.");
-        }
-        if (getRows() != result.getRows() || getColumns() != result.getColumns()) {
-            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
-        }
+    public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
+        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
         // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
-        applyFunction(result, new UnaryFunction(value -> (value + getGumbelNoise()) / gumbelSoftmaxTau));
-        final double maxValue = max();
-        applyFunction(result, new UnaryFunction(value -> Math.exp(value - maxValue)));
-        result.divide(result.sum(), result);
+        Matrix result = applyFunction(new UnaryFunction(value -> (value + getGumbelNoise()) / gumbelSoftmaxTau), false);
+        final double maxValue = result.max();
+        result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), true);
+        result.divideBy(result.sum());
         return result;
     }
 
@@ -526,18 +531,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns softmax gradient of matrix.<br>
      * Assumes that input matrix is softmax result.<br>
      *
-     * @param result result matrix.
      * @return softmax gradient of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    public Matrix softmaxGrad(Matrix result) throws MatrixException {
-        if (getColumns() != 1) {
-            throw new MatrixException("Matrix must be a column vector.");
-        }
-        if (getRows() != result.getRows() || getRows() != result.getColumns()) {
-            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns());
-        }
-        return new SoftmaxGradientMatrixOperation(getRows(), getRows()).apply(this, result);
+    public Matrix softmaxGrad() throws MatrixException {
+        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
+        return new SoftmaxGradientMatrixOperation(getRows(), getRows(), getDepth()).apply(this);
     }
 
     /**
@@ -613,198 +612,129 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Calculates convolution between this matrix and filter matrix.
+     * Sets if convolution is depth separable.
      *
-     * @param filter filter matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @param result calculated result of convolution.
+     * @param isDepthSeparable is true convolution is depth separable.
      */
-    protected void applyConvolve(Matrix filter, Matrix result) throws MatrixException {
-        new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, result);
+    public void setIsDepthSeparable(boolean isDepthSeparable) {
+        this.isDepthSeparable = isDepthSeparable;
+    }
+
+    /**
+     * Returns if convolution is depth separable.
+     *
+     * @return if true convolution is depth separable.
+     */
+    public boolean getIsDepthSeparable() {
+        return isDepthSeparable;
     }
 
     /**
      * Calculates convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @param result calculated result of convolution.
      */
-    protected void applyCrosscorrelate(Matrix filter, Matrix result) throws MatrixException {
-        new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, result);
+    protected Matrix applyConvolve(Matrix filter) throws MatrixException {
+        return new ConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
+    }
+
+    /**
+     * Calculates convolution between this matrix and filter matrix.
+     *
+     * @param filter filter matrix.
+     * @return result matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix applyCrosscorrelate(Matrix filter) throws MatrixException {
+        return new CrosscorrelationMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
     }
 
     /**
      * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @param result calculated result of convolution.
      */
-    protected void applyWinogradConvolve(Matrix filter, Matrix result) throws MatrixException {
-        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns()).apply(this, filter, result);
+    protected Matrix applyWinogradConvolve(Matrix filter) throws MatrixException {
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth()).apply(this, filter);
     }
 
     /**
      * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param filter filter matrix.
-     * @param result calculated result of convolution.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
      * @param CT C transposed matrix
      * @param G G matrix
      * @param GT G transposed matrix
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void applyWinogradConvolve(Matrix filter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT, G, GT).apply(this, filter, result);
+    protected Matrix applyWinogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), A, AT, C, CT, G, GT).apply(this, filter);
     }
 
     /**
      * Calculates Winograd convolution between this matrix and filter matrix.
      *
      * @param preprocessedFilter preprocessed filter matrix.
-     * @param result calculated result of convolution.
      * @param A A matrix
      * @param AT A transposed matrix
      * @param C C matrix
      * @param CT C transposed matrix
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void applyWinogradConvolve(Matrix preprocessedFilter, Matrix result, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), A, AT, C, CT).apply(this, preprocessedFilter, result);
-    }
-
-    /**
-     * Calculates gradient of convolution for input.
-     *
-     * @param filter filter for convolution operator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @param inputGradient input gradient.
-     */
-    public void convolveInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
-        new ConvolutionInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, inputGradient);
-    }
-
-    /**
-     * Calculates gradient of crosscorrelation for input.
-     *
-     * @param filter filter for crosscorrelation operator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @param inputGradient input gradient.
-     */
-    public void crosscorrelateInputGradient(Matrix filter, Matrix inputGradient) throws MatrixException {
-        new CrosscorrelationInputGradientMatrixOperation(getRows(), getColumns(), filter.getRows(), filter.getColumns(), getDilation(), getStride()).apply(this, filter, inputGradient);
-    }
-
-    /**
-     * Calculates gradient of convolution for filter.
-     *
-     * @param input input for convolutional operator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @param filterGradient filter gradient.
-     */
-    public void convolveFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
-        new ConvolutionFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), getDilation(), getStride()).apply(this, input, filterGradient);
-    }
-
-    /**
-     * Calculates gradient of crosscorrelation for filter.
-     *
-     * @param input input for crosscorrelation operator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @param filterGradient filter gradient.
-     */
-    public void crosscorrelateFilterGradient(Matrix input, Matrix filterGradient) throws MatrixException {
-        new CrosscorrelationFilterGradientMatrixOperation(getRows(), getColumns(), filterGradient.getRows(), filterGradient.getColumns(), getDilation(), getStride()).apply(this, input, filterGradient);
+    protected Matrix applyWinogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, preprocessedFilter.getDepth(), A, AT, C, CT).apply(this, preprocessedFilter);
     }
 
     /**
      * Calculates max pooling operation for matrix and returns max arguments.
      *
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @param maxPos maximum position for each result row and column value.
-     */
-    protected void applyMaxPool(Matrix result, HashMap<Integer, Integer> maxPos) throws MatrixException {
-        new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos, result);
-    }
-
-    /**
-     * Calculates gradient for max pool operation.
-     *
-     * @param inputGradient input gradient.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @param maxPos maximum position for each result row and column value.
      */
-    public void maxPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> maxPos) throws MatrixException {
-        new MaxPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, maxPos, inputGradient);
+    protected Matrix applyMaxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
+        return new MaxPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos);
     }
 
     /**
      * Calculates random pooling operation for matrix and returns input positions.
      *
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @param inputPos input position for each result row and column value.
-     */
-    protected void applyRandomPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        new RandomPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos, result);
-    }
-
-    /**
-     * Calculates gradient for random pool operation.
-     *
-     * @param inputGradient input gradient.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @param inputPos input position for each result row and column value.
      */
-    public void randomPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        new RandomPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, inputPos, inputGradient);
+    protected Matrix applyRandomPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
+        return new RandomPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
     }
 
     /**
      * Calculates cyclic pooling operation for matrix and returns input positions.
      *
-     * @param result result matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      * @param inputPos input position for each result row and column value.
-     */
-    protected void applyCyclicPool(Matrix result, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos, result);
-    }
-
-    /**
-     * Calculates gradient for cyclic pool operation.
-     *
-     * @param inputGradient input gradient.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @param inputPos input position for each result row and column value.
      */
-    public void cyclicPoolGradient(Matrix inputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        new CyclicPoolGradientMatrixOperation(getRows(), getColumns(), inputGradient.getColumns(), getStride()).apply(this, inputPos, inputGradient);
+    protected Matrix applyCyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
+        return new CyclicPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
     }
 
     /**
      * Calculates average pooling operation for matrix.
      *
-     * @param result result matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void applyAveragePool(Matrix result) throws MatrixException {
-        new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, result);
-    }
-
-    /**
-     * Calculates gradient of average pooling operation for matrix.
-     *
-     * @param inputGradient input gradient.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void averagePoolGradient(Matrix inputGradient) throws MatrixException {
-        new AveragePoolGradientMatrixOperation(getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputGradient);
+    protected Matrix applyAveragePool() throws MatrixException {
+        return new AveragePoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this);
     }
 
     /**
@@ -814,7 +744,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix classify() throws MatrixException {
-        return new ClassifyMatrixOperation(getRows(), getColumns()).apply(this, getNewMatrix());
+        return new ClassifyMatrixOperation(getRows(), getColumns(), getDepth()).apply(this, getNewMatrix());
     }
 
     /**
@@ -824,7 +754,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix classify(double multiLabelThreshold) throws MatrixException {
-        return new ClassifyMatrixOperation(getRows(), getColumns(), multiLabelThreshold).apply(this, getNewMatrix());
+        return new ClassifyMatrixOperation(getRows(), getColumns(), getDepth(), multiLabelThreshold).apply(this, getNewMatrix());
     }
 
     /**
@@ -849,11 +779,11 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public static Matrix encodeToBitColumnVector(int value, int maxBits) throws MatrixException {
         String binaryCode = String.format("%" + maxBits + "s", Integer.toBinaryString(value)).replaceAll(" ", "0");
         if (binaryCode.length() > maxBits) throw new MatrixException("Binary code: '" + binaryCode + "' has length " + binaryCode.length() + " exceeding number of maximum bits " + maxBits);
-        Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1);
+        Matrix encodedMatrix = new SMatrix(binaryCode.length(), 1, 1);
         int binaryCodeLength = binaryCode.length();
         for (int charIndex = 0; charIndex < binaryCodeLength; charIndex++) {
             char charAt = binaryCode.charAt(charIndex);
-            if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 1);
+            if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 0, 1);
         }
         return encodedMatrix;
     }
@@ -869,7 +799,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         int rows = getRows();
         int result = 0;
         for (int row = 0; row < rows; row++) {
-            double value = getValue(row, 0);
+            double value = getValue(row, 0, 0);
             if (!(value == 0 || value == 1)) throw new MatrixException("Bit column vector must contains values of 0 or 1.");
             result += value * Math.pow(2, (rows - 1) - row);
         }

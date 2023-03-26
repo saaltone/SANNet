@@ -19,14 +19,6 @@ public interface Mask {
     Mask getNewMask();
 
     /**
-     * Returns new mask of same dimensions optionally as transposed.
-     *
-     * @param asTransposed if true returns new mask as transposed otherwise with unchanged dimensions.
-     * @return new mask of same dimensions.
-     */
-    Mask getNewMask(boolean asTransposed);
-
-    /**
      * Creates new mask with object reference to the mask data of this mask.
      *
      * @return newly created reference mask.
@@ -43,14 +35,6 @@ public interface Mask {
     Mask copy() throws MatrixException;
 
     /**
-     * Retrieves copy of mask.
-     *
-     * @return copy of mask.
-     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
-     */
-    Mask getCopy() throws MatrixException;
-
-    /**
      * Transposes mask.
      *
      * @return reference to this mask but with transposed that is flipped rows and columns.
@@ -64,13 +48,6 @@ public interface Mask {
      * @return true is mask is transposed otherwise false.
      */
     boolean isTransposed();
-
-    /**
-     * Sets if mask is transposed.
-     *
-     * @param isTransposed if true mask is transposed and if false not transposed.
-     */
-    void setTranspose(boolean isTransposed);
 
     /**
      * Returns size (rows * columns) of mask.<br>
@@ -94,19 +71,27 @@ public interface Mask {
     int getColumns();
 
     /**
+     * Returns depth of mask.<br>
+     *
+     * @return depth of mask.
+     */
+    int getDepth();
+
+    /**
      * Resets mask.
      *
      */
     void reset();
 
     /**
-     * Checks if mask is set at specific row and column
+     * Checks if mask is set at specific row, column and depth
      *
      * @param row row to be checked.
      * @param column column to be checked.
+     * @param depth depth to be checked.
      * @return result of mask check.
      */
-    boolean isMasked(int row, int column);
+    boolean isMasked(int row, int column, int depth);
 
     /**
      * Sets bernoulli probability to mask specific element.
@@ -128,18 +113,20 @@ public interface Mask {
      *
      * @param row row of mask to be set.
      * @param column column of mask to be set.
+     * @param depth depth of mask to be set.
      * @param value sets mask if true otherwise unsets mask.
      */
-    void setMask(int row, int column, boolean value);
+    void setMask(int row, int column, int depth, boolean value);
 
     /**
      * Returns mask at specific row and column.
      *
      * @param row row of mask to be returned.
      * @param column column of mask to be returned.
+     * @param depth depth of mask to be returned.
      * @return true if mask is set otherwise false.
      */
-    boolean getMask(int row, int column);
+    boolean getMask(int row, int column, int depth);
 
     /**
      * Sets masking for this mask with given bernoulli probability.
@@ -165,7 +152,7 @@ public interface Mask {
      * Sets mask value for column mask.
      *
      * @param column column of mask to be set.
-     * @param value if true sets row mask otherwise unsets mask.
+     * @param value if true sets column mask otherwise unsets mask.
      */
     void setColumnMask(int column, boolean value);
 
@@ -174,6 +161,20 @@ public interface Mask {
      *
      */
     void maskColumnByProbability();
+
+    /**
+     * Sets mask value for depth mask.
+     *
+     * @param depth depth of mask to be set.
+     * @param value if true sets depth mask otherwise unsets mask.
+     */
+    void setDepthMask(int depth, boolean value);
+
+    /**
+     * Sets depth masking for this mask with given bernoulli probability.
+     *
+     */
+    void maskDepthByProbability();
 
     /**
      * Prints mask in row and column format.

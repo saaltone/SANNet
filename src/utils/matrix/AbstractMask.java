@@ -31,16 +31,22 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     private final int columns;
 
     /**
-     * Bernoulli-probability for selecting if entry (row, column) is masked or not.
+     * Defines depth of mask.
      *
      */
-    private double probability = 0;
+    private final int depth;
 
     /**
      * If true mask is transposed.
      *
      */
-    private boolean isTransposed = false;
+    private final boolean isTransposed;
+
+    /**
+     * Bernoulli-probability for selecting if entry (row, column) is masked or not.
+     *
+     */
+    private double probability = 0;
 
     /**
      * Random function for mask class.
@@ -53,10 +59,14 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      * @param rows number of rows in mask.
      * @param columns number of columns in mask.
+     * @param depth depth of mask.
+     * @param isTransposed is true mask is transposed otherwise false.
      */
-    public AbstractMask(int rows, int columns) {
+    public AbstractMask(int rows, int columns, int depth, boolean isTransposed) {
         this.rows = rows;
         this.columns = columns;
+        this.depth = depth;
+        this.isTransposed = isTransposed;
     }
 
     /**
@@ -64,15 +74,14 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      * @param rows number of rows in mask.
      * @param columns number of columns in mask.
-     * @param probability probability of masking.
+     * @param depth depth of mask.
      * @param isTransposed is true mask is transposed otherwise false.
+     * @param probability  probability of masking.
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
-    public AbstractMask(int rows, int columns, double probability, boolean isTransposed) throws MatrixException {
-        this.rows = rows;
-        this.columns = columns;
+    public AbstractMask(int rows, int columns, int depth, boolean isTransposed, double probability) throws MatrixException {
+        this(rows, columns, depth, isTransposed);
         setProbability(probability);
-        this.isTransposed = isTransposed;
     }
 
     /**
@@ -81,7 +90,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return size of mask.
      */
     public int size() {
-        return rows * columns;
+        return rows * columns * depth;
     }
 
     /**
@@ -90,7 +99,7 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of rows in mask.
      */
     public int getRows() {
-        return !isTransposed() ? rows : columns;
+        return !isTransposed() ? getPureRows() : getPureColumns();
     }
 
     /**
@@ -99,7 +108,43 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return number of columns in mask.
      */
     public int getColumns() {
-        return !isTransposed() ? columns : rows;
+        return !isTransposed() ? getPureColumns() : getPureRows();
+    }
+
+    /**
+     * Returns depth of mask.
+     *
+     * @return depth of mask.
+     */
+    public int getDepth() {
+        return getPureDepth();
+    }
+
+    /**
+     * Returns number of rows in mask.
+     *
+     * @return number of rows in mask.
+     */
+    protected int getPureRows() {
+        return rows;
+    }
+
+    /**
+     * Returns number of columns in mask.
+     *
+     * @return number of columns in mask.
+     */
+    protected int getPureColumns() {
+        return columns;
+    }
+
+    /**
+     * Returns depth of mask.
+     *
+     * @return depth of mask.
+     */
+    protected int getPureDepth() {
+        return depth;
     }
 
     /**
@@ -126,8 +171,16 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @throws MatrixException throws exception if masking probability is not between 0 and 1.
      */
     public Mask copy() throws MatrixException {
-        return getCopy();
+        return applyCopy();
     }
+
+    /**
+     * Retrieves copy of mask.
+     *
+     * @return copy of mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
+     */
+    protected abstract Mask applyCopy() throws MatrixException;
 
     /**
      * Transposes mask.
@@ -135,10 +188,16 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      * @return reference to this mask but as transposed with flipped rows and columns.
      */
     public Mask transpose() throws MatrixException {
-        Mask transposedMask = reference();
-        transposedMask.setTranspose(true);
-        return transposedMask;
+        return applyTranspose();
     }
+
+    /**
+     * Applies transpose operation.
+     *
+     * @return transposed mask.
+     * @throws MatrixException throws exception if masking probability is not between 0 and 1.
+     */
+    protected abstract Mask applyTranspose() throws MatrixException;
 
     /**
      * Checks if mask is transposed.
@@ -150,23 +209,15 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
-     * Sets if mask is transposed.
-     *
-     * @param isTransposed if true mask is transposed and if false not transposed.
-     */
-    public void setTranspose(boolean isTransposed) {
-        this.isTransposed = isTransposed;
-    }
-
-    /**
      * Checks if mask is set at specific row and column
      *
      * @param row row.
      * @param column column.
+     * @param depth depth.
      * @return return true if mask is set at row and column.
      */
-    public boolean isMasked(int row, int column) {
-        return getMask(row, column);
+    public boolean isMasked(int row, int column, int depth) {
+        return getMask(row, column, depth);
     }
 
     /**
@@ -205,9 +256,12 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     public void maskByProbability() {
         int rows = getRows();
         int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                setMask(row, column, isMaskedByProbability());
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    setMask(row, column, depth, isMaskedByProbability());
+                }
             }
         }
     }
@@ -235,6 +289,17 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
     }
 
     /**
+     * Sets depth masking for this mask with given bernoulli probability.
+     *
+     */
+    public void maskDepthByProbability() {
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            setDepthMask(depth, isMaskedByProbability());
+        }
+    }
+
+    /**
      * Sets mask value for row mask.
      *
      * @param row row of mask to be set.
@@ -242,7 +307,10 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      */
     public void setRowMask(int row, boolean value) {
         int columns = getColumns();
-        for (int column = 0; column < columns; column++) setMask(row, column, value);
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int column = 0; column < columns; column++) setMask(row, column, depth, value);
+        }
     }
 
     /**
@@ -253,7 +321,24 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      */
     public void setColumnMask(int column, boolean value) {
         int rows = getRows();
-        for (int row = 0; row < rows; row++)  setMask(row, column, value);
+        int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++)  setMask(row, column, depth, value);
+        }
+    }
+
+    /**
+     * Sets mask value for depth mask.
+     *
+     * @param depth depth of mask to be set.
+     * @param value if true sets depth mask otherwise unsets mask.
+     */
+    public void setDepthMask(int depth, boolean value) {
+        int rows = getRows();
+        int columns = getColumns();
+        for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < rows; row++)  setMask(row, column, depth, value);
+        }
     }
 
     /**
@@ -261,24 +346,53 @@ public abstract class AbstractMask implements Cloneable, Serializable, Mask {
      *
      */
     public void print() {
+        int totalDepth = getDepth();
         int rows = getRows();
         int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            System.out.print("[");
-            for (int column = 0; column < columns; column++) {
-                System.out.print((isMasked(row, column) ? 1 : 0));
-                if (column < columns - 1) System.out.print(" ");
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                System.out.print("[");
+                for (int column = 0; column < columns; column++) {
+                    System.out.print((isMasked(row, column, depth) ? 1 : 0));
+                    if (column < columns - 1) System.out.print(" ");
+                }
+                System.out.println("]");
             }
-            System.out.println("]");
         }
     }
 
     /**
-     * Prints size (rows x columns) of mask.
+     * Prints size (rows x columns x depth) of mask.
      *
      */
     public void printSize() {
-        System.out.println("Mask size: " + getRows() + "x" + getColumns());
+        System.out.println("Mask size: " + getRows() + "x" + getColumns() + "x" + getDepth());
+    }
+
+    /**
+     * Returns array index based on row and column
+     *
+     * @param row row
+     * @param column column
+     * @param depth depth
+     * @return array index
+     */
+    protected int getArrayIndex(int row, int column, int depth) {
+        if (getPureDepth() > 1) {
+            int actualRow = (!isTransposed() ? row : column);
+            int actualColumn = (!isTransposed() ? column : row);
+            return depth * getPureRows() * getPureColumns() + actualColumn * getPureRows() + actualRow;
+        }
+        else {
+            if (getPureColumns() > 1) {
+                int actualRow = (!isTransposed() ? row : column);
+                int actualColumn = (!isTransposed() ? column : row);
+                return actualColumn * getPureRows() + actualRow;
+            }
+            else {
+                return (!isTransposed() ? row : column);
+            }
+        }
     }
 
 }

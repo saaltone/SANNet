@@ -29,9 +29,8 @@ public class SMatrix extends ComputableMatrix {
      * @param scalarValue value for matrix.
      */
     public SMatrix(double scalarValue) {
-        super(1, 1, true);
-        updateSliceDimensions(0, 0, 0, 0);
-        setValue(0, 0, scalarValue);
+        super(1, 1, 1, true);
+        setValue(0, 0, 0, scalarValue);
     }
 
     /**
@@ -39,10 +38,13 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
+     * @param mask defines mask of matrix.
+     * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
-    public SMatrix(int rows, int columns) {
-        super(rows, columns);
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    public SMatrix(int rows, int columns, int depth, Mask mask) throws MatrixException {
+        this(rows, columns, depth);
+        if (mask != null) setMask(mask);
     }
 
     /**
@@ -50,11 +52,22 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
+     */
+    public SMatrix(int rows, int columns, int depth) {
+        super(rows, columns, depth);
+    }
+
+    /**
+     * Constructor for sparse matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      */
-    public SMatrix(int rows, int columns, boolean isScalar) {
-        super(rows, columns, isScalar);
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar) {
+        super(rows, columns, depth, isScalar);
     }
 
     /**
@@ -62,12 +75,13 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param initialization type of initialization defined in class Init.
      * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
-    public SMatrix(int rows, int columns, Initialization initialization, int inputs, int outputs) {
-        this(rows, columns);
+    public SMatrix(int rows, int columns, int depth, Initialization initialization, int inputs, int outputs) {
+        this(rows, columns, depth);
         initialize(initialization, inputs, outputs);
     }
 
@@ -76,13 +90,14 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param initialization type of initialization defined in class Init.
      * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
      */
-    public SMatrix(int rows, int columns, boolean isScalar, Initialization initialization, int inputs, int outputs) {
-        this(rows, columns, isScalar);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, Initialization initialization, int inputs, int outputs) {
+        this(rows, columns, depth, isScalar);
         initialize(initialization, inputs, outputs);
     }
 
@@ -91,10 +106,11 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param initialization type of initialization defined in class Init.
      */
-    public SMatrix(int rows, int columns, Initialization initialization) {
-        this(rows, columns);
+    public SMatrix(int rows, int columns, int depth, Initialization initialization) {
+        this(rows, columns, depth);
         initialize(initialization);
     }
 
@@ -103,11 +119,12 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param initialization type of initialization defined in class Init.
      */
-    public SMatrix(int rows, int columns, boolean isScalar, Initialization initialization) {
-        this(rows, columns, isScalar);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, Initialization initialization) {
+        this(rows, columns, depth, isScalar);
         initialize(initialization);
     }
 
@@ -116,10 +133,11 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param initializer initializer.
      */
-    public SMatrix(int rows, int columns, Matrix.Initializer initializer) {
-        this(rows, columns);
+    public SMatrix(int rows, int columns, int depth, Matrix.Initializer initializer) {
+        this(rows, columns, depth);
         initialize(initializer);
     }
 
@@ -128,11 +146,12 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param initializer initializer.
      */
-    public SMatrix(int rows, int columns, boolean isScalar, Matrix.Initializer initializer) {
-        this(rows, columns, isScalar);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, Matrix.Initializer initializer) {
+        this(rows, columns, depth, isScalar);
         initialize(initializer);
     }
 
@@ -141,10 +160,11 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param data clones matrix data from given matrix data.
      */
-    public SMatrix(int rows, int columns, HashMap<Integer, Double> data) {
-        this(rows, columns);
+    public SMatrix(int rows, int columns, int depth, HashMap<Integer, Double> data) {
+        this(rows, columns, depth);
         for (Map.Entry<Integer, Double> entry : data.entrySet()) {
             int index = entry.getKey();
             double value = entry.getValue();
@@ -157,11 +177,12 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param data clones matrix data from given matrix data.
      */
-    public SMatrix(int rows, int columns, boolean isScalar, HashMap<Integer, Double> data) {
-        this(rows, columns, isScalar);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, HashMap<Integer, Double> data) {
+        this(rows, columns, depth, isScalar);
         for (Map.Entry<Integer, Double> entry : data.entrySet()) {
             int index = entry.getKey();
             double value = entry.getValue();
@@ -174,27 +195,27 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param data matrix data.
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
-    public SMatrix(int rows, int columns, HashMap<Integer, Double> data, boolean isTransposed) {
-        super(rows, columns, false, isTransposed);
+    public SMatrix(int rows, int columns, int depth, HashMap<Integer, Double> data, boolean isTransposed) {
+        super(rows, columns, depth, false, isTransposed);
         matrix.putAll(data);
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
      * Constructor for sparse matrix.
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
      * @param isScalar true if matrix is scalar (size 1x1).
      * @param isTransposed if true matrix is transposed and if false not transposed.
      * @param data matrix data.
      */
-    public SMatrix(int rows, int columns, boolean isScalar, boolean isTransposed, HashMap<Integer, Double> data) {
-        super(rows, columns, isScalar, isTransposed);
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, boolean isTransposed, HashMap<Integer, Double> data) {
+        super(rows, columns, depth, isScalar, isTransposed);
         matrix.putAll(data);
-        updateSliceDimensions(0, 0, rows - 1, columns - 1);
     }
 
     /**
@@ -204,7 +225,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
-        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), isScalar(), false, matrix);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), isTransposed(), matrix);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -216,7 +237,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if cloning of mask fails.
      */
     protected Matrix applyTranspose() throws MatrixException {
-        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), isScalar(), true, matrix);
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), true, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -241,23 +262,15 @@ public class SMatrix extends ComputableMatrix {
     }
 
     /**
-     * Returns new mask for this matrix.
-     *
-     * @return mask of this matrix.
-     */
-    protected Mask getNewMask() {
-        return new SMask(getTotalRows(), getTotalColumns());
-    }
-
-    /**
      * Sets value of matrix at specific row and column.
      *
      * @param row row of value to be set.
      * @param column column of value to be set.
+     * @param depth depth of value to be set.
      * @param value new value to be set.
      */
-    public void setValue(int row, int column, double value) {
-        if (value != 0) matrix.put(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed() ? row : column)) * getPureColumns() + (getSliceStartColumn() + (!isTransposed() ? column : row)), value);
+    public void setValue(int row, int column, int depth, double value) {
+        if (value != 0) matrix.put(getArrayIndex(row, column, depth), value);
     }
 
     /**
@@ -265,10 +278,11 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.
+     * @param depth depth of value to be returned.
      * @return value of row and column.
      */
-    public double getValue(int row, int column) {
-        return matrix.getOrDefault(isScalar() ? 0 : (getSliceStartRow() + (!isTransposed() ? row : column)) * getPureColumns() + (getSliceStartColumn() + (!isTransposed() ? column : row)), (double)0);
+    public double getValue(int row, int column, int depth) {
+        return matrix.getOrDefault(getArrayIndex(row, column, depth), (double)0);
     }
 
     /**
@@ -276,22 +290,12 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param rows rows
      * @param columns columns
+     * @param depth depth
      * @return new matrix
+     * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
-    protected Matrix getNewMatrix(int rows, int columns) {
-        return forceDMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
-    }
-
-    /**
-     * Returns matrix of given size (rows x columns)
-     *
-     * @param rows rows
-     * @param columns columns
-     * @param isScalar true if matrix is scalar (size 1x1).
-     * @return new matrix
-     */
-    protected Matrix getNewMatrix(int rows, int columns, boolean isScalar) {
-        return forceDMatrix ? new DMatrix(rows, columns, isScalar) : new SMatrix(rows, columns, isScalar);
+    public Matrix getNewMatrix(int rows, int columns, int depth) throws MatrixException {
+        return forceDMatrix ? new DMatrix(rows, columns, depth, getMask() != null ? new DMask(rows, columns, depth) : null) : new SMatrix(rows, columns, depth, getMask() != null ? getNewMask() : null);
     }
 
     /**
@@ -302,6 +306,15 @@ public class SMatrix extends ComputableMatrix {
      */
     protected Matrix getNewMatrix(double constant) {
         return forceDMatrix ? new DMatrix(constant) : new SMatrix(constant);
+    }
+
+    /**
+     * Returns new mask for this matrix.
+     *
+     * @return mask of this matrix.
+     */
+    protected Mask getNewMask() {
+        return new SMask(getTotalRows(), getTotalColumns(), getTotalDepth());
     }
 
     /**
@@ -327,8 +340,8 @@ public class SMatrix extends ComputableMatrix {
      */
     public static Matrix getOneHotVector(int size, int position, boolean asColumnVector) throws MatrixException {
         if (position > size - 1) throw new MatrixException("Position " + position + " cannot exceed vector size " + size);
-        Matrix oneHotVector = new SMatrix(asColumnVector ? size : 1, asColumnVector ? 1 : size);
-        oneHotVector.setValue(asColumnVector ? position : 0, asColumnVector ? 0 : position, 1);
+        Matrix oneHotVector = new SMatrix(asColumnVector ? size : 1, asColumnVector ? 1 : size, 1);
+        oneHotVector.setValue(asColumnVector ? position : 0, asColumnVector ? 0 : position, 0, 1);
         return oneHotVector;
     }
 

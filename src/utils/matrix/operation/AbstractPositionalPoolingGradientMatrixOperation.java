@@ -8,11 +8,13 @@ package utils.matrix.operation;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
+import java.util.HashMap;
+
 /**
- * Implements average pooling gradient matrix operation.
+ * Implements abstract positional pooling gradient matrix operation.
  *
  */
-public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation {
+public abstract class AbstractPositionalPoolingGradientMatrixOperation extends AbstractMatrixOperation {
 
     /**
      * Output gradient.
@@ -27,51 +29,52 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
     private Matrix inputGradient;
 
     /**
-     * Filter row size.
+     * Number of inputs rows.
      *
      */
-    private final int filterRowSize;
+    private final int inputRowSize;
 
     /**
-     * Filter column size.
+     * Number of inputs columns.
      *
      */
-    private final int filterColumnSize;
+    private final int inputColumnSize;
 
     /**
-     * Inverted size of filter 1 / (filterRowSize * filterColumnSize)
+     * Input position for each resulting row and column.
      *
      */
-    private final double invertedFilterSize;
+    private HashMap<Integer, Integer> inputPos;
 
     /**
-     * Constructor for average pooling gradient matrix operation.
+     * Constructor for abstract positional pooling gradient matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
      * @param depth depth for operation.
-     * @param filterRowSize filter size in rows.
-     * @param filterColumnSize filter size in columns.
+     * @param inputRowSize number of input rows.
+     * @param inputColumnSize number of input columns.
      * @param stride stride step
      */
-    public AveragePoolGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, false, stride);
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
-        this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
+    public AbstractPositionalPoolingGradientMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int stride) {
+        super(rows, columns, depth, true, stride);
+        this.inputRowSize = inputRowSize;
+        this.inputColumnSize = inputColumnSize;
     }
 
     /**
      * Applies matrix operation.
      *
      * @param outputGradient output gradient.
-     * @param inputGradient input gradient.
+     * @param inputPos input positions.
      * @return input gradient.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix outputGradient, Matrix inputGradient) throws MatrixException {
+
+    public Matrix apply(Matrix outputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
         this.outputGradient = outputGradient;
-        this.inputGradient = outputGradient.getNewMatrix(getRows() + filterRowSize - 1, getColumns() + filterColumnSize - 1, getDepth());
+        this.inputPos = inputPos;
+        this.inputGradient = outputGradient.getNewMatrix(inputRowSize, inputColumnSize, getDepth());
         applyMatrixOperation();
         return inputGradient;
     }
@@ -103,12 +106,8 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * @param value current value.
      */
     public void apply(int row, int column, int depth, double value) {
-        double gradientValue = value * invertedFilterSize;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                inputGradient.addByValue(row + filterRow, column + filterColumn, depth, gradientValue);
-            }
-        }
+        final int position = 2 * (depth * inputRowSize  * inputColumnSize + row * inputColumnSize + column);
+        inputGradient.addByValue(inputPos.get(position), inputPos.get(position + 1), depth, value);
     }
 
 }

@@ -63,7 +63,7 @@ public class JMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     public JMatrix(ArrayList<Matrix> matrices, boolean joinedVertically) throws MatrixException {
-        super(joinedVertically ? matrices.stream().mapToInt(Matrix::getTotalRows).sum() : matrices.get(0).getTotalRows(), joinedVertically ? matrices.get(0).getTotalColumns() : matrices.stream().mapToInt(Matrix::getTotalColumns).sum(), false);
+        super(joinedVertically ? matrices.stream().mapToInt(Matrix::getTotalRows).sum() : matrices.get(0).getTotalRows(), joinedVertically ? matrices.get(0).getTotalColumns() : matrices.stream().mapToInt(Matrix::getTotalColumns).sum(), matrices.get(0).getTotalDepth(), false);
 
         this.matrices.addAll(matrices);
         this.joinedVertically = joinedVertically;
@@ -90,17 +90,6 @@ public class JMatrix extends ComputableMatrix {
                 totalColumns += matrix.getTotalColumns();
             }
         }
-
-        updateSliceDimensions(0, 0, getTotalRows() - 1, getTotalColumns() - 1);
-    }
-
-    /**
-     * Checks if matrix is joined vertically.
-     *
-     * @return true when matrices are joined vertically otherwise indicates that matrices are joined horizontally.
-     */
-    public boolean isJoinedVertically() {
-        return joinedVertically;
     }
 
     /**
@@ -142,9 +131,8 @@ public class JMatrix extends ComputableMatrix {
      */
     public Matrix applyTranspose() throws MatrixException {
         ArrayList<Matrix> transposedSubMatrices = new ArrayList<>();
-        ArrayList<Matrix> subMatrices = getSubMatrices();
-        for (Matrix matrix : subMatrices) transposedSubMatrices.add(matrix.transpose());
-        return new JMatrix(transposedSubMatrices, !joinedVertically);
+        for (Matrix subMatrix : getSubMatrices()) transposedSubMatrices.add(subMatrix.transpose());
+        return new JMatrix(transposedSubMatrices, isTransposed());
     }
 
     /**
@@ -170,7 +158,7 @@ public class JMatrix extends ComputableMatrix {
      * @return mask of this matrix.
      */
     protected Mask getNewMask() {
-        return new DMask(getTotalRows(), getTotalColumns());
+        return new DMask(getTotalRows(), getTotalColumns(), getTotalDepth());
     }
 
     /**
@@ -178,20 +166,21 @@ public class JMatrix extends ComputableMatrix {
      *
      * @param row row of value to be set.
      * @param column column of value to be set.
+     * @param depth depth of value to be set.
      * @param value new value to be set.
      */
-    public void setValue(int row, int column, double value) {
+    public void setValue(int row, int column, int depth, double value) {
         int realRow = getSliceStartRow() + row;
         int realColumn = getSliceStartColumn() + column;
         if (joinedVertically) {
             int startRow = matrixPositionOffsets.floorKey(realRow);
             Matrix matrix = matrixPositionOffsets.get(startRow);
-            matrix.setValue(realRow - startRow, realColumn, value);
+            matrix.setValue(realRow - startRow, realColumn, depth, value);
         }
         else {
             int startColumn = matrixPositionOffsets.floorKey(realColumn);
             Matrix matrix = matrixPositionOffsets.get(startColumn);
-            matrix.setValue(realRow, realColumn - startColumn, value);
+            matrix.setValue(realRow, realColumn - startColumn, depth, value);
         }
     }
 
@@ -200,32 +189,34 @@ public class JMatrix extends ComputableMatrix {
      *
      * @param row row of value to be returned.
      * @param column column of value to be returned.
+     * @param depth depth of value to be returned.
      * @return value of row and column.
      */
-    public double getValue(int row, int column) {
+    public double getValue(int row, int column, int depth) {
         int realRow = getSliceStartRow() + row;
         int realColumn = getSliceStartColumn() + column;
         if (joinedVertically) {
             int startRow = matrixPositionOffsets.floorKey(realRow);
             Matrix matrix = matrixPositionOffsets.get(startRow);
-            return matrix.getValue(realRow - startRow, realColumn);
+            return matrix.getValue(realRow - startRow, realColumn, depth);
         }
         else {
             int startColumn = matrixPositionOffsets.floorKey(realColumn);
             Matrix matrix = matrixPositionOffsets.get(startColumn);
-            return matrix.getValue(realRow, realColumn - startColumn);
+            return matrix.getValue(realRow, realColumn - startColumn, depth);
         }
     }
 
     /**
-     * Returns matrix of given size (rows x columns)
+     * Returns matrix of given size (rows x columns x depth)
      *
      * @param rows rows
      * @param columns columns
+     * @param depth depth
      * @return new matrix
      */
-    protected Matrix getNewMatrix(int rows, int columns) {
-        return new DMatrix(rows, columns);
+    public Matrix getNewMatrix(int rows, int columns, int depth) {
+        return new DMatrix(rows, columns, depth);
     }
 
     /**

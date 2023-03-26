@@ -40,30 +40,40 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
     private final int unjoinAtColumn;
 
     /**
+     * Unjoins at defined depth.
+     *
+     */
+    private final int unjoinAtDepth;
+
+    /**
      * Constructor for join binary operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
      * @param unjoinAtRow unjoins at row.
      * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
      */
-    public UnjoinMatrixOperation(int rows, int columns, int unjoinAtRow, int unjoinAtColumn) {
-        super(rows, columns, true);
+    public UnjoinMatrixOperation(int rows, int columns, int depth, int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth) {
+        super(rows, columns, depth, true);
         this.unjoinAtRow = unjoinAtRow;
         this.unjoinAtColumn = unjoinAtColumn;
+        this.unjoinAtDepth = unjoinAtDepth;
     }
 
     /**
      * Applies matrix operation.
      *
      * @param first first matrix.
-     * @param result result matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(Matrix first, Matrix result) throws MatrixException {
+    public Matrix apply(Matrix first) throws MatrixException {
         this.first = first;
-        this.result = result;
+        this.result = first.getNewMatrix(getRows(), getColumns(), getDepth());
         applyMatrixOperation();
+        return result;
     }
 
     /**
@@ -74,12 +84,15 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
      * @return input gradient
      */
     public Matrix applyGradient(Matrix first, Matrix outputGradient) {
-        Matrix result = new DMatrix(first.getRows(), first.getColumns());
+        Matrix result = new DMatrix(first.getRows(), first.getColumns(), getDepth());
         final int rows = getRows();
         final int columns = getColumns();
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                result.setValue(unjoinAtRow + row, unjoinAtColumn + column, outputGradient.getValue(row, column));
+        final int totalDepth = getDepth();
+        for (int depth = 0; depth < totalDepth; depth++) {
+            for (int row = 0; row < rows; row++) {
+                for (int column = 0; column < columns; column++) {
+                    result.setValue(unjoinAtRow + row, unjoinAtColumn + column, unjoinAtDepth + depth, outputGradient.getValue(row, column, depth));
+                }
             }
         }
         return result;
@@ -99,7 +112,7 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -108,10 +121,11 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      */
-    public void apply(int row, int column, double value) {
-        result.setValue(row, column, first.getValue(unjoinAtRow + row, unjoinAtColumn + column));
+    public void apply(int row, int column, int depth, double value) {
+        result.setValue(row, column, depth, first.getValue(unjoinAtRow + row, unjoinAtColumn + column, unjoinAtDepth + depth));
     }
 
 }

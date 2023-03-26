@@ -18,19 +18,21 @@ public interface MatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void apply(int row, int column, double value) throws MatrixException;
+    void apply(int row, int column, int depth, double value) throws MatrixException;
 
     /**
      * Applies operation assuming masked matrices.
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void applyMask(int row, int column, double value) throws MatrixException;
+    void applyMask(int row, int column, int depth, double value) throws MatrixException;
 
 }

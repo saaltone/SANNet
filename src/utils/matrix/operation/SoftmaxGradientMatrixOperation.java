@@ -31,22 +31,22 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
      */
-    public SoftmaxGradientMatrixOperation(int rows, int columns) {
-        super(rows, columns, false);
+    public SoftmaxGradientMatrixOperation(int rows, int columns, int depth) {
+        super(rows, columns, depth, false);
     }
 
     /**
      * Applies operation.
      *
      * @param first first matrix.
-     * @param result result matrix.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix first, Matrix result) throws MatrixException {
+    public Matrix apply(Matrix first) throws MatrixException {
         this.first = first;
-        this.result = result;
+        this.result = first.getNewMatrix(first.getRows(), first.getRows(), getDepth());
         applyMatrixOperation();
         return result;
     }
@@ -65,7 +65,7 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -74,10 +74,11 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param row1 current row1.
+     * @param depth current depth.
      * @param value current value.
      */
-    public void apply(int row, int row1, double value) {
-        result.setValue(row1, row, (row == row1 ? 1 : 0) - first.getValue(row1, 0));
+    public void apply(int row, int row1, int depth, double value) {
+        result.setValue(row1, row, depth, (row == row1 ? 1 : 0) - first.getValue(row1, 0, depth));
     }
 
 }

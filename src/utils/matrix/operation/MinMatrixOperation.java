@@ -39,13 +39,20 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
     private int minColumn = -1;
 
     /**
+     * Minimum depth.
+     *
+     */
+    private int minDepth = -1;
+
+    /**
      * Constructor for min matrix operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
+     * @param depth depth for operation.
      */
-    public MinMatrixOperation(int rows, int columns) {
-        super(rows, columns, true);
+    public MinMatrixOperation(int rows, int columns, int depth) {
+        super(rows, columns, depth, true);
     }
 
     /**
@@ -60,10 +67,12 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
         minValue = Double.POSITIVE_INFINITY;
         minRow = -1;
         minColumn = -1;
+        minDepth = -1;
         applyMatrixOperation();
-        int[] result = new int[2];
+        int[] result = new int[3];
         result[0] = getMinRow();
         result[1] = getMinColumn();
+        result[2] = getMinDepth();
         return result;
     }
 
@@ -94,7 +103,7 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      *
      * @return another matrix used in operation.
      */
-    public Matrix getAnother() {
+    public Matrix getOther() {
         return null;
     }
 
@@ -103,13 +112,15 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      *
      * @param row current row.
      * @param column current column.
+     * @param depth current depth.
      * @param value current value.
      */
-    public void apply(int row, int column, double value) {
+    public void apply(int row, int column, int depth, double value) {
         if (value < this.minValue) {
             this.minValue = value;
             this.minRow = row;
             this.minColumn = column;
+            this.minDepth = depth;
         }
     }
 
@@ -138,6 +149,15 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      */
     public int getMinColumn() {
         return minColumn;
+    }
+
+    /**
+     * Returns min depth.
+     *
+     * @return min depth.
+     */
+    public int getMinDepth() {
+        return minDepth;
     }
 
 }

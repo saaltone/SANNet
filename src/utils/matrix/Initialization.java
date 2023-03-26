@@ -8,7 +8,7 @@ package utils.matrix;
 /**
  * Defines initialization for matrix.<br>
  * <br>
- * Reference: https://stats.stackexchange.com/questions/373136/softmax-weights-initialization<br>
+ * Reference: <a href="https://stats.stackexchange.com/questions/373136/softmax-weights-initialization">...</a><br>
  *
  */
 public enum Initialization {
