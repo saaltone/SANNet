@@ -132,6 +132,66 @@ public enum LayerType {
     AVERAGE_POOLING,
 
     /**
+     * Single Convolution layer.
+     *
+     */
+    SINGLE_CONVOLUTION,
+
+    /**
+     * Single Cross-correlation layer.
+     *
+     */
+    SINGLE_CROSSCORRELATION,
+
+    /**
+     * Single Depth-wise Convolution layer.
+     *
+     */
+    SINGLE_DW_CONVOLUTION,
+
+    /**
+     * Single Depth-wise Cross-correlation layer.
+     *
+     */
+    SINGLE_DW_CROSSCORRELATION,
+
+    /**
+     * Single Point-wise Convolution layer.
+     *
+     */
+    SINGLE_PW_CONVOLUTION,
+
+    /**
+     * Single Point-wise Cross-correlation layer.
+     *
+     */
+    SINGLE_PW_CROSSCORRELATION,
+
+    /**
+     * Single Max pooling layer
+     *
+     */
+    SINGLE_MAX_POOLING,
+
+    /**
+     * Single Random pooling layer
+     *
+     */
+    SINGLE_RANDOM_POOLING,
+
+    /**
+     * Single Cyclic pooling layer
+     *
+     */
+    SINGLE_CYCLIC_POOLING,
+
+    /**
+     * Single Average pooling layer
+     *
+     */
+    SINGLE_AVERAGE_POOLING,
+
+    /**
      * Batch normalization layer
      *
      */
