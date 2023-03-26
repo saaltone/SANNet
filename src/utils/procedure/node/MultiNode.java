@@ -40,7 +40,6 @@ public class MultiNode extends AbstractNode {
     public MultiNode(int id, Matrix referenceMatrix) throws MatrixException {
         super(id, referenceMatrix);
         matrices = new TreeMap<>();
-        matrices.put(0, referenceMatrix);
         gradients = new TreeMap<>();
     }
 

@@ -19,13 +19,6 @@ import java.util.TreeMap;
 public interface Node {
 
     /**
-     * Returns id of node.
-     *
-     * @return id of node.
-     */
-     int getId();
-
-    /**
      * If true node is of type multi index.
      *
      * @return true node is of type multi index.
@@ -60,6 +53,13 @@ public interface Node {
      * @return number of columns in reference matrix.
      */
     int getColumns();
+
+    /**
+     * Returns depth of reference matrix.
+     *
+     * @return depth of reference matrix.
+     */
+    int getDepth();
 
     /**
      * Sets backward dependent node.
@@ -170,15 +170,6 @@ public interface Node {
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
     Matrix getNewMatrix() throws MatrixException;
-
-    /**
-     * Returns new matrix of node.
-     *
-     * @param index data index for matrix.
-     * @return matrix of node.
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
-     */
-    Matrix getNewMatrix(int index) throws MatrixException;
 
     /**
      * Sets matrix of this node.

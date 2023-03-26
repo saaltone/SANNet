@@ -126,6 +126,15 @@ public abstract class AbstractNode implements Node, Serializable {
     }
 
     /**
+     * Returns depth of reference matrix.
+     *
+     * @return depth of reference matrix.
+     */
+    public int getDepth() {
+        return referenceMatrix.getDepth();
+    }
+
+    /**
      * Sets backward dependent node.
      *
      * @param fromResultNode from result node.
@@ -212,7 +221,7 @@ public abstract class AbstractNode implements Node, Serializable {
      *
      * @return id of node.
      */
-    public int getId() {
+    private int getId() {
         return id;
     }
 
@@ -263,19 +272,6 @@ public abstract class AbstractNode implements Node, Serializable {
     }
 
     /**
-     * Returns new matrix of node.
-     *
-     * @param index data index for matrix.
-     * @return matrix of node.
-     * @throws MatrixException throws exception if scalar type of node and matrix are not matching.
-     */
-    public Matrix getNewMatrix(int index) throws MatrixException {
-        Matrix newMatrix = getNewMatrix();
-        setMatrix(index, newMatrix);
-        return newMatrix;
-    }
-
-    /**
      * Sets matrix of this node.
      *
      * @param matrix new matrix.
@@ -319,8 +315,8 @@ public abstract class AbstractNode implements Node, Serializable {
     public void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException {
         if (getGradient(index) == null) setGradient(index, getNewMatrix());
 
-        if (!negateGradient) getGradient(index).incrementBy(outputGradient);
-        else getGradient(index).decrementBy(outputGradient);
+        if (!negateGradient) getGradient(index).addBy(outputGradient);
+        else getGradient(index).subtractBy(outputGradient);
 
         cumulatedGradientEntryCount++;
     }
