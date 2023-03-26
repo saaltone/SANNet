@@ -39,9 +39,8 @@ public class ReadCSVFile {
      * @param outCols number of output cols (relevant for 2D output).
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, String separator, HashSet<Integer> inputColumns, HashSet<Integer> outputColumns, int skipRowsFromStart, boolean asSparseMatrix, boolean inAs2D, int inRows, int inCols, boolean outAs2D, int outRows, int outCols) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFile(String fileName, String separator, HashSet<Integer> inputColumns, HashSet<Integer> outputColumns, int skipRowsFromStart, boolean asSparseMatrix, boolean inAs2D, int inRows, int inCols, boolean outAs2D, int outRows, int outCols) throws FileNotFoundException {
         HashMap<Integer, Integer> inputColumnMap = new HashMap<>();
         HashMap<Integer, Integer> outputColumnMap = new HashMap<>();
         int index;
@@ -64,8 +63,8 @@ public class ReadCSVFile {
         int countSkipRows = 0;
         while (countSkipRows++ < skipRowsFromStart && scanner.hasNextLine()) scanner.nextLine();
 
-        HashMap<Integer, MMatrix> inputData = new HashMap<>();
-        HashMap<Integer, MMatrix> outputData = new HashMap<>();
+        HashMap<Integer, Matrix> inputData = new HashMap<>();
+        HashMap<Integer, Matrix> outputData = new HashMap<>();
 
         int row = 0;
         while (scanner.hasNextLine()) {
@@ -77,7 +76,8 @@ public class ReadCSVFile {
 
             row++;
         }
-        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
+
+        HashMap<Integer, HashMap<Integer, Matrix>> result = new HashMap<>();
         result.put(0, inputData);
         result.put(1, outputData);
         return result;
@@ -94,18 +94,17 @@ public class ReadCSVFile {
      * @param columns columns
      * @param asSparseMatrix if true sparse matrix usage is assumed
      * @param data data
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    private static void addItem(String[] items, HashMap<Integer, Integer> columnMap, int row, boolean as2D, int rows, int columns, boolean asSparseMatrix, HashMap<Integer, MMatrix> data) throws MatrixException {
-        Matrix inItem = !asSparseMatrix ? new DMatrix(rows, columns) : new SMatrix(rows, columns);
+    private static void addItem(String[] items, HashMap<Integer, Integer> columnMap, int row, boolean as2D, int rows, int columns, boolean asSparseMatrix, HashMap<Integer, Matrix> data) {
+        Matrix inItem = !asSparseMatrix ? new DMatrix(rows, columns, 1) : new SMatrix(rows, columns, 1);
         for (Map.Entry<Integer, Integer> entry : columnMap.entrySet()) {
             int pos = entry.getKey();
             int value = entry.getValue();
             if (items[pos].compareTo("0") != 0) {
-                inItem.setValue(getRow(as2D, value, columns), getCol(as2D, value, columns), convertToDouble(items[pos]));
+                inItem.setValue(getRow(as2D, value, columns), getCol(as2D, value, columns), 0, convertToDouble(items[pos]));
             }
         }
-        data.put(row, new MMatrix(inItem));
+        data.put(row, inItem);
     }
 
     /**
@@ -145,9 +144,8 @@ public class ReadCSVFile {
      * @param asSparseMatrix returns sample set as sparse matrix (SMatrix).
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFile(String fileName, String separator, HashSet<Integer> inputCols, HashSet<Integer> outputCols, int skipRowsFromStart, boolean asSparseMatrix) throws FileNotFoundException {
         return readFile(fileName, separator, inputCols, outputCols, skipRowsFromStart, asSparseMatrix, false, 0, 0, false, 0, 0);
     }
 
@@ -162,9 +160,8 @@ public class ReadCSVFile {
      * @param asSparseMatrix returns sample set as sparse matrix (SMatrix).
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, HashSet<Integer> inputCols, HashSet<Integer> outputCols, boolean asSparseMatrix) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFile(String fileName, HashSet<Integer> inputCols, HashSet<Integer> outputCols, boolean asSparseMatrix) throws FileNotFoundException {
         return readFile(fileName, ";", inputCols, outputCols, 0, asSparseMatrix, false, 0, 0, false, 0, 0);
     }
 

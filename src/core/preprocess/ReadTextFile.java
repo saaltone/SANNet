@@ -30,9 +30,8 @@ public class ReadTextFile {
      * @param skipRowsFromStart skips specified number of rows from start.
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
-     * @throws MatrixException throws exception if matrix is exceeding its depth or matrix is not defined.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFile(String fileName, int numberOfInputCharacters, int numberOfOutputCharacters, int inputOutputDelta, int skipRowsFromStart) throws FileNotFoundException {
         StringBuilder text = readText(fileName, skipRowsFromStart);
 
         HashMap<Integer, HashMap<Integer, Integer>> inputData = new HashMap<>();
@@ -53,34 +52,30 @@ public class ReadTextFile {
             }
             outputData.put(pos, outValues);
         }
-        HashMap<Integer, MMatrix> inputs = new HashMap<>();
-        HashMap<Integer, MMatrix> outputs = new HashMap<>();
-        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
+        HashMap<Integer, Matrix> inputs = new HashMap<>();
+        HashMap<Integer, Matrix> outputs = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, Matrix>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
         int charSize = charSize();
         for (Map.Entry<Integer, HashMap<Integer, Integer>> entry : inputData.entrySet()) {
-            int pos = entry.getKey();
             HashMap<Integer, Integer> inputDataEntry = entry.getValue();
-            Matrix input = new SMatrix(numberOfInputCharacters * charSize, 1);
+            Matrix input = new SMatrix(numberOfInputCharacters * charSize, 1, 1);
             for (Map.Entry<Integer, Integer> entry1 : inputDataEntry.entrySet()) {
                 int index = entry1.getKey();
                 int charAt = entry1.getValue();
-                input.setValue(charAt + index * charSize, 0, 1);
+                input.setValue(charAt + index * charSize, 0, 0, 1);
             }
-            inputs.put(pos, new MMatrix(input));
+            inputs.put(entry.getKey(), input);
         }
 
         for (Integer pos : inputData.keySet()) {
-            Matrix output = new SMatrix(numberOfOutputCharacters * charSize, 1);
+            Matrix output = new SMatrix(numberOfOutputCharacters * charSize, 1, 1);
             for (Map.Entry<Integer, Integer> entry : outputData.get(pos).entrySet()) {
-                int index = entry.getKey();
-                int charAt = entry.getValue();
-                int col = charAt + index * charSize;
-                output.setValue(col, 0,1);
+                output.setValue(entry.getValue() + entry.getKey() * charSize, 0, 0,1);
             }
-            outputs.put(pos, new MMatrix(output));
+            outputs.put(pos, output);
         }
 
         return result;
@@ -146,7 +141,7 @@ public class ReadTextFile {
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static HashMap<Integer, HashMap<Integer, MMatrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
         StringBuilder readText = readText(fileName, skipRowsFromStart);
         String[] words = readText.toString().split(" ");
         Arrays.setAll(words, index -> words[index].trim());
@@ -173,9 +168,9 @@ public class ReadTextFile {
             }
         }
 
-        HashMap<Integer, MMatrix> inputs = new HashMap<>();
-        HashMap<Integer, MMatrix> outputs = new HashMap<>();
-        HashMap<Integer, HashMap<Integer, MMatrix>> result = new HashMap<>();
+        HashMap<Integer, Matrix> inputs = new HashMap<>();
+        HashMap<Integer, Matrix> outputs = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, Matrix>> result = new HashMap<>();
         result.put(0, inputs);
         result.put(1, outputs);
 
@@ -199,8 +194,8 @@ public class ReadTextFile {
 
                 JMatrix joinedInputMatrix = new JMatrix(inputMatrices, true);
                 JMatrix joinedOutputMatrix = new JMatrix(outputMatrices, true);
-                inputs.put(pos, new MMatrix(joinedInputMatrix));
-                outputs.put(pos, new MMatrix(joinedOutputMatrix));
+                inputs.put(pos, joinedInputMatrix);
+                outputs.put(pos, joinedOutputMatrix);
                 pos++;
 
                 encodedWordQueue.removeFirst();

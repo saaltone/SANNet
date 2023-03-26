@@ -5,7 +5,6 @@
 
 package core.preprocess;
 
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.SMatrix;
@@ -40,55 +39,52 @@ public class OneHotEncoder {
      * @return one hot encoded sample set.
      * @throws MatrixException throws matrix exception is creation of sample fails.
      */
-    public HashMap<Integer, MMatrix> encode(HashMap<Integer, MMatrix> input, boolean keepMapping) throws MatrixException {
+    public HashMap<Integer, Matrix> encode(HashMap<Integer, Matrix> input, boolean keepMapping) throws MatrixException {
         if (input.size() == 0) return new HashMap<>();
         HashMap<Integer, HashMap<Integer, HashMap<Integer, Integer>>> itemsMap = new HashMap<>();
         if (!keepMapping) mapping = new HashMap<>();
         int rows = -1;
-        for (MMatrix sample : input.values()) {
-            int matrixDepth = sample.getDepth();
-            for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
-                Matrix entry = sample.get(inputDepth);
-                if (rows == -1) rows = entry.getColumns();
-                else if(rows != entry.getColumns()) throw new MatrixException("Inconsistent number of columns in input.");
-            }
+        for (Matrix sample : input.values()) {
+            if (rows == -1) rows = sample.getColumns();
+            else if(rows != sample.getColumns()) throw new MatrixException("Inconsistent number of columns in input.");
         }
         int prevMaxKey = 0;
-        int curMaxKey;
         for (int row = 0; row < rows; row++) {
-            curMaxKey = prevMaxKey;
+
             HashMap<Double, Integer> rowMapping;
             if (mapping.containsKey(row)) rowMapping = mapping.get(row);
             else mapping.put(row, rowMapping = new HashMap<>());
-            for (Map.Entry<Integer, MMatrix> entry : input.entrySet()) {
+
+            int curMaxKey = prevMaxKey;
+            for (Map.Entry<Integer, Matrix> entry : input.entrySet()) {
                 int index = entry.getKey();
-                MMatrix sample = entry.getValue();
+                Matrix sample = entry.getValue();
+
                 HashMap<Integer, HashMap<Integer, Integer>> sampleMapping;
                 if (itemsMap.containsKey(index)) sampleMapping = itemsMap.get(index);
                 else itemsMap.put(index, sampleMapping = new HashMap<>());
-                int depth = sample.getDepth();
-                for (int depthIndex = 0; depthIndex < depth; depthIndex++) {
-                    Matrix item = sample.get(depthIndex);
-                    HashMap<Integer, Integer> entryMapping;
-                    if (sampleMapping.containsKey(depth)) entryMapping = sampleMapping.get(depth);
-                    else sampleMapping.put(depth, entryMapping = new HashMap<>());
-                    int mappingKey = getMappingKey(rowMapping, item.getValue(row, 0));
-                    entryMapping.put(row, curMaxKey + mappingKey);
-                    prevMaxKey = Math.max(prevMaxKey, mappingKey + 1);
-                }
+
+                HashMap<Integer, Integer> entryMapping;
+                if (sampleMapping.containsKey(1)) entryMapping = sampleMapping.get(1);
+                else sampleMapping.put(1, entryMapping = new HashMap<>());
+
+                int mappingKey = getMappingKey(rowMapping, sample.getValue(row, 0, 0));
+                entryMapping.put(row, curMaxKey + mappingKey);
+
+                prevMaxKey = Math.max(prevMaxKey, mappingKey + 1);
             }
         }
-        HashMap<Integer, MMatrix> output = new HashMap<>();
+        HashMap<Integer, Matrix> output = new HashMap<>();
         for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, Integer>>> entry : itemsMap.entrySet()) {
             int index = entry.getKey();
             HashMap<Integer, HashMap<Integer, Integer>> itemEntries = entry.getValue();
-            for (Map.Entry<Integer, HashMap<Integer, Integer>> entry1 : itemEntries.entrySet()) {
-                HashMap<Integer, Integer> itemEntry = entry1.getValue();
-                Matrix item = new SMatrix(prevMaxKey, 1);
+            for (Map.Entry<Integer, HashMap<Integer, Integer>> itemMapEntry : itemEntries.entrySet()) {
+                HashMap<Integer, Integer> itemEntry = itemMapEntry.getValue();
+                Matrix item = new SMatrix(prevMaxKey, 1, 1);
                 for (Integer row : itemEntry.values()) {
-                    item.setValue(row, 0, 1);
+                    item.setValue(row, 0, 0, 1);
                 }
-                output.put(index, new MMatrix(item));
+                output.put(index, item);
             }
         }
         return output;
