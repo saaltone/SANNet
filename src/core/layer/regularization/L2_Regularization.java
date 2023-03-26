@@ -12,7 +12,7 @@ import utils.matrix.*;
 /**
  * Implements L2 (ridge) regularization.<br>
  * <br>
- * Reference: https://towardsdatascience.com/l1-and-l2-regularization-methods-ce25e7fc831c<br>
+ * Reference: <a href="https://towardsdatascience.com/l1-and-l2-regularization-methods-ce25e7fc831c">...</a><br>
  *
  */
 public class L2_Regularization extends AbstractLx_Regularization {

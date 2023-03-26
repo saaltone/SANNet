@@ -20,7 +20,7 @@ import java.util.HashSet;
  * Implements gradient clipping.<br>
  * Gradient clipping cuts gradient when certain threshold is reached to prevent then from growing too big i.e. exploding.<br>
  * <br>
- * Reference: https://hackernoon.com/gradient-clipping-57f04f0adae<br>
+ * Reference: <a href="https://hackernoon.com/gradient-clipping-57f04f0adae">...</a><br>
  *
  */
 public class GradientClipping extends AbstractRegularizationLayer {
@@ -119,7 +119,7 @@ public class GradientClipping extends AbstractRegularizationLayer {
                 Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
                 if (weightGradientSum != null) {
                     double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
-                    if (weightGradientSumL2norm > threshold) weightGradientSum.multiply(threshold / weightGradientSumL2norm, weightGradientSum);
+                    if (weightGradientSumL2norm > threshold) weightGradientSum.multiplyBy(threshold / weightGradientSumL2norm);
                 }
             }
         }

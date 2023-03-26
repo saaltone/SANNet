@@ -10,7 +10,6 @@ import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -74,7 +73,7 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         return null;
     }
 
@@ -91,7 +90,7 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      *
      * @return output of forward procedure.
      */
-    public MMatrix getForwardProcedure() {
+    public Matrix getForwardProcedure() {
         return null;
     }
 

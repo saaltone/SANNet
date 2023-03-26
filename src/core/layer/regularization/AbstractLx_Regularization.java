@@ -137,7 +137,7 @@ public abstract class AbstractLx_Regularization extends AbstractRegularizationLa
         for (Matrix weight : layerRegularizedWeights) {
             Matrix weightGradientSum = layerWeightGradients.get(weight);
             if (weightGradientSum != null) {
-                weightGradientSum.add(applyRegularization(weight, lambda), weightGradientSum);
+                weightGradientSum.addBy(applyRegularization(weight, lambda));
             }
         }
 

@@ -9,7 +9,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
-import utils.matrix.MMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.Sequence;
@@ -19,7 +18,7 @@ import utils.sampling.Sequence;
  * Drop out is based on stochastic selection of layer nodes that are removed from training process at each training step.<br>
  * This forces other nodes to take over learning process reducing neural network's tendency to overfit.<br>
  * <br>
- * Reference: https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf<br>
+ * Reference: <a href="https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf">...</a><br>
  *
  */
 public class Dropout extends AbstractRegularizationLayer {
@@ -103,18 +102,14 @@ public class Dropout extends AbstractRegularizationLayer {
         if (isTraining() || monte_carlo) {
             this.reset();
             Sequence inputSequence = getDefaultLayerInput();
-            for (MMatrix sample : inputSequence.values()) {
-                int matrixDepth = sample.getDepth();
-                for (int inputDepth = 0; inputDepth < matrixDepth; inputDepth++) {
-                    // Implements forward step for inverted drop out.<br>
-                    // Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
-                    // During training phase it also compensates all remaining inputs by dividing by probability.<br>
-                    Matrix matrix = sample.get(inputDepth);
-                    matrix.multiply(1 / probability, matrix);
-                    matrix.setMask();
-                    matrix.getMask().setProbability(probability);
-                    matrix.getMask().maskRowByProbability();
-                }
+            for (Matrix sample : inputSequence.values()) {
+                // Implements forward step for inverted drop out.<br>
+                // Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+                // During training phase it also compensates all remaining inputs by dividing by probability.<br>
+                sample.multiplyBy(1 / probability);
+                sample.setMask();
+                sample.getMask().setProbability(probability);
+                sample.getMask().maskRowByProbability();
             }
             setLayerOutputs(inputSequence);
         }
