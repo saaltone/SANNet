@@ -26,7 +26,7 @@ public class AddLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    private TreeMap<Integer, MMatrix> inputs;
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for add layer.
@@ -103,21 +103,27 @@ public class AddLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
         TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
         int layerWidth = -1;
+        int layerHeight = -1;
+        int layerDepth = -1;
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
-            if (layerWidth == -1) layerWidth = entry.getValue().getLayerWidth();
-            else if (layerWidth != entry.getValue().getLayerWidth()) throw new MatrixException("All inputs must have same width.");
-            Matrix input = new DMatrix(layerWidth, 1, Initialization.ONE);
+            if (layerWidth == -1 || layerHeight == -1 || layerDepth == -1) {
+                layerWidth = entry.getValue().getLayerWidth();
+                layerHeight = entry.getValue().getLayerHeight();
+                layerDepth = entry.getValue().getLayerDepth();
+            }
+            else if (layerWidth != entry.getValue().getLayerWidth() || layerHeight != entry.getValue().getLayerHeight() || layerDepth != entry.getValue().getLayerDepth()) throw new MatrixException("All inputs must have same size.");
+            Matrix input = new DMatrix(layerWidth, layerHeight, layerDepth, Initialization.ONE);
             input.setName("Input" + entry.getValue().getLayerIndex());
             inputMatrices.put(entry.getKey(), input);
         }
 
         for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
-            inputs.put(inputIndex, new MMatrix(inputMatrices.get(inputIndex)));
+            inputs.put(inputIndex, inputMatrices.get(inputIndex));
         }
 
         return inputs;
@@ -129,16 +135,14 @@ public class AddLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = null;
-        for (MMatrix mMatrix : inputs.values()) {
-            output = output == null ? mMatrix.get(0) : output.add(mMatrix.get(0));
+        for (Matrix matrix : inputs.values()) {
+            output = output == null ? matrix : output.add(matrix);
         }
 
         if (output != null) output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
 
     }
 

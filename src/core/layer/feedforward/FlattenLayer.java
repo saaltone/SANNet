@@ -40,7 +40,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initializeDimensions() throws NeuralNetworkException {
-        if (getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + (getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth()));
+        if (getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid dimensions: " + getDefaultPreviousLayer().getLayerWidth() + "x" + getDefaultPreviousLayer().getLayerHeight() + "x" + getDefaultPreviousLayer().getLayerDepth());
         setLayerWidth(getDefaultPreviousLayer().getLayerWidth() * getDefaultPreviousLayer().getLayerHeight() * getDefaultPreviousLayer().getLayerDepth());
         setLayerHeight(1);
         setLayerDepth(1);
@@ -108,9 +108,8 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * Takes single backward processing step to process layer output gradient(s) towards input.<br>
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void backwardProcess() throws MatrixException {
+    public void backwardProcess() {
         setLayerOutputGradients(getLayerOutputGradients().unflatten(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth()));
     }
 
@@ -147,7 +146,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         return null;
     }
 
@@ -156,7 +155,7 @@ public class FlattenLayer extends AbstractExecutionLayer {
      *
      * @return output of forward procedure.
      */
-    public MMatrix getForwardProcedure() {
+    public Matrix getForwardProcedure() {
         return null;
     }
 

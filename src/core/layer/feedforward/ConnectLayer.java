@@ -49,12 +49,13 @@ public class ConnectLayer extends AbstractExecutionLayer {
          * Constructor for weight set
          *
          * @param initialization weight initialization function.
-         * @param layerWidth width of current layer.
+         * @param layerWidth     width of current layer.
+         * @param layerDepth     depth of current layer.
          * @param previousLayers input layers.
          */
-        ConnectWeightSet(Initialization initialization, int layerWidth, TreeMap<Integer, NeuralNetworkLayer> previousLayers) {
+        ConnectWeightSet(Initialization initialization, int layerWidth, int layerDepth, TreeMap<Integer, NeuralNetworkLayer> previousLayers) {
             for (Map.Entry<Integer, NeuralNetworkLayer> entry : previousLayers.entrySet()) {
-                Matrix connectInputWeight = new DMatrix(layerWidth, entry.getValue().getLayerWidth(), initialization);
+                Matrix connectInputWeight = new DMatrix(layerWidth, entry.getValue().getLayerWidth(), layerDepth, initialization);
                 connectInputWeight.setName("ConnectWeight" + entry.getValue().getLayerIndex());
                 weights.add(connectInputWeight);
                 registerWeight(connectInputWeight, false, false);
@@ -102,7 +103,7 @@ public class ConnectLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    private TreeMap<Integer, MMatrix> inputs;
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for connector layer.
@@ -170,7 +171,7 @@ public class ConnectLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new ConnectWeightSet(initialization, getLayerWidth(), getPreviousLayers());
+        weightSet = new ConnectWeightSet(initialization, getLayerWidth(), getLayerDepth(), getPreviousLayers());
     }
 
     /**
@@ -180,18 +181,25 @@ public class ConnectLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
         TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
+        int layerHeight = -1;
+        int layerDepth = -1;
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
-            Matrix input = new DMatrix(entry.getValue().getLayerWidth(), 1, Initialization.ONE);
+            if (layerHeight == -1 || layerDepth == -1) {
+                layerHeight = entry.getValue().getLayerHeight();
+                layerDepth = entry.getValue().getLayerDepth();
+            }
+            else if (layerHeight != entry.getValue().getLayerHeight() || layerDepth != entry.getValue().getLayerDepth()) throw new MatrixException("All inputs must have same size.");
+            Matrix input = new DMatrix(entry.getValue().getLayerWidth(), layerHeight, layerDepth, Initialization.ONE);
             input.setName("Input" + entry.getValue().getLayerIndex());
             inputMatrices.put(entry.getKey(), input);
         }
 
         for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
-            inputs.put(inputIndex, new MMatrix(inputMatrices.get(inputIndex)));
+            inputs.put(inputIndex, inputMatrices.get(inputIndex));
         }
 
         return inputs;
@@ -203,16 +211,14 @@ public class ConnectLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = null;
-        for (Map.Entry<Integer, MMatrix> entry : inputs.entrySet()) {
-            output = output == null ? weightSet.connectInputWeights.get(entry.getKey()).dot(entry.getValue().get(0)) : output.add(weightSet.connectInputWeights.get(entry.getKey()).dot(entry.getValue().get(0)));
+        for (Map.Entry<Integer, Matrix> entry : inputs.entrySet()) {
+            output = output == null ? weightSet.connectInputWeights.get(entry.getKey()).dot(entry.getValue()) : output.add(weightSet.connectInputWeights.get(entry.getKey()).dot(entry.getValue()));
         }
 
         if (output != null) output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
 
     }
 

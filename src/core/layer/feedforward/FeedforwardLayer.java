@@ -61,15 +61,16 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
         /**
          * Constructor for weight set
          *
-         * @param initialization weight initialization function.
-         * @param previousLayerWidth width of previous layer.
-         * @param layerWidth width of current layer.
+         * @param initialization        weight initialization function.
+         * @param previousLayerWidth    width of previous layer.
+         * @param layerWidth            width of current layer.
+         * @param previousLayerDepth    depth of previous layer.
          * @param regulateDirectWeights if true direct weights are regulated.
          */
-        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
-            weight = new DMatrix(layerWidth, previousLayerWidth, initialization);
+        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, int previousLayerDepth, boolean regulateDirectWeights) {
+            weight = new DMatrix(layerWidth, previousLayerWidth, previousLayerDepth, initialization);
             weight.setName("Weight");
-            bias = new DMatrix(layerWidth, 1);
+            bias = new DMatrix(layerWidth, 1, previousLayerDepth);
             bias.setName("Bias");
 
             weights.add(weight);
@@ -227,7 +228,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new FeedforwardWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights);
+        weightSet = new FeedforwardWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), getDefaultPreviousLayer().getLayerDepth(), regulateDirectWeights);
     }
 
     /**
@@ -235,12 +236,11 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -249,16 +249,14 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = weightSet.weight.dot(input);
         output = output.add(weightSet.bias);
 
         if (activationFunction != null) output = output.apply(activationFunction);
 
         output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
     }
 
     /**

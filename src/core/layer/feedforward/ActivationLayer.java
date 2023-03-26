@@ -31,7 +31,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
      * Input matrices for procedure construction.
      *
      */
-    private TreeMap<Integer, MMatrix> inputs;
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for activation layer.
@@ -85,16 +85,12 @@ public class ActivationLayer extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        int layerDepth = getLayerDepth();
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         inputs = new TreeMap<>();
-        for (int index = 0; index < layerDepth; index++) {
-            Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), Initialization.ONE);
-            input.setName("Input" + getDefaultPreviousLayer().getLayerIndex() + (layerDepth > 1 ? "{" + index + "}" : ""));
-            inputs.put(index, new MMatrix(input));
-        }
+        Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
+        inputs.put(0, input);
         return inputs;
     }
 
@@ -104,18 +100,12 @@ public class ActivationLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
-        int layerDepth = getLayerDepth();
-        MMatrix outputs = new MMatrix(layerDepth, "Output");
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix output = inputs.get(0);
+        output = output.apply(activationFunction);
+        output.setName("Output");
 
-        for (int depthIndex = 0; depthIndex < layerDepth; depthIndex++) {
-            Matrix output = inputs.get(depthIndex).get(0);
-            output = output.apply(activationFunction);
-            output.setName("Output" + (layerDepth > 1 ? depthIndex : ""));
-            outputs.put(depthIndex, output);
-        }
-
-        return outputs;
+        return output;
     }
 
     /**

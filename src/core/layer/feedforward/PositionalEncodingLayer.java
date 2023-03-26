@@ -18,7 +18,7 @@ import java.util.TreeMap;
 /**
  * Implements positional encoding layer.<br>
  *
- * Reference: https://machinelearningmastery.com/a-gentle-introduction-to-positional-encoding-in-transformer-models-part-1/ <br>
+ * Reference: <a href="https://machinelearningmastery.com/a-gentle-introduction-to-positional-encoding-in-transformer-models-part-1/">...</a> <br>
  */
 public class PositionalEncodingLayer extends AbstractExecutionLayer {
 
@@ -130,11 +130,13 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      */
     public void initializeWeights() {
         int previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
-        positionalEncodingMatrix = new DMatrix(previousLayerWidth, 1);
+        int previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
+        int previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
+        positionalEncodingMatrix = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
         for (int index = 0; index < previousLayerWidth; index++) {
             double positionalCode = (double)positionIndex / Math.pow(n, 2 * (double)index / (double)previousLayerWidth);
             double positionalEncodingCode = (positionIndex % 2 == 0) ? Math.sin(positionalCode) : Math.cos(positionalCode);
-            positionalEncodingMatrix.setValue(index, 0, positionalEncodingCode);
+            positionalEncodingMatrix.setValue(index, 0, 0, positionalEncodingCode);
         }
         positionalEncodingMatrix.setName("PositionalEncodingMatrix" + positionIndex);
     }
@@ -144,12 +146,11 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      *
      * @param resetPreviousInput if true resets also previous input.
      * @return input matrix for procedure construction.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, MMatrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, Initialization.ONE);
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        return new TreeMap<>() {{ put(0, new MMatrix(input)); }};
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
@@ -158,14 +159,12 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MMatrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException {
         if (positionIndex < 0) throw new MatrixException("Position index must have positive value.");
         Matrix output = input.add(positionalEncodingMatrix);
 
         output.setName("Output");
-        MMatrix outputs = new MMatrix(1, "Output");
-        outputs.put(0, output);
-        return outputs;
+        return output;
     }
 
     /**
