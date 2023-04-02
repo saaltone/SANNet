@@ -258,7 +258,7 @@ public abstract class AbstractNode implements Node, Serializable {
      * @return empty matrix with dimensions of reference matrix.
      * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
      */
-    public Matrix getNewMatrix() throws MatrixException {
+    private Matrix getNewMatrix() throws MatrixException {
         return referenceMatrix.getNewMatrix();
     }
 

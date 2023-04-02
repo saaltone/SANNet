@@ -164,14 +164,6 @@ public interface Node {
     void reset() throws MatrixException;
 
     /**
-     * Returns new matrix with dimensions of reference matrix.
-     *
-     * @return new matrix with dimensions of reference matrix.
-     * @throws MatrixException throws exception is dimensions of matrices are not matching or any matrix is scalar type.
-     */
-    Matrix getNewMatrix() throws MatrixException;
-
-    /**
      * Sets matrix of this node.
      *
      * @param matrix new matrix.
