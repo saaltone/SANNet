@@ -64,6 +64,14 @@ public class MaxPoolExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+        maxPos = new HashMap<>();
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -78,9 +86,9 @@ public class MaxPoolExpression extends AbstractUnaryExpression {
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        maxPos = new HashMap<>();
-        maxPos.put(sampleIndex, new HashMap<>());
-        result.setMatrix(sampleIndex, maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPos.get(sampleIndex)));
+        HashMap<Integer, Integer> maxPosEntry = new HashMap<>();
+        maxPos.put(sampleIndex, maxPosEntry);
+        result.setMatrix(sampleIndex, maxPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), maxPosEntry));
     }
 
     /**

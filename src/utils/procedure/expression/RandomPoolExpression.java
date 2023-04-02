@@ -64,6 +64,14 @@ public class RandomPoolExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+        inputPos = new HashMap<>();
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -78,7 +86,6 @@ public class RandomPoolExpression extends AbstractUnaryExpression {
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        inputPos = new HashMap<>();
         inputPos.put(sampleIndex, new HashMap<>());
         result.setMatrix(sampleIndex, randomPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex)));
     }

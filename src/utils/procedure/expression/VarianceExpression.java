@@ -66,7 +66,7 @@ public class VarianceExpression extends AbstractUnaryExpression {
      * Resets expression.
      *
      */
-    public void reset() {
+    public void applyReset() {
         mean = null;
         means = new HashMap<>();
     }

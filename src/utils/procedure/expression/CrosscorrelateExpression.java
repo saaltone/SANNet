@@ -51,7 +51,7 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression {
         super("CROSSCORRELATE", "CROSSCORRELATE", expressionID, argument1, argument2, result);
 
         crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
-        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
+        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
         crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
     }
 
@@ -62,6 +62,13 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression {
      */
     protected boolean executeAsSingleStep() {
         return false;
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
     }
 
     /**

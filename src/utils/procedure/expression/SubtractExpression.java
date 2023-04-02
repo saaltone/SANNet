@@ -54,6 +54,13 @@ public class SubtractExpression extends AbstractBinaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      */

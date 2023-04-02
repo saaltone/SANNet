@@ -72,6 +72,13 @@ public class NormExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      */

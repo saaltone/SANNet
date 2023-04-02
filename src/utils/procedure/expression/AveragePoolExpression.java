@@ -56,6 +56,13 @@ public class AveragePoolExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      */
@@ -88,7 +95,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression {
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex), argument1.getNewMatrix()), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, averagePoolGradientMatrixOperation.apply(result.getGradient(sampleIndex)), false);
     }
 
     /**

@@ -118,7 +118,7 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
         GT = G.transpose();
 
         winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), a, AT, c, CT);
-        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
+        crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
         crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
     }
 
@@ -148,6 +148,13 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
      */
     protected boolean executeAsSingleStep() {
         return false;
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
     }
 
     /**

@@ -60,6 +60,13 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      */

@@ -71,7 +71,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression {
      * Resets expression.
      *
      */
-    public void reset() {
+    public void applyReset() {
         mean = null;
         means = new HashMap<>();
     }

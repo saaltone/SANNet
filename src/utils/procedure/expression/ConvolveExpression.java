@@ -48,8 +48,8 @@ public class ConvolveExpression extends AbstractBinaryExpression {
     public ConvolveExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, boolean isDepthSeparable) throws MatrixException {
         super("CONVOLVE", "CONVOLVE", expressionID, argument1, argument2, result);
 
-        convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), result.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
-        convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
+        convolutionMatrixOperation = new ConvolutionMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
+        convolutionInputGradientMatrixOperation = new ConvolutionInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
         convolutionFilterGradientMatrixOperation = new ConvolutionFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
     }
 
@@ -60,6 +60,13 @@ public class ConvolveExpression extends AbstractBinaryExpression {
      */
     protected boolean executeAsSingleStep() {
         return false;
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
     }
 
     /**

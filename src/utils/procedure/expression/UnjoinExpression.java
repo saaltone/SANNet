@@ -63,6 +63,13 @@ public class UnjoinExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      */

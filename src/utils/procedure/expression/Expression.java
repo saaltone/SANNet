@@ -55,6 +55,12 @@ public interface Expression {
     void setPreviousExpression(Expression previousExpression);
 
     /**
+     * Resets expression.
+     *
+     */
+    void reset();
+
+    /**
      * Calculates entire expression chain including regulation.
      *
      * @param sampleIndex sample index

@@ -186,6 +186,21 @@ public abstract class AbstractExpression implements Expression, Serializable {
     protected abstract boolean executeAsSingleStep();
 
     /**
+     * Resets expression.
+     *
+     */
+    public void reset() {
+        applyReset();
+        if (nextExpression != null) nextExpression.reset();
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    protected abstract void applyReset();
+
+    /**
      * Calculates entire expression chain including regulation.
      *
      * @param sampleIndex sample index

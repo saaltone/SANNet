@@ -46,6 +46,13 @@ public class SumExpression extends AbstractUnaryExpression {
     }
 
     /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+    }
+
+    /**
      * Calculates expression.
      *
      * @throws MatrixException throws exception if calculation fails.

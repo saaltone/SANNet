@@ -48,7 +48,7 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public CyclicPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
-        super("RANDOM_POOL", "RANDOM_POOL", expressionID, argument1, result);
+        super("CYCLIC_POOL", "CYCLIC_POOL", expressionID, argument1, result);
 
         cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
         cyclicPoolGradientMatrixOperation = new CyclicPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
@@ -61,6 +61,14 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
      */
     protected boolean executeAsSingleStep() {
         return false;
+    }
+
+    /**
+     * Resets expression.
+     *
+     */
+    public void applyReset() {
+        inputPos = new HashMap<>();
     }
 
     /**
@@ -78,7 +86,6 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        inputPos = new HashMap<>();
         inputPos.put(sampleIndex, new HashMap<>());
         result.setMatrix(sampleIndex, cyclicPoolMatrixOperation.apply(argument1.getMatrix(sampleIndex), inputPos.get(sampleIndex)));
     }
