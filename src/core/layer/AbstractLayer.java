@@ -487,16 +487,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     }
 
     /**
-     * Sets layer input gradients.
-     *
-     * @param newLayerInputGradients layer input gradients.
-     */
-    protected void setLayerOutputGradients(Sequence newLayerInputGradients) {
-        layerOutputGradients.reset();
-        layerOutputGradients.putAll(newLayerInputGradients);
-    }
-
-    /**
      * Passes output gradients from this layer to previous layer.
      *
      * @throws MatrixException throws exception if depth of sequence is not matching depth of this sequence.
