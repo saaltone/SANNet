@@ -49,7 +49,7 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param stride stride step
      */
     public CyclicPoolMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, inputRowSize, inputColumnSize, filterRowSize, filterColumnSize, stride);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
     }
 
     /**

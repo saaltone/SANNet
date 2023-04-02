@@ -27,6 +27,18 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
     private Matrix inputGradient;
 
     /**
+     * Input gradient row size.
+     *
+     */
+    private final int inputGradientRowSize;
+
+    /**
+     * Input gradient column size.
+     *
+     */
+    private final int inputGradientColumnSize;
+
+    /**
      * Filter row size.
      *
      */
@@ -55,7 +67,9 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * @param stride stride step
      */
     public AveragePoolGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, false, stride);
+        super(rows, columns, depth, true, stride);
+        this.inputGradientRowSize = rows + filterRowSize - 1;
+        this.inputGradientColumnSize = columns + filterColumnSize - 1;
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
@@ -65,13 +79,12 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * Applies matrix operation.
      *
      * @param outputGradient output gradient.
-     * @param inputGradient input gradient.
      * @return input gradient.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix outputGradient, Matrix inputGradient) throws MatrixException {
+    public Matrix apply(Matrix outputGradient) throws MatrixException {
         this.outputGradient = outputGradient;
-        this.inputGradient = outputGradient.getNewMatrix(getRows() + filterRowSize - 1, getColumns() + filterColumnSize - 1, getDepth());
+        inputGradient = outputGradient.getNewMatrix(inputGradientRowSize, inputGradientColumnSize, getDepth());
         applyMatrixOperation();
         return inputGradient;
     }

@@ -29,16 +29,16 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
     private Matrix inputGradient;
 
     /**
-     * Number of inputs rows.
+     * Number of input gradient rows.
      *
      */
-    private final int inputRowSize;
+    private final int inputGradientRowSize;
 
     /**
-     * Number of inputs columns.
+     * Number of input gradient columns.
      *
      */
-    private final int inputColumnSize;
+    private final int inputGradientColumnSize;
 
     /**
      * Input position for each resulting row and column.
@@ -58,8 +58,8 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
      */
     public AbstractPositionalPoolingGradientMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int stride) {
         super(rows, columns, depth, true, stride);
-        this.inputRowSize = inputRowSize;
-        this.inputColumnSize = inputColumnSize;
+        this.inputGradientRowSize = inputRowSize;
+        this.inputGradientColumnSize = inputColumnSize;
     }
 
     /**
@@ -74,7 +74,7 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
     public Matrix apply(Matrix outputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
         this.outputGradient = outputGradient;
         this.inputPos = inputPos;
-        this.inputGradient = outputGradient.getNewMatrix(inputRowSize, inputColumnSize, getDepth());
+        this.inputGradient = outputGradient.getNewMatrix(inputGradientRowSize, inputGradientColumnSize, getDepth());
         applyMatrixOperation();
         return inputGradient;
     }
@@ -106,7 +106,7 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
      * @param value current value.
      */
     public void apply(int row, int column, int depth, double value) {
-        final int position = 2 * (depth * inputRowSize  * inputColumnSize + row * inputColumnSize + column);
+        final int position = 2 * (depth * getRows() * getColumns() + column * getRows() + row);
         inputGradient.addByValue(inputPos.get(position), inputPos.get(position + 1), depth, value);
     }
 

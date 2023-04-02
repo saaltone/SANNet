@@ -24,27 +24,7 @@ public class CrosscorrelationFilterGradientMatrixOperation extends AbstractConvo
      * @param isDepthSeparable if true convolution is depth separable
      */
     public CrosscorrelationFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable);
-    }
-
-    /**
-     * Returns filter row.
-     *
-     * @param filterRow filter row.
-     * @return filter row.
-     */
-    protected int getFilterRow(int filterRow) {
-        return filterRow;
-    }
-
-    /**
-     * Returns filter column.
-     *
-     * @param filterColumn filter column.
-     * @return filter column.
-     */
-    protected int getFilterColumn(int filterColumn) {
-        return filterColumn;
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, false);
     }
 
 }

@@ -57,6 +57,12 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
     protected final boolean isDepthSeparable;
 
     /**
+     * If true operation is executed as convolution otherwise as crosscorrelation
+     *
+     */
+    protected final boolean asConvolution;
+
+    /**
      * Resulting filter gradient.
      *
      */
@@ -73,13 +79,15 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @param dilation         dilation step
      * @param stride           stride step
      * @param isDepthSeparable if true convolution is depth separable
+     * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
-    public AbstractConvolutionFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable) {
+    public AbstractConvolutionFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
         super(rows, columns, depth, true, stride);
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.dilation = dilation;
         this.isDepthSeparable = isDepthSeparable;
+        this.asConvolution = asConvolution;
     }
 
     /**
@@ -93,8 +101,8 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
     public Matrix apply(Matrix outputGradient, Matrix input) throws MatrixException {
         this.outputGradient = outputGradient;
         this.input = input;
-        this.totalInputDepth = input.getDepth();
-        this.filterGradient = outputGradient.getNewMatrix(filterRowSize, filterColumnSize, getDepth());
+        totalInputDepth = input.getDepth();
+        filterGradient = outputGradient.getNewMatrix(filterRowSize, filterColumnSize, getDepth());
         applyMatrixOperation();
         return filterGradient;
     }
@@ -133,12 +141,10 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
                     filterGradient.addByValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth, inputValue * value);
                 }
                 else {
-                    double sumValue = 0;
                     for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
                         double inputValue = input.getValue(row + filterRow, column + filterColumn, inputDepth);
-                        sumValue += inputValue * value;
+                        filterGradient.addByValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth, inputValue * value);
                     }
-                    filterGradient.addByValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth, sumValue);
                 }
             }
         }
@@ -162,14 +168,12 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
                     }
                 }
                 else {
-                    double sumValue = 0;
                     for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
                         if (!hasMaskAt(row + filterRow, column + filterColumn, inputDepth, input)) {
-                            double inputValue = input.getValue(row + filterRow, column + filterColumn, depth);
-                            sumValue += inputValue * value;
+                            double inputValue = input.getValue(row + filterRow, column + filterColumn, inputDepth);
+                            filterGradient.addByValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth, inputValue * value);
                         }
                     }
-                    filterGradient.addByValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth, sumValue);
                 }
             }
         }
@@ -181,7 +185,9 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @param filterRow filter row.
      * @return filter row.
      */
-    protected abstract int getFilterRow(int filterRow);
+    private int getFilterRow(int filterRow) {
+        return asConvolution ? filterRowSize - 1 - filterRow : filterRow;
+    }
 
     /**
      * Returns filter column.
@@ -189,6 +195,8 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @param filterColumn filter column.
      * @return filter column.
      */
-    protected abstract int getFilterColumn(int filterColumn);
+    private int getFilterColumn(int filterColumn) {
+        return asConvolution ? filterColumnSize - 1 - filterColumn : filterColumn;
+    }
 
 }

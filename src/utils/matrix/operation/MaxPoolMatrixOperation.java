@@ -36,7 +36,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param stride stride step
      */
     public MaxPoolMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, inputRowSize, inputColumnSize, filterRowSize, filterColumnSize, stride);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
     }
 
     /**
@@ -49,7 +49,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
     protected void executeApply(int row, int column, int depth) {
         inputRow = -1;
         inputColumn = -1;
-        double maxValue = Double.MIN_VALUE;
+        double maxValue = Double.NEGATIVE_INFINITY;
         for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
                 int currentRow = row + filterRow;

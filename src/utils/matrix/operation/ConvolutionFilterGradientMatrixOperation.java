@@ -24,27 +24,7 @@ public class ConvolutionFilterGradientMatrixOperation extends AbstractConvolutio
      * @param isDepthSeparable if true convolution is depth separable
      */
     public ConvolutionFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable);
-    }
-
-    /**
-     * Returns filter row.
-     *
-     * @param filterRow filter row.
-     * @return filter row.
-     */
-    protected int getFilterRow(int filterRow) {
-        return filterRowSize - 1 - filterRow;
-    }
-
-    /**
-     * Returns filter column.
-     *
-     * @param filterColumn filter column.
-     * @return filter column.
-     */
-    protected int getFilterColumn(int filterColumn) {
-        return filterColumnSize - 1 - filterColumn;
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, true);
     }
 
 }

@@ -46,7 +46,7 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param stride stride step
      */
     public RandomPoolMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, inputRowSize, inputColumnSize, filterRowSize, filterColumnSize, stride);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
     }
 
     /**
