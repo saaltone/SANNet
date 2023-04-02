@@ -113,16 +113,15 @@ public class MNISTDemo {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, isDepthSeparable = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 1, isDepthSeparable = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 5, stride = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.MAX_POOLING, "filterSize = 2, stride = 1");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, isDepthSeparable = true");
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 1, isDepthSeparable = false");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 24, filterSize = 3, stride = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.MAX_POOLING, "filterSize = 2, stride = 1");
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.AVERAGE_POOLING, "filterSize = 2, stride = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.FLATTEN);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 100");
