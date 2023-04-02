@@ -6,7 +6,9 @@
 package utils.matrix;
 
 import utils.configurable.DynamicParamException;
+import utils.matrix.operation.FlattenMatrixOperation;
 import utils.matrix.operation.JoinMatrixOperation;
+import utils.matrix.operation.UnflattenMatrixOperation;
 import utils.matrix.operation.UnjoinMatrixOperation;
 import utils.procedure.ProcedureFactory;
 
@@ -1978,20 +1980,27 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Flattens matrix into one dimensional column vector (matrix)
      *
      * @return flattened matrix
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix flatten() {
-        int rows = getRows();
-        int columns = getColumns();
-        int totalDepth = getDepth();
-        Matrix flattenedMatrix = new DMatrix(rows * columns * totalDepth, 1, 1);
-        for (int currentDepth = 0; currentDepth < totalDepth; currentDepth++) {
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
-                    flattenedMatrix.setValue(getPosition(rows, columns, row, column, currentDepth), 0, 0, getValue(row, column, currentDepth));
-                }
-            }
+    public Matrix flatten() throws MatrixException {
+        if (!hasProcedureFactory()) return applyFlatten();
+        else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyFlatten();
+            ProcedureFactory.synchronize(this, result);
+            getProcedureFactory().createFlattenExpression(expressionLock, this, result);
+            return result;
         }
-        return flattenedMatrix;
+    }
+
+    /**
+     * Flattens matrix into one dimensional column vector (matrix)
+     *
+     * @return result matrix
+     * @throws MatrixException throws matrix exception if joining fails.
+     */
+    private Matrix applyFlatten() throws MatrixException {
+        return new FlattenMatrixOperation(getRows(), getColumns(), getDepth()).apply(this);
     }
 
     /**
@@ -2001,31 +2010,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param columns columns of unflattened matrix.
      * @param depth depth of unflattened matrix.
      * @return unflattened matrix.
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    public Matrix unflatten(int rows, int columns, int depth) {
-        Matrix unflattenedMatrix = new DMatrix(rows, columns, depth);
-        for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
-                    unflattenedMatrix.setValue(row, column, currentDepth, getValue(getPosition(rows, columns, row, column, currentDepth), 0, 0));
-                }
-            }
-        }
-        return unflattenedMatrix;
-    }
-
-    /**
-     * Returns one dimensional index calculated based on width, height and depth.
-     *
-     * @param rows number of rows in unflattened matrix
-     * @param columns number of columns in unflattened matrix
-     * @param row current row
-     * @param column current column
-     * @param depth current depth
-     * @return one dimensional index
-     */
-    private int getPosition(int rows, int columns, int row, int column, int depth) {
-        return row + rows * column + rows * columns * depth;
+    public Matrix unflatten(int rows, int columns, int depth) throws MatrixException {
+        return new UnflattenMatrixOperation(rows, columns, depth).apply(this);
     }
 
     /**
