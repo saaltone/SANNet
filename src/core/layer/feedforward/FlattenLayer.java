@@ -23,6 +23,12 @@ import java.util.TreeMap;
 public class FlattenLayer extends AbstractExecutionLayer {
 
     /**
+     * Input matrix for procedure construction.
+     *
+     */
+    private Matrix input;
+
+    /**
      * Constructor for flatten layer.
      *
      * @param layerIndex layer index
@@ -79,38 +85,28 @@ public class FlattenLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     * Returns input matrices for procedure construction.
      *
+     * @param resetPreviousInput if true resets also previous input.
+     * @return input matrix for procedure construction.
      */
-    protected void defineProcedure() {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
+        return new TreeMap<>() {{ put(0, input); }};
     }
 
     /**
-     * Reinitializes neural network layer.
+     * Builds forward procedure and implicitly builds backward procedure.
      *
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void reinitialize() throws MatrixException {
-        this.reset();
-    }
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix output = input.flatten();
 
-    /**
-     * Takes single forward processing step to process layer input(s).<br>
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void forwardProcess() throws MatrixException {
-        this.reset();
-        setLayerOutputs(getDefaultLayerInput().flatten());
-    }
-
-    /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     *
-     */
-    public void backwardProcess() {
-        setLayerOutputGradients(getLayerOutputGradients().unflatten(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth()));
+        output.setName("Output");
+        return output;
     }
 
     /**
@@ -138,32 +134,6 @@ public class FlattenLayer extends AbstractExecutionLayer {
      */
     protected int getTruncateSteps() {
         return -1;
-    }
-
-    /**
-     * Returns input matrices for procedure construction.
-     *
-     * @param resetPreviousInput if true resets also previous input.
-     * @return input matrix for procedure construction.
-     */
-    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
-        return null;
-    }
-
-    /**
-     * Builds forward procedure and implicitly builds backward procedure.
-     *
-     * @return output of forward procedure.
-     */
-    public Matrix getForwardProcedure() {
-        return null;
-    }
-
-    /**
-     * Executes weight updates with regularizers and optimizer.
-     *
-     */
-    public void optimize() {
     }
 
     /**
