@@ -281,47 +281,6 @@ public class Sequence implements Serializable {
     }
 
     /**
-     * Returns flattened sequence i.e. samples that have been flattened into single row with depth one.
-     *
-     * @return flattened sequence.
-     */
-    public Sequence flatten() {
-        accessLock.lock();
-        try {
-            Sequence flattenedSequence = new Sequence();
-            for (Map.Entry<Integer, Matrix> entry : entrySet()) {
-                flattenedSequence.put(entry.getKey(), entry.getValue().flatten());
-            }
-            return flattenedSequence;
-        }
-        finally {
-            accessLock.unlock();
-        }
-    }
-
-    /**
-     * Returns unflattened sequence i.e. samples that have been unflattened from single row with depth one.
-     *
-     * @param width width of unflattened sequence.
-     * @param height height of unflattened sequence.
-     * @param depth depth of unflattened sequence.
-     * @return unflattened sequence.
-     */
-    public Sequence unflatten(int width, int height, int depth) {
-        accessLock.lock();
-        try {
-            Sequence unflattenedSequence = new Sequence();
-            for (Map.Entry<Integer, Matrix> entry : entrySet()) {
-                unflattenedSequence.put(entry.getKey(), entry.getValue().unflatten(width, height, depth));
-            }
-            return unflattenedSequence;
-        }
-        finally {
-            accessLock.unlock();
-        }
-    }
-
-    /**
      * Sequences together by sample indices.
      *
      * @param sequences sequences to be joined.
