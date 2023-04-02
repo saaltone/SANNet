@@ -1173,8 +1173,9 @@ public interface Matrix {
      * Flattens matrix into one dimensional column vector (matrix)
      *
      * @return flattened matrix
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix flatten();
+    Matrix flatten() throws MatrixException;
 
     /**
      * Returns unflattened matrix i.e. samples that have been unflattened from single column vector.
@@ -1183,8 +1184,9 @@ public interface Matrix {
      * @param columns columns of unflattened matrix.
      * @param depth depth of unflattened matrix.
      * @return unflattened matrix.
+     * @throws MatrixException throws matrix exception if joining fails.
      */
-    Matrix unflatten(int rows, int columns, int depth);
+    Matrix unflatten(int rows, int columns, int depth) throws MatrixException;
 
     /**
      * Prints matrix in row and column format.
