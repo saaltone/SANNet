@@ -83,7 +83,6 @@ public class Procedure implements Serializable {
     /**
      * Constructor for procedure.
      *
-     * @param name name of procedure.
      * @param inputNodes input nodes for procedure.
      * @param outputNode output node for procedure.
      * @param nodes all nodes for procedure.
@@ -96,7 +95,7 @@ public class Procedure implements Serializable {
      * @param joinedInput if true inputs are joined otherwise not.
      * @throws MatrixException throws exception if node does not contain all constant and parameter matrices.
      */
-    public Procedure(String name, HashMap<Integer, Node> inputNodes, Node outputNode, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, HashSet<Node> dependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException {
+    public Procedure(HashMap<Integer, Node> inputNodes, Node outputNode, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, HashSet<Node> dependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException {
         this.inputNodes.putAll(inputNodes);
         this.outputNode = outputNode;
         this.nodes.addAll(nodes);
@@ -175,6 +174,7 @@ public class Procedure implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void calculateExpression(TreeMap<Integer, Sequence> inputSequences, Sequence outputSequence) throws MatrixException, DynamicParamException {
+        expressionChain.reset();
         if (joinedInput) calculateExpressionForMultipleSequences(Sequence.join(inputSequences, true), outputSequence);
         else calculateExpressionForMultipleSequences(inputSequences, outputSequence);
     }
