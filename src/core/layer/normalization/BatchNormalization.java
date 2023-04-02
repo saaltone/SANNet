@@ -29,7 +29,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
     /**
      * Parameter name types for batch normalization.
      *     - meanOnly: true if normalization is done only by using mean otherwise false (default value false).<br>
-     *     - momentum: degree of weighting decrease for exponential moving average. (default value 0.95).<br>
+     *     - momentum: degree of weighting decrease for exponential moving average. (default value 0.99).<br>
      *
      */
     private final static String paramNameTypes = "(meanOnly:BOOLEAN), " +
@@ -207,7 +207,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
         epsilonMatrix.setName("Epsilon");
         meanOnly = false;
         batchSize = -1;
-        momentum = 0.95;
+        momentum = 0.99;
     }
 
     /**
@@ -224,7 +224,7 @@ public class BatchNormalization extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - meanOnly: true if normalization is done only by using mean otherwise false (default value).<br>
-     *     - momentum: degree of weighting decrease for exponential moving average. (default value 0.95).<br>
+     *     - momentum: degree of weighting decrease for exponential moving average. (default value 0.99).<br>
      *
      * @param params parameters used for batch normalization.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.

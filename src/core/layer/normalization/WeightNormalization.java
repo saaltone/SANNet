@@ -161,9 +161,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if operation fails.
      */
-    protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
+    protected void defineProcedure() throws MatrixException, DynamicParamException {
         procedures = new HashMap<>();
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
             HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
