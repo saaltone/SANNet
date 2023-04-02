@@ -5,9 +5,11 @@
 
 package utils.procedure;
 
-import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
-import utils.matrix.*;
+import utils.matrix.BinaryFunction;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
+import utils.matrix.UnaryFunction;
 import utils.procedure.expression.*;
 import utils.procedure.node.Node;
 import utils.procedure.node.NodeRegister;
@@ -189,9 +191,8 @@ public class ProcedureFactory implements Serializable {
      * @return resulting procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws NeuralNetworkException throws exception if operation fails.
      */
-    public Procedure getProcedure(ForwardProcedure forwardProcedure) throws MatrixException, DynamicParamException, NeuralNetworkException {
+    public Procedure getProcedure(ForwardProcedure forwardProcedure) throws MatrixException, DynamicParamException {
         registerConstantMatrices(forwardProcedure.getParameterMatrices());
         registerConstantMatrices(forwardProcedure.getConstantMatrices());
 
@@ -219,7 +220,7 @@ public class ProcedureFactory implements Serializable {
             previousExpression = expression;
         }
 
-        return new Procedure(forwardProcedure.getProcedureName(), nextProcedureData.inputNodes, nextProcedureData.outputNode, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.dependentNodes, forwardProcedure.getParameterMatrices(), forwardProcedure.getStopGradients(), forwardProcedure.isReversedInput(), forwardProcedure.isJoinedInput());
+        return new Procedure(nextProcedureData.inputNodes, nextProcedureData.outputNode, nextProcedureData.nodes, nextProcedureData.expressions.get(0), nextProcedureData.gradients.get(0), nextProcedureData.dependentNodes, forwardProcedure.getParameterMatrices(), forwardProcedure.getStopGradients(), forwardProcedure.isReversedInput(), forwardProcedure.isJoinedInput());
     }
 
     /**
@@ -790,6 +791,19 @@ public class ProcedureFactory implements Serializable {
     public void createUnjoinExpression(double expressionLock, Matrix argument1, Matrix result, int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
         storeExpression(new UnjoinExpression(currentExpressionID++, defineNode(argument1), defineNode(result), unjoinAtRow, unjoinAtColumn, unjoinAtDepth));
+    }
+
+    /**
+     * Records flatten expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createFlattenExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new FlattenExpression(currentExpressionID++, defineNode(argument1), defineNode(result)));
     }
 
     /**
