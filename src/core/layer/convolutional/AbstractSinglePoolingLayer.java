@@ -16,22 +16,20 @@ import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
- * Implements abstract pooling layer which implements common functionality for pooling layer.
+ * Implements abstract single pooling layer which implements common functionality for pooling layer.
  *
  */
-public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
+public abstract class AbstractSinglePoolingLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for abstract pooling layer.
+     * Parameter name types for abstract single pooling layer.
      *     - filterSize size of filter. Default size 2.<br>
      *     - filterRowSize row size of filter. Default size 2.<br>
      *     - filterColumnSize column size of filter. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
-     *     - avgPool: if true does average pooling otherwise does max pooling.<br>
      *
      */
-    private final static String paramNameTypes = "(filters:INT), " +
-            "(filterSize:INT), " +
+    private final static String paramNameTypes = "(filterSize:INT), " +
             "(filterRowSize:INT), " +
             "(filterColumnSize:INT), " +
             "(stride:INT)";
@@ -47,12 +45,6 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      *
      */
     private int previousLayerHeight;
-
-    /**
-     * Defines height of incoming image.
-     *
-     */
-    private int previousLayerDepth;
 
     /**
      * Row size for filter.
@@ -79,15 +71,15 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     private TreeMap<Integer, Matrix> inputs;
 
     /**
-     * Constructor for abstract pooling layer.
+     * Constructor for abstract single pooling layer.
      *
      * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for abstract pooling layer.
+     * @param params parameters for abstract single pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public AbstractPoolingLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+    public AbstractSinglePoolingLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
     }
 
@@ -108,11 +100,11 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      * @return parameters used for abstract pooling layer.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + AbstractPoolingLayer.paramNameTypes;
+        return super.getParamDefs() + ", " + AbstractSinglePoolingLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for abstract pooling layer.<br>
+     * Sets parameters used for abstract single pooling layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filterSize size of filter. Default size 2.<br>
@@ -120,7 +112,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      *     - filterColumnSize column size of filter. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
      *
-     * @param params parameters used for abstract pooling layer.
+     * @param params parameters used for abstract single pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -168,10 +160,9 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public void initializeDimensions() throws NeuralNetworkException {
         previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
         previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
-        previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
+
         if (previousLayerWidth < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + previousLayerWidth);
         if (previousLayerHeight < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + previousLayerHeight);
-        if (previousLayerDepth < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + previousLayerDepth);
 
         if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride);
         if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride);
@@ -184,7 +175,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
 
         setLayerWidth(layerWidth);
         setLayerHeight(layerHeight);
-        setLayerDepth(previousLayerDepth);
+        setLayerDepth(1);
     }
 
     /**
@@ -211,7 +202,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      */
     public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         inputs = new TreeMap<>();
-        Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
+        Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight, 1);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         inputs.put(0, input);
         return inputs;
@@ -225,9 +216,9 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      */
     public Matrix getForwardProcedure() throws MatrixException {
         Matrix input = inputs.get(0);
-        input.setStride(stride);
         input.setFilterRowSize(filterRowSize);
         input.setFilterColumnSize(filterColumnSize);
+        input.setStride(stride);
 
         Matrix output = executePoolingOperation(input);
         output.setName("Output");

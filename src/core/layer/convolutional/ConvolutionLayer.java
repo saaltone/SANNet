@@ -34,7 +34,6 @@ public class ConvolutionLayer extends AbstractConvolutionalLayer {
             "(stride:INT), " +
             "(dilation:INT), ";
 
-
     /**
      * Constructor for convolution layer.
      *
@@ -105,14 +104,13 @@ public class ConvolutionLayer extends AbstractConvolutionalLayer {
     /**
      * Executes convolutional operation.
      *
-     * @param input input matrix.
+     * @param input  input matrix.
      * @param filter filter matrix.
-     * @param output output matrix.
      * @return result of convolutional operation.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix executeConvolutionalOperation(Matrix input, Matrix filter, Matrix output) throws MatrixException {
-        return output.add(input.convolve(filter));
+    protected Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException {
+        return input.convolve(filter);
     }
 
     /**

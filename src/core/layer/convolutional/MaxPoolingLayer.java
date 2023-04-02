@@ -36,11 +36,11 @@ public class MaxPoolingLayer extends AbstractPoolingLayer {
      * Executes pooling operation.
      *
      * @param input input matrix.
-     * @param output output matrix.
+     * @return output matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void executePoolingOperation(Matrix input, Matrix output) throws MatrixException {
-        input.maxPool(output, new HashMap<>());
+    protected Matrix executePoolingOperation(Matrix input) throws MatrixException {
+        return input.maxPool(new HashMap<>());
     }
 
     /**

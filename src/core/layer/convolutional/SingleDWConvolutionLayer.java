@@ -5,7 +5,6 @@
 
 package core.layer.convolutional;
 
-import core.activation.ActivationFunction;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -14,13 +13,13 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Implements crosscorrelation layer.
+ * Implements single depth-wise separable convolutional layer
  *
  */
-public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
+public class SingleDWConvolutionLayer extends AbstractDWSingleConvolutionLayer {
 
     /**
-     * Parameter name types for crosscorrelation layer.
+     * Parameter name types for single depth-wise separable convolution layer.
      *     - filterSize size of filter. Default value 3.<br>
      *     - filterRowSize size of filter in terms of rows. Overrides filterSize parameter. Default value 3.<br>
      *     - filterColumnSize size of filter in terms of columns. Overrides filterSize parameter. Default value 3.<br>
@@ -36,30 +35,29 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
 
 
     /**
-     * Constructor for crosscorrelation layer.
+     * Constructor for single depth-wise separable convolution layer.
      *
      * @param layerIndex layer index
-     * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for crosscorrelation layer.
+     * @param params parameters for single depth-wise separable convolution layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
-    public CrosscorrelationLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
-        super (layerIndex, activationFunction, initialization, params);
+    public SingleDWConvolutionLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+        super (layerIndex, initialization, params);
     }
 
     /**
-     * Returns parameters used for crosscorrelation layer.
+     * Returns parameters used for single depth-wise separable convolution layer.
      *
-     * @return parameters used for crosscorrelation layer.
+     * @return parameters used for single depth-wise separable convolution layer.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + CrosscorrelationLayer.paramNameTypes;
+        return super.getParamDefs() + ", " + SingleDWConvolutionLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for crosscorrelation layer.<br>
+     * Sets parameters used for single depth-wise separable convolution layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filterSize size of filter. Default value 3.<br>
@@ -68,7 +66,7 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
      *     - stride: size of stride. Default size 1.<br>
      *     - dilation: dilation step for filter. Default step 1.<br>
      *
-     * @param params parameters used for crosscorrelation layer.
+     * @param params parameters used for single depth-wise separable convolution layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
@@ -111,7 +109,7 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException {
-        return input.crosscorrelate(filter);
+        return input.convolve(filter);
     }
 
     /**
@@ -120,7 +118,7 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
      * @return convolution type.
      */
     protected String getConvolutionType() {
-        return "Crosscorrelation";
+        return "Convolution";
     }
 
 }

@@ -5,7 +5,6 @@
 
 package core.layer.convolutional;
 
-import core.activation.ActivationFunction;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -14,13 +13,13 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 /**
- * Implements crosscorrelation layer.
+ * Implements single crosscorrelation layer.
  *
  */
-public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
+public class SingleCrosscorrelationLayer extends AbstractSingleConvolutionalLayer {
 
     /**
-     * Parameter name types for crosscorrelation layer.
+     * Parameter name types for single crosscorrelation layer.
      *     - filterSize size of filter. Default value 3.<br>
      *     - filterRowSize size of filter in terms of rows. Overrides filterSize parameter. Default value 3.<br>
      *     - filterColumnSize size of filter in terms of columns. Overrides filterSize parameter. Default value 3.<br>
@@ -36,30 +35,29 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
 
 
     /**
-     * Constructor for crosscorrelation layer.
+     * Constructor for single crosscorrelation layer.
      *
      * @param layerIndex layer index
-     * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
      * @param params parameters for crosscorrelation layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
-    public CrosscorrelationLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
-        super (layerIndex, activationFunction, initialization, params);
+    public SingleCrosscorrelationLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+        super (layerIndex, initialization, params);
     }
 
     /**
-     * Returns parameters used for crosscorrelation layer.
+     * Returns parameters used for single crosscorrelation layer.
      *
-     * @return parameters used for crosscorrelation layer.
+     * @return parameters used for single crosscorrelation layer.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + CrosscorrelationLayer.paramNameTypes;
+        return super.getParamDefs() + ", " + SingleCrosscorrelationLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for crosscorrelation layer.<br>
+     * Sets parameters used for single crosscorrelation layer.<br>
      * <br>
      * Supported parameters are:<br>
      *     - filterSize size of filter. Default value 3.<br>
@@ -68,7 +66,7 @@ public class CrosscorrelationLayer extends AbstractConvolutionalLayer {
      *     - stride: size of stride. Default size 1.<br>
      *     - dilation: dilation step for filter. Default step 1.<br>
      *
-     * @param params parameters used for crosscorrelation layer.
+     * @param params parameters used for single crosscorrelation layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */

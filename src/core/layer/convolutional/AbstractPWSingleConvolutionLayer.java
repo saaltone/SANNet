@@ -5,8 +5,8 @@
 
 package core.layer.convolutional;
 
-import core.activation.ActivationFunction;
 import core.layer.AbstractExecutionLayer;
+import core.layer.NeuralNetworkLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
@@ -16,69 +16,43 @@ import utils.matrix.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Implements abstract convolutional layer which implements common functionality for convolutional layer.
+ * Implements abstract single point-wise separable convolutional layer which implements common functionality for convolutional layer.<br>
+ * Reference: <a href="https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728">...</a>
  *
  */
-public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer {
+public abstract class AbstractPWSingleConvolutionLayer extends AbstractExecutionLayer {
 
     /**
-     * Parameter name types for abstract convolutional layer.
-     *     - filters: number of filters (default 1).<br>
-     *     - isDepthSeparable: true if layer is depth separable (default false).<br>
+     * Parameter name types for abstract single point-wise separable convolutional layer.
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
      */
-    private final static String paramNameTypes = "(filters:INT), " +
-            "(isDepthSeparable:BOOLEAN), "  +
-            "(regulateWeights:BOOLEAN)";
+    private final static String paramNameTypes = "(regulateWeights:BOOLEAN)";
 
     /**
      * Implements weight set for layer.
      *
      */
-    protected class ConvolutionWeightSet implements WeightSet, Serializable {
+    protected class PWConvolutionWeightSet implements WeightSet, Serializable {
 
         @Serial
-        private static final long serialVersionUID = -1987157248603388756L;
+        private static final long serialVersionUID = -7133810873264735302L;
 
         /**
-         * Filter row size.
+         * Treemap for point-wise filter maps (weights).
          *
          */
-        private final int filterRowSize;
+        private final Matrix filterWeightPointWise;
 
         /**
-         * Filter column size.
+         * Treemap for point-wise biases.
          *
          */
-        private final int filterColumnSize;
-
-        /**
-         * Number of filters.
-         *
-         */
-        private final int numberOfFilters;
-
-        /**
-         * Previous layer depth.
-         *
-         */
-        private final int previousLayerDepth;
-
-        /**
-         * Treemap for filter maps (weights).
-         *
-         */
-        private final Matrix filterWeight;
-
-        /**
-         * Treemap for biases.
-         *
-         */
-        private final Matrix filterBias;
+        private final Matrix filterBiasPointWise;
 
         /**
          * Set of weights.
@@ -90,27 +64,18 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
          * Constructor for weight set
          *
          * @param initialization weight initialization function.
-         * @param filterRowSize filter row size.
-         * @param filterColumnSize filter column size.
-         * @param numberOfFilters number of filters.
-         * @param previousLayerDepth previous layer depth.
          * @param regulateWeights if true weights are regulated.
          */
-        ConvolutionWeightSet(Initialization initialization, int filterRowSize, int filterColumnSize, int numberOfFilters, int previousLayerDepth, boolean regulateWeights) {
-            this.filterRowSize = filterRowSize;
-            this.filterColumnSize = filterColumnSize;
-            this.numberOfFilters = numberOfFilters;
-            this.previousLayerDepth = previousLayerDepth;
+        PWConvolutionWeightSet(Initialization initialization, boolean regulateWeights) {
+            filterWeightPointWise = new DMatrix(1, 1, 1, initialization, 1, 1);
+            filterWeightPointWise.setName("WfPW");
+            weights.add(filterWeightPointWise);
+            registerWeight(filterWeightPointWise, regulateWeights, true);
 
-            filterWeight = new DMatrix(filterRowSize, filterColumnSize, numberOfFilters, initialization, filterRowSize * filterColumnSize * previousLayerDepth,  filterRowSize * filterColumnSize * numberOfFilters);
-            filterWeight.setName("Wf");
-            weights.add(filterWeight);
-            registerWeight(filterWeight, regulateWeights, true);
-
-            filterBias = new DMatrix(getLayerWidth(), getLayerHeight(), numberOfFilters);
-            filterBias.setName("Bf");
-            weights.add(filterBias);
-            registerWeight(filterBias, false, false);
+            filterBiasPointWise = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth());
+            filterBiasPointWise.setName("BfPW");
+            weights.add(filterBiasPointWise);
+            registerWeight(filterBiasPointWise, false, false);
         }
 
         /**
@@ -127,8 +92,8 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
          *
          */
         public void reinitialize() {
-            filterWeight.initialize(initialization, filterRowSize * filterColumnSize * previousLayerDepth, filterRowSize * filterColumnSize * numberOfFilters);
-            filterBias.reset();
+            filterWeightPointWise.initialize(initialization, 1, 1);
+            filterBiasPointWise.reset();
         }
 
         /**
@@ -148,7 +113,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * Weight set.
      *
      */
-    protected ConvolutionWeightSet weightSet;
+    protected PWConvolutionWeightSet weightSet;
 
     /**
      * Defines width of incoming image.
@@ -161,18 +126,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      */
     private int previousLayerHeight;
-
-    /**
-     * Defines number of channels (depth) of incoming image.
-     *
-     */
-    private int previousLayerDepth;
-
-    /**
-     * Defines number of filters.
-     *
-     */
-    private int numberOfFilters;
 
     /**
      * Defines filter dimension in terms of rows.
@@ -199,22 +152,10 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     private int dilation;
 
     /**
-     * Defines if layer is depth separable.
-     *
-     */
-    private boolean isDepthSeparable;
-
-    /**
      * True is filter weights are regulated otherwise weights are not regulated.
      *
      */
     private boolean regulateWeights;
-
-    /**
-     * Activation function for convolutional layer.
-     *
-     */
-    protected ActivationFunction activationFunction;
 
     /**
      * Input matrices for procedure construction.
@@ -223,18 +164,16 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     private TreeMap<Integer, Matrix> inputs;
 
     /**
-     * Constructor for abstract convolutional layer.
+     * Constructor for abstract single point-wise separable convolutional layer.
      *
      * @param layerIndex layer index
-     * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
-     * @param params parameters for abstract convolutional layer.
+     * @param params parameters for abstract single point-wise separable convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
-    public AbstractConvolutionalLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+    public AbstractPWSingleConvolutionLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
-        this.activationFunction = activationFunction;
     }
 
     /**
@@ -243,44 +182,44 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        filterRowSize = 3;
-        filterColumnSize = 3;
-        numberOfFilters = 1;
+        filterRowSize = 1;
+        filterColumnSize = 1;
         stride = 1;
         dilation = 1;
-        isDepthSeparable = false;
         regulateWeights = false;
     }
 
     /**
-     * Returns parameters used for abstract convolutional layer.
+     * Returns parameters used for abstract single point-wise separable convolutional layer.
      *
-     * @return parameters used for abstract convolutional layer.
+     * @return parameters used for abstract single point-wise separable convolutional layer.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + AbstractConvolutionalLayer.paramNameTypes;
+        return super.getParamDefs() + ", " + AbstractPWSingleConvolutionLayer.paramNameTypes;
     }
 
     /**
-     * Sets parameters used for abstract convolutional layer.<br>
+     * Sets parameters used for abstract single point-wise separable convolutional layer.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - filters: number of filters (default 1).<br>
-     *     - isDepthSeparable: true if layer is depth separable (default false).<br>
      *     - regulateWeights: true if filter weights are regulated otherwise false (default false).<br>
      *
-     * @param params parameters used for abstract convolutional layer.
+     * @param params parameters used for abstract single point-wise separable convolutional layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
-        if (params.hasParam("filters")) {
-            numberOfFilters = params.getValueAsInteger("filters");
-            if (numberOfFilters < 1) throw new NeuralNetworkException("At least one filter must be defined. Number of filters cannot be: " + numberOfFilters);
-        }
-        if (params.hasParam("isDepthSeparable")) isDepthSeparable = params.getValueAsBoolean("isDepthSeparable");
         if (params.hasParam("regulateWeights")) regulateWeights = params.getValueAsBoolean("regulateWeights");
+    }
+
+    /**
+     * Checks if layer can have multiple previous layers.
+     *
+     * @return  if true layer can have multiple previous layers otherwise false.
+     */
+    public boolean canHaveMultiplePreviousLayers() {
+        return true;
     }
 
     /**
@@ -300,42 +239,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     }
 
     /**
-     * Sets filter row size.
-     *
-     * @param filterRowSize filter row size.
-     */
-    protected void setFilterRowSize(int filterRowSize) {
-        this.filterRowSize = filterRowSize;
-    }
-
-    /**
-     * Sets filter column size.
-     *
-     * @param filterColumnSize filter column size.
-     */
-    protected void setFilterColumnSize(int filterColumnSize) {
-        this.filterColumnSize = filterColumnSize;
-    }
-
-    /**
-     * Sets stride.
-     *
-     * @param stride stride.
-     */
-    protected void setStride(int stride) {
-        this.stride = stride;
-    }
-
-    /**
-     * Sets dilation.
-     *
-     * @param dilation dilation.
-     */
-    protected void setDilation(int dilation) {
-        this.dilation = dilation;
-    }
-
-    /**
      * Initializes neural network layer dimensions.
      *
      * @throws NeuralNetworkException thrown if initialization of layer fails.
@@ -343,20 +246,19 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     public void initializeDimensions() throws NeuralNetworkException {
         previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
         previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
-        previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
+
         if (previousLayerWidth < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + previousLayerWidth);
         if (previousLayerHeight < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + previousLayerHeight);
-        if (previousLayerDepth < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + previousLayerDepth);
 
-        if (getCurrentLayerWidth() < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + getCurrentLayerWidth());
-        if (getCurrentLayerHeight() < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + getCurrentLayerHeight());
+        int layerWidth = getCurrentLayerWidth();
+        int layerHeight = getCurrentLayerHeight();
 
-        numberOfFilters = isDepthSeparable ? previousLayerDepth : numberOfFilters;
-        if (numberOfFilters < 1) throw new NeuralNetworkException("At least one filter must be defined");
+        if (layerWidth < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + layerWidth);
+        if (layerHeight < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + layerHeight);
 
-        setLayerWidth(getCurrentLayerWidth());
-        setLayerHeight(getCurrentLayerHeight());
-        setLayerDepth(numberOfFilters);
+        setLayerWidth(layerWidth);
+        setLayerHeight(layerHeight);
+        setLayerDepth(1);
     }
 
     /**
@@ -373,7 +275,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      */
     public void initializeWeights() {
-        weightSet = new ConvolutionWeightSet(initialization, filterRowSize, filterColumnSize, numberOfFilters, previousLayerDepth, regulateWeights);
+        weightSet = new PWConvolutionWeightSet(initialization, regulateWeights);
     }
 
     /**
@@ -411,12 +313,28 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      *
      * @param resetPreviousInput if true resets previous input.
      * @return input matrices for procedure construction.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
-        Matrix input = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
-        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
-        inputs.put(0, input);
+
+        TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
+        int layerWidth = -1;
+        int layerHeight = -1;
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
+            if (layerWidth == -1) layerWidth = entry.getValue().getLayerWidth();
+            else if (layerWidth != entry.getValue().getLayerWidth()) throw new MatrixException("All inputs must have same width.");
+            if (layerHeight == -1) layerHeight = entry.getValue().getLayerHeight();
+            else if (layerHeight != entry.getValue().getLayerHeight()) throw new MatrixException("All inputs must have same height.");
+            Matrix input = new DMatrix(layerWidth, layerHeight, 1, Initialization.ONE);
+            input.setName("Input" + entry.getValue().getLayerIndex() + "{" + entry.getKey() + "}");
+            inputMatrices.put(entry.getKey(), input);
+        }
+
+        for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
+            inputs.put(inputIndex, inputMatrices.get(inputIndex));
+        }
+
         return inputs;
     }
 
@@ -427,15 +345,17 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getForwardProcedure() throws MatrixException {
-        Matrix input = inputs.get(0);
-        input.setFilterRowSize(filterRowSize);
-        input.setFilterColumnSize(filterColumnSize);
-        input.setStride(stride);
-        input.setDilation(dilation);
-        input.setIsDepthSeparable(isDepthSeparable);
-        Matrix output = weightSet.filterBias.add(executeConvolutionalOperation(input, weightSet.filterWeight));
-        if (activationFunction != null) output = output.apply(activationFunction);
+        // Point-wise separable convolution
+        Matrix output = weightSet.filterBiasPointWise;
+        for (Matrix matrix : inputs.values()) {
+            matrix.setStride(stride);
+            matrix.setDilation(dilation);
+            matrix.setFilterRowSize(filterRowSize);
+            matrix.setFilterColumnSize(filterColumnSize);
+            output = output.add(executeConvolutionalOperation(matrix, weightSet.filterWeightPointWise));
+        }
         output.setName("Output");
+
         return output;
     }
 
@@ -464,8 +384,8 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @return constant matrices.
      */
     public HashSet<Matrix> getConstantMatrices() {
-       return new HashSet<>();
-   }
+        return new HashSet<>();
+    }
 
     /**
      * Returns number of truncated steps for gradient calculation. -1 means no truncation.
@@ -484,13 +404,10 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
     protected String getLayerDetailsByName() {
         String layerDetailsByName = "";
         layerDetailsByName += "Convolution type: " + getConvolutionType() + ", ";
-        layerDetailsByName += "Number of filters: " + numberOfFilters + ", ";
         layerDetailsByName += "Filter row size: " + filterRowSize + ", ";
         layerDetailsByName += "Filter column size: " + filterColumnSize + ", ";
         layerDetailsByName += "Stride: " + stride + ", ";
         layerDetailsByName += "Dilation: " + dilation + ", ";
-        layerDetailsByName += "Is depth separable: " + isDepthSeparable;
-        if (activationFunction != null) layerDetailsByName += ", Activation function: " + activationFunction.getName();
         return layerDetailsByName;
     }
 

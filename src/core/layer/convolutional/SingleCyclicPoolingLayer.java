@@ -14,22 +14,22 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 
 /**
- * Implements random pooling layer.<br>
- * Selects each input of pool for propagation randomly with uniform probability.<br>
+ * Implements single cyclic pooling layer.<br>
+ * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
  *
  */
-public class RandomPoolingLayer extends AbstractPoolingLayer {
+public class SingleCyclicPoolingLayer extends AbstractSinglePoolingLayer {
 
     /**
-     * Constructor for random pooling layer.
+     * Constructor for single cyclic pooling layer.
      *
      * @param layerIndex layer index
      * @param initialization initialization function for weight maps (not relevant for pooling layer).
-     * @param params parameters for random pooling layer.
+     * @param params parameters for single cyclic pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails.
      */
-    public RandomPoolingLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+    public SingleCyclicPoolingLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
         super (layerIndex, initialization, params);
     }
 
@@ -41,7 +41,7 @@ public class RandomPoolingLayer extends AbstractPoolingLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix executePoolingOperation(Matrix input) throws MatrixException {
-        return input.randomPool(new HashMap<>());
+        return input.cyclicPool(new HashMap<>());
     }
 
     /**
@@ -50,7 +50,7 @@ public class RandomPoolingLayer extends AbstractPoolingLayer {
      * @return pooling type.
      */
     protected String getPoolingType() {
-        return "Random";
+        return "Cyclic";
     }
 
 }
