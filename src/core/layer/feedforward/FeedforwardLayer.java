@@ -166,6 +166,20 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
+     * Initializes neural network layer dimensions.
+     *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     */
+    public void initializeDimensions() throws NeuralNetworkException {
+        if (getLayerWidth() == -1) {
+            if ((getDefaultPreviousLayer().getLayerWidth()) < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + (getDefaultPreviousLayer().getLayerWidth()));
+            setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
+            setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
+            setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
+        }
+    }
+
+    /**
      * Initializes default params.
      *
      */
