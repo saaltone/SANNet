@@ -351,7 +351,7 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
         if (getCurrentLayerWidth() < 1) throw new NeuralNetworkException("Convolutional layer width cannot be less than 1: " + getCurrentLayerWidth());
         if (getCurrentLayerHeight() < 1) throw new NeuralNetworkException("Convolutional layer height cannot be less than 1: " + getCurrentLayerHeight());
 
-        numberOfFilters = isDepthSeparable ? previousLayerDepth : numberOfFilters;
+        if (isDepthSeparable && numberOfFilters != previousLayerDepth) throw new NeuralNetworkException("For depth separable layer depth of previous layer " + previousLayerDepth + " and number of filters " + numberOfFilters +  " must be same");
         if (numberOfFilters < 1) throw new NeuralNetworkException("At least one filter must be defined");
 
         setLayerWidth(getCurrentLayerWidth());
