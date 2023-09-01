@@ -51,6 +51,18 @@ public enum ExecutablePolicyType {
      * Epsilon noisy next best policy
      *
      */
-    ENTROPY_NOISY_NEXT_BEST
+    ENTROPY_NOISY_NEXT_BEST,
+
+    /**
+     * Multinomial policy
+     *
+     */
+    MULTINOMIAL,
+
+    /**
+     * Noisy policy
+     *
+     */
+    NOISY
 
 }

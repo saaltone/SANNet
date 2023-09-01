@@ -33,6 +33,8 @@ public class ExecutablePolicyFactory implements Serializable {
             case MCTS -> params == null ? new MCTSPolicy() : new MCTSPolicy(params);
             case ENTROPY_GREEDY -> new EntropyGreedyPolicy();
             case ENTROPY_NOISY_NEXT_BEST -> new EntropyNoisyNextBestPolicy();
+            case MULTINOMIAL -> new MultinomialPolicy(params);
+            case NOISY -> new NoisyPolicy(params);
         };
     }
 
@@ -62,6 +64,8 @@ public class ExecutablePolicyFactory implements Serializable {
         if (executablePolicy instanceof SampledPolicy) return ExecutablePolicyType.SAMPLED;
         if (executablePolicy instanceof MCTSPolicy) return ExecutablePolicyType.MCTS;
         if (executablePolicy instanceof EntropyNoisyNextBestPolicy) return ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
+        if (executablePolicy instanceof MultinomialPolicy) return ExecutablePolicyType.MULTINOMIAL;
+        if (executablePolicy instanceof NoisyPolicy) return ExecutablePolicyType.NOISY;
         throw new AgentException("Unknown executable policy type");
     }
 
