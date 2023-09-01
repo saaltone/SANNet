@@ -93,7 +93,7 @@ public class NormExpression extends AbstractUnaryExpression {
      */
     public void calculateExpression(int sampleIndex) throws MatrixException {
         checkArgument(argument1, sampleIndex);
-        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
+        if (!argument1.isStopGradient()) result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
     }
 
     /**

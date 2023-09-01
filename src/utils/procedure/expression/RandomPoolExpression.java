@@ -50,7 +50,7 @@ public class RandomPoolExpression extends AbstractUnaryExpression {
     public RandomPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("RANDOM_POOL", "RANDOM_POOL", expressionID, argument1, result);
 
-        randomPoolMatrixOperation = new RandomPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
+        randomPoolMatrixOperation = new RandomPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
         randomPoolGradientMatrixOperation = new RandomPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
     }
 

@@ -55,6 +55,13 @@ public interface Expression {
     void setPreviousExpression(Expression previousExpression);
 
     /**
+     * Sets is procedure is active.
+     *
+     * @param isActive is true procedure is active otherwise non-active.
+     */
+    void setActive(boolean isActive);
+
+    /**
      * Resets expression.
      *
      */

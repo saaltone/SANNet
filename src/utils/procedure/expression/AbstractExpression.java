@@ -18,6 +18,7 @@ import java.util.Set;
  * Assumes underlying class that implements specific expression.<br>
  *
  */
+@SuppressWarnings("SameReturnValue")
 public abstract class AbstractExpression implements Expression, Serializable {
 
     @Serial
@@ -64,6 +65,12 @@ public abstract class AbstractExpression implements Expression, Serializable {
      *
      */
     private Expression previousExpression;
+
+    /**
+     * If true expression is active otherwise not-active.
+     *
+     */
+    private boolean isActive = true;
 
     /**
      * Constructor for abstract expression.
@@ -199,6 +206,25 @@ public abstract class AbstractExpression implements Expression, Serializable {
      *
      */
     protected abstract void applyReset();
+
+    /**
+     * Sets is expression is active.
+     *
+     * @param isActive is true expression is active otherwise non-active.
+     */
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        if (nextExpression != null) nextExpression.setActive(isActive);
+    }
+
+    /**
+     * Returns is expression is active.
+     *
+     * @return returns true if expression is active otherwise false.
+     */
+    protected boolean isActive() {
+        return isActive;
+    }
 
     /**
      * Calculates entire expression chain including regulation.

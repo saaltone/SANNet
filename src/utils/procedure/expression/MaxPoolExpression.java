@@ -50,7 +50,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression {
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("MAX_POOL", "MAX_POOL", expressionID, argument1, result);
 
-        maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), filterRowSize, filterColumnSize, stride);
+        maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
         maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
     }
 
