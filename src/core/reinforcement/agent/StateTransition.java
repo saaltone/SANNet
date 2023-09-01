@@ -30,7 +30,7 @@ public class StateTransition implements Serializable, Comparable<StateTransition
      * Action taken to move from current environment state to next state.
      *
      */
-    public int action;
+    public int action = -1;
 
     /**
      * Immediate reward after taking specific action in current environment state.
