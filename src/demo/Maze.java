@@ -442,7 +442,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * Size of agent's history. Remembers given number of previous moves and uses then as input for agent state.
      *
      */
-    private final int agentHistorySize = 14;
+    private final int agentHistorySize = 20;
 
     /**
      * State size.
@@ -788,6 +788,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             }
             case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
+            case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
+            case 7 -> executablePolicyType = ExecutablePolicyType.NOISY;
         }
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.PPO;
         boolean onlineMemory = switch (agentAlgorithmType) {
@@ -829,7 +831,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int[] inputModuleIndices = new int[7];
+        int[] inputModuleIndices = new int[agentHistorySize];
         for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
             int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
             int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
@@ -839,7 +841,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             inputModuleIndices[inputIndex] = feedforwardLayerIndex;
         }
 
-        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ADDITIVE_ATTENTION);
+        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
         for (int inputModuleIndex : inputModuleIndices) {
             neuralNetworkConfiguration.connectLayers(inputModuleIndex, attentionLayerIndex);
         }
@@ -876,7 +878,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int[] inputModuleIndices = new int[10];
+        int[] inputModuleIndices = new int[12];
         for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
             int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
             int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
