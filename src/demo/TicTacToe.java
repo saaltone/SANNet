@@ -754,11 +754,11 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        int numberfOfAgents = 4;
+        int numberfOfAgents = 2;
         boolean singleFunctionEstimator = false;
-        boolean sharedPolicyFunctionEstimator = false;
-        boolean sharedValueFunctionEstimator = false;
-        boolean sharedMemory = false;
+        boolean sharedPolicyFunctionEstimator = true;
+        boolean sharedValueFunctionEstimator = true;
+        boolean sharedMemory = true;
         int policyType = 4;
         ExecutablePolicyType executablePolicyType = null;
         String policyTypeParams = "";
@@ -778,6 +778,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             }
             case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
+            case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
         }
 
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDQN;
