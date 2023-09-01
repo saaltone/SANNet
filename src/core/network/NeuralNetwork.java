@@ -109,6 +109,12 @@ public class NeuralNetwork implements Runnable, Serializable {
     private final TreeMap<Integer, InputLayer> inputLayers = new TreeMap<>();
 
     /**
+     * Reference to input layer groups of neural network.
+     *
+     */
+    private final TreeMap<Integer, TreeMap<Integer, InputLayer>> inputLayerGroups = new TreeMap<>();
+
+    /**
      * List containing hidden layers for neural network.
      *
      */
@@ -119,6 +125,12 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      */
     private final TreeMap<Integer, OutputLayer> outputLayers = new TreeMap<>();
+
+    /**
+     * Reference to output layer groups of neural network.
+     *
+     */
+    private final TreeMap<Integer, TreeMap<Integer, OutputLayer>> outputLayerGroups = new TreeMap<>();
 
     /**
      * List of neural network layers.
@@ -316,12 +328,21 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns inputs layers.
+     * Returns input layers.
      *
      * @return input layers.
      */
     public TreeMap<Integer, InputLayer> getInputLayers() {
         return inputLayers;
+    }
+
+    /**
+     * Returns inputs layer groups.
+     *
+     * @return inputs layer groups.
+     */
+    public TreeMap<Integer, TreeMap<Integer, InputLayer>> getInputLayerGroups() {
+        return new TreeMap<>() {{ putAll(inputLayerGroups); }};
     }
 
     /**
@@ -331,6 +352,15 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public TreeMap<Integer, OutputLayer> getOutputLayers() {
         return outputLayers;
+    }
+
+    /**
+     * Returns output layer groups.
+     *
+     * @return output layer groups.
+     */
+    public TreeMap<Integer, TreeMap<Integer, OutputLayer>> getOutputLayerGroups() {
+        return new TreeMap<>() {{ putAll(outputLayerGroups); }};
     }
 
     /**
@@ -354,8 +384,10 @@ public class NeuralNetwork implements Runnable, Serializable {
         neuralNetworkConfiguration.validate();
 
         inputLayers.putAll(neuralNetworkConfiguration.getInputLayers());
+        inputLayerGroups.putAll(neuralNetworkConfiguration.getInputLayerGroups());
         hiddenLayers.putAll(neuralNetworkConfiguration.getHiddenLayers());
         outputLayers.putAll(neuralNetworkConfiguration.getOutputLayers());
+        outputLayerGroups.putAll(neuralNetworkConfiguration.getOutputLayerGroups());
         neuralNetworkLayers.putAll(neuralNetworkConfiguration.getNeuralNetworkLayers());
     }
 
