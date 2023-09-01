@@ -111,6 +111,7 @@ public class SimpleDemo {
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
         int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.GRADIENT_CLIPPING);
         int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
         int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
         int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
