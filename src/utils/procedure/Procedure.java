@@ -5,6 +5,8 @@
 
 package utils.procedure;
 
+import core.optimization.Optimizer;
+import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
 import utils.matrix.AbstractMatrix;
 import utils.sampling.Sequence;
@@ -81,6 +83,12 @@ public class Procedure implements Serializable {
     private final HashSet<Matrix> parameterMatrices;
 
     /**
+     * Optimizer for procedure.
+     *
+     */
+    protected Optimizer optimizer = OptimizerFactory.createDefault();
+
+    /**
      * Constructor for procedure.
      *
      * @param inputNodes input nodes for procedure.
@@ -94,8 +102,9 @@ public class Procedure implements Serializable {
      * @param reversedInput reversed input.
      * @param joinedInput if true inputs are joined otherwise not.
      * @throws MatrixException throws exception if node does not contain all constant and parameter matrices.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Procedure(HashMap<Integer, Node> inputNodes, Node outputNode, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, HashSet<Node> dependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException {
+    public Procedure(HashMap<Integer, Node> inputNodes, Node outputNode, HashSet<Node> nodes, Expression expressionChain, Expression gradientChain, HashSet<Node> dependentNodes, HashSet<Matrix> parameterMatrices, HashSet<Matrix> stopGradientMatrices, boolean reversedInput, boolean joinedInput) throws MatrixException, DynamicParamException {
         this.inputNodes.putAll(inputNodes);
         this.outputNode = outputNode;
         this.nodes.addAll(nodes);
@@ -125,6 +134,16 @@ public class Procedure implements Serializable {
      */
     public void reset() throws MatrixException {
         for (Node node : nodes) node.reset();
+    }
+
+    /**
+     * Sets is procedure is active.
+     *
+     * @param isActive is true procedure is active otherwise non-active.
+     */
+    public void setActive(boolean isActive) {
+        expressionChain.setActive(isActive);
+        gradientChain.setActive(isActive);
     }
 
     /**
@@ -465,6 +484,43 @@ public class Procedure implements Serializable {
             }
         }
         if (!containsReferenceMatrix) throw new MatrixException("Procedure does not contain reference matrix.");
+    }
+
+    /**
+     * Sets optimizer for layer.<br>
+     * Optimizer optimizes weight parameters iteratively towards optimal solution.<br>
+     *
+     * @param optimizer optimizer to be added.
+     */
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+    }
+
+    /**
+     * Resets optimizer of layer.
+     *
+     */
+    public void resetOptimizer() {
+        optimizer.reset();
+    }
+
+    /**
+     * Executes weight updates with regularizers and optimizer.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void optimize() throws MatrixException, DynamicParamException {
+        for (Map.Entry<Matrix, Matrix> entry : getGradients().entrySet()) optimizer.optimize(entry.getKey(), entry.getValue());
+    }
+
+    /**
+     * Returns optimizer by name.
+     *
+     * @return optimizer by name.
+     */
+    public String getOptimizerByName() {
+        return optimizer.getName();
     }
 
     /**
