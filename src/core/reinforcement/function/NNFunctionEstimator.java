@@ -13,6 +13,7 @@ import core.reinforcement.memory.Memory;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
+import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.sampling.BasicSampler;
@@ -66,10 +67,22 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private final int stateHistorySize;
 
     /**
-     * Zero input for empty history entries.
+     * Size of action history.
      *
      */
-    private final Matrix zeroInputReference;
+    private final int actionHistorySize;
+
+    /**
+     * Zero state input for empty history entries.
+     *
+     */
+    private final Matrix zeroStateInputReference;
+
+    /**
+     * Zero action input for empty history entries.
+     *
+     */
+    private final Matrix zeroActionInputReference;
 
     /**
      * Intermediate map for state value pairs as value cache.
@@ -103,10 +116,15 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, String params) throws DynamicParamException {
-        super (memory, neuralNetwork.getInputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().size() == 2, params);
+        super (memory, neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getOutputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().size() == 2, params);
         this.neuralNetwork = neuralNetwork;
-        stateHistorySize = neuralNetwork.getInputLayers().size();
-        zeroInputReference = new DMatrix(neuralNetwork.getInputLayers().get(0).getLayerWidth(), 1, 1);
+
+        stateHistorySize = neuralNetwork.getInputLayerGroups().get(0).size();
+        zeroStateInputReference = new DMatrix(neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerHeight(), neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerDepth(), Initialization.ONE);
+
+        actionHistorySize = neuralNetwork.getInputLayerGroups().get(1) != null ? neuralNetwork.getInputLayerGroups().get(1).size() : 0;
+        zeroActionInputReference = actionHistorySize > 0 ? new DMatrix(neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerWidth(), neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerHeight(), neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerDepth(), Initialization.ONE) : null;
+
         applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
 
@@ -272,8 +290,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param stateTransition state.
      * @return values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    private TreeMap<Integer, Matrix> predictValues(StateTransition stateTransition) throws NeuralNetworkException {
+    private TreeMap<Integer, Matrix> predictValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         TreeMap<Integer, Matrix> values = stateTransitionCache.get(stateTransition);
         if (values == null)  {
             values = neuralNetwork.predictMatrix(new TreeMap<>() {{ putAll(getInputs(stateTransition)); }});
@@ -282,17 +301,36 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         return values;
     }
 
-    private TreeMap<Integer, Matrix> getInputs(StateTransition stateTransition) {
-        TreeMap<Integer, Matrix> states = new TreeMap<>();
+    /**
+     * Returns inputs based on state transition
+     *
+     * @param stateTransition state transition
+     * @return inputs
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    private TreeMap<Integer, Matrix> getInputs(StateTransition stateTransition) throws MatrixException {
+        TreeMap<Integer, Matrix> inputs = new TreeMap<>();
+
         StateTransition currentStateTransition = stateTransition;
         for (int inputIndex = stateHistorySize - 1; inputIndex >= 0; inputIndex--) {
             if (currentStateTransition != null) {
-                states.put(inputIndex, currentStateTransition.environmentState.state());
+                inputs.put(inputIndex, currentStateTransition.environmentState.state());
                 currentStateTransition = currentStateTransition.previousStateTransition;
             }
-            else states.put(inputIndex, zeroInputReference);
+            else inputs.put(inputIndex, zeroStateInputReference);
         }
-        return states;
+
+        if (actionHistorySize > 0) {
+            currentStateTransition = stateTransition;
+            for (int inputIndex = actionHistorySize - 1; inputIndex >= 0; inputIndex--) {
+                if (currentStateTransition != null && currentStateTransition.action > -1) {
+                    inputs.put(stateHistorySize + inputIndex, currentStateTransition.action < getNumberOfActions() ? DMatrix.getOneHotVector(getNumberOfActions(), currentStateTransition.action) : new DMatrix(currentStateTransition.tdTarget));
+                    currentStateTransition = currentStateTransition.previousStateTransition;
+                }
+                else inputs.put(stateHistorySize + inputIndex, zeroActionInputReference);
+            }
+        }
+        return inputs;
     }
 
     /**
@@ -302,8 +340,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param isAction true if prediction is for taking other otherwise false.
      * @return state values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws NeuralNetworkException {
+    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws NeuralNetworkException, MatrixException {
         return predictValues(stateTransition).get(0);
     }
 
@@ -313,8 +352,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param stateTransition state.
      * @return state action values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predictStateActionValues(StateTransition stateTransition) throws NeuralNetworkException {
+    public Matrix predictStateActionValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
         return predictValues(stateTransition).get(!isStateActionValueFunction() ? 0 : 1);
     }
 
@@ -353,32 +393,35 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void update() throws NeuralNetworkException, DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        HashMap<Integer, HashMap<Integer, Matrix>> states = new HashMap<>();
-        HashMap<Integer, HashMap<Integer, Matrix>> stateValues = new HashMap<>();
-        ArrayDeque<Matrix> stateHistory = new ArrayDeque<>();
-        for (int inputIndex = 0; inputIndex < stateHistorySize; inputIndex++) {
-            states.put(inputIndex, new HashMap<>());
-            stateHistory.add(new DMatrix(neuralNetwork.getInputLayers().get(inputIndex).getLayerWidth(), 1, 1));
-        }
-        stateValues.put(0, new HashMap<>());
-        if (isStateActionValueFunction()) stateValues.put(1, new HashMap<>());
+        HashMap<Integer, HashMap<Integer, Matrix>> inputs = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, Matrix>> outputs = new HashMap<>();
+
+        for (int inputIndex = 0; inputIndex < stateHistorySize; inputIndex++) inputs.put(inputIndex, new HashMap<>());
+        if (actionHistorySize > 0) for (int inputIndex = 0; inputIndex < actionHistorySize; inputIndex++) inputs.put(stateHistorySize + inputIndex, new HashMap<>());
+
+        outputs.put(0, new HashMap<>());
+        if (isStateActionValueFunction()) outputs.put(1, new HashMap<>());
+
         HashMap<Integer, Double> importanceSamplingWeights = new HashMap<>();
+
         int index = 0;
         for (Map.Entry<StateTransition, TreeMap<Integer, Matrix>> entry: stateTransitionValueMap.entrySet()) {
             StateTransition stateTransition = entry.getKey();
-            stateHistory.add(stateTransition.environmentState.state());
-            stateHistory.poll();
-            int inputIndex = 0;
-            for (Matrix state : stateHistory) states.get(inputIndex++).put(index, state);
+
+            TreeMap<Integer, Matrix> currentInputs = getInputs(stateTransition);
+            for (Map.Entry<Integer, Matrix> inputEntry : currentInputs.entrySet()) inputs.get(inputEntry.getKey()).put(index, inputEntry.getValue());
+
             TreeMap<Integer, Matrix> matrix = entry.getValue();
             for (Map.Entry<Integer, Matrix> entry1 : matrix.entrySet()) {
-                stateValues.get(entry1.getKey()).put(index, entry1.getValue());
+                outputs.get(entry1.getKey()).put(index, entry1.getValue());
             }
             if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index, stateTransition.importanceSamplingWeight);
+
             index++;
         }
+
         if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(new TreeMap<>() {{ put(0, importanceSamplingWeights); }});
-        neuralNetwork.train(new BasicSampler(new HashMap<>() {{ putAll(states); }}, new HashMap<>() {{ putAll(stateValues); }}, "fullSet = true, randomOrder = false, numberOfIterations = " + numberOfIterations));
+        neuralNetwork.train(new BasicSampler(new HashMap<>() {{ putAll(inputs); }}, new HashMap<>() {{ putAll(outputs); }}, "fullSet = true, randomOrder = false, numberOfIterations = " + numberOfIterations));
 
         updateComplete();
     }
