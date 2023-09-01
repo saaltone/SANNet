@@ -484,17 +484,125 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Returns binomial distribution.
+     * Reference: <a href="https://peterchng.com/blog/2020/10/23/building-binomial-and-multinomial-samplers-in-java/">...</a>
+     *
+     * @param probability probability.
+     * @return number of successful trials.
+     */
+    public int getBinomial(double probability) {
+        return getBinomial(1, probability);
+    }
+
+    /**
+     * Returns binomial distribution.
+     * Reference: <a href="https://peterchng.com/blog/2020/10/23/building-binomial-and-multinomial-samplers-in-java/">...</a>
+     *
+     * @param numberOfTrials number of trials.
+     * @param probability probability.
+     * @return number of successful trials.
+     */
+    public int getBinomial(int numberOfTrials, double probability) {
+        if (numberOfTrials < 1 || probability < 0) return 0;
+        if (probability > 1) return numberOfTrials;
+
+        int numberOfSuccessfulTrials = 0;
+        for (int trial = 0; trial < numberOfTrials; trial++) {
+            if (random.nextDouble() < probability) numberOfSuccessfulTrials++;
+        }
+        return numberOfSuccessfulTrials;
+    }
+
+    /**
+     * Returns multinomial distribution. Assumes single trial.
+     *
+     * @return multinomial distribution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getMultinomial() throws MatrixException {
+        return getMultinomial(1);
+    }
+
+    /**
+     * Returns multinomial distribution.
+     * Reference: <a href="https://peterchng.com/blog/2020/10/23/building-binomial-and-multinomial-samplers-in-java/">...</a>
+     *
+     * @param numberOfTrials number of trials.
+     * @return multinomial distribution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getMultinomial(int numberOfTrials) throws MatrixException {
+        if (numberOfTrials < 1) throw new MatrixException("Number of trials cannot be less than 1.");
+
+        Matrix result = getNewMatrix();
+        final int rows = getRows();
+        final int columns = getColumns();
+        final int totalDepth = getDepth();
+        double sumLeft = 1;
+        int trialsLeft = numberOfTrials;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                for (int depth = 0; depth < totalDepth; depth++) {
+                    double probability = getValue(row, column, depth);
+                    double binomial = getBinomial(trialsLeft, probability / sumLeft);
+                    result.setValue(row, column, depth, binomial);
+                    sumLeft -= probability;
+                    trialsLeft -= binomial;
+                    if (sumLeft <= 0 || trialsLeft <= 0) break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Implements inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
+     *
+     * @param probability probability
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix applyDropout(double probability, boolean inplace) throws MatrixException {
+        return new DropoutMatrixOperation(getRows(), getColumns(), getDepth(), probability).apply(this, inplace);
+    }
+
+    /**
+     * Implements matrix noising.
+     *
+     * @param noise noise
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     */
+    public Matrix noise(double noise, boolean inplace) throws MatrixException {
+        return apply(new UnaryFunction(value -> value + noise * (1 - 2 * random.nextDouble())), inplace);
+    }
+
+    /**
      * Returns softmax of matrix.
      *
+     * @param softmaxTau tau value for Softmax.
      * @return softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    public Matrix softmax() throws MatrixException {
+    public Matrix softmax(double softmaxTau) throws MatrixException {
         if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
-        final double maxValue = max();
-        Matrix result = applyFunction(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
-        result.divideBy(result.sum());
+        Matrix result;
+        if (softmaxTau != 1) {
+            result = divide(softmaxTau);
+            final double maxValue = result.max();
+            result = result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
+            result.divideBy(result.sum());
+        }
+        else {
+            final double maxValue = max();
+            result = applyFunction(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
+            result.divideBy(result.sum());
+        }
         return result;
     }
 
@@ -502,15 +610,15 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * Returns Gumbel softmax of matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
-     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @param softmaxTau tau value for Softmax.
      * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    public Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException {
+    public Matrix gumbelSoftmax(double softmaxTau) throws MatrixException {
         if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
         // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
-        Matrix result = applyFunction(new UnaryFunction(value -> (value + getGumbelNoise()) / gumbelSoftmaxTau), false);
+        Matrix result = applyFunction(new UnaryFunction(value -> (value + getGumbelNoise()) / softmaxTau), false);
         final double maxValue = result.max();
         result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), true);
         result.divideBy(result.sum());
@@ -702,7 +810,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyMaxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        return new MaxPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos);
+        return new MaxPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos);
     }
 
     /**
@@ -713,7 +821,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyRandomPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        return new RandomPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
+        return new RandomPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
     }
 
     /**
@@ -724,7 +832,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyCyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        return new CyclicPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getRows(), getColumns(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
+        return new CyclicPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
     }
 
     /**
