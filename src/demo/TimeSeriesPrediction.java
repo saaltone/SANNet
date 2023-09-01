@@ -129,7 +129,7 @@ public class TimeSeriesPrediction {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         int[] hiddenLayerIndices = new int[numberOfInputs];
         for (int i = 0; i < numberOfInputs; i++) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer(i, "width = " + inputSize);
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = 20");
             int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.GRU, "width = 20, reversedInput = true");
             neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex1);
