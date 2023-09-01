@@ -5,7 +5,6 @@
 
 package utils.procedure;
 
-import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
@@ -18,14 +17,6 @@ import java.util.TreeMap;
  *
  */
 public interface ForwardProcedure {
-
-    /**
-     * Returns name of forward procedure.
-     *
-     * @return name of forward procedure.
-     * @throws NeuralNetworkException throws exception if operation fails.
-     */
-    String getProcedureName() throws NeuralNetworkException;
 
     /**
      * Returns input matrix for procedure construction.
