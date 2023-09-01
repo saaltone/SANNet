@@ -807,6 +807,35 @@ public class ProcedureFactory implements Serializable {
     }
 
     /**
+     * Records dropout expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @param probability probability.
+     * @param monte_carlo if true is monte carlo dropout otherwise normal dropout.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createDropoutExpression(double expressionLock, Matrix argument1, Matrix result, double probability, boolean monte_carlo) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new DropoutExpression(currentExpressionID++, defineNode(argument1), defineNode(result), probability, monte_carlo));
+    }
+
+    /**
+     * Records gradient clipping expression to procedure factory.
+     *
+     * @param expressionLock unique expression lock key.
+     * @param argument1 first argument of expression.
+     * @param result result of expression.
+     * @param threshold threshold.
+     * @throws MatrixException throws exception if adding of expression fails.
+     */
+    public void createGradientClippingExpression(double expressionLock, Matrix argument1, Matrix result, double threshold) throws MatrixException {
+        if (checkOngoingExpression(expressionLock, argument1)) return;
+        storeExpression(new GradientClippingExpression(currentExpressionID++, defineNode(argument1), defineNode(result), threshold));
+    }
+
+    /**
      * Stores expression into procedure chain
      *
      * @param expression expression.
