@@ -12,61 +12,13 @@ import utils.matrix.MatrixException;
  * Implements abstract convolution matrix operation.
  *
  */
-public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixOperation {
-
-    /**
-     * Input matrix.
-     *
-     */
-    protected Matrix input;
+public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolutionOperation {
 
     /**
      * Total input depth.
      *
      */
     protected int totalInputDepth;
-
-    /**
-     * Filter matrix.
-     *
-     */
-    protected Matrix filter;
-
-    /**
-     * Filter row size.
-     *
-     */
-    protected final int filterRowSize;
-
-    /**
-     * Filter column size.
-     *
-     */
-    protected final int filterColumnSize;
-
-    /**
-     * Matrix dilation value.
-     *
-     */
-    protected final int dilation;
-
-    /**
-     * If true convolution is depth separable
-     *
-     */
-    protected final boolean isDepthSeparable;
-
-    /**
-     * If true operation is executed as convolution otherwise as crosscorrelation
-     *
-     */
-    protected final boolean asConvolution;
-
-    /**
-     * Result matrix.
-     *
-     */
-    protected Matrix result;
 
     /**
      * Constructor for abstract convolution matrix operation.
@@ -82,12 +34,7 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
     public AbstractConvolutionMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, false, stride);
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
-        this.dilation = dilation;
-        this.isDepthSeparable = isDepthSeparable;
-        this.asConvolution = asConvolution;
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution);
     }
 
     /**
@@ -99,30 +46,12 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix input, Matrix filter) throws MatrixException {
-        this.input = input;
+        setTargetMatrix(input);
+        setInputMatrix(filter);
         totalInputDepth = input.getDepth();
-        this.filter = filter;
-        result = input.getNewMatrix(getRows(), getColumns(), getDepth());
+        setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
         applyMatrixOperation();
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+        return getResult();
     }
 
     /**
@@ -136,18 +65,19 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
     public void apply(int row, int column, int depth, double value) {
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                double filterValue = filter.getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
+                double filterValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
+                double sumInputValue = 0;
+                int inputRow = row + filterRow;
+                int inputColumn = column + filterColumn;
                 if (isDepthSeparable) {
-                    double inputValue = input.getValue(row + filterRow, column + filterColumn, depth);
-                    result.addByValue(row, column, depth, inputValue * filterValue);
+                    sumInputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
                 }
                 else {
-                    double sumInputValue = 0;
                     for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
-                        sumInputValue += input.getValue(row + filterRow, column + filterColumn, inputDepth);
+                        sumInputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
                     }
-                    result.addByValue(row, column, depth, sumInputValue * filterValue);
                 }
+                getResult().addByValue(row, column, depth, sumInputValue * filterValue);
             }
         }
     }
@@ -163,47 +93,27 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractMatrixO
     public void applyMask(int row, int column, int depth, double value) {
         for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
             for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                if (!hasMaskAt(filterRow, filterColumn, depth, filter)) {
-                    double filterValue = filter.getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
+                if (!hasMaskAt(filterRow, filterColumn, depth, getInputMatrix())) {
+                    double filterValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
+                    double sumInputValue = 0;
+                    int inputRow = row + filterRow;
+                    int inputColumn = column + filterColumn;
                     if (isDepthSeparable) {
-                        if (!hasMaskAt(row + filterRow, column + filterColumn, depth, input)) {
-                            double inputValue = input.getValue(row + filterRow, column + filterColumn, depth);
-                            result.setValue(row, column, depth, inputValue * filterValue);
+                        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
+                            sumInputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
                         }
                     }
                     else {
-                        double sumInputValue = 0;
                         for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
-                            if (!hasMaskAt(row + filterRow, column + filterColumn, inputDepth, input)) {
-                                sumInputValue += input.getValue(row + filterRow, column + filterColumn, inputDepth);
+                            if (!hasMaskAt(inputRow, inputColumn, inputDepth, getTargetMatrix())) {
+                                sumInputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
                             }
                         }
-                        result.setValue(row, column, depth, sumInputValue * filterValue);
                     }
+                    getResult().addByValue(row, column, depth, sumInputValue * filterValue);
                 }
             }
         }
     }
-
-    /**
-     * Returns filter row.
-     *
-     * @param filterRow filter row.
-     * @return filter row.
-     */
-    private int getFilterRow(int filterRow) {
-        return asConvolution ? filterRowSize - 1 - filterRow : filterRow;
-    }
-
-    /**
-     * Returns filter column.
-     *
-     * @param filterColumn filter column.
-     * @return filter column.
-     */
-    private int getFilterColumn(int filterColumn) {
-        return asConvolution ? filterColumnSize - 1 - filterColumn : filterColumn;
-    }
-
 
 }
