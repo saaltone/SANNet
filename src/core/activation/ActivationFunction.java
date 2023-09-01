@@ -11,8 +11,6 @@ import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
 import utils.matrix.UnaryFunctionType;
 
-import java.io.Serial;
-
 /**
  * Implements activation function for neural network and uses implementation of unary function.<br>
  * Provides calculation for both function and it's derivative.<br>
@@ -44,9 +42,6 @@ import java.io.Serial;
  *     CUSTOM
  */
 public class ActivationFunction extends UnaryFunction {
-
-    @Serial
-    private static final long serialVersionUID = 4302816456291628148L;
 
     /**
      * List of supported activation functions.
