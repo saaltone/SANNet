@@ -12,10 +12,8 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunction;
 
 import java.util.HashSet;
-import java.util.Random;
 
 /**
  * Implements layer that adds noise to the weights during training phase.<br>
@@ -33,12 +31,6 @@ public class WeightNoising extends AbstractRegularizationLayer {
     private final static String paramNameTypes = "(initialNoise:DOUBLE), " +
             "(minNoise:DOUBLE), " +
             "(noiseDecay:DOUBLE)";
-
-    /**
-     * Random function for weight noising.
-     *
-     */
-    private final Random random = new Random();
 
     /**
      * Current noise.
@@ -65,6 +57,12 @@ public class WeightNoising extends AbstractRegularizationLayer {
     private double noiseDecay;
 
     /**
+     * Normalized weights of next layer.
+     *
+     */
+    private final HashSet<Matrix> layerNormalizedWeights = new HashSet<>();
+
+    /**
      * Constructor for weight noising layer.
      *
      * @param layerIndex layer index
@@ -83,10 +81,9 @@ public class WeightNoising extends AbstractRegularizationLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        initialNoise = 0.02;
+        currentNoise = initialNoise = 0.02;
         minNoise = 0;
         noiseDecay = 0.999;
-        currentNoise = initialNoise;
     }
 
     /**
@@ -125,6 +122,9 @@ public class WeightNoising extends AbstractRegularizationLayer {
      */
     protected void defineProcedure() throws NeuralNetworkException {
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) if (nextLayer.getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight noising. Next layer #" + nextLayer.getLayerIndex() + " does not contain any weights.");
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
+            layerNormalizedWeights.addAll(nextLayer.getNormalizedWeights());
+        }
     }
 
     /**
@@ -137,14 +137,8 @@ public class WeightNoising extends AbstractRegularizationLayer {
         super.forwardProcess();
 
         if (isTraining()) {
-            UnaryFunction unaryFunction = new UnaryFunction(value -> value + currentNoise * (1 - 2 * random.nextDouble()));
-            for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
-                HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
-                for (Matrix weight : nextLayerNormalizedWeights) {
-                    weight.apply(unaryFunction, true);
-                    if (currentNoise > minNoise) currentNoise *= noiseDecay;
-                }
-            }
+            for (Matrix layerNormalizedWeight : layerNormalizedWeights) layerNormalizedWeight.noise(currentNoise, true);
+            currentNoise *= currentNoise > minNoise ? noiseDecay : 1;
         }
     }
 

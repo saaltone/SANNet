@@ -5,16 +5,18 @@
 
 package core.layer.regularization;
 
-import core.layer.NeuralNetworkLayer;
+import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements gradient clipping.<br>
@@ -23,7 +25,7 @@ import java.util.HashSet;
  * Reference: <a href="https://hackernoon.com/gradient-clipping-57f04f0adae">...</a><br>
  *
  */
-public class GradientClipping extends AbstractRegularizationLayer {
+public class GradientClipping extends AbstractExecutionLayer {
 
     /**
      * Parameter name types for gradient clipping.
@@ -39,10 +41,10 @@ public class GradientClipping extends AbstractRegularizationLayer {
     private double threshold;
 
     /**
-     * Regularized weight of next layer.
+     * Input matrices for procedure construction.
      *
      */
-    private HashSet<Matrix> nextLayerRegularizedWeights;
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for gradient clipping layer.
@@ -91,38 +93,90 @@ public class GradientClipping extends AbstractRegularizationLayer {
     }
 
     /**
-     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     * Checks if layer is recurrent layer type.
      *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     * @return always false.
      */
-    protected void defineProcedure() throws NeuralNetworkException {
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) if (nextLayer.getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight normalization. Next layer #" + nextLayer.getLayerIndex() + " does not contain any weights.");
+    public boolean isRecurrentLayer() { return false; }
 
-        nextLayerRegularizedWeights = new HashSet<>();
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayerRegularizedWeights.addAll(nextLayer.getRegularizedWeights());
+    /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
     }
 
     /**
-     * Takes single backward processing step to process layer output gradient(s) towards input.<br>
-     * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
-     * Applies additionally any regularization defined for layer.<br>
+     * Returns weight set.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return weight set.
      */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
-        super.backwardProcess();
+    protected WeightSet getWeightSet() {
+        return null;
+    }
 
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
-            HashMap<Matrix, Matrix> nextLayerWeightGradients = nextLayer.getLayerWeightGradients();
-            for (Matrix weight : nextLayerRegularizedWeights) {
-                Matrix weightGradientSum = nextLayerWeightGradients.get(weight);
-                if (weightGradientSum != null) {
-                    double weightGradientSumL2norm = Math.sqrt(weightGradientSum.norm(2));
-                    if (weightGradientSumL2norm > threshold) weightGradientSum.multiplyBy(threshold / weightGradientSumL2norm);
-                }
-            }
-        }
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+    }
+
+    /**
+     * Returns input matrices for procedure construction.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     * @return input matrix for procedure construction.
+     */
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        inputs = new TreeMap<>();
+        Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
+        inputs.put(0, input);
+        return inputs;
+    }
+
+    /**
+     * Builds forward procedure and implicitly builds backward procedure.
+     *
+     * @return output of forward procedure.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix output = inputs.get(0);
+        output = output.gradientClip(threshold, false);
+        output.setName("Output");
+
+        return output;
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    public HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
+    }
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    public HashSet<Matrix> getConstantMatrices() {
+        return new HashSet<>();
+    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
     }
 
     /**

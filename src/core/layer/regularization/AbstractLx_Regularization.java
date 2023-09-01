@@ -39,7 +39,7 @@ public abstract class AbstractLx_Regularization extends AbstractRegularizationLa
     private double lambda;
 
     /**
-     * Regularized weight of next layer.
+     * Regularized weights of next layer.
      *
      */
     private final HashSet<Matrix> layerRegularizedWeights = new HashSet<>();
@@ -162,10 +162,8 @@ public abstract class AbstractLx_Regularization extends AbstractRegularizationLa
      */
     public double error() throws MatrixException, DynamicParamException {
         double weightSum = 0;
-        for (NeuralNetworkLayer previousNeuralNetworkLayer : previousNeuralNetworkLayers) {
-            for (Matrix weight : previousNeuralNetworkLayer.getRegularizedWeights()) {
-                weightSum += weight.apply(UnaryFunctionType.ABS).sum();
-            }
+        for (Matrix layerRegularizedWeight : layerRegularizedWeights) {
+            weightSum += layerRegularizedWeight.apply(UnaryFunctionType.ABS).sum();
         }
         return lambda * weightSum;
     }

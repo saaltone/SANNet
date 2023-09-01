@@ -5,13 +5,18 @@
 
 package core.layer.regularization;
 
+import core.layer.AbstractExecutionLayer;
+import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
 import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
-import utils.sampling.Sequence;
+
+import java.util.HashSet;
+import java.util.TreeMap;
 
 /**
  * Implements drop out regularization method for layer weights (parameters).<br>
@@ -21,7 +26,7 @@ import utils.sampling.Sequence;
  * Reference: <a href="https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf">...</a><br>
  *
  */
-public class Dropout extends AbstractRegularizationLayer {
+public class Dropout extends AbstractExecutionLayer {
 
     /**
      * Parameter name types for drop out.
@@ -43,6 +48,12 @@ public class Dropout extends AbstractRegularizationLayer {
      *
      */
     private boolean monte_carlo;
+
+    /**
+     * Input matrices for procedure construction.
+     *
+     */
+    private TreeMap<Integer, Matrix> inputs;
 
     /**
      * Constructor for drop out layer.
@@ -94,26 +105,90 @@ public class Dropout extends AbstractRegularizationLayer {
     }
 
     /**
-     * Takes single forward processing step to process layer input(s).<br>
+     * Checks if layer is recurrent layer type.
      *
+     * @return always false.
+     */
+    public boolean isRecurrentLayer() { return false; }
+
+    /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
+
+    /**
+     * Returns weight set.
+     *
+     * @return weight set.
+     */
+    protected WeightSet getWeightSet() {
+        return null;
+    }
+
+    /**
+     * Initializes neural network layer weights.
+     *
+     */
+    public void initializeWeights() {
+    }
+
+    /**
+     * Returns input matrices for procedure construction.
+     *
+     * @param resetPreviousInput if true resets also previous input.
+     * @return input matrix for procedure construction.
+     */
+    public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
+        inputs = new TreeMap<>();
+        Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth(), Initialization.ONE);
+        input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
+        inputs.put(0, input);
+        return inputs;
+    }
+
+    /**
+     * Builds forward procedure and implicitly builds backward procedure.
+     *
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void forwardProcess() throws MatrixException {
-        if (isTraining() || monte_carlo) {
-            this.reset();
-            Sequence inputSequence = getDefaultLayerInput();
-            for (Matrix sample : inputSequence.values()) {
-                // Implements forward step for inverted drop out.<br>
-                // Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
-                // During training phase it also compensates all remaining inputs by dividing by probability.<br>
-                sample.multiplyBy(1 / probability);
-                sample.setMask();
-                sample.getMask().setProbability(probability);
-                sample.getMask().maskRowByProbability();
-            }
-            setLayerOutputs(inputSequence);
-        }
-        else passLayerOutputs();
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix output = inputs.get(0);
+        output = output.dropout(probability, monte_carlo, true);
+        output.setName("Output");
+
+        return output;
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    public HashSet<Matrix> getStopGradients() {
+        return new HashSet<>();
+    }
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    public HashSet<Matrix> getConstantMatrices() {
+        return new HashSet<>();
+    }
+
+    /**
+     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
+     *
+     * @return number of truncated steps.
+     */
+    protected int getTruncateSteps() {
+        return -1;
     }
 
     /**
