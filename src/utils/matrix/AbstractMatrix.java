@@ -6,10 +6,7 @@
 package utils.matrix;
 
 import utils.configurable.DynamicParamException;
-import utils.matrix.operation.FlattenMatrixOperation;
-import utils.matrix.operation.JoinMatrixOperation;
-import utils.matrix.operation.UnflattenMatrixOperation;
-import utils.matrix.operation.UnjoinMatrixOperation;
+import utils.matrix.operation.*;
 import utils.procedure.ProcedureFactory;
 
 import java.io.Serial;
@@ -1508,14 +1505,65 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
-     * Returns entropy of matrix.
+     * Implements inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
      *
-     * @param asDistribution if true matrix is forced into distribution prior calculating entropy.
-     * @return entropy of matrix.
+     * @param probability probability
+     * @param monte_carlo if true is monte carlo dropout otherwise normal dropout.
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double entropy(boolean asDistribution) throws MatrixException {
-        return divide(sum()).entropy();
+    public Matrix dropout(double probability, boolean monte_carlo, boolean inplace) throws MatrixException {
+        if (!hasProcedureFactory()) return applyDropout(probability, inplace);
+        else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyDropout(probability, inplace);
+            ProcedureFactory.synchronize(this, result);
+            getProcedureFactory().createDropoutExpression(expressionLock, this, result, probability, monte_carlo);
+            return result;
+        }
+    }
+
+    /**
+     * Implements inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
+     *
+     * @param probability probability
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public abstract Matrix applyDropout(double probability, boolean inplace) throws MatrixException;
+
+    /**
+     * Clips gradient matrix against threshold.
+     *
+     * @param threshold threshold.
+     * @param inplace if true gradient clipping in done in place otherwise not.
+     * @return clipped gradient matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix gradientClip(double threshold, boolean inplace) throws MatrixException {
+        Matrix result = this.copy();
+        if (hasProcedureFactory()) {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            ProcedureFactory.synchronize(this, result);
+            getProcedureFactory().createGradientClippingExpression(expressionLock, this, result, threshold);
+        }
+        return result;
+    }
+
+    /**
+     * Returns softmax of this matrix.
+     *
+     * @return softmax of matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    public Matrix softmax() throws MatrixException {
+        return softmax(1);
     }
 
     /**
