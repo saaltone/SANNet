@@ -82,10 +82,10 @@ public class UnaryFunction implements Serializable {
     private double SELULambda = 1.0507;
 
     /**
-     * Stores tau value for Gumbel Softmax.
+     * Stores tau value for Softmax.
      *
      */
-    private double gumbelSoftmaxTau = 1.5;
+    private double softmaxTau = 1.5;
 
     /**
      * Constructor for custom unary function.
@@ -128,7 +128,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for Gumbel Softmax 1.5.<br>
+     *     - tau: default value for (Gumbel) Softmax 1.5.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters used for function.
@@ -147,8 +147,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for Gumbel Softmax 1.5.<br>
-     *     - tauDecay: default value for Gumbel Softmax 0.999. <br>
+     *     - tau: default value for (Gumbel) Softmax 1.5.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters as DynamicParam type for function.
@@ -297,14 +296,10 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * value * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3))));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3)))) + (value * (0.134145 * Math.pow(value, 2) + 1) * Math.pow(1 / Math.cosh((0.044715 * Math.pow(value, 3) + value) * Math.sqrt(2 / Math.PI)), 2)) / Math.sqrt(2 * Math.PI);
             }
-            case SOFTMAX -> {
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
-            }
-            case GUMBEL_SOFTMAX -> {
+            case SOFTMAX, GUMBEL_SOFTMAX -> {
                 if (params != null) {
                     DynamicParam dynamicParam = new DynamicParam(params, "(tau:DOUBLE)");
-                    if (dynamicParam.hasParam("tau")) gumbelSoftmaxTau = dynamicParam.getValueAsDouble("tau");
+                    if (dynamicParam.hasParam("tau")) softmaxTau = dynamicParam.getValueAsDouble("tau");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
@@ -358,12 +353,12 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Return Gumbel softmax tau.
+     * Returns Softmax tau.
      *
-     * @return Gumbel softmax tau.
+     * @return Softmax tau.
      */
-    public double getGumbelSoftmaxTau() {
-        return gumbelSoftmaxTau;
+    public double getSoftmaxTau() {
+        return softmaxTau;
     }
 
     /**
