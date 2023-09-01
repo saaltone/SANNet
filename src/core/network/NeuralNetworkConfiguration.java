@@ -28,6 +28,12 @@ public class NeuralNetworkConfiguration {
     private final TreeMap<Integer, InputLayer> inputLayers = new TreeMap<>();
 
     /**
+     * Reference to input layer groups of neural network.
+     *
+     */
+    private final TreeMap<Integer, TreeMap<Integer, InputLayer>> inputLayerGroups = new TreeMap<>();
+
+    /**
      * List containing hidden layers for neural network.
      *
      */
@@ -38,6 +44,12 @@ public class NeuralNetworkConfiguration {
      *
      */
     private final TreeMap<Integer, OutputLayer> outputLayers = new TreeMap<>();
+
+    /**
+     * Reference to output layer groups of neural network.
+     *
+     */
+    private final TreeMap<Integer, TreeMap<Integer, OutputLayer>> outputLayerGroups = new TreeMap<>();
 
     /**
      * List of neural network layers.
@@ -67,20 +79,51 @@ public class NeuralNetworkConfiguration {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public int addInputLayer(String params) throws NeuralNetworkException, DynamicParamException {
+        return addInputLayer(-1 , params);
+    }
+
+    /**
+     * Adds input layer to neural network.
+     *
+     * @param inputLayerGroupID input layer group ID.
+     * @param params parameters for input layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of input layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public int addInputLayer(int inputLayerGroupID, String params) throws NeuralNetworkException, DynamicParamException {
         int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
-        InputLayer inputLayer = new InputLayer(neuralNetworkLayerIndex, params);
-        inputLayers.put(inputLayers.size(), inputLayer);
+        int currentInputLayerGroupId = inputLayerGroupID > -1 ? inputLayerGroupID : 0;
+
+        InputLayer inputLayer = new InputLayer(neuralNetworkLayerIndex, currentInputLayerGroupId, params);
+        int inputLayerID = inputLayers.size();
+        inputLayers.put(inputLayerID, inputLayer);
+
+        TreeMap<Integer, InputLayer> inputLayerGroup;
+        if (inputLayerGroups.containsKey(currentInputLayerGroupId)) inputLayerGroup = inputLayerGroups.get(currentInputLayerGroupId);
+        else inputLayerGroups.put(currentInputLayerGroupId, inputLayerGroup = new TreeMap<>());
+        inputLayerGroup.put(inputLayerID, inputLayer);
+
         neuralNetworkLayers.put(neuralNetworkLayers.size(), inputLayer);
         return neuralNetworkLayerIndex;
     }
 
     /**
-     * Returns inputs layers.
+     * Returns input layers.
      *
      * @return input layers.
      */
     public TreeMap<Integer, InputLayer> getInputLayers() {
         return new TreeMap<>() {{ putAll(inputLayers); }};
+    }
+
+    /**
+     * Returns input layer groups.
+     *
+     * @return input layer groups.
+     */
+    public TreeMap<Integer, TreeMap<Integer, InputLayer>> getInputLayerGroups() {
+        return new TreeMap<>() {{ putAll(inputLayerGroups); }};
     }
 
     /**
@@ -228,6 +271,20 @@ public class NeuralNetworkConfiguration {
     /**
      * Adds output layer to neural network.
      *
+     * @param outputLayerGroupID output layer group ID.
+     * @param lossFunctionType loss function type for output layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addOutputLayer(int outputLayerGroupID, BinaryFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addOutputLayer(outputLayerGroupID, lossFunctionType, null);
+    }
+
+    /**
+     * Adds output layer to neural network.
+     *
      * @param lossFunctionType loss function type for output layer.
      * @param params parameters for loss function.
      * @return neural network layer index.
@@ -236,9 +293,34 @@ public class NeuralNetworkConfiguration {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int addOutputLayer(BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addOutputLayer(-1, lossFunctionType, params);
+    }
+
+    /**
+     * Adds output layer to neural network.
+     *
+     * @param outputLayerGroupID output layer group ID.
+     * @param lossFunctionType loss function type for output layer.
+     * @param params parameters for loss function.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addOutputLayer(int outputLayerGroupID, BinaryFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        int currentOutputLayerGroupId = outputLayerGroupID > -1 ? outputLayerGroupID : 0;
         int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
-        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndex, new LossFunction(lossFunctionType, params));
-        outputLayers.put(outputLayers.size(), outputLayer);
+
+        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndex, currentOutputLayerGroupId, new LossFunction(lossFunctionType, params));
+
+        int outputLayerID = outputLayers.size();
+        outputLayers.put(outputLayerID, outputLayer);
+
+        TreeMap<Integer, OutputLayer> outputLayerGroup;
+        if (outputLayerGroups.containsKey(currentOutputLayerGroupId)) outputLayerGroup = outputLayerGroups.get(currentOutputLayerGroupId);
+        else outputLayerGroups.put(currentOutputLayerGroupId, outputLayerGroup = new TreeMap<>());
+        outputLayerGroup.put(outputLayerID, outputLayer);
+
         neuralNetworkLayers.put(neuralNetworkLayers.size(), outputLayer);
         return neuralNetworkLayerIndex;
     }
@@ -253,12 +335,21 @@ public class NeuralNetworkConfiguration {
     }
 
     /**
-     * Returns output layers of neural network.
+     * Returns output layers.
      *
-     * @return output layers of neural network.
+     * @return output layers.
      */
     public TreeMap<Integer, OutputLayer> getOutputLayers() {
         return new TreeMap<>() {{ putAll(outputLayers); }};
+    }
+
+    /**
+     * Returns output layer groups.
+     *
+     * @return output layer groups.
+     */
+    public TreeMap<Integer, TreeMap<Integer, OutputLayer>> getOutputLayerGroups() {
+        return new TreeMap<>() {{ putAll(outputLayerGroups); }};
     }
 
     /**
