@@ -26,6 +26,12 @@ import java.util.Map;
 public class OutputLayer extends AbstractPlainLayer {
 
     /**
+     * Layer group index.
+     *
+     */
+    private final int layerGroupIndex;
+
+    /**
      * Neural network loss function for output layer (single output case).
      *
      */
@@ -64,8 +70,22 @@ public class OutputLayer extends AbstractPlainLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public OutputLayer(int layerIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
+        this(layerIndex, -1,  lossFunction);
+    }
+
+    /**
+     * Constructor for output layer.
+     *
+     * @param layerIndex index of layer.
+     * @param layerGroupIndex index of layer group.
+     * @param lossFunction loss function for output layer.
+     * @throws NeuralNetworkException throws exception if setting of activation function fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public OutputLayer(int layerIndex, int layerGroupIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
         super(layerIndex, null);
         this.lossFunction = lossFunction;
+        this.layerGroupIndex = layerGroupIndex > -1 ? layerGroupIndex : 0;
     }
 
     /**
@@ -195,7 +215,7 @@ public class OutputLayer extends AbstractPlainLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void print() throws NeuralNetworkException {
-        System.out.println(getLayerName() + " [ " + getLayerConnections() + ", Loss function: " + lossFunction.getName() + " ]");
+        System.out.println(getLayerName() + " [ " + getLayerConnections() + ", Loss function: " + lossFunction.getName() + ", Layer Group ID: " + layerGroupIndex + " ]");
     }
 
     /**

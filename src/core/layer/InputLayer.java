@@ -15,6 +15,12 @@ import utils.configurable.DynamicParamException;
 public class InputLayer extends AbstractPlainLayer {
 
     /**
+     * Layer group index.
+     *
+     */
+    private final int layerGroupIndex;
+
+    /**
      * Constructor for input layer.
      *
      * @param layerIndex index of layer.
@@ -23,7 +29,21 @@ public class InputLayer extends AbstractPlainLayer {
      * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
      */
     public InputLayer(int layerIndex, String params) throws DynamicParamException, NeuralNetworkException {
+        this(layerIndex, -1, params);
+    }
+
+    /**
+     * Constructor for input layer.
+     *
+     * @param layerIndex index of layer.
+     * @param layerGroupIndex index of layer group.
+     * @param params parameters for input layer.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws NeuralNetworkException throws exception if minimum layer dimensions are not met.
+     */
+    public InputLayer(int layerIndex, int layerGroupIndex, String params) throws DynamicParamException, NeuralNetworkException {
         super(layerIndex, params);
+        this.layerGroupIndex = layerGroupIndex > -1 ? layerGroupIndex : 0;
     }
 
     /**
@@ -82,7 +102,7 @@ public class InputLayer extends AbstractPlainLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void print() throws NeuralNetworkException {
-        System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + " ]");
+        System.out.println(getLayerName() + " [ Width: " + getLayerWidth() + ", Height: " + getLayerHeight() + ", Depth: " + getLayerDepth() + ", Layer Group ID: " + layerGroupIndex + " ]");
     }
 
 }

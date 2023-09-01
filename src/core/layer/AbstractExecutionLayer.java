@@ -7,7 +7,6 @@ package core.layer;
 
 import core.network.NeuralNetworkException;
 import core.optimization.Optimizer;
-import core.optimization.OptimizerFactory;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.procedure.ForwardProcedure;
@@ -53,12 +52,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      */
     private final HashMap<Integer, Matrix> weightsMap = new HashMap<>();
-
-    /**
-     * Optimizer for layer.
-     *
-     */
-    protected Optimizer optimizer = OptimizerFactory.createDefault();
 
     /**
      * If true neural network is in training mode otherwise false.
@@ -112,6 +105,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     protected void setTraining(boolean isTraining) {
         this.isTraining = isTraining;
+        if (procedure != null) procedure.setActive(isTraining);
     }
 
     /**
@@ -152,16 +146,6 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
         if (procedure == null) initializeWeights();
         procedure = new ProcedureFactory().getProcedure(this);
-    }
-
-    /**
-     * Returns name of forward procedure.
-     *
-     * @return name of forward procedure.
-     * @throws NeuralNetworkException throws exception if operation fails.
-     */
-    public String getProcedureName() throws NeuralNetworkException {
-        return getLayerName();
     }
 
     /**
@@ -291,7 +275,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @param optimizer optimizer to be added.
      */
     public void setOptimizer(Optimizer optimizer) {
-        this.optimizer = optimizer;
+        if (procedure != null) procedure.setOptimizer(optimizer);
     }
 
     /**
@@ -299,7 +283,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      */
     public void resetOptimizer() {
-        optimizer.reset();
+        if (procedure != null) procedure.resetOptimizer();
     }
 
     /**
@@ -309,7 +293,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void optimize() throws MatrixException, DynamicParamException {
-        for (Map.Entry<Matrix, Matrix> entry : getLayerWeightGradients().entrySet()) optimizer.optimize(entry.getKey(), entry.getValue());
+        if (procedure != null) procedure.optimize();
     }
 
     /**
@@ -352,7 +336,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      * @return optimizer by name.
      */
     protected String getOptimizerByName() {
-        return "Optimizer: " + optimizer.getName();
+        return "Optimizer: " + (procedure != null ? procedure.getOptimizerByName() : "N/A");
     }
 
     /**
