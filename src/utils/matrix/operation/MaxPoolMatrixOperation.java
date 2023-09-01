@@ -29,13 +29,11 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
      * @param depth depth for operation.
-     * @param inputRowSize number of input rows.
-     * @param inputColumnSize number of input columns.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
      * @param stride stride step
      */
-    public MaxPoolMatrixOperation(int rows, int columns, int depth, int inputRowSize, int inputColumnSize, int filterRowSize, int filterColumnSize, int stride) {
+    public MaxPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
         super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
     }
 

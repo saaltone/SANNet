@@ -97,8 +97,8 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
         this.first = first;
         asFunction = true;
         switch (unaryFunctionType) {
-            case SOFTMAX -> result = first.softmax();
-            case GUMBEL_SOFTMAX -> result = first.gumbelSoftmax(unaryFunction.getGumbelSoftmaxTau());
+            case SOFTMAX -> result = first.softmax(unaryFunction.getSoftmaxTau());
+            case GUMBEL_SOFTMAX -> result = first.gumbelSoftmax(unaryFunction.getSoftmaxTau());
             case TRANSPOSE -> {
                 result = first.getNewMatrix(first.getColumns(), first.getRows(), getDepth());
                 applyMatrixOperation();
