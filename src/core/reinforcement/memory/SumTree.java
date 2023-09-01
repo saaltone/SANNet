@@ -16,9 +16,11 @@ import java.util.*;
  * Links leaf nodes together as forward cycled list.<br>
  * Stores mapping of state transition and each leaf node containing respective state transition.<br>
  * <br>
- * Reference: <a href="https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-re<a href="play">...</a>">and https://github.com/jaromiru/AI-blog/blob</a>/master/SumTree.py <br>
+ * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay
+ * Reference: https://github.com/jaromiru/AI-blog/blob/master/SumTree.py
  *
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 public class SumTree implements SearchTree, Serializable {
 
     @Serial
