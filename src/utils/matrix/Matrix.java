@@ -891,13 +891,71 @@ public interface Matrix {
     double entropy() throws MatrixException;
 
     /**
-     * Returns entropy of matrix.
+     * Returns binomial distribution.
      *
-     * @param asDistribution if true matrix is forced into distribution prior calculating entropy.
-     * @return entropy of matrix.
+     * @param probability probability.
+     * @return number of successful trials.
+     */
+    int getBinomial(double probability);
+
+    /**
+     * Returns binomial distribution.
+     *
+     * @param numberOfTrials number of trials.
+     * @param probability probability.
+     * @return number of successful trials.
+     */
+    int getBinomial(int numberOfTrials, double probability);
+
+    /**
+     * Returns multinomial distribution. Assumes single trial.
+     *
+     * @return multinomial distribution.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    double entropy(boolean asDistribution) throws MatrixException;
+    Matrix getMultinomial() throws MatrixException;
+
+    /**
+     * Returns multinomial distribution.
+     *
+     * @param numberOfTrials number of trials.
+     * @return multinomial distribution.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix getMultinomial(int numberOfTrials) throws MatrixException;
+
+    /**
+     * Clips gradient matrix against threshold.
+     *
+     * @param threshold threshold.
+     * @param inplace if true gradient clipping in done in place otherwise not.
+     * @return clipped gradient matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix gradientClip(double threshold, boolean inplace) throws MatrixException;
+
+    /**
+     * Implements inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
+     *
+     * @param probability probability
+     * @param monte_carlo if true is monte carlo dropout otherwise normal dropout.
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix dropout(double probability, boolean monte_carlo, boolean inplace) throws MatrixException;
+
+    /**
+     * Implements matrix noising.
+     *
+     * @param noise noise
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix noise(double noise, boolean inplace) throws MatrixException;
 
     /**
      * Returns softmax of this matrix.
@@ -906,6 +964,15 @@ public interface Matrix {
      * @throws MatrixException thrown if index dimensions do not match.
      */
     Matrix softmax() throws MatrixException;
+
+    /**
+     * Returns softmax of this matrix.
+     *
+     * @param softmaxTau tau value for Softmax.
+     * @return softmax of matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     */
+    Matrix softmax(double softmaxTau) throws MatrixException;
 
     /**
      * Returns Gumbel softmax of this matrix.<br>
@@ -920,11 +987,11 @@ public interface Matrix {
      * Returns Gumbel softmax of this matrix.<br>
      * Applies sigmoid prior log function plus adds Gumbel noise.<br>
      *
-     * @param gumbelSoftmaxTau tau value for Gumbel Softmax.
+     * @param softmaxTau tau value for Softmax.
      * @return Gumbel softmax of matrix.
      * @throws MatrixException thrown if index dimensions do not match.
      */
-    Matrix gumbelSoftmax(double gumbelSoftmaxTau) throws MatrixException;
+    Matrix gumbelSoftmax(double softmaxTau) throws MatrixException;
 
     /**
      * Returns softmax gradient of this matrix.
