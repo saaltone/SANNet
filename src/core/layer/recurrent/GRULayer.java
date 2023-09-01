@@ -20,7 +20,8 @@ import java.util.TreeMap;
 /**
  * Implements gated recurrent unit (GRU).<br>
  * <br>
- * Reference: <a href="https://en.wikipedia.org/wiki/Gated_recurrent_<a href="unit">...</a>">and https://github.com/</a>erikvdplas/gru-rnn<br>
+ * Reference: https://en.wikipedia.org/wiki/Gated_recurrent_unit
+ * Reference: https://github.com/erikvdplas/gru-rnn
  * <br>
  * Equations applied for forward operation:<br>
  *     z = sigmoid(Wz * x + Uz * out(t-1) + bz) → Update gate<br>
@@ -29,6 +30,7 @@ import java.util.TreeMap;
  *     s = (1 - z) x h + z x out(t-1) → Internal state<br>
  *
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 public class GRULayer extends AbstractRecurrentLayer {
 
     /**
