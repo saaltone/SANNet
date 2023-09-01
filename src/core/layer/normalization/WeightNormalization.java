@@ -165,11 +165,10 @@ public class WeightNormalization extends AbstractExecutionLayer {
     protected void defineProcedure() throws MatrixException, DynamicParamException {
         procedures = new HashMap<>();
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
-            HashSet<Matrix> nextLayerNormalizedWeights = nextLayer.getNormalizedWeights();
-            for (Matrix weight : nextLayerNormalizedWeights) {
-                input = weight;
+            for (Matrix normalizedWeight : nextLayer.getNormalizedWeights()) {
+                input = normalizedWeight;
                 Procedure procedure = new ProcedureFactory().getProcedure(this);
-                procedures.put(weight, procedure);
+                procedures.put(normalizedWeight, procedure);
             }
         }
     }

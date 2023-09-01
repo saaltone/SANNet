@@ -380,7 +380,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
                 for (Map.Entry<Integer, Matrix> entry : inputSequence.entrySet()) {
                     int sampleIndex = entry.getKey();
                     Matrix inputSample = entry.getValue();
-                    inputSequence.get(sampleIndex);
                     layerOutputs.put(sampleIndex, inputSample.subtract(averageMean).multiply(weightSet.gamma).add(weightSet.beta));
                 }
             }
