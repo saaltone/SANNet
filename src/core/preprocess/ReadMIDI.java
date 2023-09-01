@@ -322,23 +322,24 @@ public class ReadMIDI {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public HashMap<Integer, HashMap<Integer, Matrix>> readFile(String fileName) throws InvalidMidiDataException, IOException, MatrixException {
-        return readFile(new ArrayList<>() {{ add(fileName); }}, 1, false, 0, 25);
+        return readFile(new ArrayList<>() {{ add(fileName); }}, 1, false, 0, Long.MAX_VALUE, 25);
     }
 
     /**
      * Reads and encodes MIDI files.
      *
-     * @param fileNames MIDI files.
-     * @param numberOfInputs number of inputs.
-     * @param encodeNoteOffs if true encodes note offs otherwise does not include note offs.
-     * @param minTickDelta minimum tick delta
+     * @param fileNames       MIDI files.
+     * @param numberOfInputs  number of inputs.
+     * @param encodeNoteOffs  if true encodes note offs otherwise does not include note offs.
+     * @param minTickDelta    minimum tick delta
+     * @param maxTickDelta    maximum tick delta
      * @param maxEncodedTicks maximum number of encoded ticks.
      * @return encoded inputs and outputs.
      * @throws InvalidMidiDataException if opening file fails throws exception.
-     * @throws IOException if opening file fails throws exception.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException              if opening file fails throws exception.
+     * @throws MatrixException          throws exception if matrix operation fails.
      */
-    public HashMap<Integer, HashMap<Integer, Matrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, long minTickDelta, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
+    public HashMap<Integer, HashMap<Integer, Matrix>> readFile(ArrayList<String> fileNames, int numberOfInputs, boolean encodeNoteOffs, long minTickDelta, long maxTickDelta, int maxEncodedTicks) throws InvalidMidiDataException, IOException, MatrixException {
         HashMap<Integer, HashMap<Integer, Matrix>> result = new HashMap<>();
         for (int index = 0; index < 3 * (numberOfInputs + 1); index++) result.put(index, new HashMap<>());
 
@@ -365,7 +366,7 @@ public class ReadMIDI {
                     MidiEvent midiEvent = track.get(trackIndex);
                     if (midiEvent.getMessage() instanceof ShortMessage shortMessage) {
                         long tick = midiEvent.getTick();
-                        long tickDelta = Math.max(minTickDelta, tick - previousTick);
+                        long tickDelta = Math.min(maxTickDelta, Math.max(minTickDelta, tick - previousTick));
                         previousTick = tick;
                         int keyValue = shortMessage.getData1() + metadata.getNoteOffset();
                         switch (shortMessage.getCommand()) {
