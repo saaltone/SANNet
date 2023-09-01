@@ -19,10 +19,11 @@ import java.util.TreeMap;
 /**
  * Implements abstract attention layer.<br>
  *
- * Reference: <a href="https://machinelearningmastery.com/adding-a-custom-attention-layer-to-recurrent-neural-network-in-keras/">...</a><<a href="br>
- ">* Reference: https://www.analyticsvidhya.com/blog/2019/11/comprehensive-guide-attention-mechan</a>ism-deep-learning/<<a href="br>
- ">* Reference: https://analyticsindiamag.com/a-beginners-guide-to-using-attention-layer-i</a>n-neural-networks/<br>
+ * Reference: https://machinelearningmastery.com/adding-a-custom-attention-layer-to-recurrent-neural-network-in-keras/
+ * Reference: https://www.analyticsvidhya.com/blog/2019/11/comprehensive-guide-attention-mechanism-deep-learning/
+ * Reference: https://analyticsindiamag.com/a-beginners-guide-to-using-attention-layer-in-neural-networks/
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
 
     /**
