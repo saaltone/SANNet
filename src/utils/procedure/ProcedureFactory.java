@@ -551,14 +551,15 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param dilation dilation for operation.
      * @param stride stride for operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createMaxPoolExpression(double expressionLock, Matrix argument1, Matrix result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MaxPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), stride, filterRowSize, filterColumnSize));
+        storeExpression(new MaxPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), dilation, stride, filterRowSize, filterColumnSize));
     }
 
     /**
@@ -567,14 +568,15 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param dilation dilation for operation.
      * @param stride stride for operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createRandomPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createRandomPoolExpression(double expressionLock, Matrix argument1, Matrix result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new RandomPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), stride, filterRowSize, filterColumnSize));
+        storeExpression(new RandomPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), dilation, stride, filterRowSize, filterColumnSize));
     }
 
     /**
@@ -583,14 +585,15 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param dilation dilation for operation.
      * @param stride stride for operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createCyclicPoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createCyclicPoolExpression(double expressionLock, Matrix argument1, Matrix result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new CyclicPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), stride, filterRowSize, filterColumnSize));
+        storeExpression(new CyclicPoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), dilation, stride, filterRowSize, filterColumnSize));
     }
 
     /**
@@ -599,14 +602,15 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param dilation dilation for operation.
      * @param stride stride for operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public void createAveragePoolExpression(double expressionLock, Matrix argument1, Matrix result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new AveragePoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), stride, filterRowSize, filterColumnSize));
+        storeExpression(new AveragePoolExpression(currentExpressionID++, defineNode(argument1), defineNode(result), dilation, stride, filterRowSize, filterColumnSize));
     }
 
     /**
