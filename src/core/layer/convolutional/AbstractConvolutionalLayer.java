@@ -383,9 +383,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @throws NeuralNetworkException throws exception if layer dimensions do not match.
      */
     protected int getCurrentLayerWidth() throws NeuralNetworkException {
-        // Enlarge filter size with dilation factor.
-        filterRowSize = filterRowSize + (filterRowSize - 1) * (dilation - 1);
-
         if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
 
         return ((previousLayerWidth - filterRowSize) / stride) + 1;
@@ -398,9 +395,6 @@ public abstract class AbstractConvolutionalLayer extends AbstractExecutionLayer 
      * @throws NeuralNetworkException throws exception if layer dimensions do not match.
      */
     protected int getCurrentLayerHeight() throws NeuralNetworkException {
-        // Enlarge filter size with dilation factor.
-        filterColumnSize = filterColumnSize + (filterColumnSize - 1) * (dilation - 1);
-
         if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Convolutional layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride + " using dilation: " + dilation);
 
         return ((previousLayerHeight - filterColumnSize) / stride) + 1;
