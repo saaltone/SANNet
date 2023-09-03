@@ -1750,7 +1750,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = applyMaxPool(maxPos);
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createMaxPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createMaxPoolExpression(expressionLock, this, result, getDilation(), getStride(), getFilterRowSize(), getFilterColumnSize());
             return result;
         }
     }
@@ -1777,7 +1777,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = applyRandomPool(inputPos);
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createRandomPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createRandomPoolExpression(expressionLock, this, result, getDilation(), getStride(), getFilterRowSize(), getFilterColumnSize());
             return result;
         }
     }
@@ -1804,7 +1804,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = applyCyclicPool(inputPos);
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createCyclicPoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createCyclicPoolExpression(expressionLock, this, result, getDilation(), getStride(), getFilterRowSize(), getFilterColumnSize());
             return result;
         }
     }
@@ -1830,7 +1830,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = getProcedureFactory().startExpression(this);
             Matrix result = applyAveragePool();
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createAveragePoolExpression(expressionLock, this, result, getStride(), getFilterRowSize(), getFilterColumnSize());
+            getProcedureFactory().createAveragePoolExpression(expressionLock, this, result, getDilation(), getStride(), getFilterRowSize(), getFilterColumnSize());
             return result;
         }
     }

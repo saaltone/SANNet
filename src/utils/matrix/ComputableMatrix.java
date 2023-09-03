@@ -810,7 +810,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyMaxPool(HashMap<Integer, Integer> maxPos) throws MatrixException {
-        return new MaxPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, maxPos);
+        return new MaxPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getDilation(), getStride()).apply(this, maxPos);
     }
 
     /**
@@ -821,7 +821,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyRandomPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        return new RandomPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
+        return new RandomPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getDilation(), getStride()).apply(this, inputPos);
     }
 
     /**
@@ -832,7 +832,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyCyclicPool(HashMap<Integer, Integer> inputPos) throws MatrixException {
-        return new CyclicPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this, inputPos);
+        return new CyclicPoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getDilation(), getStride()).apply(this, inputPos);
     }
 
     /**
@@ -842,7 +842,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyAveragePool() throws MatrixException {
-        return new AveragePoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getStride()).apply(this);
+        return new AveragePoolMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getDepth(), getFilterRowSize(), getFilterColumnSize(), getDilation(), getStride()).apply(this);
     }
 
     /**
