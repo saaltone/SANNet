@@ -42,15 +42,16 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param result result of expression.
+     * @param dilation dilation of pooling operation.
      * @param stride stride of pooling operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public CyclicPoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public CyclicPoolExpression(int expressionID, Node argument1, Node result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("CYCLIC_POOL", "CYCLIC_POOL", expressionID, argument1, result);
 
-        cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
+        cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
         cyclicPoolGradientMatrixOperation = new CyclicPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
     }
 

@@ -34,16 +34,17 @@ public class AveragePoolExpression extends AbstractUnaryExpression {
      * @param expressionID unique ID for expression.
      * @param argument1 first argument.
      * @param result result of expression.
+     * @param dilation dilation of pooling operation.
      * @param stride stride of pooling operation.
      * @param filterRowSize filter row size for operation.
      * @param filterColumnSize filter column size for operation.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AveragePoolExpression(int expressionID, Node argument1, Node result, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
+    public AveragePoolExpression(int expressionID, Node argument1, Node result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
         super("AVERAGE_POOL", "AVERAGE_POOL", expressionID, argument1, result);
 
-        averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
-        averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, stride);
+        averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
+        averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
     }
 
     /**
