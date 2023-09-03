@@ -12,16 +12,22 @@ package utils.matrix.operation;
 public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOperation {
 
     /**
-     * Current input row.
+     * Current max row.
      *
      */
-    private int inputRow;
+    private int maxRow;
 
     /**
-     * Current input column.
+     * Current max column.
      *
      */
-    private int inputColumn;
+    private int maxColumn;
+
+    /**
+     * Max value
+     *
+     */
+    private transient double maxValue = Double.NEGATIVE_INFINITY;
 
     /**
      * Constructor for max pooling matrix operation.
@@ -31,64 +37,76 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param dilation dilation step
      * @param stride stride step
      */
-    public MaxPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
+    public MaxPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride);
     }
 
     /**
-     * Applies operation.
+     * Applies convolution operation.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
+     */
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double filterValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
+        if (maxValue < filterValue) {
+            maxValue = filterValue;
+            maxRow = inputRow;
+            maxColumn = inputColumn;
+        }
+    }
+
+    /**
+     * Applies masked convolution operation.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
+     */
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
+            applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
+        }
+    }
+
+    /**
+     * Starts convolutional operation
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
      */
-    protected void executeApply(int row, int column, int depth) {
-        inputRow = -1;
-        inputColumn = -1;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                int currentRow = row + filterRow;
-                int currentColumn = column + filterColumn;
-                double filterValue = input.getValue(currentRow, currentColumn, depth);
-                if (maxValue < filterValue) {
-                    maxValue = filterValue;
-                    inputRow = currentRow;
-                    inputColumn = currentColumn;
-                }
-            }
-        }
-        result.setValue(row, column, depth, maxValue);
+    protected void startOperation(int row, int column, int depth) {
+        maxRow = -1;
+        maxColumn = -1;
+        maxValue = Double.NEGATIVE_INFINITY;
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Finishes convolutional operation
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
      */
-    public void executeApplyMask(int row, int column, int depth) {
-        inputRow = -1;
-        inputColumn = -1;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                int currentRow = row + filterRow;
-                int currentColumn = column + filterColumn;
-                if (!hasMaskAt(currentRow, currentColumn, depth, input)) {
-                    double inputValue = input.getValue(currentRow, currentColumn, depth);
-                    if (maxValue < inputValue) {
-                        maxValue = inputValue;
-                        inputRow = currentRow;
-                        inputColumn = currentColumn;
-                    }
-                }
-            }
-        }
-        result.setValue(row, column, depth, maxValue);
+    protected void finishOperation(int row, int column, int depth) {
+        getResult().setValue(row, column, depth, maxValue);
+
+        super.finishOperation(row, column, depth);
     }
 
     /**
@@ -97,7 +115,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @return input row.
      */
     protected int getInputRow() {
-        return inputRow;
+        return maxRow;
     }
 
     /**
@@ -106,7 +124,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @return input column.
      */
     protected int getInputColumn() {
-        return inputColumn;
+        return maxColumn;
     }
 
 }

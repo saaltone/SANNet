@@ -44,52 +44,76 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param dilation dilation step
      * @param stride stride step
      */
-    public CyclicPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
+    public CyclicPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride);
     }
 
     /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
      */
-    public void executeApply(int row, int column, int depth) {
-        inputRow = row + currentRow;
-        inputColumn = column + currentColumn;
-        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
-
-        if(++currentRow >= filterRowSize) {
-            currentRow = 0;
-            if(++currentColumn >= filterColumnSize) currentColumn = 0;
-        }
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Applies masked convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
      */
-    public void executeApplyMask(int row, int column, int depth) {
-        while (hasMaskAt(currentRow, currentColumn, 0, input)) {
-            if(++currentRow >= filterRowSize) {
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        while (hasMaskAt(currentRow, currentColumn, depth, getTargetMatrix())) {
+            if(++currentRow >= getFilterRows()) {
                 currentRow = 0;
-                if(++currentColumn >= filterColumnSize) currentColumn = 0;
+                if(++currentColumn >= getFilterColumns()) currentColumn = 0;
             }
         }
+    }
 
+    /**
+     * Starts convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void startOperation(int row, int column, int depth) {
         inputRow = row + currentRow;
         inputColumn = column + currentColumn;
-        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
+    }
 
-        if(++currentRow >= filterRowSize) {
+    /**
+     * Finishes convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void finishOperation(int row, int column, int depth) {
+        getResult().setValue(row, column, depth, getTargetMatrix().getValue(inputRow, inputColumn, depth));
+
+        super.finishOperation(row, column, depth);
+
+        if(++currentRow >= getFilterRows()) {
             currentRow = 0;
-            if(++currentColumn >= filterColumnSize) currentColumn = 0;
+            if(++currentColumn >= getFilterColumns()) currentColumn = 0;
         }
     }
 

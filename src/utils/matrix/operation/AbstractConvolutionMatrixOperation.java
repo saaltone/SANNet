@@ -15,10 +15,10 @@ import utils.matrix.MatrixException;
 public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolutionOperation {
 
     /**
-     * Total input depth.
+     * Input depth.
      *
      */
-    protected int totalInputDepth;
+    protected int inputDepth;
 
     /**
      * Constructor for abstract convolution matrix operation.
@@ -34,7 +34,7 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
     public AbstractConvolutionMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, false);
     }
 
     /**
@@ -48,72 +48,68 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
     public Matrix apply(Matrix input, Matrix filter) throws MatrixException {
         setTargetMatrix(input);
         setInputMatrix(filter);
-        totalInputDepth = input.getDepth();
+        inputDepth = input.getDepth();
         setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
         applyMatrixOperation();
         return getResult();
     }
 
     /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void apply(int row, int column, int depth, double value) {
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                double filterValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
-                double sumInputValue = 0;
-                int inputRow = row + filterRow;
-                int inputColumn = column + filterColumn;
-                if (isDepthSeparable) {
-                    sumInputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
-                }
-                else {
-                    for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
-                        sumInputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
-                    }
-                }
-                getResult().addByValue(row, column, depth, sumInputValue * filterValue);
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double inputValue = 0;
+        if (getIsDepthSeparable()) {
+            inputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
+        }
+        else {
+            for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+                inputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
             }
         }
+        double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
+        double resultValue = inputValue * filterValue;
+        getResult().addByValue(row, column, depth, resultValue);
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Applies masked convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void applyMask(int row, int column, int depth, double value) {
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                if (!hasMaskAt(filterRow, filterColumn, depth, getInputMatrix())) {
-                    double filterValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth);
-                    double sumInputValue = 0;
-                    int inputRow = row + filterRow;
-                    int inputColumn = column + filterColumn;
-                    if (isDepthSeparable) {
-                        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
-                            sumInputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
-                        }
-                    }
-                    else {
-                        for (int inputDepth = 0; inputDepth < totalInputDepth; inputDepth++) {
-                            if (!hasMaskAt(inputRow, inputColumn, inputDepth, getTargetMatrix())) {
-                                sumInputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
-                            }
-                        }
-                    }
-                    getResult().addByValue(row, column, depth, sumInputValue * filterValue);
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double inputValue = 0;
+        if (getIsDepthSeparable()) {
+            if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
+                inputValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
+            }
+        }
+        else {
+            for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+                if (!hasMaskAt(inputRow, inputColumn, inputDepth, getTargetMatrix())) {
+                    inputValue += getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
                 }
             }
         }
+        double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
+        double resultValue = inputValue * filterValue;
+        getResult().addByValue(row, column, depth, resultValue);
     }
 
 }

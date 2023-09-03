@@ -12,43 +12,19 @@ import utils.matrix.MatrixException;
  * Implements average pooling gradient matrix operation.
  *
  */
-public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation {
-
-    /**
-     * Output gradient.
-     *
-     */
-    private Matrix outputGradient;
-
-    /**
-     * Input gradient.
-     *
-     */
-    private Matrix inputGradient;
+public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOperation {
 
     /**
      * Input gradient row size.
      *
      */
-    private final int inputGradientRowSize;
+    private final int inputRows;
 
     /**
      * Input gradient column size.
      *
      */
-    private final int inputGradientColumnSize;
-
-    /**
-     * Filter row size.
-     *
-     */
-    private final int filterRowSize;
-
-    /**
-     * Filter column size.
-     *
-     */
-    private final int filterColumnSize;
+    private final int inputColumns;
 
     /**
      * Inverted size of filter 1 / (filterRowSize * filterColumnSize)
@@ -64,14 +40,13 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param dilation dilation step
      * @param stride stride step
      */
-    public AveragePoolGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, true, stride);
-        this.inputGradientRowSize = rows + filterRowSize - 1;
-        this.inputGradientColumnSize = columns + filterColumnSize - 1;
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
+    public AveragePoolGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, true);
+        this.inputRows = rows + filterRowSize - 1;
+        this.inputColumns = columns + filterColumnSize - 1;
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
     }
 
@@ -83,45 +58,63 @@ public class AveragePoolGradientMatrixOperation extends AbstractMatrixOperation 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix outputGradient) throws MatrixException {
-        this.outputGradient = outputGradient;
-        inputGradient = outputGradient.getNewMatrix(inputGradientRowSize, inputGradientColumnSize, getDepth());
+        setTargetMatrix(outputGradient);
+        setResult(outputGradient.getNewMatrix(inputRows, inputColumns, getDepth()));
         applyMatrixOperation();
-        return inputGradient;
+        return getResult();
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return outputGradient;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void apply(int row, int column, int depth, double value) {
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
         double gradientValue = value * invertedFilterSize;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                inputGradient.addByValue(row + filterRow, column + filterColumn, depth, gradientValue);
-            }
-        }
+        getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
+    }
+
+    /**
+     * Applies masked convolution operation.
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
+     */
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
+    }
+
+    /**
+     * Starts convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void startOperation(int row, int column, int depth) {
+    }
+
+    /**
+     * Finishes convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void finishOperation(int row, int column, int depth) {
     }
 
 }

@@ -11,7 +11,7 @@ import utils.matrix.Matrix;
  * Implements abstract convolution operation.
  *
  */
-public abstract class AbstractConvolutionOperation extends AbstractMatrixOperation {
+public abstract class AbstractConvolutionOperation extends AbstractConvolutionalOperation {
 
     /**
      * Input matrix.
@@ -20,46 +20,16 @@ public abstract class AbstractConvolutionOperation extends AbstractMatrixOperati
     private Matrix inputMatrix;
 
     /**
-     * Target matrix.
-     *
-     */
-    private Matrix targetMatrix;
-
-    /**
-     * Result matrix.
-     *
-     */
-    private Matrix result;
-
-    /**
-     * Filter row size.
-     *
-     */
-    protected final int filterRowSize;
-
-    /**
-     * Filter column size.
-     *
-     */
-    protected final int filterColumnSize;
-
-    /**
-     * Matrix dilation value.
-     *
-     */
-    protected final int dilation;
-
-    /**
      * If true convolution is depth separable
      *
      */
-    protected final boolean isDepthSeparable;
+    private final boolean isDepthSeparable;
 
     /**
      * If true operation is executed as convolution otherwise as crosscorrelation
      *
      */
-    protected final boolean asConvolution;
+    private final boolean asConvolution;
 
     /**
      * Constructor for abstract convolution operation.
@@ -73,12 +43,10 @@ public abstract class AbstractConvolutionOperation extends AbstractMatrixOperati
      * @param stride           stride step
      * @param isDepthSeparable if true convolution is depth separable
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
+     * @param provideValue if true operation provides value when applying operation otherwise false.
      */
-    public AbstractConvolutionOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, false, stride);
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
-        this.dilation = dilation;
+    public AbstractConvolutionOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution, boolean provideValue) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, provideValue);
         this.isDepthSeparable = isDepthSeparable;
         this.asConvolution = asConvolution && (filterRowSize > 1 || filterColumnSize > 1);
     }
@@ -102,48 +70,12 @@ public abstract class AbstractConvolutionOperation extends AbstractMatrixOperati
     }
 
     /**
-     * Sets target matrix.
+     * Returns if convolution is depth separable.
      *
-     * @param targetMatrix target matrix.
+     * @return true if convolution is depth separable otherwise false.
      */
-    protected void setTargetMatrix(Matrix targetMatrix) {
-        this.targetMatrix = targetMatrix;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return targetMatrix;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    protected void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    protected Matrix getResult() {
-        return result;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+    protected boolean getIsDepthSeparable() {
+        return isDepthSeparable;
     }
 
     /**
@@ -153,7 +85,7 @@ public abstract class AbstractConvolutionOperation extends AbstractMatrixOperati
      * @return filter row.
      */
     protected int getFilterRow(int filterRow) {
-        return asConvolution ? filterRowSize - 1 - filterRow * dilation : filterRow * dilation;
+        return asConvolution ? getFilterRows() - 1 - filterRow : filterRow;
     }
 
     /**
@@ -163,7 +95,27 @@ public abstract class AbstractConvolutionOperation extends AbstractMatrixOperati
      * @return filter column.
      */
     protected int getFilterColumn(int filterColumn) {
-        return asConvolution ? filterColumnSize - 1 - filterColumn * dilation : filterColumn * dilation;
+        return asConvolution ? getFilterColumns() - 1 - filterColumn : filterColumn;
+    }
+
+    /**
+     * Starts convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void startOperation(int row, int column, int depth) {
+    }
+
+    /**
+     * Finishes convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void finishOperation(int row, int column, int depth) {
     }
 
 }

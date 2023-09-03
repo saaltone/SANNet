@@ -47,7 +47,7 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
     public AbstractConvolutionInputGradientMatrixOperation(int rows, int columns, int depth, int inputDepth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, !asConvolution);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, !asConvolution, true);
         this.inputDepth = inputDepth;
         this.inputGradientRowSize = rows + filterRowSize - 1;
         this.inputGradientColumnSize = columns + filterColumnSize - 1;
@@ -70,54 +70,52 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
     }
 
     /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void apply(int row, int column, int depth, double value) {
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                double gradientValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth) * value;
-                int inputRow = row + filterRow;
-                int inputColumn = column + filterColumn;
-                if (isDepthSeparable) {
-                    getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
-                }
-                else {
-                    for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
-                        getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
-                    }
-                }
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
+        double gradientValue = filterValue * value;
+        if (getIsDepthSeparable()) {
+            getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
+        }
+        else {
+            for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+                getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
             }
         }
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Applies masked convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void applyMask(int row, int column, int depth, double value) {
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow += dilation) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn += dilation) {
-                double gradientValue = getInputMatrix().getValue(getFilterRow(filterRow), getFilterColumn(filterColumn), depth) * value;
-                int inputRow = row + filterRow;
-                int inputColumn = column + filterColumn;
-                if (!hasMaskAt(filterRow, filterColumn, depth, getTargetMatrix())) {
-                    if (isDepthSeparable) {
-                        getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
-                    }
-                    else {
-                        for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
-                            getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
-                        }
-                    }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
+        double gradientValue = filterValue * value;
+        if (!hasMaskAt(filterRow, filterColumn, depth, getTargetMatrix())) {
+            if (getIsDepthSeparable()) {
+                getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
+            }
+            else {
+                for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+                    getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
                 }
             }
         }

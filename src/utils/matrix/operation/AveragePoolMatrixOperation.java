@@ -12,37 +12,19 @@ import utils.matrix.MatrixException;
  * Implements average pooling matrix operation.
  *
  */
-public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
-
-    /**
-     * Input matrix.
-     *
-     */
-    private Matrix input;
-
-    /**
-     * Result.
-     *
-     */
-    private Matrix result;
-
-    /**
-     * Number of rows in filter.
-     *
-     */
-    private final int filterRowSize;
-
-    /**
-     * Number of columns in filter.
-     *
-     */
-    private final int filterColumnSize;
+public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
 
     /**
      * Inverted size of filter = 1 / (rows * columns)
      *
      */
     private final double invertedFilterSize;
+
+    /**
+     * Sum value
+     *
+     */
+    private transient double sumValue = 0;
 
     /**
      * Constructor for average pooling matrix operation.
@@ -52,12 +34,11 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param dilation dilation step
      * @param stride stride step
      */
-    public AveragePoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, false, stride);
-        this.filterRowSize = filterRowSize;
-        this.filterColumnSize = filterColumnSize;
+    public AveragePoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, false);
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
     }
 
@@ -69,66 +50,67 @@ public class AveragePoolMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix input) throws MatrixException {
-        this.input = input;
-        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth());
+        setTargetMatrix(input);
+        setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
         applyMatrixOperation();
-        return result;
+        return getResult();
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void apply(int row, int column, int depth, double value) {
-        double sumValue = 0;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                sumValue += input.getValue(row + filterRow, column + filterColumn, depth);
-            }
-        }
-        result.setValue(row, column, depth, sumValue * invertedFilterSize);
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        double filterValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
+        sumValue += filterValue;
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Applies masked convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
      * @param value current value.
      */
-    public void applyMask(int row, int column, int depth, double value) {
-        double sumValue = 0;
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                if (!hasMaskAt(row + filterRow, column + filterColumn, depth, input)) {
-                    sumValue += input.getValue(row + filterRow, column + filterColumn, depth);
-                }
-            }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
+            applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
         }
-        result.setValue(row, column, depth, sumValue * invertedFilterSize);
+    }
+
+    /**
+     * Starts convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void startOperation(int row, int column, int depth) {
+        sumValue = 0;
+    }
+
+    /**
+     * Finishes convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void finishOperation(int row, int column, int depth) {
+        getResult().setValue(row, column, depth, sumValue * invertedFilterSize);
     }
 
 }

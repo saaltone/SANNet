@@ -5,7 +5,6 @@
 
 package utils.matrix.operation;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -19,13 +18,13 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * Current input row.
      *
      */
-    private int inputRow;
+    private int randomRow;
 
     /**
      * Current input column.
      *
      */
-    private int inputColumn;
+    private int randomColumn;
 
     /**
      * Random number generator.
@@ -41,49 +40,69 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param depth depth for operation.
      * @param filterRowSize filter size in rows.
      * @param filterColumnSize filter size in columns.
+     * @param dilation dilation step
      * @param stride stride step
      */
-    public RandomPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int stride) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, stride);
+    public RandomPoolMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride);
     }
 
     /**
-     * Applies operation.
+     * Applies convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
      */
-    public void executeApply(int row, int column, int depth) {
-        inputRow = row + random.nextInt(filterRowSize);
-        inputColumn = column + random.nextInt(filterRowSize);
-        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
     }
 
     /**
-     * Applies operation assuming masked matrices.
+     * Applies masked convolution operation.
      *
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param inputRow current input row.
+     * @param inputColumn current input column.
+     * @param filterRow current filter row.
+     * @param filterColumn current filter column.
+     * @param value current value.
      */
-    public void executeApplyMask(int row, int column, int depth) {
-        ArrayList<Integer> availableRows = new ArrayList<>();
-        ArrayList<Integer> availableColumns = new ArrayList<>();
-        for (int filterRow = 0; filterRow < filterRowSize; filterRow++) {
-            for (int filterColumn = 0; filterColumn < filterColumnSize; filterColumn++) {
-                int inputRow = row + filterRow;
-                int inputColumn = column + filterColumn;
-                if (!hasMaskAt(inputRow, inputColumn, depth, input)) {
-                    availableRows.add(inputRow);
-                    availableColumns.add(inputColumn);
-                }
-            }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+        while (hasMaskAt(randomRow, randomColumn, depth, getTargetMatrix())) {
+            startOperation(row, column, depth);
         }
-        int pos = random.nextInt(availableRows.size());
-        inputRow = availableRows.get(pos);
-        inputColumn = availableColumns.get(pos);
-        result.setValue(row, column, depth, input.getValue(inputRow, inputColumn, depth));
+    }
+
+    /**
+     * Starts convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void startOperation(int row, int column, int depth) {
+        randomRow = row + random.nextInt(getFilterRows());
+        randomColumn = column + random.nextInt(getFilterColumns());
+    }
+
+    /**
+     * Finishes convolutional operation
+     *
+     * @param row current row.
+     * @param column current column.
+     * @param depth current depth.
+     */
+    protected void finishOperation(int row, int column, int depth) {
+        getResult().setValue(row, column, depth, getTargetMatrix().getValue(randomRow, randomColumn, depth));
+
+        super.finishOperation(row, column, depth);
     }
 
     /**
@@ -92,7 +111,7 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @return input row.
      */
     protected int getInputRow() {
-        return inputRow;
+        return randomRow;
     }
 
     /**
@@ -101,7 +120,7 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @return input column.
      */
     protected int getInputColumn() {
-        return inputColumn;
+        return randomColumn;
     }
 
 }
