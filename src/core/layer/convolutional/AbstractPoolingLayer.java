@@ -5,12 +5,14 @@
 
 package core.layer.convolutional;
 
-import core.layer.AbstractExecutionLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.*;
+import utils.matrix.DMatrix;
+import utils.matrix.Initialization;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -19,7 +21,7 @@ import java.util.TreeMap;
  * Implements abstract pooling layer which implements common functionality for pooling layer.
  *
  */
-public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
+public abstract class AbstractPoolingLayer extends AbstractConvolutionLayer {
 
     /**
      * Parameter name types for abstract pooling layer.
@@ -27,50 +29,15 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      *     - filterRowSize row size of filter. Default size 2.<br>
      *     - filterColumnSize column size of filter. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
-     *     - avgPool: if true does average pooling otherwise does max pooling.<br>
+     *     - dilation: dilation step for filter. Default step 1.<br>
      *
      */
     private final static String paramNameTypes = "(filters:INT), " +
             "(filterSize:INT), " +
             "(filterRowSize:INT), " +
             "(filterColumnSize:INT), " +
-            "(stride:INT)";
-
-    /**
-     * Defines width of incoming image.
-     *
-     */
-    private int previousLayerWidth;
-
-    /**
-     * Defines height of incoming image.
-     *
-     */
-    private int previousLayerHeight;
-
-    /**
-     * Defines height of incoming image.
-     *
-     */
-    private int previousLayerDepth;
-
-    /**
-     * Row size for filter.
-     *
-     */
-    private int filterRowSize;
-
-    /**
-     * Column size for filter.
-     *
-     */
-    private int filterColumnSize;
-
-    /**
-     * Defines stride i.e. size of step when moving over image.
-     *
-     */
-    private int stride;
+            "(stride:INT), " +
+            "(dilation:INT), ";
 
     /**
      * Input matrices for procedure construction.
@@ -100,6 +67,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
         filterRowSize = 2;
         filterColumnSize = 2;
         stride = 1;
+        dilation = 1;
     }
 
     /**
@@ -119,6 +87,7 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      *     - filterRowSize row size of filter. Default size 2.<br>
      *     - filterColumnSize column size of filter. Default size 2.<br>
      *     - stride: size of stride. Default size 1.<br>
+     *     - dilation: dilation step for filter. Default step 1.<br>
      *
      * @param params parameters used for abstract pooling layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -127,37 +96,31 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
         if (params.hasParam("filterSize")) {
-            filterRowSize = filterColumnSize = params.getValueAsInteger("filterSize");
-            if (filterRowSize < 2) throw new NeuralNetworkException("Filter size must be at least 2.");
+            int filterSize = params.getValueAsInteger("filterSize");
+            if (filterSize < 1) throw new NeuralNetworkException("Filter size must be at least 1.");
+            setFilterRowSize(filterSize);
+            setFilterColumnSize(filterSize);
         }
         if (params.hasParam("filterRowSize")) {
-            filterRowSize = params.getValueAsInteger("filterRowSize");
-            if (filterRowSize < 2) throw new NeuralNetworkException("Filter row size must be at least 2.");
+            int filterRowSize = params.getValueAsInteger("filterRowSize");
+            if (filterRowSize < 1) throw new NeuralNetworkException("Filter row size must be at least 1.");
+            setFilterRowSize(filterRowSize);
         }
         if (params.hasParam("filterColumnSize")) {
-            filterColumnSize = params.getValueAsInteger("filterColumnSize");
-            if (filterColumnSize < 2) throw new NeuralNetworkException("Filter column size must be at least 2.");
+            int filterColumnSize = params.getValueAsInteger("filterColumnSize");
+            if (filterColumnSize < 1) throw new NeuralNetworkException("Filter column size must be at least 1.");
+            setFilterColumnSize(filterColumnSize);
         }
         if (params.hasParam("stride")) {
-            stride = params.getValueAsInteger("stride");
+            int stride = params.getValueAsInteger("stride");
             if (stride < 1) throw new NeuralNetworkException("Stride must be at least 1.");
+            setStride(stride);
         }
-    }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
+        if (params.hasParam("dilation")) {
+            int dilation = params.getValueAsInteger("dilation");
+            if (dilation < 1) throw new NeuralNetworkException("Dilation must be at least 1.");
+            setDilation(dilation);
+        }
     }
 
     /**
@@ -166,24 +129,8 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     public void initializeDimensions() throws NeuralNetworkException {
-        previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
-        previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
-        previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
-        if (previousLayerWidth < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + previousLayerWidth);
-        if (previousLayerHeight < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + previousLayerHeight);
-        if (previousLayerDepth < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + previousLayerDepth);
+        super.initializeDimensions();
 
-        if ((previousLayerWidth - filterRowSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer widthIn: " + previousLayerWidth + " - filterRowSize: " + filterRowSize + " must be divisible by stride: " + stride);
-        if ((previousLayerHeight - filterColumnSize) % stride != 0)  throw new NeuralNetworkException("Pooling layer heightIn: " + previousLayerHeight + " - filterColumnSize: " + filterColumnSize + " must be divisible by stride: " + stride);
-
-        int layerWidth = ((previousLayerWidth - filterRowSize) / stride) + 1;
-        int layerHeight = ((previousLayerHeight - filterColumnSize) / stride) + 1;
-
-        if (layerWidth < 1) throw new NeuralNetworkException("Pooling layer width cannot be less than 1: " + layerWidth);
-        if (layerHeight < 1) throw new NeuralNetworkException("Pooling layer height cannot be less than 1: " + layerHeight);
-
-        setLayerWidth(layerWidth);
-        setLayerHeight(layerHeight);
         setLayerDepth(previousLayerDepth);
     }
 
@@ -277,11 +224,8 @@ public abstract class AbstractPoolingLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        String layerDetailsByName = "";
-        layerDetailsByName += "Pooling type: " + getPoolingType() + ", ";
-        layerDetailsByName += "Filter row size: " + filterRowSize + ", ";
-        layerDetailsByName += "Filter column size: " + filterColumnSize + ", ";
-        layerDetailsByName += "Stride: " + stride;
+        String layerDetailsByName = super.getLayerDetailsByName() + ", ";
+        layerDetailsByName += "Pooling type: " + getPoolingType();
         return layerDetailsByName;
     }
 
