@@ -5,7 +5,6 @@
 
 package core.layer.convolutional;
 
-import core.activation.ActivationFunction;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Initialization;
@@ -22,14 +21,13 @@ public class DSCrosscorrelationLayer extends AbstractDSConvolutionalLayer {
      * Constructor for depth-wise separable crosscorrelation layer.
      *
      * @param layerIndex layer index
-     * @param activationFunction activation function used.
      * @param initialization initialization function for weight maps.
      * @param params parameters for depth-wise separable crosscorrelation layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception setting of activation function fails or layer dimension requirements are not met.
      */
-    public DSCrosscorrelationLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
-        super (layerIndex, activationFunction, initialization, params);
+    public DSCrosscorrelationLayer(int layerIndex, Initialization initialization, String params) throws DynamicParamException, NeuralNetworkException {
+        super (layerIndex, initialization, params);
     }
 
     /**
