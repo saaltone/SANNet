@@ -1044,6 +1044,13 @@ public interface Matrix {
     void setFilterColumnSize(int filterColumnSize);
 
     /**
+     * Sets filter depth.
+     *
+     * @param filterDepth filter depth.
+     */
+    void setFilterDepth(int filterDepth);
+
+    /**
      * Returns filter row size for convolution and pooling operations.
      *
      * @return filter row size for convolution and pooling operations.
@@ -1056,6 +1063,13 @@ public interface Matrix {
      * @return filter column size for convolution and pooling operations.
      */
     int getFilterColumnSize();
+
+    /**
+     * Returns filter depth.
+     *
+     * @return filter depth.
+     */
+    int getFilterDepth();
 
     /**
      * Sets if convolution is depth separable.
