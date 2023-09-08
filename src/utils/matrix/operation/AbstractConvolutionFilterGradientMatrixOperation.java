@@ -33,18 +33,6 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
     protected int inputDepth;
 
     /**
-     * Half filter rows.
-     *
-     */
-    private final int halfFilterRows;
-
-    /**
-     * Half filter columns.
-     *
-     */
-    private final int halfFilterColumns;
-
-    /**
      * Constructor for abstract convolution filter gradient matrix operation.
      *
      * @param rows             number of rows for operation.
@@ -59,8 +47,6 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      */
     public AbstractConvolutionFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
         super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, true);
-        halfFilterRows = filterRowSize / 2;
-        halfFilterColumns = filterColumnSize / 2;
     }
 
     /**
@@ -144,7 +130,7 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @return current input row.
      */
     protected int getCurrentInputRow(int row, int filterRow) {
-        return row + filterRow - halfFilterRows;
+        return row + filterRow;
     }
 
     /**
@@ -155,7 +141,7 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @return current input column.
      */
     protected int getCurrentInputColumn(int column, int filterColumn) {
-        return column + filterColumn - halfFilterColumns;
+        return column + filterColumn;
     }
 
     /**

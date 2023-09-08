@@ -47,7 +47,7 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
     public AbstractConvolutionInputGradientMatrixOperation(int rows, int columns, int depth, int inputDepth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, true);
+        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, !asConvolution, true);
         this.inputRows = rows + filterRowSize - 1;
         this.inputColumns = columns + filterColumnSize - 1;
         this.inputDepth = inputDepth;
