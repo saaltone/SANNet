@@ -99,6 +99,17 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
     }
 
     /**
+     * Returns filter position based on combined position of input depth and filter
+     *
+     * @param inputDepth input depth
+     * @param filter filter
+     * @return filter position
+     */
+    protected int getFilterPosition(int inputDepth, int filter) {
+        return getDepth() * inputDepth + filter;
+    }
+
+    /**
      * Starts convolutional operation
      *
      * @param row current row.
