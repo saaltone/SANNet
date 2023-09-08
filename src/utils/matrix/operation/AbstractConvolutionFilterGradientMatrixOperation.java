@@ -15,10 +15,34 @@ import utils.matrix.MatrixException;
 public abstract class AbstractConvolutionFilterGradientMatrixOperation extends AbstractConvolutionOperation {
 
     /**
+     * Input gradient row size.
+     *
+     */
+    private int inputRows;
+
+    /**
+     * Input gradient column size.
+     *
+     */
+    private int inputColumns;
+
+    /**
      * Input depth.
      *
      */
     protected int inputDepth;
+
+    /**
+     * Half filter rows.
+     *
+     */
+    private final int halfFilterRows;
+
+    /**
+     * Half filter columns.
+     *
+     */
+    private final int halfFilterColumns;
 
     /**
      * Constructor for abstract convolution filter gradient matrix operation.
@@ -35,6 +59,8 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      */
     public AbstractConvolutionFilterGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
         super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, true);
+        halfFilterRows = filterRowSize / 2;
+        halfFilterColumns = filterColumnSize / 2;
     }
 
     /**
@@ -48,8 +74,10 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
     public Matrix apply(Matrix outputGradient, Matrix input) throws MatrixException {
         setTargetMatrix(outputGradient);
         setInputMatrix(input);
+        inputRows = outputGradient.getRows() + getFilterRows() - 1;
+        inputColumns = outputGradient.getColumns() + getFilterColumns() - 1;
         inputDepth = input.getDepth();
-        setResult(outputGradient.getNewMatrix(getFilterRows(), getFilterColumns(), getDepth()));
+        setResult(outputGradient.getNewMatrix(getFilterRows(), getFilterColumns(), getIsDepthSeparable() ? inputDepth : inputDepth * getDepth()));
         applyMatrixOperation();
         return getResult();
     }
@@ -67,17 +95,16 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @param value current value.
      */
     protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        double inputValue = 0;
         if (getIsDepthSeparable()) {
-            inputValue = getInputMatrix().getValue(inputRow, inputColumn, depth);
+            double inputValue = getInputMatrix().getValue(inputRow, inputColumn, depth);
+            getResult().addByValue(filterRow, filterColumn, depth, inputValue * value);
         }
         else {
             for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
-                inputValue += getInputMatrix().getValue(inputRow, inputColumn, inputDepth);
+                double inputValue = getInputMatrix().getValue(inputRow, inputColumn, inputDepth);
+                getResult().addByValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth), inputValue * value);
             }
         }
-        double gradientValue = inputValue * value;
-        getResult().addByValue(filterRow, filterColumn, depth, gradientValue);
     }
 
     /**
@@ -93,21 +120,53 @@ public abstract class AbstractConvolutionFilterGradientMatrixOperation extends A
      * @param value current value.
      */
     protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        double inputValue = 0;
         if (getIsDepthSeparable()) {
             if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
-                inputValue = getInputMatrix().getValue(inputRow, inputColumn, depth);
+                double inputValue = getInputMatrix().getValue(inputRow, inputColumn, depth);
+                getResult().addByValue(filterRow, filterColumn, depth, inputValue * value);
             }
         }
         else {
             for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
                 if (!hasMaskAt(inputRow, inputColumn, inputDepth, getTargetMatrix())) {
-                    inputValue += getInputMatrix().getValue(inputRow, column + filterColumn, inputDepth);
+                    double inputValue = getInputMatrix().getValue(inputRow, inputColumn, depth);
+                    getResult().addByValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth), inputValue * value);
                 }
             }
         }
-        double gradientValue = inputValue * value;
-        getResult().addByValue(filterRow, filterColumn, depth, gradientValue);
+    }
+
+    /**
+     * Returns current input row.
+     *
+     * @param row row
+     * @param filterRow filter row
+     * @return current input row.
+     */
+    protected int getCurrentInputRow(int row, int filterRow) {
+        return row + filterRow - halfFilterRows;
+    }
+
+    /**
+     * Returns current input column.
+     *
+     * @param column column
+     * @param filterColumn filter column
+     * @return current input column.
+     */
+    protected int getCurrentInputColumn(int column, int filterColumn) {
+        return column + filterColumn - halfFilterColumns;
+    }
+
+    /**
+     * Checks if input row and columns are valid.
+     *
+     * @param inputRow input row
+     * @param inputColumn input column
+     * @return true if input row and column are valid otherwise returns false.
+     */
+    protected boolean isValidInputPosition(int inputRow, int inputColumn) {
+        return (inputRow >= 0 && inputColumn >= 0 && inputRow < inputRows && inputColumn < inputColumns);
     }
 
 }
