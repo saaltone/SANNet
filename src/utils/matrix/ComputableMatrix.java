@@ -47,6 +47,12 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     private int filterColumnSize;
 
     /**
+     * Filter depth for convolutional operation.
+     *
+     */
+    private int filterDepth;
+
+    /**
      * If true convolution is depth separable.
      *
      */
@@ -111,6 +117,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         matrix.setDilation(dilation);
         matrix.setFilterRowSize(filterRowSize);
         matrix.setFilterColumnSize(filterColumnSize);
+        matrix.setFilterDepth(filterDepth);
     }
 
     /**
@@ -702,6 +709,15 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Sets filter depth.
+     *
+     * @param filterDepth filter depth.
+     */
+    public void setFilterDepth(int filterDepth) {
+        this.filterDepth = filterDepth;
+    }
+
+    /**
      * Returns filter row size for convolution and pooling operations.
      *
      * @return filter row size for convolution and pooling operations.
@@ -717,6 +733,15 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public int getFilterColumnSize() {
         return filterColumnSize;
+    }
+
+    /**
+     * Returns filter depth.
+     *
+     * @return filter depth.
+     */
+    public int getFilterDepth() {
+        return filterDepth;
     }
 
     /**
@@ -745,7 +770,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyConvolve(Matrix filter) throws MatrixException {
-        return new ConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
+        return new ConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
     }
 
     /**
@@ -756,7 +781,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyCrosscorrelate(Matrix filter) throws MatrixException {
-        return new CrosscorrelationMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
+        return new CrosscorrelationMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
     }
 
     /**
@@ -767,7 +792,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyWinogradConvolve(Matrix filter) throws MatrixException {
-        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth()).apply(this, filter);
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth()).apply(this, filter);
     }
 
     /**
@@ -784,7 +809,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyWinogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException {
-        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, filter.getDepth(), A, AT, C, CT, G, GT).apply(this, filter);
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), A, AT, C, CT, G, GT).apply(this, filter);
     }
 
     /**
@@ -799,7 +824,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyWinogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException {
-        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, preprocessedFilter.getDepth(), A, AT, C, CT).apply(this, preprocessedFilter);
+        return new WinogradConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), A, AT, C, CT).apply(this, preprocessedFilter);
     }
 
     /**
