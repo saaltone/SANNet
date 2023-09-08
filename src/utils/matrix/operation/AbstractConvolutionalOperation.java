@@ -221,10 +221,12 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
             for (int filterColumn = 0; filterColumn < getFilterColumns(); filterColumn += getDilation()) {
                 int currentFilterRow = getFilterRow(filterRow);
                 int currentFilterColumn = getFilterColumn(filterColumn);
-                int inputRow = row + currentFilterRow;
-                int inputColumn = column + currentFilterColumn;
-                if (asMasked) applyMaskOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
-                else applyOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
+                int inputRow = getCurrentInputRow(row, currentFilterRow);
+                int inputColumn = getCurrentInputColumn(column, currentFilterColumn);
+                if (isValidInputPosition(inputRow, inputColumn)) {
+                    if (asMasked) applyMaskOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
+                    else applyOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
+                }
             }
         }
         finishOperation(row, column, depth);
@@ -248,5 +250,31 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      */
     protected abstract void finishOperation(int row, int column, int depth);
 
+    /**
+     * Returns current input row.
+     *
+     * @param row row
+     * @param filterRow filter row
+     * @return current input row.
+     */
+    protected abstract int getCurrentInputRow(int row, int filterRow);
+
+    /**
+     * Returns current input column.
+     *
+     * @param column column
+     * @param filterColumn filter column
+     * @return current input column.
+     */
+    protected abstract int getCurrentInputColumn(int column, int filterColumn);
+
+    /**
+     * Checks if input row and columns are valid.
+     *
+     * @param inputRow input row
+     * @param inputColumn input column
+     * @return true if input row and column are valid otherwise returns false.
+     */
+    protected abstract boolean isValidInputPosition(int inputRow, int inputColumn);
 
 }
