@@ -55,8 +55,8 @@ public class LayerFactory {
             case CONVOLUTION -> new ConvolutionLayer(layerIndex, activationFunction, initialization, params);
             case CROSSCORRELATION -> new CrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
             case WINOGRAD_CONVOLUTION -> new WinogradConvolutionLayer(layerIndex, activationFunction, initialization, params);
-            case DSCONVOLUTION -> new DSConvolutionLayer(layerIndex, activationFunction, initialization, params);
-            case DSCROSSCORRELATION -> new DSCrosscorrelationLayer(layerIndex, activationFunction, initialization, params);
+            case DSCONVOLUTION -> new DSConvolutionLayer(layerIndex, initialization, params);
+            case DSCROSSCORRELATION -> new DSCrosscorrelationLayer(layerIndex, initialization, params);
             case MAX_POOLING -> new MaxPoolingLayer(layerIndex, initialization, params);
             case RANDOM_POOLING -> new RandomPoolingLayer(layerIndex, initialization, params);
             case CYCLIC_POOLING -> new CyclicPoolingLayer(layerIndex, initialization, params);
