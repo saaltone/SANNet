@@ -22,19 +22,19 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Filter matrix.
      *
      */
-    private Matrix filter;
+    private transient Matrix filter;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * A matrix for Winograd convolution.
