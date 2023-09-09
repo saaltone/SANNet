@@ -20,13 +20,13 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
      * Output gradient.
      *
      */
-    private Matrix outputGradient;
+    private transient Matrix outputGradient;
 
     /**
      * Input gradient.
      *
      */
-    private Matrix inputGradient;
+    private transient Matrix inputGradient;
 
     /**
      * Number of input gradient rows.
@@ -44,7 +44,7 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
      * Input position for each resulting row and column.
      *
      */
-    private HashMap<Integer, Integer> inputPos;
+    private transient HashMap<Integer, Integer> inputPos;
 
     /**
      * Constructor for abstract positional pooling gradient matrix operation.

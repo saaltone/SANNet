@@ -17,7 +17,7 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
      * Input matrix.
      *
      */
-    private Matrix inputMatrix;
+    private transient Matrix inputMatrix;
 
     /**
      * If true convolution is depth separable
@@ -37,6 +37,7 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
      * @param rows             number of rows for operation.
      * @param columns          number of columns for operation.
      * @param depth            depth for operation.
+     * @param inputDepth       input depth.
      * @param filterRowSize    filter row size
      * @param filterColumnSize filter column size.
      * @param dilation         dilation step
@@ -45,8 +46,8 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      * @param provideValue if true operation provides value when applying operation otherwise false.
      */
-    public AbstractConvolutionOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution, boolean provideValue) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, provideValue);
+    public AbstractConvolutionOperation(int rows, int columns, int depth, int inputDepth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution, boolean provideValue) {
+        super(rows, columns, depth, inputDepth, filterRowSize, filterColumnSize, dilation, stride, provideValue);
         this.isDepthSeparable = isDepthSeparable;
         this.asConvolution = asConvolution && (filterRowSize > 1 || filterColumnSize > 1);
     }

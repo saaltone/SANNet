@@ -15,24 +15,6 @@ import utils.matrix.MatrixException;
 public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolutionOperation {
 
     /**
-     * Input gradient row size.
-     *
-     */
-    private int inputRows;
-
-    /**
-     * Input gradient column size.
-     *
-     */
-    private int inputColumns;
-
-    /**
-     * Input depth.
-     *
-     */
-    protected int inputDepth;
-
-    /**
      * Value of convolution.
      *
      */
@@ -44,6 +26,7 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
      * @param rows             number of rows for operation.
      * @param columns          number of columns for operation.
      * @param depth            depth for operation.
+     * @param inputDepth       input depth.
      * @param filterRowSize    filter row size
      * @param filterColumnSize filter column size.
      * @param dilation         dilation step
@@ -51,8 +34,8 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
      * @param isDepthSeparable if true convolution is depth separable
      * @param asConvolution    if true operation is executed as convolution otherwise as crosscorrelation
      */
-    public AbstractConvolutionMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, false);
+    public AbstractConvolutionMatrixOperation(int rows, int columns, int depth, int inputDepth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean isDepthSeparable, boolean asConvolution) {
+        super(rows, columns, depth, inputDepth, filterRowSize, filterColumnSize, dilation, stride, isDepthSeparable, asConvolution, false);
     }
 
     /**
@@ -66,9 +49,6 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
     public Matrix apply(Matrix input, Matrix filter) throws MatrixException {
         setTargetMatrix(input);
         setInputMatrix(filter);
-        inputRows = input.getRows();
-        inputColumns = input.getColumns();
-        inputDepth = input.getDepth();
         setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
         applyMatrixOperation();
         return getResult();
@@ -93,7 +73,7 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
             convolutionValue += inputValue * filterValue;
         }
         else {
-            for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+            for (int inputDepth = 0; inputDepth < getInputDepth(); inputDepth++) {
                 double inputValue = getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
                 double filterValue = getInputMatrix().getValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth));
                 convolutionValue += inputValue * filterValue;
@@ -122,7 +102,7 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
             }
         }
         else {
-            for (int inputDepth = 0; inputDepth < this.inputDepth; inputDepth++) {
+            for (int inputDepth = 0; inputDepth < getInputDepth(); inputDepth++) {
                 if (!hasMaskAt(inputRow, inputColumn, inputDepth, getTargetMatrix())) {
                     double inputValue = getTargetMatrix().getValue(inputRow, inputColumn, inputDepth);
                     double filterValue = getInputMatrix().getValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth));
@@ -152,39 +132,6 @@ public abstract class AbstractConvolutionMatrixOperation extends AbstractConvolu
      */
     protected void finishOperation(int row, int column, int depth) {
         getResult().setValue(row, column, depth, convolutionValue);
-    }
-
-    /**
-     * Returns current input row.
-     *
-     * @param row row
-     * @param filterRow filter row
-     * @return current input row.
-     */
-    protected int getCurrentInputRow(int row, int filterRow) {
-        return row + filterRow;
-    }
-
-    /**
-     * Returns current input column.
-     *
-     * @param column column
-     * @param filterColumn filter column
-     * @return current input column.
-     */
-    protected int getCurrentInputColumn(int column, int filterColumn) {
-        return column + filterColumn;
-    }
-
-    /**
-     * Checks if input row and columns are valid.
-     *
-     * @param inputRow input row
-     * @param inputColumn input column
-     * @return true if input row and column are valid otherwise returns false.
-     */
-    protected boolean isValidInputPosition(int inputRow, int inputColumn) {
-        return (inputRow >= 0 && inputColumn >= 0 && inputRow < inputRows && inputColumn < inputColumns);
     }
 
 }

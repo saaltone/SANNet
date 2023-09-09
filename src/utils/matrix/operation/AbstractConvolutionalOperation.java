@@ -17,13 +17,31 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * Target matrix.
      *
      */
-    private Matrix targetMatrix;
+    private transient Matrix targetMatrix;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
+
+    /**
+     * Input gradient row size.
+     *
+     */
+    private final int inputRows;
+
+    /**
+     * Input gradient column size.
+     *
+     */
+    private final int inputColumns;
+
+    /**
+     * Input depth.
+     *
+     */
+    protected final int inputDepth;
 
     /**
      * Filter row size.
@@ -49,14 +67,18 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param rows             number of rows for operation.
      * @param columns          number of columns for operation.
      * @param depth            depth for operation.
+     * @param inputDepth       input depth.
      * @param filterRowSize    filter row size
      * @param filterColumnSize filter column size.
      * @param dilation         dilation step
      * @param stride           stride step
      * @param provideValue if true operation provides value when applying operation otherwise false.
      */
-    public AbstractConvolutionalOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean provideValue) {
+    public AbstractConvolutionalOperation(int rows, int columns, int depth, int inputDepth, int filterRowSize, int filterColumnSize, int dilation, int stride, boolean provideValue) {
         super(rows, columns, depth, provideValue, stride);
+        this.inputRows = rows + filterRowSize - 1;
+        this.inputColumns = columns + filterColumnSize - 1;
+        this.inputDepth = inputDepth;
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.dilation = dilation;
@@ -105,6 +127,33 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      */
     public Matrix getOther() {
         return null;
+    }
+
+    /**
+     * Returns input rows.
+     *
+     * @return input rows.
+     */
+    protected int getInputRows() {
+        return inputRows;
+    }
+
+    /**
+     * Returns input columns.
+     *
+     * @return input columns.
+     */
+    protected int getInputColumns() {
+        return inputColumns;
+    }
+
+    /**
+     * Returns input depth.
+     *
+     * @return input depth.
+     */
+    protected int getInputDepth() {
+        return inputDepth;
     }
 
     /**
@@ -257,7 +306,9 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param filterRow filter row
      * @return current input row.
      */
-    protected abstract int getCurrentInputRow(int row, int filterRow);
+    protected int getCurrentInputRow(int row, int filterRow) {
+        return row + filterRow;
+    }
 
     /**
      * Returns current input column.
@@ -266,7 +317,9 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param filterColumn filter column
      * @return current input column.
      */
-    protected abstract int getCurrentInputColumn(int column, int filterColumn);
+    protected int getCurrentInputColumn(int column, int filterColumn) {
+        return column + filterColumn;
+    }
 
     /**
      * Checks if input row and columns are valid.
@@ -275,6 +328,8 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param inputColumn input column
      * @return true if input row and column are valid otherwise returns false.
      */
-    protected abstract boolean isValidInputPosition(int inputRow, int inputColumn);
+    protected boolean isValidInputPosition(int inputRow, int inputColumn) {
+        return (inputRow >= 0 && inputColumn >= 0 && inputRow < getInputRows() && inputColumn < getInputColumns());
+    }
 
 }
