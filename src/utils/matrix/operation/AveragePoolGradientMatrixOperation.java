@@ -44,7 +44,7 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @param stride stride step
      */
     public AveragePoolGradientMatrixOperation(int rows, int columns, int depth, int filterRowSize, int filterColumnSize, int dilation, int stride) {
-        super(rows, columns, depth, filterRowSize, filterColumnSize, dilation, stride, true);
+        super(rows, columns, depth, depth, filterRowSize, filterColumnSize, dilation, stride, true);
         this.inputRows = rows + filterRowSize - 1;
         this.inputColumns = columns + filterColumnSize - 1;
         this.invertedFilterSize = 1 / (double)(filterRowSize * filterColumnSize);
@@ -115,39 +115,6 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @param depth current depth.
      */
     protected void finishOperation(int row, int column, int depth) {
-    }
-
-    /**
-     * Returns current input row.
-     *
-     * @param row row
-     * @param filterRow filter row
-     * @return current input row.
-     */
-    protected int getCurrentInputRow(int row, int filterRow) {
-        return row + filterRow;
-    }
-
-    /**
-     * Returns current input column.
-     *
-     * @param column column
-     * @param filterColumn filter column
-     * @return current input column.
-     */
-    protected int getCurrentInputColumn(int column, int filterColumn) {
-        return column + filterColumn;
-    }
-
-    /**
-     * Checks if input row and columns are valid.
-     *
-     * @param inputRow input row
-     * @param inputColumn input column
-     * @return true if input row and column are valid otherwise returns false.
-     */
-    protected boolean isValidInputPosition(int inputRow, int inputColumn) {
-        return (inputRow >= 0 && inputColumn >= 0 && inputRow < inputRows && inputColumn < inputColumns);
     }
 
 }
