@@ -18,13 +18,13 @@ public class UnflattenMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    protected Matrix input;
+    protected transient Matrix input;
 
     /**
      * Result.
      *
      */
-    protected Matrix result;
+    protected transient Matrix result;
 
 
     /**
@@ -48,8 +48,7 @@ public class UnflattenMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix apply(Matrix input) throws MatrixException {
         this.input = input;
-        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth());
-        applyMatrixOperation();
+        this.result = input.redimension(getRows(), getColumns(), getDepth(), false);
         return result;
     }
 
@@ -80,21 +79,6 @@ public class UnflattenMatrixOperation extends AbstractMatrixOperation {
      * @param value current value.
      */
     public void apply(int row, int column, int depth, double value) {
-        result.setValue(row, column, depth, input.getValue(getPosition(getRows(), getColumns(), row, column, depth), 0, 0));
-    }
-
-    /**
-     * Returns one dimensional index calculated based on width, height and depth.
-     *
-     * @param rows number of rows in unflattened matrix
-     * @param columns number of columns in unflattened matrix
-     * @param row current row
-     * @param column current column
-     * @param depth current depth
-     * @return one dimensional index
-     */
-    private int getPosition(int rows, int columns, int row, int column, int depth) {
-        return row + rows * column + rows * columns * depth;
     }
 
 }
