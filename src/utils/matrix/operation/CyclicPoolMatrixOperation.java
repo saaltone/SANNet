@@ -16,25 +16,25 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * Current input row.
      *
      */
-    private int inputRow;
+    private transient int inputRow;
 
     /**
      * Current input column.
      *
      */
-    private int inputColumn;
+    private transient int inputColumn;
 
     /**
      * Current row of filter.
      *
      */
-    private transient int currentRow = 0;
+    private int currentRow = 0;
 
     /**
      * Current column of filter.
      *
      */
-    private transient int currentColumn = 0;
+    private int currentColumn = 0;
 
     /**
      * Constructor for cyclic pooling matrix operation.

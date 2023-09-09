@@ -20,7 +20,7 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Probability of dropout.

@@ -18,7 +18,7 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Maximum value.
@@ -30,19 +30,19 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * Maximum row.
      *
      */
-    private int maxRow = -1;
+    private transient int maxRow = -1;
 
     /**
      * Maximum column.
      *
      */
-    private int maxColumn = -1;
+    private transient int maxColumn = -1;
 
     /**
      * Maximum depth.
      *
      */
-    private int maxDepth = -1;
+    private transient int maxDepth = -1;
 
     /**
      * Constructor for max matrix operation.

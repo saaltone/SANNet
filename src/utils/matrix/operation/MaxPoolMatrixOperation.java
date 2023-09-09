@@ -15,13 +15,13 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * Current max row.
      *
      */
-    private int maxRow;
+    private transient int maxRow;
 
     /**
      * Current max column.
      *
      */
-    private int maxColumn;
+    private transient int maxColumn;
 
     /**
      * Max value

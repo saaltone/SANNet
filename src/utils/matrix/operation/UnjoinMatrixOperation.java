@@ -19,13 +19,13 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * Unjoins at defined row.

@@ -18,7 +18,7 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Mean value for variance operation.
@@ -30,13 +30,13 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * Cumulated variance value.
      *
      */
-    private double value;
+    private transient double value;
 
     /**
      * Number of counted entries.
      *
      */
-    private int count;
+    private transient int count;
 
     /**
      * Constructor for variance operation.

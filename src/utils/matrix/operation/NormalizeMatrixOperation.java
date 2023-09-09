@@ -18,7 +18,7 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Mean for normalize operation.
@@ -36,7 +36,7 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      * Normalized matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * Constructor for normalize matrix operation.

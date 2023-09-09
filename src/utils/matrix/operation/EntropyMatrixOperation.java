@@ -18,19 +18,19 @@ public class EntropyMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Cumulated value.
      *
      */
-    private double value;
+    private transient double value;
 
     /**
      * Number of counted entries.
      *
      */
-    private int count;
+    private transient int count;
 
     /**
      * Constructor for entropy matrix operation.

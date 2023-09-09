@@ -18,19 +18,19 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Second matrix.
      *
      */
-    private Matrix second;
+    private transient Matrix second;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * Constructor for dot matrix operation.

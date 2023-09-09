@@ -18,13 +18,13 @@ public class EqualMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * Constructor for equal matrix operation.

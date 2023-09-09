@@ -20,13 +20,13 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Result matrix.
      *
      */
-    private Matrix result;
+    private transient Matrix result;
 
     /**
      * Matrix unary function.
@@ -56,7 +56,7 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
      * If true is applied as function otherwise as gradient.
      *
      */
-    private boolean asFunction;
+    private transient boolean asFunction;
 
     /**
      * Constructor for matrix unary operation.

@@ -18,7 +18,7 @@ public class GradientClippingMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Threshold.

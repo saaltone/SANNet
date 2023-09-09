@@ -19,13 +19,13 @@ public class JoinMatrixOperation extends AbstractMatrixOperation {
      * First matrix.
      *
      */
-    private Matrix first;
+    private transient Matrix first;
 
     /**
      * Second matrix.
      *
      */
-    private Matrix second;
+    private transient Matrix second;
 
     /**
      * If true joins matrices vertically otherwise horizontally.

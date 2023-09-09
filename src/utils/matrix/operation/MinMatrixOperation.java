@@ -18,31 +18,31 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * Input matrix.
      *
      */
-    private Matrix input;
+    private transient Matrix input;
 
     /**
      * Minimum value.
      *
      */
-    private double minValue = Double.POSITIVE_INFINITY;
+    private transient double minValue = Double.POSITIVE_INFINITY;
 
     /**
      * Minimum row.
      *
      */
-    private int minRow = -1;
+    private transient int minRow = -1;
 
     /**
      * Minimum column.
      *
      */
-    private int minColumn = -1;
+    private transient int minColumn = -1;
 
     /**
      * Minimum depth.
      *
      */
-    private int minDepth = -1;
+    private transient int minDepth = -1;
 
     /**
      * Constructor for min matrix operation.
