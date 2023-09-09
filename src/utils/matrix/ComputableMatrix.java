@@ -770,7 +770,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyConvolve(Matrix filter) throws MatrixException {
-        return new ConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
+        return new ConvolutionMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
     }
 
     /**
@@ -781,7 +781,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyCrosscorrelate(Matrix filter) throws MatrixException {
-        return new CrosscorrelationMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
+        return new CrosscorrelationMatrixOperation(getRows() - getFilterRowSize() + 1, getColumns() - getFilterColumnSize() + 1, getFilterDepth(), getDepth(), filter.getRows(), filter.getColumns(), getDilation(), getStride(), getIsDepthSeparable()).apply(this, filter);
     }
 
     /**
