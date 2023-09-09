@@ -231,6 +231,35 @@ public class SMatrix extends ComputableMatrix {
     }
 
     /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    public Matrix redimension(int newRows, int newColumns, int newDepth) throws MatrixException {
+        if (newRows * newColumns * newDepth != getPureRows() * getPureColumns() * getPureDepth()) throw new MatrixException("Matrix of size: " + getPureRows() + "x" + getPureColumns() + "x" + getPureDepth() + " cannot be redimensioned to size: " + newRows + "x" + newColumns + "x" + newDepth);
+        Matrix newMatrix = new SMatrix(newRows, newColumns, newDepth, isScalar(), isTransposed(), matrix);
+        super.setParameters(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    public Matrix redimension(int newRows, int newColumns, int newDepth, boolean copyData) throws MatrixException {
+        return redimension(newRows, newColumns, newDepth);
+    }
+
+    /**
      * Transposes matrix.
      *
      * @return transposed matrix.

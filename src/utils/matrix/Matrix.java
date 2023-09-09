@@ -279,6 +279,29 @@ public interface Matrix {
     Matrix copy() throws MatrixException;
 
     /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    Matrix redimension(int newRows, int newColumns, int newDepth) throws MatrixException;
+
+    /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @param copyData if true matrix data is copied and if false referenced.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    Matrix redimension(int newRows, int newColumns, int newDepth, boolean copyData) throws MatrixException;
+
+    /**
      * Slices matrix.
      *
      * @param startRow start row of slice.

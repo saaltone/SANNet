@@ -105,6 +105,33 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    public Matrix redimension(int newRows, int newColumns, int newDepth) throws MatrixException {
+        throw new MatrixException("JMatrix type cannot be redimensioned.");
+    }
+
+    /**
+     * Redimensions matrix assuming new dimensions are matching.
+     *
+     * @param newRows new row size
+     * @param newColumns new column size
+     * @param newDepth new depth size.
+     * @param copyData if true matrix data is copied and if false referenced.
+     * @return redimensioned matrix.
+     * @throws MatrixException throws exception if redimensioning fails.
+     */
+    public Matrix redimension(int newRows, int newColumns, int newDepth, boolean copyData) throws MatrixException {
+        throw new MatrixException("JMatrix type cannot be redimensioned.");
+    }
+
+    /**
      * Checks if data of other matrix is equal to data of this matrix
      *
      * @param other matrix to be compared.
