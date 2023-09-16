@@ -27,6 +27,13 @@ import utils.matrix.MatrixException;
 public class LayerFactory {
 
     /**
+     * Default constructor for layer factory.
+     *
+     */
+    public LayerFactory() {
+    }
+
+    /**
      * Creates neural network execution layer.
      *
      * @param layerIndex layer index
