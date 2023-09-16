@@ -29,6 +29,13 @@ import java.util.*;
 public class TextSeqDemo {
 
     /**
+     * Default constructor for text sequence demo.
+     *
+     */
+    public TextSeqDemo() {
+    }
+
+    /**
      * Main function that reads data, executes learning process and replicates learnt text sequences.
      *
      * @param args input arguments (not used).
