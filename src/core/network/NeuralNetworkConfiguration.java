@@ -102,7 +102,7 @@ public class NeuralNetworkConfiguration {
         TreeMap<Integer, InputLayer> inputLayerGroup;
         if (inputLayerGroups.containsKey(currentInputLayerGroupId)) inputLayerGroup = inputLayerGroups.get(currentInputLayerGroupId);
         else inputLayerGroups.put(currentInputLayerGroupId, inputLayerGroup = new TreeMap<>());
-        inputLayerGroup.put(inputLayerID, inputLayer);
+        inputLayerGroup.put(inputLayerGroup.size(), inputLayer);
 
         neuralNetworkLayers.put(neuralNetworkLayers.size(), inputLayer);
         return neuralNetworkLayerIndex;
