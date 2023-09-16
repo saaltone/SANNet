@@ -28,6 +28,13 @@ import java.io.IOException;
 public class AgentFactory {
 
     /**
+     * Default constructor for agent factory.
+     *
+     */
+    public AgentFactory() {
+    }
+
+    /**
      * Agent algorithm type.
      *
      */
@@ -131,8 +138,7 @@ public class AgentFactory {
         };
         if (singleFunctionEstimator) {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
-            NeuralNetwork stateActionValueNN = agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize);
-            policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+            policyEstimator = new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize));
             valueEstimator = policyEstimator;
         }
         else {
@@ -205,8 +211,7 @@ public class AgentFactory {
         };
         if (singleFunctionEstimator) {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
-            NeuralNetwork stateActionValueNN = agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize);
-            policyEstimator = new NNFunctionEstimator(estimatorMemory, stateActionValueNN);
+            policyEstimator = new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize));
             valueEstimator = policyEstimator;
         }
         else {
