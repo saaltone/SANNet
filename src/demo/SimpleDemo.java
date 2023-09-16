@@ -31,6 +31,13 @@ import java.util.TreeMap;
 public class SimpleDemo {
 
     /**
+     * Default constructor for simple demo.
+     *
+     */
+    public SimpleDemo() {
+    }
+
+    /**
      * Main function for simple demo.
      *
      * @param args arguments
