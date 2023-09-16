@@ -896,10 +896,38 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      *
      */
     public static class RewardStructure {
+
+        /**
+         * Reward for winning.
+         *
+         */
         final double WIN = 1;
+
+        /**
+         * Reward for draw.
+         *
+         */
         final double DRAW = 0.5;
+
+        /**
+         * Reward for losing.
+         *
+         */
         final double LOST = 0;
+
+        /**
+         * Reward for moving.
+         *
+         */
         final double MOVE = 0;
+
+        /**
+         * Default constructor for reward structure
+         *
+         */
+        public RewardStructure() {
+        }
+
     }
 
     /**
