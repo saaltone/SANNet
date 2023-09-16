@@ -15,6 +15,13 @@ import utils.configurable.DynamicParamException;
 public class OptimizerFactory {
 
     /**
+     * Default constructor for optimizer factory.
+     *
+     */
+    public OptimizerFactory() {
+    }
+
+    /**
      * Constructs optimizer.
      *
      * @param optimizationType optimizer type.
