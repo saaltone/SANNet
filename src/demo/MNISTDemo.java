@@ -29,6 +29,13 @@ import java.util.TreeMap;
 public class MNISTDemo {
 
     /**
+     * Default constructor for MNIST demo.
+     *
+     */
+    public MNISTDemo() {
+    }
+
+    /**
      * Main function for demo.<br>
      * Function reads samples from files, build CNN and executed training, validation and testing.<br>
      *
