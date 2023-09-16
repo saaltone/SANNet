@@ -5,6 +5,7 @@
 
 package demo;
 
+import core.layer.utils.AttentionLayerFactory;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -831,25 +832,12 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int[] inputModuleIndices = new int[agentHistorySize];
-        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-            int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-            int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 4 * inputSize);
-            neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-            neuralNetworkConfiguration.connectLayers(positionalEmbeddingLayerIndex, feedforwardLayerIndex);
-            inputModuleIndices[inputIndex] = feedforwardLayerIndex;
-        }
 
-        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-        for (int inputModuleIndex : inputModuleIndices) {
-            neuralNetworkConfiguration.connectLayers(inputModuleIndex, attentionLayerIndex);
-        }
+        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
-        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, normalizationLayerIndex);
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
+
         if (!policyGradient && applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
@@ -878,31 +866,16 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int[] inputModuleIndices = new int[12];
-        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-            int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-            int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + 4 * inputSize);
-            neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-            neuralNetworkConfiguration.connectLayers(positionalEmbeddingLayerIndex, feedforwardLayerIndex);
-            inputModuleIndices[inputIndex] = feedforwardLayerIndex;
-        }
 
-        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ADDITIVE_ATTENTION);
-        for (int inputModuleIndex : inputModuleIndices) {
-            neuralNetworkConfiguration.connectLayers(inputModuleIndex, attentionLayerIndex);
-        }
-
-        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, normalizationLayerIndex);
+        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 1");
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex1);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex1);
         int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, outputLayerIndex1);
 
@@ -911,6 +884,30 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
+    }
+
+    /**
+     * Build input part of neural network for travelling salesman (agent).
+     *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @param inputSize input size of neural network (number of states)
+     * @param attentionOutputSize output size of attention neural network.
+     * @return attention layer index.
+     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        int historySize = 12;
+
+        boolean includeEncoder = false;
+        int attentionLayerIndex;
+        int feedforwardLayerWidth = 4 * attentionOutputSize;
+        int numberOfAttentionBlocks = 4;
+        if (includeEncoder) attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, attentionOutputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
+        else attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
+
+        return attentionLayerIndex;
     }
 
 }
