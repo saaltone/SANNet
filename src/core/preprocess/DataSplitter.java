@@ -20,6 +20,13 @@ import java.util.HashMap;
 public class DataSplitter {
 
     /**
+     * Default constructor for data splitter utility.
+     *
+     */
+    public DataSplitter() {
+    }
+
+    /**
      * Splits data into training and test sample sets.
      *
      * @param data initial sample set to be split.

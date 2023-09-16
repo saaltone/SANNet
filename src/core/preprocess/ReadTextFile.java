@@ -20,6 +20,13 @@ import java.util.*;
 public class ReadTextFile {
 
     /**
+     * Default constructor for read text file utility.
+     *
+     */
+    public ReadTextFile() {
+    }
+
+    /**
      * Reads text file and maps each character as separate input and output columns.<br>
      * Returns input matrix with hash map index 0 and output matrix with hash map index 1.<br>
      *

@@ -21,6 +21,13 @@ import java.util.Scanner;
 public class ReadCSVFile {
 
     /**
+     * Default constructor for read CSV file utility.
+     *
+     */
+    public ReadCSVFile() {
+    }
+
+    /**
      * Reads CVS file and transforms comma separated data as input and output sample set.<br>
      * Separates each value separated by separator to own column.<br>
      * Returns input matrix with hash map index 0 and output matrix with hash map index 1.<br>

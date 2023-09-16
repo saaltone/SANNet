@@ -20,6 +20,13 @@ import java.util.concurrent.TimeUnit;
 public class ReadMIDI {
 
     /**
+     * Default constructor for read MIDI file utility.
+     *
+     */
+    public ReadMIDI() {
+    }
+
+    /**
      * Defines metadata for MIDI
      *
      */
