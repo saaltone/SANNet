@@ -17,6 +17,13 @@ import java.io.Serializable;
 public class ExecutablePolicyFactory implements Serializable {
 
     /**
+     * Default constructor for executable policy factory.
+     *
+     */
+    public ExecutablePolicyFactory() {
+    }
+
+    /**
      * Creates executable policy instance of given type with defined parameters.
      *
      * @param executablePolicyType type of executable policy.
