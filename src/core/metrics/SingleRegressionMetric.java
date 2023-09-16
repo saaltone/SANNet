@@ -51,6 +51,13 @@ public class SingleRegressionMetric implements Metric, Serializable {
     private double cumulativeSquaredError = 0;
 
     /**
+     * Default constructor for single regression metric.
+     *
+     */
+    public SingleRegressionMetric() {
+    }
+
+    /**
      * Returns reference metric.
      *
      * @return reference metric.
