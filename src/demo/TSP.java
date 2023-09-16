@@ -5,6 +5,7 @@
 
 package demo;
 
+import core.layer.utils.AttentionLayerFactory;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -877,46 +878,11 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int historySize = 7;
-        boolean includeDecoder = false;
-        int[] inputModuleIndices = new int[historySize];
-        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer(0, "width = " + inputSize);
-            int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-            neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-            inputModuleIndices[inputIndex] = positionalEmbeddingLayerIndex;
-        }
-        int inputAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-        for (int inputModuleIndex : inputModuleIndices) {
-            neuralNetworkConfiguration.connectLayers(inputModuleIndex, inputAttentionLayerIndex);
-        }
-        int inputFeedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(inputAttentionLayerIndex, inputFeedforwardLayerIndex);
 
-        int combinedAttentionLayerIndex;
-        if (includeDecoder) {
-            int[] outputModuleIndices = new int[historySize];
-            for (int inputIndex = 0; inputIndex < outputModuleIndices.length; inputIndex++) {
-                int inputLayerIndex = neuralNetworkConfiguration.addInputLayer(1, "width = " + outputSize);
-                int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-                neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-                outputModuleIndices[inputIndex] = positionalEmbeddingLayerIndex;
-            }
-            int outputAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-            for (int outputModuleIndex : outputModuleIndices) {
-                neuralNetworkConfiguration.connectLayers(outputModuleIndex, outputAttentionLayerIndex);
-            }
+        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
-            combinedAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-            neuralNetworkConfiguration.connectLayers(inputFeedforwardLayerIndex, combinedAttentionLayerIndex);
-            neuralNetworkConfiguration.connectLayers(outputAttentionLayerIndex, combinedAttentionLayerIndex);
-        }
-        else combinedAttentionLayerIndex = inputFeedforwardLayerIndex;
-
-        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetworkConfiguration.connectLayers(combinedAttentionLayerIndex, normalizationLayerIndex);
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
         if (!policyGradient && applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
@@ -945,52 +911,16 @@ public class TSP implements Environment, AgentFunctionEstimator {
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int historySize = 7;
-        boolean includeDecoder = false;
-        int[] inputModuleIndices = new int[historySize];
-        for (int inputIndex = 0; inputIndex < inputModuleIndices.length; inputIndex++) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer(0, "width = " + inputSize);
-            int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-            neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-            inputModuleIndices[inputIndex] = positionalEmbeddingLayerIndex;
-        }
-        int inputAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-        for (int inputModuleIndex : inputModuleIndices) {
-            neuralNetworkConfiguration.connectLayers(inputModuleIndex, inputAttentionLayerIndex);
-        }
-        int inputFeedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(inputAttentionLayerIndex, inputFeedforwardLayerIndex);
 
-        int combinedAttentionLayerIndex;
-        if (includeDecoder) {
-            int[] outputModuleIndices = new int[historySize];
-            for (int inputIndex = 0; inputIndex < outputModuleIndices.length; inputIndex++) {
-                int inputLayerIndex = neuralNetworkConfiguration.addInputLayer(1, "width = " + outputSize);
-                int positionalEmbeddingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.POSITIONAL_ENCODING, "positionIndex = " + inputIndex);
-                neuralNetworkConfiguration.connectLayers(inputLayerIndex, positionalEmbeddingLayerIndex);
-                outputModuleIndices[inputIndex] = positionalEmbeddingLayerIndex;
-            }
-            int outputAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-            for (int outputModuleIndex : outputModuleIndices) {
-                neuralNetworkConfiguration.connectLayers(outputModuleIndex, outputAttentionLayerIndex);
-            }
-
-            combinedAttentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-            neuralNetworkConfiguration.connectLayers(inputFeedforwardLayerIndex, combinedAttentionLayerIndex);
-            neuralNetworkConfiguration.connectLayers(outputAttentionLayerIndex, combinedAttentionLayerIndex);
-        }
-        else combinedAttentionLayerIndex = inputFeedforwardLayerIndex;
-
-        int normalizationLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        neuralNetworkConfiguration.connectLayers(combinedAttentionLayerIndex, normalizationLayerIndex);
+        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 1");
-        neuralNetworkConfiguration.connectLayers(normalizationLayerIndex, hiddenLayerIndex1);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex1);
         int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, outputLayerIndex1);
 
@@ -999,6 +929,30 @@ public class TSP implements Environment, AgentFunctionEstimator {
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
         return neuralNetwork;
+    }
+
+    /**
+     * Build input part of neural network for travelling salesman (agent).
+     *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @param inputSize input size of neural network (number of states)
+     * @param attentionOutputSize output size of attention neural network.
+     * @return attention layer index.
+     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws NeuralNetworkException throws exception if building of neural network fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        int historySize = 7;
+
+        boolean includeEncoder = false;
+        int feedforwardLayerWidth = attentionOutputSize;
+        int numberOfAttentionBlocks = 5;
+        int attentionLayerIndex;
+        if (includeEncoder) attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, attentionOutputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
+        else attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
+
+        return attentionLayerIndex;
     }
 
 }
