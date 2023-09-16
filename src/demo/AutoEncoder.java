@@ -31,6 +31,13 @@ import java.util.TreeMap;
 public class AutoEncoder {
 
     /**
+     * Default constructor for auto encoder demo.
+     *
+     */
+    public AutoEncoder() {
+    }
+
+    /**
      * Main function for auto-encoder demo.
      *
      * @param args arguments
