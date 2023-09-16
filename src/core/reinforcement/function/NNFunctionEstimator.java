@@ -5,6 +5,7 @@
 
 package core.reinforcement.function;
 
+import core.layer.InputLayer;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.AgentException;
@@ -119,11 +120,21 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         super (memory, neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getOutputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().size() == 2, params);
         this.neuralNetwork = neuralNetwork;
 
-        stateHistorySize = neuralNetwork.getInputLayerGroups().get(0).size();
-        zeroStateInputReference = new DMatrix(neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerHeight(), neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerDepth(), Initialization.ONE);
+        TreeMap<Integer, InputLayer> stateInputLayers = neuralNetwork.getInputLayerGroups().get(0);
+        stateHistorySize = stateInputLayers.size();
+        int firstStateKey = stateInputLayers.firstKey();
+        zeroStateInputReference = new DMatrix(stateInputLayers.get(firstStateKey).getLayerWidth(), stateInputLayers.get(firstStateKey).getLayerHeight(), stateInputLayers.get(firstStateKey).getLayerDepth(), Initialization.ONE);
 
-        actionHistorySize = neuralNetwork.getInputLayerGroups().get(1) != null ? neuralNetwork.getInputLayerGroups().get(1).size() : 0;
-        zeroActionInputReference = actionHistorySize > 0 ? new DMatrix(neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerWidth(), neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerHeight(), neuralNetwork.getInputLayerGroups().get(1).get(stateHistorySize).getLayerDepth(), Initialization.ONE) : null;
+        TreeMap<Integer, InputLayer> actionInputLayers = neuralNetwork.getInputLayerGroups().get(1);
+        if (actionInputLayers != null) {
+            actionHistorySize = actionInputLayers.size();
+            int firstActionKey = actionInputLayers.firstKey();
+            zeroActionInputReference = new DMatrix(actionInputLayers.get(firstActionKey).getLayerWidth(), actionInputLayers.get(firstActionKey).getLayerHeight(), actionInputLayers.get(firstActionKey).getLayerDepth(), Initialization.ONE);
+        }
+        else {
+            actionHistorySize = 0;
+            zeroActionInputReference = null;
+        }
 
         applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
@@ -330,6 +341,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
                 else inputs.put(stateHistorySize + inputIndex, zeroActionInputReference);
             }
         }
+
         return inputs;
     }
 
