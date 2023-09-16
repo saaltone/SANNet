@@ -24,6 +24,13 @@ import java.util.*;
 public class TimeSeriesPrediction {
 
     /**
+     * Default constructor for time series prediction demo
+     *
+     */
+    public TimeSeriesPrediction() {
+    }
+
+    /**
      * Main function for pseudo time series demo.
      *
      * @param args arguments
