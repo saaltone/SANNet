@@ -34,12 +34,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
     private final static String paramNameTypes = "(g:INT)";
 
     /**
-     * Map for un-normalized weights.
-     *
-     */
-    private final transient HashMap<Matrix, Matrix> weights = new HashMap<>();
-
-    /**
      * Weight normalization scalar.
      *
      */
@@ -225,7 +219,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
             for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
                 Matrix weight = entry.getKey();
                 Procedure procedure = entry.getValue();
-                weights.put(weight, weight.copy());
                 procedure.reset();
                 weight.setEqualTo(procedure.calculateExpression(weight));
             }
@@ -237,21 +230,9 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * Applies automated backward (automatic gradient) procedure when relevant to layer.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void backwardProcess() throws MatrixException, DynamicParamException {
+    public void backwardProcess() throws MatrixException {
         passLayerOutputGradients();
-
-        for (Map.Entry<Matrix, Procedure> entry : procedures.entrySet()) {
-            Matrix weight = entry.getKey();
-            Procedure procedure = entry.getValue();
-            weight.setEqualTo(weights.get(weight));
-            for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
-                Matrix weightGradient = nextLayer.getLayerWeightGradients().get(weight);
-                if (weightGradient != null) weightGradient.setEqualTo(procedure.calculateGradient(weightGradient));
-            }
-        }
-
     }
 
     /**
