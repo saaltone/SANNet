@@ -82,53 +82,95 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      */
     public WinogradConvolutionMatrixOperation(int rows, int columns, int depth) throws MatrixException {
         super(rows, columns, depth, false, 2);
-        AT = new DMatrix(2, 4, 1);
-        AT.setValue(0, 0, 0, 1);
-        AT.setValue(0, 1, 0, 1);
-        AT.setValue(0, 2, 0, 1);
-        AT.setValue(0, 3, 0, 0);
-        AT.setValue(1, 0, 0, 0);
-        AT.setValue(1, 1, 0, 1);
-        AT.setValue(1, 2, 0, -1);
-        AT.setValue(1, 3, 0, -1);
+        AT = getATMatrix(getDepth());
+        A = AT.transpose().copy(true);
+
+        C = getCMatrix(getDepth());
+        CT = C.transpose().copy(true);
+
+        G = getGMatrix(getDepth());
+        GT = G.transpose().copy(true);
+    }
+
+    /**
+     * Return AT matrix.
+     *
+     * @param depth depth
+     * @return AT matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Matrix getATMatrix(int depth) throws MatrixException {
+        Matrix AT = new DMatrix(2, 4, depth).copy(true);
+        for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
+            AT.setValue(0, 0, currentDepth, 1);
+            AT.setValue(0, 1, currentDepth, 1);
+            AT.setValue(0, 2, currentDepth, 1);
+            AT.setValue(0, 3, currentDepth, 0);
+            AT.setValue(1, 0, currentDepth, 0);
+            AT.setValue(1, 1, currentDepth, 1);
+            AT.setValue(1, 2, currentDepth, -1);
+            AT.setValue(1, 3, currentDepth, -1);
+        }
         maskZeros(AT);
-        A = AT.transpose();
+        return AT;
+    }
 
-        C = new DMatrix(4, 4, 1);
-        C.setValue(0, 0, 0, 1);
-        C.setValue(0, 1, 0, 0);
-        C.setValue(0, 2, 0, -1);
-        C.setValue(0, 3, 0, 0);
-        C.setValue(1, 0, 0, 0);
-        C.setValue(1, 1, 0, 1);
-        C.setValue(1, 2, 0, 1);
-        C.setValue(1, 3, 0, 0);
-        C.setValue(2, 0, 0, 0);
-        C.setValue(2, 1, 0, -1);
-        C.setValue(2, 2, 0, 1);
-        C.setValue(2, 3, 0, 0);
-        C.setValue(3, 0, 0, 0);
-        C.setValue(3, 1, 0, 1);
-        C.setValue(3, 2, 0, 0);
-        C.setValue(3, 3, 0, -1);
+    /**
+     * Return C matrix.
+     *
+     * @param depth depth
+     * @return C matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Matrix getCMatrix(int depth) throws MatrixException {
+        Matrix C = new DMatrix(4, 4, depth).copy(true);
+        for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
+            C.setValue(0, 0, currentDepth, 1);
+            C.setValue(0, 1, currentDepth, 0);
+            C.setValue(0, 2, currentDepth, -1);
+            C.setValue(0, 3, currentDepth, 0);
+            C.setValue(1, 0, currentDepth, 0);
+            C.setValue(1, 1, currentDepth, 1);
+            C.setValue(1, 2, currentDepth, 1);
+            C.setValue(1, 3, currentDepth, 0);
+            C.setValue(2, 0, currentDepth, 0);
+            C.setValue(2, 1, currentDepth, -1);
+            C.setValue(2, 2, currentDepth, 1);
+            C.setValue(2, 3, currentDepth, 0);
+            C.setValue(3, 0, currentDepth, 0);
+            C.setValue(3, 1, currentDepth, 1);
+            C.setValue(3, 2, currentDepth, 0);
+            C.setValue(3, 3, currentDepth, -1);
+        }
         maskZeros(C);
-        CT = C.transpose();
+        return C;
+    }
 
-        G = new DMatrix(4, 3, 1);
-        G.setValue(0, 0, 0, 1);
-        G.setValue(0, 1, 0, 0);
-        G.setValue(0, 2, 0, 0);
-        G.setValue(1, 0, 0, 1/(double)2);
-        G.setValue(1, 1, 0, 1/(double)2);
-        G.setValue(1, 2, 0, 1/(double)2);
-        G.setValue(2, 0, 0, 1/(double)2);
-        G.setValue(2, 1, 0, -1/(double)2);
-        G.setValue(2, 2, 0, 1/(double)2);
-        G.setValue(3, 0, 0, 0);
-        G.setValue(3, 1, 0, 0);
-        G.setValue(3, 2, 0, 1);
+    /**
+     * Return G matrix.
+     *
+     * @param depth depth
+     * @return G matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public static Matrix getGMatrix(int depth) throws MatrixException {
+        Matrix G = new DMatrix(4, 3, depth).copy(true);
+        for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
+            G.setValue(0, 0, currentDepth, 1);
+            G.setValue(0, 1, currentDepth, 0);
+            G.setValue(0, 2, currentDepth, 0);
+            G.setValue(1, 0, currentDepth, 1/(double)2);
+            G.setValue(1, 1, currentDepth, 1/(double)2);
+            G.setValue(1, 2, currentDepth, 1/(double)2);
+            G.setValue(2, 0, currentDepth, 1/(double)2);
+            G.setValue(2, 1, currentDepth, -1/(double)2);
+            G.setValue(2, 2, currentDepth, 1/(double)2);
+            G.setValue(3, 0, currentDepth, 0);
+            G.setValue(3, 1, currentDepth, 0);
+            G.setValue(3, 2, currentDepth, 1);
+        }
         maskZeros(G);
-        GT = G.transpose();
+        return G;
     }
 
     /**
@@ -180,7 +222,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param matrix matrix to be masked.
      */
-    private void maskZeros(Matrix matrix) {
+    private static void maskZeros(Matrix matrix) {
         matrix.setMask();
         int matrixRows = matrix.getRows();
         int matrixColumns = matrix.getColumns();
@@ -206,7 +248,7 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
     public Matrix apply(Matrix input, Matrix filter) throws MatrixException {
         this.input = input;
         this.filter = filter;
-        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth());
+        this.result = input.getNewMatrix(getRows(), getColumns(), getDepth()).copy(true);
         applyMatrixOperation();
         return result;
     }
@@ -239,21 +281,45 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(int row, int column, int depth, double value) throws MatrixException {
-        input.slice(row, column, depth, row + 3, column + 3, depth);
+        Matrix currentFilter = filter.copy(true);
+        currentFilter.slice(0, 0, depth, filter.getTotalRows() - 1, filter.getTotalColumns() - 1, depth);
         Matrix Gprime;
         if (G != null) {
-            Matrix G1 = G.dot(filter);
+            G.slice(0, 0, depth, 3, 2, depth);
+            GT.slice(0, 0, depth, 2, 3, depth);
+            Matrix G1 = G.dot(currentFilter);
             Gprime = G1.dot(GT);
         }
-        else Gprime = filter;
-        Matrix C1 = CT.dot(input);
+        else Gprime = currentFilter;
+        Matrix C1 = null;
+        Matrix currentInput = input.copy(true);
+        for (int inputDepth = 0; inputDepth < currentInput.getDepth(); inputDepth++) {
+            currentInput.slice(row, column, inputDepth, row + 3, column + 3, inputDepth);
+            CT.slice(0, 0, depth, 3, 3, depth);
+            C1 = C1 == null ? CT.dot(currentInput) : C1.add(CT.dot(currentInput));
+        }
+
+        C.slice(0, 0, depth, 3, 3, depth);
         Matrix CPrime = C1.dot(C);
         Matrix GCprime = Gprime.dot(CPrime);
+        AT.slice(0, 0, depth, 1, 3, depth);
         Matrix AT1 = AT.dot(GCprime);
         result.slice(row, column, depth, row + 1, column + 1, depth);
+        A.slice(0, 0, depth, 3, 1, depth);
         result.setEqualTo(AT1.dot(A));
-        input.unslice();
+        currentInput.unslice();
         result.unslice();
+    }
+
+    /**
+     * Returns filter position based on combined position of input depth and filter
+     *
+     * @param inputDepth input depth
+     * @param filter filter
+     * @return filter position
+     */
+    protected int getFilterPosition(int inputDepth, int filter) {
+        return getDepth() * inputDepth + filter;
     }
 
 }
