@@ -5,7 +5,6 @@
 
 package core.reinforcement.agent;
 
-import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.reinforcement.algorithm.*;
 import core.reinforcement.function.FunctionEstimator;
