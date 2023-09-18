@@ -5,7 +5,6 @@
 
 package utils.procedure.expression;
 
-import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.CrosscorrelationFilterGradientMatrixOperation;
@@ -69,76 +68,18 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
     public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
         super("WINOGRAD_CONVOLUTION", "WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
 
-        Matrix AT = new DMatrix(2, 4, 1);
-        AT.setValue(0, 0, 0, 1);
-        AT.setValue(0, 1, 0, 1);
-        AT.setValue(0, 2, 0, 1);
-        AT.setValue(0, 3, 0, 0);
-        AT.setValue(1, 0, 0, 0);
-        AT.setValue(1, 1, 0, 1);
-        AT.setValue(1, 2, 0, -1);
-        AT.setValue(1, 3, 0, -1);
-        maskZeros(AT);
-        Matrix a = AT.transpose();
+        Matrix AT = WinogradConvolutionMatrixOperation.getATMatrix(result.getDepth());
+        Matrix a = AT.transpose().copy(true);
 
-        Matrix c = new DMatrix(4, 4, 1);
-        c.setValue(0, 0, 0, 1);
-        c.setValue(0, 1, 0, 0);
-        c.setValue(0, 2, 0, -1);
-        c.setValue(0, 3, 0, 0);
-        c.setValue(1, 0, 0, 0);
-        c.setValue(1, 1, 0, 1);
-        c.setValue(1, 2, 0, 1);
-        c.setValue(1, 3, 0, 0);
-        c.setValue(2, 0, 0, 0);
-        c.setValue(2, 1, 0, -1);
-        c.setValue(2, 2, 0, 1);
-        c.setValue(2, 3, 0, 0);
-        c.setValue(3, 0, 0, 0);
-        c.setValue(3, 1, 0, 1);
-        c.setValue(3, 2, 0, 0);
-        c.setValue(3, 3, 0, -1);
-        maskZeros(c);
-        Matrix CT = c.transpose();
+        Matrix c = WinogradConvolutionMatrixOperation.getCMatrix(result.getDepth());
+        Matrix CT = c.transpose().copy(true);
 
-        G = new DMatrix(4, 3, 1);
-        G.setValue(0, 0, 0, 1);
-        G.setValue(0, 1, 0, 0);
-        G.setValue(0, 2, 0, 0);
-        G.setValue(1, 0, 0, 1/(double)2);
-        G.setValue(1, 1, 0, 1/(double)2);
-        G.setValue(1, 2, 0, 1/(double)2);
-        G.setValue(2, 0, 0, 1/(double)2);
-        G.setValue(2, 1, 0, -1/(double)2);
-        G.setValue(2, 2, 0, 1/(double)2);
-        G.setValue(3, 0, 0, 0);
-        G.setValue(3, 1, 0, 0);
-        G.setValue(3, 2, 0, 1);
-        maskZeros(G);
-        GT = G.transpose();
+        G = WinogradConvolutionMatrixOperation.getGMatrix(result.getDepth());
+        GT = G.transpose().copy(true);
 
         winogradConvolutionMatrixOperation = new WinogradConvolutionMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), a, AT, c, CT);
         crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
         crosscorrelationFilterGradientMatrixOperation = new CrosscorrelationFilterGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, false);
-    }
-
-    /**
-     * Masks matrix positions with zero value to avoid unnecessary calculations.
-     *
-     * @param matrix matrix to be masked.
-     */
-    private void maskZeros(Matrix matrix) {
-        matrix.setMask();
-        int rows = matrix.getRows();
-        int columns = matrix.getColumns();
-        int totalDepth = matrix.getDepth();
-        for (int depth = 0; depth < totalDepth; depth++) {
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
-                    if (matrix.getValue(row, column, depth) == 0) matrix.getMask().setMask(row, column, depth, true);
-                }
-            }
-        }
     }
 
     /**
