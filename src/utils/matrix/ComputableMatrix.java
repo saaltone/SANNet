@@ -106,6 +106,22 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Constructor for computable matrix.
+     * If rows and columns do not equal to 1 isScalar parameter is ignored.<br>
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     */
+    protected ComputableMatrix(int rows, int columns, int depth, boolean isScalar, boolean isTransposed, boolean canBeSliced) {
+        super(rows, columns, depth, isTransposed, canBeSliced);
+        this.isScalar = isScalar && (rows == 1 && columns == 1 && depth == 1);
+    }
+
+    /**
      * Sets parameters for matrix.
      *
      * @param matrix matrix.

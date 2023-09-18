@@ -77,6 +77,21 @@ public class DMatrix extends ComputableMatrix {
      * @param rows defines number of rows in matrix.
      * @param columns defines number of columns in matrix.
      * @param depth defines depth of matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     */
+    public DMatrix(int rows, int columns, int depth, boolean isScalar, boolean isTransposed, boolean canBeSliced) {
+        super(rows, columns, depth, isScalar, isTransposed, canBeSliced);
+        matrix = new double[rows * columns * depth];
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
      * @param initialization type of initialization defined in class Init.
      * @param inputs applied in convolutional initialization defined as channels * filter size * filter size.
      * @param outputs applied in convolutional initialization defined as filters * filter size * filter size.
@@ -217,6 +232,23 @@ public class DMatrix extends ComputableMatrix {
     /**
      * Constructor for dense matrix.
      *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
+     * @param data matrix data.
+     * @param copyData if true matrix data is copied and if false referenced.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     */
+    public DMatrix(int rows, int columns, int depth, double[] data, boolean copyData, boolean isScalar, boolean isTransposed, boolean canBeSliced) {
+        super(rows, columns, depth, isScalar, isTransposed, canBeSliced);
+        matrix = copyData ? data.clone() : data;
+    }
+
+    /**
+     * Constructor for dense matrix.
+     *
      * @param other matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
@@ -228,11 +260,24 @@ public class DMatrix extends ComputableMatrix {
     /**
      * Creates new matrix with object full copy of this matrix.
      *
-     * @return newly created reference matrix.
+     * @return newly created copy of matrix.
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
-        Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, isScalar(), isTransposed());
+        Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, true, isScalar(), isTransposed());
+        super.setParameters(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     * @return newly created copy of matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy(boolean canBeSliced) throws MatrixException {
+        Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, true, isScalar(), isTransposed(), canBeSliced);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -358,7 +403,7 @@ public class DMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
     public Matrix getNewMatrix(int rows, int columns, int depth) throws MatrixException {
-        return new DMatrix(rows, columns, depth, getMask() != null ? getNewMask() : null);
+        return new DMatrix(rows, columns, depth, getMask() != null ? getNewMask(rows, columns, depth) : null);
     }
 
     /**
@@ -378,6 +423,18 @@ public class DMatrix extends ComputableMatrix {
      */
     protected Mask getNewMask() {
         return new DMask(getTotalRows(), getTotalColumns(), getTotalDepth());
+    }
+
+    /**
+     * Returns new mask for this matrix.
+     *
+     * @param rows rows
+     * @param columns columns
+     * @param depth depth
+     * @return mask of this matrix.
+     */
+    protected Mask getNewMask(int rows, int columns, int depth) {
+        return new DMask(rows, columns, depth);
     }
 
     /**

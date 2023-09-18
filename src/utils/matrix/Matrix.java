@@ -273,10 +273,19 @@ public interface Matrix {
     /**
      * Creates new matrix with object full copy of this matrix.
      *
-     * @return newly created reference matrix.
+     * @return newly created copy of matrix.
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     Matrix copy() throws MatrixException;
+
+    /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     * @return newly created copy of matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    Matrix copy(boolean canBeSliced) throws MatrixException;
 
     /**
      * Redimensions matrix assuming new dimensions are matching.
@@ -317,8 +326,9 @@ public interface Matrix {
     /**
      * Removes slicing of matrix.
      *
+     * @throws MatrixException throws exception if matrix cannot be sliced.
      */
-    void unslice();
+    void unslice() throws MatrixException;
 
     /**
      * Checks if this matrix and other matrix are equal in dimensions (rows x columns).

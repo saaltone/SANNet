@@ -89,6 +89,12 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     private int sliceSize;
 
     /**
+     * If true matrix can be slides otherwise cannot be sliced.
+     *
+     */
+    private final boolean canBeSliced;
+
+    /**
      * Name of matrix.
      *
      */
@@ -133,11 +139,25 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @param isTransposed if true matrix is transposed and if false not transposed.
      */
     protected AbstractMatrix(int rows, int columns, int depth, boolean isTransposed) {
+        this(rows, columns, depth, isTransposed, false);
+    }
+
+    /**
+     * Constructor for abstract matrix.
+     *
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth defines depth of matrix.
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     */
+    protected AbstractMatrix(int rows, int columns, int depth, boolean isTransposed, boolean canBeSliced) {
         this.rows = rows;
         this.columns = columns;
         this.depth = depth;
         this.isTransposed = isTransposed;
-        updateSliceDimensions(0, 0, 0, rows - 1, columns - 1, depth -1);
+        this.canBeSliced = canBeSliced;
+        if (canBeSliced()) updateSliceDimensions(0, 0, 0, rows - 1, columns - 1, depth -1);
     }
 
     /**
@@ -205,6 +225,15 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Checks if matrix can be sliced.
+     *
+     * @return true if matrix can be sliced otherwise returns false.
+     */
+    private boolean canBeSliced() {
+        return canBeSliced;
+    }
+
+    /**
      * Returns array index based on row and column
      *
      * @param row row
@@ -214,27 +243,10 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     protected int getArrayIndex(int row, int column, int depth) {
         if (isScalar()) return 0;
-        else return (getPureDepth() > 1 ? (getSliceStartDepth() + depth) * getPureRows() * getPureColumns() : 0) + (getPureColumns() > 1 ? (getSliceStartColumn() + (!isTransposed() ? column : row)) * getPureRows() : 0) + getSliceStartRow() + (!isTransposed() ? row : column);
-    }
-
-    /**
-     * Updates slice dimensions.
-     *
-     * @param startRow slice start row
-     * @param startColumn slice start columns
-     * @param startDepth slice start depth
-     * @param endRow slice end row
-     * @param endColumn slide end column
-     * @param endDepth slide end depth
-     */
-    protected void updateSliceDimensions(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) {
-        sliceStartRow = startRow;
-        sliceStartColumn = startColumn;
-        sliceStartDepth = startDepth;
-        sliceRows = endRow - sliceStartRow + 1;
-        sliceColumns = endColumn - sliceStartColumn + 1;
-        sliceDepth = endDepth - sliceStartDepth + 1;
-        sliceSize = sliceRows * sliceColumns;
+        else {
+            if (canBeSliced()) return (getPureDepth() > 1 ? (getSliceStartDepth() + depth) * getPureRows() * getPureColumns() : 0) + (getPureColumns() > 1 ? (getSliceStartColumn() + (!isTransposed() ? column : row)) * getPureRows() : 0) + getSliceStartRow() + (!isTransposed() ? row : column);
+            else return (getPureDepth() > 1 ? (depth) * getPureRows() * getPureColumns() : 0) + (getPureColumns() > 1 ? ((!isTransposed() ? column : row)) * getPureRows() : 0) + (!isTransposed() ? row : column);
+        }
     }
 
     /**
@@ -243,7 +255,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return slice start row.
      */
     protected int getSliceStartRow() {
-        return sliceStartRow;
+        return canBeSliced() ? sliceStartRow : 0;
     }
 
     /**
@@ -252,7 +264,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return slice start column.
      */
     protected int getSliceStartColumn() {
-        return sliceStartColumn;
+        return canBeSliced() ? sliceStartColumn : 0;
     }
 
     /**
@@ -261,7 +273,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return slice start depth.
      */
     protected int getSliceStartDepth() {
-        return sliceStartDepth;
+        return canBeSliced() ? sliceStartDepth : 0;
     }
 
     /**
@@ -270,7 +282,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of slice rows.
      */
     protected int getSliceRows() {
-        return sliceRows;
+        return canBeSliced() ? sliceRows : getPureRows();
     }
 
     /**
@@ -279,7 +291,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of slice columns.
      */
     protected int getSliceColumns() {
-        return sliceColumns;
+        return canBeSliced() ? sliceColumns : getPureColumns();
     }
 
     /**
@@ -288,7 +300,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return depth of slice.
      */
     protected int getSliceDepth() {
-        return sliceDepth;
+        return canBeSliced() ? sliceDepth : getPureDepth();
     }
 
     /**
@@ -303,6 +315,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if slicing fails.
      */
     public void slice(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) throws MatrixException {
+        if (!canBeSliced()) throw new MatrixException("Matrix cannot be sliced.");
         if (startRow < 0 || startColumn < 0 || startDepth < 0 || (!isTransposed() ? endRow : endColumn) > getPureRows() -1 || (!isTransposed() ? endColumn : endRow) > getPureColumns() - 1 || (endDepth > getPureDepth() - 1)) {
             throw new MatrixException("Slice rows: " + startRow + " - " + endRow + " and slice columns: " + startColumn + " - " + endColumn + " and slice depth: " + startDepth + " - " + endDepth + " do not match matrix dimensions: " + getTotalRows() + "x" + getTotalColumns() + "x" + getTotalDepth());
         }
@@ -312,9 +325,31 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Removes slicing of matrix.
      *
+     * @throws MatrixException throws exception if matrix cannot be sliced.
      */
-    public void unslice() {
+    public void unslice() throws MatrixException {
+        if (!canBeSliced()) throw new MatrixException("Matrix cannot be sliced.");
         updateSliceDimensions(0, 0, 0, getPureRows() - 1, getPureColumns() - 1, getPureDepth() - 1);
+    }
+
+    /**
+     * Updates slice dimensions.
+     *
+     * @param startRow slice start row
+     * @param startColumn slice start columns
+     * @param startDepth slice start depth
+     * @param endRow slice end row
+     * @param endColumn slide end column
+     * @param endDepth slide end depth
+     */
+    private void updateSliceDimensions(int startRow, int startColumn, int startDepth, int endRow, int endColumn, int endDepth) {
+        sliceStartRow = startRow;
+        sliceStartColumn = startColumn;
+        sliceStartDepth = startDepth;
+        sliceRows = endRow - sliceStartRow + 1;
+        sliceColumns = endColumn - sliceStartColumn + 1;
+        sliceDepth = endDepth - sliceStartDepth + 1;
+        sliceSize = sliceRows * sliceColumns;
     }
 
     /**
@@ -323,7 +358,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return size of matrix.
      */
     public int size() {
-        return sliceSize;
+        return canBeSliced() ? sliceSize : getPureRows() * getPureColumns();
     }
 
     /**
@@ -332,7 +367,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of rows in matrix.
      */
     public int getRows() {
-        return !isTransposed() ? getSliceRows() : getSliceColumns();
+        return !isTransposed() ? (canBeSliced() ? getSliceRows() : getPureRows()) : (canBeSliced() ? getSliceColumns() : getPureColumns());
     }
 
     /**
@@ -341,7 +376,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return number of columns in matrix.
      */
     public int getColumns() {
-        return !isTransposed() ? getSliceColumns() : getSliceRows();
+        return !isTransposed() ? (canBeSliced() ? getSliceColumns() : getPureColumns()) : (canBeSliced() ? getSliceRows() : getPureRows());
     }
 
     /**
@@ -350,7 +385,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @return depth of matrix.
      */
     public int getDepth() {
-        return getSliceDepth();
+        return (canBeSliced() ? getSliceDepth() : getPureDepth());
     }
 
     /**

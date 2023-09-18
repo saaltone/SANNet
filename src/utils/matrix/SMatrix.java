@@ -219,13 +219,41 @@ public class SMatrix extends ComputableMatrix {
     }
 
     /**
+     * Constructor for sparse matrix.
+     * @param rows defines number of rows in matrix.
+     * @param columns defines number of columns in matrix.
+     * @param depth depth of matrix.
+     * @param isScalar true if matrix is scalar (size 1x1).
+     * @param isTransposed if true matrix is transposed and if false not transposed.
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     * @param data matrix data.
+     */
+    public SMatrix(int rows, int columns, int depth, boolean isScalar, boolean isTransposed, boolean canBeSliced, HashMap<Integer, Double> data) {
+        super(rows, columns, depth, isScalar, isTransposed, canBeSliced);
+        matrix.putAll(data);
+    }
+
+    /**
      * Creates new matrix with object full copy of this matrix.
      *
-     * @return newly created reference matrix.
+     * @return newly created copy of matrix.
      * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
     public Matrix copy() throws MatrixException {
         Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), isTransposed(), matrix);
+        super.setParameters(newMatrix);
+        return newMatrix;
+    }
+
+    /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
+     * @return newly created copy of matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy(boolean canBeSliced) throws MatrixException {
+        Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), isTransposed(), canBeSliced, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
     }
@@ -324,7 +352,7 @@ public class SMatrix extends ComputableMatrix {
      * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
     public Matrix getNewMatrix(int rows, int columns, int depth) throws MatrixException {
-        return forceDMatrix ? new DMatrix(rows, columns, depth, getMask() != null ? new DMask(rows, columns, depth) : null) : new SMatrix(rows, columns, depth, getMask() != null ? getNewMask() : null);
+        return forceDMatrix ? new DMatrix(rows, columns, depth, getMask() != null ? new DMask(rows, columns, depth) : null) : new SMatrix(rows, columns, depth, getMask() != null ? getNewMask(rows, columns, depth) : null);
     }
 
     /**
@@ -344,6 +372,18 @@ public class SMatrix extends ComputableMatrix {
      */
     protected Mask getNewMask() {
         return new SMask(getTotalRows(), getTotalColumns(), getTotalDepth());
+    }
+
+    /**
+     * Returns new mask for this matrix.
+     *
+     * @param rows rows
+     * @param columns columns
+     * @param depth depth
+     * @return mask of this matrix.
+     */
+    protected Mask getNewMask(int rows, int columns, int depth) {
+        return new SMask(rows, columns, depth);
     }
 
     /**

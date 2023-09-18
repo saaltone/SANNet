@@ -105,6 +105,18 @@ public class JMatrix extends ComputableMatrix {
     }
 
     /**
+     * Creates new matrix with object full copy of this matrix.
+     *
+     * @return newly created reference matrix.
+     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
+     */
+    public Matrix copy(boolean canBeSliced) throws MatrixException {
+        ArrayList<Matrix> subMatrices = new ArrayList<>();
+        for (Matrix matrix : matrices) subMatrices.add(matrix.copy());
+        return new JMatrix(subMatrices, joinedVertically);
+    }
+
+    /**
      * Redimensions matrix assuming new dimensions are matching.
      *
      * @param newRows new row size
