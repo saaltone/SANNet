@@ -86,11 +86,12 @@ public class SimpleDemo {
 
     private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, int id, HashMap<Integer, HashMap<Integer, Matrix>> data, boolean print) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + id);
-        neuralNetwork.setAsRegression();
+        neuralNetwork.setAsRegression(true);
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setAutoValidate(5);
         neuralNetwork.verboseValidation();
-        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping("trainingStopThreshold = 100, validationStopThreshold = 100")); }});
+        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping()); }});
+        neuralNetwork.setShowTrainingMetrics(true);
         neuralNetwork.start();
         if (print) {
             neuralNetwork.print();

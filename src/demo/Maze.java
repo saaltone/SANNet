@@ -637,8 +637,10 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             agent.act();
 
             mazePanel.updateAgentHistory(mazeAgentHistory);
-            jFrame.revalidate();
-            mazePanel.paintImmediately(0, 0, size * 10, size * 10 + 40);
+            SwingUtilities.invokeLater(() -> {
+                jFrame.revalidate();
+                mazePanel.repaint();
+            });
 
             if (resetRequested) {
                 initMaze();
@@ -850,7 +852,10 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
-        if (!policyGradient) neuralNetwork.verboseTraining(10);
+        if (!policyGradient) {
+            neuralNetwork.verboseTraining(10);
+        }
+
         return neuralNetwork;
     }
 
@@ -883,6 +888,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
 
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
+
         return neuralNetwork;
     }
 

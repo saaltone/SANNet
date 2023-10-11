@@ -108,11 +108,12 @@ public class TimeSeriesPrediction {
      */
     private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, Matrix>> trainingInputs, HashMap<Integer, HashMap<Integer, Matrix>> trainingOutputs, HashMap<Integer, HashMap<Integer, Matrix>> validationInputs, HashMap<Integer, HashMap<Integer, Matrix>> validationOutputs) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network");
-        neuralNetwork.setAsRegression();
+        neuralNetwork.setAsRegression(true);
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setAutoValidate(100);
         neuralNetwork.verboseValidation();
 //        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping("trainingStopThreshold = 100, validationStopThreshold = 100")); }});
+        neuralNetwork.setShowTrainingMetrics(true);
         neuralNetwork.start();
         neuralNetwork.print();
         neuralNetwork.printExpressions();

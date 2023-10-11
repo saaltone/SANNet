@@ -754,7 +754,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     public TicTacToe() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        int numberfOfAgents = 2;
+        int numberOfAgents = 2;
         boolean singleFunctionEstimator = false;
         boolean sharedPolicyFunctionEstimator = true;
         boolean sharedValueFunctionEstimator = true;
@@ -804,7 +804,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         if (!policyTypeParams.isEmpty() && !algorithmParams.isEmpty()) params = policyTypeParams + ", " + algorithmParams;
 
         Agent agent = null;
-        for (int agentCount = 0; agentCount < numberfOfAgents; agentCount++) {
+        for (int agentCount = 0; agentCount < numberOfAgents; agentCount++) {
             if (agent == null) agent = AgentFactory.createAgent(this, agentAlgorithmType, this, getInputSize(), getOutputSize(), onlineMemory, singleFunctionEstimator, applyDueling, executablePolicyType, params);
             else agent = AgentFactory.createAgent(agent, sharedPolicyFunctionEstimator, sharedValueFunctionEstimator, sharedMemory);
             agent.start();
@@ -837,7 +837,9 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.ADAM);
-        if (!policyGradient) neuralNetwork.verboseTraining(10);
+        if (!policyGradient) {
+            neuralNetwork.verboseTraining(10);
+        }
         neuralNetwork.setNeuralNetworkName("TicTacToe");
         return neuralNetwork;
     }
@@ -867,9 +869,10 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
-        neuralNetwork.verboseTraining(10);
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.setNeuralNetworkName("TicTacToe");
+        neuralNetwork.verboseTraining(10);
+
         return neuralNetwork;
     }
 
@@ -1180,8 +1183,10 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
         panelLock.unlock();
-        jFrame.revalidate();
-        ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
+        SwingUtilities.invokeLater(() -> {
+            jFrame.revalidate();
+            ticTacToePanel.repaint();
+        });
 
         if (currentHumanPlayerRole != null) {
             try {

@@ -54,6 +54,7 @@ public class TextSeqDemo {
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
             neuralNetwork.verboseTraining(10);
+            neuralNetwork.setShowTrainingMetrics(true);
             neuralNetwork.start();
             neuralNetwork.print();
             neuralNetwork.printExpressions();

@@ -56,16 +56,18 @@ public class MNISTDemo {
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
 
-            neuralNetwork.setAsClassification();
+            neuralNetwork.setAsClassification(true);
             neuralNetwork.verboseTraining(10);
-            neuralNetwork.setAutoValidate(100);
+            neuralNetwork.setAutoValidate(10);
             neuralNetwork.verboseValidation();
             neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping()); }});
+            neuralNetwork.setShowTrainingMetrics(true);
+            neuralNetwork.showConfusionMatrix(true);
 
             neuralNetwork.start();
 
             neuralNetwork.setTrainingData(new BasicSampler(new HashMap<>() {{ put(0, trainMNIST.get(0)); }}, new HashMap<>() {{ put(0, trainMNIST.get(1)); }},"perEpoch = true, randomOrder = true, shuffleSamples = true, sampleSize = 16, numberOfIterations = 5625"));
-            neuralNetwork.setValidationData(new BasicSampler(new HashMap<>() {{ put(0, testMNIST.get(0)); }}, new HashMap<>() {{ put(0, testMNIST.get(1)); }}, "randomOrder = true, shuffleSamples = true, sampleSize = 10"));
+            neuralNetwork.setValidationData(new BasicSampler(new HashMap<>() {{ put(0, testMNIST.get(0)); }}, new HashMap<>() {{ put(0, testMNIST.get(1)); }}, "randomOrder = true, shuffleSamples = true, sampleSize = 20"));
 
             neuralNetwork.print();
             neuralNetwork.printExpressions();

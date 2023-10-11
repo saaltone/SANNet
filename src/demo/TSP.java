@@ -664,6 +664,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
          * @param g graphics.
          */
         public void paintComponent(Graphics g) {
+            super.paintComponent(g);
             Graphics2D g2 = (Graphics2D)g;
             super.paintComponent(g2);
             if (drawCities.isEmpty()) return;
@@ -773,12 +774,14 @@ public class TSP implements Environment, AgentFunctionEstimator {
         getAgent().endEpisode();
 
         if (redraw) {
-            jFrame.remove(tspPanel);
-            tspPanel = new TSPPanel();
-            jFrame.add(tspPanel);
-            tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious, tour.visitedCitiesMin);
-            jFrame.revalidate();
-            tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
+            SwingUtilities.invokeLater(() -> {
+                jFrame.remove(tspPanel);
+                tspPanel = new TSPPanel();
+                jFrame.add(tspPanel);
+                tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious, tour.visitedCitiesMin);
+                jFrame.revalidate();
+                tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
+            });
         }
     }
 
@@ -835,7 +838,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
             case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
         }
-        boolean singleFunctionEstimator = false;
+        boolean singleFunctionEstimator = true;
 
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
         boolean onlineMemory = switch (agentAlgorithmType) {
@@ -895,7 +898,10 @@ public class TSP implements Environment, AgentFunctionEstimator {
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
-        if (!policyGradient) neuralNetwork.verboseTraining(10);
+        if (!policyGradient) {
+            neuralNetwork.verboseTraining(10);
+        }
+
         return neuralNetwork;
     }
 
@@ -928,6 +934,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
+
         return neuralNetwork;
     }
 
