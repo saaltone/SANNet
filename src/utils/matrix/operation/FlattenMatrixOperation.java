@@ -15,19 +15,6 @@ import utils.matrix.MatrixException;
 public class FlattenMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    protected transient Matrix input;
-
-    /**
-     * Result.
-     *
-     */
-    protected transient Matrix result;
-
-
-    /**
      * Constructor for flatten matrix operation.
      *
      * @param rows number of rows for operation.
@@ -42,43 +29,24 @@ public class FlattenMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies matrix operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix input) throws MatrixException {
-        this.input = input;
-        this.result = input.redimension(getRows() * getColumns() * getDepth(), 1, 1, false);
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+    public Matrix apply(Matrix first) throws MatrixException {
+        return first.redimension(getRows() * getColumns() * getDepth(), 1, 1, false);
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
     }
 
 }

@@ -17,18 +17,6 @@ import java.util.HashMap;
 public abstract class AbstractPositionalPoolingGradientMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Output gradient.
-     *
-     */
-    private transient Matrix outputGradient;
-
-    /**
-     * Input gradient.
-     *
-     */
-    private transient Matrix inputGradient;
-
-    /**
      * Number of input gradient rows.
      *
      */
@@ -72,42 +60,22 @@ public abstract class AbstractPositionalPoolingGradientMatrixOperation extends A
      */
 
     public Matrix apply(Matrix outputGradient, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        this.outputGradient = outputGradient;
         this.inputPos = inputPos;
-        this.inputGradient = outputGradient.getNewMatrix(inputGradientRowSize, inputGradientColumnSize, getDepth());
-        applyMatrixOperation();
-        return inputGradient;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return outputGradient;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+        return applyMatrixOperation(outputGradient, null, outputGradient.getNewMatrix(inputGradientRowSize, inputGradientColumnSize, getDepth()));
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         final int position = 2 * (depth * getRows() * getColumns() + column * getRows() + row);
-        inputGradient.addByValue(inputPos.get(position), inputPos.get(position + 1), depth, value);
+        result.addByValue(inputPos.get(position), inputPos.get(position + 1), depth, value);
     }
 
 }

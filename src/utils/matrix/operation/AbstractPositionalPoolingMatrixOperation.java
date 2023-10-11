@@ -17,6 +17,12 @@ import java.util.HashMap;
 public abstract class AbstractPositionalPoolingMatrixOperation extends AbstractConvolutionalOperation {
 
     /**
+     * First matrix.
+     *
+     */
+    private transient Matrix first;
+
+    /**
      * Input position for each resulting row and column.
      *
      */
@@ -40,17 +46,24 @@ public abstract class AbstractPositionalPoolingMatrixOperation extends AbstractC
     /**
      * Applies matrix operation.
      *
-     * @param input input matrix.
-     * @param inputPos input positions.
+     * @param first first matrix.
+     * @param inputPos first positions.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix input, HashMap<Integer, Integer> inputPos) throws MatrixException {
-        setTargetMatrix(input);
+    public Matrix apply(Matrix first, HashMap<Integer, Integer> inputPos) throws MatrixException {
+        this.first = first;
         this.inputPos = inputPos;
-        setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
-        applyMatrixOperation();
-        return getResult();
+        return applyMatrixOperation(first, null, first.getNewMatrix(getRows(), getColumns(), getDepth()));
+    }
+
+    /**
+     * Returns first matrix.
+     *
+     * @return first matrix.
+     */
+    protected Matrix getFirst() {
+        return first;
     }
 
     /**

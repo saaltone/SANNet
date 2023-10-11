@@ -15,6 +15,12 @@ import utils.matrix.MatrixException;
 public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
 
     /**
+     * First matrix.
+     *
+     */
+    private transient Matrix first;
+
+    /**
      * Inverted size of filter = 1 / (rows * columns)
      *
      */
@@ -45,15 +51,13 @@ public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
     /**
      * Applies matrix operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix input) throws MatrixException {
-        setTargetMatrix(input);
-        setResult(input.getNewMatrix(getRows(), getColumns(), getDepth()));
-        applyMatrixOperation();
-        return getResult();
+    public Matrix apply(Matrix first) throws MatrixException {
+        this.first = first;
+        return applyMatrixOperation(first, null, first.getNewMatrix(getRows(), getColumns(), getDepth()));
     }
 
     /**
@@ -67,10 +71,10 @@ public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        double filterValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
-        sumValue += filterValue;
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        sumValue += first.getValue(inputRow, inputColumn, depth);
     }
 
     /**
@@ -84,11 +88,10 @@ public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
-            applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
-        }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value, result);
     }
 
     /**
@@ -108,9 +111,10 @@ public class AveragePoolMatrixOperation extends AbstractConvolutionalOperation {
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
-        getResult().setValue(row, column, depth, sumValue * invertedFilterSize);
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
+        result.setValue(row, column, depth, sumValue * invertedFilterSize);
     }
 
 }

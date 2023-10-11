@@ -15,6 +15,12 @@ import utils.matrix.MatrixException;
 public abstract class AbstractConvolutionInputGradientMatrixOperation extends AbstractConvolutionOperation {
 
     /**
+     * Filter matrix.
+     *
+     */
+    private transient Matrix filter;
+
+    /**
      * Constructor for abstract convolution input gradient matrix operation.
      *
      * @param rows             number of rows for operation.
@@ -41,11 +47,8 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix outputGradient, Matrix filter) throws MatrixException {
-        setTargetMatrix(outputGradient);
-        setInputMatrix(filter);
-        setResult(outputGradient.getNewMatrix(getInputRows(), getInputColumns(), getInputDepth()));
-        applyMatrixOperation();
-        return getResult();
+        this.filter = filter;
+        return applyMatrixOperation(outputGradient, null, outputGradient.getNewMatrix(getInputRows(), getInputColumns(), getInputDepth()));
     }
 
     /**
@@ -59,18 +62,19 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
         if (getIsDepthSeparable()) {
-            double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
+            double filterValue = filter.getValue(filterRow, filterColumn, depth);
             double gradientValue = filterValue * value;
-            getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
+            result.addByValue(inputRow, inputColumn, depth, gradientValue);
         }
         else {
             for (int inputDepth = 0; inputDepth < getInputDepth(); inputDepth++) {
-                double filterValue = getInputMatrix().getValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth));
+                double filterValue = filter.getValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth));
                 double gradientValue = filterValue * value;
-                getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
+                result.addByValue(inputRow, inputColumn, inputDepth, gradientValue);
             }
         }
     }
@@ -86,22 +90,10 @@ public abstract class AbstractConvolutionInputGradientMatrixOperation extends Ab
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        if (!hasMaskAt(filterRow, filterColumn, depth, getTargetMatrix())) {
-            if (getIsDepthSeparable()) {
-                double filterValue = getInputMatrix().getValue(filterRow, filterColumn, depth);
-                double gradientValue = filterValue * value;
-                getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
-            }
-            else {
-                for (int inputDepth = 0; inputDepth < getInputDepth(); inputDepth++) {
-                    double filterValue = getInputMatrix().getValue(filterRow, filterColumn, getFilterPosition(inputDepth, depth));
-                    double gradientValue = filterValue * value;
-                    getResult().addByValue(inputRow, inputColumn, inputDepth, gradientValue);
-                }
-            }
-        }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value, result);
     }
 
 }

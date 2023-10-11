@@ -5,6 +5,8 @@
 
 package utils.matrix.operation;
 
+import utils.matrix.Matrix;
+
 import java.util.Random;
 
 /**
@@ -58,8 +60,9 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
     }
 
     /**
@@ -73,9 +76,10 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        while (hasMaskAt(randomRow, randomColumn, depth, getTargetMatrix())) {
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        while (hasMaskAt(randomRow, randomColumn, depth, getFirst())) {
             startOperation(row, column, depth);
         }
     }
@@ -98,10 +102,10 @@ public class RandomPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
-        getResult().setValue(row, column, depth, getTargetMatrix().getValue(randomRow, randomColumn, depth));
-
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
+        result.setValue(row, column, depth, getFirst().getValue(randomRow, randomColumn, depth));
         super.finishOperation(row, column, depth);
     }
 

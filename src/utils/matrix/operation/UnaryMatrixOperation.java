@@ -17,18 +17,6 @@ import utils.matrix.UnaryFunctionType;
 public class UnaryMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private transient Matrix first;
-
-    /**
-     * Result matrix.
-     *
-     */
-    private transient Matrix result;
-
-    /**
      * Matrix unary function.
      *
      */
@@ -94,21 +82,21 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyFunction(Matrix first, boolean inplace) throws MatrixException {
-        this.first = first;
         asFunction = true;
         switch (unaryFunctionType) {
-            case SOFTMAX -> result = first.softmax(unaryFunction.getSoftmaxTau());
-            case GUMBEL_SOFTMAX -> result = first.gumbelSoftmax(unaryFunction.getSoftmaxTau());
+            case SOFTMAX -> {
+                return first.softmax(unaryFunction.getSoftmaxTau());
+            }
+            case GUMBEL_SOFTMAX -> {
+                return first.gumbelSoftmax(unaryFunction.getSoftmaxTau());
+            }
             case TRANSPOSE -> {
-                result = first.getNewMatrix(first.getColumns(), first.getRows(), getDepth());
-                applyMatrixOperation();
+                return applyMatrixOperation(first, null, first.getNewMatrix(first.getColumns(), first.getRows(), getDepth()));
             }
             default -> {
-                result = inplace ? first : first.getNewMatrix(getRows(), getColumns(), getDepth());
-                applyMatrixOperation();
+                return applyMatrixOperation(first, null, inplace ? first : first.getNewMatrix(getRows(), getColumns(), getDepth()));
             }
         }
-        return result;
     }
 
     /**
@@ -120,50 +108,30 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix first, Matrix outputGradient) throws MatrixException {
-        this.first = first;
         asFunction = false;
         switch (unaryFunctionType) {
             case SOFTMAX, GUMBEL_SOFTMAX -> {
-                return result = first.softmaxGrad().dot(outputGradient);
+                return first.softmaxGrad().dot(outputGradient);
             }
             case TRANSPOSE -> {
-                return result = outputGradient.transpose();
+                return outputGradient.transpose();
             }
             default -> {
-                result = first.getNewMatrix(getRows(), getColumns(), getDepth());
-                applyMatrixOperation();
-                return result = outputGradient.multiply(result);
+                return outputGradient.multiply(applyMatrixOperation(first, null, first.getNewMatrix(getRows(), getColumns(), getDepth())));
             }
         }
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         if (unaryFunctionType == UnaryFunctionType.TRANSPOSE) result.setValue(column, row, depth, value);
         else result.setValue(row, column, depth, asFunction ? matrixUnaryOperation.execute(value) : matrixGradientUnaryOperation.execute(value));
     }

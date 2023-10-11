@@ -16,18 +16,6 @@ import java.util.TreeMap;
 public class JoinMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private transient Matrix first;
-
-    /**
-     * Second matrix.
-     *
-     */
-    private transient Matrix second;
-
-    /**
      * If true joins matrices vertically otherwise horizontally.
      *
      */
@@ -55,8 +43,6 @@ public class JoinMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix first, Matrix second) throws MatrixException {
-        this.first = first;
-        this.second = second;
         return new JMatrix(new TreeMap<>() {{ put(0, first); put(1, second); }}, joinedVertically);
     }
 
@@ -72,32 +58,15 @@ public class JoinMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return second;
-    }
-
-    /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
     }
 
 }

@@ -5,6 +5,8 @@
 
 package utils.matrix.operation;
 
+import utils.matrix.Matrix;
+
 /**
  * Implements max pooling matrix operation.
  *
@@ -55,9 +57,10 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        double filterValue = getTargetMatrix().getValue(inputRow, inputColumn, depth);
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        double filterValue = getFirst().getValue(inputRow, inputColumn, depth);
         if (maxValue < filterValue) {
             maxValue = filterValue;
             maxRow = inputRow;
@@ -76,11 +79,10 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        if (!hasMaskAt(inputRow, inputColumn, depth, getTargetMatrix())) {
-            applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
-        }
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value, result);
     }
 
     /**
@@ -102,10 +104,10 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
-        getResult().setValue(row, column, depth, maxValue);
-
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
+        result.setValue(row, column, depth, maxValue);
         super.finishOperation(row, column, depth);
     }
 

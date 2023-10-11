@@ -17,12 +17,6 @@ import utils.matrix.MatrixException;
 public class DropoutMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private transient Matrix first;
-
-    /**
      * Probability of dropout.
      *
      */
@@ -50,7 +44,6 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix first, boolean inplace) throws MatrixException {
-        this.first = first;
         Matrix result = first;
         if (inplace) first.multiplyBy(1 / probability);
         else result = first.multiply(1 / probability);
@@ -61,33 +54,16 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
      * Applies operation.<br>
      * Ignores masking of other matrix.<br>
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
     }
 
 }

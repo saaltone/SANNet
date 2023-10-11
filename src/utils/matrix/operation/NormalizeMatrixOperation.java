@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class NormalizeMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix input;
-
-    /**
      * Mean for normalize operation.
      *
      */
@@ -31,12 +25,6 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
      *
      */
     private final double variance;
-
-    /**
-     * Normalized matrix.
-     *
-     */
-    private transient Matrix result;
 
     /**
      * Constructor for normalize matrix operation.
@@ -56,63 +44,25 @@ public class NormalizeMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @param result result matrix.
      * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix apply(Matrix input, Matrix result) throws MatrixException {
-        this.input = input;
-        this.result = result;
-        applyMatrixOperation();
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    public void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    public Matrix getResult() {
-        return result;
+    public Matrix apply(Matrix first, Matrix result) throws MatrixException {
+        return applyMatrixOperation(first, null, result);
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         result.setValue(row, column, depth, (value - mean) / variance);
     }
 

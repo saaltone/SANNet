@@ -249,38 +249,21 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
         this.input = input;
         this.filter = filter;
         this.result = input.getNewMatrix(getRows(), getColumns(), getDepth()).copy(true);
-        applyMatrixOperation();
+        applyMatrixOperation(input, null, result);
         return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void apply(int row, int column, int depth, double value) throws MatrixException {
+    public void apply(int row, int column, int depth, double value, Matrix result) throws MatrixException {
         Matrix currentFilter = filter.copy(true);
         currentFilter.slice(0, 0, depth, filter.getTotalRows() - 1, filter.getTotalColumns() - 1, depth);
         Matrix Gprime;
@@ -300,26 +283,16 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
         }
 
         C.slice(0, 0, depth, 3, 3, depth);
+        assert C1 != null;
         Matrix CPrime = C1.dot(C);
         Matrix GCprime = Gprime.dot(CPrime);
         AT.slice(0, 0, depth, 1, 3, depth);
         Matrix AT1 = AT.dot(GCprime);
-        result.slice(row, column, depth, row + 1, column + 1, depth);
+        this.result.slice(row, column, depth, row + 1, column + 1, depth);
         A.slice(0, 0, depth, 3, 1, depth);
-        result.setEqualTo(AT1.dot(A));
+        this.result.setEqualTo(AT1.dot(A));
         currentInput.unslice();
-        result.unslice();
-    }
-
-    /**
-     * Returns filter position based on combined position of input depth and filter
-     *
-     * @param inputDepth input depth
-     * @param filter filter
-     * @return filter position
-     */
-    protected int getFilterPosition(int inputDepth, int filter) {
-        return getDepth() * inputDepth + filter;
+        this.result.unslice();
     }
 
 }

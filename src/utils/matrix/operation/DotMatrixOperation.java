@@ -27,26 +27,28 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     private transient Matrix second;
 
     /**
-     * Result matrix.
+     * Number of rows in second matrix.
      *
      */
-    private transient Matrix result;
+    private final int secondRows;
 
     /**
      * Constructor for dot matrix operation.
      *
-     * @param rows number of rows for operation.
-     * @param columns number of columns for operation.
-     * @param depth depth for operation.
+     * @param firstRows  number of first matrix rows for operation.
+     * @param secondRows number of second matrix rows for operation.
+     * @param columns    number of columns for operation.
+     * @param depth      depth for operation.
      */
-    public DotMatrixOperation(int rows, int columns, int depth) {
-        super(rows, columns, depth, false);
+    public DotMatrixOperation(int firstRows, int secondRows, int columns, int depth) {
+        super(firstRows, columns, depth, false);
+        this.secondRows = secondRows;
     }
 
     /**
      * Applies matrix operation.
      *
-     * @param first first matrix.
+     * @param first  first matrix.
      * @param second second matrix.
      * @return result matrix.
      * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
@@ -54,35 +56,15 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     public Matrix apply(Matrix first, Matrix second) throws MatrixException {
         this.first = first;
         this.second = second;
-        this.result = first.getNewMatrix(first.getRows(), second.getColumns(), getDepth());
-        applyMatrixOperation();
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    protected Matrix getOther() {
-        return second;
+        return applyMatrixOperation(first, second, first.getNewMatrix(first.getRows(), second.getColumns(), getDepth()));
     }
 
     /**
      * Check if first matrix and optionally second matrix are masked at specific row and column.
      *
-     * @param row row.
+     * @param row    row.
      * @param column column.
-     * @param first first matrix.
+     * @param first  first matrix.
      * @param second second matrix.
      * @return returns true if first or second matrix are masked at specific row and column.
      */
@@ -93,65 +75,63 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies matrix operation.
      *
+     * @param first  first matrix.
+     * @param second second matrix.
+     * @param result result matrix.
+     * @return result matrix.
      */
-    protected void applyMatrixOperation() {
-        final int rows1 = getRows();
-        final Matrix other = getOther();
-        final int rows2 = other.getRows();
-        final int totalDepth = getDepth();
-        final int rowStride = getStride();
-        final int columnStride = getStride();
-        final Matrix targetMatrix = getTargetMatrix();
-        if (!hasMask(targetMatrix, other)) {
-            for (int depth = 0; depth < totalDepth; depth++) {
-                for (int row1 = 0; row1 < rows1; row1 += rowStride) {
-                    for (int row2 = 0; row2 < rows2; row2 += rowStride) {
-                        apply(row1, row2, depth, 0);
+    protected Matrix applyMatrixOperation(Matrix first, Matrix second, Matrix result) {
+        if (!hasMask(first, second)) {
+            for (int depth = 0; depth < getDepth(); depth++) {
+                for (int firstRow = 0; firstRow < getRows(); firstRow += getStride()) {
+                    for (int secondRow = 0; secondRow < secondRows; secondRow += getStride()) {
+                        apply(firstRow, secondRow, depth, 0, result);
                     }
                 }
             }
         }
         else {
-            for (int depth = 0; depth < totalDepth; depth++) {
-                for (int row1 = 0; row1 < rows1; row1 += rowStride) {
-                    for (int row2 = 0; row2 < rows2; row2 += columnStride) {
-                        if (!hasMaskAt(row1, row2, depth, targetMatrix, other)) {
-                            applyMask(row1, row2, depth, 0);
+            for (int depth = 0; depth < getDepth(); depth++) {
+                for (int firstRow = 0; firstRow < getRows(); firstRow += getStride()) {
+                    for (int secondRow = 0; secondRow < secondRows; secondRow += getStride()) {
+                        if (!hasMaskAt(firstRow, secondRow, depth, first, second)) {
+                            applyMask(firstRow, secondRow, depth, 0, result);
                         }
                     }
                 }
             }
         }
+        return result;
     }
 
     /**
      * Applies operation.
      *
-     * @param row1 current row1.
-     * @param row2 current row2.
-     * @param depth current depth.
-     * @param value current value.
+     * @param firstRow  current firstRow.
+     * @param secondRow current secondRow.
+     * @param depth     current depth.
+     * @param value     current value.
+     * @param result    result matrix.
      */
-    public void apply(int row1, int row2, int depth, double value) {
-        int columns = second.getColumns();
-        for (int column = 0; column < columns; column++) {
-            result.setValue(row1, column, depth, result.getValue(row1, column, depth) + first.getValue(row1, row2, depth) * second.getValue(row2, column, depth));
+    public void apply(int firstRow, int secondRow, int depth, double value, Matrix result) {
+        for (int column = 0; column < getColumns(); column += getStride()) {
+            result.setValue(firstRow, column, depth, result.getValue(firstRow, column, depth) + first.getValue(firstRow, secondRow, depth) * second.getValue(secondRow, column, depth));
         }
     }
 
     /**
      * Applies operation assuming masked matrices.
      *
-     * @param row1 current row1.
-     * @param row2 current row2.
-     * @param depth current depth.
-     * @param value current value.
+     * @param firstRow  current firstRow.
+     * @param secondRow current secondRow.
+     * @param depth     current depth.
+     * @param value     current value.
+     * @param result    result matrix.
      */
-    public void applyMask(int row1, int row2, int depth, double value) {
-        int columns = second.getColumns();
-        for (int column = 0; column < columns; column++) {
-            if (!hasMaskAt(row1, row2, depth, first) && !hasMaskAt(row2, column, depth, second)) {
-                result.setValue(row1, column, depth, result.getValue(row1, column, depth) + first.getValue(row1, row2, depth) * second.getValue(row2, column, depth));
+    public void applyMask(int firstRow, int secondRow, int depth, double value, Matrix result) {
+        for (int column = 0; column < getColumns(); column += getStride()) {
+            if (!hasMaskAt(firstRow, secondRow, depth, first) && !hasMaskAt(secondRow, column, depth, second)) {
+                result.setValue(firstRow, column, depth, result.getValue(firstRow, column, depth) + first.getValue(firstRow, secondRow, depth) * second.getValue(secondRow, column, depth));
             }
         }
     }

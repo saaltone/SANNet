@@ -15,18 +15,6 @@ import utils.matrix.MatrixException;
 public class EqualMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private transient Matrix first;
-
-    /**
-     * Result matrix.
-     *
-     */
-    private transient Matrix result;
-
-    /**
      * Constructor for equal matrix operation.
      *
      * @param rows number of rows for operation.
@@ -45,39 +33,20 @@ public class EqualMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(Matrix first, Matrix result) throws MatrixException {
-        this.first = first;
-        this.result = result;
-        applyMatrixOperation();
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+        applyMatrixOperation(first, null, result);
     }
 
     /**
      * Applies operation.<br>
      * Ignores masking of other matrix.<br>
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         result.setValue(row, column, depth, value);
     }
 

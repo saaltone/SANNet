@@ -58,10 +58,7 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix outputGradient) throws MatrixException {
-        setTargetMatrix(outputGradient);
-        setResult(outputGradient.getNewMatrix(inputRows, inputColumns, getDepth()));
-        applyMatrixOperation();
-        return getResult();
+        return applyMatrixOperation(outputGradient, null, outputGradient.getNewMatrix(inputRows, inputColumns, getDepth()));
     }
 
     /**
@@ -75,10 +72,11 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
         double gradientValue = value * invertedFilterSize;
-        getResult().addByValue(inputRow, inputColumn, depth, gradientValue);
+        result.addByValue(inputRow, inputColumn, depth, gradientValue);
     }
 
     /**
@@ -92,9 +90,10 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value);
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        applyOperation(row, column, depth, inputRow, inputColumn, filterRow, filterColumn, value, result);
     }
 
     /**
@@ -113,8 +112,9 @@ public class AveragePoolGradientMatrixOperation extends AbstractConvolutionalOpe
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
     }
 
 }

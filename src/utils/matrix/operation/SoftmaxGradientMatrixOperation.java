@@ -21,12 +21,6 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
     private transient Matrix first;
 
     /**
-     * Result matrix.
-     *
-     */
-    private transient Matrix result;
-
-    /**
      * Constructor for Softmax gradient matrix operation.
      *
      * @param rows number of rows for operation.
@@ -46,38 +40,19 @@ public class SoftmaxGradientMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix apply(Matrix first) throws MatrixException {
         this.first = first;
-        this.result = first.getNewMatrix(first.getRows(), first.getRows(), getDepth());
-        applyMatrixOperation();
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+        return applyMatrixOperation(first, null, first.getNewMatrix(first.getRows(), first.getRows(), getDepth()));
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
-     * @param row1 current row1.
-     * @param depth current depth.
-     * @param value current value.
+     * @param row    current row.
+     * @param row1   current row1.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int row1, int depth, double value) {
+    public void apply(int row, int row1, int depth, double value, Matrix result) {
         result.setValue(row1, row, depth, (row == row1 ? 1 : 0) - first.getValue(row1, 0, depth));
     }
 

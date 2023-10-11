@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class EntropyMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix input;
-
-    /**
      * Cumulated value.
      *
      */
@@ -44,23 +38,15 @@ public class EntropyMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         this.value += value * Math.log10(value) / Math.log10(2);
         count++;
     }
@@ -68,25 +54,15 @@ public class EntropyMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies entropy operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return entropy of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double applyEntropy(Matrix input) throws MatrixException {
-        this.input = input;
+    public double applyEntropy(Matrix first) throws MatrixException {
         value = 0;
         count = 0;
-        applyMatrixOperation();
+        applyMatrixOperation(first, null, null);
         return -value / (double)count;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
     }
 
 }

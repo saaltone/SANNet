@@ -120,13 +120,6 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
     }
 
     /**
-     * Returns other matrix used in operation.
-     *
-     * @return other matrix used in operation.
-     */
-    protected abstract Matrix getOther();
-
-    /**
      * Returns stride step for operation.
      *
      * @return stride step for operation.
@@ -138,82 +131,73 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
     /**
      * Applies operation assuming masked matrices.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void applyMask(int row, int column, int depth, double value) throws MatrixException {
-        apply(row, column, depth, value);
+    public void applyMask(int row, int column, int depth, double value, Matrix result) throws MatrixException {
+        apply(row, column, depth, value, result);
     }
 
     /**
      * Applies matrix operation.
      *
+     * @param first first matrix.
+     * @param second second matrix.
+     * @param result result matrix.
+     * @return result matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected void applyMatrixOperation() throws MatrixException {
-        final int rows = getRows();
-        final int columns = getColumns();
-        final int totalDepth = getDepth();
-        final Matrix other = getOther();
-        final boolean provideValue = getProvideValue();
-        final int rowStride = getStride();
-        final int columnStride = getStride();
-        final Matrix targetMatrix = getTargetMatrix();
-        if (!hasMask(targetMatrix, other)) {
-            if (provideValue) {
-                for (int depth = 0; depth < totalDepth; depth++) {
-                    for (int row = 0; row < rows; row += rowStride) {
-                        for (int column = 0; column < columns; column += columnStride) {
-                            apply(row, column, depth, targetMatrix.getValue(row, column, depth));
+    protected Matrix applyMatrixOperation(Matrix first, Matrix second, Matrix result) throws MatrixException {
+        if (!hasMask(first, second)) {
+            if (getProvideValue()) {
+                for (int depth = 0; depth < getDepth(); depth++) {
+                    for (int row = 0; row < getRows(); row += getStride()) {
+                        for (int column = 0; column < getColumns(); column += getStride()) {
+                            apply(row, column, depth, first.getValue(row, column, depth), result);
                         }
                     }
                 }
             }
             else {
-                for (int depth = 0; depth < totalDepth; depth++) {
-                    for (int row = 0; row < rows; row += rowStride) {
-                        for (int column = 0; column < columns; column += columnStride) {
-                            apply(row, column, depth, 0);
+                for (int depth = 0; depth < getDepth(); depth++) {
+                    for (int row = 0; row < getRows(); row += getStride()) {
+                        for (int column = 0; column < getColumns(); column += getStride()) {
+                            apply(row, column, depth, 0, result);
                         }
                     }
                 }
             }
         }
         else {
-            if (provideValue) {
-                for (int depth = 0; depth < totalDepth; depth++) {
-                    for (int row = 0; row < rows; row += rowStride) {
-                        for (int column = 0; column < columns; column += columnStride) {
-                            if (!hasMaskAt(row, column, depth, targetMatrix, other)) {
-                                applyMask(row, column, depth, targetMatrix.getValue(row, column, depth));
+            if (getProvideValue()) {
+                for (int depth = 0; depth < getDepth(); depth++) {
+                    for (int row = 0; row < getRows(); row += getStride()) {
+                        for (int column = 0; column < getColumns(); column += getStride()) {
+                            if (!hasMaskAt(row, column, depth, first, second)) {
+                                applyMask(row, column, depth, first.getValue(row, column, depth), result);
                             }
                         }
                     }
                 }
             }
             else {
-                for (int depth = 0; depth < totalDepth; depth++) {
-                    for (int row = 0; row < rows; row += rowStride) {
-                        for (int column = 0; column < columns; column += columnStride) {
-                            if (!hasMaskAt(row, column, depth, targetMatrix, other)) {
-                                applyMask(row, column, depth, 0);
+                for (int depth = 0; depth < getDepth(); depth++) {
+                    for (int row = 0; row < getRows(); row += getStride()) {
+                        for (int column = 0; column < getColumns(); column += getStride()) {
+                            if (!hasMaskAt(row, column, depth, first, second)) {
+                                applyMask(row, column, depth, 0, result);
                             }
                         }
                     }
                 }
             }
         }
+        return result;
     }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected abstract Matrix getTargetMatrix();
 
     /**
      * Checks if first matrix and optionally second matrix are masked.

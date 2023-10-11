@@ -14,12 +14,6 @@ import utils.matrix.Matrix;
 public abstract class AbstractConvolutionOperation extends AbstractConvolutionalOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix inputMatrix;
-
-    /**
      * If true convolution is depth separable
      *
      */
@@ -50,24 +44,6 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
         super(rows, columns, depth, inputDepth, filterRowSize, filterColumnSize, dilation, stride, provideValue);
         this.isDepthSeparable = isDepthSeparable;
         this.asConvolution = asConvolution && (filterRowSize > 1 || filterColumnSize > 1);
-    }
-
-    /**
-     * Sets input matrix.
-     *
-     * @param inputMatrix input matrix.
-     */
-    protected void setInputMatrix(Matrix inputMatrix) {
-        this.inputMatrix = inputMatrix;
-    }
-
-    /**
-     * Returns input matrix.
-     *
-     * @return input matrix.
-     */
-    protected Matrix getInputMatrix() {
-        return inputMatrix;
     }
 
     /**
@@ -126,8 +102,9 @@ public abstract class AbstractConvolutionOperation extends AbstractConvolutional
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
     }
 
 }

@@ -14,22 +14,10 @@ import utils.matrix.*;
 public class BinaryMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private Matrix first;
-
-    /**
      * Second matrix.
      *
      */
     private Matrix second;
-
-    /**
-     * Result matrix.
-     *
-     */
-    private Matrix result;
 
     /**
      * Matrix binary function type
@@ -92,13 +80,14 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyFunction(Matrix first, Matrix second, boolean inplace) throws MatrixException {
-        this.first = first;
         this.second = second;
         asFunction = true;
         switch (binaryFunctionType) {
-            case DIRECT_GRADIENT -> result = second;
+            case DIRECT_GRADIENT -> {
+                return second;
+            }
             case POLICY_VALUE -> {
-                this.result = first.getNewMatrix();
+                Matrix result = first.getNewMatrix();
                 int rows = first.getRows();
                 int totalDepth = first.getDepth();
                 for (int depth = 0; depth < totalDepth; depth++) {
@@ -106,19 +95,18 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
                         result.setValue(row, 0, depth, row == 0 ? (0.5 * Math.pow(second.getValue(0, 0, depth) - first.getValue(0, 0, depth), 2)) : second.getValue(row, 0, depth));
                     }
                 }
+                return result;
             }
             // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
             case COS_SIM -> {
                 double norm_output = first.norm(2);
                 double norm_target = second.norm(2);
-                result = first.multiply(second).divide(norm_output * norm_target);
+                return first.multiply(second).divide(norm_output * norm_target);
             }
             default -> {
-                result = inplace ? first : !first.isScalar() ? first.getNewMatrix() : second.getNewMatrix();
-                applyMatrixOperation();
+                return applyMatrixOperation(first, second, inplace ? first : !first.isScalar() ? first.getNewMatrix() : second.getNewMatrix());
             }
         }
-        return result;
     }
 
     /**
@@ -130,12 +118,11 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix first, Matrix second) throws MatrixException {
-        this.first = first;
         this.second = second;
         asFunction = false;
         switch (binaryFunctionType) {
             case DIRECT_GRADIENT -> {
-                return result = second;
+                return second;
             }
             case POLICY_VALUE -> {
                 Matrix gradient = second.getNewMatrix();
@@ -146,7 +133,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
                         gradient.setValue(row, 0, depth, row == 0 ? (first.getValue(0, 0, depth) - second.getValue(0, 0, depth)) : second.getValue(row, 0, depth));
                     }
                 }
-                return result = gradient;
+                return gradient;
             }
             // https://math.stackexchange.com/questions/1923613/partial-derivative-of-cosine-similarity
             case COS_SIM -> {
@@ -154,12 +141,10 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
                 double norm_target = second.norm(2);
                 double norm_multiply = norm_output * norm_target;
                 Matrix cos_sim = first.multiply(second).divide(norm_multiply);
-                return result = first.divide(norm_multiply).subtract(second.divide(Math.pow(norm_output, 2)).multiply(cos_sim));
+                return first.divide(norm_multiply).subtract(second.divide(Math.pow(norm_output, 2)).multiply(cos_sim));
             }
             default -> {
-                result = first.getNewMatrix();
-                applyMatrixOperation();
-                return result;
+                return applyMatrixOperation(first, second, first.getNewMatrix());
             }
         }
     }
@@ -174,36 +159,19 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix applyGradient(Matrix first, Matrix second, Matrix outputGradient) throws MatrixException {
-        return result = outputGradient.multiply(applyGradient(first, second));
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return second;
+        return outputGradient.multiply(applyGradient(first, second));
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         result.setValue(row, column, depth, asFunction ? matrixBinaryOperation.execute(value, second.getValue(row, column, depth)) : matrixGradientBinaryOperation.execute(value, second.getValue(row, column, depth)));
     }
 

@@ -5,6 +5,8 @@
 
 package utils.matrix.operation;
 
+import utils.matrix.Matrix;
+
 /**
  * Implements cyclic pooling matrix operation.<br>
  * Traverses cyclically each filter row and column through step by step and propagates selected row and column.<br>
@@ -62,8 +64,9 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
+    protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
     }
 
     /**
@@ -77,9 +80,10 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value) {
-        while (hasMaskAt(currentRow, currentColumn, depth, getTargetMatrix())) {
+    protected void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
+        while (hasMaskAt(currentRow, currentColumn, depth, getFirst())) {
             if(++currentRow >= getFilterRows()) {
                 currentRow = 0;
                 if(++currentColumn >= getFilterColumns()) currentColumn = 0;
@@ -105,10 +109,10 @@ public class CyclicPoolMatrixOperation extends AbstractPositionalPoolingMatrixOp
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected void finishOperation(int row, int column, int depth) {
-        getResult().setValue(row, column, depth, getTargetMatrix().getValue(inputRow, inputColumn, depth));
-
+    protected void finishOperation(int row, int column, int depth, Matrix result) {
+        result.setValue(row, column, depth, getFirst().getValue(inputRow, inputColumn, depth));
         super.finishOperation(row, column, depth);
 
         if(++currentRow >= getFilterRows()) {

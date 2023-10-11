@@ -21,12 +21,6 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
     private Matrix first;
 
     /**
-     * Result matrix.
-     *
-     */
-    private Matrix result;
-
-    /**
      * Implements threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
      *
      */
@@ -67,38 +61,19 @@ public class ClassifyMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix apply(Matrix first, Matrix result) throws MatrixException {
         this.first = first;
-        this.result = result;
-        applyMatrixOperation();
-        return result;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
+        return applyMatrixOperation(first, null, result);
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         result.setValue(row, column, depth, first.getValue(row, column, depth) < multiLabelThreshold ? 0 : 1);
     }
 

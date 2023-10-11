@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class MaxMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix input;
-
-    /**
      * Maximum value.
      *
      */
@@ -58,17 +52,16 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies argmax operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return maximum arguments (row and column)
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public int[] applyArgMax(Matrix input) throws MatrixException {
-        this.input = input;
+    public int[] applyArgMax(Matrix first) throws MatrixException {
         maxValue = Double.NEGATIVE_INFINITY;
         maxRow = -1;
         maxColumn = -1;
         maxDepth = -1;
-        applyMatrixOperation();
+        applyMatrixOperation(first, null, null);
         int[] result = new int[3];
         result[0] = getMaxRow();
         result[1] = getMaxColumn();
@@ -79,43 +72,25 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies maximum operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return maximum value
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double applyMax(Matrix input) throws MatrixException {
-        this.input = input;
-        applyMatrixOperation();
+    public double applyMax(Matrix first) throws MatrixException {
+        applyMatrixOperation(first, null, null);
         return getMaxValue();
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         if (value > this.maxValue) {
             this.maxValue = value;
             this.maxRow = row;

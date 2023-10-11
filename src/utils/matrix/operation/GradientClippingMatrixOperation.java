@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class GradientClippingMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * First matrix.
-     *
-     */
-    private transient Matrix first;
-
-    /**
      * Threshold.
      *
      */
@@ -48,7 +42,6 @@ public class GradientClippingMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix apply(Matrix first, boolean inplace) throws MatrixException {
-        this.first = first;
         Matrix result = first;
         double l2Norm = Math.sqrt(first.norm(2));
         if (l2Norm > threshold) {
@@ -59,33 +52,16 @@ public class GradientClippingMatrixOperation extends AbstractMatrixOperation {
     }
 
     /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return first;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
-    }
-
-    /**
      * Applies operation.<br>
      * Ignores masking of other matrix.<br>
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
     }
 
 }

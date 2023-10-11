@@ -14,18 +14,6 @@ import utils.matrix.Matrix;
 public abstract class AbstractConvolutionalOperation extends AbstractMatrixOperation {
 
     /**
-     * Target matrix.
-     *
-     */
-    private transient Matrix targetMatrix;
-
-    /**
-     * Result matrix.
-     *
-     */
-    private transient Matrix result;
-
-    /**
      * Input gradient row size.
      *
      */
@@ -82,51 +70,6 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
         this.filterRowSize = filterRowSize;
         this.filterColumnSize = filterColumnSize;
         this.dilation = dilation;
-    }
-
-    /**
-     * Sets target matrix.
-     *
-     * @param targetMatrix target matrix.
-     */
-    protected void setTargetMatrix(Matrix targetMatrix) {
-        this.targetMatrix = targetMatrix;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return targetMatrix;
-    }
-
-    /**
-     * Sets result matrix.
-     *
-     * @param result result matrix.
-     */
-    protected void setResult(Matrix result) {
-        this.result = result;
-    }
-
-    /**
-     * Returns result matrix.
-     *
-     * @return result matrix.
-     */
-    protected Matrix getResult() {
-        return result;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
     }
 
     /**
@@ -206,13 +149,14 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
-        apply(row, column, depth, value, false);
+    public void apply(int row, int column, int depth, double value, Matrix result) {
+        apply(row, column, depth, value, false, result);
     }
 
     /**
@@ -226,19 +170,21 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected abstract void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value);
+    protected abstract void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result);
 
     /**
      * Applies operation assuming masked matrices.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void applyMask(int row, int column, int depth, double value) {
-        apply(row, column, depth, value, true);
+    public void applyMask(int row, int column, int depth, double value, Matrix result) {
+        apply(row, column, depth, value, true, result);
     }
 
     /**
@@ -252,8 +198,9 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param filterRow current filter row.
      * @param filterColumn current filter column.
      * @param value current value.
+     * @param result result matrix.
      */
-    protected abstract void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value);
+    protected abstract void applyMaskOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result);
 
     /**
      * Applies operation.
@@ -263,8 +210,9 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param depth current depth.
      * @param value current value.
      * @param asMasked if true applied operation as masked otherwise as non-masked.
+     * @param result result matrix.
      */
-    private void apply(int row, int column, int depth, double value, boolean asMasked) {
+    private void apply(int row, int column, int depth, double value, boolean asMasked, Matrix result) {
         startOperation(row, column, depth);
         for (int filterRow = 0; filterRow < getFilterRows(); filterRow += getDilation()) {
             for (int filterColumn = 0; filterColumn < getFilterColumns(); filterColumn += getDilation()) {
@@ -273,12 +221,12 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
                 int inputRow = getCurrentInputRow(row, currentFilterRow);
                 int inputColumn = getCurrentInputColumn(column, currentFilterColumn);
                 if (isValidInputPosition(inputRow, inputColumn)) {
-                    if (asMasked) applyMaskOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
-                    else applyOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value);
+                    if (asMasked) applyMaskOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value, result);
+                    else applyOperation(row, column, depth, inputRow, inputColumn, currentFilterRow, currentFilterColumn, value, result);
                 }
             }
         }
-        finishOperation(row, column, depth);
+        finishOperation(row, column, depth, result);
     }
 
     /**
@@ -296,8 +244,9 @@ public abstract class AbstractConvolutionalOperation extends AbstractMatrixOpera
      * @param row current row.
      * @param column current column.
      * @param depth current depth.
+     * @param result result matrix.
      */
-    protected abstract void finishOperation(int row, int column, int depth);
+    protected abstract void finishOperation(int row, int column, int depth, Matrix result);
 
     /**
      * Returns current input row.

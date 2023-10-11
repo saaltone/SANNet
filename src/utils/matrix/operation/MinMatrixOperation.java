@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class MinMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix input;
-
-    /**
      * Minimum value.
      *
      */
@@ -58,17 +52,16 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies argmin operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return minimum arguments (row and column)
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public int[] applyArgMin(Matrix input) throws MatrixException {
-        this.input = input;
+    public int[] applyArgMin(Matrix first) throws MatrixException {
         minValue = Double.POSITIVE_INFINITY;
         minRow = -1;
         minColumn = -1;
         minDepth = -1;
-        applyMatrixOperation();
+        applyMatrixOperation(first, null, null);
         int[] result = new int[3];
         result[0] = getMinRow();
         result[1] = getMinColumn();
@@ -79,43 +72,25 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
     /**
      * Applies minimum operation.
      *
-     * @param input input matrix.
+     * @param first first matrix.
      * @return minimum value
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public double applyMin(Matrix input) throws MatrixException {
-        this.input = input;
-        applyMatrixOperation();
+    public double applyMin(Matrix first) throws MatrixException {
+        applyMatrixOperation(first, null, null);
         return getMinValue();
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         if (value < this.minValue) {
             this.minValue = value;
             this.minRow = row;

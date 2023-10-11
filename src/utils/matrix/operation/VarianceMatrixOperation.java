@@ -15,12 +15,6 @@ import utils.matrix.MatrixException;
 public class VarianceMatrixOperation extends AbstractMatrixOperation {
 
     /**
-     * Input matrix.
-     *
-     */
-    private transient Matrix input;
-
-    /**
      * Mean value for variance operation.
      *
      */
@@ -59,10 +53,9 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double applyVariance(Matrix input) throws MatrixException {
-        this.input = input;
         value = 0;
         count = 0;
-        applyMatrixOperation();
+        applyMatrixOperation(input, null, null);
         return count > 0 ? value / (double)count : 0;
     }
 
@@ -74,38 +67,20 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public double applyStandardDeviation(Matrix input) throws MatrixException {
-        this.input = input;
-        applyMatrixOperation();
+        applyMatrixOperation(input, null, null);
         return count > 1 ? Math.sqrt(value / (double)(count - 1)) : 0;
-    }
-
-    /**
-     * Returns target matrix.
-     *
-     * @return target matrix.
-     */
-    protected Matrix getTargetMatrix() {
-        return input;
-    }
-
-    /**
-     * Returns another matrix used in operation.
-     *
-     * @return another matrix used in operation.
-     */
-    public Matrix getOther() {
-        return null;
     }
 
     /**
      * Applies operation.
      *
-     * @param row current row.
+     * @param row    current row.
      * @param column current column.
-     * @param depth current depth.
-     * @param value current value.
+     * @param depth  current depth.
+     * @param value  current value.
+     * @param result result matrix.
      */
-    public void apply(int row, int column, int depth, double value) {
+    public void apply(int row, int column, int depth, double value, Matrix result) {
         this.value += Math.pow(value - mean, 2);
         count++;
     }
