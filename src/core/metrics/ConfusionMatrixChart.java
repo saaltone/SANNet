@@ -120,7 +120,6 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel confusionMatrixPanel = new JPanel() {
-            @Override
             protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             drawConfusionMatrix(g);
