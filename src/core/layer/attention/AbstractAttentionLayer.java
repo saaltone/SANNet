@@ -149,7 +149,7 @@ public abstract class AbstractAttentionLayer extends AbstractExecutionLayer {
 
         Matrix contextMatrix = null;
         for (Map.Entry<Integer, Matrix> entry : inputs.descendingMap().entrySet()) {
-            Matrix singleWeightMatrix =  weightMatrix.unjoin(entry.getKey(), 0, 0, 1, 1, 1);
+            Matrix singleWeightMatrix =  weightMatrix.unjoin(entry.getKey());
             singleWeightMatrix.setName("Weight" + entry.getKey());
             contextMatrix = contextMatrix == null ? entry.getValue().multiply(singleWeightMatrix) : contextMatrix.add(entry.getValue().multiply(singleWeightMatrix));
         }
