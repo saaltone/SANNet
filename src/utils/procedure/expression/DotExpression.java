@@ -45,9 +45,9 @@ public class DotExpression extends AbstractBinaryExpression {
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
         super("DOT", "x", expressionID, argument1, argument2, result);
 
-        dotMatrixOperation = new DotMatrixOperation(argument1.getRows(), argument2.getColumns(), argument1.getDepth());
-        dotGradient1MatrixOperation = new DotMatrixOperation(result.getRows(), argument2.getRows(), argument2.getDepth());
-        dotGradient2MatrixOperation = new DotMatrixOperation(argument1.getColumns(), result.getColumns(), argument1.getDepth());
+        dotMatrixOperation = new DotMatrixOperation(argument1.getRows(), argument2.getRows(), argument2.getColumns(), argument1.getDepth());
+        dotGradient1MatrixOperation = new DotMatrixOperation(result.getRows(), argument2.getColumns(), argument2.getRows(), argument2.getDepth());
+        dotGradient2MatrixOperation = new DotMatrixOperation(argument1.getColumns(), result.getRows(), result.getColumns(), argument1.getDepth());
     }
 
     /**
