@@ -13,6 +13,8 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunctionType;
 
+import java.util.Stack;
+
 /**
  * Defines factory class to build attention layer components including transformer.
  *
@@ -249,6 +251,60 @@ public class AttentionLayerFactory {
         }
 
         return combinedAttentionIndex;
+    }
+
+    /**
+     * Builds stacked attention.
+     *
+     * @param neuralNetworkConfiguration neural network configuration.
+     * @param decoderInputSize           decoder output size.
+     * @param numberOfDecoderInputs      number of decoder inputs.
+     * @param feedforwardWidth           feedforward layer width.
+     * @param numberOfAttentionBlocks    number of attention blocks.
+     * @return transformer layer id.
+     * @throws DynamicParamException  throws exception if setting of neural network parameters fail.
+     * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
+     */
+    public static int buildStackedAttention(NeuralNetworkConfiguration  neuralNetworkConfiguration, int decoderInputSize, int numberOfDecoderInputs, int feedforwardWidth, int numberOfAttentionBlocks) throws MatrixException, NeuralNetworkException, DynamicParamException {
+        if (numberOfDecoderInputs < 2) throw new NeuralNetworkException("Stacked attention must have at least two inputs.");
+
+        int numberOfInputBlocks = numberOfDecoderInputs / 2;
+        int numberOfAdditionalInputs = numberOfDecoderInputs % 2;
+
+        Stack<Integer> attentionIndices = new Stack<>();
+        for (int inputBlockIndex = 0; inputBlockIndex < numberOfInputBlocks; inputBlockIndex++) {
+            int decoderLayerIndex = buildDecoderInputAttentionBlock(neuralNetworkConfiguration, decoderInputSize, 2 + numberOfAdditionalInputs);
+            attentionIndices.push(decoderLayerIndex);
+            numberOfAdditionalInputs = 0;
+        }
+
+        Stack<Integer> nextAttentionIndices = new Stack<>();
+        int outputAttentionIndex = -1;
+        while (!attentionIndices.empty()) {
+            int firstAttentionIndex = attentionIndices.pop();
+            if (attentionIndices.empty()) {
+                if (!nextAttentionIndices.empty()) {
+                    nextAttentionIndices.push(firstAttentionIndex);
+                    attentionIndices = nextAttentionIndices;
+                }
+                else {
+                    outputAttentionIndex = firstAttentionIndex;
+                }
+            }
+            else {
+                int secondAttentionIndex = attentionIndices.pop();
+                outputAttentionIndex = buildAttentionModule(neuralNetworkConfiguration, firstAttentionIndex, secondAttentionIndex);
+                nextAttentionIndices.push(outputAttentionIndex);
+            }
+        }
+
+        // Attention blocks
+        for (int index = 0; index < numberOfAttentionBlocks; index++) {
+            outputAttentionIndex = buildAttentionBlock(neuralNetworkConfiguration, outputAttentionIndex, feedforwardWidth);
+        }
+
+        return outputAttentionIndex;
     }
 
 }
