@@ -35,7 +35,7 @@ Framework provides following regularization layers: drop-out, gradient clipping,
 Framework supports following normalization layers: batch normalization, layer normalization and weight normalization.
 
 ## Metrics
-Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed.
+Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed. Framework also provides option to show trend and confusion matrix charts.
 
 ## Utilities
 Framework provides libraries to read inputs from CSV, text and MIDI files, normalize, split, encode and decode data. It also has persistence support to serialize trained neural network instances into file and restore trained neural network instances from file for later use.
