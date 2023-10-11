@@ -162,7 +162,6 @@ public class TrendMetricChart extends JFrame implements Serializable {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel chartPanel = new JPanel() {
-            @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 try {
