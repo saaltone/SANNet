@@ -2016,6 +2016,17 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param unjoinAtRow unjoins at row.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    public Matrix unjoin(int unjoinAtRow) throws MatrixException {
+        return unjoin(unjoinAtRow, 0, 0, 1, 1, 1);
+    }
+
+    /**
      * Unjoins matrix into resulting unjoined matrix and potentially unjoined matrices.
      *
      * @param unjoinAtRow unjoins at row.

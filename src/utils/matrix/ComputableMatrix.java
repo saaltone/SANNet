@@ -378,7 +378,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getColumns() != other.getRows() || getDepth() != other.getDepth()) {
             throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + "x" + getDepth() + " by " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
         }
-        return new DotMatrixOperation(getRows(), other.getColumns(), getDepth()).apply(this, other);
+        return new DotMatrixOperation(getRows(), other.getRows(), other.getColumns(), getDepth()).apply(this, other);
     }
 
     /**
@@ -614,19 +614,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     public Matrix softmax(double softmaxTau) throws MatrixException {
         if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
-        Matrix result;
-        if (softmaxTau != 1) {
-            result = divide(softmaxTau);
-            final double maxValue = result.max();
-            result = result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
-            result.divideBy(result.sum());
-        }
-        else {
-            final double maxValue = max();
-            result = applyFunction(new UnaryFunction(value -> Math.exp(value - maxValue)), false);
-            result.divideBy(result.sum());
-        }
-        return result;
+        return finalizeSoftmax(softmaxTau == 1 ? this : divide(softmaxTau));
     }
 
     /**
@@ -641,7 +629,17 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
 
         // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
-        Matrix result = applyFunction(new UnaryFunction(value -> (value + getGumbelNoise()) / softmaxTau), false);
+        return finalizeSoftmax(applyFunction(new UnaryFunction(value -> softmaxTau == 1 ? (value + getGumbelNoise()) : (value + getGumbelNoise()) / softmaxTau), false));
+    }
+
+    /**
+     * Finalizes softmax result.<br>
+     *
+     * @param result result matrix.
+     * @return finalized result matrix.
+     * @throws MatrixException thrown if matrix operation fails.
+     */
+    private Matrix finalizeSoftmax(Matrix result) throws MatrixException {
         final double maxValue = result.max();
         result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), true);
         result.divideBy(result.sum());
