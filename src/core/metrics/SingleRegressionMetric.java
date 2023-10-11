@@ -51,10 +51,18 @@ public class SingleRegressionMetric implements Metric, Serializable {
     private double cumulativeSquaredError = 0;
 
     /**
-     * Default constructor for single regression metric.
+     * Reference to metrics chart.
      *
      */
-    public SingleRegressionMetric() {
+    private final TrendMetricChart trendMetricChart;
+
+    /**
+     * Default constructor for single regression metric.
+     *
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public SingleRegressionMetric(boolean showMetric) {
+        trendMetricChart = showMetric ? new TrendMetricChart("Neural Network Training Error", "Iteration", "Error") : null;
     }
 
     /**
@@ -63,7 +71,7 @@ public class SingleRegressionMetric implements Metric, Serializable {
      * @return reference metric.
      */
     public Metric reference() {
-        return new SingleRegressionMetric();
+        return new SingleRegressionMetric(trendMetricChart != null);
     }
 
     /**
@@ -76,12 +84,12 @@ public class SingleRegressionMetric implements Metric, Serializable {
     }
 
     /**
-     * Returns mean absolute error.
+     * Returns last absolute error.
      *
-     * @return mean absolute error.
+     * @return last absolute error.
      */
-    public double getMeanAbsoluteError() {
-        return getMeanAbsoluteErrorMatrix();
+    public double getLastAbsoluteError() {
+        return absoluteErrors.get(absoluteErrors.lastKey());
     }
 
     /**
@@ -89,44 +97,35 @@ public class SingleRegressionMetric implements Metric, Serializable {
      *
      * @return mean absolute error matrix.
      */
-    public double getMeanAbsoluteErrorMatrix() {
+    public double getMeanAbsoluteError() {
         return cumulativeAbsoluteError / (double)getErrorCount();
     }
 
     /**
-     * Returns mean absolute error.
-     *
-     * @param lastN calculate for last N errors.
-     * @return mean absolute error.
-     */
-    public double getMeanAbsoluteError(int lastN) {
-        return getMeanAbsoluteErrorMatrix(lastN);
-    }
-
-    /**
      * Returns mean absolute error matrix.
      *
      * @param lastN calculate for last N errors.
      * @return mean absolute error matrix.
      */
-    public double getMeanAbsoluteErrorMatrix(int lastN) {
+    public double getMeanAbsoluteError(int lastN) {
         if (lastN < 1) return 0;
         double lastNCumulativeAbsoluteError = 0;
         int lastNCount = 0;
         for (Integer index : absoluteErrors.descendingKeySet()) {
             lastNCumulativeAbsoluteError += absoluteErrors.get(index);
+
             if (++lastNCount == lastN) break;
         }
         return lastNCumulativeAbsoluteError / (double)lastN;
     }
 
     /**
-     * Returns mean squared error.
+     * Returns last absolute error.
      *
-     * @return mean squared error.
+     * @return last absolute error.
      */
-    public double getMeanSquaredError() {
-        return getMeanSquaredErrorMatrix();
+    public double getLastSquaredError() {
+        return squaredErrors.get(squaredErrors.lastKey());
     }
 
     /**
@@ -134,27 +133,17 @@ public class SingleRegressionMetric implements Metric, Serializable {
      *
      * @return mean squared error matrix.
      */
-    public double getMeanSquaredErrorMatrix() {
+    public double getMeanSquaredError() {
         return Math.sqrt(cumulativeSquaredError) / (double)(getErrorCount());
     }
 
     /**
-     * Returns mean squared error.
-     *
-     * @param lastN calculate for last N errors.
-     * @return mean absolute error.
-     */
-    public double getMeanSquaredError(int lastN) {
-        return getMeanSquaredErrorMatrix(lastN);
-    }
-
-    /**
      * Returns mean squared error matrix.
      *
      * @param lastN calculate for last N errors.
      * @return mean squared error matrix.
      */
-    public double getMeanSquaredErrorMatrix(int lastN) {
+    public double getMeanSquaredError(int lastN) {
         if (lastN < 1) return 0;
         double lastNCumulativeSquaredError = 0;
         int lastNCount = 0;
@@ -171,7 +160,7 @@ public class SingleRegressionMetric implements Metric, Serializable {
      * @return last error.
      */
     public double getLastError() {
-        return Math.sqrt(squaredErrors.get(squaredErrors.lastKey()));
+        return Math.sqrt(getLastSquaredError());
     }
 
     /**
@@ -184,6 +173,14 @@ public class SingleRegressionMetric implements Metric, Serializable {
         squaredErrors.clear();
         cumulativeSquaredError = 0;
         errorCount = 0;
+    }
+
+    /**
+     * Reinitializes metric.
+     *
+     */
+    public void reinitialize() {
+        reset();
     }
 
     /**
@@ -201,11 +198,13 @@ public class SingleRegressionMetric implements Metric, Serializable {
      * @param error single error value to be reported.
      */
     public void report(double error) {
+        errorCount++;
         cumulativeAbsoluteError += error;
         absoluteErrors.put(errorCount, error);
         cumulativeSquaredError += Math.pow(error, 2);
         squaredErrors.put(errorCount, Math.pow(error, 2));
-        errorCount++;
+
+        if (trendMetricChart != null) trendMetricChart.addErrorData(errorCount, error);
     }
 
     /**

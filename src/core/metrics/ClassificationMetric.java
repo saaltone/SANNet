@@ -13,9 +13,7 @@ import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Implements functionality for calculation of classification error.
@@ -50,7 +48,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * Average type for classification: macro or micro.
      *
      */
-    private AverageType averageType = AverageType.MACRO;
+    private final AverageType averageType;
 
     /**
      * If true assumes multi label classification otherwise assumes single label classification.<br>
@@ -58,43 +56,43 @@ public class ClassificationMetric implements Metric, Serializable {
      * Multi label assumes that any value above threshold is true (1) otherwise false (0).<br>
      *
      */
-    private boolean multiLabel = false;
+    private final boolean multiLabel;
 
     /**
      * Defines threshold value for multi label classification. If value of label is below threshold it is classified as negative (0) otherwise classified as positive (1).
      *
      */
-    private double multiLabelThreshold = 0.5;
+    private final double multiLabelThreshold;
 
     /**
      * Features classified.
      *
      */
-    private final HashSet<Integer> features = new HashSet<>();
+    private final TreeSet<Integer> features = new TreeSet<>();
 
     /**
      * True positive counts for each feature.
      *
      */
-    private final HashMap<Integer, Integer> TP = new HashMap<>();
+    private final TreeMap<Integer, Integer> TP = new TreeMap<>();
 
     /**
      * False positive counts for each feature.
      *
      */
-    private final HashMap<Integer, Integer> FP = new HashMap<>();
+    private final TreeMap<Integer, Integer> FP = new TreeMap<>();
 
     /**
      * True negative counts for each feature.
      *
      */
-    private final HashMap<Integer, Integer> TN = new HashMap<>();
+    private final TreeMap<Integer, Integer> TN = new TreeMap<>();
 
     /**
      * False negative counts for each feature.
      *
      */
-    private final HashMap<Integer, Integer> FN = new HashMap<>();
+    private final TreeMap<Integer, Integer> FN = new TreeMap<>();
 
     /**
      * Total true positive count over all features.
@@ -124,83 +122,115 @@ public class ClassificationMetric implements Metric, Serializable {
      * Confusion matrix.
      *
      */
-    private final HashMap<Integer, HashMap<Integer, Integer>> confusion = new HashMap<>();
+    private final TreeMap<Integer, TreeMap<Integer, Integer>> confusionMatrix = new TreeMap<>();
 
     /**
-     * If true print confusion matrix along other classification metrics.
+     * If true prints confusion matrix along other classification metrics.
      *
      */
-    private boolean printConfusionMatrix = true;
+    private boolean printConfusionMatrix;
+
+    /**
+     * If true shows confusion matrix along other classification metrics.
+     *
+     */
+    private boolean showConfusionMatrix;
+
+    /**
+     * Reference to confusion matrix chart.
+     *
+     */
+    private ConfusionMatrixChart confusionMatrixChart = null;
+
+    /**
+     * Reference to metrics chart.
+     *
+     */
+    private final TrendMetricChart trendMetricChart;
+
+    /**
+     * Report count.
+     *
+     */
+    private int reportCount = 0;
 
     /**
      * Default constructor for classification class.
      *
      */
-    public ClassificationMetric() {}
+    public ClassificationMetric() {
+        this(false);
+    }
+
+    /**
+     * Default constructor for classification class.
+     *
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public ClassificationMetric(boolean showMetric) {
+        this(AverageType.MACRO, showMetric);
+    }
+
+    /**
+     * Default constructor for classification class.
+     *
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public ClassificationMetric(boolean multiLabel, boolean showMetric) {
+        this(AverageType.MACRO, multiLabel, showMetric);
+    }
 
     /**
      * Constructor for classification.
      *
      * @param averageType average type.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public ClassificationMetric(AverageType averageType) {
+    public ClassificationMetric(AverageType averageType, boolean showMetric) {
+        this(averageType, false, showMetric);
+    }
+
+    /**
+     * Constructor for classification metric.
+     *
+     * @param averageType average type.
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public ClassificationMetric(AverageType averageType, boolean multiLabel, boolean showMetric) {
+        this(averageType, multiLabel, 0.5, showMetric);
+    }
+
+    /**
+     * Constructor for classification metric.
+     *
+     * @param averageType average type.
+     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
+     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public ClassificationMetric(AverageType averageType, boolean multiLabel, double multiLabelThreshold, boolean showMetric) {
+        this(averageType, multiLabel, multiLabelThreshold, true, true, showMetric);
+    }
+
+    /**
+     * Constructor for classification metric.
+     *
+     * @param averageType          average type.
+     * @param multiLabel           if true assumes multi label classification otherwise assumes single label.
+     * @param multiLabelThreshold  if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
+     * @param printConfusionMatrix if true prints confusion matrix otherwise not.
+     * @param showConfusionMatrix  if true shows confusion matrix otherwise not.
+     * @param showMetric           if true shows metric otherwise not.
+     */
+    public ClassificationMetric(AverageType averageType, boolean multiLabel, double multiLabelThreshold, boolean printConfusionMatrix, boolean showConfusionMatrix, boolean showMetric) {
         this.averageType = averageType;
-    }
-
-    /**
-     * Constructor for classification metric.
-     *
-     * @param averageType average type.
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     */
-    public ClassificationMetric(AverageType averageType, boolean multiLabel) {
-        this(averageType);
         this.multiLabel = multiLabel;
-    }
-
-    /**
-     * Constructor for classification metric.
-     *
-     * @param averageType average type.
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
-     */
-    public ClassificationMetric(AverageType averageType, boolean multiLabel, double multiLabelThreshold) {
-        this(averageType, multiLabel);
         this.multiLabelThreshold = multiLabelThreshold;
-    }
-
-    /**
-     * Constructor for classification metric.
-     *
-     * @param averageType average type.
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
-     * @param printConfusionMatrix if true verbosing prints confusion matrix otherwise not.
-     */
-    public ClassificationMetric(AverageType averageType, boolean multiLabel, double multiLabelThreshold, boolean printConfusionMatrix) {
-        this(averageType, multiLabel, multiLabelThreshold);
         this.printConfusionMatrix = printConfusionMatrix;
-    }
-
-    /**
-     * Constructor for classification metric.
-     *
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     */
-    public ClassificationMetric(boolean multiLabel) {
-        this.multiLabel = multiLabel;
-    }
-
-    /**
-     * Constructor for classification metric.
-     *
-     * @param multiLabel if true assumes multi label classification otherwise assumes single label.
-     * @param multiLabelThreshold if class probability is below threshold is it classified as negative (0) otherwise as positive (1).
-     */
-    public ClassificationMetric(boolean multiLabel, double multiLabelThreshold) {
-        this(multiLabel);
-        this.multiLabelThreshold = multiLabelThreshold;
+        this.showConfusionMatrix = showConfusionMatrix;
+        trendMetricChart = showMetric ? new TrendMetricChart("Neural Network Classification Accuracy", "Step", "F1 Score") : null;
     }
 
     /**
@@ -222,12 +252,30 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
+     * Sets if confusion matrix is shown along other classification metrics.
+     *
+     * @param showConfusionMatrix if true confusion matrix is shown along other classification metrics.
+     */
+    public void setShowConfusionMatrix(boolean showConfusionMatrix) {
+        this.showConfusionMatrix = showConfusionMatrix;
+    }
+
+    /**
+     * Returns if confusion matrix is shown along other classification metrics.
+     *
+     * @return if true confusion matrix is shown along other classification metrics.
+     */
+    public boolean getShowConfusionMatrix() {
+        return showConfusionMatrix;
+    }
+
+    /**
      * Returns reference metric.
      *
      * @return reference metric.
      */
     public Metric reference() {
-        return new ClassificationMetric(averageType, multiLabel, multiLabelThreshold, getPrintConfusionMatrix());
+        return new ClassificationMetric(averageType, multiLabel, multiLabelThreshold, getPrintConfusionMatrix(), getShowConfusionMatrix(), trendMetricChart != null);
     }
 
     /**
@@ -239,7 +287,9 @@ public class ClassificationMetric implements Metric, Serializable {
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
-        updateConfusion(predicted, actual);
+        if (actual.sampleSize() == 0) throw new NeuralNetworkException("Nothing to classify");
+        update(getClassification(predicted), actual);
+        if (trendMetricChart != null) trendMetricChart.addErrorData(++reportCount, classificationF1Score());
     }
 
     /**
@@ -248,7 +298,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param predicted predicted sample.
      * @param actual actual (true) sample.
      */
-    public void update(Matrix predicted, Matrix actual) {
+    private void update(Matrix predicted, Matrix actual) {
         int actualRows = actual.getRows();
         int predictedRows = predicted.getRows();
         for (int predictedRow = 0; predictedRow < predictedRows; predictedRow++) {
@@ -274,7 +324,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @param actualRow actual row
      */
     private void incrementConfusion(int predictedRow, int actualRow) {
-        HashMap<Integer, Integer> actuals = confusion.computeIfAbsent(predictedRow, k -> new HashMap<>());
+        TreeMap<Integer, Integer> actuals = confusionMatrix.computeIfAbsent(predictedRow, k -> new TreeMap<>());
         actuals.put(actualRow, actuals.getOrDefault(actualRow, 0) + 1);
     }
 
@@ -353,7 +403,15 @@ public class ClassificationMetric implements Metric, Serializable {
         FPTotal = 0;
         TNTotal = 0;
         FNTotal = 0;
-        confusion.clear();
+        confusionMatrix.clear();
+    }
+
+    /**
+     * Reinitializes metric.
+     *
+     */
+    public void reinitialize() {
+        reset();
     }
 
     /**
@@ -361,7 +419,7 @@ public class ClassificationMetric implements Metric, Serializable {
      *
      * @return classified features.
      */
-    public HashSet<Integer> getFeatures() {
+    public TreeSet<Integer> getFeatures() {
         return features;
     }
 
@@ -446,8 +504,8 @@ public class ClassificationMetric implements Metric, Serializable {
      *
      * @return confusion matrix.
      */
-    public HashMap<Integer, HashMap<Integer, Integer>> getConfusion() {
-        return confusion;
+    public TreeMap<Integer, TreeMap<Integer, Integer>> getConfusionMatrix() {
+        return confusionMatrix;
     }
 
     /**
@@ -458,7 +516,7 @@ public class ClassificationMetric implements Metric, Serializable {
      * @return specific value in confusion matrix.
      */
     public int getConfusionValue(int predictedRow, int actualRow) {
-        return confusion.get(predictedRow) == null ? 0 : confusion.get(predictedRow).getOrDefault(actualRow, 0);
+        return getConfusionMatrix().get(predictedRow) == null ? 0 : getConfusionMatrix().get(predictedRow).getOrDefault(actualRow, 0);
     }
 
     /**
@@ -493,19 +551,6 @@ public class ClassificationMetric implements Metric, Serializable {
             classified.put(entry.getKey(), getClassification(entry.getValue()));
         }
         return classified;
-    }
-
-    /**
-     * Updates confusion and classification statistics by including multiple new predicted / actual (true) sample pairs.<br>
-     *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if classification statistics update fails.
-     */
-    private void updateConfusion(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
-        if (actual.sampleSize() == 0) throw new NeuralNetworkException("Nothing to classify");
-        update(getClassification(predicted), actual);
     }
 
     /**
@@ -680,26 +725,28 @@ public class ClassificationMetric implements Metric, Serializable {
     }
 
     /**
-     * Returns confusion matrix.
-     *
-     * @return confusion matrix.
-     */
-    public HashMap<Integer, HashMap<Integer, Integer>> confusionMatrix() {
-        return getConfusion();
-    }
-
-    /**
      * Prints classification report.
      *
      */
     public void printReport() {
+        double classificationAccuracy = classificationAccuracy();
+        double classificationErrorRate = classificationErrorRate();
+        double classificationPrecision = classificationPrecision();
+        double classificationRecall = classificationRecall();
+        double classificationSpecificity = classificationSpecificity();
+        double classificationF1Score = classificationF1Score();
         System.out.println("Classification report:");
-        System.out.println("  Accuracy: " + classificationAccuracy());
-        System.out.println("  Precision: " + classificationPrecision());
-        System.out.println("  Recall: " + classificationRecall());
-        System.out.println("  Specificity: " + classificationSpecificity());
-        System.out.println("  F1 Score: " + classificationF1Score());
+        System.out.println("  Accuracy: " + classificationAccuracy);
+        System.out.println("  Error rate: " + classificationErrorRate);
+        System.out.println("  Precision: " + classificationPrecision);
+        System.out.println("  Recall: " + classificationRecall);
+        System.out.println("  Specificity: " + classificationSpecificity);
+        System.out.println("  F1 Score: " + classificationF1Score);
         if (printConfusionMatrix) printConfusionMatrix();
+        if (showConfusionMatrix) {
+            if (confusionMatrixChart == null) confusionMatrixChart = new ConfusionMatrixChart();
+            confusionMatrixChart.updateConfusion(getFeatures(), getConfusionMatrix(), classificationAccuracy, classificationErrorRate, classificationPrecision, classificationRecall, classificationSpecificity, classificationF1Score);
+        }
     }
 
     /**

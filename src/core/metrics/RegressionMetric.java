@@ -11,7 +11,6 @@ import utils.sampling.Sequence;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -34,7 +33,7 @@ public class RegressionMetric implements Metric, Serializable {
      * Absolute errors.
      *
      */
-    private final HashMap<Integer, Matrix> absoluteErrors = new HashMap<>();
+    private final TreeMap<Integer, Matrix> absoluteErrors = new TreeMap<>();
 
     /**
      * Cumulative absolute error.
@@ -73,20 +72,29 @@ public class RegressionMetric implements Metric, Serializable {
     private final boolean useR2AsLastError;
 
     /**
-     * Default constructor for regression metric.
+     * Reference to metrics chart.
      *
      */
-    public RegressionMetric() {
-        useR2AsLastError = true;
+    private final TrendMetricChart trendMetricChart;
+
+    /**
+     * Default constructor for regression metric.
+     *
+     * @param showMetric if true shows metric otherwise not.
+     */
+    public RegressionMetric(boolean showMetric) {
+        this(true, showMetric);
     }
 
     /**
      * Constructor for regression metric.
      *
      * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public RegressionMetric(boolean useR2AsLastError) {
+    public RegressionMetric(boolean useR2AsLastError, boolean showMetric) {
         this.useR2AsLastError = useR2AsLastError;
+        trendMetricChart = showMetric ? new TrendMetricChart("Neural Network Validation Error", "Step", "Error") : null;
     }
 
     /**
@@ -95,7 +103,7 @@ public class RegressionMetric implements Metric, Serializable {
      * @return reference metric.
      */
     public Metric reference() {
-        return new RegressionMetric(useR2AsLastError);
+        return new RegressionMetric(useR2AsLastError, trendMetricChart != null);
     }
 
     /**
@@ -108,7 +116,7 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private Matrix getAbsoluteError(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
-        return actual.subtract(predicted).power(2);
+        return actual.subtract(predicted).apply(UnaryFunctionType.ABS);
     }
 
     /**
@@ -124,42 +132,60 @@ public class RegressionMetric implements Metric, Serializable {
     }
 
     /**
-     * Updates regression error for single predicted / actual sample pair.<br>
+     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
-     * @param predicted predicted sample.
-     * @param actual actual (true) sample.
+     * @param predicted predicted errors.
+     * @param actual actual (true) error.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void update(Matrix predicted, Matrix actual) throws MatrixException, DynamicParamException {
-        predictions.put(errorCount, predicted);
-        actuals.put(errorCount, actual);
+    public void report(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
+        actuals.clear();
+        predictions.clear();
+        Matrix currentCumulativeAbsoluteError = null;
+        Matrix currentCumulativeSquaredError = null;
+        int entryCount = 0;
+        for (Map.Entry<Integer, Matrix> entry : predicted.entrySet()) {
+            Matrix singleActual = actual.get(entry.getKey());
+            actuals.put(++entryCount, singleActual);
 
-        Matrix absoluteError = getAbsoluteError(predicted, actual);
-        absoluteErrors.put(errorCount, absoluteError);
-        if (cumulativeAbsoluteError == null) cumulativeAbsoluteError = absoluteError.getNewMatrix();
-        cumulativeAbsoluteError.addBy(absoluteError);
+            Matrix singlePredicted = entry.getValue();
+            predictions.put(entryCount, singlePredicted);
 
-        Matrix squaredError = getSquaredError(absoluteError);
-        squaredErrors.put(errorCount, squaredError);
-        if (cumulativeSquaredError == null) cumulativeSquaredError = squaredError.getNewMatrix();
-        cumulativeAbsoluteError.addBy(squaredError);
+            Matrix absoluteError = getAbsoluteError(singlePredicted, singleActual);
+            currentCumulativeAbsoluteError = cumulateError(absoluteError, currentCumulativeAbsoluteError);
+
+            Matrix squaredError = getSquaredError(absoluteError);
+            currentCumulativeSquaredError = cumulateError(squaredError, currentCumulativeSquaredError);
+        }
+
+        assert currentCumulativeAbsoluteError != null;
+        Matrix meanAbsoluteError = currentCumulativeAbsoluteError.divide(predicted.sampleSize());
+        Matrix meanSquaredError = currentCumulativeSquaredError.divide(predicted.sampleSize());
 
         errorCount++;
+
+        absoluteErrors.put(errorCount, meanAbsoluteError);
+        cumulativeAbsoluteError = cumulateError(meanAbsoluteError, cumulativeAbsoluteError);
+
+        squaredErrors.put(errorCount, meanSquaredError);
+        cumulativeSquaredError = cumulateError(meanSquaredError, cumulativeSquaredError);
+
+        if (trendMetricChart != null) trendMetricChart.addErrorData(errorCount, meanAbsoluteError.mean());
     }
 
     /**
-     * Updates regression accuracy for multiple predicted / actual sample pairs.
+     * Cumulates error.
      *
-     * @param predicted predicted samples.
-     * @param actual actual (true) samples.
+     * @param error error.
+     * @param cumulativeError cumulative error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return cumulative error.
      */
-    public void update(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
-        for (Map.Entry<Integer, Matrix> entry : predicted.entrySet()) {
-            update(entry.getValue(), actual.get(entry.getKey()));
-        }
+    private Matrix cumulateError(Matrix error, Matrix cumulativeError) throws MatrixException {
+        if (cumulativeError == null) cumulativeError = error.getNewMatrix();
+        cumulativeError.addBy(error);
+        return cumulativeError;
     }
 
     /**
@@ -172,13 +198,22 @@ public class RegressionMetric implements Metric, Serializable {
     }
 
     /**
+     * Returns last absolute error.
+     *
+     * @return last absolute error.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public double getLastAbsoluteError() throws MatrixException {
+        return absoluteErrors.get(absoluteErrors.lastKey()).mean();
+    }
+
+    /**
      * Returns mean absolute error.
      *
      * @return mean absolute error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public double getMeanAbsoluteError() throws MatrixException, DynamicParamException {
+    public double getMeanAbsoluteError() throws MatrixException {
         return getMeanAbsoluteErrorMatrix().mean();
     }
 
@@ -187,10 +222,9 @@ public class RegressionMetric implements Metric, Serializable {
      *
      * @return mean absolute error matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getMeanAbsoluteErrorMatrix() throws MatrixException, DynamicParamException {
-        return cumulativeAbsoluteError.apply(UnaryFunctionType.SQRT).divide(getErrorCount());
+    public Matrix getMeanAbsoluteErrorMatrix() throws MatrixException {
+        return cumulativeAbsoluteError.divide(getErrorCount());
     }
 
     /**
@@ -199,31 +233,19 @@ public class RegressionMetric implements Metric, Serializable {
      * @param lastN calculate for last N errors.
      * @return mean absolute error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public double getMeanAbsoluteError(int lastN) throws MatrixException, DynamicParamException {
-        return getMeanAbsoluteErrorMatrix(lastN).mean();
+    public double getMeanAbsoluteError(int lastN) throws MatrixException {
+        return getCumulativeErrorMatrix(lastN, absoluteErrors).mean();
     }
 
     /**
-     * Returns mean absolute error matrix.
+     * Returns last squared error.
      *
-     * @param lastN calculate for last N errors.
-     * @return mean absolute error matrix.
+     * @return last squared error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getMeanAbsoluteErrorMatrix(int lastN) throws MatrixException, DynamicParamException {
-        if (lastN < 1) return null;
-        Matrix lastNCumulativeAbsoluteError = null;
-        int lastNCount = 0;
-        for (Integer index : actuals.descendingKeySet()) {
-            Matrix absoluteError = absoluteErrors.get(index);
-            if (lastNCumulativeAbsoluteError == null) lastNCumulativeAbsoluteError = absoluteError.getNewMatrix();
-            lastNCumulativeAbsoluteError.addBy(absoluteError);
-            if (++lastNCount == lastN) break;
-        }
-        return lastNCumulativeAbsoluteError == null ? null : lastNCumulativeAbsoluteError.apply(UnaryFunctionType.SQRT).divide(lastN);
+    public double getLastSquaredError() throws MatrixException {
+        return squaredErrors.get(squaredErrors.lastKey()).mean();
     }
 
     /**
@@ -231,9 +253,8 @@ public class RegressionMetric implements Metric, Serializable {
      *
      * @return mean squared error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public double getMeanSquaredError() throws MatrixException, DynamicParamException {
+    public double getMeanSquaredError() throws MatrixException {
         return getMeanSquaredErrorMatrix().mean();
     }
 
@@ -242,10 +263,9 @@ public class RegressionMetric implements Metric, Serializable {
      *
      * @return mean squared error matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getMeanSquaredErrorMatrix() throws MatrixException, DynamicParamException {
-        return cumulativeSquaredError.apply(UnaryFunctionType.SQRT).divide(getErrorCount());
+    public Matrix getMeanSquaredErrorMatrix() throws MatrixException {
+        return cumulativeSquaredError.divide(getErrorCount());
     }
 
     /**
@@ -254,31 +274,31 @@ public class RegressionMetric implements Metric, Serializable {
      * @param lastN calculate for last N errors.
      * @return mean absolute error.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public double getMeanSquaredError(int lastN) throws MatrixException, DynamicParamException {
-        return getMeanSquaredErrorMatrix(lastN).mean();
+    public double getMeanSquaredError(int lastN) throws MatrixException {
+        return getCumulativeErrorMatrix(lastN, squaredErrors).mean();
     }
 
     /**
-     * Returns mean squared error matrix.
+     * Returns mean cumulative error matrix.
      *
      * @param lastN calculate for last N errors.
-     * @return mean squared error matrix.
+     * @param errors errors.
+     * @return mean absolute error matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getMeanSquaredErrorMatrix(int lastN) throws MatrixException, DynamicParamException {
-        if (lastN < 1) return null;
-        Matrix lastNCumulativeSquaredError = null;
+    public Matrix getCumulativeErrorMatrix(int lastN, TreeMap<Integer, Matrix> errors) throws MatrixException {
+        if (lastN < 1) throw new MatrixException("Last N samples cannot be less than 1.");
+        Matrix lastNCumulativeError = null;
         int lastNCount = 0;
-        for (Integer index : actuals.descendingKeySet()) {
-            Matrix squaredError = squaredErrors.get(index);
-            if (lastNCumulativeSquaredError == null) lastNCumulativeSquaredError = squaredError.getNewMatrix();
-            lastNCumulativeSquaredError.addBy(squaredError);
-            if (++lastNCount == lastN) break;
+        for (Integer index : errors.descendingKeySet()) {
+            Matrix error = errors.get(index);
+            if (lastNCumulativeError == null) lastNCumulativeError = error.getNewMatrix();
+            lastNCumulativeError.addBy(error);
+
+            if (++lastNCount >= lastN) break;
         }
-        return lastNCumulativeSquaredError == null ? null : lastNCumulativeSquaredError.apply(UnaryFunctionType.SQRT).divide(lastN);
+        return lastNCumulativeError == null ? null : lastNCumulativeError.divide(lastN);
     }
 
     /**
@@ -300,7 +320,7 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public Matrix getR2Matrix() throws MatrixException, DynamicParamException {
-        if (errorCount == 0) return null;
+        if (predictions.isEmpty()) return null;
         Matrix meanActualValue = getMeanActualValue();
         Matrix SSRes = null;
         Matrix SSTot = null;
@@ -344,33 +364,29 @@ public class RegressionMetric implements Metric, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public double getLastError() throws MatrixException, DynamicParamException {
-        return useR2AsLastError ? getR2() : Math.sqrt(squaredErrors.get(squaredErrors.lastKey()).mean());
+        return useR2AsLastError ? getR2() : 1 - absoluteErrors.get(absoluteErrors.lastKey()).mean();
     }
 
     /**
-     * Resets cumulative error and sample count.
+     * Resets reported sample sets.
      *
      */
     public void reset() {
+        actuals.clear();
+        predictions.clear();
+    }
+
+    /**
+     * Reinitialized metric.
+     *
+     */
+    public void reinitialize() {
+        reset();
         absoluteErrors.clear();
         cumulativeAbsoluteError = null;
         squaredErrors.clear();
         cumulativeSquaredError = null;
-        actuals.clear();
-        predictions.clear();
         errorCount = 0;
-    }
-
-    /**
-     * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
-     *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void report(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
-        update(predicted, actual);
     }
 
     /**

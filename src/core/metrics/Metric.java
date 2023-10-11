@@ -30,6 +30,12 @@ public interface Metric {
     void reset();
 
     /**
+     * Reinitializes current metric.
+     *
+     */
+    void reinitialize();
+
+    /**
      * Returns last error.
      *
      * @return last error.
