@@ -1284,6 +1284,15 @@ public interface Matrix {
     Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException;
 
     /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param unjoinAtRow unjoins at row.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    Matrix unjoin(int unjoinAtRow) throws MatrixException;
+
+    /**
      * Flattens matrix into one dimensional column vector (matrix)
      *
      * @return flattened matrix
