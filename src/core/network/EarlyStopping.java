@@ -14,8 +14,7 @@ import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.TreeMap;
 
 /**
  * Implements early stopping method for neural network.<br>
@@ -31,14 +30,18 @@ public class EarlyStopping implements Configurable, Serializable {
 
     /**
      * Parameter name types for early stopping.
-     *     - trainingAverageSize: size for training error rolling average. Default value 100 (iterations).<br>
-     *     - trainingStopThreshold: stop threshold for training error condition. Default 20 (consequent iterations where condition is met).<br>
-     *     - validationAverageSize: size for validation error rolling average. Default value 100 (iterations).<br>
-     *     - validationStopThreshold: stop threshold for validation error condition. Default 20 (consequent iterations where condition is met).<br>
+     *     - trainingPatience: training patience in terms of iterations. Default value 1 (iterations).<br>
+     *     - trainingAverageSize: size for training error rolling average. Default value 500 (iterations).<br>
+     *     - trainingStopThreshold: stop threshold for training error condition. Default 100 (consequent iterations where condition is met).<br>
+     *     - validationPatience: validation patience in terms of iterations. Default value 1 (iterations).<br>
+     *     - validationAverageSize: size for validation error rolling average. Default value 500 (iterations).<br>
+     *     - validationStopThreshold: stop threshold for validation error condition. Default 100 (consequent iterations where condition is met).<br>
      *
      */
-    private final static String paramNameTypes = "(trainingAverageSize:INT), " +
+    private final static String paramNameTypes = "(trainingPatience:INT), " +
+            "(trainingAverageSize:INT), " +
             "(trainingStopThreshold:INT), " +
+            "(validationPatience:INT), " +
             "(validationAverageSize:INT), " +
             "(validationStopThreshold:INT)";
 
@@ -47,6 +50,12 @@ public class EarlyStopping implements Configurable, Serializable {
      *
      */
     private final String params;
+
+    /**
+     * Training patience in terms of iterations.
+     *
+     */
+    private int trainingPatience;
 
     /**
      * Size for training error rolling average.
@@ -58,7 +67,7 @@ public class EarlyStopping implements Configurable, Serializable {
      * Training averages.
      *
      */
-    private final Deque<Double> trainingAverages = new ArrayDeque<>();
+    private final TreeMap<Integer, Double> trainingAverages = new TreeMap<>();
 
     /**
      * Sets stop threshold for training error condition.
@@ -70,7 +79,13 @@ public class EarlyStopping implements Configurable, Serializable {
      * Stores previous training error average.
      *
      */
-    private double previousTrainingAverage = Double.NEGATIVE_INFINITY;
+    private double previousTrainingAverage = Double.MAX_VALUE;
+
+    /**
+     * Validation patience in terms of iterations.
+     *
+     */
+    private int validationPatience;
 
     /**
      * Size for validation error rolling average.
@@ -82,7 +97,7 @@ public class EarlyStopping implements Configurable, Serializable {
      * Validation averages.
      *
      */
-    private final Deque<Double> validationAverages = new ArrayDeque<>();
+    private final TreeMap<Integer, Double> validationAverages = new TreeMap<>();
 
     /**
      * Sets stop threshold for validation error condition.
@@ -94,7 +109,7 @@ public class EarlyStopping implements Configurable, Serializable {
      * Stores previous validation error average.
      *
      */
-    private double previousValidationAverage = Double.NEGATIVE_INFINITY;
+    private double previousValidationAverage = Double.MIN_VALUE;
 
     /**
      * Reference to training error instance.
@@ -158,10 +173,12 @@ public class EarlyStopping implements Configurable, Serializable {
      *
      */
     public void initializeDefaultParams() {
-        trainingAverageSize = 100;
-        trainingStopThreshold = 20;
-        validationAverageSize = 100;
-        validationStopThreshold = 20;
+        trainingPatience = 1;
+        trainingAverageSize = 500;
+        trainingStopThreshold = 100;
+        validationPatience = 1;
+        validationAverageSize = 500;
+        validationStopThreshold = 100;
     }
 
     /**
@@ -177,17 +194,21 @@ public class EarlyStopping implements Configurable, Serializable {
      * Sets parameters used for early stopping.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - trainingAverageSize: size for training error rolling average. Default value 100 (iterations).<br>
-     *     - trainingStopThreshold: stop threshold for training error condition. Default 20 (consequent iterations where condition is met).<br>
-     *     - validationAverageSize: size for validation error rolling average. Default value 100 (iterations).<br>
-     *     - validationStopThreshold: stop threshold for validation error condition. Default 20 (consequent iterations where condition is met).<br>
+     *     - trainingPatience: training patience in terms of iterations. Default value 1 (iterations).<br>
+     *     - trainingAverageSize: size for training error rolling average. Default value 500 (iterations).<br>
+     *     - trainingStopThreshold: stop threshold for training error condition. Default 100 (consequent iterations where condition is met).<br>
+     *     - validationPatience: validation patience in terms of iterations. Default value 1 (iterations).<br>
+     *     - validationAverageSize: size for validation error rolling average. Default value 500 (iterations).<br>
+     *     - validationStopThreshold: stop threshold for validation error condition. Default 100 (consequent iterations where condition is met).<br>
      *
      * @param params parameters used for stopping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
+        if (params.hasParam("trainingPatience")) trainingPatience = params.getValueAsInteger("trainingPatience");
         if (params.hasParam("trainingAverageSize")) trainingAverageSize = params.getValueAsInteger("trainingAverageSize");
         if (params.hasParam("trainingStopThreshold")) trainingStopThreshold = params.getValueAsInteger("trainingStopThreshold");
+        if (params.hasParam("validationPatience")) validationPatience = params.getValueAsInteger("validationPatience");
         if (params.hasParam("validationAverageSize")) validationAverageSize = params.getValueAsInteger("validationAverageSize");
         if (params.hasParam("validationStopThreshold")) validationStopThreshold = params.getValueAsInteger("validationStopThreshold");
     }
@@ -229,14 +250,16 @@ public class EarlyStopping implements Configurable, Serializable {
      * @param iteration current neural network training iteration.
      */
     public void evaluateTrainingCondition(int iteration) {
-        if (!trainingStopCondition && iteration >= trainingAverageSize) {
-            double lastAverage = getAverageError(trainingAverages, trainingAverageSize, trainingMetric.getLastError());
-            if (previousTrainingAverage <= lastAverage && previousTrainingAverage != Double.NEGATIVE_INFINITY) trainingStopCount++;
-            else {
-                previousTrainingAverage = lastAverage;
-                trainingStopCount = 0;
+        if (!trainingStopCondition && iteration > trainingPatience) {
+            double lastTrainingAverage = getAverageError(trainingAverages, iteration -trainingPatience, trainingAverageSize, trainingMetric.getLastError());
+            if (iteration >= trainingAverageSize) {
+                if (previousTrainingAverage >= lastTrainingAverage) trainingStopCount++;
+                else {
+                    previousTrainingAverage = lastTrainingAverage;
+                    trainingStopCount = 0;
+                }
+                if (trainingStopCount >= trainingStopThreshold) trainingStopCondition = true;
             }
-            if (trainingStopCount >= trainingStopThreshold) trainingStopCondition = true;
         }
     }
 
@@ -251,14 +274,16 @@ public class EarlyStopping implements Configurable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void evaluateValidationCondition(int iteration) throws MatrixException, DynamicParamException {
-        if (!validationStopCondition && iteration >= validationAverageSize) {
-            double lastAverage = getAverageError(validationAverages, validationAverageSize, validationMetric.getLastError());
-            if (previousValidationAverage <= lastAverage && previousValidationAverage != Double.NEGATIVE_INFINITY) validationStopCount++;
-            else {
-                previousValidationAverage = lastAverage;
-                validationStopCount = 0;
+        if (!validationStopCondition && iteration > validationPatience) {
+            double lastValidationAverage = getAverageError(validationAverages, iteration - validationPatience, validationAverageSize, validationMetric.getLastError());
+            if (iteration >= validationAverageSize) {
+                if (previousValidationAverage >= lastValidationAverage) validationStopCount++;
+                else {
+                    previousValidationAverage = lastValidationAverage;
+                    validationStopCount = 0;
+                }
+                if (validationStopCount >= validationStopThreshold) validationStopCondition = true;
             }
-            if (validationStopCount >= validationStopThreshold) validationStopCondition = true;
         }
     }
 
@@ -266,16 +291,26 @@ public class EarlyStopping implements Configurable, Serializable {
      * Returns cumulative error.
      *
      * @param errors errors.
+     * @param iteration iteration.
      * @param maxSize max size of error queue.
      * @param lastError latest error.
      * @return average error.
      */
-    private double getAverageError(Deque<Double> errors, int maxSize, double lastError) {
-        double cumulativeError = 0;
-        if (errors.size() == maxSize) errors.pollLast();
-        errors.addFirst(lastError);
-        for (Double error : errors) cumulativeError += error;
-        return cumulativeError / (double)errors.size();
+    private double getAverageError(TreeMap<Integer, Double> errors, int iteration, int maxSize, double lastError) {
+        if (!errors.isEmpty()) {
+            int lastKey = errors.lastKey();
+            double lastValue = errors.get(lastKey);
+            for (int index = lastKey + 1; index < iteration - 1; index++) errors.put(index, lastValue);
+        }
+
+        errors.put(iteration, lastError);
+
+        while (errors.size() > maxSize) errors.remove(errors.firstKey());
+
+        double movingAverageError = Double.MIN_VALUE;
+        double smoothingFactor = 0.99;
+        for (Double error : errors.values()) movingAverageError = movingAverageError == Double.MIN_VALUE ? error : smoothingFactor * movingAverageError + (1 - smoothingFactor) * error;
+        return movingAverageError;
     }
 
     /**
