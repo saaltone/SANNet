@@ -115,11 +115,13 @@ public class AutoEncoder {
      */
     private static void initializeNeuralNetwork(NeuralNetwork neuralNetwork, HashMap<Integer, HashMap<Integer, Matrix>> data) throws NeuralNetworkException, MatrixException, DynamicParamException {
         neuralNetwork.setNeuralNetworkName("Neural Network " + 1);
-        neuralNetwork.setAsClassification();
+        neuralNetwork.setAsClassification(true);
         neuralNetwork.verboseTraining(10);
         neuralNetwork.setAutoValidate(5);
         neuralNetwork.verboseValidation();
-        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping("trainingStopThreshold = 25, validationStopThreshold = 25")); }});
+        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping()); }});
+        neuralNetwork.setShowTrainingMetrics(true);
+        neuralNetwork.showConfusionMatrix(true);
         neuralNetwork.start();
 
         neuralNetwork.print();
