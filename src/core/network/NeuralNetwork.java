@@ -151,6 +151,12 @@ public class NeuralNetwork implements Runnable, Serializable {
     private final TreeMap<Integer, SingleRegressionMetric> trainingMetrics = new TreeMap<>();
 
     /**
+     * If true shows training metrics otherwise not.
+     *
+     */
+    private boolean showTrainingMetrics = false;
+
+    /**
      * Reference to validation error metric. Default Regression.
      *
      */
@@ -479,7 +485,7 @@ public class NeuralNetwork implements Runnable, Serializable {
         checkStarted();
 
         trainingMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) trainingMetrics.put(outputLayerIndex, new SingleRegressionMetric());
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) trainingMetrics.put(outputLayerIndex, new SingleRegressionMetric(showTrainingMetrics));
         for (Integer outputLayerIndex : getOutputLayers().keySet()) if (validationMetrics.get(outputLayerIndex) != null) validationMetrics.put(outputLayerIndex, validationMetrics.get(outputLayerIndex).reference());
 
         if (!earlyStoppingMap.isEmpty()) {
@@ -1042,7 +1048,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
         long startTime = System.nanoTime();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) if (reset) neuralNetworkLayer.resetOptimizer();
-        for (SingleRegressionMetric trainingMetric : trainingMetrics.values()) trainingMetric.reset();
         TreeMap<Integer, Sequence> inputSequences = new TreeMap<>();
         TreeMap<Integer, Sequence> outputSequences = new TreeMap<>();
         trainingSampler.getSamples(inputSequences, outputSequences);
@@ -1075,7 +1080,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     private void verboseTrainingStatus() {
         StringBuilder meanSquaredError = new StringBuilder("[ ");
         for (SingleRegressionMetric trainingMetric : trainingMetrics.values()) {
-            meanSquaredError.append(String.format("%.4f", trainingMetric.getMeanSquaredError())).append(" ");
+            meanSquaredError.append(String.format("%.4f", trainingMetric.getLastAbsoluteError())).append(" ");
         }
         meanSquaredError.append("]");
         if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + meanSquaredError + ", Training time in seconds: " + (trainingTime / 1000000000));
@@ -1124,6 +1129,17 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Sets if training metrics is shown.
+     *
+     * @param showTrainingMetrics if true training metrics is shown otherwise not.
+     * @throws NeuralNetworkException throws exception if parameter is attempted to be set when neural network is already started.
+     */
+    public void setShowTrainingMetrics(boolean showTrainingMetrics) throws NeuralNetworkException {
+        if(isStarted()) throw new NeuralNetworkException("Training metrics can be only enabled / disabled when neural network is not started.");
+        this.showTrainingMetrics = showTrainingMetrics;
+    }
+
+    /**
      * Returns total neural network training iterations count.
      *
      * @return total neural network training iterations count.
@@ -1150,32 +1166,35 @@ public class NeuralNetwork implements Runnable, Serializable {
     /**
      * Sets regression as validation metric.
      *
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsRegression() {
+    public void setAsRegression(boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric());
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric(showMetric));
     }
 
     /**
      * Sets regression as validation metric.
      *
      * @param outputLayerIndex output layer index.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsRegression(int outputLayerIndex) {
+    public void setAsRegression(int outputLayerIndex, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new RegressionMetric());
+        validationMetrics.put(outputLayerIndex, new RegressionMetric(showMetric));
     }
 
     /**
      * Sets regression as validation metric.
      *
      * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsRegression(boolean useR2AsLastError) {
+    public void setAsRegression(boolean useR2AsLastError, boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError));
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError, showMetric));
     }
 
     /**
@@ -1183,41 +1202,45 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param outputLayerIndex output layer index.
      * @param useR2AsLastError if true uses R2 as last error otherwise uses MSE.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsRegression(int outputLayerIndex, boolean useR2AsLastError) {
+    public void setAsRegression(int outputLayerIndex, boolean useR2AsLastError, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError));
+        validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError, showMetric));
     }
 
     /**
      * Sets classification as validation metric.
      *
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsClassification() {
+    public void setAsClassification(boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric());
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric(showMetric));
     }
 
     /**
      * Sets classification as validation metric.
      *
      * @param outputLayerIndex output layer index.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsClassification(int outputLayerIndex) {
+    public void setAsClassification(int outputLayerIndex, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new ClassificationMetric());
+        validationMetrics.put(outputLayerIndex, new ClassificationMetric(showMetric));
     }
 
     /**
      * Sets regression as validation metric.
      *
      * @param multiClass if true metrics assumes multi class classification otherwise single class classification.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsClassification(boolean multiClass) {
+    public void setAsClassification(boolean multiClass, boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass));
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass, showMetric));
     }
 
     /**
@@ -1225,10 +1248,11 @@ public class NeuralNetwork implements Runnable, Serializable {
      *
      * @param outputLayerIndex output layer index.
      * @param multiClass if true metrics assumes multi class classification otherwise single class classification.
+     * @param showMetric if true shows metric otherwise not.
      */
-    public void setAsClassification(int outputLayerIndex, boolean multiClass) {
+    public void setAsClassification(int outputLayerIndex, boolean multiClass, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass));
+        validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass, showMetric));
     }
 
     /**
@@ -1238,7 +1262,21 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void printConfusionMatrix(boolean printConfusionMatrix) {
         waitToComplete();
-        for (Metric validationMetric : validationMetrics.values()) if (validationMetric instanceof  ClassificationMetric) ((ClassificationMetric) validationMetric).setPrintConfusionMatrix(printConfusionMatrix);
+        for (Metric validationMetric : validationMetrics.values()) if (validationMetric instanceof ClassificationMetric classificationMetric) {
+            classificationMetric.setPrintConfusionMatrix(printConfusionMatrix);
+        }
+    }
+
+    /**
+     * Sets if confusion matrix is shown along other classification metrics.
+     *
+     * @param showConfusionMatrix if true confusion matrix is shown along other classification metrics.
+     */
+    public void showConfusionMatrix(boolean showConfusionMatrix) {
+        waitToComplete();
+        for (Metric validationMetric : validationMetrics.values()) if (validationMetric instanceof ClassificationMetric classificationMetric) {
+            classificationMetric.setShowConfusionMatrix(showConfusionMatrix);
+        }
     }
 
     /**
@@ -1312,7 +1350,7 @@ public class NeuralNetwork implements Runnable, Serializable {
         predictInputs.clear();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.reinitialize();
         for (Map.Entry<Integer, EarlyStopping> entry : earlyStoppingMap.entrySet()) earlyStoppingMap.put(entry.getKey(), entry.getValue().reference());
-        for (Metric validationMetric : validationMetrics.values()) validationMetric.reset();
+        for (Metric validationMetric : validationMetrics.values()) validationMetric.reinitialize();
         totalIterations = 0;
         trainingTime = 0;
     }
