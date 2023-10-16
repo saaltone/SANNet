@@ -186,8 +186,8 @@ public class SingleRegressionMetric implements Metric, Serializable {
     /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
+     * @param predicted    predicted errors.
+     * @param actual       actual (true) error.
      */
     public void report(Sequence predicted, Sequence actual) {
     }
@@ -195,7 +195,7 @@ public class SingleRegressionMetric implements Metric, Serializable {
     /**
      * Reports single error value.
      *
-     * @param error single error value to be reported.
+     * @param error         single error value to be reported.
      */
     public void report(double error) {
         errorCount++;
