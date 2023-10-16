@@ -116,10 +116,11 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
      */
     private void activateChart() {
         setTitle("Confusion Matrix");
-        setSize(400, 550);
+        setSize(400, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel confusionMatrixPanel = new JPanel() {
+            @Override
             protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             drawConfusionMatrix(g);
@@ -141,7 +142,7 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
         int numberOfFeatures = features.size();
 
         int blockWidth = getWidth() / (numberOfFeatures + 2);
-        int effectiveBlockHeight = getHeight() - 150;
+        int effectiveBlockHeight = (int)(4 * (double)getHeight() / 5);
         int blockHeight = effectiveBlockHeight / (numberOfFeatures + 2);
 
         FontMetrics metrics = g.getFontMetrics();
@@ -170,14 +171,14 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
         g.setColor(Color.BLACK);
         int statisticsX = getWidth() / 10;
         int statisticsXStep = getWidth() / 2;
-        int statisticsY = effectiveBlockHeight;
+        int yStep = (int)((double)getHeight() / 25);
 
-        g.drawString("Accuracy:   " + String.format("%.2f", classificationAccuracy), statisticsX, statisticsY);
-        g.drawString("Error rate:  " + String.format("%.2f", classificationErrorRate), statisticsX + statisticsXStep, statisticsY);
-        g.drawString("Precision:   " + String.format("%.2f", classificationPrecision), statisticsX, statisticsY + 20);
-        g.drawString("Recall:       " + String.format("%.2f", classificationRecall), statisticsX + statisticsXStep, statisticsY + 20);
-        g.drawString("Specificity: " + String.format("%.2f", classificationSpecificity), statisticsX, statisticsY + 40);
-        g.drawString("F1 score:   " + String.format("%.2f", classificationF1Score), statisticsX + statisticsXStep, statisticsY + 40);
+        g.drawString("Accuracy:   " + String.format("%.2f", classificationAccuracy), statisticsX, effectiveBlockHeight);
+        g.drawString("Error rate:  " + String.format("%.2f", classificationErrorRate), statisticsX + statisticsXStep, effectiveBlockHeight);
+        g.drawString("Precision:   " + String.format("%.2f", classificationPrecision), statisticsX, effectiveBlockHeight + yStep);
+        g.drawString("Recall:       " + String.format("%.2f", classificationRecall), statisticsX + statisticsXStep, effectiveBlockHeight + yStep);
+        g.drawString("Specificity: " + String.format("%.2f", classificationSpecificity), statisticsX, effectiveBlockHeight + 2 * yStep);
+        g.drawString("F1 score:   " + String.format("%.2f", classificationF1Score), statisticsX + statisticsXStep, effectiveBlockHeight + 2 * yStep);
     }
 
     /**
