@@ -162,6 +162,7 @@ public class TrendMetricChart extends JFrame implements Serializable {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel chartPanel = new JPanel() {
+            @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 try {
@@ -199,8 +200,8 @@ public class TrendMetricChart extends JFrame implements Serializable {
     /**
      * Adds error data.
      *
-     * @param iteration iteration.
-     * @param error error value.
+     * @param iteration    iteration.
+     * @param error        error value.
      */
     public void addErrorData(int iteration, double error) {
         if (!isActivated) {
@@ -243,16 +244,18 @@ public class TrendMetricChart extends JFrame implements Serializable {
     private void drawXAxis(Graphics g, int iterations) {
         FontMetrics metrics = g.getFontMetrics();
 
+        int yOffset = (int)((double)getHeight() / 20);
+
         g.setColor(Color.BLACK);
         int iteration = 0;
         int iterationStep = errors.size() / 10;
         for (Map.Entry<Integer, Matrix> entry : errors.entrySet()) {
             int x = getX(iteration, iterations);
-            if (iterationStep == 0 || iteration % iterationStep == 0) g.drawString(Integer.toString(entry.getKey()), x - metrics.stringWidth(Integer.toString(entry.getKey())) / 2, yEnd + 20);
+            if (iterationStep == 0 || iteration % iterationStep == 0) g.drawString(Integer.toString(entry.getKey()), x - metrics.stringWidth(Integer.toString(entry.getKey())) / 2, yEnd + yOffset);
             iteration++;
         }
 
-        g.drawString(xAxisName, xStart + xStep / 2, yEnd + 40);
+        g.drawString(xAxisName, xStart + xStep / 2, yEnd + 2 * yOffset);
     }
 
     /**
@@ -273,17 +276,20 @@ public class TrendMetricChart extends JFrame implements Serializable {
         }
         factor = Math.max(Math.min(factor, maxFactor), minFactor);
 
+        int xAxisStep = (int)((double)getWidth() / 160);
+        int yAxisStep = (int)((double)getHeight() / 80);
+
         g.setColor(Color.BLACK);
         for (int i = 0; i <= maxYSteps; i++) {
             double yStep = i / (double)maxYSteps;
             int y = getY(yStep, 1);
             String yString = String.format("%." + factor + "f", yStep / Math.pow(10, factor - 1));
 
-            g.drawString(yString, xStart - 20 - 5 * factor, y + 1);
+            g.drawString(yString, xStart - 4 * xAxisStep - xAxisStep * factor, y + 1);
             g.drawLine(xStart, y, xEnd, y);
         }
 
-        g.drawString(yAxisName, xStart - 30, yStart - 15);
+        g.drawString(yAxisName, xStart - 6 * xAxisStep, yStart - 3 * yAxisStep);
         g.drawLine(xStart, yStart, xStart, yEnd);
     }
 
