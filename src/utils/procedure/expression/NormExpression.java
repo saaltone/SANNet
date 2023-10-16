@@ -111,6 +111,7 @@ public class NormExpression extends AbstractUnaryExpression {
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
+
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
         if (!argument1.isStopGradient()) {
             Matrix normGradientMatrix = normGradientMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex));
