@@ -134,9 +134,9 @@ public class RegressionMetric implements Metric, Serializable {
     /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param predicted    predicted errors.
+     * @param actual       actual (true) error.
+     * @throws MatrixException       throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, DynamicParamException {
