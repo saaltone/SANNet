@@ -281,9 +281,9 @@ public class ClassificationMetric implements Metric, Serializable {
     /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param predicted    predicted errors.
+     * @param actual       actual (true) error.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
      */
     public void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException {
