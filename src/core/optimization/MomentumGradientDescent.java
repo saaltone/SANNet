@@ -110,6 +110,7 @@ public class MomentumGradientDescent extends AbstractOptimizer {
         // θt+1=θt+μtvt−εt∇f(θt)
         Matrix dMPrev = getParameterMatrix(dPrev, matrix);
         dMPrev = dMPrev.multiply(mu).subtract(matrixGradient.multiply(learningRate));
+
         // vt+1=μtvt−εt∇f(θt)
         setParameterMatrix(dPrev, matrix, dMPrev);
 

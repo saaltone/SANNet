@@ -135,6 +135,7 @@ public class AMSGrad extends AbstractOptimizer {
         // vt = β2*vt − 1 + (1 − β2)*g2t
         Matrix vM = getParameterMatrix(v, matrix);
         Matrix vM_temp = vM.multiply(beta2).add(matrixGradient.power(2).multiply(1 - beta2));
+
         // vt = max(vt, vt-1)
         vM = vM_temp.max(v.get(matrix));
         setParameterMatrix(v, matrix, vM);
