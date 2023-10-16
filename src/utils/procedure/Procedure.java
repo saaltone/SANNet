@@ -425,7 +425,7 @@ public class Procedure implements Serializable {
                 }
             }
             if (!containsParameterMatrix) {
-                System.out.println("Fail: " + this + " " + parameterMatrix + " " + parameterMatrix.getName());
+                System.out.println("Failed to find parameter matrix: " + this + " " + parameterMatrix + " " + parameterMatrix.getName());
                 throw new MatrixException("Procedure does not contain all parameter matrices.");
             }
         }
