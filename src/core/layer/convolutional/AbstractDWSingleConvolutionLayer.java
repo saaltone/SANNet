@@ -94,7 +94,7 @@ public abstract class AbstractDWSingleConvolutionLayer extends AbstractConvoluti
             this.filterRowSize = filterRowSize;
             this.filterColumnSize = filterColumnSize;
 
-            filterWeightDepthWise = new DMatrix(filterRowSize, filterColumnSize, previousLayerDepth, initialization, filterRowSize * filterColumnSize, filterRowSize * filterColumnSize);
+            filterWeightDepthWise = new DMatrix(filterRowSize, filterColumnSize, 1, initialization, filterRowSize * filterColumnSize, filterRowSize * filterColumnSize);
             filterWeightDepthWise.setName("WfDW");
             weights.add(filterWeightDepthWise);
             registerWeight(filterWeightDepthWise, regulateWeights, true);
@@ -302,6 +302,7 @@ public abstract class AbstractDWSingleConvolutionLayer extends AbstractConvoluti
         input.setFilterRowSize(filterRowSize);
         input.setFilterColumnSize(filterColumnSize);
         input.setFilterDepth(1);
+        input.setIsDepthSeparable(true);
 
         return weightSet.filterBiasDepthWise.add(executeConvolutionalOperation(input, weightSet.filterWeightDepthWise));
     }
