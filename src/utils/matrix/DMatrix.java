@@ -181,7 +181,7 @@ public class DMatrix extends ComputableMatrix {
      */
     public DMatrix(int rows, int columns, int depth, double[] data) {
         super(rows, columns, depth);
-        matrix = data.clone();
+        matrix = data;
     }
 
     /**
@@ -195,7 +195,7 @@ public class DMatrix extends ComputableMatrix {
      */
     public DMatrix(int rows, int columns, int depth, double[] data, boolean isScalar) {
         super(rows, columns, depth, isScalar);
-        matrix = data.clone();
+        matrix = data;
     }
 
     /**
