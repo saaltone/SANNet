@@ -15,6 +15,7 @@ import utils.matrix.MatrixException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Interface for neural network layer.<br>
@@ -160,6 +161,20 @@ public interface NeuralNetworkLayer {
     void reinitialize() throws MatrixException;
 
     /**
+     * Returns training execution time in nanoseconds.
+     *
+     * @return training execution time in nanoseconds.
+     */
+    double getTrainingExecutionTime();
+
+    /**
+     * Returns prediction execution time in nanoseconds.
+     *
+     * @return prediction execution time in nanoseconds.
+     */
+    double getPredictExecutionTime();
+
+    /**
      * Returns outputs of neural network layer.
      *
      * @return outputs of neural network layer.
@@ -198,11 +213,12 @@ public interface NeuralNetworkLayer {
     /**
      * Starts neural network layer and it's execution thread.
      *
+     * @param threadPool thread pool.
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void start(ExecutorService threadPool) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops neural network layer and terminates neural network layer execution thread.<br>
