@@ -110,7 +110,7 @@ public class TimeSeriesPrediction {
         neuralNetwork.setNeuralNetworkName("Neural Network");
         neuralNetwork.setAsRegression(true);
         neuralNetwork.verboseTraining(10);
-        neuralNetwork.setAutoValidate(100);
+        neuralNetwork.setAutoValidate(10);
         neuralNetwork.verboseValidation();
 //        neuralNetwork.setTrainingEarlyStopping(new TreeMap<>() {{ put(0, new EarlyStopping("trainingStopThreshold = 100, validationStopThreshold = 100")); }});
         neuralNetwork.setShowTrainingMetrics(true);
