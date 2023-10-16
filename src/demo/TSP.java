@@ -775,12 +775,13 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         if (redraw) {
             SwingUtilities.invokeLater(() -> {
-                jFrame.remove(tspPanel);
-                tspPanel = new TSPPanel();
-                jFrame.add(tspPanel);
+                if (tspPanel == null) {
+                    tspPanel = new TSPPanel();
+                    jFrame.add(tspPanel);
+                }
                 tspPanel.addCities(tour.visitedCities, tour.visitedCitiesPrevious, tour.visitedCitiesMin);
                 jFrame.revalidate();
-                tspPanel.paintImmediately(0, 0, (int)(0.8 * xWindowSize), (int)(0.8 * yWindowSize));
+                tspPanel.repaint();
             });
         }
     }
