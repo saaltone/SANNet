@@ -48,10 +48,10 @@ public abstract class AbstractPWSingleConvolutionLayer extends AbstractConvoluti
          * Treemap for point-wise filter maps (weights).
          *
          */
-        private final Matrix filterWeightPointWise;
+        private final TreeMap<Integer, Matrix> filtersWeightPointWise = new TreeMap<>();
 
         /**
-         * Treemap for point-wise biases.
+         * Point-wise bias.
          *
          */
         private final Matrix filterBiasPointWise;
@@ -69,10 +69,13 @@ public abstract class AbstractPWSingleConvolutionLayer extends AbstractConvoluti
          * @param regulateWeights if true weights are regulated.
          */
         PWConvolutionWeightSet(Initialization initialization, boolean regulateWeights) {
-            filterWeightPointWise = new DMatrix(1, 1, previousLayerDepth, initialization, 1, 1);
-            filterWeightPointWise.setName("WfPW");
-            weights.add(filterWeightPointWise);
-            registerWeight(filterWeightPointWise, regulateWeights, true);
+            for (Integer filterIndex : getPreviousLayers().keySet()) {
+                Matrix filterWeightPointWise = new DMatrix(1, 1, 1, initialization, 1, 1);
+                filterWeightPointWise.setName("WfPW" + filterIndex);
+                weights.add(filterWeightPointWise);
+                registerWeight(filterWeightPointWise, regulateWeights, true);
+                filtersWeightPointWise.put(filterIndex, filterWeightPointWise);
+            }
 
             filterBiasPointWise = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth());
             filterBiasPointWise.setName("BfPW");
@@ -94,7 +97,7 @@ public abstract class AbstractPWSingleConvolutionLayer extends AbstractConvoluti
          *
          */
         public void reinitialize() {
-            filterWeightPointWise.initialize(initialization, 1, 1);
+            for (Matrix filterWeightPointWise : filtersWeightPointWise.values()) filterWeightPointWise.initialize(initialization, 1, 1);
             filterBiasPointWise.reset();
         }
 
@@ -257,13 +260,14 @@ public abstract class AbstractPWSingleConvolutionLayer extends AbstractConvoluti
     public Matrix getForwardProcedure() throws MatrixException {
         // Point-wise separable convolution
         Matrix output = weightSet.filterBiasPointWise;
-        for (Matrix matrix : inputs.values()) {
+        for (Map.Entry<Integer, Matrix> entry : inputs.entrySet()) {
+            Matrix matrix = entry.getValue();
             matrix.setStride(stride);
             matrix.setDilation(dilation);
             matrix.setFilterRowSize(filterRowSize);
             matrix.setFilterColumnSize(filterColumnSize);
             matrix.setFilterDepth(1);
-            output = output.add(executeConvolutionalOperation(matrix, weightSet.filterWeightPointWise));
+            output = output.add(executeConvolutionalOperation(matrix, weightSet.filtersWeightPointWise.get(entry.getKey())));
         }
         output.setName("Output");
 
