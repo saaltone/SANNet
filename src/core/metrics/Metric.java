@@ -47,11 +47,11 @@ public interface Metric {
     /**
      * Reports errors and handles them as either regression or classification errors depending on metrics initialization.
      *
-     * @param predicted predicted errors.
-     * @param actual actual (true) error.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param predicted    predicted errors.
+     * @param actual       actual (true) error.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if reporting of errors fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
     void report(Sequence predicted, Sequence actual) throws MatrixException, NeuralNetworkException, DynamicParamException;
 
