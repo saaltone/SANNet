@@ -22,6 +22,9 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -91,10 +94,28 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient boolean stopExecution;
 
     /**
+     * Thread pool for neural network.
+     *
+     */
+    private transient ExecutorService networkThreadPool;
+
+    /**
+     * Thread pool for neural network layers.
+     *
+     */
+    private transient ExecutorService layerThreadPool;
+
+    /**
      * Neural network execution thread.
      *
      */
     private transient Thread neuralNetworkThread;
+
+    /**
+     * Future of the neural network thread.
+     *
+     */
+    private transient Future<?> future;
 
     /**
      * Name of neural network instance.
@@ -505,9 +526,14 @@ public class NeuralNetwork implements Runnable, Serializable {
 
         neuralNetworkThread = new Thread(this);
         neuralNetworkThread.setName("NeuralNetwork" + (neuralNetworkName != null ? " (" + neuralNetworkName + ")" : ""));
-        neuralNetworkThread.start();
 
-        for (InputLayer inputLayer : inputLayers.values()) inputLayer.start();
+        layerThreadPool = Executors.newWorkStealingPool();
+
+        if (networkThreadPool != null) future = networkThreadPool.submit(neuralNetworkThread);
+        else neuralNetworkThread.start();
+
+        for (InputLayer inputLayer : inputLayers.values()) inputLayer.start(layerThreadPool);
+
     }
 
     /**
@@ -523,10 +549,17 @@ public class NeuralNetwork implements Runnable, Serializable {
         executeLockCondition.signal();
         executeLock.unlock();
 
-        try {
-            neuralNetworkThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (layerThreadPool == null) {
+            try {
+                neuralNetworkThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            layerThreadPool.shutdownNow();
+            if (future != null) future.cancel(true);
+            if (networkThreadPool != null) networkThreadPool.shutdownNow();
         }
 
         executeLock = null;
@@ -534,6 +567,8 @@ public class NeuralNetwork implements Runnable, Serializable {
         completeLockCondition = null;
         stopLock = null;
         neuralNetworkThread = null;
+        layerThreadPool = null;
+        networkThreadPool = null;
     }
 
     /**
@@ -542,7 +577,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return returns true if neural network is started otherwise false.
      */
     public boolean isStarted() {
-        return neuralNetworkThread != null && (neuralNetworkThread.getState() != Thread.State.NEW);
+        return networkThreadPool != null ? future != null && (!future.isDone()) : neuralNetworkThread != null && (neuralNetworkThread.getState() != Thread.State.NEW);
     }
 
     /**
@@ -989,6 +1024,31 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Returns total training time.
+     *
+     * @return total training time.
+     */
+    public double getTotalTrainingTime() {
+        double totalTrainingTime = 0;
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) {
+            double layerTrainingTime = neuralNetworkLayer.getTrainingExecutionTime();
+            totalTrainingTime += layerTrainingTime;
+        }
+        return totalTrainingTime;
+    }
+
+    /**
+     * Returns total prediction time.
+     *
+     * @return total prediction time.
+     */
+    public double getTotalPredictionTime() {
+        double totalPredictionTime = 0;
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) totalPredictionTime += neuralNetworkLayer.getPredictExecutionTime();
+        return totalPredictionTime;
+    }
+
+    /**
      * Thread run function.<br>
      * Executes given neural network procedures and synchronizes their execution via neural network thread execution lock.<br>
      *
@@ -1083,7 +1143,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             meanSquaredError.append(String.format("%.4f", trainingMetric.getLastAbsoluteError())).append(" ");
         }
         meanSquaredError.append("]");
-        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + meanSquaredError + ", Training time in seconds: " + (trainingTime / 1000000000));
+        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + meanSquaredError + ", Training time in seconds: " + (int)(getTotalTrainingTime() / Math.pow(10, 9)));
     }
 
     /**
