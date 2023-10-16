@@ -905,17 +905,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
-     * Encodes to value to column row vector.
-     *
-     * @param value value
-     * @return bit column vector.
-     * @throws MatrixException throws exception if binary code size is exceeding number of maximum bits.
-     */
-    public static Matrix encodeToBitColumnVector(int value) throws MatrixException {
-        return ComputableMatrix.encodeToBitColumnVector(value, value);
-    }
-
-    /**
      * Encodes to value to bit column vector.
      *
      * @param value value
