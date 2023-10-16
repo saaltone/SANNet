@@ -15,6 +15,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -91,10 +93,28 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     private transient ExecutionState executionState;
 
     /**
+     * Layer training execution time.
+     *
+     */
+    private transient long trainingExecutionTime;
+
+    /**
+     * Layer prediction execution time.
+     *
+     */
+    private transient long predictExecutionTime;
+
+    /**
      * Execution thread for neural network layer.
      *
      */
     private transient Thread layerThread;
+
+    /**
+     * Future of the neural network layer thread.
+     *
+     */
+    private transient Future<?> future;
 
     /**
      * Reference to next layer
@@ -534,22 +554,27 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     /**
      * Starts neural network layer and it's execution thread.
      *
+     * @param threadPool thread pool.
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void start(ExecutorService threadPool) throws NeuralNetworkException, MatrixException, DynamicParamException {
         if (layerThread != null) return;
         executeLock = new ReentrantLock();
         executeLockCondition = executeLock.newCondition();
         executeLockCompleteCondition = executeLock.newCondition();
         executionState = ExecutionState.IDLE;
 
+        trainingExecutionTime = 0;
+        predictExecutionTime = 0;
+
         layerThread = new Thread(this);
         layerThread.setName(getLayerName());
-        layerThread.start();
+        if (threadPool != null) future = threadPool.submit(this);
+        else layerThread.start();
 
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.start();
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.start(threadPool);
 
         defineProcedure();
     }
@@ -561,6 +586,25 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void stop() {
         nextState(ExecutionState.TERMINATED);
+        if (future != null) future.cancel(true);
+    }
+
+    /**
+     * Returns training execution time in nanoseconds.
+     *
+     * @return training execution time in nanoseconds.
+     */
+    public double getTrainingExecutionTime() {
+        return trainingExecutionTime;
+    }
+
+    /**
+     * Returns prediction execution time in nanoseconds.
+     *
+     * @return prediction execution time in nanoseconds.
+     */
+    public double getPredictExecutionTime() {
+        return predictExecutionTime;
     }
 
     /**
@@ -629,28 +673,32 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     private void nextState(ExecutionState executionState) {
         executeLock.lock();
-        switch (executionState) {
-            case TRAIN, PREDICT, UPDATE, TERMINATED -> {
-                if (++stateStartCount >= previousLayers.size()) {
+        try {
+            switch (executionState) {
+                case TRAIN, PREDICT, UPDATE, TERMINATED -> {
+                    if (++stateStartCount >= previousLayers.size()) {
+                        this.executionState = executionState;
+                        executeLockCondition.signalAll();
+                        stateStartCount = 0;
+                    }
+                }
+                case BACKWARD -> {
+                    if (++stateStartCount >= nextLayers.size()) {
+                        this.executionState = executionState;
+                        executeLockCondition.signalAll();
+                        stateStartCount = 0;
+                    }
+                }
+                default -> {
                     this.executionState = executionState;
                     executeLockCondition.signalAll();
-                    stateStartCount = 0;
                 }
             }
-            case BACKWARD -> {
-                if (++stateStartCount >= nextLayers.size()) {
-                    this.executionState = executionState;
-                    executeLockCondition.signalAll();
-                    stateStartCount = 0;
-                }
-            }
-            default -> {
-                this.executionState = executionState;
-                executeLockCondition.signalAll();
-            }
+            if (executionState != ExecutionState.TERMINATED) waitToComplete();
         }
-        if (executionState != ExecutionState.TERMINATED) waitToComplete();
-        executeLock.unlock();
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -659,8 +707,12 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     public void waitToComplete() {
         executeLock.lock();
-        while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
-        executeLock.unlock();
+        try {
+            while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
+        }
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -669,9 +721,13 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      */
     private void completeState() {
         executeLock.lock();
-        executionState = ExecutionState.IDLE;
-        executeLockCompleteCondition.signalAll();
-        executeLock.unlock();
+        try {
+            executionState = ExecutionState.IDLE;
+            executeLockCompleteCondition.signalAll();
+        }
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -685,25 +741,33 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
             try {
                 switch (executionState) {
                     case TRAIN -> {
+                        long startTime = System.nanoTime();
                         forwardProcess();
+                        trainingExecutionTime += System.nanoTime() - startTime;
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.train();
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
                         completeState();
                     }
                     case PREDICT -> {
+                        long startTime = System.nanoTime();
                         forwardProcess();
+                        predictExecutionTime += System.nanoTime() - startTime;
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.predict();
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
                         completeState();
                     }
                     case BACKWARD -> {
+                        long startTime = System.nanoTime();
                         backwardProcess();
+                        trainingExecutionTime += System.nanoTime() - startTime;
                         if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.backward();
                         if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.waitToComplete();
                         completeState();
                     }
                     case UPDATE -> {
+                        long startTime = System.nanoTime();
                         optimize();
+                        trainingExecutionTime += System.nanoTime() - startTime;
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.update();
                         if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
                         completeState();
@@ -722,7 +786,9 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
                 exception.printStackTrace();
                 System.exit(-1);
             }
-            executeLock.unlock();
+            finally {
+                executeLock.unlock();
+            }
         }
     }
 
