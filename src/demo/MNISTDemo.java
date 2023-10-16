@@ -123,6 +123,97 @@ public class MNISTDemo {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
+        int convLayerIndex0 = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_DW_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, stride = 1");
+        neuralNetworkConfiguration.connectLayers(inputLayerIndex, convLayerIndex0);
+        int[] convLayerIndices1 = new int[24];
+        for (int convLayerIndex1 = 0; convLayerIndex1 < convLayerIndices1.length; convLayerIndex1++) {
+            int convLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_PW_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV);
+            neuralNetworkConfiguration.connectLayers(convLayerIndex0, convLayerIndex);
+            int activationLayer = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+            neuralNetworkConfiguration.connectLayers(convLayerIndex, activationLayer);
+            int poolingLayer = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_AVERAGE_POOLING, "filterSize = 2, stride = 1");
+            neuralNetworkConfiguration.connectLayers(activationLayer, poolingLayer);
+            convLayerIndices1[convLayerIndex1] = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_DW_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, stride = 1");
+            neuralNetworkConfiguration.connectLayers(poolingLayer, convLayerIndices1[convLayerIndex1]);
+        }
+        int[] convLayerIndices2 = new int[24];
+        for (int convLayerIndex2 = 0; convLayerIndex2 < convLayerIndices2.length; convLayerIndex2++) {
+            int convLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_PW_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV);
+            for (int layerIndex0 : convLayerIndices1) neuralNetworkConfiguration.connectLayers(layerIndex0, convLayerIndex);
+            int activationLayer = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+            neuralNetworkConfiguration.connectLayers(convLayerIndex, activationLayer);
+            int poolingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_AVERAGE_POOLING, "filterSize = 2, stride = 1");
+            neuralNetworkConfiguration.connectLayers(activationLayer,poolingLayerIndex);
+            int flattenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FLATTEN);
+            neuralNetworkConfiguration.connectLayers(poolingLayerIndex,flattenLayerIndex);
+            int layerNormLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
+            neuralNetworkConfiguration.connectLayers(flattenLayerIndex, layerNormLayerIndex);
+            int dense0LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 100");
+            neuralNetworkConfiguration.connectLayers(layerNormLayerIndex, dense0LayerIndex);
+            convLayerIndices2[convLayerIndex2] = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+            neuralNetworkConfiguration.connectLayers(dense0LayerIndex, convLayerIndices2[convLayerIndex2]);
+        }
+
+        int attentionLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
+        for (int convLayerIndex2 : convLayerIndices2) neuralNetworkConfiguration.connectLayers(convLayerIndex2, attentionLayerIndex);
+
+        int dense1LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, dense1LayerIndex);
+        int activation1LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
+        neuralNetworkConfiguration.connectLayers(dense1LayerIndex, activation1LayerIndex);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        neuralNetworkConfiguration.connectLayers(activation1LayerIndex, outputLayerIndex);
+
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
+        neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
+        return neuralNetwork;
+
+/*        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
+        int[] convLayerIndices1 = new int[12];
+        for (int layerIndex = 0; layerIndex < convLayerIndices1.length; layerIndex++) {
+            int convLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, stride = 1");
+            neuralNetworkConfiguration.connectLayers(inputLayerIndex, convLayerIndex);
+            int activationLayer = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+            neuralNetworkConfiguration.connectLayers(convLayerIndex, activationLayer);
+            convLayerIndices1[layerIndex] = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_AVERAGE_POOLING, "filterSize = 2, stride = 1");
+            neuralNetworkConfiguration.connectLayers(activationLayer, convLayerIndices1[layerIndex]);
+        }
+        int[] convLayerIndices2 = new int[24];
+        for (int layerIndex = 0; layerIndex < convLayerIndices2.length; layerIndex++) {
+            int convLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_CROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filterSize = 3, stride = 1");
+            for (int layerIndex0 : convLayerIndices1) neuralNetworkConfiguration.connectLayers(layerIndex0, convLayerIndex);
+            int activationLayer = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+            neuralNetworkConfiguration.connectLayers(convLayerIndex, activationLayer);
+            int poolingLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.SINGLE_AVERAGE_POOLING, "filterSize = 2, stride = 1");
+            neuralNetworkConfiguration.connectLayers(activationLayer,poolingLayerIndex);
+            convLayerIndices2[layerIndex] = neuralNetworkConfiguration.addHiddenLayer(LayerType.FLATTEN);
+            neuralNetworkConfiguration.connectLayers(poolingLayerIndex, convLayerIndices2[layerIndex]);
+        }
+        int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
+        for (int layerIndex1 : convLayerIndices2) neuralNetworkConfiguration.connectLayers(layerIndex1, joinLayerIndex);
+
+        int batchNormLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
+        neuralNetworkConfiguration.connectLayers(joinLayerIndex, batchNormLayerIndex);
+        int dense0LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 100");
+        neuralNetworkConfiguration.connectLayers(batchNormLayerIndex, dense0LayerIndex);
+        int activation0LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
+        neuralNetworkConfiguration.connectLayers(dense0LayerIndex, activation0LayerIndex);
+        int dense1LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(activation0LayerIndex, dense1LayerIndex);
+        int activation1LayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
+        neuralNetworkConfiguration.connectLayers(dense1LayerIndex, activation1LayerIndex);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        neuralNetworkConfiguration.connectLayers(activation1LayerIndex, outputLayerIndex);
+
+        NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
+
+        neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
+        return neuralNetwork; */
+
+/*        NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = " + inputSize);
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DSCROSSCORRELATION, Initialization.UNIFORM_XAVIER_CONV, "filters = 12, filterSize = 3, stride = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.BATCH_NORMALIZATION);
@@ -143,7 +234,7 @@ public class MNISTDemo {
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.ADADELTA);
-        return neuralNetwork;
+        return neuralNetwork; */
 
     }
 
