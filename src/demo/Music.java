@@ -159,10 +159,13 @@ public class Music {
                 for (int sampleIndex = 0; sampleIndex < numberOfGeneratedSamples; sampleIndex++) {
 
                     TreeMap<Integer, Matrix> targetMatrices = predictNextSample(sampleIndex, neuralNetworkForPrediction, currentSample, result);
+
                     int targetKey = targetMatrices.get(0).argmax()[0];
                     System.out.print("Key: " + metadata.decodeItem(targetKey, metadata.minKeyValue) + ", ");
+
                     int targetVelocity = targetMatrices.get(1).argmax()[0];
                     System.out.print("Velocity: " + metadata.decodeItem(targetVelocity, metadata.minVelocityValue) + ", ");
+
                     int targetTick = targetMatrices.get(2).argmax()[0];
                     System.out.println("Tick: " + metadata.tickValueReverseMapping.get(targetTick));
 
@@ -233,7 +236,7 @@ public class Music {
     }
 
     /**
-     * Builds neural network instance.
+     * Builds recurrent neural network (GRU) instance.
      *
      * @param numberOfKeyInputs       number of key inputs.
      * @param numberOfKeyOutputs      number of key outputs.
@@ -269,8 +272,10 @@ public class Music {
 
         // Key neural network
         buildSingleNeuralNetwork(neuralNetworkConfiguration, numberOfKeyInputs, numberOfKeyOutputs, inputKeySize, outputKeySize, decoderOnly, keyFeedforwardWidth, keyAttentionBlocks, tau);
+
         // Velocity neural network
         buildSingleNeuralNetwork(neuralNetworkConfiguration, numberOfVelocityInputs, numberOfVelocityOutputs, inputVelocitySize, outputVelocitySize, decoderOnly, velocityFeedforwardWidth, velocityAttentionBlocks, tau);
+
         // Tick neural network
         buildSingleNeuralNetwork(neuralNetworkConfiguration, numberOfTickInputs, numberOfTickOutputs, inputTickSize, outputTickSize, decoderOnly, tickFeedforwardWidth, tickAttentionBlocks, tau);
 
@@ -282,7 +287,7 @@ public class Music {
 
 
     /**
-     * Builds single neural network instance.
+     * Builds recurrent neural network (GRU) instance.
      *
      * @param numberOfInputs       number of inputs.
      * @param numberOfOutputs      number of outputs.
