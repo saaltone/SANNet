@@ -12,8 +12,7 @@ import utils.matrix.MatrixException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implements sequence for samples.<br>
@@ -31,10 +30,10 @@ public class Sequence implements Serializable {
     private final TreeMap<Integer, Matrix> samples = new TreeMap<>();
 
     /**
-     * Access lock for sequence data.
+     * Re-entrant read write lock for sequence access.
      *
      */
-    private final Lock accessLock = new ReentrantLock();
+    private final ReentrantReadWriteLock accessLock = new ReentrantReadWriteLock();
 
     /**
      * Constructor for sequence.
@@ -49,10 +48,12 @@ public class Sequence implements Serializable {
      * @param newSamples samples to be added into this sequence.
      */
     public Sequence(HashMap<Integer, Matrix> newSamples) {
-        for (Map.Entry<Integer, Matrix> entry : newSamples.entrySet()) {
-            int key = entry.getKey();
-            Matrix value = entry.getValue();
-            samples.put(key, value);
+        accessLock.writeLock().lock();
+        try {
+            samples.putAll(newSamples);
+        }
+        finally {
+            accessLock.writeLock().unlock();
         }
     }
 
@@ -71,9 +72,13 @@ public class Sequence implements Serializable {
      *
      */
     public void reset() {
-        accessLock.lock();
-        samples.clear();
-        accessLock.unlock();
+        accessLock.writeLock().lock();
+        try {
+            samples.clear();
+        }
+        finally {
+            accessLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -82,12 +87,12 @@ public class Sequence implements Serializable {
      * @return returns true if sequence is empty otherwise returns false.
      */
     public boolean isEmpty() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.isEmpty();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -97,12 +102,12 @@ public class Sequence implements Serializable {
      * @return number of samples in sequence.
      */
     public int sampleSize() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.size();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -112,12 +117,12 @@ public class Sequence implements Serializable {
      * @return total size of sequence.
      */
     public int totalSize() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.size();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -128,9 +133,13 @@ public class Sequence implements Serializable {
      * @param sample sample to be inserted.
      */
     public void put(int sampleIndex, Matrix sample) {
-        accessLock.lock();
-        samples.put(sampleIndex, sample);
-        accessLock.unlock();
+        accessLock.writeLock().lock();
+        try {
+            samples.put(sampleIndex, sample);
+        }
+        finally {
+            accessLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -139,9 +148,13 @@ public class Sequence implements Serializable {
      * @param sequence sequence containing new samples for this sequence.
      */
     public void putAll(Sequence sequence) {
-        accessLock.lock();
-        samples.putAll(sequence.get());
-        accessLock.unlock();
+        accessLock.writeLock().lock();
+        try {
+            samples.putAll(sequence.get());
+        }
+        finally {
+            accessLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -151,12 +164,12 @@ public class Sequence implements Serializable {
      * @return requested sample.
      */
     public Matrix get(int sampleIndex) {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.get(sampleIndex);
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -166,12 +179,12 @@ public class Sequence implements Serializable {
      * @return all samples inside sequence as ordered map.
      */
     public TreeMap<Integer, Matrix> get() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples;
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -181,12 +194,12 @@ public class Sequence implements Serializable {
      * @return sample values.
      */
     public Collection<Matrix> values() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.values();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -196,12 +209,12 @@ public class Sequence implements Serializable {
      * @return sample index key set.
      */
     public Set<Integer> keySet() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.keySet();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -211,12 +224,12 @@ public class Sequence implements Serializable {
      * @return sample index entry set.
      */
     public Set<Map.Entry<Integer, Matrix>> entrySet() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.entrySet();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -226,12 +239,12 @@ public class Sequence implements Serializable {
      * @return descending sample index entry set.
      */
     public Set<Map.Entry<Integer, Matrix>> descendingEntrySet() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.descendingMap().entrySet();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -241,12 +254,12 @@ public class Sequence implements Serializable {
      * @return sample index key set in descending order.
      */
     public Set<Integer> descendingKeySet() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.descendingKeySet();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -256,12 +269,12 @@ public class Sequence implements Serializable {
      * @return first index of sequence.
      */
     public Integer firstKey() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.firstKey();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -271,12 +284,12 @@ public class Sequence implements Serializable {
      * @return last index of sequence.
      */
     public Integer lastKey() {
-        accessLock.lock();
+        accessLock.readLock().lock();
         try {
             return samples.lastKey();
         }
         finally {
-            accessLock.unlock();
+            accessLock.readLock().unlock();
         }
     }
 
@@ -307,14 +320,8 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void increment(Sequence sequence) throws MatrixException {
-        accessLock.lock();
-        try {
-            for (Map.Entry<Integer, Matrix> entry : sequence.entrySet()) {
-                increment(entry.getKey(), entry.getValue());
-            }
-        }
-        finally {
-            accessLock.unlock();
+        for (Map.Entry<Integer, Matrix> entry : sequence.entrySet()) {
+            increment(entry.getKey(), entry.getValue());
         }
     }
 
@@ -326,14 +333,14 @@ public class Sequence implements Serializable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void increment(int sampleIndex, Matrix matrix) throws MatrixException {
-        accessLock.lock();
+        accessLock.writeLock().lock();
         try {
             Matrix currentMatrix = get(sampleIndex);
             if (currentMatrix != null) currentMatrix.addBy(matrix);
             else put(sampleIndex, matrix);
         }
         finally {
-            accessLock.unlock();
+            accessLock.writeLock().unlock();
         }
     }
 
@@ -348,6 +355,5 @@ public class Sequence implements Serializable {
         for (Map.Entry<Integer, Matrix> entry : matrices.entrySet()) sequences.put(entry.getKey(), new Sequence(entry.getValue()));
         return sequences;
     }
-
 
 }
