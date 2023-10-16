@@ -254,7 +254,7 @@ public class AttentionLayerFactory {
     }
 
     /**
-     * Builds stacked attention.
+     * Builds transformer with option to have encoder decoder or decoder only.
      *
      * @param neuralNetworkConfiguration neural network configuration.
      * @param decoderInputSize           decoder output size.
