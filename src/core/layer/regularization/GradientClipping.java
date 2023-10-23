@@ -29,7 +29,7 @@ public class GradientClipping extends AbstractExecutionLayer {
 
     /**
      * Parameter name types for gradient clipping.
-     *     - threshold: threshold for clipping gradients. Default value 0.1.<br>
+     *     - threshold: threshold for clipping gradients. Default value 2.<br>
      *
      */
     private final static String paramNameTypes = "(threshold:DOUBLE)";
@@ -65,7 +65,7 @@ public class GradientClipping extends AbstractExecutionLayer {
      */
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
-        threshold = 0.1;
+        threshold = 2;
     }
 
     /**
@@ -81,7 +81,7 @@ public class GradientClipping extends AbstractExecutionLayer {
      * Sets parameters used for gradient clipping.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - threshold: threshold for clipping gradients. Default value 0.1.<br>
+     *     - threshold: threshold for clipping gradients. Default value 2.<br>
      *
      * @param params parameters used for gradient clipping.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.

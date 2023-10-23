@@ -94,7 +94,7 @@ public class GradientClippingExpression extends AbstractUnaryExpression {
      */
     public void calculateGradient(int sampleIndex) throws MatrixException {
         checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, gradientClippingMatrixOperation.apply(result.getMatrix(sampleIndex), false), false);
+        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, gradientClippingMatrixOperation.apply(result.getGradient(sampleIndex), false), false);
     }
 
     /**
