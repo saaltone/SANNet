@@ -6,10 +6,10 @@
 package core.reinforcement.algorithm;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.DeepAgent;
 import core.reinforcement.agent.Environment;
+import core.reinforcement.agent.StateSynchronization;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
@@ -26,25 +26,27 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
     /**
      * Constructor for abstract policy gradient.
      *
+     * @param stateSynchronization reference to state synchronization.
      * @param environment reference to environment.
      * @param policy reference to policy.
      * @param valueFunction reference to value function.
      */
-    public AbstractPolicyGradient(Environment environment, Policy policy, ValueFunction valueFunction) {
-        super(environment, policy, valueFunction);
+    public AbstractPolicyGradient(StateSynchronization stateSynchronization, Environment environment, Policy policy, ValueFunction valueFunction) {
+        super(stateSynchronization, environment, policy, valueFunction);
     }
 
     /**
      * Constructor for abstract policy gradient.
      *
+     * @param stateSynchronization reference to state synchronization.
      * @param environment reference to environment.
      * @param policy reference to policy.
      * @param valueFunction reference to value function.
      * @param params parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractPolicyGradient(Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
-        super(environment, policy, valueFunction, params);
+    public AbstractPolicyGradient(StateSynchronization stateSynchronization, Environment environment, Policy policy, ValueFunction valueFunction, String params) throws DynamicParamException {
+        super(stateSynchronization, environment, policy, valueFunction, params);
         policy.getFunctionEstimator().setEnableImportanceSamplingWeights(false);
     }
 
@@ -80,25 +82,22 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException, NeuralNetworkException;
+    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
     /**
-     * Appends parameters to this agent from another agent.
+     * Returns reference to abstract policy gradient algorithm.
      *
-     * @param agent agent used to update current agent.
-     * @param tau tau which controls contribution of other agent.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used otherwise new policy function estimator is created.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to algorithm.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public void append(Agent agent, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        valueFunction.append(agent.getValueFunction(), tau);
-        policy.append(agent.getPolicy(), tau);
-    }
+    public abstract AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }
