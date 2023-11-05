@@ -612,7 +612,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets neural network into completed state and makes state transition to idle state.
+     * Sets neural network into completed state and makes state to idle state.
      *
      */
     private void stateCompleted() {
@@ -1424,9 +1424,8 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void append(NeuralNetwork otherNeuralNetwork, double tau) throws MatrixException {
         waitToComplete();
-        int neuralNetworkLayersSize = neuralNetworkLayers.size();
-        for (int index = 0; index < neuralNetworkLayersSize; index++) {
-            neuralNetworkLayers.get(index).append(otherNeuralNetwork.getNeuralNetworkLayers().get(index), tau);
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : neuralNetworkLayers.entrySet()) {
+            entry.getValue().append(otherNeuralNetwork.getNeuralNetworkLayers().get(entry.getKey()), tau);
         }
     }
 
