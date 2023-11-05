@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyFactory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -140,7 +140,8 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+    public void start(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
+        getFunctionEstimator().registerAgent(agent);
         getFunctionEstimator().start();
     }
 
@@ -150,15 +151,6 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      */
     public void stop() {
         getFunctionEstimator().stop();
-    }
-
-    /**
-     * Registers agent for function estimator.
-     *
-     * @param agent agent.
-     */
-    public void registerAgent(Agent agent) {
-        getFunctionEstimator().registerAgent(agent);
     }
 
     /**
@@ -200,37 +192,40 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     /**
      * Returns values for state.
      *
-     * @param functionEstimator function estimator.
-     * @param stateTransition state.
-     * @param isAction true if prediction is for taking other otherwise false.
+     * @param state state.
      * @return values for state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getValues(FunctionEstimator functionEstimator, StateTransition stateTransition, boolean isAction) throws MatrixException, NeuralNetworkException {
-        return functionEstimator.predictPolicyValues(stateTransition, isAction);
+    protected Matrix getValues(State state) throws MatrixException, NeuralNetworkException {
+        return getFunctionEstimator().predictPolicyValues(state);
     }
 
     /**
      * Takes action defined by external agent.
-     * @param stateTransition state transition.
+     * @param state state.
      *
      */
-    public void act(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition, true), stateTransition.environmentState.availableActions(), stateTransition.action);
+    public void act(State state) throws MatrixException, NeuralNetworkException {
+        getExecutablePolicy().action(getValues(state), state.environmentState.availableActions(), state.action);
     }
 
     /**
      * Takes action defined by executable policy.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @param alwaysGreedy if true greedy action is always taken.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        stateTransition.action = getExecutablePolicy().action(getValues(getFunctionEstimator(), stateTransition, true), stateTransition.environmentState.availableActions(), !isLearning() || alwaysGreedy);
-        if (isLearning()) getFunctionEstimator().add(stateTransition);
+    public void act(State state, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
+        Matrix policyValues = getValues(state);
+        state.action = getExecutablePolicy().action(policyValues, state.environmentState.availableActions(), !isLearning() || alwaysGreedy);
+        state.policyValue = policyValues.getValue(state.action, 0, 0);
+        if (isLearning()) {
+            getFunctionEstimator().add(state);
+            getExecutablePolicy().add(state);
+        }
     }
 
     /**
