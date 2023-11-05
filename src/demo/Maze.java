@@ -389,13 +389,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * Size of maze.
      *
      */
-    private int size = 60;
-
-    /**
-     * Episode ID
-     *
-     */
-    private int episodeID = 0;
+    private final int size = 60;
 
     /**
      * Current time step.
@@ -492,16 +486,6 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      *
      */
     public Maze() {
-        newMaze();
-    }
-
-    /**
-     * Constructor for maze with specific size.
-     *
-     * @param size size of maze.
-     */
-    public Maze(int size) {
-        this.size = size;
         newMaze();
     }
 
@@ -632,8 +616,9 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
+        agent.startEpisode();
         while (true) {
-            agent.newStep();
+            agent.newTimeStep();
             agent.act();
 
             mazePanel.updateAgentHistory(mazeAgentHistory);
@@ -694,7 +679,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             Neighbor neighbor = cell.neighbors[action];
             if (neighbor != null) if (neighbor.connected) availableActions.add(action);
         }
-        environmentState = new EnvironmentState(++episodeID, 1, state, availableActions);
+        environmentState = new EnvironmentState(state, availableActions);
     }
 
 
@@ -734,8 +719,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         if (maze[mazeAgentCurrent.x][mazeAgentCurrent.y].isDeadEnd()) agent.respond(0);
         else {
             double distanceToStart = 1 - 1 / Math.max(1, Math.sqrt(Math.pow((double)size / 2 - mazeAgentCurrent.x, 2) + Math.pow((double)size / 2 - mazeAgentCurrent.y, 2)));
-            double positionPenalty = Math.pow(1 / (double)maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 2);
-            agent.respond(Math.max(0, distanceToStart * positionPenalty));
+            double positionPenalty = Math.pow(1 / (double)maze[mazeAgentCurrent.x][mazeAgentCurrent.y].getVisitCount(), 0.1);
+            agent.respond(Math.max(0, 0.5 * (distanceToStart + positionPenalty)));
         }
     }
 
@@ -771,7 +756,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
     private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
-        boolean singleFunctionEstimator = true;
+        boolean singleFunctionEstimator = false;
         int policyType = 4;
         ExecutablePolicyType executablePolicyType = null;
         String policyTypeParams = "";
@@ -794,7 +779,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
             case 7 -> executablePolicyType = ExecutablePolicyType.NOISY;
         }
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.PPO;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDPG;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
@@ -804,8 +789,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "gamma = 1, agentUpdateCycle = 10";
-            case SACDiscrete -> "gamma = 1, applyImportanceSamplingWeights = false, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case DDPG -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -904,7 +889,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        int historySize = 12;
+        int historySize = 6;
 
         boolean includeEncoder = false;
         int attentionLayerIndex;
