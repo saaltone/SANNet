@@ -5,6 +5,9 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import utils.configurable.DynamicParam;
+import utils.configurable.DynamicParamException;
+
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -16,10 +19,23 @@ import java.util.TreeSet;
 public class EntropyGreedyPolicy extends GreedyPolicy {
 
     /**
+     * Parameter name types for entropy greedy policy.
+     *     - entropyFactory: factor for controlling randomness of policy. Default value 0.3.<br>
+     *
+     */
+    private final static String paramNameTypes = "(entropyFactory:DOUBLE)";
+
+    /**
      * Random function for entropy greedy policy.
      *
      */
     private final Random random = new Random();
+
+    /**
+     * Factor for controlling randomness of policy.
+     *
+     */
+    private double entropyFactor;
 
     /**
      * Constructor for entropy greedy policy.
@@ -30,13 +46,57 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
     }
 
     /**
+     * Constructor for entropy greedy policy.
+     *
+     * @param params parameters for entropy greedy policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public EntropyGreedyPolicy(String params) throws DynamicParamException {
+        super(ExecutablePolicyType.ENTROPY_GREEDY, params, EntropyGreedyPolicy.paramNameTypes);
+    }
+
+    /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+        super.initializeDefaultParams();
+        entropyFactor = 0.3;
+    }
+
+    /**
+     * Returns parameters used for entropy greedy policy.
+     *
+     * @return parameters used for entropy greedy policy.
+     */
+    public String getParamDefs() {
+        return super.getParamDefs() + ", " + EntropyGreedyPolicy.paramNameTypes;
+    }
+
+    /**
+     * Sets parameters used for epsilon greedy policy.<br>
+     * <br>
+     * Supported parameters are:<br>
+     *     - entropyFactor: factor for controlling randomness of policy. Default value 0.3.<br>
+     *
+     * @param params parameters used for epsilon greedy policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void setParams(DynamicParam params) throws DynamicParamException {
+        super.setParams(params);
+        if (params.hasParam("entropyFactor")) entropyFactor = params.getValueAsDouble("entropyFactor");
+    }
+
+    /**
      * Returns action based on policy.
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
      */
     protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) {
-        if (Math.random() < getActionEntropy(stateValueSet)) {
+        double entropy = getActionEntropy(stateValueSet);
+        boolean randomChoice = Math.random() < entropy * entropyFactor;
+        if (randomChoice) {
             AbstractExecutablePolicy.ActionValueTuple[] actionValueTupleArray = new AbstractExecutablePolicy.ActionValueTuple[stateValueSet.size()];
             actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
             return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
