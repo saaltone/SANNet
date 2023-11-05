@@ -6,7 +6,7 @@
 package core.reinforcement.value;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -28,19 +28,11 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     /**
      * Parameter name types for abstract value function.
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 1.<br>
      *     - tdDataPrintCycle: TD data print cycle. Default value 100.
      *
      */
     private final static String paramNameTypes = "(gamma:DOUBLE), " +
-            "(lambda:DOUBLE), " +
             "(tdDataPrintCycle:INT)";
-
-    /**
-     * Number of actions for value function.
-     *
-     */
-    private final int numberOfActions;
 
     /**
      * Parameters for value function.
@@ -53,12 +45,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      *
      */
     private double gamma;
-
-    /**
-     * Lambda value controlling balance between bootstrapped value and future reward of next state.
-     *
-     */
-    protected double lambda;
 
     /**
      * Moving average reward.
@@ -88,29 +74,16 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Count for average TD data verbosing.
      *
      */
-    private int tdDataPrintCount;
+    private transient int tdDataPrintCount = 0;
 
     /**
      * Constructor for abstract value function.
      *
-     * @param numberOfActions number of actions for abstract value function.
-     */
-    AbstractValueFunction(int numberOfActions) {
-        initializeDefaultParams();
-        this.numberOfActions = numberOfActions;
-        this.params = null;
-    }
-
-    /**
-     * Constructor for abstract value function.
-     *
-     * @param numberOfActions number of actions for abstract value function.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    AbstractValueFunction(int numberOfActions, String params) throws DynamicParamException {
+    AbstractValueFunction(String params) throws DynamicParamException {
         initializeDefaultParams();
-        this.numberOfActions = numberOfActions;
         this.params = params;
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
@@ -121,9 +94,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      */
     public void initializeDefaultParams() {
         gamma = 0.99;
-        lambda = 1;
         tdDataPrintCycle = 100;
-        tdDataPrintCount = 0;
     }
 
     /**
@@ -149,7 +120,6 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * <br>
      * Supported parameters are:<br>
      *     - gamma: discount value for value function. Default value 0.99.<br>
-     *     - lambda: value controlling balance between bootstrapping and future reward of next state. Default value 0.<br>
      *     - tdDataPrintCycle: TD data print cycle. Default value 100.
      *
      * @param params parameters used for abstract value function.
@@ -157,113 +127,95 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         if (params.hasParam("gamma")) gamma = params.getValueAsDouble("gamma");
-        if (params.hasParam("lambda")) lambda = params.getValueAsDouble("lambda");
         if (params.hasParam("tdDataPrintCycle")) tdDataPrintCycle = params.getValueAsInteger("tdDataPrintCycle");
-    }
-
-    /**
-     * Returns number of actions.
-     *
-     * @return number of actions.
-     */
-    protected int getNumberOfActions() {
-        return numberOfActions;
-    }
-
-    /**
-     * Returns value for state.
-     *
-     * @param stateTransition state transition.
-     * @return value for state.
-     */
-    private double getValue(StateTransition stateTransition) {
-        return stateTransition.value;
     }
 
     /**
      * Updates state value.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract void updateValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    protected abstract void updateValue(State state) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Updates baseline value for state transitions.
+     * Updates baseline value for states.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      */
-    protected abstract void updateBaseline(TreeSet<StateTransition> stateTransitions);
+    protected abstract void updateBaseline(TreeSet<State> states);
 
     /**
-     * Returns sampled state transitions.
+     * Returns sampled states.
      *
-     * @return sampled state transitions.
+     * @return sampled states.
      */
-    protected abstract TreeSet<StateTransition> getSampledStateTransitions();
+    protected abstract TreeSet<State> getSampledStates();
 
     /**
-     * Updates value function for set sampled from memory.
+     * Updates value function for state set sampled from memory.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     public void update() throws MatrixException, NeuralNetworkException {
-        updateValue(getSampledStateTransitions());
+        updateValue(getSampledStates());
     }
 
     /**
-     * Updates values for current state transition chain.
+     * Updates values for current state chain end from of sequence to start.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    public void update(StateTransition stateTransition) throws NeuralNetworkException, MatrixException {
-        StateTransition currentStateTransition = stateTransition;
-        TreeSet<StateTransition> stateTransitions = new TreeSet<>();
-        while (currentStateTransition != null) {
-            stateTransitions.add(currentStateTransition);
-            currentStateTransition = currentStateTransition.previousStateTransition;
+    public void update(State state) throws NeuralNetworkException, MatrixException {
+        TreeSet<State> states = new TreeSet<>();
+        State currentState = state;
+        while (currentState != null) {
+            states.add(currentState);
+            currentState = currentState.previousState;
         }
-        updateValue(stateTransitions);
+        updateValue(states);
     }
 
     /**
-     * Updates value of state transitions.
+     * Updates values of states.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private void updateValue(TreeSet<StateTransition> stateTransitions) throws MatrixException, NeuralNetworkException {
-        if (stateTransitions == null) return;
+    private void updateValue(TreeSet<State> states) throws MatrixException, NeuralNetworkException {
+        if (states == null) return;
 
-        for (StateTransition stateTransition : stateTransitions.descendingSet()) {
-            updateValue(stateTransition);
-            stateTransition.tdTarget = stateTransition.reward + (stateTransition.isFinalState() ? 0 : gamma * ((lambda == 0 ? getValue(stateTransition.nextStateTransition) : lambda == 1 ? getTargetValue(stateTransition.nextStateTransition) : (1 - lambda) * getValue(stateTransition.nextStateTransition) + lambda * getTargetValue(stateTransition.nextStateTransition))));
-            stateTransition.tdError = stateTransition.tdTarget - getValue(stateTransition);
-            stateTransition.advantage = stateTransition.tdError;
-            averageReward = averageReward == Double.MIN_VALUE ? stateTransition.reward : 0.99 * averageReward + 0.01 * stateTransition.reward;
-            averageTDTarget = averageTDTarget == Double.MIN_VALUE ? stateTransition.tdTarget : 0.99 * averageTDTarget + 0.01 * stateTransition.tdTarget;
-            averageTDError = averageTDError == Double.MIN_VALUE ? stateTransition.tdError : 0.99 * averageTDError + 0.01 * stateTransition.tdError;
-            if (tdDataPrintCycle > 0 && ++tdDataPrintCount % tdDataPrintCycle == 0) {
+        for (State state : states.descendingSet()) {
+            updateValue(state);
+            double nextStateValue = state.isFinalState() ? 0 : gamma * getTargetValue(state.nextState);
+            state.tdTarget = state.reward + nextStateValue;
+            state.tdError = state.tdTarget - state.stateValue;
+            state.advantage = state.policyValue - state.stateValue;
+            averageReward = averageReward == Double.MIN_VALUE ? state.reward : 0.99 * averageReward + 0.01 * state.reward;
+            averageTDTarget = averageTDTarget == Double.MIN_VALUE ? state.tdTarget : 0.99 * averageTDTarget + 0.01 * state.tdTarget;
+            averageTDError = averageTDError == Double.MIN_VALUE ? state.tdError : 0.99 * averageTDError + 0.01 * state.tdError;
+            if (tdDataPrintCycle > 0 && ++tdDataPrintCount >= tdDataPrintCycle) {
                 System.out.println("Average Reward: " + averageReward + ", Average TD target: " + averageTDTarget + ", Average TD error: " + averageTDError);
+                tdDataPrintCount = 0;
             }
         }
 
-        updateBaseline(stateTransitions);
+        updateBaseline(states);
     }
 
     /**
      * Returns target value based on next state.
      *
-     * @param nextStateTransition next state transition.
+     * @param nextState next state.
      * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract double getTargetValue(StateTransition nextStateTransition) throws NeuralNetworkException, MatrixException;
+    protected abstract double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException;
 
 }

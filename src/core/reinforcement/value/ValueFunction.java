@@ -10,7 +10,7 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -31,10 +31,20 @@ public interface ValueFunction extends Configurable {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException;
+    ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    ValueFunction reference(FunctionEstimator policyFunctionEstimator) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Returns reference to value function.
@@ -46,10 +56,22 @@ public interface ValueFunction extends Configurable {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException;
+    ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    ValueFunction reference(FunctionEstimator policyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Returns reference to value function.
@@ -61,34 +83,40 @@ public interface ValueFunction extends Configurable {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      */
-    ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, AgentException, NeuralNetworkException;
+    ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    ValueFunction reference(FunctionEstimator policyFunctionEstimator, boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
      * Starts function estimator
      *
+     * @param agent agent.
      * @throws NeuralNetworkException throws exception if starting of value function fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
      * @throws IOException throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
+    void start(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
 
     /**
      * Stops function estimator
      *
      */
     void stop();
-
-    /**
-     * Registers agent for function estimator.
-     *
-     * @param agent agent.
-     */
-    void registerAgent(Agent agent);
 
     /**
      * Updates value function.
@@ -101,11 +129,11 @@ public interface ValueFunction extends Configurable {
     /**
      * Updates values for current episode.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    void update(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    void update(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Resets function estimator.
@@ -140,25 +168,8 @@ public interface ValueFunction extends Configurable {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
-
-    /**
-     * Appends parameters to this value function from another value function.
-     *
-     * @param valueFunction value function used to update current value function.
-     * @param tau tau which controls contribution of other value function.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    void append(ValueFunction valueFunction, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException;
+    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }

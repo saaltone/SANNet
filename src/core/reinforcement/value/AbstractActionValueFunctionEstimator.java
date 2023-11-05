@@ -6,7 +6,7 @@
 package core.reinforcement.value;
 
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParamException;
 
 /**
@@ -19,30 +19,21 @@ public abstract class AbstractActionValueFunctionEstimator extends AbstractValue
      * Constructor for abstract action value function estimator
      *
      * @param functionEstimator reference to function estimator.
-     */
-    public AbstractActionValueFunctionEstimator(FunctionEstimator functionEstimator) {
-        super(functionEstimator.getNumberOfActions(), functionEstimator);
-    }
-
-    /**
-     * Constructor for abstract action value function estimator
-     *
-     * @param functionEstimator reference to function estimator.
      * @param params parameters for value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractActionValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(functionEstimator.getNumberOfActions(), functionEstimator, params);
+        super(functionEstimator, params);
     }
 
     /**
      * Returns function index applying potential state action value offset.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @return function index.
      */
-    protected int getValueFunctionIndex(StateTransition stateTransition) {
-        return stateTransition.action;
+    protected int getValueFunctionIndex(State state) {
+        return state.action;
     }
 
 }

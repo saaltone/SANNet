@@ -9,33 +9,29 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
+import java.io.IOException;
 import java.util.TreeSet;
 
 /**
  * Implements plain value function without function estimator.<br>
  *
  */
-public class PlainValueFunction extends AbstractValueFunction {
+public class PlainValueFunction extends AbstractActionValueFunctionEstimator {
 
     /**
      * Parameter name types for plain value function.
      *     - useBaseline: if true baseline is used for value function. Default value true.<br>
-     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.95.<br>
+     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.99.<br>
      *
      */
     private final static String paramNameTypes = "(useBaseline:BOOLEAN), " +
             "(tau:DOUBLE)";
-
-    /**
-     * Reference to direct function estimator.
-     *
-     */
-    private final DirectFunctionEstimator functionEstimator;
 
     /**
      * If true uses baseline for target value update.
@@ -53,21 +49,22 @@ public class PlainValueFunction extends AbstractValueFunction {
      * Average mean.
      *
      */
-    private double averageMean = Double.MIN_VALUE;
+    private double averageMean = 0;
 
     /**
      * Average standard deviation.
      *
      */
-    private double averageStandardDeviation = Double.MIN_VALUE;
+    private double averageStandardDeviation = 0;
 
     /**
      * Constructor for plain value function.
      *
      * @param functionEstimator reference to direct function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public PlainValueFunction(DirectFunctionEstimator functionEstimator) {
-        this(1, functionEstimator);
+    public PlainValueFunction(DirectFunctionEstimator functionEstimator) throws DynamicParamException {
+        super(functionEstimator, null);
     }
 
     /**
@@ -78,31 +75,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public PlainValueFunction(DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        this(1, functionEstimator, params);
-    }
-
-    /**
-     * Constructor for plain value function.
-     *
-     * @param numberOfActions number of actions for plain value function.
-     * @param functionEstimator reference to direct function estimator.
-     */
-    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator) {
-        super(numberOfActions);
-        this.functionEstimator = functionEstimator;
-    }
-
-    /**
-     * Constructor for plain value function.
-     *
-     * @param numberOfActions number of actions for plain value function.
-     * @param functionEstimator reference to direct function estimator.
-     * @param params parameters for value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public PlainValueFunction(int numberOfActions, DirectFunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        super(numberOfActions, params);
-        this.functionEstimator = functionEstimator;
+        super(functionEstimator, params);
     }
 
     /**
@@ -112,7 +85,7 @@ public class PlainValueFunction extends AbstractValueFunction {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         useBaseline = true;
-        tau = 0.95;
+        tau = 0.99;
     }
 
     /**
@@ -129,7 +102,7 @@ public class PlainValueFunction extends AbstractValueFunction {
      * <br>
      * Supported parameters are:<br>
      *     - useBaseline: if true, uses baseline for value function. Default value true.<br>
-     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.95.<br>
+     *     - tau: tau value for baseline (mean and standard deviation) averaging. Default value 0.99.<br>
      *
      * @param params parameters used for plain value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -144,10 +117,27 @@ public class PlainValueFunction extends AbstractValueFunction {
      * Returns reference to value function.
      *
      * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public ValueFunction reference() throws DynamicParamException {
-        return new PlainValueFunction(getNumberOfActions(), (DirectFunctionEstimator)functionEstimator.reference(), getParams());
+    public ValueFunction reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction((DirectFunctionEstimator)functionEstimator.reference(), getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    public ValueFunction reference(FunctionEstimator policyFunctionEstimator) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction((DirectFunctionEstimator)functionEstimator.reference(), getParams());
     }
 
     /**
@@ -156,10 +146,29 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException {
-        return new PlainValueFunction(getNumberOfActions(), sharedValueFunctionEstimator ? functionEstimator : (DirectFunctionEstimator)functionEstimator.reference(), getParams());
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction(sharedValueFunctionEstimator ? (DirectFunctionEstimator)functionEstimator : (DirectFunctionEstimator)functionEstimator.reference(), getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    public ValueFunction reference(FunctionEstimator policyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction(sharedValueFunctionEstimator ? (DirectFunctionEstimator)functionEstimator : (DirectFunctionEstimator)functionEstimator.reference(), getParams());
     }
 
     /**
@@ -168,17 +177,38 @@ public class PlainValueFunction extends AbstractValueFunction {
      * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
      * @param memory reference to memory.
      * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
      */
-    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException {
-        return new PlainValueFunction(getNumberOfActions(), (DirectFunctionEstimator)functionEstimator.reference(memory), getParams());
+    public ValueFunction reference(boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction((DirectFunctionEstimator)functionEstimator.reference(memory), getParams());
+    }
+
+    /**
+     * Returns reference to value function.
+     *
+     * @param policyFunctionEstimator reference to policy function estimator.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used between value functions otherwise separate value function estimator is used.
+     * @param memory reference to memory.
+     * @return reference to value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    public ValueFunction reference(FunctionEstimator policyFunctionEstimator, boolean sharedValueFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        return new PlainValueFunction((DirectFunctionEstimator)functionEstimator.reference(memory), getParams());
     }
 
     /**
      * Not used.
      *
      */
-    public void start() {}
+    public void start(Agent agent) {
+        getFunctionEstimator().registerAgent(agent);
+    }
 
     /**
      * Not used.
@@ -187,55 +217,44 @@ public class PlainValueFunction extends AbstractValueFunction {
     public void stop() {}
 
     /**
-     * Not used.
-     *
-     * @param agent agent.
-     */
-    public void registerAgent(Agent agent) {
-        getFunctionEstimator().registerAgent(agent);
-    }
-
-    /**
      * Updates state value.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      */
-    protected void updateValue(StateTransition stateTransition) {
+    protected void updateValue(State state) {
     }
 
     /**
      * Returns target value based on next state.
      *
-     * @param nextStateTransition next state transition.
+     * @param nextState next state.
      * @return target value based on next state
      */
-    public double getTargetValue(StateTransition nextStateTransition) {
-        return nextStateTransition.tdTarget;
+    public double getTargetValue(State nextState) {
+        return useBaseline && averageMean > 0 && averageStandardDeviation > 0? (nextState.tdTarget - averageMean) / averageStandardDeviation : nextState.tdTarget;
     }
 
     /**
-     * Updates baseline values for state transitions.
+     * Updates baseline values for states.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      */
-    protected void updateBaseline(TreeSet<StateTransition> stateTransitions) {
+    protected void updateBaseline(TreeSet<State> states) {
         if (!useBaseline) return;
 
-        int size = stateTransitions.size();
+        int size = states.size();
+        if (size < 2) return;
 
         double mean = 0;
-        for (StateTransition stateTransition : stateTransitions) mean += stateTransition.tdTarget;
+        for (State state : states) mean += state.tdTarget;
         mean /= size;
-        averageMean = averageMean == Double.MIN_VALUE ? mean : tau * averageMean + (1 - tau) * mean;
+        averageMean = averageMean == 0 ? mean : tau * averageMean + (1 - tau) * mean;
 
-        double std = 0;
-        for (StateTransition stateTransition : stateTransitions) std += Math.pow(stateTransition.tdTarget - mean, 2);
-        std = Math.sqrt(std / (size - 1));
-        averageStandardDeviation = averageStandardDeviation == Double.MIN_VALUE ? std : tau * averageStandardDeviation + (1 - tau) * std;
+        double standardDeviation = 0;
+        for (State state : states) standardDeviation += Math.pow(state.tdTarget - mean, 2);
+        standardDeviation = Math.sqrt(standardDeviation / (size - 1));
+        averageStandardDeviation = averageStandardDeviation == 0 ? standardDeviation : tau * averageStandardDeviation + (1 - tau) * standardDeviation;
 
-        for (StateTransition stateTransition : stateTransitions) {
-            stateTransition.tdTarget = (stateTransition.tdTarget - averageMean) / averageStandardDeviation;
-        }
     }
 
     /**
@@ -266,43 +285,17 @@ public class PlainValueFunction extends AbstractValueFunction {
     }
 
     /**
-     * Samples memory of function estimator.
-     *
-     */
-    public void sample() {
-        getFunctionEstimator().sample();
-    }
-
-    /**
-     * Returns sampled state transitions.
-     *
-     * @return sampled state transitions.
-     */
-    public TreeSet<StateTransition> getSampledStateTransitions() {
-        return getFunctionEstimator().getSampledStateTransitions();
-    }
-
-    /**
      * Updates function estimator.
      *
      */
     public void updateFunctionEstimator() {
-        TreeSet<StateTransition> sampledStateTransitions = getSampledStateTransitions();
-        if (sampledStateTransitions == null) {
+        TreeSet<State> sampledStates = getSampledStates();
+        if (sampledStates == null) {
             getFunctionEstimator().abortUpdate();
             return;
         }
 
-        getFunctionEstimator().update(sampledStateTransitions);
-    }
-
-    /**
-     * Appends parameters to this value function from another value function.
-     *
-     * @param valueFunction value function used to update current value function.
-     * @param tau tau which controls contribution of other value function.
-     */
-    public void append(ValueFunction valueFunction, double tau) {
+        getFunctionEstimator().update(sampledStates);
     }
 
 }
