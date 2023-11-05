@@ -5,16 +5,11 @@
 
 package core.reinforcement.function;
 
-import core.network.NeuralNetworkException;
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-
-import java.io.IOException;
 
 /**
  * Implements direct function estimator (proxy for memory) to be used with plain value function.<br>
@@ -25,13 +20,22 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Constructor for direct function estimator.
      *
-     * @param memory memory reference.
-     * @param numberOfStates number of states for direct function estimator
-     * @param numberOfActions number of actions for direct function estimator
+     * @param functionEstimator function estimator reference.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false);
+    public DirectFunctionEstimator(FunctionEstimator functionEstimator) throws DynamicParamException {
+        this (functionEstimator, null);
+    }
+
+    /**
+     * Constructor for direct function estimator.
+     *
+     * @param functionEstimator function estimator reference.
+     * @param params parameters for function
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public DirectFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
+        this (functionEstimator.getMemory(), functionEstimator.getNumberOfStates(), functionEstimator.getNumberOfActions(), params);
     }
 
     /**
@@ -48,13 +52,20 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Initializes default params.
+     *
+     */
+    public void initializeDefaultParams() {
+    }
+
+    /**
      * Returns reference to function estimator.
      *
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator reference() throws DynamicParamException {
-        return new DirectFunctionEstimator(getMemory(), getNumberOfStates(), getNumberOfActions(), getParams());
+        return new DirectFunctionEstimator(this, getParams());
     }
 
     /**
@@ -102,15 +113,6 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Checks if function estimator is started.
-     *
-     * @return true if function estimator is started otherwise false.
-     */
-    public boolean isStarted() {
-        return true;
-    }
-
-    /**
      * Returns shallow copy of direct function estimator.
      *
      * @return shallow copy of direct function estimator.
@@ -123,72 +125,67 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Not used.
      *
-     * @param stateTransition state
-     * @param isAction true if prediction is for taking other otherwise false.
+     * @param state state
      * @return policy values corresponding to a state
      */
-    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) {
+    public Matrix predictPolicyValues(State state) {
         return null;
     }
 
     /**
      * Not used.
      *
-     * @param stateTransition state
+     * @param state state.
+     * @return policy values corresponding to a state.
+     */
+    public Matrix predictTargetPolicyValues(State state) {
+        return null;
+    }
+
+    /**
+     * Not used.
+     *
+     * @param state state
      * @return state action values corresponding to a state
      */
-    public Matrix predictStateActionValues(StateTransition stateTransition) {
+    public Matrix predictStateActionValues(State state) {
+        return null;
+    }
+
+    /**
+     * Not used.
+     *
+     * @param state state
+     * @return state action values corresponding to a state
+     */
+    public Matrix predictTargetStateActionValues(State state) {
         return null;
     }
 
     /**
      * Not used.
 
-     * @param stateTransition state transition.
+     * @param state state.
      * @param values values.
      */
-    public void storePolicyValues(StateTransition stateTransition, Matrix values) {
+    public void storePolicyValues(State state, Matrix values) {
     }
 
     /**
      * Not used.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @param values values.
      */
-    public void storeStateActionValues(StateTransition stateTransition, Matrix values) {
+    public void storeStateActionValues(State state, Matrix values) {
     }
 
     /**
      * Not used.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void update() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
+    public void update() {
         updateComplete();
-    }
-
-    /**
-     * Not used.
-     *
-     * @param functionEstimator estimator function used to update this function.
-     * @param fullUpdate if true full update is done.
-     */
-    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) {
-    }
-
-    /**
-     * Appends parameters to this function estimator from another function estimator.
-     *
-     * @param functionEstimator function estimator used to update current function estimator.
-     * @param tau tau which controls contribution of other function estimator.
-     */
-    public void append(FunctionEstimator functionEstimator, double tau) {
     }
 
     /**
@@ -197,6 +194,14 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
      */
     public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
+    }
+
+    /**
+     * Appends from function estimator.
+     *
+     * @param functionEstimator function estimator.
+     */
+    public void append(FunctionEstimator functionEstimator) {
     }
 
 }

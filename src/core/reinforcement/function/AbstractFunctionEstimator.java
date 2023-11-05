@@ -5,18 +5,15 @@
 
 package core.reinforcement.function;
 
-import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -30,13 +27,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
 
     @Serial
     private static final long serialVersionUID = -557430597852291426L;
-
-    /**
-     * Parameter name types for abstract function estimator.
-     *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
-     *
-     */
-    private final static String paramNameTypes = "(targetFunctionUpdateCycle:INT)";
 
     /**
      * Parameters for function estimator.
@@ -81,29 +71,11 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     protected final int numberOfActions;
 
     /**
-     * Target function estimator.
-     *
-     */
-    private FunctionEstimator targetFunctionEstimator = null;
-
-    /**
-     * Update cycle (in episodes) for target function estimator. If update cycle is zero then smooth parameter updates are applied with update rate tau.
-     *
-     */
-    private int targetFunctionUpdateCycle;
-
-    /**
-     * Update count for target function update cycle.
-     *
-     */
-    private transient int updateCount = 0;
-
-    /**
      * Constructor for abstract function estimator.
      *
-     * @param memory memory reference.
-     * @param numberOfStates number of states.
-     * @param numberOfActions number of actions.
+     * @param memory                     memory reference.
+     * @param numberOfStates             number of states.
+     * @param numberOfActions            number of actions.
      * @param isStateActionValueFunction if true function is combined state action value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
@@ -114,11 +86,11 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     /**
      * Constructor for abstract function estimator.
      *
-     * @param memory memory reference.
-     * @param numberOfStates number of states.
-     * @param numberOfActions number of actions.
+     * @param memory                     memory reference.
+     * @param numberOfStates             number of states.
+     * @param numberOfActions            number of actions.
      * @param isStateActionValueFunction if true function is combined state action value function.
-     * @param params parameters for function
+     * @param params                     parameters for function
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public AbstractFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, boolean isStateActionValueFunction, String params) throws DynamicParamException {
@@ -129,14 +101,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
         this.isStateActionValueFunction = isStateActionValueFunction;
         this.params = params;
         if (params != null) setParams(new DynamicParam(params, getParamDefs()));
-    }
-
-    /**
-     * Initializes default params.
-     *
-     */
-    public void initializeDefaultParams() throws DynamicParamException {
-        targetFunctionUpdateCycle = 0;
     }
 
     /**
@@ -154,7 +118,7 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @return parameters used for abstract function estimator.
      */
     public String getParamDefs() {
-        return AbstractFunctionEstimator.paramNameTypes + ", " + memory.getParamDefs();
+        return memory.getParamDefs();
     }
 
     /**
@@ -168,7 +132,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         memory.setParams(params);
-        if (params.hasParam("targetFunctionUpdateCycle")) targetFunctionUpdateCycle = params.getValueAsInteger("targetFunctionUpdateCycle");
     }
 
     /**
@@ -178,27 +141,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      */
     public Memory getMemory() {
         return memory;
-    }
-
-    /**
-     * Starts function estimator.
-     *
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
-        if (targetFunctionEstimator != null) targetFunctionEstimator.start();
-    }
-
-    /**
-     * Stops function estimator.
-     *
-     */
-    public void stop() {
-        if (targetFunctionEstimator != null) targetFunctionEstimator.stop();
     }
 
     /**
@@ -237,14 +179,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Reinitializes function estimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void reinitialize() throws MatrixException, DynamicParamException {
-    }
-
-    /**
      * Samples memory of abstract function estimator.
      *
      */
@@ -253,21 +187,21 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Returns sampled state transitions.
+     * Returns sampled states.
      *
-     * @return sampled state transitions.
+     * @return sampled states.
      */
-    public TreeSet<StateTransition> getSampledStateTransitions() {
-        return memory.getSampledStateTransitions();
+    public TreeSet<State> getSampledStates() {
+        return memory.getSampledStates();
     }
 
     /**
-     * Adds new state transition into memory of abstract function estimator.
+     * Adds new state into memory of abstract function estimator.
      *
-     * @param stateTransition state transition
+     * @param state state
      */
-    public void add(StateTransition stateTransition) {
-        memory.add(stateTransition);
+    public void add(State state) {
+        memory.add(state);
     }
 
     /**
@@ -284,12 +218,12 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Updates state transitions in memory of abstract function estimator.
+     * Updates states in memory of abstract function estimator.
      *
-     * @param stateTransitions state transitions
+     * @param states states
      */
-    public void update(TreeSet<StateTransition> stateTransitions) {
-        memory.update(stateTransitions);
+    public void update(TreeSet<State> states) {
+        memory.update(states);
     }
 
     /**
@@ -303,15 +237,8 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     /**
      * Completes abstract function estimator update.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void updateComplete() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        updateTargetFunctionEstimator();
+    protected void updateComplete() {
         completedAgents.clear();
     }
 
@@ -325,150 +252,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
-     * Creates target function estimator.
-     *
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     */
-    public void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException {
-        boolean isStarted = false;
-        if (targetFunctionEstimator != null) isStarted= targetFunctionEstimator.isStarted();
-        targetFunctionEstimator = copy();
-        if (isStarted) targetFunctionEstimator.start();
-    }
-
-    /**
-     * Returns target function estimator.
-     *
-     * @return target function estimator.
-     */
-    public FunctionEstimator getTargetFunctionEstimator() {
-        return targetFunctionEstimator;
-    }
-
-    /**
-     * Updates target function estimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    private void updateTargetFunctionEstimator() throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        if (targetFunctionEstimator == null) return;
-        if (targetFunctionUpdateCycle == 0) targetFunctionEstimator.append(this, false);
-        else {
-            if (++updateCount >= targetFunctionUpdateCycle) {
-                targetFunctionEstimator.append(this, true);
-                updateCount = 0;
-            }
-        }
-    }
-
-    /**
-     * Appends parameters to this abstract function estimator from another abstract function estimator.
-     *
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void append() throws AgentException {
-        if (!completedAgents.isEmpty()) throw new AgentException("Update cycle is ongoing.");
-    }
-
-    /**
-     * Finalizes append.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    protected void finalizeAppend() throws MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        if (targetFunctionEstimator != null) {
-            boolean isStarted = targetFunctionEstimator.isStarted();
-            if (isStarted) targetFunctionEstimator.stop();
-            targetFunctionEstimator = copy();
-            if (isStarted) targetFunctionEstimator.start();
-        }
-    }
-
-    /**
-     * Returns min value of state.
-     *
-     * @param stateValues state values.
-     * @return max value of state.
-     */
-    public double min(Matrix stateValues) {
-        return stateValues.getValue(argmin(stateValues), 0, 0);
-    }
-
-    /**
-     * Returns min value of state given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return min value of state.
-     */
-    public double min(Matrix stateValues, HashSet<Integer> availableActions) {
-        return stateValues.getValue(argmin(stateValues, availableActions), 0, 0);
-    }
-
-    /**
-     * Returns action with minimum state value.
-     *
-     * @param stateValues state values.
-     * @return action with minimum state value.
-     */
-    public int argmin(Matrix stateValues) {
-        int minAction = -1;
-        double minValue = Double.POSITIVE_INFINITY;
-        int numberOfActions = getNumberOfActions();
-        for (int action = 0; action < numberOfActions; action++) {
-            double actionValue = stateValues.getValue(action, 0, 0);
-            if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
-                minValue = actionValue;
-                minAction = action;
-            }
-        }
-        return minAction;
-    }
-
-    /**
-     * Returns action with minimum state value given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return action with minimum state value.
-     */
-    public int argmin(Matrix stateValues, HashSet<Integer> availableActions) {
-        int minAction = -1;
-        double minValue = Double.POSITIVE_INFINITY;
-        for (int action : availableActions) {
-            double actionValue = stateValues.getValue(action, 0, 0);
-            if (minValue == Double.POSITIVE_INFINITY || minValue > actionValue) {
-                minValue = actionValue;
-                minAction = action;
-            }
-        }
-        return minAction;
-    }
-
-    /**
-     * Returns max value of state.
-     *
-     * @param stateValues state values.
-     * @return max value of state.
-     */
-    public double max(Matrix stateValues) {
-        return stateValues.getValue(argmax(stateValues), 0, 0);
-    }
-
-    /**
      * Returns max value of state given available actions.
      *
      * @param stateValues state values.
@@ -477,26 +260,6 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      */
     public double max(Matrix stateValues, HashSet<Integer> availableActions) {
         return stateValues.getValue(argmax(stateValues, availableActions), 0, 0);
-    }
-
-    /**
-     * Returns action with maximum state value.
-     *
-     * @param stateValues state values.
-     * @return action with maximum state value.
-     */
-    public int argmax(Matrix stateValues) {
-        int maxAction = -1;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        int numberOfActions = getNumberOfActions();
-        for (int action = 0; action < numberOfActions; action++) {
-            double actionValue = stateValues.getValue(action, 0, 0);
-            if (maxValue == Double.NEGATIVE_INFINITY || maxValue < actionValue) {
-                maxValue = actionValue;
-                maxAction = action;
-            }
-        }
-        return maxAction;
     }
 
     /**

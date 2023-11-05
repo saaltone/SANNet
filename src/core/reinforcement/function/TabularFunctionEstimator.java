@@ -5,11 +5,9 @@
 
 package core.reinforcement.function;
 
-import core.network.NeuralNetworkException;
 import core.optimization.*;
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -17,7 +15,6 @@ import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +28,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
     /**
      * Parameter name types for tabular function estimator.
-     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
      *
      */
@@ -45,10 +42,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     private HashMap<Matrix, Matrix> stateValues = new HashMap<>();
 
     /**
-     * Intermediate map for state transition value pairs for function update.
+     * Intermediate map for state value pairs for function update.
      *
      */
-    private final HashMap<StateTransition, Matrix> stateTransitionValueMap = new HashMap<>();
+    private final HashMap<State, Matrix> stateValueMap = new HashMap<>();
 
     /**
      * Optimizer for tabular function estimator.
@@ -102,8 +99,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void initializeDefaultParams() throws DynamicParamException {
-        super.initializeDefaultParams();
-        optimizer = new Adadelta();
+        optimizer = new Adam();
     }
 
     /**
@@ -119,7 +115,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Sets parameters used for tabular function estimator.<br>
      * <br>
      * Supported parameters are:<br>
-     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adadelta".<br>
+     *     - optimizerName: name of optimizer for tabular function estimator. Default value "Adam".<br>
      *     - learningRate: learning rate for optimizer. Default value 0.001.<br>
      *
      * @param params parameters used for tabular function estimator.
@@ -136,12 +132,17 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Checks if function estimator is started.
+     * Not used.
      *
-     * @return true if function estimator is started otherwise false.
      */
-    public boolean isStarted() {
-        return true;
+    public void start() {
+    }
+
+    /**
+     * Not used.
+     *
+     */
+    public void stop() {
     }
 
     /**
@@ -177,25 +178,13 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Sets state values map for tabular function estimator.
+     * Returns shallow copy of tabular function estimator.
      *
-     * @param newStateValues new state values map
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return shallow copy of tabular function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void setStateValues(HashMap<Matrix, Matrix> newStateValues) throws MatrixException {
-        stateValues.clear();
-        for (Map.Entry<Matrix, Matrix> entry : newStateValues.entrySet()) {
-            stateValues.put(entry.getKey().copy(), entry.getValue().copy());
-        }
-    }
-
-    /**
-     * Returns state values map of tabular function estimator.
-     *
-     * @return state values map
-     */
-    public HashMap<Matrix, Matrix> getStateValues() {
-        return stateValues;
+    public FunctionEstimator copy() throws DynamicParamException {
+        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), stateValues, getParams());
     }
 
     /**
@@ -209,19 +198,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         for (Map.Entry<Matrix, Matrix> entry : stateValues.entrySet()) {
             if (state.equals(entry.getKey())) return entry.getValue();
         }
-        Matrix stateValue = new DMatrix(numberOfActions, 1, 1, Initialization.RANDOM);
-        stateValues.put(state.copy(), stateValue);
-        return stateValue;
-    }
 
-    /**
-     * Returns shallow copy of tabular function estimator.
-     *
-     * @return shallow copy of tabular function estimator.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator copy() throws DynamicParamException {
-        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), stateValues, getParams());
+        Matrix stateValue = new DMatrix(numberOfActions, 1, 1, Initialization.RANDOM);
+        stateValues.put(state, stateValue);
+        return stateValue;
     }
 
     /**
@@ -230,74 +210,83 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void reset() {
         super.reset();
-        stateTransitionValueMap.clear();
-    }
-
-    /**
-     * Reinitializes tabular function estimator.
-     *
-     */
-    public void reinitialize() {
-        this.reset();
+        stateValueMap.clear();
     }
 
     /**
      * Returns (predicts) state value corresponding to a state as stored by tabular function estimator.
      *
-     * @param stateTransition state
-     * @param isAction true if prediction is for taking other otherwise false.
+     * @param state state
      * @return state value corresponding to a state
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws MatrixException {
-        return getStateValue(stateTransition.environmentState.state());
+    public Matrix predictPolicyValues(State state) throws MatrixException {
+        return getStateValue(state.environmentState.state());
+    }
+
+    /**
+     * Predicts target policy values corresponding to a state.
+     *
+     * @param state state.
+     * @return policy values corresponding to a state.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public Matrix predictTargetPolicyValues(State state) throws MatrixException {
+        return predictPolicyValues(state);
     }
 
     /**
      * Predicts state action values corresponding to a state.
      *
-     * @param stateTransition state.
+     * @param state state.
      * @return state action values corresponding to a state.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Matrix predictStateActionValues(StateTransition stateTransition) throws MatrixException {
-        return predictPolicyValues(stateTransition, true);
+    public Matrix predictStateActionValues(State state) throws MatrixException {
+        return predictPolicyValues(state);
     }
 
     /**
-     * Stores policy state transition values pair.
+     * Predicts target state action values corresponding to a state.
      *
-     * @param stateTransition state transition.
-     * @param values values.
+     * @param state state.
+     * @return state action values corresponding to a state.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void storePolicyValues(StateTransition stateTransition, Matrix values) {
-        stateTransitionValueMap.put(stateTransition, values);
+    public Matrix predictTargetStateActionValues(State state) throws MatrixException {
+        return predictPolicyValues(state);
     }
 
     /**
-     * Stores state action state transition values pair.
+     * Stores policy state values pair.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @param values values.
      */
-    public void storeStateActionValues(StateTransition stateTransition, Matrix values) {
-        storePolicyValues(stateTransition, values);
+    public void storePolicyValues(State state, Matrix values) {
+        stateValueMap.put(state, values);
+    }
+
+    /**
+     * Stores state action values pair.
+     *
+     * @param state state.
+     * @param values values.
+     */
+    public void storeStateActionValues(State state, Matrix values) {
+        storePolicyValues(state, values);
     }
 
     /**
      * Updates (trains) tabular function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void update() throws MatrixException, AgentException, DynamicParamException, NeuralNetworkException, IOException, ClassNotFoundException {
+    public void update() throws MatrixException, DynamicParamException {
         HashMap<Matrix, Matrix> stateErrors = new HashMap<>();
-        for (Map.Entry<StateTransition, Matrix> entry : stateTransitionValueMap.entrySet()) {
-            Matrix stateValue = predictPolicyValues(entry.getKey(), false);
+        for (Map.Entry<State, Matrix> entry : stateValueMap.entrySet()) {
+            Matrix stateValue = predictPolicyValues(entry.getKey());
             Matrix error = stateValue.subtract(entry.getValue());
             Matrix stateError = stateErrors.get(stateValue);
             if (stateError == null) stateErrors.put(stateValue, error);
@@ -306,10 +295,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
         for (Map.Entry<Matrix, Matrix> entry : stateErrors.entrySet()) {
             Matrix stateValue = entry.getKey();
             Matrix stateError = entry.getValue();
-            optimizer.optimize(stateValue, stateError.divide(stateTransitionValueMap.size()));
+            optimizer.optimize(stateValue, stateError.divide(stateValueMap.size()));
         }
 
-        stateTransitionValueMap.clear();
+        stateValueMap.clear();
 
         // Allows other threads to get execution time.
         try {
@@ -325,47 +314,19 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
-     * Updates parameters to this tabular function estimator from another tabular function estimator.
-     *
-     * @param functionEstimator estimator function used to update this function.
-     * @param fullUpdate if true full update is done.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws AgentException, MatrixException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        super.append();
-        setStateValues(((TabularFunctionEstimator) functionEstimator).getStateValues());
-        finalizeAppend();
-    }
-
-    /**
-     * Appends parameters to this function estimator from another function estimator.
-     *
-     * @param functionEstimator function estimator used to update current function estimator.
-     * @param tau tau which controls contribution of other function estimator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void append(FunctionEstimator functionEstimator, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        super.append();
-        setStateValues(((TabularFunctionEstimator) functionEstimator).getStateValues());
-        finalizeAppend();
-    }
-
-    /**
      * Sets if importance sampling weights are applied.
      *
      * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
      */
     public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
+    }
+
+    /**
+     * Appends from function estimator.
+     *
+     * @param functionEstimator function estimator.
+     */
+    public void append(FunctionEstimator functionEstimator) {
     }
 
 }

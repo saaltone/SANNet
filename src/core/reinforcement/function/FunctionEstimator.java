@@ -9,7 +9,7 @@ import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.memory.Memory;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
@@ -86,24 +86,15 @@ public interface FunctionEstimator extends Configurable {
      *
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
      * @throws MatrixException throws exception if depth of matrix is less than 1.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void start() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException;
+    void start() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops function estimator.
      *
      */
     void stop();
-
-    /**
-     * Checks if function estimator is started.
-     *
-     * @return true if function estimator is started otherwise false.
-     */
-    boolean isStarted();
 
     /**
      * Registers agent for function estimator.
@@ -119,32 +110,24 @@ public interface FunctionEstimator extends Configurable {
     void reset();
 
     /**
-     * Reinitializes function estimator.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    void reinitialize() throws MatrixException, DynamicParamException;
-
-    /**
      * Samples memory of function estimator.
      *
      */
     void sample();
 
     /**
-     * Returns sampled state transitions.
+     * Returns sampled states.
      *
-     * @return sampled state transitions.
+     * @return sampled states.
      */
-    TreeSet<StateTransition> getSampledStateTransitions();
+    TreeSet<State> getSampledStates();
 
     /**
-     * Adds new state transition into memory of function estimator.
+     * Adds new state into memory of function estimator.
      *
-     * @param stateTransition state transition
+     * @param state state
      */
-    void add(StateTransition stateTransition);
+    void add(State state);
 
     /**
      * Notifies that agent is ready to update.
@@ -156,11 +139,11 @@ public interface FunctionEstimator extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updates state transitions in memory of function estimator.
+     * Updates states in memory of function estimator.
      *
-     * @param stateTransitions state transitions
+     * @param states states
      */
-    void update(TreeSet<StateTransition> stateTransitions);
+    void update(TreeSet<State> states);
 
     /**
      * If true value function is combined state action value function.
@@ -181,53 +164,69 @@ public interface FunctionEstimator extends Configurable {
     FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException;
 
     /**
-     * Predicts policy values corresponding to a state.
+     * Predicts target policy values corresponding to a state.
      *
-     * @param stateTransition state.
-     * @param isAction true if prediction is for taking other otherwise false.
+     * @param state state.
      * @return policy values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      */
-    Matrix predictPolicyValues(StateTransition stateTransition, boolean isAction) throws NeuralNetworkException, MatrixException;
+    Matrix predictTargetPolicyValues(State state) throws NeuralNetworkException, MatrixException;
+
+    /**
+     * Predicts policy values corresponding to a state.
+     *
+     * @param state state.
+     * @return policy values corresponding to a state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     */
+    Matrix predictPolicyValues(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Predicts state action values corresponding to a state.
      *
-     * @param stateTransition state.
+     * @param state state.
      * @return state action values corresponding to a state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix predictStateActionValues(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    Matrix predictStateActionValues(State state) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Stores policy state transition values pair.
+     * Predicts target state action values corresponding to a state.
      *
-     * @param stateTransition state transition.
-     * @param values values.
+     * @param state state.
+     * @return state action values corresponding to a state.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void storePolicyValues(StateTransition stateTransition, Matrix values);
+    Matrix predictTargetStateActionValues(State state) throws NeuralNetworkException, MatrixException;
 
     /**
-     * Stores state action state transition values pair.
+     * Stores policy state values pair.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @param values values.
      */
-    void storeStateActionValues(StateTransition stateTransition, Matrix values);
+    void storePolicyValues(State state, Matrix values);
+
+    /**
+     * Stores state action values pair.
+     *
+     * @param state state.
+     * @param values values.
+     */
+    void storeStateActionValues(State state, Matrix values);
 
     /**
      * Updates (trains) function estimator.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void update() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+    void update() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Aborts function estimator update.
@@ -236,74 +235,12 @@ public interface FunctionEstimator extends Configurable {
     void abortUpdate();
 
     /**
-     * Appends parameters to this function estimator from another function estimator.
+     * Appends from function estimator.
      *
-     * @param functionEstimator function estimator used to update current function estimator.
-     * @param fullUpdate if true full update is done.
+     * @param functionEstimator function estimator.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void append(FunctionEstimator functionEstimator, boolean fullUpdate) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException;
-
-    /**
-     * Appends parameters to this function estimator from another function estimator.
-     *
-     * @param functionEstimator function estimator used to update current function estimator.
-     * @param tau tau which controls contribution of other function estimator.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    void append(FunctionEstimator functionEstimator, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException;
-
-    /**
-     * Returns min value of state.
-     *
-     * @param stateValues state values.
-     * @return min value of state.
-     */
-    double min(Matrix stateValues);
-
-    /**
-     * Returns min value of state given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return min value of state.
-     */
-    double min(Matrix stateValues, HashSet<Integer> availableActions);
-
-    /**
-     * Returns action with minimum state value.
-     *
-     * @param stateValues state values.
-     * @return action with minimum state value.
-     */
-    int argmin(Matrix stateValues);
-
-    /**
-     * Returns action with minimum state value given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return action with minimum state value.
-     */
-    int argmin(Matrix stateValues, HashSet<Integer> availableActions);
-
-    /**
-     * Returns max value of state.
-     *
-     * @param stateValues state values.
-     * @return max value of state.
-     */
-    double max(Matrix stateValues);
+    void append(FunctionEstimator functionEstimator) throws MatrixException;
 
     /**
      * Returns max value of state given available actions.
@@ -315,14 +252,6 @@ public interface FunctionEstimator extends Configurable {
     double max(Matrix stateValues, HashSet<Integer> availableActions);
 
     /**
-     * Returns action with maximum state value.
-     *
-     * @param stateValues state values.
-     * @return action with maximum state value.
-     */
-    int argmax(Matrix stateValues);
-
-    /**
      * Returns action with maximum state value given available actions.
      *
      * @param stateValues state values.
@@ -330,24 +259,6 @@ public interface FunctionEstimator extends Configurable {
      * @return action with maximum state value.
      */
     int argmax(Matrix stateValues, HashSet<Integer> availableActions);
-
-    /**
-     * Creates target function estimator.
-     *
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of function estimator fails.
-     */
-    void createTargetFunctionEstimator() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException, NeuralNetworkException;
-
-    /**
-     * Returns target function estimator.
-     *
-     * @return target function estimator.
-     */
-    FunctionEstimator getTargetFunctionEstimator();
 
     /**
      * Sets if importance sampling weights are applied.
