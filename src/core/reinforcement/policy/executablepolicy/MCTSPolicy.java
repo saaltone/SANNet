@@ -5,9 +5,10 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.ComputableMatrix;
 import utils.matrix.Matrix;
 
 import java.io.Serial;
@@ -53,7 +54,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Implements action for state.
      *
      */
-    private class Action {
+    private class MCTSAction {
 
         /**
          * Action ID.
@@ -77,35 +78,35 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * Reference to parent state.
          *
          */
-        private final State parentState;
+        private final MCTSState parentMCTSState;
 
         /**
          * Reference to child state.
          *
          */
-        private final State childState;
+        private final MCTSState childMCTSState;
 
         /**
          * Constructor for action.
          *
-         * @param parentState parent state
+         * @param parentMCTSState parent state
          * @param actionID action ID
          */
-        Action(State parentState, int actionID) {
-            this.parentState = parentState;
+        MCTSAction(MCTSState parentMCTSState, int actionID) {
+            this.parentMCTSState = parentMCTSState;
             this.actionID = actionID;
-            childState = new State(parentState);
+            childMCTSState = new MCTSState(parentMCTSState);
         }
 
         /**
          * Constructor for action.
          *
-         * @param parentState parent state
+         * @param parentMCTSState parent state
          * @param actionID action ID
          * @param actionProbability action probability.
          */
-        Action(State parentState, int actionID, double actionProbability) {
-            this(parentState, actionID);
+        MCTSAction(MCTSState parentMCTSState, int actionID, double actionProbability) {
+            this(parentMCTSState, actionID);
             this.actionProbability = actionProbability;
         }
 
@@ -114,8 +115,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @return parent state.
          */
-        State getParentState() {
-            return parentState;
+        MCTSState getParentState() {
+            return parentMCTSState;
         }
 
         /**
@@ -123,8 +124,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @return child state.
          */
-        State getChildState() {
-            return childState;
+        MCTSState getChildState() {
+            return childMCTSState;
         }
 
         /**
@@ -213,13 +214,13 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Implements state for MCTS.
      *
      */
-    private class State {
+    private class MCTSState {
 
         /**
          * Parent state for state;
          *
          */
-        private final State parentState;
+        private final MCTSState parentMCTSState;
 
         /**
          * Visit count for state.
@@ -231,29 +232,29 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * Actions for state.
          *
          */
-        private final HashMap<Integer, Action> actions = new HashMap<>();
+        private final HashMap<Integer, MCTSAction> stateMCTSActions = new HashMap<>();
 
         /**
          * Reference to action with maximum value.
          *
          */
-        private Action maxAction = null;
+        private MCTSAction maxMCTSAction = null;
 
         /**
          * Constructor for state.
          *
          */
-        State() {
-            parentState = null;
+        MCTSState() {
+            parentMCTSState = null;
         }
 
         /**
          * Constructor for state.
          *
-         * @param parentState parent state.
+         * @param parentMCTSState parent state.
          */
-        State(State parentState) {
-            this.parentState = parentState;
+        MCTSState(MCTSState parentMCTSState) {
+            this.parentMCTSState = parentMCTSState;
         }
 
         /**
@@ -261,8 +262,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @return child state based on max action.
          */
-        State getNextState() {
-            return maxAction.getChildState();
+        MCTSState getNextState() {
+            return maxMCTSAction.getChildState();
         }
 
         /**
@@ -279,8 +280,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @return parent state.
          */
-        State getParentState() {
-            return parentState;
+        MCTSState getParentState() {
+            return parentMCTSState;
         }
 
         /**
@@ -289,7 +290,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * @return true if state has max action otherwise false.
          */
         boolean hasMaxAction() {
-            return maxAction != null;
+            return maxMCTSAction != null;
         }
 
         /**
@@ -297,8 +298,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          *
          * @return max action.
          */
-        Action getMaxAction() {
-            return maxAction;
+        MCTSAction getMaxAction() {
+            return maxMCTSAction;
         }
 
         /**
@@ -327,11 +328,11 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          */
         void act(Matrix stateValueMatrix, HashSet<Integer> availableActions, int action) {
             updateActionProbabilities(stateValueMatrix, availableActions);
-            maxAction = actions.get(action);
+            maxMCTSAction = stateMCTSActions.get(action);
         }
 
         /**
-         * Takes action based on heuristic value. Adds noise to UCB value from Dirichlet distribution.
+         * Takes action based on heuristic value. Adds noise to upper confidence boundary (UCB) value from Dirichlet distribution.
          *
          * @param policyValueMatrix current policy value matrix.
          * @param availableActions available actions in current state
@@ -340,15 +341,15 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          */
         public int act(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
             updateActionProbabilities(policyValueMatrix, availableActions);
-            maxAction = null;
-            double maxValue = Double.NEGATIVE_INFINITY;
+            maxMCTSAction = null;
+            double maxValue = Double.MIN_VALUE;
             if (alwaysGreedy) {
                 for (Integer actionID : availableActions) {
-                    Action action = actions.get(actionID);
-                    double currentValue = action.getPolicyValue();
-                    if (maxValue == Double.NEGATIVE_INFINITY || maxValue < currentValue) {
+                    MCTSAction MCTSAction = stateMCTSActions.get(actionID);
+                    double currentValue = MCTSAction.getPolicyValue();
+                    if (maxValue < currentValue) {
                         maxValue = currentValue;
-                        maxAction = action;
+                        maxMCTSAction = MCTSAction;
                     }
                 }
             }
@@ -356,15 +357,15 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
                 incrementVisitCount();
                 HashMap<Integer, Double> dirichletDistribution = getDirichletDistribution(alpha, availableActions);
                 for (Integer actionID : availableActions) {
-                    Action action = actions.get(actionID);
-                    double currentValue = action.getPUCT(dirichletDistribution.get(action.actionID), epsilon);
-                    if (maxValue == Double.NEGATIVE_INFINITY || maxValue < currentValue) {
+                    MCTSAction MCTSAction = stateMCTSActions.get(actionID);
+                    double currentValue = MCTSAction.getPUCT(dirichletDistribution.get(MCTSAction.actionID), epsilon);
+                    if (maxValue < currentValue) {
                         maxValue = currentValue;
-                        maxAction = action;
+                        maxMCTSAction = MCTSAction;
                     }
                 }
             }
-            return (maxAction != null) ? maxAction.getActionID() : -1;
+            return (maxMCTSAction != null) ? maxMCTSAction.getActionID() : -1;
         }
 
         /**
@@ -376,11 +377,10 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * @return Dirichlet distribution.
          */
         private HashMap<Integer, Double> getDirichletDistribution(double shape, HashSet<Integer> availableActions) {
-            // Computes log(sum(exp(elements across dimensions of a tensor))).
             HashMap<Integer, Double> dirichletDistribution = new HashMap<>();
             double cumulativeValue = 0;
             for (Integer action : availableActions) {
-                double gammaValue = sampleGamma(shape, 1);
+                double gammaValue = ComputableMatrix.sampleGamma(shape, 1, random);
                 cumulativeValue += gammaValue;
                 dirichletDistribution.put(action, gammaValue);
             }
@@ -393,57 +393,33 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         }
 
         /**
-         * Samples random variable from gamma distribution.<br>
-         * Reference: <a href="https://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/">...</a>
-         *
-         * @param shape shape (alpha) parameter
-         * @param scale scale (beta) parameter
-         * @return random variable from gamma distribution
-         */
-        private double sampleGamma(double shape, double scale) {
-            if (shape > 1) {
-                double d = shape - 1 / (double)3;
-                double c = 1 / Math.sqrt(9 * d);
-                while (true) {
-                    double gaussian = random.nextGaussian();
-                    if (gaussian > - 1 / c) {
-                        double uniform = random.nextDouble();
-                        double V = Math.pow(1 + c * gaussian, 3);
-                        if (Math.log(uniform) < 0.5 * Math.pow(gaussian, 2) + d - d * V + d * Math.log(V)) return d * V / scale;
-                    }
-                }
-            }
-            else return sampleGamma(shape + 1, scale) * Math.pow(random.nextDouble(), 1 / shape);
-        }
-
-        /**
          * Updates action probabilities for state.
          *
          * @param policyValueMatrix current state value matrix.
          * @param availableActions available actions in current state
          */
         private void updateActionProbabilities(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
-            for (Integer action : availableActions) {
-                double actionValue = policyValueMatrix.getValue(action, 0, 0);
-                MCTSPolicy.Action mctsAction = actions.get(action);
-                if (mctsAction != null) mctsAction.setActionProbability(actionValue);
-                else actions.put(action, new Action(this, action, actionValue));
+            for (Integer actionID : availableActions) {
+                double actionValue = policyValueMatrix.getValue(actionID, 0, 0);
+                MCTSAction MCTSAction = stateMCTSActions.get(actionID);
+                if (MCTSAction != null) MCTSAction.setActionProbability(actionValue);
+                else stateMCTSActions.put(actionID, new MCTSAction(this, actionID, actionValue));
             }
             double cumulativeValue = 0;
-            for (Action action : actions.values()) cumulativeValue += action.getActionProbability();
-            if (cumulativeValue > 0) for (Action action : actions.values()) action.setActionProbability(action.getActionProbability() / cumulativeValue);
+            for (MCTSAction MCTSAction : stateMCTSActions.values()) cumulativeValue += MCTSAction.getActionProbability();
+            if (cumulativeValue > 0) for (MCTSAction MCTSAction : stateMCTSActions.values()) MCTSAction.setActionProbability(MCTSAction.getActionProbability() / cumulativeValue);
         }
 
         /**
          * Updates state action value chain from leaf state towards root state.
          *
-         * @param stateTransitionStack state transition stack.
+         * @param stateStack state stack.
          */
-        public void update(Stack<StateTransition> stateTransitionStack) {
-            StateTransition stateTransition = stateTransitionStack.pop();
-            getMaxAction().updateActionValue(stateTransition.tdTarget);
-            stateTransition.value = getMaxAction().getPolicyValue();
-            if (hasParentState()) getParentState().update(stateTransitionStack);
+        public void update(Stack<core.reinforcement.agent.State> stateStack) {
+            State state = stateStack.pop();
+            getMaxAction().updateActionValue(state.tdTarget);
+            state.policyValue = getMaxAction().getPolicyValue();
+            if (hasParentState()) getParentState().update(stateStack);
         }
 
     }
@@ -476,19 +452,19 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Reference to root state.
      *
      */
-    public State rootState;
+    public MCTSState rootMCTSState;
 
     /**
      * Reference to current state.
      *
      */
-    public State currentState;
+    public MCTSState currentMCTSState;
 
     /**
-     * Stack to store state transitions for actions taken.
+     * Stack to store states for actions taken.
      *
      */
-    private Stack<StateTransition> stateTransitionStack = new Stack<>();
+    private Stack<State> stateStack = new Stack<>();
 
     /**
      * Random number generator.
@@ -600,7 +576,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     public void increment() {
         if (++resetCount < resetCycle || resetCycle < 1) return;
         resetCount = 0;
-        rootState = currentState = null;
+        rootMCTSState = currentMCTSState = null;
     }
 
     /**
@@ -608,8 +584,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      *
      */
     private void updateState() {
-        if (rootState == null) rootState = new State();
-        currentState = currentState == null ? rootState : currentState.getNextState();
+        if (rootMCTSState == null) rootMCTSState = new MCTSState();
+        currentMCTSState = currentMCTSState == null ? rootMCTSState : currentMCTSState.getNextState();
     }
 
     /**
@@ -621,7 +597,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      */
    public void action(Matrix policyValueMatrix, HashSet<Integer> availableActions, int action) {
         updateState();
-        currentState.act(policyValueMatrix, availableActions, action);
+        currentMCTSState.act(policyValueMatrix, availableActions, action);
     }
 
     /**
@@ -634,16 +610,16 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      */
     public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         updateState();
-        return currentState.act(policyValueMatrix, availableActions, alwaysGreedy);
+        return currentMCTSState.act(policyValueMatrix, availableActions, alwaysGreedy);
     }
 
     /**
-     * Adds state transition for action execution.
+     * Adds state for action execution.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      */
-    public void add(StateTransition stateTransition) {
-        stateTransitionStack.push(stateTransition);
+    public void add(core.reinforcement.agent.State state) {
+        stateStack.push(state);
     }
 
     /**
@@ -652,21 +628,11 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      */
     public void endEpisode() {
         if (isLearning()) {
-            if (currentState == null || stateTransitionStack.isEmpty()) return;
-            currentState.update(stateTransitionStack);
+            if (currentMCTSState == null || stateStack.isEmpty()) return;
+            currentMCTSState.update(stateStack);
         }
-        stateTransitionStack = new Stack<>();
-        currentState = null;
-    }
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
-        rootState = currentState = null;
-        stateTransitionStack = new Stack<>();
-        resetCount = 0;
+        stateStack = new Stack<>();
+        currentMCTSState = null;
     }
 
     /**
