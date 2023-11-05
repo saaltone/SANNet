@@ -38,14 +38,6 @@ public class MultinomialPolicy extends AbstractExecutablePolicy {
     private int numberOfTrials;
 
     /**
-     * Default constructor for multinomial policy.
-     *
-     */
-    public MultinomialPolicy() {
-        super(ExecutablePolicyType.MULTINOMIAL);
-    }
-
-    /**
      * Constructor for multinomial policy.
      *
      * @param params parameters for multinomial policy.
@@ -161,13 +153,6 @@ public class MultinomialPolicy extends AbstractExecutablePolicy {
         }
 
         return result;
-    }
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
     }
 
 }

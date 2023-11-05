@@ -130,11 +130,4 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
     }
 
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
-    }
-
 }

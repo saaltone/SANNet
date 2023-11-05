@@ -142,11 +142,4 @@ public class SampledPolicy extends AbstractExecutablePolicy {
         return -1;
     }
 
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
-    }
-
 }

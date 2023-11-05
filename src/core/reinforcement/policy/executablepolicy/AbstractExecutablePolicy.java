@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
@@ -146,20 +146,41 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      */
     protected double getActionEntropy(TreeSet<ActionValueTuple> stateValueSet) {
         double entropy = 0;
-        double actionValueSum = 0;
-        for (ActionValueTuple actionValueTuple : stateValueSet) actionValueSum += (actionValueTuple.value() + 10E-08);
-        for (ActionValueTuple actionValueTuple : stateValueSet) {
-            entropy += -((actionValueTuple.value() + 10E-08) / actionValueSum) * Math.log10((actionValueTuple.value() + 10E-08) / actionValueSum);
+        TreeSet<ActionValueTuple> softmaxStateValueSet = softmax(stateValueSet);
+        double base = softmaxStateValueSet.size() > 1 ? Math.log(softmaxStateValueSet.size()) : 1;
+        for (ActionValueTuple actionValueTuple : softmaxStateValueSet) {
+            entropy += Math.log(actionValueTuple.value) * actionValueTuple.value / base;
         }
-        return entropy;
+        return -entropy;
     }
 
     /**
-     * Adds state transition for action execution.
+     * Turns values into softmax distribution.
      *
-     * @param stateTransition state transition.
+     * @param stateValueSet state value set
+     * @return state value set softmax distributed.
      */
-    public void add(StateTransition stateTransition) {
+    private TreeSet<ActionValueTuple> softmax(TreeSet<ActionValueTuple> stateValueSet) {
+        double sum = 0;
+        TreeSet<ActionValueTuple> expStateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
+        for (ActionValueTuple actionValueTuple : stateValueSet) {
+            double value = Math.exp(actionValueTuple.value);
+            sum += value;
+            expStateValueSet.add(new ActionValueTuple(actionValueTuple.action, value));
+        }
+        TreeSet<ActionValueTuple> normalizedStateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
+        for (ActionValueTuple actionValueTuple : expStateValueSet) {
+            normalizedStateValueSet.add(new ActionValueTuple(actionValueTuple.action, actionValueTuple.value / sum));
+        }
+        return normalizedStateValueSet;
+    }
+
+    /**
+     * Adds state for action execution.
+     *
+     * @param state state.
+     */
+    public void add(State state) {
     }
 
     /**

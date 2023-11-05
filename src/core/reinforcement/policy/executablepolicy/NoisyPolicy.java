@@ -117,21 +117,4 @@ public class NoisyPolicy extends AbstractExecutablePolicy {
         return result;
     }
 
-    /**
-     * Applies value as double
-     *
-     * @param actionValueTuple action value tuple
-     * @return returned value
-     */
-    private static double applyAsDouble(ActionValueTuple actionValueTuple) {
-        return actionValueTuple.value();
-    }
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
-    }
-
 }

@@ -5,7 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.matrix.Matrix;
 
@@ -57,23 +57,17 @@ public interface ExecutablePolicy extends Configurable {
     int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy);
 
     /**
-     * Adds state transition for action execution.
+     * Adds state for action execution.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      */
-    void add(StateTransition stateTransition);
+    void add(State state);
 
     /**
      * Ends episode.
      *
      */
     void endEpisode();
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    void reset();
 
     /**
      * Returns executable policy type.

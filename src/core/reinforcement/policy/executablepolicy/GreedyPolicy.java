@@ -37,11 +37,10 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * Constructor for greedy policy.
      *
      * @param params parameters for Policy.
-     * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public GreedyPolicy(String params, String paramNameTypes) throws DynamicParamException {
-        super(ExecutablePolicyType.GREEDY, params, paramNameTypes);
+    public GreedyPolicy(String params) throws DynamicParamException {
+        super(ExecutablePolicyType.GREEDY, params, null);
     }
 
     /**
@@ -71,13 +70,6 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      */
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
-    }
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
     }
 
 }

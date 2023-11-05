@@ -5,6 +5,8 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import utils.configurable.DynamicParamException;
+
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -24,6 +26,16 @@ public class EntropyNoisyNextBestPolicy extends AbstractExecutablePolicy {
     }
 
     /**
+     * Constructor for entropy noisy next best policy.
+     *
+     * @param params parameters for Policy.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public EntropyNoisyNextBestPolicy(String params) throws DynamicParamException {
+        super(ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST, params, null);
+    }
+
+    /**
      * Increments policy.
      *
      */
@@ -39,13 +51,6 @@ public class EntropyNoisyNextBestPolicy extends AbstractExecutablePolicy {
     protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
         if (stateValueSet.size() > 1 && Math.random() < getActionEntropy(stateValueSet)) stateValueSet.pollLast();
         return stateValueSet.isEmpty() ? -1 : Objects.requireNonNull(stateValueSet.pollLast()).action();
-    }
-
-    /**
-     * Resets executable policy.
-     *
-     */
-    public void reset() {
     }
 
 }

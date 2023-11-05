@@ -33,13 +33,13 @@ public class ExecutablePolicyFactory implements Serializable {
      */
     public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException {
         return switch (executablePolicyType) {
-            case GREEDY -> new GreedyPolicy();
+            case GREEDY -> params == null ? new GreedyPolicy() : new GreedyPolicy(params);
             case EPSILON_GREEDY -> params == null ? new EpsilonGreedyPolicy() : new EpsilonGreedyPolicy(params);
             case NOISY_NEXT_BEST -> params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
             case SAMPLED -> params == null ? new SampledPolicy() : new SampledPolicy(params);
             case MCTS -> params == null ? new MCTSPolicy() : new MCTSPolicy(params);
-            case ENTROPY_GREEDY -> new EntropyGreedyPolicy();
-            case ENTROPY_NOISY_NEXT_BEST -> new EntropyNoisyNextBestPolicy();
+            case ENTROPY_GREEDY -> new EntropyGreedyPolicy(params);
+            case ENTROPY_NOISY_NEXT_BEST -> params == null ? new EntropyNoisyNextBestPolicy() : new EntropyNoisyNextBestPolicy(params);
             case MULTINOMIAL -> new MultinomialPolicy(params);
             case NOISY -> new NoisyPolicy(params);
         };
