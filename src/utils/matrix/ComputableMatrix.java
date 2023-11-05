@@ -952,4 +952,41 @@ public abstract class ComputableMatrix extends AbstractMatrix {
         return (int)Math.floor((Math.log10(value) / Math.log10(2) + 1));
     }
 
+    /**
+     * Samples random variable from gamma distribution.<br>
+     * Reference: <a href="https://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/">...</a>
+     *
+     * @param shape shape (alpha) parameter
+     * @param scale scale (beta) parameter
+     * @param random random function
+     * @return random variable from gamma distribution
+     */
+    public static double sampleGamma(double shape, double scale, Random random) {
+        if (shape > 1) {
+            double d = shape - 1 / (double)3;
+            double c = 1 / Math.sqrt(9 * d);
+            while (true) {
+                double gaussian = random.nextGaussian();
+                if (gaussian > - 1 / c) {
+                    double uniform = random.nextDouble();
+                    double V = Math.pow(1 + c * gaussian, 3);
+                    if (Math.log(uniform) < 0.5 * Math.pow(gaussian, 2) + d - d * V + d * Math.log(V)) return d * V / scale;
+                }
+            }
+        }
+        else return sampleGamma(shape + 1, scale, random) * Math.pow(random.nextDouble(), 1 / shape);
+    }
+
+    /**
+     * Clips value between minimum value and maximum value.
+     *
+     * @param value value
+     * @param minValue minimum value.
+     * @param maxValue maximum value.
+     * @return clipped value.
+     */
+    public static double clipValue(double value, double minValue, double maxValue) {
+        return (value < minValue) ? minValue : Math.min(value, maxValue);
+    }
+
 }
