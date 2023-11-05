@@ -352,18 +352,6 @@ public class TSP implements Environment, AgentFunctionEstimator {
     private final Tour tour;
 
     /**
-     * Episode ID
-     *
-     */
-    private int episodeID = 0;
-
-    /**
-     * Current time stamp of episode.
-     *
-     */
-    private int timeStamp = 0;
-
-    /**
      * State of travelling salesman problem. State contains time stamp of episode, coordinates of cities as state and available actions.<br>
      * If city has been marked with negative coordinates it means city has been already visited during journey.<br>
      *
@@ -435,7 +423,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             }
         }
 
-        environmentState = new EnvironmentState(episodeID, timeStamp, state, tour.getUnvisitedCities());
+        environmentState = new EnvironmentState(state, tour.getUnvisitedCities());
     }
 
     /**
@@ -763,12 +751,9 @@ public class TSP implements Environment, AgentFunctionEstimator {
     private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         resetRoute();
 
-        getAgent().newEpisode();
-        episodeID++;
-        timeStamp = 0;
+        getAgent().startEpisode();
         while (!isTerminalState()) {
-            timeStamp++;
-            getAgent().newStep();
+            getAgent().newTimeStep();
             getAgent().act();
         }
         getAgent().endEpisode();
@@ -829,7 +814,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
-                policyTypeParams = "initialExplorationNoise = 0.2, explorationNoiseDecay = 0.999, minExplorationNoise = 0";
+                policyTypeParams = "initialExplorationNoise = 0.2, explorationNoiseDecay = 0.99, minExplorationNoise = 0";
             }
             case 3 -> {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
@@ -839,7 +824,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
             case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
         }
-        boolean singleFunctionEstimator = true;
+        boolean singleFunctionEstimator = false;
 
         AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.MCTS;
         boolean onlineMemory = switch (agentAlgorithmType) {
@@ -847,13 +832,13 @@ public class TSP implements Environment, AgentFunctionEstimator {
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DQN, DDQN -> true;
+            case DQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
             case QN -> "agentUpdateCycle = 10";
-            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 2000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
+            case SACDiscrete -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 10000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -885,7 +870,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
         if (!policyGradient && applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
@@ -921,7 +906,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
@@ -951,7 +936,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        int historySize = 7;
+        int historySize = 3;
 
         boolean includeEncoder = false;
         int feedforwardLayerWidth = attentionOutputSize;
