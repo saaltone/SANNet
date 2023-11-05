@@ -10,9 +10,11 @@ import core.optimization.Optimizer;
 import core.optimization.OptimizerFactory;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
+import core.reinforcement.value.SoftQValueFunctionEstimator;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -57,16 +59,16 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     private final Matrix softQAlphaMatrix;
 
     /**
-     * Cumulative alpha loss gradient.
+     * Cumulative alpha loss.
      *
      */
-    private transient double alphaLossGradient = 0;
+    private transient double cumulativeAlphaLoss = 0;
 
     /**
-     * Update count for cumulative alpha loss gradient.
+     * Update count for cumulative alpha loss.
      *
      */
-    private transient int alphaLossGradientCount = 0;
+    private transient int alphaLossCount = 0;
 
     /**
      * Optimizer for alpha loss.
@@ -87,32 +89,38 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     private int softQAlphaVerboseCount = 0;
 
     /**
-     * Constructor for updateable soft Q policy.
+     * Soft Q value function estimator.
      *
-     * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
-     * @param softQAlphaMatrix reference to softQAlphaMatrix.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix) throws DynamicParamException, AgentException {
-        this(executablePolicyType, functionEstimator, softQAlphaMatrix, null);
-    }
+    private final SoftQValueFunctionEstimator softQValueFunctionEstimator;
 
     /**
      * Constructor for updateable soft Q policy.
      *
      * @param executablePolicyType executable policy type.
      * @param functionEstimator reference to function estimator.
-     * @param softQAlphaMatrix reference to softQAlphaMatrix.
-     * @param params parameters for updateable soft Q policy.
+     * @param softQValueFunctionEstimator reference to soft Q value function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Matrix softQAlphaMatrix, String params) throws DynamicParamException, AgentException {
+    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, SoftQValueFunctionEstimator softQValueFunctionEstimator) throws DynamicParamException, AgentException {
+        this(executablePolicyType, functionEstimator, null, softQValueFunctionEstimator);
+    }
+
+    /**
+     * Constructor for updateable soft Q policy.
+     *
+     * @param executablePolicyType executable policy type.
+     * @param functionEstimator    reference to function estimator.
+     * @param params               parameters for updateable soft Q policy.
+     * @param softQValueFunctionEstimator reference to soft Q value function estimator.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException        throws exception if state action value function is applied to non-updateable policy.
+     */
+    public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params, SoftQValueFunctionEstimator softQValueFunctionEstimator) throws DynamicParamException, AgentException {
         super(executablePolicyType, functionEstimator, params);
-        if (!softQAlphaMatrix.isScalar()) throw new AgentException("Soft Q Alpha matrix must be scalar matrix.");
-        this.softQAlphaMatrix = softQAlphaMatrix;
+        this.softQValueFunctionEstimator = softQValueFunctionEstimator;
+        this.softQAlphaMatrix = softQValueFunctionEstimator.getSoftQAlphaMatrix();
         this.softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
     }
 
@@ -156,6 +164,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     /**
      * Returns reference to policy.
      *
+     * @param valueFunctionEstimator value function estimator.
      * @return reference to policy.
      * @throws IOException throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
@@ -163,24 +172,42 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference() throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), new DMatrix(0), params);
+    public Policy reference(FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), params, softQValueFunctionEstimator);
     }
 
     /**
      * Returns reference to policy.
      *
+     * @param valueFunctionEstimator        value function estimator.
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedMemory if true shared memory is used between estimators.
+     * @param sharedMemory                  if true shared memory is used between estimators.
      * @return reference to policy.
-     * @throws IOException throws exception if copying of neural network fails.
+     * @throws IOException            throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), new DMatrix(0), params);
+    public Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), params, softQValueFunctionEstimator);
+    }
+
+    /**
+     * Returns reference to policy.
+     *
+     * @param valueFunctionEstimator        reference to value function estimator.
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param memory                  if true policy will use shared memory otherwise dedicated memory.
+     * @return reference to policy.
+     * @throws IOException            throws exception if copying of neural network fails.
+     * @throws ClassNotFoundException throws exception if copying of neural network fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
+     */
+    public Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
+        return new UpdateableSoftQPolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(memory), params, softQValueFunctionEstimator);
     }
 
     /**
@@ -219,26 +246,29 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     /**
      * Returns policy gradient value for update.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @return policy gradient value.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected double getPolicyValue(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
-        Matrix currentPolicyValues = getValues(getFunctionEstimator(), stateTransition, false);
-        if (isAutoSoftAlpha()) incrementPolicyValues(currentPolicyValues, stateTransition.action, stateTransition.environmentState.availableActions().size());
-        return getSoftAlpha() * Math.log(currentPolicyValues.getValue(stateTransition.action, 0, 0)) - stateTransition.tdTarget;
+    protected double getPolicyValue(State state) throws MatrixException, NeuralNetworkException {
+        if (isAutoSoftAlpha()) incrementPolicyValues(state);
+        return softQValueFunctionEstimator.getTargetValue(state) - getSoftAlpha() * Math.log(state.policyValue);
     }
 
     /**
      * Increments policy values.
      *
-     * @param policyValues policy values.
-     * @param action action.
+     * @param state state.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private void incrementPolicyValues(Matrix policyValues, int action, int actionsAvailable) {
-        alphaLossGradient += -Math.log(policyValues.getValue(action, 0, 0)) - 0.98 * Math.log(actionsAvailable);
-        alphaLossGradientCount++;
+    private void incrementPolicyValues(State state) throws MatrixException, NeuralNetworkException {
+        double stateEntropy = getValues(state).entropy();
+        if (!Double.isNaN(stateEntropy) && !Double.isInfinite(stateEntropy)) {
+            cumulativeAlphaLoss += stateEntropy;
+            alphaLossCount++;
+        }
     }
 
     /**
@@ -248,19 +278,19 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void updateAlpha() throws MatrixException, DynamicParamException {
-        if (alphaLossGradientCount == 0) return;
+        if (alphaLossCount == 0) return;
         // https://raw.githubusercontent.com/BY571/Deep-Reinforcement-Learning-Algorithm-Collection/master/ContinousControl/SAC.ipynb
         // self.target_entropy = -action_size  # -dim(A)
         // alpha_loss = - (self.log_alpha * (log_pis + self.target_entropy).detach()).mean()
-        softQAlphaMatrix.setValue(0,0, 0, softQAlpha);
-        optimizer.optimize(softQAlphaMatrix, new DMatrix(-alphaLossGradient / (double)alphaLossGradientCount));
+        optimizer.optimize(softQAlphaMatrix, new DMatrix(softQAlpha * cumulativeAlphaLoss / (double) alphaLossCount));
         softQAlpha = softQAlphaMatrix.getValue(0,0, 0);
+        cumulativeAlphaLoss = 0;
+        alphaLossCount = 0;
+
         if (++softQAlphaVerboseCount == softQAlphaVerboseInterval && softQAlphaVerboseInterval > 0) {
             System.out.println("Soft Q alpha: " + softQAlpha);
             softQAlphaVerboseCount = 0;
         }
-        alphaLossGradientCount = 0;
-        alphaLossGradient = 0;
     }
 
 }
