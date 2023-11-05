@@ -143,8 +143,11 @@ public class OutputLayer extends AbstractPlainLayer {
         if (targets == null || targets.isEmpty() || !training) return;
         loss = null;
         for (Map.Entry<Integer, Matrix> entry : targets.entrySet()) {
-            Matrix output = getLayerOutputs().get(entry.getKey());
-            Matrix currentLoss = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyFunction(output, entry.getValue());
+            int sampleIndex = entry.getKey();
+            Matrix output = getLayerOutputs().get(sampleIndex);
+            Matrix target = entry.getValue();
+            Matrix currentLoss = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyFunction(output, target);
+            if (importanceSamplingWeights != null) currentLoss.multiplyBy(importanceSamplingWeights.get(sampleIndex));
             loss = loss == null ? currentLoss : loss.add(currentLoss);
         }
         loss = LossFunction.getMeanError(loss, targets.totalSize());
@@ -171,9 +174,10 @@ public class OutputLayer extends AbstractPlainLayer {
         for (Map.Entry<Integer, Matrix> entry : targets.entrySet()) {
             int sampleIndex = entry.getKey();
             Matrix output = getLayerOutputs().get(sampleIndex);
-            Matrix lossGradient = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyGradient(output, entry.getValue());
-            if (importanceSamplingWeights != null) lossGradient.multiplyBy(importanceSamplingWeights.get(0));
-            lossGradients.put(sampleIndex, lossGradient);
+            Matrix target = entry.getValue();
+            Matrix currentLossGradient = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyGradient(output, target);
+            if (importanceSamplingWeights != null) currentLossGradient.multiplyBy(importanceSamplingWeights.get(sampleIndex));
+            lossGradients.put(sampleIndex, currentLossGradient);
         }
         getDefaultLayerInputGradient().increment(lossGradients);
     }
