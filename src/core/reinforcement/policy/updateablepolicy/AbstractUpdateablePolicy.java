@@ -8,10 +8,9 @@ package core.reinforcement.policy.updateablepolicy;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.AbstractPolicy;
-import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParamException;
@@ -87,24 +86,11 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     }
 
     /**
-     * Takes action by applying defined executable policy.
-     *
-     * @param stateTransition state transition.
-     * @param alwaysGreedy if true greedy action is always taken.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    public void act(StateTransition stateTransition, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
-        super.act(stateTransition, alwaysGreedy);
-        if (isLearning()) executablePolicy.add(stateTransition);
-    }
-
-    /**
      * Ends episode
      *
      */
     public void endEpisode() {
-        executablePolicy.endEpisode();
+        getExecutablePolicy().endEpisode();
     }
 
     /**
@@ -137,13 +123,14 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        TreeSet<StateTransition> sampledStateTransitions = getFunctionEstimator().getSampledStateTransitions();
-        if (sampledStateTransitions == null || sampledStateTransitions.isEmpty()) {
+        TreeSet<State> sampledStates = getFunctionEstimator().getSampledStates();
+        if (sampledStates == null || sampledStates.isEmpty()) {
             getFunctionEstimator().abortUpdate();
             return;
         }
 
-        for (StateTransition stateTransition : sampledStateTransitions) getFunctionEstimator().storePolicyValues(stateTransition, getPolicyValues(stateTransition));
+        for (State state : sampledStates) getFunctionEstimator().storePolicyValues(state, getPolicyValues(state));
+
         postProcess();
 
         getFunctionEstimator().update();
@@ -152,55 +139,33 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     /**
      * Returns policy values.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @return policy values.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private Matrix getPolicyValues(StateTransition stateTransition) throws MatrixException, NeuralNetworkException {
+    private Matrix getPolicyValues(State state) throws MatrixException, NeuralNetworkException {
         Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
-        policyValues.setValue(stateTransition.action, 0, 0, getPolicyValue(stateTransition));
+        policyValues.setValue(state.action, 0, 0, getPolicyValue(state));
         return policyValues;
     }
 
     /**
-     * Returns policy value for state transition.
+     * Returns policy value for state.
      *
-     * @param stateTransition state transition.
+     * @param state state.
      * @return policy gradient value for sample.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected abstract double getPolicyValue(StateTransition stateTransition) throws NeuralNetworkException, MatrixException;
+    protected abstract double getPolicyValue(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Postprocesses policy gradient update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    protected void postProcess() throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-    }
-
-    /**
-     * Appends parameters to this policy from another policy.
-     *
-     * @param policy policy used to update current policy.
-     * @param tau tau which controls contribution of other policy.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void append(Policy policy, double tau) throws MatrixException, AgentException, NeuralNetworkException, IOException, DynamicParamException, ClassNotFoundException {
-        functionEstimator.append(policy.getFunctionEstimator(), tau);
-        getExecutablePolicy().reset();
+    protected void postProcess() throws MatrixException {
     }
 
 }
