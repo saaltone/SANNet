@@ -5,7 +5,7 @@
 
 package core.reinforcement.memory;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 
@@ -45,12 +45,6 @@ public class PriorityMemory implements Memory, Serializable {
             "(proportionalPrioritization:BOOLEAN), " +
             "(applyImportanceSamplingWeights:BOOLEAN), " +
             "(applyUniformSampling:BOOLEAN)";
-
-    /**
-     * Parameters for memory.
-     *
-     */
-    private final String params;
 
     /**
      * Random number generator.
@@ -113,10 +107,10 @@ public class PriorityMemory implements Memory, Serializable {
     private boolean applyUniformSampling;
 
     /**
-     * Sampled state transitions.
+     * Sampled states.
      *
      */
-    private TreeSet<StateTransition> sampledStateTransitions;
+    private TreeSet<State> sampledStates;
 
     /**
      * Default constructor for prioritized replay memory.
@@ -124,20 +118,30 @@ public class PriorityMemory implements Memory, Serializable {
      */
     public PriorityMemory() {
         initializeDefaultParams();
-        this.params = null;
         searchTree = new SumTree(capacity);
     }
 
     /**
-     * Default constructor for prioritized replay memory.
+     * Constructor for priority memory.
      *
-     * @param params parameters for memory
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param capacity capacity
+     * @param batchSize batch size
+     * @param alpha alpha
+     * @param beta beta
+     * @param betaStepSize beta step size
+     * @param proportionalPrioritization if true proportional prioritization if applied otherwise uniform sampling is applied.
+     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
+     * @param applyUniformSampling if true uniform sampling is applied.
      */
-    public PriorityMemory(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    private PriorityMemory(int capacity, int batchSize, double alpha, double beta, double betaStepSize, boolean proportionalPrioritization, boolean applyImportanceSamplingWeights, boolean applyUniformSampling) {
+        this.capacity = capacity;
+        this.batchSize = batchSize;
+        this.alpha = alpha;
+        this.beta = beta;
+        this.betaStepSize = betaStepSize;
+        this.proportionalPrioritization = proportionalPrioritization;
+        this.applyImportanceSamplingWeights = applyImportanceSamplingWeights;
+        this.applyUniformSampling = applyUniformSampling;
         searchTree = new SumTree(capacity);
     }
 
@@ -154,15 +158,6 @@ public class PriorityMemory implements Memory, Serializable {
         proportionalPrioritization = true;
         applyImportanceSamplingWeights = true;
         applyUniformSampling = false;
-    }
-
-    /**
-     * Returns parameters of memory.
-     *
-     * @return parameters for memory.
-     */
-    protected String getParams() {
-        return params;
     }
 
     /**
@@ -206,39 +201,38 @@ public class PriorityMemory implements Memory, Serializable {
      * Returns reference to memory.
      *
      * @return reference to memory.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Memory reference() throws DynamicParamException {
-        return new PriorityMemory(getParams());
+    public Memory reference() {
+        return new PriorityMemory(capacity, batchSize, alpha, beta, betaStepSize, proportionalPrioritization, applyImportanceSamplingWeights, applyUniformSampling);
     }
 
     /**
      * Adds sample into prioritized replay memory. Removes old ones exceeding memory capacity by FIFO principle.
      *
-     * @param stateTransition state transition to be stored.
+     * @param state state to be stored.
      */
-    public void add(StateTransition stateTransition) {
-        searchTree.add(stateTransition);
+    public void add(State state) {
+        searchTree.add(state);
     }
 
     /**
-     * Updates state transition in search tree with new error value.
+     * Updates state in search tree with new error value.
      *
-     * @param stateTransition state transition to be updated.
+     * @param state state to be updated.
      */
-    private void update(StateTransition stateTransition) {
+    private void update(State state) {
         final double epsilon = 10E-8;
-        stateTransition.priority = Math.pow(Math.abs(stateTransition.tdError) + epsilon, alpha);
-        searchTree.update(stateTransition);
+        state.priority = Math.pow(Math.abs(state.tdError) + epsilon, alpha);
+        searchTree.update(state);
     }
 
     /**
-     * Updates state transitions in prioritized replay memory with new error values.
+     * Updates states in prioritized replay memory with new error values.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      */
-    public void update(TreeSet<StateTransition> stateTransitions) {
-        for (StateTransition stateTransition : stateTransitions) update(stateTransition);
+    public void update(TreeSet<State> states) {
+        for (State state : states) update(state);
     }
 
     /**
@@ -246,7 +240,7 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public void reset() {
-        sampledStateTransitions = null;
+        sampledStates = null;
     }
 
     /**
@@ -254,38 +248,39 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public void sample() {
-        sampledStateTransitions = new TreeSet<>();
+        sampledStates = new TreeSet<>();
         if (!applyUniformSampling) {
             final double totalPriority = searchTree.getTotalPriority();
             final double segment = totalPriority / (double)batchSize;
             beta = Math.min(beta + betaStepSize, 1);
-            double maxWeight = Double.NEGATIVE_INFINITY;
+            double maxWeight = Double.MIN_VALUE;
             for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
-                double prioritySum = proportionalPrioritization ? segment * (random.nextDouble() + (double)sampleIndex) : (totalPriority - 10E-8) * random.nextDouble() + 10E-8;
-                StateTransition stateTransition = searchTree.getStateTransition(prioritySum);
-                if (stateTransition != null) {
-                    sampledStateTransitions.add(stateTransition);
-                    maxWeight = Math.max(stateTransition.importanceSamplingWeight = Math.pow(1 / prioritySum, beta), maxWeight);
+                double prioritySum = proportionalPrioritization ? segment * random.nextDouble() + (double)sampleIndex : (totalPriority - 10E-8) * random.nextDouble() + 10E-8;
+                State state = searchTree.getState(prioritySum);
+                if (state != null) {
+                    sampledStates.add(state);
+                    double weight = state.importanceSamplingWeight = Math.pow(1 / prioritySum, beta);
+                    maxWeight = maxWeight == Double.MIN_VALUE ? weight : Math.max(weight, maxWeight);
                 }
             }
-            for (StateTransition stateTransition : sampledStateTransitions) stateTransition.importanceSamplingWeight /= maxWeight;
+            for (State state : sampledStates) state.importanceSamplingWeight /= maxWeight;
         }
         else {
             if (searchTree.size() > 0) {
                 for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
-                    sampledStateTransitions.add(searchTree.getRandomStateTransition());
+                    sampledStates.add(searchTree.getRandomState());
                 }
             }
         }
     }
 
     /**
-     * Returns defined number of state transitions from prioritized replay memory. Applies priority sampling.
+     * Returns defined number of states from prioritized replay memory. Applies priority sampling.
      *
-     * @return retrieved state transitions.
+     * @return retrieved states.
      */
-    public TreeSet<StateTransition> getSampledStateTransitions() {
-        return sampledStateTransitions;
+    public TreeSet<State> getSampledStates() {
+        return sampledStates;
     }
 
     /**

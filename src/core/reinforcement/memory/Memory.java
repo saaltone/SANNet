@@ -5,9 +5,8 @@
 
 package core.reinforcement.memory;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
-import utils.configurable.DynamicParamException;
 
 import java.util.TreeSet;
 
@@ -21,23 +20,22 @@ public interface Memory extends Configurable {
      * Returns reference to memory.
      *
      * @return reference to memory.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Memory reference() throws DynamicParamException;
+    Memory reference();
 
     /**
-     * Adds state transition into memory.
+     * Adds state into memory.
      *
-     * @param stateTransition sample to be stored.
+     * @param state sample to be stored.
      */
-    void add(StateTransition stateTransition);
+    void add(State state);
 
     /**
-     * Updates state transitions in memory with new error values.
+     * Updates states in memory with new error values.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      */
-    void update(TreeSet<StateTransition> stateTransitions);
+    void update(TreeSet<State> states);
 
     /**
      * Resets memory.
@@ -52,11 +50,11 @@ public interface Memory extends Configurable {
     void sample();
 
     /**
-     * Samples defined number of state transitions from memory.
+     * Samples defined number of states from memory.
      *
-     * @return retrieved state transitions.
+     * @return retrieved states.
      */
-    TreeSet<StateTransition> getSampledStateTransitions();
+    TreeSet<State> getSampledStates();
 
     /**
      * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.

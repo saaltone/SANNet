@@ -5,7 +5,7 @@
 
 package core.reinforcement.memory;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 
 /**
  * Interface for search tree.
@@ -14,7 +14,7 @@ import core.reinforcement.agent.StateTransition;
 public interface SearchTree {
 
     /**
-     * Current size of search tree i.e. number of state transitions stored.
+     * Current size of search tree i.e. number of states stored.
      *
      * @return size of search tree.
      */
@@ -28,33 +28,33 @@ public interface SearchTree {
     double getTotalPriority();
 
     /**
-     * Adds state transition in search tree at the location of current node and shifts current node one forward.
-     * Updates total priority of search tree according to priority of added state transition.
+     * Adds state in search tree at the location of current node and shifts current node one forward.
+     * Updates total priority of search tree according to priority of added state.
      *
-     * @param stateTransition state transition to be added.
+     * @param state state to be added.
      */
-    void add(StateTransition stateTransition);
+    void add(State state);
 
     /**
-     * Updates priority of state transition and entire search tree.
+     * Updates priority of state and entire search tree.
      *
-     * @param stateTransition state transition to be updated.
+     * @param state state to be updated.
      */
-    void update(StateTransition stateTransition);
+    void update(State state);
 
     /**
-     * Returns state transition by priority sum.
+     * Returns state by priority sum.
      *
      * @param prioritySum priority sum.
-     * @return state transition according to priority sum.
+     * @return state according to priority sum.
      */
-    StateTransition getStateTransition(double prioritySum);
+    State getState(double prioritySum);
 
     /**
-     * Returns random state transition.
+     * Returns random state.
      *
-     * @return random state transition.
+     * @return random state.
      */
-    StateTransition getRandomStateTransition();
+    State getRandomState();
 
 }

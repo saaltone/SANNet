@@ -5,7 +5,7 @@
 
 package core.reinforcement.memory;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * Implements sum tree using search tree interface.<br>
  * Links leaf nodes together as forward cycled list.<br>
- * Stores mapping of state transition and each leaf node containing respective state transition.<br>
+ * Stores mapping of state and each leaf node containing respective state.<br>
  * <br>
  * Reference: https://www.endtoend.ai/deep-rl-seminar/2#prioritized-experience-replay
  * Reference: https://github.com/jaromiru/AI-blog/blob/master/SumTree.py
@@ -57,10 +57,10 @@ public class SumTree implements SearchTree, Serializable {
         private Node rightNode;
 
         /**
-         * State transition stored in leaf node.
+         * State stored in leaf node.
          *
          */
-        private StateTransition stateTransition;
+        private State state;
 
         /**
          * Next leaf node in forward traversing order. Last node is linked back to first node creating cyclical traversal.
@@ -210,21 +210,21 @@ public class SumTree implements SearchTree, Serializable {
         }
 
         /**
-         * Set state transition to node.
+         * Set state to node.
          *
-         * @param stateTransition state transition to node.
+         * @param state state to node.
          */
-        void setStateTransition(StateTransition stateTransition) {
-            this.stateTransition = stateTransition;
+        void setState(State state) {
+            this.state = state;
         }
 
         /**
-         * Returns state transition of node.
+         * Returns state of node.
          *
-         * @return state transition of node.
+         * @return state of node.
          */
-        StateTransition getStateTransition() {
-            return stateTransition;
+        State getState() {
+            return state;
         }
 
         /**
@@ -247,13 +247,13 @@ public class SumTree implements SearchTree, Serializable {
         }
 
         /**
-         * Retrieves state transition by priority sum. Traverses sum tree down until leaf node matching priority and containing state transition is found.
+         * Retrieves state by priority sum. Traverses sum tree down until leaf node matching priority and containing state is found.
          *
          * @param prioritySum priority sum.
-         * @return state state transition corresponding priority sum.
+         * @return state state corresponding priority sum.
          */
-        StateTransition getStateTransition(double prioritySum) {
-            return !hasLeftNode() ? getStateTransition() : prioritySum <= getLeftNode().getPrioritySum() ? getLeftNode().getStateTransition(prioritySum) : !hasRightNode() ? getStateTransition() : getRightNode().getStateTransition(prioritySum - getLeftNode().getPrioritySum());
+        State getState(double prioritySum) {
+            return !hasLeftNode() ? getState() : prioritySum <= getLeftNode().getPrioritySum() ? getLeftNode().getState(prioritySum) : !hasRightNode() ? getState() : getRightNode().getState(prioritySum - getLeftNode().getPrioritySum());
         }
 
     }
@@ -265,10 +265,10 @@ public class SumTree implements SearchTree, Serializable {
     private final int capacity;
 
     /**
-     * Map that links state transition store in sum tree to respective leaf node.
+     * Map that links state store in sum tree to respective leaf node.
      *
      */
-    private final HashMap<StateTransition, Node> stateTransitionNodeHashMap = new HashMap<>();
+    private final HashMap<State, Node> stateNodeHashMap = new HashMap<>();
 
     /**
      * Root node of sum tree.
@@ -277,7 +277,7 @@ public class SumTree implements SearchTree, Serializable {
     private final Node rootNode;
 
     /**
-     * Current leaf node of sum tree where new state transition is to be added.
+     * Current leaf node of sum tree where new state is to be added.
      *
      */
     private Node currentLeafNode;
@@ -355,12 +355,12 @@ public class SumTree implements SearchTree, Serializable {
     }
 
     /**
-     * Current size of sum tree i.e. number of state transitions stored.
+     * Current size of sum tree i.e. number of states stored.
      *
      * @return size of sum tree.
      */
     public int size() {
-        return stateTransitionNodeHashMap.size();
+        return stateNodeHashMap.size();
     }
 
     /**
@@ -382,49 +382,49 @@ public class SumTree implements SearchTree, Serializable {
     }
 
     /**
-     * Adds state transition in sum tree at the location of current node and shifts current node one forward.
-     * Updates total priority of sum tree according to priority of added state transition.
+     * Adds state in sum tree at the location of current node and shifts current node one forward.
+     * Updates total priority of sum tree according to priority of added state.
      *
-     * @param stateTransition state transition to be added.
+     * @param state state to be added.
      */
-    public void add(StateTransition stateTransition) {
-        if (currentLeafNode.getStateTransition() != null) currentLeafNode.getStateTransition().removePreviousStateTransition();
-        stateTransitionNodeHashMap.remove(currentLeafNode.getStateTransition());
+    public void add(State state) {
+        if (currentLeafNode.getState() != null) currentLeafNode.getState().removePreviousState();
+        stateNodeHashMap.remove(currentLeafNode.getState());
         if (leafNodes.size() < capacity()) leafNodes.add(currentLeafNode);
-        currentLeafNode.setStateTransition(stateTransition);
-        stateTransitionNodeHashMap.put(stateTransition, currentLeafNode);
-        stateTransition.priority = maxPriority = Math.max(maxPriority, stateTransition.priority);
+        currentLeafNode.setState(state);
+        stateNodeHashMap.put(state, currentLeafNode);
+        state.priority = maxPriority = Math.max(maxPriority, state.priority);
         currentLeafNode.updatePrioritySum(maxPriority);
         currentLeafNode = currentLeafNode.getNextLeafNode();
     }
 
     /**
-     * Updates priority of state transition and entire sum tree.
+     * Updates priority of state and entire sum tree.
      *
-     * @param stateTransition state transition to be updated.
+     * @param state state to be updated.
      */
-    public void update(StateTransition stateTransition) {
-        maxPriority = Math.max(maxPriority, stateTransition.priority);
-        stateTransitionNodeHashMap.get(stateTransition).updatePrioritySum(stateTransition.priority);
+    public void update(State state) {
+        maxPriority = Math.max(maxPriority, state.priority);
+        stateNodeHashMap.get(state).updatePrioritySum(state.priority);
     }
 
     /**
-     * Returns state transition by priority sum.
+     * Returns state by priority sum.
      *
      * @param prioritySum priority sum.
-     * @return state transition according to priority sum.
+     * @return state according to priority sum.
      */
-    public StateTransition getStateTransition(double prioritySum) {
-        return rootNode.getStateTransition(prioritySum);
+    public State getState(double prioritySum) {
+        return rootNode.getState(prioritySum);
     }
 
     /**
-     * Returns random state transition.
+     * Returns random state.
      *
-     * @return random state transition.
+     * @return random state.
      */
-    public StateTransition getRandomStateTransition() {
-        return leafNodes.get(random.nextInt(leafNodes.size())).getStateTransition();
+    public State getRandomState() {
+        return leafNodes.get(random.nextInt(leafNodes.size())).getState();
     }
 
 }

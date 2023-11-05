@@ -5,7 +5,7 @@
 
 package core.reinforcement.memory;
 
-import core.reinforcement.agent.StateTransition;
+import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 
@@ -30,28 +30,22 @@ public class OnlineMemory implements Memory, Serializable {
     private final static String paramNameTypes = "(capacity:INT)";
 
     /**
-     * Parameters for memory.
-     *
-     */
-    private final String params;
-
-    /**
      * Capacity of online memory.
      *
      */
     private int capacity;
 
     /**
-     * Tree set of state transitions in online memory.
+     * Tree set of states in online memory.
      *
      */
-    private final TreeSet<StateTransition> stateTransitionSet = new TreeSet<>();
+    private final TreeSet<State> stateSet = new TreeSet<>();
 
     /**
-     * Sampled state transitions.
+     * Sampled states.
      *
      */
-    private TreeSet<StateTransition> sampledStateTransitions;
+    private TreeSet<State> sampledStates;
 
     /**
      * Default constructor for online memory.
@@ -59,19 +53,15 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public OnlineMemory() {
         initializeDefaultParams();
-        params = null;
     }
 
     /**
-     * Default constructor for online memory.
+     * Constructor for online memory.
      *
-     * @param params parameters for memory
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param capacity capacity.
      */
-    public OnlineMemory(String params) throws DynamicParamException {
-        initializeDefaultParams();
-        this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
+    private OnlineMemory(int capacity) {
+        this.capacity = capacity;
     }
 
     /**
@@ -80,15 +70,6 @@ public class OnlineMemory implements Memory, Serializable {
      */
     public void initializeDefaultParams() {
         capacity = 0;
-    }
-
-    /**
-     * Returns parameters of memory.
-     *
-     * @return parameters for memory.
-     */
-    protected String getParams() {
-        return params;
     }
 
     /**
@@ -117,31 +98,30 @@ public class OnlineMemory implements Memory, Serializable {
      * Returns reference to memory.
      *
      * @return reference to memory.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Memory reference() throws DynamicParamException {
-        return new OnlineMemory(getParams());
+    public Memory reference() {
+        return new OnlineMemory(capacity);
     }
 
     /**
-     * Adds state transition into online memory. Removes old ones exceeding memory capacity by FIFO principle.
+     * Adds state into online memory. Removes old ones exceeding memory capacity by FIFO principle.
      *
-     * @param stateTransition state transition to be stored.
+     * @param state state to be stored.
      */
-    public void add(StateTransition stateTransition) {
-        if (stateTransitionSet.size() >= capacity && capacity > 0) {
-            StateTransition removedStateTransition = stateTransitionSet.pollFirst();
-            if (removedStateTransition != null) removedStateTransition.removePreviousStateTransition();
+    public void add(State state) {
+        if (stateSet.size() >= capacity && capacity > 0) {
+            State removedState = stateSet.pollFirst();
+            if (removedState != null) removedState.removePreviousState();
         }
-        stateTransitionSet.add(stateTransition);
+        stateSet.add(state);
     }
 
     /**
-     * Updates state transitions in online memory with new error values.
+     * Updates states in online memory with new error values.
      *
-     * @param stateTransitions state transitions.
+     * @param states states.
      */
-    public void update(TreeSet<StateTransition> stateTransitions) {
+    public void update(TreeSet<State> states) {
     }
 
     /**
@@ -149,8 +129,8 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     public void reset() {
-        sampledStateTransitions = null;
-        stateTransitionSet.clear();
+        sampledStates = null;
+        stateSet.clear();
     }
 
     /**
@@ -158,17 +138,17 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     public void sample() {
-        sampledStateTransitions = new TreeSet<>(stateTransitionSet);
-        stateTransitionSet.clear();
+        sampledStates = new TreeSet<>(stateSet);
+        stateSet.clear();
     }
 
     /**
-     * Samples defined number of state transitions from online memory.
+     * Samples defined number of states from online memory.
      *
-     * @return retrieved state transitions.
+     * @return retrieved states.
      */
-    public TreeSet<StateTransition> getSampledStateTransitions() {
-        return sampledStateTransitions;
+    public TreeSet<State> getSampledStates() {
+        return sampledStates;
     }
 
     /**
