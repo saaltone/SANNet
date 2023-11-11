@@ -50,7 +50,7 @@ public class LayerFactory {
         return switch (layerType) {
             case FEEDFORWARD -> new FeedforwardLayer(layerIndex, activationFunction, initialization, params);
             case DENSE -> new DenseLayer(layerIndex, initialization, params);
-            case DUELING -> new DuelingLayer(layerIndex, activationFunction, initialization, params);
+            case DUELING -> new DuelingLayer(layerIndex, initialization, params);
             case ACTIVATION -> new ActivationLayer(layerIndex, activationFunction, params);
             case FLATTEN -> new FlattenLayer(layerIndex, params);
             case RECURRENT -> new RecurrentLayer(layerIndex, activationFunction, initialization, params);
