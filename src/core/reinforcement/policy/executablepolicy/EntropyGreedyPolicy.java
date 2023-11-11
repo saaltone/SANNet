@@ -20,10 +20,10 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
 
     /**
      * Parameter name types for entropy greedy policy.
-     *     - entropyFactory: factor for controlling randomness of policy. Default value 0.3.<br>
+     *     - entropyFactor: factor for controlling randomness of policy. Default value 0.3.<br>
      *
      */
-    private final static String paramNameTypes = "(entropyFactory:DOUBLE)";
+    private final static String paramNameTypes = "(entropyFactor:DOUBLE)";
 
     /**
      * Random function for entropy greedy policy.
