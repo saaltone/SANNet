@@ -347,7 +347,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
                 for (Integer actionID : availableActions) {
                     MCTSAction MCTSAction = stateMCTSActions.get(actionID);
                     double currentValue = MCTSAction.getPolicyValue();
-                    if (maxValue < currentValue) {
+                    if (maxValue == Double.MIN_VALUE || maxValue < currentValue) {
                         maxValue = currentValue;
                         maxMCTSAction = MCTSAction;
                     }
@@ -359,7 +359,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
                 for (Integer actionID : availableActions) {
                     MCTSAction MCTSAction = stateMCTSActions.get(actionID);
                     double currentValue = MCTSAction.getPUCT(dirichletDistribution.get(MCTSAction.actionID), epsilon);
-                    if (maxValue < currentValue) {
+                    if (maxValue == Double.MIN_VALUE || maxValue < currentValue) {
                         maxValue = currentValue;
                         maxMCTSAction = MCTSAction;
                     }
@@ -610,7 +610,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      */
     public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
         updateState();
-        return currentMCTSState.act(policyValueMatrix, availableActions, alwaysGreedy);
+        return currentMCTSState.act(policyValueMatrix, availableActions, !isLearning() || alwaysGreedy);
     }
 
     /**
