@@ -283,12 +283,6 @@ public class SumTree implements SearchTree, Serializable {
     private Node currentLeafNode;
 
     /**
-     * List of leaf nodes.
-     *
-     */
-    private final ArrayList<Node> leafNodes = new ArrayList<>();
-
-    /**
      * Current maximum priority of leaf nodes. Used for newly added sample as default priority.
      *
      */
@@ -390,7 +384,6 @@ public class SumTree implements SearchTree, Serializable {
     public void add(State state) {
         if (currentLeafNode.getState() != null) currentLeafNode.getState().removePreviousState();
         stateNodeHashMap.remove(currentLeafNode.getState());
-        if (leafNodes.size() < capacity()) leafNodes.add(currentLeafNode);
         currentLeafNode.setState(state);
         stateNodeHashMap.put(state, currentLeafNode);
         state.priority = maxPriority = Math.max(maxPriority, state.priority);
@@ -424,7 +417,7 @@ public class SumTree implements SearchTree, Serializable {
      * @return random state.
      */
     public State getRandomState() {
-        return leafNodes.get(random.nextInt(leafNodes.size())).getState();
+        return size() == 0 ? null : getState(random.nextDouble() * getTotalPriority());
     }
 
 }
