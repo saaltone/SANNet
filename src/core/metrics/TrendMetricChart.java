@@ -266,7 +266,7 @@ public class TrendMetricChart extends JFrame implements Serializable {
      */
     private void drawYAxis(Graphics g) throws MatrixException {
         double maxError = Double.MIN_VALUE;
-        for (Map.Entry<Integer, Matrix> entry : errors.entrySet()) maxError = Math.max(maxError, entry.getValue().mean());
+        for (Map.Entry<Integer, Matrix> entry : errors.entrySet()) maxError = maxError == Double.MIN_VALUE ? entry.getValue().mean() : Math.max(maxError, entry.getValue().mean());
 
         factor = 0;
         double tempMaxError = maxError;
