@@ -56,6 +56,9 @@ public class DotMatrixOperation extends AbstractMatrixOperation {
     public Matrix apply(Matrix first, Matrix second) throws MatrixException {
         this.first = first;
         this.second = second;
+        if (first.getColumns() != second.getRows() || first.getDepth() != second.getDepth()) {
+            throw new MatrixException("Incompatible matrix sizes: " + first.getRows() + "x" + first.getColumns() + "x" + first.getDepth() + " by " + second.getRows() + "x" + second.getColumns() + "x" + second.getDepth());
+        }
         return applyMatrixOperation(first, second, first.getNewMatrix(first.getRows(), second.getColumns(), getDepth()));
     }
 
