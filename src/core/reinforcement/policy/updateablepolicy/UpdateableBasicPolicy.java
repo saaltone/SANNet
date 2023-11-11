@@ -110,7 +110,7 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(State state) {
-        return Math.log(state.policyValue) * state.advantage;
+        return Math.log(state.policyValue) * state.tdError;
     }
 
 }
