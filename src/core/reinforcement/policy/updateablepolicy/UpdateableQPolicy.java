@@ -117,8 +117,7 @@ public class UpdateableQPolicy extends AbstractUpdateablePolicy {
      * @return policy gradient value.
      */
     protected double getPolicyValue(State state) throws MatrixException, NeuralNetworkException {
-        int action = getFunctionEstimator().predictTargetPolicyValues(state).argmax()[0];
-        return valueFunctionEstimator.predictStateActionValues(state).getValue(action, 0, 0);
+        return -valueFunctionEstimator.predictStateActionValues(state).getValue(getFunctionEstimator().predictTargetPolicyValues(state).argmax()[0], 0, 0);
     }
 
 }
