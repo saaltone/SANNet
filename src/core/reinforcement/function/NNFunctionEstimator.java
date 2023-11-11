@@ -31,7 +31,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Parameter name types for neural network based function estimator.
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
-     *     - targetFunctionTau: update rate of target function. Default value 0.1.<br>
+     *     - targetFunctionTau: update rate of target function. Default value 0.001.<br>
      *
      */
     private final static String paramNameTypes = "(numberOfIterations:INT), " +
@@ -174,7 +174,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     public void initializeDefaultParams() {
         numberOfIterations = 1;
         targetFunctionUpdateCycle = 0;
-        targetFunctionTau = 0.1;
+        targetFunctionTau = 0.001;
     }
 
     /**
@@ -192,7 +192,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Supported parameters are:<br>
      *     - numberOfIterations: number of training or validation iterations executed during step. Default value 1.<br>
      *     - targetFunctionUpdateCycle; target function update cycle. Default value 0 (smooth update).<br>
-     *     - targetFunctionTau: update rate of target function. Default value 0.1.<br>
+     *     - targetFunctionTau: update rate of target function. Default value 0.001.<br>
      *
      * @param params parameters used for neural network based function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
