@@ -33,6 +33,9 @@ public class EqualMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public void apply(Matrix first, Matrix result) throws MatrixException {
+        if (result.getRows() != getRows() || result.getColumns() != getColumns() || result.getDepth() != getDepth()) {
+            throw new MatrixException("Incompatible result matrix size: " + result.getRows() + "x" + result.getColumns() + "x" + result.getDepth());
+        }
         applyMatrixOperation(first, null, result);
     }
 
