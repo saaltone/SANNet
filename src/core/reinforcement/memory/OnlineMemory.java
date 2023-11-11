@@ -138,6 +138,7 @@ public class OnlineMemory implements Memory, Serializable {
      *
      */
     public void sample() {
+        if (sampledStates != null) return;
         sampledStates = new TreeSet<>(stateSet);
         stateSet.clear();
     }
