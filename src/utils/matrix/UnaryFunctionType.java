@@ -102,6 +102,12 @@ public enum UnaryFunctionType {
     TANH,
 
     /**
+     * Scaled Hyperbolic tangent
+     *
+     */
+    STANH,
+
+    /**
      * Linear
      *
      */

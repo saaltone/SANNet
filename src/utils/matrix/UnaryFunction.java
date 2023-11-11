@@ -216,6 +216,10 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::tanh;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 - Math.pow(Math.tanh(value), 2);
             }
+            case STANH -> {
+                function = (Matrix.MatrixUnaryOperation & Serializable)  (value) -> (1 + Math.tanh(value)) / 2;
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.pow(1 / Math.cosh(value), 2) / 2;
+            }
             case LINEAR -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
