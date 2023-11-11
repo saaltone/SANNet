@@ -7,6 +7,7 @@ package core.reinforcement.policy;
 
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
+import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -14,6 +15,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
 /**
  * Implements actionable policy.<br>
@@ -128,10 +130,18 @@ public class ActionablePolicy extends AbstractPolicy {
     }
 
     /**
-     * Updates policy.
+     * Updates function estimator.
      *
      */
     public void updateFunctionEstimator() {
+    }
+
+    /**
+     * Updates function estimator.
+     *
+     * @param sampledStates sampled states.
+     */
+    public void updateFunctionEstimator(TreeSet<State> sampledStates) {
     }
 
     /**
