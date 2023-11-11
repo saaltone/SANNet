@@ -1914,49 +1914,14 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     /**
      * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
      *
-     * @param position position of split
+     * @param splitAt split at position
      * @param splitVertically if true splits vertically otherwise horizontally.
      * @return split matrix as JMatrix.
      * @throws MatrixException throws matrix exception if splitting fails.
      *
      */
-    public Matrix split(int position, boolean splitVertically) throws MatrixException {
-        if (!((this instanceof DMatrix) || (this instanceof SMatrix))) throw new MatrixException("Matrix must be of type DMatrix or SMatrix");
-        Matrix matrix1;
-        Matrix matrix2;
-        int rows = getTotalRows();
-        int columns = getTotalColumns();
-        int totalDepth = getTotalDepth();
-        if (splitVertically) {
-            if (position < 1 || position > rows - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(position, columns, totalDepth);
-            matrix2 = getNewMatrix(rows - matrix1.getTotalRows(), columns, totalDepth);
-            for (int depth = 0; depth < totalDepth; depth++) {
-                for (int row = 0; row < rows; row++) {
-                    for (int column = 0; column < columns; column++) {
-                        if (row < position) matrix1.setValue(row, column, depth, getValue(row, column, depth));
-                        else matrix2.setValue(row - position, column, depth, getValue(row, column, depth));
-                    }
-                }
-            }
-        }
-        else {
-            if (position < 1 || position > columns - 1) throw new MatrixException("For vertical split position is beyond number of rows in matrix.");
-            matrix1 = getNewMatrix(rows, position, totalDepth);
-            matrix2 = getNewMatrix(rows, columns - matrix1.getTotalColumns(), totalDepth);
-            for (int depth = 0; depth < totalDepth; depth++) {
-                for (int row = 0; row < rows; row++) {
-                    for (int column = 0; column < columns; column++) {
-                        if (column < position) matrix1.setValue(row, column, depth, getValue(row, column, depth));
-                        else matrix2.setValue(row, column - position, depth, getValue(row, column, depth));
-                    }
-                }
-            }
-        }
-        ArrayList<Matrix> matrices = new ArrayList<>();
-        matrices.add(matrix1);
-        matrices.add(matrix2);
-        Matrix result = new JMatrix(matrices, splitVertically);
+    public Matrix split(int splitAt, boolean splitVertically) throws MatrixException {
+        Matrix result = new SplitMatrixOperation(getRows(), getColumns(), getDepth()).apply(this, splitAt, splitVertically);
         if (hasProcedureFactory()) ProcedureFactory.synchronize(this, result);
         return result;
     }
