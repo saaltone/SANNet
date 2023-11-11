@@ -229,7 +229,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
             double currentActionValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
             double previousActionValue = getPreviousFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
             double rValue = previousActionValue != 0 ? currentActionValue / previousActionValue : 1;
-            return Math.min(rValue, ComputableMatrix.clipValue(rValue, 1 - epsilon, 2 + epsilon)) * state.tdError;
+            return Math.min(rValue, ComputableMatrix.clipValue(rValue, 1 - epsilon, 1 + epsilon)) * state.tdError;
         }
     }
 
