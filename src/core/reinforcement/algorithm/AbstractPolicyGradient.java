@@ -6,16 +6,14 @@
 package core.reinforcement.algorithm;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.agent.AgentException;
-import core.reinforcement.agent.DeepAgent;
-import core.reinforcement.agent.Environment;
-import core.reinforcement.agent.StateSynchronization;
+import core.reinforcement.agent.*;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
 /**
  * Implements abstract policy gradient functionality.<br>
@@ -61,12 +59,15 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        if(policy.readyToUpdate(this) && valueFunction.readyToUpdate(this)) {
+        TreeSet<State> sampledStates = null;
+        if(valueFunction.readyToUpdate(this)) {
             valueFunction.sample();
             if (!updateValuePerEpisode) valueFunction.update();
-            valueFunction.updateFunctionEstimator();
-            policy.updateFunctionEstimator();
+            sampledStates = valueFunction.updateFunctionEstimator();
             valueFunction.resetFunctionEstimator();
+        }
+        if(policy.readyToUpdate(this) && sampledStates != null) {
+            policy.updateFunctionEstimator(sampledStates);
             policy.resetFunctionEstimator();
         }
     }
