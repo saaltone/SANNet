@@ -296,24 +296,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public boolean equals(Matrix other) throws MatrixException {
-        int rows = getRows();
-        int columns = getColumns();
-        int totalDepth = getDepth();
-        int otherRows = other.getRows();
-        int otherColumns = other.getColumns();
-        int otherTotalDepth = other.getDepth();
-        if (otherRows != rows || otherColumns != columns || otherTotalDepth != totalDepth) {
-            throw new MatrixException("Incompatible target matrix size: " + otherRows + "x" + otherColumns + "x" + otherTotalDepth);
-        }
-
-        for (int depth = 0; depth < totalDepth; depth++) {
-            for (int row = 0; row < otherRows; row++) {
-                for (int column = 0; column < otherColumns; column++) {
-                    if (getValue(row, column, depth) != other.getValue(row, column, depth)) return false;
-                }
-            }
-        }
-        return true;
+        return new IsEqualMatrixOperation(getRows(), getColumns(), getDepth()).apply(this, other);
     }
 
     /**
@@ -323,10 +306,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     public void setEqualTo(Matrix other) throws MatrixException {
-        if (other.getRows() != getRows() || other.getColumns() != getColumns() || other.getDepth() != getDepth()) {
-            throw new MatrixException("Incompatible target matrix size: " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
-        }
-
         new EqualMatrixOperation(getRows(), getColumns(), getDepth()).apply(other, this);
     }
 
@@ -375,9 +354,6 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching or rows of this and result matrix or columns of result and other matrix are not matching.
      */
     protected Matrix applyDot(Matrix other) throws MatrixException {
-        if (getColumns() != other.getRows() || getDepth() != other.getDepth()) {
-            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + "x" + getDepth() + " by " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
-        }
         return new DotMatrixOperation(getRows(), other.getRows(), other.getColumns(), getDepth()).apply(this, other);
     }
 
