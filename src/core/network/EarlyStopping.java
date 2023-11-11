@@ -109,7 +109,7 @@ public class EarlyStopping implements Configurable, Serializable {
      * Stores previous validation error average.
      *
      */
-    private double previousValidationAverage = Double.MIN_VALUE;
+    private double previousValidationAverage = Double.MAX_VALUE;
 
     /**
      * Reference to training error instance.
@@ -253,10 +253,13 @@ public class EarlyStopping implements Configurable, Serializable {
         if (!trainingStopCondition && iteration > trainingPatience) {
             double lastTrainingAverage = getAverageError(trainingAverages, iteration -trainingPatience, trainingAverageSize, trainingMetric.getLastError());
             if (iteration >= trainingAverageSize) {
-                if (previousTrainingAverage >= lastTrainingAverage) trainingStopCount++;
+                if (previousTrainingAverage == Double.MAX_VALUE) previousTrainingAverage = lastTrainingAverage;
                 else {
-                    previousTrainingAverage = lastTrainingAverage;
-                    trainingStopCount = 0;
+                    if (previousTrainingAverage >= lastTrainingAverage) trainingStopCount++;
+                    else {
+                        previousTrainingAverage = lastTrainingAverage;
+                        trainingStopCount = 0;
+                    }
                 }
                 if (trainingStopCount >= trainingStopThreshold) trainingStopCondition = true;
             }
@@ -277,10 +280,13 @@ public class EarlyStopping implements Configurable, Serializable {
         if (!validationStopCondition && iteration > validationPatience) {
             double lastValidationAverage = getAverageError(validationAverages, iteration - validationPatience, validationAverageSize, validationMetric.getLastError());
             if (iteration >= validationAverageSize) {
-                if (previousValidationAverage >= lastValidationAverage) validationStopCount++;
+                if (previousValidationAverage == Double.MAX_VALUE) previousValidationAverage = lastValidationAverage;
                 else {
-                    previousValidationAverage = lastValidationAverage;
-                    validationStopCount = 0;
+                    if (previousValidationAverage >= lastValidationAverage) validationStopCount++;
+                    else {
+                        previousValidationAverage = lastValidationAverage;
+                        validationStopCount = 0;
+                    }
                 }
                 if (validationStopCount >= validationStopThreshold) validationStopCondition = true;
             }
