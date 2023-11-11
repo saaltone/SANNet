@@ -86,7 +86,7 @@ public class PriorityMemory implements Memory, Serializable {
      * Reference to search tree.
      *
      */
-    private final SearchTree searchTree;
+    private SearchTree searchTree;
 
     /**
      * If true sampling is done proportionally based on sample priority otherwise purely based on priority.
@@ -186,7 +186,10 @@ public class PriorityMemory implements Memory, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        if (params.hasParam("capacity")) capacity = params.getValueAsInteger("capacity");
+        if (params.hasParam("capacity")) {
+            capacity = params.getValueAsInteger("capacity");
+            searchTree = new SumTree(capacity);
+        }
         if (params.hasParam("batchSize")) batchSize = params.getValueAsInteger("batchSize");
         if (params.hasParam("alpha")) alpha = params.getValueAsDouble("alpha");
         if (params.hasParam("beta")) beta = params.getValueAsDouble("beta");
@@ -248,6 +251,7 @@ public class PriorityMemory implements Memory, Serializable {
      *
      */
     public void sample() {
+        if (sampledStates != null) return;
         sampledStates = new TreeSet<>();
         if (!applyUniformSampling) {
             final double totalPriority = searchTree.getTotalPriority();
