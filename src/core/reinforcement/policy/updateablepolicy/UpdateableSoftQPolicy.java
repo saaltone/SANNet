@@ -22,6 +22,7 @@ import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
 /**
  * Implements updateable soft Q policy.<br>
@@ -244,6 +245,22 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
+     * Updates function estimator.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
+        super.updateFunctionEstimator(sampledStates);
+        if (isAutoSoftAlpha()) updateAlpha();
+    }
+
+    /**
      * Returns policy gradient value for update.
      *
      * @param state state.
@@ -252,21 +269,18 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
     protected double getPolicyValue(State state) throws MatrixException, NeuralNetworkException {
-        if (isAutoSoftAlpha()) incrementPolicyValues(state);
-        return softQValueFunctionEstimator.getTargetValue(state) - getSoftAlpha() * Math.log(state.policyValue);
+        if (isAutoSoftAlpha()) cumulateAlphaLoss(state);
+        return -softQValueFunctionEstimator.getTargetValue(state) + getSoftAlpha() * Math.log(state.policyValue);
     }
 
     /**
-     * Increments policy values.
+     * Cumulates alpha loss.
      *
      * @param state state.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    private void incrementPolicyValues(State state) throws MatrixException, NeuralNetworkException {
-        double stateEntropy = getValues(state).entropy();
-        if (!Double.isNaN(stateEntropy) && !Double.isInfinite(stateEntropy)) {
-            cumulativeAlphaLoss += stateEntropy;
+    private void cumulateAlphaLoss(State state) {
+        if (state.policyValue > 0) {
+            cumulativeAlphaLoss += - Math.log(state.policyValue) + state.environmentState.availableActions().size();
             alphaLossCount++;
         }
     }
