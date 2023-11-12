@@ -123,7 +123,21 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        TreeSet<State> sampledStates = getFunctionEstimator().getSampledStates();
+        updateFunctionEstimator(getFunctionEstimator().getSampledStates());
+    }
+
+    /**
+     * Updates function estimator.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws AgentException throws exception if update cycle is ongoing.
+     */
+    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         if (sampledStates == null || sampledStates.isEmpty()) {
             getFunctionEstimator().abortUpdate();
             return;
