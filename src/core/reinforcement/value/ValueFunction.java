@@ -16,6 +16,7 @@ import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
 /**
  * Interface that defines value function.<br>
@@ -166,10 +167,11 @@ public interface ValueFunction extends Configurable {
     /**
      * Updates function estimator.
      *
+     * @return sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException;
+    TreeSet<State> updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }
