@@ -785,12 +785,12 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DQN, DDQN -> true;
+            case DQN -> true;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case DDPG -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case DDPG -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 1000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 1000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.001";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -822,7 +822,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
 
         int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.ELU) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
 
         if (!policyGradient && applyDueling) {
@@ -889,7 +889,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        int historySize = 6;
+        int historySize = 4;
 
         boolean includeEncoder = false;
         int attentionLayerIndex;
