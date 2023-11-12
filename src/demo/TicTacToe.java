@@ -1034,8 +1034,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
             panelLock.lock();
             ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
             panelLock.unlock();
-            jFrame.revalidate();
-            ticTacToePanel.paintImmediately(0, 0, boardSize * tileSize, boardSize * tileSize + 60);
+
+            SwingUtilities.invokeLater(ticTacToePanel::repaint);
 
             currentPlayerList.get(currentPlayer).getAgent().newTimeStep();
             if (currentPlayerList.get(currentPlayer).isHuman()) {
@@ -1061,10 +1061,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         panelLock.lock();
         ticTacToePanel.setGameBoard(gameBoard.getGameBoard(), gameStatus);
         panelLock.unlock();
-        SwingUtilities.invokeLater(() -> {
-            jFrame.revalidate();
-            ticTacToePanel.repaint();
-        });
+
+        SwingUtilities.invokeLater(ticTacToePanel::repaint);
 
         if (currentHumanPlayerRole != null) {
             try {
@@ -1203,9 +1201,8 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 default -> false;
             };
             String algorithmParams = switch (agentAlgorithmType) {
-                case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
-                case DDPG -> "applyImportanceSamplingWeights = false, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
-                case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
+                case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 1000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.001";
+                case DDPG, SACDiscrete -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 20000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.001";
                 case MCTS -> "gamma = 1, updateValuePerEpisode = true";
                 default -> "";
             };
@@ -1240,7 +1237,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.TANH) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         if (!policyGradient && applyDueling) neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
@@ -1273,7 +1270,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
         int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayersSerially();
 
-        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SINACT), "width = 1");
+        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.LINEAR), "width = 1");
         int outputLayerIndex2 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndex4);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex4, outputLayerIndex2);
