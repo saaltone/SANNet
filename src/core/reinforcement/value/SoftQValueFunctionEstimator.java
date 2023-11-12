@@ -296,11 +296,12 @@ public class SoftQValueFunctionEstimator extends QTargetValueFunctionEstimator {
     /**
      * Updates function estimator.
      *
+     * @return sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public TreeSet<State> updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
         TreeSet<State> sampledStates = getSampledStates();
         if (sampledStates == null || sampledStates.isEmpty()) {
             getFunctionEstimator().abortUpdate();
@@ -314,6 +315,7 @@ public class SoftQValueFunctionEstimator extends QTargetValueFunctionEstimator {
                 if (getFunctionEstimator2() !=  null) getFunctionEstimator2().update();
             }
         }
+        return sampledStates;
     }
 
     /**
