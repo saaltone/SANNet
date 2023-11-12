@@ -287,15 +287,17 @@ public class PlainValueFunction extends AbstractActionValueFunctionEstimator {
     /**
      * Updates function estimator.
      *
+     * @return sampled states.
      */
-    public void updateFunctionEstimator() {
+    public TreeSet<State> updateFunctionEstimator() {
         TreeSet<State> sampledStates = getSampledStates();
         if (sampledStates == null) {
             getFunctionEstimator().abortUpdate();
-            return;
+            return null;
         }
 
         getFunctionEstimator().update(sampledStates);
+        return sampledStates;
     }
 
 }
