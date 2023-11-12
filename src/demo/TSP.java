@@ -537,8 +537,9 @@ public class TSP implements Environment, AgentFunctionEstimator {
             tsp = new TSP(numberOfCities);
             tsp.initWindow();
             for (int tour = 0; tour < 1000000; tour++) {
-                tsp.route(tour % 10 == 0);
-                System.out.println("Tour #" + (tour + 1) + " Total: " + String.format(stringFormat, tsp.getTotalDistance()) + " (" + String.format(stringFormat, tsp.getTotalNormalizedDistance()) +")" + " Min: " + String.format(stringFormat, tsp.getMinDistance()) + " (" + String.format(stringFormat, tsp.getMinNormalizedDistance()) + ")" + " Max: " + String.format(stringFormat, tsp.getMaxDistance()) + " (" + String.format(stringFormat, tsp.getMaxNormalizedDistance()) + ")" + " Cumul. reward learning " + String.format(stringFormat, tsp.getCumulativeReward(true)) + " Cumul. reward non-learning " + String.format(stringFormat, tsp.getCumulativeReward(false)));
+                boolean isLearning = Math.random() < 0.5;
+                tsp.route(isLearning);
+                if (!isLearning) System.out.println("Tour #" + (tour + 1) + " Total: " + String.format(stringFormat, tsp.getTotalDistance()) + " (" + String.format(stringFormat, tsp.getTotalNormalizedDistance()) +")" + " Min: " + String.format(stringFormat, tsp.getMinDistance()) + " (" + String.format(stringFormat, tsp.getMinNormalizedDistance()) + ")" + " Max: " + String.format(stringFormat, tsp.getMaxDistance()) + " (" + String.format(stringFormat, tsp.getMaxNormalizedDistance()) + ")" + " Cumul. reward learning " + String.format(stringFormat, tsp.getCumulativeReward(true)) + " Cumul. reward non-learning " + String.format(stringFormat, tsp.getCumulativeReward(false)));
             }
             tsp.stop();
         } catch (Exception exception) {
@@ -586,13 +587,22 @@ public class TSP implements Environment, AgentFunctionEstimator {
         setReward(agent);
     }
 
+    private double previousTotalDistance = Double.MIN_VALUE;
+
     /**
      * Requests immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
      */
     public void setReward(Agent agent) {
-        agent.respond(isTerminalState() ? (getMaxNormalizedDistance() - getMinNormalizedDistance() != 0 ? Math.pow(1 - (getTotalNormalizedDistance() - getMinNormalizedDistance()) / (getMaxNormalizedDistance() - getMinNormalizedDistance()), 6) : 0) : 0);
+        double reward = 0;
+        if (isTerminalState()) {
+            double currentTotalDistance = getTotalDistance();
+            if (previousTotalDistance == Double.MIN_VALUE) reward = 0;
+            else reward = (previousTotalDistance - currentTotalDistance) / previousTotalDistance;
+            previousTotalDistance = currentTotalDistance;
+        }
+        agent.respond(reward);
     }
 
     /**
@@ -740,16 +750,19 @@ public class TSP implements Environment, AgentFunctionEstimator {
     /**
      * Single journey of travelling salesman taken by deep agent.
      *
-     * @param redraw if true current journey is drawn to window.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param isLearning if true agent is learning.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
+     * @throws IOException            throws exception if creation of FunctionEstimator copy fails.
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if update cycle is ongoing.
      */
-    private void route(boolean redraw) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
+    private void route(boolean isLearning) throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
         resetRoute();
+
+        if (isLearning) getAgent().enableLearning();
+        else getAgent().disableLearning();
 
         getAgent().startEpisode();
         while (!isTerminalState()) {
@@ -758,7 +771,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
         }
         getAgent().endEpisode();
 
-        if (redraw) {
+        if (!isLearning) {
             SwingUtilities.invokeLater(() -> {
                 if (tspPanel == null) {
                     tspPanel = new TSPPanel();
@@ -810,7 +823,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.4, epsilonDecayRate = 0.999, epsilonMin = 0.00";
+                policyTypeParams = "epsilonInitial = 0.4, epsilonDecayRate = 0.999, epsilonMin = 0.1";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -820,7 +833,10 @@ public class TSP implements Environment, AgentFunctionEstimator {
                 executablePolicyType = ExecutablePolicyType.SAMPLED;
                 policyTypeParams = "thresholdInitial = 0.7, thresholdMin = 0.0";
             }
-            case 4 -> executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
+            case 4 -> {
+                executablePolicyType = ExecutablePolicyType.ENTROPY_GREEDY;
+                policyTypeParams = "entropyFactor = 0.6";
+            }
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
             case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
         }
@@ -836,9 +852,8 @@ public class TSP implements Environment, AgentFunctionEstimator {
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case QN -> "agentUpdateCycle = 10";
-            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 2000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
-            case SACDiscrete -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 10000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.1";
+            case DDQN -> "applyImportanceSamplingWeights = true, applyUniformSampling = false, capacity = 10000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
+            case DDPG, SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 10000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.001";
             case MCTS -> "gamma = 1, updateValuePerEpisode = true";
             default -> "";
         };
@@ -868,10 +883,23 @@ public class TSP implements Environment, AgentFunctionEstimator {
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
-        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+        boolean feedforwardNetwork = true;
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.RELU) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
+        int hiddenLayerIndexPre;
+        if (feedforwardNetwork) {
+            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+            neuralNetworkConfiguration.connectLayersSerially();
+            hiddenLayerIndexPre = hiddenLayerIndex2;
+        }
+        else {
+            int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+            hiddenLayerIndexPre = attentionLayerIndex;
+        }
+
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.RELU), "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex);
         if (!policyGradient && applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
@@ -904,15 +932,29 @@ public class TSP implements Environment, AgentFunctionEstimator {
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
-        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+        boolean feedforwardNetwork = false;
+
+        int hiddenLayerIndexPre;
+        if (feedforwardNetwork) {
+            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
+            int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DROPOUT, "probability = 0.1");
+            neuralNetworkConfiguration.connectLayersSerially();
+            hiddenLayerIndexPre = hiddenLayerIndex3;
+        }
+        else {
+            int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+            hiddenLayerIndexPre = attentionLayerIndex;
+        }
 
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 1");
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex1);
+        neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex1);
         int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, outputLayerIndex1);
 
@@ -936,7 +978,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        int historySize = 3;
+        int historySize = 1;
 
         boolean includeEncoder = false;
         int feedforwardLayerWidth = attentionOutputSize;
