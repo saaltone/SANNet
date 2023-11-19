@@ -797,8 +797,9 @@ public class TSP implements Environment, AgentFunctionEstimator {
     /**
      * Stops deep agent.
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    private void stop() {
+    private void stop() throws NeuralNetworkException {
         agent.stop();
     }
 
