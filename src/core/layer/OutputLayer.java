@@ -161,7 +161,7 @@ public class OutputLayer extends AbstractPlainLayer {
     public void backward() throws NeuralNetworkException  {
         if (targets.isEmpty()) throw new NeuralNetworkException("No targets defined");
         if (targets.totalSize() != getLayerOutputs().totalSize()) throw new NeuralNetworkException("Target size: "+ targets.totalSize() + " is not matching with output size: " + getLayerOutputs().totalSize());
-        super.backward();
+        super.backward(true);
     }
 
     /**
