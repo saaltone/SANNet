@@ -55,7 +55,13 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * Procedures for weight normalization.
      *
      */
-    private HashMap<Matrix, Procedure> procedures = new HashMap<>();
+    private HashMap<Matrix, Procedure> procedures = null;
+
+    /**
+     * Template procedure.
+     *
+     */
+    private Procedure templateProcedure;
 
     /**
      * Constructor for weight normalization layer.
@@ -153,10 +159,21 @@ public class WeightNormalization extends AbstractExecutionLayer {
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException {
+        input = new DMatrix(1, 1, 1);
+        templateProcedure = new ProcedureFactory().getProcedure(this);
+    }
+
+    /**
+     * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
+     * @throws MatrixException       throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private void defineProcedures() throws MatrixException, DynamicParamException {
         procedures = new HashMap<>();
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
             for (Matrix normalizedWeight : nextLayer.getNormalizedWeights()) {
@@ -213,6 +230,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
+        if (procedures == null) defineProcedures();
+
         passLayerOutputs();
 
         if (isTraining()) {
@@ -257,9 +276,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void printExpressions() throws NeuralNetworkException {
-        if (procedures.size() == 0) return;
         System.out.println(getLayerName() + ": ");
-        procedures.get(input).printExpressionChain();
+        templateProcedure.printExpressionChain();
         System.out.println();
     }
 
@@ -269,9 +287,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
      * @throws NeuralNetworkException throws exception if printing of neural network fails.
      */
     public void printGradients() throws NeuralNetworkException {
-        if (procedures.size() == 0) return;
         System.out.println(getLayerName() + ": ");
-        procedures.get(input).printGradientChain();
+        templateProcedure.printGradientChain();
         System.out.println();
     }
 
