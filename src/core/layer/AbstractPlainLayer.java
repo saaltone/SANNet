@@ -61,7 +61,6 @@ public abstract class AbstractPlainLayer extends AbstractLayer {
 
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
-     *
      */
     protected void defineProcedure() {
     }
