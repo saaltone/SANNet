@@ -272,9 +272,9 @@ public class TrendMetricChart extends JFrame implements Serializable {
         double tempMaxError = maxError;
         while (tempMaxError < 1) {
             tempMaxError *= 10;
-            factor++;
+            if (++factor >= maxFactor) break;
         }
-        factor = Math.max(Math.min(factor, maxFactor), minFactor);
+        factor = Math.max(factor, minFactor);
 
         int xAxisStep = (int)((double)getWidth() / 160);
         int yAxisStep = (int)((double)getHeight() / 80);
