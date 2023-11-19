@@ -7,6 +7,7 @@ package utils.procedure.expression;
 
 import utils.matrix.BinaryFunction;
 import utils.matrix.BinaryFunctionType;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.BinaryMatrixOperation;
 import utils.procedure.node.Node;
@@ -32,11 +33,11 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
     /**
      * Constructor for binary function.
      *
-     * @param expressionID unique ID for expression.
-     * @param argument1 first argument.
-     * @param argument2 second argument.
-     * @param result result of expression.
-     * @param binaryFunction BinaryFunction.
+     * @param expressionID    unique ID for expression.
+     * @param argument1       first argument.
+     * @param argument2       second argument.
+     * @param result          result of expression.
+     * @param binaryFunction  BinaryFunction.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
@@ -67,39 +68,60 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      */
-    public void calculateExpression() {
+    protected Matrix calculateResult() {
+        return null;
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        checkArguments(argument1, argument2, sampleIndex);
-        result.setMatrix(sampleIndex, binaryMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        return binaryMatrixOperation.applyFunction(argument1Matrix, argument2Matrix);
     }
 
     /**
-     * Calculates gradient of expression.
-     *
+     * Calculates argument 1 gradient matrix.
      */
-    public void calculateGradient() {
+    protected void calculateArgument1Gradient() {
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, binaryMatrixOperation.applyGradient(result.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex), result.getGradient(sampleIndex)), false);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
+        return binaryMatrixOperation.applyGradient(resultMatrix, argument2Matrix, resultGradient);
+    }
+
+    /**
+     * Calculates argument 2 gradient matrix.
+     *
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     */
+    protected Matrix calculateArgument2Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) {
+        return null;
     }
 
     /**

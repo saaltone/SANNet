@@ -79,45 +79,47 @@ public class NormExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      */
-    public void calculateExpression() {
+    protected Matrix calculateResult() {
+        return null;
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        checkArgument(argument1, sampleIndex);
-        if (!argument1.isStopGradient()) result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).constantAsMatrix(normMatrixOperation.apply(argument1.getMatrix(sampleIndex))));
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        return argument1Matrix.constantAsMatrix(normMatrixOperation.apply(argument1Matrix));
     }
 
     /**
-     * Calculates gradient of expression.
-     *
+     * Calculates argument 1 gradient matrix.
      */
-    public void calculateGradient() {
+    protected void calculateArgument1Gradient() {
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        checkResultGradient(result, sampleIndex);
-
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
         // https://math.stackexchange.com/questions/1482494/derivative-of-the-l-p-norm/1482525
-        if (!argument1.isStopGradient()) {
-            Matrix normGradientMatrix = normGradientMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), result.getMatrix(sampleIndex));
-            Matrix resultMatrix = multiplyMatrixOperation.applyFunction(result.getGradient(sampleIndex), normGradientMatrix);
-            argument1.cumulateGradient(sampleIndex, resultMatrix, false);
-        }
+        return multiplyMatrixOperation.applyFunction(resultGradient, normGradientMatrixOperation.applyFunction(argument1Matrix, resultMatrix));
     }
 
     /**

@@ -72,64 +72,58 @@ public class VarianceExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression() throws MatrixException, DynamicParamException {
-        if (!executeAsSingleStep()) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
+    protected Matrix calculateResult() throws MatrixException, DynamicParamException {
         mean = AbstractMatrix.mean(argument1.getMatrices());
-        result.setMatrix(AbstractMatrix.variance(argument1.getMatrices(), mean));
+        return AbstractMatrix.variance(argument1.getMatrices(), mean);
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkArgument(argument1, sampleIndex);
-        Matrix mean = argument1.getMatrix(sampleIndex).meanAsMatrix();
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        Matrix mean = argument1Matrix.meanAsMatrix();
         if (means == null) means = new HashMap<>();
         means.put(sampleIndex, mean);
-        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).varianceAsMatrix(mean));
+        return argument1Matrix.varianceAsMatrix(mean);
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient() throws MatrixException {
-        if (!executeAsSingleStep()) return;
-        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined");
+    protected void calculateArgument1Gradient() throws MatrixException {
+        double argument1Size = argument1.size();
         for (Map.Entry<Integer, Matrix> entry : argument1.entrySet()) {
-            double argument1Size = argument1.size();
-            if (!argument1.isStopGradient()) {
-                int index = entry.getKey();
-                Matrix matrix = entry.getValue();
-                Matrix varianceGradient = matrix.subtract(mean).multiply(2 / argument1Size);
-                argument1.cumulateGradient(index, result.getGradient().multiply(varianceGradient), false);
-            }
+            argument1.cumulateGradient(entry.getKey(), result.getGradient().multiply(entry.getValue().subtract(mean).multiply(2 / argument1Size)));
         }
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkResultGradient(result, sampleIndex);
-        Matrix varianceGradient = argument1.getMatrix(sampleIndex).subtract(means.get(sampleIndex)).multiply(2 / (double)argument1.getMatrix(sampleIndex).size());
-        argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(varianceGradient), false);
-        means.remove(sampleIndex);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
+        return resultGradient.multiply(argument1Matrix.subtract(means.get(sampleIndex)).multiply(2 / (double)argument1Matrix.size()));
     }
 
     /**

@@ -6,6 +6,7 @@
 package utils.procedure.expression;
 
 import utils.matrix.AbstractMatrix;
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
@@ -53,49 +54,49 @@ public class SumExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression() throws MatrixException {
-        if (!executeAsSingleStep()) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
-        result.setMatrix(AbstractMatrix.sum(argument1.getMatrices()));
+    protected Matrix calculateResult() throws MatrixException {
+        return AbstractMatrix.sum(argument1.getMatrices());
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkArgument(argument1, sampleIndex);
-        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).sumAsMatrix());
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        return argument1Matrix.sumAsMatrix();
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient() throws MatrixException {
-        if (!executeAsSingleStep()) return;
-        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined");
-        for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, result.getGradient(), false);
+    protected void calculateArgument1Gradient() throws MatrixException {
+        for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, result.getGradient());
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) {
+        return resultGradient;
     }
 
     /**

@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
 
@@ -12,7 +13,7 @@ import utils.procedure.node.Node;
  * Implements abstract binary expression.<br>
  *
  */
-public abstract class AbstractBinaryExpression extends AbstractExpression {
+public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
 
     /**
      * Node for second argument.
@@ -23,12 +24,12 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     /**
      * Constructor for abstract binary expression.
      *
-     * @param name name of expression.
+     * @param name               name of expression.
      * @param operationSignature operation signature
-     * @param expressionID expression ID
-     * @param argument1 first argument.
-     * @param argument2 second argument.
-     * @param result result of node.
+     * @param expressionID       expression ID
+     * @param argument1          first argument.
+     * @param argument2          second argument.
+     * @param result             result of node.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public AbstractBinaryExpression(String name, String operationSignature, int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
@@ -45,6 +46,53 @@ public abstract class AbstractBinaryExpression extends AbstractExpression {
     public Node getArgument2() {
         return argument2;
     }
+
+    /**
+     * Calculates expression.
+     *
+     * @param sampleIndex sample index
+     * @throws MatrixException throws exception if calculation fails.
+     */
+    public void calculateExpression(int sampleIndex) throws MatrixException {
+        if (executeAsSingleStep()) return;
+        checkArguments(getArgument1(), getArgument2(), sampleIndex);
+        calculateExpressionResult(sampleIndex, getArgument1().getMatrix(sampleIndex), getArgument2().getMatrix(sampleIndex));
+    }
+
+    /**
+     * Calculates gradient of expression.
+     *
+     * @param sampleIndex sample index
+     * @throws MatrixException throws exception if calculation of gradient fails.
+     */
+    public void calculateGradient(int sampleIndex) throws MatrixException {
+        if (executeAsSingleStep()) return;
+        super.calculateGradient(sampleIndex);
+        cumulateArgument2Gradient(sampleIndex);
+    }
+
+    /**
+     * Cumulates argument 2 gradient.
+     *
+     * @param sampleIndex sample index
+     * @throws MatrixException throws exception if calculation of gradient fails.
+     */
+    public void cumulateArgument2Gradient(int sampleIndex) throws MatrixException {
+        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, calculateArgument2Gradient(sampleIndex, getResult().getGradient(sampleIndex), getArgument1().getMatrix(sampleIndex), getArgument2().getMatrix(sampleIndex), getResult().getMatrix(sampleIndex)));
+    }
+
+    /**
+     * Calculates argument 2 gradient matrix.
+     *
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     * @throws MatrixException throws exception if calculation fails.
+     */
+    protected abstract Matrix calculateArgument2Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException;
 
     /**
      * Check is argument matrices are defined for specific sample index.

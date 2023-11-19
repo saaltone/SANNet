@@ -28,10 +28,10 @@ public class AddExpression extends AbstractBinaryExpression {
     /**
      * Constructor for add operation.
      *
-     * @param expressionID unique ID for expression.
-     * @param argument1 first argument.
-     * @param argument2 second argument.
-     * @param result result of expression.
+     * @param expressionID    unique ID for expression.
+     * @param argument1       first argument.
+     * @param argument2       second argument.
+     * @param result          result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public AddExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
@@ -61,40 +61,59 @@ public class AddExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      */
-    public void calculateExpression() {
+    protected Matrix calculateResult() {
+        return null;
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        checkArguments(argument1, argument2, sampleIndex);
-        result.setMatrix(sampleIndex, addMatrixOperation.applyFunction(argument1.getMatrix(sampleIndex), argument2.getMatrix(sampleIndex)));
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        return addMatrixOperation.applyFunction(argument1Matrix, argument2Matrix);
     }
 
     /**
-     * Calculates gradient of expression.
-     *
+     * Calculates argument 1 gradient matrix.
      */
-    public void calculateGradient() {
+    protected void calculateArgument1Gradient() {
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
-        if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, result.getGradient(sampleIndex), false);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) {
+        return resultGradient;
+    }
+
+    /**
+     * Calculates argument 2 gradient matrix.
+     *
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     */
+    protected Matrix calculateArgument2Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) {
+        return resultGradient;
     }
 
     /**

@@ -54,50 +54,51 @@ public class MeanExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression() throws MatrixException {
-        if (!executeAsSingleStep()) return;
-        if (argument1.getMatrices() == null) throw new MatrixException(getExpressionName() + ": Argument 1 for operation not defined");
-        result.setMatrix(AbstractMatrix.mean(argument1.getMatrices()));
+    protected Matrix calculateResult() throws MatrixException {
+        return AbstractMatrix.mean(argument1.getMatrices());
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkArgument(argument1, sampleIndex);
-        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex).meanAsMatrix());
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+        return argument1Matrix.meanAsMatrix();
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient() throws MatrixException {
-        if (!executeAsSingleStep()) return;
-        if (result.getGradient() == null) throw new MatrixException(getExpressionName() + ": Result gradient not defined");
+    protected void calculateArgument1Gradient() throws MatrixException {
         Matrix meanGradient = result.getGradient().multiply(1 / (double)argument1.size());
-        for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, meanGradient, false);
+        for (Integer index : argument1.keySet()) argument1.cumulateGradient(index, meanGradient);
     }
 
     /**
-     * Calculates gradient of expression.
+     * Calculates argument 1 gradient matrix.
      *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
+     * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        if (executeAsSingleStep()) return;
-        checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, result.getGradient(sampleIndex).multiply(1 / (double)argument1.getMatrix(sampleIndex).size()), false);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
+        return resultGradient.multiply(1 / (double)argument1Matrix.size());
     }
 
     /**

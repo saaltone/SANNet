@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.GradientClippingMatrixOperation;
 import utils.procedure.node.Node;
@@ -62,39 +63,45 @@ public class GradientClippingExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
+     * @return result matrix.
      */
-    public void calculateExpression() {
+    protected Matrix calculateResult() {
+        return null;
     }
 
     /**
-     * Calculates expression.
+     * Calculates result matrix.
      *
      * @param sampleIndex sample index
+     * @param argument1Matrix argument1 matrix for a sample index.
+     * @param argument2Matrix argument2 matrix for a sample index.
+     * @return result matrix.
+     */
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) {
+        return argument1Matrix;
+    }
+
+    /**
+     * Calculates argument 1 gradient matrix.
+     */
+    protected void calculateArgument1Gradient() {
+    }
+
+    /**
+     * Calculates argument 1 gradient matrix.
+     *
+     * @param sampleIndex     sample index.
+     * @param resultGradient  result gradient.
+     * @param argument1Matrix argument 1 matrix.
+     * @param argument2Matrix argument 2 matrix.
+     * @param resultMatrix    result matrix.
+     * @return argument1 gradient matrix.
      * @throws MatrixException throws exception if calculation fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
-        checkArgument(argument1, sampleIndex);
-        result.setMatrix(sampleIndex, argument1.getMatrix(sampleIndex));
-    }
-
-    /**
-     * Calculates gradient of expression.
-     *
-     */
-    public void calculateGradient() {
-    }
-
-    /**
-     * Calculates gradient of expression.
-     *
-     * @param sampleIndex sample index
-     * @throws MatrixException throws exception if calculation of gradient fails.
-     */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
-        checkResultGradient(result, sampleIndex);
-        if (!argument1.isStopGradient()) argument1.cumulateGradient(sampleIndex, gradientClippingMatrixOperation.apply(result.getGradient(sampleIndex), false), false);
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
+        return gradientClippingMatrixOperation.apply(resultGradient, false);
     }
 
     /**

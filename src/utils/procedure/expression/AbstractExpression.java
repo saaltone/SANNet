@@ -43,18 +43,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
     private final int expressionID;
 
     /**
-     * Node for first argument.
-     *
-     */
-    protected final Node argument1;
-
-    /**
-     * Node for result.
-     *
-     */
-    protected final Node result;
-
-    /**
      * Next expression for expression calculation.
      *
      */
@@ -75,20 +63,17 @@ public abstract class AbstractExpression implements Expression, Serializable {
     /**
      * Constructor for abstract expression.
      *
-     * @param expressionName name of expression.
+     * @param expressionName     name of expression.
      * @param operationSignature operation signature of expression.
-     * @param expressionID unique ID for expression.
-     * @param argument1 first argument.
-     * @param result result of expression.
+     * @param expressionID       unique ID for expression.
+     * @param argument1          first argument.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractExpression(String expressionName, String operationSignature, int expressionID, Node argument1, Node result) throws MatrixException {
+    public AbstractExpression(String expressionName, String operationSignature, int expressionID, Node argument1) throws MatrixException {
         if (argument1 == null) throw new MatrixException("First argument not defined.");
         this.expressionName = expressionName;
         this.operationSignature = operationSignature;
         this.expressionID = expressionID;
-        this.argument1 = argument1;
-        this.result = result;
     }
 
     /**
@@ -116,44 +101,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      */
     public int getExpressionID() {
         return expressionID;
-    }
-
-    /**
-     * Returns first argument of expression.
-     *
-     * @return first argument of expression.
-     */
-    public Node getArgument1() {
-        return argument1;
-    }
-
-    /**
-     * Returns second argument of expression.
-     *
-     * @return returns null unless overloaded by abstract binary expression class.
-     */
-    public Node getArgument2() {
-        return null;
-    }
-
-    /**
-     * Checks if argument matrix is defined for specific sample index.
-     *
-     * @param argument1 argument1
-     * @param sampleIndex sample index.
-     * @throws MatrixException throws exception if argument is not defined.
-     */
-    protected void checkArgument(Node argument1, int sampleIndex) throws MatrixException {
-        if (argument1.getMatrix(sampleIndex) == null) throw new MatrixException(this + ": " + getExpressionName() + ": Argument 1 for operation is not defined for sample index " + sampleIndex);
-    }
-
-    /**
-     * Returns result of expression.
-     *
-     * @return result of expression.
-     */
-    public Node getResult() {
-        return result;
     }
 
     /**
@@ -372,123 +319,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      */
     protected void print() {
         System.out.print("Expression " +getExpressionID() + ": ");
-    }
-
-    /**
-     * Returns gradient identifier name.
-     *
-     * @return gradient identifier name.
-     */
-    protected String getGradientIdentifierName() {
-        return "d";
-    }
-
-    /**
-     * Return gradient name of argument1.
-     *
-     * @return gradient name of argument1.
-     */
-    protected String getArgument1GradientName() {
-        return getGradientIdentifierName() + argument1.getName();
-    }
-
-    /**
-     * Return gradient name of result.
-     *
-     * @return gradient name of result.
-     */
-    protected String getResultGradientName() {
-        return getGradientIdentifierName() + result.getName();
-    }
-
-    /**
-     * Returns gradient prefix for argument1.
-     *
-     * @return gradient prefix for argument1.
-     */
-    protected String getArgument1PrefixName() {
-        return getExpressionName() + ": " + getArgument1GradientName() + " = " + "" + getArgument1SumPrefix();
-    }
-
-    /**
-     * Returns argument1 prefix.
-     *
-     * @return argument1 prefix.
-     */
-    protected String getArgument1SumPrefix() {
-        return !argument1.isMultiIndex() ? "sum(" : "";
-    }
-
-    /**
-     * Returns argument1 postfix.
-     *
-     * @return argument1 postfix.
-     */
-    protected String getArgument1SumPostfix() {
-        return !argument1.isMultiIndex() ? ")" : "";
-    }
-
-    /**
-     * Returns node gradient name.
-     *
-     * @param node node
-     * @return node gradient name.
-     */
-    protected String getNodeGradientName(Node node) {
-        return getGradientIdentifierName() + node.getName();
-    }
-
-    /**
-     * Returns node gradient prefix name.
-     *
-     * @param node node
-     * @param negateResult if true result will be negated.
-     * @return node gradient prefix name.
-     */
-    protected String getNodeGradientPrefixName(Node node, boolean negateResult) {
-        return getExpressionName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
-    }
-
-    /**
-     * Returns node gradient prefix name with result.
-     *
-     * @param node node
-     * @param negateResult if true result will be negated.
-     * @return node gradient prefix name with result.
-     */
-    protected String getNodeGradientWithResultPrefixName(Node node, boolean negateResult) {
-        return getNodeGradientPrefixName(node, negateResult) + getResultGradientName();
-    }
-
-    /**
-     * Returns node sum prefix.
-     *
-     * @param node node.
-     * @return node sum prefix.
-     */
-    protected String getNodeSumPrefix(Node node) {
-        return !node.isMultiIndex() ? "sum(" : "";
-    }
-
-    /**
-     * Returns node sum postfix.
-     *
-     * @param node node.
-     * @return node sum postfix.
-     */
-    protected String getNodeSumPostfix(Node node) {
-        return !node.isMultiIndex() ? ")" : "";
-    }
-
-    /**
-     * Prints gradient for argument1
-     *
-     * @param withResultPrefix true if result prefix is added.
-     * @param suffix suffix part for gradient expression.
-     */
-    protected void printArgument1Gradient(boolean withResultPrefix, String suffix) {
-        print();
-        System.out.println((withResultPrefix ? getNodeGradientWithResultPrefixName(argument1, false) : getNodeGradientPrefixName(argument1, false)) + (suffix != null ? suffix : "") + getNodeSumPostfix(argument1));
     }
 
 }
