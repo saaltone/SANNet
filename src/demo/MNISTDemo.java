@@ -78,7 +78,7 @@ public class MNISTDemo {
 
             System.out.println("Predicting...");
 
-            ClassificationMetric predictionAbstractMetric = new ClassificationMetric();
+            ClassificationMetric predictionMetric = new ClassificationMetric();
             for (int index = 0; index < 100; index++) {
                 Sequence input = new Sequence();
                 Sequence output = new Sequence();
@@ -95,9 +95,9 @@ public class MNISTDemo {
                         System.out.println("True label: " + trueIndex[0] + ", Predicted label: " + predictIndex[0]);
                     }
                 }
-                predictionAbstractMetric.report(predict, output);
+                predictionMetric.report(predict, output);
             }
-            predictionAbstractMetric.printReport();
+            predictionMetric.printReport();
 
             Persistence.saveNeuralNetwork(persistenceName, neuralNetwork);
 
