@@ -63,6 +63,12 @@ public class WeightNoising extends AbstractRegularizationLayer {
     private final HashSet<Matrix> layerNormalizedWeights = new HashSet<>();
 
     /**
+     * If true layer has been initialized otherwise not.
+     *
+     */
+    private boolean hasBeenInitialized = false;
+
+    /**
      * Constructor for weight noising layer.
      *
      * @param layerIndex layer index
@@ -118,12 +124,12 @@ public class WeightNoising extends AbstractRegularizationLayer {
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     * @throws MatrixException thrown if initialization of layer fails.
      */
-    protected void defineProcedure() throws NeuralNetworkException {
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) if (nextLayer.getWeightsMap().isEmpty()) throw new NeuralNetworkException("Unable initialize weight noising. Next layer #" + nextLayer.getLayerIndex() + " does not contain any weights.");
+    protected void defineProcedures() throws MatrixException {
+        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) if (nextLayer.getRegularizedWeights().isEmpty()) throw new MatrixException("Unable initialize weight noising. Next layer #" + nextLayer.getLayerIndex() + " does not contain any regularized weights.");
         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) {
-            layerNormalizedWeights.addAll(nextLayer.getNormalizedWeights());
+            layerNormalizedWeights.addAll(nextLayer.getRegularizedWeights());
         }
     }
 
@@ -134,6 +140,11 @@ public class WeightNoising extends AbstractRegularizationLayer {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void forwardProcess() throws MatrixException, DynamicParamException {
+        if (!hasBeenInitialized) {
+            defineProcedures();
+            hasBeenInitialized = true;
+        }
+
         super.forwardProcess();
 
         if (isTraining()) {
