@@ -214,6 +214,15 @@ public class EarlyStopping implements Configurable, Serializable {
     }
 
     /**
+     * Returns parameters for early stopping.
+     *
+     * @return parameters for early stopping.
+     */
+    public String getParams() {
+        return params;
+    }
+
+    /**
      * Returns reference to early stopping.
      *
      * @return reference to early stopping.
