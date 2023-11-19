@@ -66,7 +66,7 @@ public class Music {
             long minTickDelta = 60;
             long maxTickDelta = 200;
             int maxEncodedTicks = 50;
-            double tickScalingConstant = 0.65;
+            double tickScalingConstant = 0.5;
             int numberOfGeneratedSamples = 500;
             boolean decoderOnly = true;
             boolean prePlaySequence = true;
@@ -132,9 +132,9 @@ public class Music {
             neuralNetwork.setTrainingData(new BasicSampler(trainingInputs, trainingOutputs, params));
 
 
-            int totalIterations = neuralNetwork.getTotalIterations();
+            int totalIterations = neuralNetwork.getTotalTrainingIterations();
             int fileVersion = 0;
-            while (neuralNetwork.getTotalIterations() - totalIterations < 100000) {
+            while (neuralNetwork.getTotalTrainingIterations() - totalIterations < 100000) {
                 NeuralNetwork neuralNetworkForPrediction = neuralNetwork.copy();
 
                 System.out.println("Training...");
