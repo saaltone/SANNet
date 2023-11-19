@@ -397,20 +397,6 @@ public class Procedure implements Serializable {
     }
 
     /**
-     * Calculates backward chain of gradient expressions.
-     *
-     * @param outputGradient output gradient for procedure.
-     * @return input gradient.
-     * @throws MatrixException throws exception if calculation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public Matrix calculateGradient(Matrix outputGradient) throws MatrixException, DynamicParamException {
-        getOutputNode().setGradient(0, outputGradient);
-        gradientChain.calculateGradientStep(0, 0);
-        return getInputNodes().get(0).getGradient(0);
-    }
-
-    /**
      * Check that procedure contains all parameter matrices.
      *
      * @throws MatrixException throws exception if node does not contain all parameter matrices.

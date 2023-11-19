@@ -135,7 +135,6 @@ public class ProcedureFactory implements Serializable {
 
     /**
      * Default constructor for procedure factory.
-     *
      */
     public ProcedureFactory() {
     }
