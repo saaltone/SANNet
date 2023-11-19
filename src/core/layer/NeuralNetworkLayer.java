@@ -161,20 +161,6 @@ public interface NeuralNetworkLayer {
     void reinitialize() throws MatrixException;
 
     /**
-     * Returns training execution time in nanoseconds.
-     *
-     * @return training execution time in nanoseconds.
-     */
-    double getTrainingExecutionTime();
-
-    /**
-     * Returns prediction execution time in nanoseconds.
-     *
-     * @return prediction execution time in nanoseconds.
-     */
-    double getPredictExecutionTime();
-
-    /**
      * Returns outputs of neural network layer.
      *
      * @return outputs of neural network layer.
@@ -213,12 +199,12 @@ public interface NeuralNetworkLayer {
     /**
      * Starts neural network layer and it's execution thread.
      *
-     * @param threadPool thread pool.
+     * @param executorService executor service.
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException        throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    void start(ExecutorService threadPool) throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void start(ExecutorService executorService) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Stops neural network layer and terminates neural network layer execution thread.<br>
@@ -238,8 +224,9 @@ public interface NeuralNetworkLayer {
      * Executes training step for neural network layer and propagates procedure to next layer.<br>
      * Uses existing training inputs and outputs.<br>
      *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    void train();
+    void train(boolean waitToComplete);
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.
@@ -252,15 +239,16 @@ public interface NeuralNetworkLayer {
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
      * Uses existing testing inputs.<br>
      *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    void predict();
+    void predict(boolean waitToComplete);
 
     /**
      * Executes backward (gradient) propagation phase for training step of neural network layer.
      *
-     * @throws NeuralNetworkException throws exception if backward operation fails.
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    void backward() throws NeuralNetworkException;
+    void backward(boolean waitToComplete);
 
     /**
      * Executes parameter (weight) update for training step of neural network layer.
@@ -269,7 +257,14 @@ public interface NeuralNetworkLayer {
     void update();
 
     /**
-     * Waits for layer to complete execution.
+     * Executes parameter (weight) update for training step of neural network layer.
+     *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
+     */
+    void update(boolean waitToComplete);
+
+    /**
+     * Wait for layer to complete.
      *
      */
     void waitToComplete();

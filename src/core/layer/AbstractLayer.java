@@ -15,8 +15,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Implementation is based on principle that each neural network is individual thread to allow concurrent execution of multiple neural network instances.<br>
  *
  */
-public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Serializable {
+public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable {
 
     @Serial
     private static final long serialVersionUID = -3851862716566007887L;
@@ -38,7 +37,6 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *   PREDICT: initiates forward predict procedure step.<br>
      *   BACKWARD: initiates backward phase of training procedure step.<br>
      *   UPDATE: initiates weight update procedure step.<br>
-     *   EXECUTING: neural network layer is executing procedure step.<br>
      *   TERMINATED: neural network layer is terminated (layer thread is terminated).<br>
      *
      */
@@ -81,40 +79,22 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     private transient Condition executeLockCondition;
 
     /**
-     * Lock-condition for synchronizing completion of procedure execution and shift to idle state.
+     * Lock for synchronizing neural network layer complete operations.
      *
      */
-    private transient Condition executeLockCompleteCondition;
+    private transient Lock completeLock;
+
+    /**
+     * Lock-condition for synchronizing procedure completion.
+     *
+     */
+    private transient Condition completeLockCondition;
 
     /**
      * Execution state of neural network layer.
      *
      */
     private transient ExecutionState executionState;
-
-    /**
-     * Layer training execution time.
-     *
-     */
-    private transient long trainingExecutionTime;
-
-    /**
-     * Layer prediction execution time.
-     *
-     */
-    private transient long predictExecutionTime;
-
-    /**
-     * Execution thread for neural network layer.
-     *
-     */
-    private transient Thread layerThread;
-
-    /**
-     * Future of the neural network layer thread.
-     *
-     */
-    private transient Future<?> future;
 
     /**
      * Reference to next layer
@@ -171,10 +151,10 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     private final TreeMap<Integer, Sequence> inputGradientSequences = new TreeMap<>();
 
     /**
-     * Count for state start request from previous layers.
+     * Count for execution start requests from peer layers.
      *
      */
-    private transient int stateStartCount = 0;
+    private transient int executionStartCount;
 
     /**
      * Default constructor for abstract layer.
@@ -452,8 +432,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException thrown if initialization of layer fails.
      */
     protected abstract void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException;
@@ -554,27 +534,21 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     /**
      * Starts neural network layer and it's execution thread.
      *
-     * @param threadPool thread pool.
+     * @param executorService executor service.
      * @throws NeuralNetworkException throws exception if neural network layer name cannot be returned.
-     * @throws MatrixException throws exception if depth of matrix is less than 1.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException        throws exception if depth of matrix is less than 1.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    public void start(ExecutorService threadPool) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        if (layerThread != null) return;
+    public void start(ExecutorService executorService) throws NeuralNetworkException, MatrixException, DynamicParamException {
         executeLock = new ReentrantLock();
         executeLockCondition = executeLock.newCondition();
-        executeLockCompleteCondition = executeLock.newCondition();
         executionState = ExecutionState.IDLE;
+        executionStartCount = -1;
 
-        trainingExecutionTime = 0;
-        predictExecutionTime = 0;
+        completeLock = new ReentrantLock();
+        completeLockCondition = completeLock.newCondition();
 
-        layerThread = new Thread(this);
-        layerThread.setName(getLayerName());
-        if (threadPool != null) future = threadPool.submit(this);
-        else layerThread.start();
-
-        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.start(threadPool);
+        executeLayer(executorService);
 
         defineProcedure();
     }
@@ -585,26 +559,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void stop() {
-        nextState(ExecutionState.TERMINATED);
-        if (future != null) future.cancel(true);
-    }
-
-    /**
-     * Returns training execution time in nanoseconds.
-     *
-     * @return training execution time in nanoseconds.
-     */
-    public double getTrainingExecutionTime() {
-        return trainingExecutionTime;
-    }
-
-    /**
-     * Returns prediction execution time in nanoseconds.
-     *
-     * @return prediction execution time in nanoseconds.
-     */
-    public double getPredictExecutionTime() {
-        return predictExecutionTime;
+        nextState(ExecutionState.TERMINATED, true);
     }
 
     /**
@@ -615,17 +570,18 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public void train(Sequence inputs) {
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
-        train();
+        train(true);
     }
 
     /**
      * Executes training step for neural network layer and propagates procedure to next layer.<br>
      * Uses existing training inputs and outputs.<br>
      *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    public void train() {
+    public void train(boolean waitToComplete) {
         setTraining(true);
-        nextState(ExecutionState.TRAIN);
+        nextState(ExecutionState.TRAIN, waitToComplete);
     }
 
     /**
@@ -636,26 +592,27 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
     public void predict(Sequence inputs) {
         if (inputs.isEmpty()) return;
         setLayerOutputs(inputs);
-        predict();
+        predict(true);
     }
 
     /**
      * Executes predict step for neural network layer and propagates procedure to next layer.<br>
      * Uses existing testing inputs.<br>
      *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    public void predict() {
+    public void predict(boolean waitToComplete) {
         setTraining(false);
-        nextState(ExecutionState.PREDICT);
+        nextState(ExecutionState.PREDICT, waitToComplete);
     }
 
     /**
      * Executes backward (gradient) propagation phase for training step of neural network layer.
      *
-     * @throws NeuralNetworkException throws exception if backward operation fails.
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    public void backward() throws NeuralNetworkException {
-        nextState(ExecutionState.BACKWARD);
+    public void backward(boolean waitToComplete) {
+        nextState(ExecutionState.BACKWARD, waitToComplete);
     }
 
     /**
@@ -663,132 +620,153 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Runnable, Ser
      *
      */
     public void update() {
-        nextState(ExecutionState.UPDATE);
+        nextState(ExecutionState.UPDATE, true);
+    }
+
+    /**
+     * Executes parameter (weight) update for training step of neural network layer.
+     *
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
+     */
+    public void update(boolean waitToComplete) {
+        nextState(ExecutionState.UPDATE, waitToComplete);
     }
 
     /**
      * Sets next execution state.
-     * @param executionState next execution state.
      *
+     * @param executionState next execution state.
+     * @param waitToComplete if true wait for layer execution to complete otherwise not.
      */
-    private void nextState(ExecutionState executionState) {
-        executeLock.lock();
+    private void nextState(ExecutionState executionState, boolean waitToComplete) {
+        waitToComplete();
         try {
-            switch (executionState) {
-                case TRAIN, PREDICT, UPDATE, TERMINATED -> {
-                    if (++stateStartCount >= previousLayers.size()) {
-                        this.executionState = executionState;
-                        executeLockCondition.signalAll();
-                        stateStartCount = 0;
-                    }
-                }
-                case BACKWARD -> {
-                    if (++stateStartCount >= nextLayers.size()) {
-                        this.executionState = executionState;
-                        executeLockCondition.signalAll();
-                        stateStartCount = 0;
-                    }
-                }
-                default -> {
-                    this.executionState = executionState;
-                    executeLockCondition.signalAll();
+            executeLock.lock();
+            if (executionStartCount == -1) {
+                switch (executionState) {
+                    case TRAIN, PREDICT, UPDATE, TERMINATED -> executionStartCount = hasPreviousLayers() ? previousLayers.size() : 0;
+                    case BACKWARD -> executionStartCount = hasNextLayers() ? nextLayers.size() : 0;
+                    default -> {}
                 }
             }
-            if (executionState != ExecutionState.TERMINATED) waitToComplete();
+            if (--executionStartCount <= 0) {
+                this.executionState = executionState;
+                executeLockCondition.signalAll();
+                executionStartCount = -1;
+            }
         }
         finally {
             executeLock.unlock();
         }
+
+        if (waitToComplete) waitToComplete();
     }
 
     /**
-     * Waits for layer to complete execution.
+     * Wait for layer to complete.
      *
      */
     public void waitToComplete() {
-        executeLock.lock();
         try {
-            while (executionState != ExecutionState.IDLE) executeLockCompleteCondition.awaitUninterruptibly();
-        }
-        finally {
-            executeLock.unlock();
+            completeLock.lock();
+            while (executionState != ExecutionState.IDLE) completeLockCondition.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            completeLock.unlock();
         }
     }
 
     /**
-     * Changes layer execution state to IDLE.
+     * Sets layer completed and notifies other layers.
      *
      */
-    private void completeState() {
-        executeLock.lock();
+    private void complete() {
         try {
-            executionState = ExecutionState.IDLE;
-            executeLockCompleteCondition.signalAll();
+            completeLock.lock();
+            this.executionState = ExecutionState.IDLE;
+            completeLockCondition.signalAll();
         }
         finally {
-            executeLock.unlock();
+            completeLock.unlock();
         }
     }
 
     /**
-     * Thread run function.<br>
-     * Executes given neural network procedures and synchronizes their execution via layer thread execution lock.<br>
+     * Executes layer.
      *
+     * @param executorService executor service
+     * @throws RuntimeException throws runtime exception in case any exception happens.
      */
-    public void run() {
-        while (true) {
-            executeLock.lock();
+    private void executeLayer(ExecutorService executorService) throws RuntimeException {
+        executorService.execute(() -> {
             try {
-                switch (executionState) {
-                    case TRAIN -> {
-                        long startTime = System.nanoTime();
-                        forwardProcess();
-                        trainingExecutionTime += System.nanoTime() - startTime;
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.train();
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
-                        completeState();
+                while (!executeLayerOperation()) {}
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    /**
+     * Executes layer operation.
+     *
+     * @return return true if layer has been terminated otherwise returns true.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     */
+    private boolean executeLayerOperation() throws MatrixException, DynamicParamException {
+        try {
+            executeLock.lock();
+            switch (executionState) {
+                case TRAIN -> {
+                    forwardProcess();
+                    if (hasNextLayers()) {
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.train(false);
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
                     }
-                    case PREDICT -> {
-                        long startTime = System.nanoTime();
-                        forwardProcess();
-                        predictExecutionTime += System.nanoTime() - startTime;
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.predict();
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
-                        completeState();
-                    }
-                    case BACKWARD -> {
-                        long startTime = System.nanoTime();
-                        backwardProcess();
-                        trainingExecutionTime += System.nanoTime() - startTime;
-                        if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.backward();
-                        if (hasPreviousLayers()) for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.waitToComplete();
-                        completeState();
-                    }
-                    case UPDATE -> {
-                        long startTime = System.nanoTime();
-                        optimize();
-                        trainingExecutionTime += System.nanoTime() - startTime;
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.update();
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
-                        completeState();
-                    }
-                    case TERMINATED -> {
-                        if (hasNextLayers()) for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.stop();
-                        completeState();
-                        layerThread = null;
-                        executeLock.unlock();
-                        return;
-                    }
-                    default -> executeLockCondition.awaitUninterruptibly();
+                    complete();
                 }
+                case PREDICT -> {
+                    forwardProcess();
+                    if (hasNextLayers()) {
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.predict(false);
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                    }
+                    complete();
+                }
+                case BACKWARD -> {
+                    backwardProcess();
+                    if (hasPreviousLayers()) {
+                        for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.backward(false);
+                        for (NeuralNetworkLayer previousLayer : getPreviousLayers().values()) previousLayer.waitToComplete();
+                    }
+                    complete();
+                }
+                case UPDATE -> {
+                    optimize();
+                    if (hasNextLayers()) {
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.update(false);
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                    }
+                    complete();
+                }
+                case TERMINATED -> {
+                    if (hasNextLayers()) {
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.stop();
+                        for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
+                    }
+                    complete();
+                    return true;
+                }
+                case IDLE -> executeLockCondition.await();
             }
-            catch (Exception exception) {
-                exception.printStackTrace();
-                System.exit(-1);
-            }
-            finally {
-                executeLock.unlock();
-            }
+            return false;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            executeLock.unlock();
         }
     }
 
