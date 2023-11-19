@@ -140,7 +140,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException       throws exception if matrix operation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException, NeuralNetworkException {
