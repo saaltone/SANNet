@@ -52,8 +52,7 @@ public class AutoEncoder {
             NeuralNetwork neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows());
             initializeNeuralNetwork(neuralNetwork, data);
 
-            neuralNetwork.train(true, false);
-            neuralNetwork.waitToComplete();
+            neuralNetwork.train(true, true);
 
             int numberOfTests = 100;
             Random random = new Random();
@@ -78,8 +77,6 @@ public class AutoEncoder {
             classificationMetric.printReport();
 
             neuralNetwork.stop();
-
-            neuralNetwork.removePersistence();
 
             System.out.println("Removing last hidden layers for decoder part.");
             neuralNetwork.removeLastHiddenLayers(6);
