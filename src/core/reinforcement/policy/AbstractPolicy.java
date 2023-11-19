@@ -148,8 +148,9 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     /**
      * Stops abstract policy.
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    public void stop() {
+    public void stop() throws NeuralNetworkException {
         getFunctionEstimator().stop();
     }
 

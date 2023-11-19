@@ -301,8 +301,9 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     /**
      * Stops deep agent.
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    public void stop() {
+    public void stop() throws NeuralNetworkException {
         policy.stop();
         if (valueFunction != null) valueFunction.stop();
     }

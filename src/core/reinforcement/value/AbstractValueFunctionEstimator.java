@@ -87,8 +87,9 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     /**
      * Stops function estimator
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    public void stop() {
+    public void stop() throws NeuralNetworkException {
         getFunctionEstimator().stop();
     }
 

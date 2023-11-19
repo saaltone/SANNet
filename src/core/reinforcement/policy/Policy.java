@@ -90,8 +90,9 @@ public interface Policy extends Configurable {
     /**
      * Stops policy.
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    void stop();
+    void stop() throws NeuralNetworkException;
 
     /**
      * Returns executable policy.

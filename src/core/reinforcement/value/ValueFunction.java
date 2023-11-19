@@ -116,8 +116,9 @@ public interface ValueFunction extends Configurable {
     /**
      * Stops function estimator
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    void stop();
+    void stop() throws NeuralNetworkException;
 
     /**
      * Updates value function.

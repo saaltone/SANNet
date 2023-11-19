@@ -31,8 +31,9 @@ public interface Agent {
     /**
      * Stops agent.
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    void stop();
+    void stop() throws NeuralNetworkException;
 
     /**
      * Begins new step for agent.

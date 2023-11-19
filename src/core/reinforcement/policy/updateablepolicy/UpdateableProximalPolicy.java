@@ -88,7 +88,8 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      */
     public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, AgentException, MatrixException {
         super(executablePolicyType, functionEstimator, params);
-        previousFunctionEstimator = functionEstimator.copy();
+        previousFunctionEstimator = functionEstimator.reference();
+//        previousFunctionEstimator = functionEstimator.copy();
     }
 
     /**
@@ -200,8 +201,9 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     /**
      * Stops function estimator
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    public void stop() {
+    public void stop() throws NeuralNetworkException {
         super.stop();
         getPreviousFunctionEstimator().stop();
     }

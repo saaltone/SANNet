@@ -257,7 +257,7 @@ public class SoftQValueFunctionEstimator extends QTargetValueFunctionEstimator {
      */
     public void start(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         super.start(agent);
-        functionEstimator2 = dualFunctionEstimation ? getFunctionEstimator().copy() : null;
+        functionEstimator2 = dualFunctionEstimation ? getFunctionEstimator().reference() : null;
         if (getFunctionEstimator2() != null) {
             if (!isStateActionValueFunction()) getFunctionEstimator2().registerAgent(agent);
             getFunctionEstimator2().start();
@@ -267,8 +267,9 @@ public class SoftQValueFunctionEstimator extends QTargetValueFunctionEstimator {
     /**
      * Stops function estimator
      *
+     * @throws NeuralNetworkException throws exception is neural network is not started.
      */
-    public void stop() {
+    public void stop() throws NeuralNetworkException {
         super.stop();
         if (getFunctionEstimator2() != null) getFunctionEstimator2().stop();
     }
