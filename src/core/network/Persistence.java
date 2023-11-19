@@ -88,6 +88,16 @@ public class Persistence implements Serializable {
     }
 
     /**
+     * Returns reference to persistence.
+     *
+     * @param neuralNetwork reference to neural network instance to be made persistent.
+     * @return reference to persistence.
+     */
+    public Persistence reference(NeuralNetwork neuralNetwork) {
+        return new Persistence(snapshot, interval, neuralNetwork, filename, overwrite);
+    }
+
+    /**
      * Activates snapshots.
      *
      * @param interval interval (in iterations) between snapshots.
