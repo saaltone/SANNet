@@ -5,7 +5,10 @@
 
 package core.network;
 
-import core.layer.*;
+import core.layer.AbstractLayer;
+import core.layer.InputLayer;
+import core.layer.NeuralNetworkLayer;
+import core.layer.OutputLayer;
 import core.metrics.ClassificationMetric;
 import core.metrics.Metric;
 import core.metrics.RegressionMetric;
@@ -24,7 +27,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,7 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Can support multiple layer of different types including regularization, normalization and optimization methods.<br>
  *
  */
-public class NeuralNetwork implements Runnable, Serializable {
+public class NeuralNetwork implements Serializable {
 
     @Serial
     private static final long serialVersionUID = -1075977720550636471L;
@@ -70,6 +73,12 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient Condition executeLockCondition;
 
     /**
+     * Lock for synchronizing neural network thread operations.
+     *
+     */
+    private transient Lock completeLock;
+
+    /**
      * Lock-condition for synchronizing completion of procedure execution and shift to idle state.
      *
      */
@@ -94,28 +103,16 @@ public class NeuralNetwork implements Runnable, Serializable {
     private transient boolean stopExecution;
 
     /**
-     * Thread pool for neural network.
+     * Network thread pool.
      *
      */
     private transient ExecutorService networkThreadPool;
 
     /**
-     * Thread pool for neural network layers.
+     * Layer thread pool.
      *
      */
     private transient ExecutorService layerThreadPool;
-
-    /**
-     * Neural network execution thread.
-     *
-     */
-    private transient Thread neuralNetworkThread;
-
-    /**
-     * Future of the neural network thread.
-     *
-     */
-    private transient Future<?> future;
 
     /**
      * Name of neural network instance.
@@ -187,7 +184,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Structure containing prediction input sequence.
      *
      */
-    private final TreeMap<Integer, Sequence> predictInputs = new TreeMap<>();
+    private transient TreeMap<Integer, Sequence> predictInputs;
 
     /**
      * Flag is neural network and it's layers are to be reset prior training phase.
@@ -199,13 +196,19 @@ public class NeuralNetwork implements Runnable, Serializable {
      * Count of total neural network training iterations.
      *
      */
-    private int totalIterations = 0;
+    private int totalTrainingIterations = 0;
 
     /**
      * Total training time of neural network in nanoseconds.
      *
      */
     private long trainingTime = 0;
+
+    /**
+     * Total validation time of neural network in nanoseconds.
+     *
+     */
+    private long validationTime = 0;
 
     /**
      * Length of automatic validation cycle in iterations.
@@ -263,18 +266,6 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
      */
     public NeuralNetwork(NeuralNetworkConfiguration neuralNetworkConfiguration) throws NeuralNetworkException {
-        build(neuralNetworkConfiguration);
-    }
-
-    /**
-     * Constructor for neural network.
-     *
-     * @param neuralNetworkConfiguration neural network configuration.
-     * @param neuralNetworkName name for neural network instance.
-     * @throws NeuralNetworkException thrown if initialization of layer fails or neural network is already built.
-     */
-    public NeuralNetwork(NeuralNetworkConfiguration neuralNetworkConfiguration, String neuralNetworkName) throws NeuralNetworkException {
-        this.neuralNetworkName = neuralNetworkName;
         build(neuralNetworkConfiguration);
     }
 
@@ -451,6 +442,8 @@ public class NeuralNetwork implements Runnable, Serializable {
 
         hiddenLayers.remove(lastLayerIndex);
         neuralNetworkLayers.remove(lastNeuralNetworkLayerIndex);
+
+        if (persistence != null) persistence = persistence.reference(this);
     }
 
     /**
@@ -502,15 +495,13 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void start() throws NeuralNetworkException, MatrixException, DynamicParamException {
-        if (neuralNetworkLayers.isEmpty()) throw new NeuralNetworkException("Neural network is not built.");
         checkStarted();
+        if (neuralNetworkLayers.isEmpty()) throw new NeuralNetworkException("Neural network is not built.");
 
-        trainingMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) trainingMetrics.put(outputLayerIndex, new SingleRegressionMetric(showTrainingMetrics));
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) if (validationMetrics.get(outputLayerIndex) != null) validationMetrics.put(outputLayerIndex, validationMetrics.get(outputLayerIndex).reference());
-
-        if (!earlyStoppingMap.isEmpty()) {
-            for (Integer outputLayerIndex : getOutputLayers().keySet()) {
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) {
+            trainingMetrics.put(outputLayerIndex, new SingleRegressionMetric(showTrainingMetrics));
+            if (validationMetrics.get(outputLayerIndex) != null) validationMetrics.put(outputLayerIndex, validationMetrics.get(outputLayerIndex).reference());
+            if (!earlyStoppingMap.isEmpty()) {
                 earlyStoppingMap.get(outputLayerIndex).setTrainingMetric(trainingMetrics.get(outputLayerIndex));
                 earlyStoppingMap.get(outputLayerIndex).setValidationMetric(validationMetrics.get(outputLayerIndex));
             }
@@ -518,22 +509,17 @@ public class NeuralNetwork implements Runnable, Serializable {
 
         executeLock = new ReentrantLock();
         executeLockCondition = executeLock.newCondition();
-        completeLockCondition = executeLock.newCondition();
+        completeLock = new ReentrantLock();
+        completeLockCondition = completeLock.newCondition();
         executionState = ExecutionState.IDLE;
-
         stopLock = new ReentrantLock();
         stopExecution = false;
 
-        neuralNetworkThread = new Thread(this);
-        neuralNetworkThread.setName("NeuralNetwork" + (neuralNetworkName != null ? " (" + neuralNetworkName + ")" : ""));
+        networkThreadPool = Executors.newSingleThreadExecutor();
+        executeLayer(networkThreadPool);
 
-        layerThreadPool = Executors.newWorkStealingPool();
-
-        if (networkThreadPool != null) future = networkThreadPool.submit(neuralNetworkThread);
-        else neuralNetworkThread.start();
-
-        for (InputLayer inputLayer : inputLayers.values()) inputLayer.start(layerThreadPool);
-
+        layerThreadPool = Executors.newCachedThreadPool();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.start(layerThreadPool);
     }
 
     /**
@@ -543,32 +529,72 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void stop() {
         if (!isStarted()) return;
         waitToComplete();
-        executeLock.lock();
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.stop();
-        executionState = ExecutionState.TERMINATED;
-        executeLockCondition.signal();
-        executeLock.unlock();
+        nextState(ExecutionState.TERMINATED);
+        for (NeuralNetworkLayer neuralNetworkLayer : inputLayers.values()) neuralNetworkLayer.stop();
 
-        if (layerThreadPool == null) {
-            try {
-                neuralNetworkThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            layerThreadPool.shutdownNow();
+            networkThreadPool.shutdownNow();
+            if (!layerThreadPool.awaitTermination(10, TimeUnit.SECONDS) || !networkThreadPool.awaitTermination(10, TimeUnit.SECONDS)) {
+                System.out.println("Failed to shut down neural network.");
             }
         }
-        else {
-            layerThreadPool.shutdownNow();
-            if (future != null) future.cancel(true);
-            if (networkThreadPool != null) networkThreadPool.shutdownNow();
+        catch (InterruptedException ignored) {
         }
+    }
 
-        executeLock = null;
-        executeLockCondition = null;
-        completeLockCondition = null;
-        stopLock = null;
-        neuralNetworkThread = null;
-        layerThreadPool = null;
-        networkThreadPool = null;
+    /**
+     * Executes layer.
+     *
+     * @param executorService executor service
+     * @throws RuntimeException throws runtime exception in case any exception happens.
+     */
+    private void executeLayer(ExecutorService executorService) throws RuntimeException {
+        executorService.execute(() -> {
+            try {
+                while (!executeLayerOperation()) {}
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    /**
+     * Thread run function.<br>
+     * Executes given neural network procedures and synchronizes their execution via neural network thread execution lock.<br>
+     *
+     * @return return true if layer has been terminated otherwise returns true.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws IOException throws exception if neural network persistence operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private boolean executeLayerOperation() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException {
+        try {
+            executeLock.lock();
+            switch (executionState) {
+                case TRAIN -> {
+                    trainIterations();
+                    complete();
+                }
+                case VALIDATE -> {
+                    validateInput();
+                    complete();
+                }
+                case PREDICT -> {
+                    predictInput();
+                    complete();
+                }
+                case TERMINATED -> {
+                    complete();
+                    return true;
+                }
+            }
+        }
+        finally {
+            executeLock.unlock();
+        }
+        return false;
     }
 
     /**
@@ -577,7 +603,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return returns true if neural network is started otherwise false.
      */
     public boolean isStarted() {
-        return networkThreadPool != null ? future != null && (!future.isDone()) : neuralNetworkThread != null && (neuralNetworkThread.getState() != Thread.State.NEW);
+        return networkThreadPool != null && !networkThreadPool.isTerminated();
     }
 
     /**
@@ -599,41 +625,18 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Aborts execution of neural network.<br>
-     * Execution is aborted after execution of last single operation is completed.<br>
-     * Useful when neural network is executing multiple training iterations.<br>
-     *
-     */
-    public void abortExecution() {
-        if (!isStarted()) return;
-        stopLock.lock();
-        stopExecution = true;
-        stopLock.unlock();
-    }
-
-    /**
      * Sets neural network into completed state and makes state to idle state.
      *
      */
-    private void stateCompleted() {
-        executeLock.lock();
-        executionState = ExecutionState.IDLE;
-        completeLockCondition.signal();
-        executeLock.unlock();
-    }
-
-    /**
-     * Checks if neural network is executing (processing).
-     *
-     * @return true if neural network is executing otherwise false.
-     */
-    public boolean isProcessing() {
-        if (!isStarted()) return false;
-        executeLock.lock();
-        boolean isProcessing;
-        isProcessing = !(executionState == ExecutionState.IDLE || executionState == ExecutionState.TERMINATED);
-        executeLock.unlock();
-        return isProcessing;
+    private void complete() {
+        try {
+            completeLock.lock();
+            executionState = ExecutionState.IDLE;
+            completeLockCondition.signal();
+        }
+        finally {
+            completeLock.unlock();
+        }
     }
 
     /**
@@ -642,9 +645,29 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void waitToComplete() {
         if (!isStarted()) return;
-        executeLock.lock();
-        if (isProcessing()) completeLockCondition.awaitUninterruptibly();
-        executeLock.unlock();
+        try {
+            completeLock.lock();
+            while (executionState != ExecutionState.IDLE) completeLockCondition.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            completeLock.unlock();
+        }
+    }
+
+    /**
+     * Stops execution.
+     *
+     */
+    public void stopExecution() {
+        try {
+            stopLock.lock();
+            stopExecution = true;
+        }
+        finally {
+            stopLock.unlock();
+        }
     }
 
     /**
@@ -653,14 +676,14 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @return true if execution is stopped otherwise false.
      */
     private boolean stoppedExecution() {
-        stopLock.lock();
-        boolean stopped = false;
-        if (stopExecution) {
-            stopped = true;
-            stopExecution = false;
+        try {
+            stopLock.lock();
+            return stopExecution;
         }
-        stopLock.unlock();
-        return stopped;
+        finally {
+            stopExecution = false;
+            stopLock.unlock();
+        }
     }
 
     /**
@@ -669,9 +692,14 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param executionState next state for neural network.
      */
     private void nextState(ExecutionState executionState) {
-        this.executionState = executionState;
-        executeLockCondition.signal();
-        executeLock.unlock();
+        try {
+            executeLock.lock();
+            this.executionState = executionState;
+            executeLockCondition.signal();
+        }
+        finally {
+            executeLock.unlock();
+        }
     }
 
     /**
@@ -682,53 +710,28 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @throws NeuralNetworkException throws exception if setting of training sample sets fail.
      */
     public void setTrainingData(Sampler trainingSampler) throws NeuralNetworkException {
-        checkNotStarted();
         waitToComplete();
-        executeLock.lock();
-        if (trainingSampler == null) {
-            executeLock.unlock();
-            throw new NeuralNetworkException("Training sampler is not set.");
-        }
+        if (trainingSampler == null) throw new NeuralNetworkException("Training sampler is not set.");
         this.trainingSampler = trainingSampler;
-        executeLock.unlock();
     }
 
     /**
      * Sets early stopping conditions.
      *
-     * @param earlyStoppingMap early stopping instances.
+     * @param newEarlyStoppingMap early stopping instances.
      * @throws NeuralNetworkException throws exception if early stopping is not defined.
      */
-    public void setTrainingEarlyStopping(TreeMap<Integer, EarlyStopping> earlyStoppingMap) throws NeuralNetworkException {
+    public void setTrainingEarlyStopping(TreeMap<Integer, EarlyStopping> newEarlyStoppingMap) throws NeuralNetworkException {
         waitToComplete();
-        if (earlyStoppingMap == null) throw new NeuralNetworkException("Early stopping is not defined.");
-        this.earlyStoppingMap.clear();
-        this.earlyStoppingMap.putAll(earlyStoppingMap);
-        for (Integer earlyStoppingIndex : this.earlyStoppingMap.keySet()) {
+        if (newEarlyStoppingMap == null) throw new NeuralNetworkException("Early stopping is not defined.");
+        earlyStoppingMap.clear();
+        earlyStoppingMap.putAll(newEarlyStoppingMap);
+        for (Integer earlyStoppingIndex : newEarlyStoppingMap.keySet()) {
             earlyStoppingMap.get(earlyStoppingIndex).setTrainingMetric(trainingMetrics.get(earlyStoppingIndex));
+        }
+        for (Integer earlyStoppingIndex : newEarlyStoppingMap.keySet()) {
             earlyStoppingMap.get(earlyStoppingIndex).setValidationMetric(validationMetrics.get(earlyStoppingIndex));
         }
-    }
-
-    /**
-     * Sets auto validation on.
-     *
-     * @param autoValidationCycle validation cycle in iterations.
-     * @throws NeuralNetworkException throws exception if number of auto validation cycles are below 1.
-     */
-    public void setAutoValidate(int autoValidationCycle) throws NeuralNetworkException {
-        waitToComplete();
-        if (autoValidationCycle < 1) throw new NeuralNetworkException("Auto validation cycle size must be at least 1.");
-        this.autoValidationCycle = autoValidationCycle;
-    }
-
-    /**
-     * Unsets auto validation.
-     *
-     */
-    public void unsetAutoValidate() {
-        waitToComplete();
-        autoValidationCycle = 0;
     }
 
     /**
@@ -797,12 +800,135 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void train(Sampler trainingSampler, boolean reset, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        executeLock.lock();
         if (trainingSampler != null) this.trainingSampler = trainingSampler;
         if (this.trainingSampler == null) throw new NeuralNetworkException("Training sampler is not set.");
         this.reset = reset;
         nextState(ExecutionState.TRAIN);
         if (waitToComplete) waitToComplete();
+    }
+
+    /**
+     * Trains neural network with defined number of iterations.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException throws exception if neural network persistence operation fails.
+     * @throws NeuralNetworkException throws exception if neural network training fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private void trainIterations() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
+        trainingSampler.reset();
+        int numberOfIterations = trainingSampler.getNumberOfIterations();
+        for (int iteration = 0; iteration < numberOfIterations; iteration++) {
+            trainIteration();
+            if (stoppedExecution()) return;
+            if (!earlyStoppingMap.isEmpty()) {
+                boolean stopTraining = true;
+                for (EarlyStopping earlyStopping : earlyStoppingMap.values()) if (!earlyStopping.stopTraining()) stopTraining = false;
+                if (stopTraining) return;
+            }
+        }
+    }
+
+    /**
+     * Trains single neural network iteration.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws IOException throws exception if neural network persistence operation fails.
+     * @throws NeuralNetworkException throws exception if neural network training fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
+        totalTrainingIterations++;
+        long trainingStartTime = System.nanoTime();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) if (reset) neuralNetworkLayer.resetOptimizer();
+        TreeMap<Integer, Sequence> inputSequences = new TreeMap<>();
+        TreeMap<Integer, Sequence> outputSequences = new TreeMap<>();
+        trainingSampler.getSamples(inputSequences, outputSequences);
+        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().setTargets(outputSequences.get(entry.getKey()));
+        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().train(inputSequences.get(entry.getKey()));
+        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().backward();
+        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().update();
+        long trainingEndTime = System.nanoTime();
+        trainingTime += trainingEndTime - trainingStartTime;
+        for (Map.Entry<Integer, SingleRegressionMetric> entry : trainingMetrics.entrySet()) entry.getValue().report(getOutputLayers().get(entry.getKey()).getTotalError());
+        if (!earlyStoppingMap.isEmpty()) for (EarlyStopping earlyStopping : earlyStoppingMap.values()) earlyStopping.evaluateTrainingCondition(totalTrainingIterations);
+        if (autoValidationCycle > 0) {
+            autoValidationCount++;
+            if (autoValidationCount >= autoValidationCycle) {
+                long validationStartTime = System.nanoTime();
+                validateInput();
+                long validationEndTime = System.nanoTime();
+                validationTime += validationEndTime - validationStartTime;
+                if (!earlyStoppingMap.isEmpty()) for (EarlyStopping earlyStopping : earlyStoppingMap.values()) earlyStopping.evaluateValidationCondition(totalTrainingIterations);
+                autoValidationCount = 0;
+            }
+        }
+        if (verboseTraining) verboseTrainingStatus();
+        if (persistence != null) persistence.cycle();
+    }
+
+    /**
+     * Verboses (prints to console) neural network training status.<br>
+     * Prints number of iteration, neural network training time and training error.<br>
+     *
+     */
+    private void verboseTrainingStatus() {
+        StringBuilder meanSquaredError = new StringBuilder("[ ");
+        for (SingleRegressionMetric trainingMetric : trainingMetrics.values()) {
+            meanSquaredError.append(String.format("%.4f", trainingMetric.getLastAbsoluteError())).append(" ");
+        }
+        meanSquaredError.append("]");
+        if (totalTrainingIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalTrainingIterations +"): " + meanSquaredError + ", Training time: " + String.format("%.3f", trainingTime / Math.pow(10, 9)) + "s" + (autoValidationCycle > 0 ? ", Validation time: " + String.format("%.3f", validationTime / Math.pow(10, 9)) + "s" : ""));
+    }
+
+    /**
+     * Returns output of neural network (output layer).
+     *
+     * @return output of neural network.
+     */
+    public TreeMap<Integer, Sequence> getOutput() {
+        waitToComplete();
+        TreeMap<Integer, Sequence> outputs = new TreeMap<>();
+        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) outputs.put(entry.getKey(), entry.getValue().getLayerOutputs());
+        return outputs;
+    }
+
+    /**
+     * Returns neural network output error.
+     *
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return neural network output error.
+     */
+    public TreeMap<Integer, Double> getOutputError() throws MatrixException, DynamicParamException {
+        waitToComplete();
+        TreeMap<Integer, Double> outputErrors = new TreeMap<>();
+        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) outputErrors.put(entry.getKey(), entry.getValue().getTotalError());
+        return outputErrors;
+    }
+
+    /**
+     * Sets importance sampling weights to output layer.
+     *
+     * @param importanceSamplingWeights importance sampling weights
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     */
+    public void setImportanceSamplingWeights(TreeMap<Integer, HashMap<Integer, Double>> importanceSamplingWeights) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        executeLock.lock();
+        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().setImportanceSamplingWeights(importanceSamplingWeights.get(entry.getKey()));
+        executeLock.unlock();
+    }
+
+    /**
+     * Sets reset flag for procedure expression dependencies.
+     *
+     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     */
+    public void resetDependencies(boolean resetDependencies) {
+        waitToComplete();
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.resetDependencies(resetDependencies);
     }
 
     /**
@@ -847,100 +973,46 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets reset flag for procedure expression dependencies.
+     * Returns training metrics instance.
      *
-     * @param resetDependencies if true procedure expression dependencies are reset otherwise false.
+     * @return training metrics instance.
      */
-    public void resetDependencies(boolean resetDependencies) {
+    public TreeMap<Integer, SingleRegressionMetric> getTrainingMetrics() {
         waitToComplete();
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.resetDependencies(resetDependencies);
+        return trainingMetrics;
     }
 
     /**
-     * Predicts values based on current test set inputs.
+     * Sets if training metrics is shown.
      *
-     * @return predicted values (neural network output).
-     * @throws NeuralNetworkException throws exception if prediction fails.
+     * @param showTrainingMetrics if true training metrics is shown otherwise not.
+     * @throws NeuralNetworkException throws exception if parameter is attempted to be set when neural network is already started.
      */
-    public TreeMap<Integer, Sequence>  predict() throws NeuralNetworkException {
-        return predict(null, true);
+    public void setShowTrainingMetrics(boolean showTrainingMetrics) throws NeuralNetworkException {
+        if(isStarted()) throw new NeuralNetworkException("Training metrics can be only enabled / disabled when neural network is not started.");
+        this.showTrainingMetrics = showTrainingMetrics;
     }
 
     /**
-     * Predicts values based on given input.
+     * Returns total neural network training iterations count.
      *
-     * @param inputs inputs for prediction.
-     * @return predicted values (neural network outputs).
-     * @throws NeuralNetworkException throws exception if prediction fails.
+     * @return total neural network training iterations count.
      */
-    public TreeMap<Integer, Matrix> predictMatrix(TreeMap<Integer, Matrix> inputs) throws NeuralNetworkException {
-        if (inputs.isEmpty()) throw new NeuralNetworkException("No prediction inputs set");
-        TreeMap<Integer, Matrix> outputs = new TreeMap<>();
-        for (Map.Entry<Integer, Sequence> entry : predict(Sequence.getSequencesFromMatrices(inputs), true).entrySet()) outputs.put(entry.getKey(), entry.getValue().get(0));
-        return outputs;
-    }
-
-    /**
-     * Predicts values based on current test set inputs.<br>
-     * Sets specific inputs for prediction.<br>
-     *
-     * @param inputs test input set for prediction.
-     * @return predicted values (neural network output).
-     * @throws NeuralNetworkException throws exception if prediction fails.
-     */
-    public TreeMap<Integer, Sequence> predict(TreeMap<Integer, Sequence>  inputs) throws NeuralNetworkException {
-        return predict(inputs, true);
-    }
-
-    /**
-     * Predicts values based on current test set inputs.<br>
-     * Optionally waits neural network prediction procedure to complete.<br>
-     *
-     * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior prediction completion.
-     * @return predicted values (neural network output).
-     * @throws NeuralNetworkException throws exception if prediction fails.
-     */
-    public TreeMap<Integer, Sequence> predict(boolean waitToComplete) throws NeuralNetworkException {
-        return predict(null, waitToComplete);
-    }
-
-    /**
-     * Predicts values based on given inputs.<br>
-     * Optionally waits neural network prediction procedure to complete.<br>
-     *
-     * @param inputs test input set for prediction.
-     * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior prediction completion.
-     * @return predicted values (neural network output).
-     * @throws NeuralNetworkException throws exception if prediction fails.
-     */
-    public TreeMap<Integer, Sequence> predict(TreeMap<Integer, Sequence> inputs, boolean waitToComplete) throws NeuralNetworkException {
-        checkNotStarted();
+    public int getTotalTrainingIterations() {
         waitToComplete();
-        if (inputs == null) throw new NeuralNetworkException("No prediction inputs set");
-        executeLock.lock();
-        predictInputs.clear();
-        predictInputs.putAll(inputs);
-        nextState(ExecutionState.PREDICT);
-        return waitToComplete ? getOutput() : null;
+        return totalTrainingIterations;
     }
 
     /**
-     * Sets verbosing for validation phase.<br>
-     * Follows training verbosing cycle.<br>
+     * Sets validation data.
      *
+     * @param validationSampler validation sampler containing validation data set.
+     * @throws NeuralNetworkException throws exception if setting of validation data fails.
      */
-    public void verboseValidation() {
+    public void setValidationData(Sampler validationSampler) throws NeuralNetworkException {
         waitToComplete();
-        verboseValidation = true;
-    }
-
-    /**
-     * Unsets verbosing for validation phase.
-     *
-     */
-    public void unverboseValidation() {
-        waitToComplete();
-        verboseValidation = false;
+        if (validationSampler == null) throw new NeuralNetworkException("Validation sampler is not set.");
+        this.validationSampler = validationSampler;
     }
 
     /**
@@ -975,24 +1047,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Sets validation data.
-     *
-     * @param validationSampler validation sampler containing validation data set.
-     * @throws NeuralNetworkException throws exception if setting of validation data fails.
-     */
-    public void setValidationData(Sampler validationSampler) throws NeuralNetworkException {
-        checkNotStarted();
-        waitToComplete();
-        executeLock.lock();
-        if (validationSampler == null) {
-            executeLock.unlock();
-            throw new NeuralNetworkException("Validation sampler is not set.");
-        }
-        this.validationSampler = validationSampler;
-        executeLock.unlock();
-    }
-
-    /**
      * Validates neural network.<br>
      * Sets specific input and output (actual true values) test samples.<br>
      * Optionally waits neural network validation procedure to complete.<br>
@@ -1004,7 +1058,6 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void validate(Sampler validationSampler, boolean waitToComplete) throws NeuralNetworkException {
         checkNotStarted();
         waitToComplete();
-        executeLock.lock();
         if (validationSampler != null) this.validationSampler = validationSampler;
         if (this.validationSampler == null) throw new NeuralNetworkException("Validation sampler is not set.");
         nextState(ExecutionState.VALIDATE);
@@ -1012,158 +1065,13 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
-     * Returns output of neural network (output layer).
-     *
-     * @return output of neural network.
-     */
-    public TreeMap<Integer, Sequence> getOutput() {
-        waitToComplete();
-        TreeMap<Integer, Sequence> outputs = new TreeMap<>();
-        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) outputs.put(entry.getKey(), entry.getValue().getLayerOutputs());
-        return outputs;
-    }
-
-    /**
-     * Returns total training time.
-     *
-     * @return total training time.
-     */
-    public double getTotalTrainingTime() {
-        double totalTrainingTime = 0;
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) {
-            double layerTrainingTime = neuralNetworkLayer.getTrainingExecutionTime();
-            totalTrainingTime += layerTrainingTime;
-        }
-        return totalTrainingTime;
-    }
-
-    /**
-     * Returns total prediction time.
-     *
-     * @return total prediction time.
-     */
-    public double getTotalPredictionTime() {
-        double totalPredictionTime = 0;
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) totalPredictionTime += neuralNetworkLayer.getPredictExecutionTime();
-        return totalPredictionTime;
-    }
-
-    /**
-     * Thread run function.<br>
-     * Executes given neural network procedures and synchronizes their execution via neural network thread execution lock.<br>
-     *
-     */
-    public void run() {
-        while (true) {
-            executeLock.lock();
-            try {
-                switch (executionState) {
-                    case TRAIN -> trainIterations();
-                    case PREDICT -> predictInput();
-                    case VALIDATE -> validateInput(true);
-                    case TERMINATED -> {
-                        return;
-                    }
-                }
-            }
-            catch (Exception exception) {
-                exception.printStackTrace();
-                System.exit(-1);
-            }
-            executeLock.unlock();
-        }
-    }
-
-    /**
-     * Trains neural network with defined number of iterations.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws IOException throws exception if neural network persistence operation fails.
-     * @throws NeuralNetworkException throws exception if neural network training fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void trainIterations() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
-        trainingSampler.reset();
-        int numberOfIterations = trainingSampler.getNumberOfIterations();
-        for (int iteration = 0; iteration < numberOfIterations; iteration++) {
-            trainIteration();
-            if (stoppedExecution()) break;
-            if (!earlyStoppingMap.isEmpty()) {
-                boolean stopTraining = true;
-                for (EarlyStopping earlyStopping : earlyStoppingMap.values()) if (!earlyStopping.stopTraining()) stopTraining = false;
-                if (stopTraining) break;
-            }
-        }
-        stateCompleted();
-    }
-
-    /**
-     * Trains single neural network iteration.
-     *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws IOException throws exception if neural network persistence operation fails.
-     * @throws NeuralNetworkException throws exception if neural network training fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    private void trainIteration() throws MatrixException, IOException, NeuralNetworkException, DynamicParamException {
-        long startTime = System.nanoTime();
-        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) if (reset) neuralNetworkLayer.resetOptimizer();
-        TreeMap<Integer, Sequence> inputSequences = new TreeMap<>();
-        TreeMap<Integer, Sequence> outputSequences = new TreeMap<>();
-        trainingSampler.getSamples(inputSequences, outputSequences);
-        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().setTargets(outputSequences.get(entry.getKey()));
-        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().train(inputSequences.get(entry.getKey()));
-        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().backward();
-        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().update();
-        long endTime = System.nanoTime();
-        trainingTime += endTime - startTime;
-        for (Map.Entry<Integer, SingleRegressionMetric> entry : trainingMetrics.entrySet()) entry.getValue().report(getOutputLayers().get(entry.getKey()).getTotalError());
-        totalIterations++;
-        if (autoValidationCycle > 0) {
-            autoValidationCount++;
-            if (autoValidationCount >= autoValidationCycle) {
-                validateInput(false);
-                if (!earlyStoppingMap.isEmpty()) for (EarlyStopping earlyStopping : earlyStoppingMap.values()) earlyStopping.evaluateValidationCondition(totalIterations);
-                autoValidationCount = 0;
-            }
-        }
-        if (!earlyStoppingMap.isEmpty()) for (EarlyStopping earlyStopping : earlyStoppingMap.values()) earlyStopping.evaluateTrainingCondition(totalIterations);
-        if (verboseTraining) verboseTrainingStatus();
-        if (persistence != null) persistence.cycle();
-    }
-
-    /**
-     * Verboses (prints to console) neural network training status.<br>
-     * Prints number of iteration, neural network training time and training error.<br>
-     *
-     */
-    private void verboseTrainingStatus() {
-        StringBuilder meanSquaredError = new StringBuilder("[ ");
-        for (SingleRegressionMetric trainingMetric : trainingMetrics.values()) {
-            meanSquaredError.append(String.format("%.4f", trainingMetric.getLastAbsoluteError())).append(" ");
-        }
-        meanSquaredError.append("]");
-        if (totalIterations % verboseCycle == 0) System.out.println((neuralNetworkName != null ? neuralNetworkName + ": " : "") + "Training error (iteration #" + totalIterations +"): " + meanSquaredError + ", Training time in seconds: " + (int)(getTotalTrainingTime() / Math.pow(10, 9)));
-    }
-
-    /**
-     * Predicts using given test set inputs.
-     *
-     */
-    private void predictInput() {
-        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().predict(predictInputs.get(entry.getKey()));
-        stateCompleted();
-    }
-
-    /**
      * Validates with given test set inputs and outputs.
      *
-     * @param stateCompleted if flag is sets calls stateCompleted function.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if validation fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    private void validateInput(boolean stateCompleted) throws MatrixException, NeuralNetworkException, DynamicParamException {
+    private void validateInput() throws MatrixException, NeuralNetworkException, DynamicParamException {
         for (Metric validationMetric : validationMetrics.values()) validationMetric.reset();
         validationSampler.reset();
         int numberOfIterations = validationSampler.getNumberOfIterations();
@@ -1174,53 +1082,7 @@ public class NeuralNetwork implements Runnable, Serializable {
             for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().predict(inputSequences.get(entry.getKey()));
             for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) validationMetrics.get(entry.getKey()).report(entry.getValue().getLayerOutputs(), outputSequences.get(entry.getKey()));
         }
-        if (verboseValidation && (totalIterations % verboseCycle == 0)) verboseValidationStatus();
-        if (stateCompleted) stateCompleted();
-    }
-
-    /**
-     * Returns training metrics instance.
-     *
-     * @return training metrics instance.
-     */
-    public TreeMap<Integer, SingleRegressionMetric> getTrainingMetrics() {
-        waitToComplete();
-        return trainingMetrics;
-    }
-
-    /**
-     * Sets if training metrics is shown.
-     *
-     * @param showTrainingMetrics if true training metrics is shown otherwise not.
-     * @throws NeuralNetworkException throws exception if parameter is attempted to be set when neural network is already started.
-     */
-    public void setShowTrainingMetrics(boolean showTrainingMetrics) throws NeuralNetworkException {
-        if(isStarted()) throw new NeuralNetworkException("Training metrics can be only enabled / disabled when neural network is not started.");
-        this.showTrainingMetrics = showTrainingMetrics;
-    }
-
-    /**
-     * Returns total neural network training iterations count.
-     *
-     * @return total neural network training iterations count.
-     */
-    public int getTotalIterations() {
-        waitToComplete();
-        return totalIterations;
-    }
-
-    /**
-     * Returns neural network output error.
-     *
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @return neural network output error.
-     */
-    public TreeMap<Integer, Double> getOutputError() throws MatrixException, DynamicParamException {
-        waitToComplete();
-        TreeMap<Integer, Double> outputErrors = new TreeMap<>();
-        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) outputErrors.put(entry.getKey(), entry.getValue().getTotalError());
-        return outputErrors;
+        if (verboseValidation && (totalTrainingIterations % verboseCycle == 0)) verboseValidationStatus();
     }
 
     /**
@@ -1229,9 +1091,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param showMetric if true shows metric otherwise not.
      */
     public void setAsRegression(boolean showMetric) {
-        waitToComplete();
-        validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric(showMetric));
+        setAsRegression(false, showMetric);
     }
 
     /**
@@ -1241,8 +1101,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param showMetric if true shows metric otherwise not.
      */
     public void setAsRegression(int outputLayerIndex, boolean showMetric) {
-        waitToComplete();
-        validationMetrics.put(outputLayerIndex, new RegressionMetric(showMetric));
+        setAsRegression(outputLayerIndex, false, showMetric);
     }
 
     /**
@@ -1254,7 +1113,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setAsRegression(boolean useR2AsLastError, boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError, showMetric));
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) setAsRegression(outputLayerIndex, useR2AsLastError, showMetric);
     }
 
     /**
@@ -1266,7 +1125,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void setAsRegression(int outputLayerIndex, boolean useR2AsLastError, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new RegressionMetric(useR2AsLastError, showMetric));
+        setValidationMetric(outputLayerIndex, new RegressionMetric(useR2AsLastError, showMetric));
     }
 
     /**
@@ -1275,9 +1134,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param showMetric if true shows metric otherwise not.
      */
     public void setAsClassification(boolean showMetric) {
-        waitToComplete();
-        validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric(showMetric));
+        setAsClassification(false, showMetric);
     }
 
     /**
@@ -1287,8 +1144,7 @@ public class NeuralNetwork implements Runnable, Serializable {
      * @param showMetric if true shows metric otherwise not.
      */
     public void setAsClassification(int outputLayerIndex, boolean showMetric) {
-        waitToComplete();
-        validationMetrics.put(outputLayerIndex, new ClassificationMetric(showMetric));
+        setAsClassification(outputLayerIndex, false, showMetric);
     }
 
     /**
@@ -1300,7 +1156,7 @@ public class NeuralNetwork implements Runnable, Serializable {
     public void setAsClassification(boolean multiClass, boolean showMetric) {
         waitToComplete();
         validationMetrics.clear();
-        for (Integer outputLayerIndex : getOutputLayers().keySet()) validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass, showMetric));
+        for (Integer outputLayerIndex : getOutputLayers().keySet()) setAsClassification(outputLayerIndex, multiClass, showMetric);
     }
 
     /**
@@ -1312,7 +1168,58 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void setAsClassification(int outputLayerIndex, boolean multiClass, boolean showMetric) {
         waitToComplete();
-        validationMetrics.put(outputLayerIndex, new ClassificationMetric(multiClass, showMetric));
+        setValidationMetric(outputLayerIndex, new ClassificationMetric(multiClass, showMetric));
+    }
+
+    /**
+     * Sets validation metric.
+     *
+     * @param outputLayerIndex output layer index.
+     * @param metric metric.
+     */
+    private void setValidationMetric(int outputLayerIndex, Metric metric) {
+        validationMetrics.put(outputLayerIndex, metric);
+        if (earlyStoppingMap.get(outputLayerIndex) != null) earlyStoppingMap.get(outputLayerIndex).setValidationMetric(metric);
+    }
+
+    /**
+     * Sets auto validation on.
+     *
+     * @param autoValidationCycle validation cycle in iterations.
+     * @throws NeuralNetworkException throws exception if number of auto validation cycles are below 1.
+     */
+    public void setAutoValidate(int autoValidationCycle) throws NeuralNetworkException {
+        waitToComplete();
+        if (autoValidationCycle < 1) throw new NeuralNetworkException("Auto validation cycle size must be at least 1.");
+        this.autoValidationCycle = autoValidationCycle;
+    }
+
+    /**
+     * Unsets auto validation.
+     *
+     */
+    public void unsetAutoValidate() {
+        waitToComplete();
+        autoValidationCycle = 0;
+    }
+
+    /**
+     * Sets verbosing for validation phase.<br>
+     * Follows training verbosing cycle.<br>
+     *
+     */
+    public void verboseValidation() {
+        waitToComplete();
+        verboseValidation = true;
+    }
+
+    /**
+     * Unsets verbosing for validation phase.
+     *
+     */
+    public void unverboseValidation() {
+        waitToComplete();
+        verboseValidation = false;
     }
 
     /**
@@ -1361,6 +1268,58 @@ public class NeuralNetwork implements Runnable, Serializable {
     }
 
     /**
+     * Predicts values based on given input.
+     *
+     * @param inputs inputs for prediction.
+     * @return predicted values (neural network outputs).
+     * @throws NeuralNetworkException throws exception if prediction fails.
+     */
+    public TreeMap<Integer, Matrix> predictMatrix(TreeMap<Integer, Matrix> inputs) throws NeuralNetworkException {
+        if (inputs.isEmpty()) throw new NeuralNetworkException("No prediction inputs set");
+        TreeMap<Integer, Matrix> outputs = new TreeMap<>();
+        for (Map.Entry<Integer, Sequence> entry : predict(Sequence.getSequencesFromMatrices(inputs), true).entrySet()) outputs.put(entry.getKey(), entry.getValue().get(0));
+        return outputs;
+    }
+
+    /**
+     * Predicts values based on current test set inputs.<br>
+     * Sets specific inputs for prediction.<br>
+     *
+     * @param inputs test input set for prediction.
+     * @return predicted values (neural network output).
+     * @throws NeuralNetworkException throws exception if prediction fails.
+     */
+    public TreeMap<Integer, Sequence> predict(TreeMap<Integer, Sequence> inputs) throws NeuralNetworkException {
+        return predict(inputs, true);
+    }
+
+    /**
+     * Predicts values based on given inputs.<br>
+     * Optionally waits neural network prediction procedure to complete.<br>
+     *
+     * @param inputs test input set for prediction.
+     * @param waitToComplete if true waits for neural network execution complete otherwise returns function prior prediction completion.
+     * @return predicted values (neural network output).
+     * @throws NeuralNetworkException throws exception if prediction fails.
+     */
+    public TreeMap<Integer, Sequence> predict(TreeMap<Integer, Sequence> inputs, boolean waitToComplete) throws NeuralNetworkException {
+        checkNotStarted();
+        waitToComplete();
+        if (inputs == null) throw new NeuralNetworkException("No prediction inputs set");
+        predictInputs = inputs;
+        nextState(ExecutionState.PREDICT);
+        return waitToComplete ? getOutput() : null;
+    }
+
+    /**
+     * Predicts using given test set inputs.
+     *
+     */
+    private void predictInput() {
+        for (Map.Entry<Integer, InputLayer> entry : getInputLayers().entrySet()) entry.getValue().predict(predictInputs.get(entry.getKey()));
+    }
+
+    /**
      * Makes deep copy of neural network by using object serialization.
      *
      * @return copy of this neural network.
@@ -1370,7 +1329,6 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public NeuralNetwork copy() throws IOException, ClassNotFoundException, MatrixException {
         waitToComplete();
-        predictInputs.clear();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.reset();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
@@ -1407,11 +1365,13 @@ public class NeuralNetwork implements Runnable, Serializable {
      */
     public void reinitialize() throws MatrixException, DynamicParamException {
         waitToComplete();
-        predictInputs.clear();
+        predictInputs = new TreeMap<>();
+        trainingSampler = null;
+        validationSampler = null;
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) neuralNetworkLayer.reinitialize();
         for (Map.Entry<Integer, EarlyStopping> entry : earlyStoppingMap.entrySet()) earlyStoppingMap.put(entry.getKey(), entry.getValue().reference());
         for (Metric validationMetric : validationMetrics.values()) validationMetric.reinitialize();
-        totalIterations = 0;
+        totalTrainingIterations = 0;
         trainingTime = 0;
     }
 
@@ -1427,20 +1387,6 @@ public class NeuralNetwork implements Runnable, Serializable {
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : neuralNetworkLayers.entrySet()) {
             entry.getValue().append(otherNeuralNetwork.getNeuralNetworkLayers().get(entry.getKey()), tau);
         }
-    }
-
-    /**
-     * Sets importance sampling weights to output layer.
-     *
-     * @param importanceSamplingWeights importance sampling weights
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void setImportanceSamplingWeights(TreeMap<Integer, HashMap<Integer, Double>> importanceSamplingWeights) throws NeuralNetworkException {
-        checkNotStarted();
-        waitToComplete();
-        executeLock.lock();
-        for (Map.Entry<Integer, OutputLayer> entry : getOutputLayers().entrySet()) entry.getValue().setImportanceSamplingWeights(importanceSamplingWeights.get(entry.getKey()));
-        executeLock.unlock();
     }
 
 
