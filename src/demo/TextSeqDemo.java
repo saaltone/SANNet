@@ -61,7 +61,7 @@ public class TextSeqDemo {
             neuralNetwork.printGradients();
             neuralNetwork.resetDependencies(false);
             neuralNetwork.setTrainingData(new BasicSampler(new HashMap<>() {{ put(0, data.get(0)); }}, new HashMap<>() {{ put(0, data.get(1)); }},"randomOrder = false, randomStart = false, stepSize = 1, shuffleSamples = false, sampleSize = 100, numberOfIterations = 100"));
-            while (neuralNetwork.getTotalIterations() < 100000) {
+            while (neuralNetwork.getTotalTrainingIterations() < 100000) {
                 neuralNetwork.train();
                 System.out.println("Validating...");
                 Matrix input = data.get(0).get(1);
