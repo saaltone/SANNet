@@ -307,16 +307,14 @@ public abstract class AbstractNode implements Node, Serializable {
     /**
      * Cumulates gradient.
      *
-     * @param index data index.
+     * @param index          data index.
      * @param outputGradient output gradient.
-     * @param negateGradient if true output gradient contribution is negated prior being cumulated.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException {
+    public void cumulateGradient(int index, Matrix outputGradient) throws MatrixException {
         if (getGradient(index) == null) setGradient(index, getNewMatrix());
 
-        if (!negateGradient) getGradient(index).addBy(outputGradient);
-        else getGradient(index).subtractBy(outputGradient);
+        getGradient(index).addBy(outputGradient);
 
         cumulatedGradientEntryCount++;
     }

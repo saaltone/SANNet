@@ -236,11 +236,10 @@ public interface Node {
     /**
      * Cumulates gradient.
      *
-     * @param index data index.
+     * @param index          data index.
      * @param outputGradient output gradient.
-     * @param negateGradient if true output gradient contribution is negated prior being cumulated.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    void cumulateGradient(int index, Matrix outputGradient, boolean negateGradient) throws MatrixException;
+    void cumulateGradient(int index, Matrix outputGradient) throws MatrixException;
 
 }
