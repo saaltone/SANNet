@@ -53,8 +53,7 @@ public class TimeSeriesPrediction {
 
             neuralNetwork.resetDependencies(false);
 
-            neuralNetwork.train(false, false);
-            neuralNetwork.waitToComplete();
+            neuralNetwork.train(false, true);
 
             double timeStep = 1 / (double)sampleAmount;
             ArrayDeque<Double> currentYs = new ArrayDeque<>();
