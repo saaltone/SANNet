@@ -158,7 +158,7 @@ public class Dropout extends AbstractExecutionLayer {
      */
     public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = inputs.get(0);
-        output = output.dropout(probability, monte_carlo, true);
+        output = output.dropout(probability, monte_carlo, false);
         output.setName("Output");
 
         return output;
