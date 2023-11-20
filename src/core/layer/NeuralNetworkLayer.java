@@ -325,6 +325,13 @@ public interface NeuralNetworkLayer {
     void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException;
 
     /**
+     * Returns number of layer parameters.
+     *
+     * @return number of layer parameters.
+     */
+    int getNumberOfParameters();
+
+    /**
      * Prints structure and metadata of neural network layer.
      *
      * @throws NeuralNetworkException throws exception if printing of neural network fails.

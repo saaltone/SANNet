@@ -326,7 +326,7 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @return number of layer parameters.
      */
-    protected int getNumberOfParameters() {
+    public int getNumberOfParameters() {
         return getWeightSet() != null ? getWeightSet().getNumberOfParameters() : 0;
     }
 

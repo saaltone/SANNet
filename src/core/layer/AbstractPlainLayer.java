@@ -61,6 +61,7 @@ public abstract class AbstractPlainLayer extends AbstractLayer {
 
     /**
      * Defines layer procedure for forward and backward calculation (automatic gradient) by applying procedure factory.<br>
+     *
      */
     protected void defineProcedure() {
     }
@@ -138,6 +139,15 @@ public abstract class AbstractPlainLayer extends AbstractLayer {
      * @param tau tau which controls contribution of other layer.
      */
     public void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) {
+    }
+
+    /**
+     * Returns number of layer parameters.
+     *
+     * @return number of layer parameters.
+     */
+    public int getNumberOfParameters() {
+        return 0;
     }
 
     /**
