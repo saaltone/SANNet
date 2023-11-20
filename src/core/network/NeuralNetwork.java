@@ -1397,12 +1397,18 @@ public class NeuralNetwork implements Serializable {
      */
     public void print() throws NeuralNetworkException {
         checkNotStarted();
+        System.out.println("Number of layers: " + neuralNetworkLayers.size() + " [ Input layers: " + inputLayers.size() + ", Hidden layers: " + hiddenLayers.size() + ", Output layers: " + outputLayers.size() + " ]");
+        int totalNumberOfParameters = 0;
+        for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) {
+            totalNumberOfParameters += neuralNetworkLayer.getNumberOfParameters();
+        }
+        System.out.println("Total number of parameters: " + totalNumberOfParameters);
+        System.out.println("Apply early stopping: " + (!earlyStoppingMap.isEmpty() ? "Yes" : "No"));
+        System.out.println();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) {
             neuralNetworkLayer.print();
             System.out.println();
         }
-        System.out.println("Apply early stopping: " + (!earlyStoppingMap.isEmpty() ? "Yes" : "No"));
-        System.out.println();
     }
 
     /**
