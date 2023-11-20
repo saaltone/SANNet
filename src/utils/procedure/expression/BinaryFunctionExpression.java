@@ -41,7 +41,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public BinaryFunctionExpression(int expressionID, Node argument1, Node argument2, Node result, BinaryFunction binaryFunction) throws MatrixException {
-        super("BINARY_FUNCTION", String.valueOf(binaryFunction.getType()), expressionID, argument1, argument2, result);
+        super("BINARY_FUNCTION", expressionID, argument1, argument2, result);
         this.binaryFunctionType = binaryFunction.getType();
 
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
@@ -125,19 +125,30 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printSpecificBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return binaryFunctionType + "(" + getArgument1().getName() + ", " + getArgument2().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " * " + binaryFunctionType + "_GRADIENT(" + result.getName() + ", " + argument2.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " * " + binaryFunctionType + "_GRADIENT(" + getResult().getName() + ", " + getArgument2().getName() + ")";
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return null;
     }
 
 }

@@ -44,7 +44,7 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public UnaryFunctionExpression(int expressionID, Node argument1, Node result, UnaryFunction unaryFunction) throws MatrixException {
-        super("UNARY_FUNCTION", String.valueOf(unaryFunction.getType()), expressionID, argument1, result);
+        super("UNARY_FUNCTION", expressionID, argument1, result);
 
         this.unaryFunctionType = unaryFunction.getType();
         this.unaryFunction = unaryFunction;
@@ -112,20 +112,21 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + ": " + unaryFunctionType + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return unaryFunctionType + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " * " + unaryFunctionType + "_GRADIENT(" + result.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " * " + unaryFunctionType + "_GRADIENT(" + getResult().getName() + ")";
     }
 
 }

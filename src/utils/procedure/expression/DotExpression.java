@@ -44,7 +44,7 @@ public class DotExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public DotExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super("DOT", "x", expressionID, argument1, argument2, result);
+        super("DOT", expressionID, argument1, argument2, result);
 
         dotMatrixOperation = new DotMatrixOperation(argument1.getRows(), argument2.getRows(), argument2.getColumns(), argument1.getDepth());
         dotGradient1MatrixOperation = new DotMatrixOperation(result.getRows(), argument2.getColumns(), argument2.getRows(), argument2.getDepth());
@@ -126,20 +126,30 @@ public class DotExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printBasicBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return getArgument1().getName() + " x " + getArgument2().getName();
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " " + getOperationSignature() + " " + argument2.getName() + ".T");
-        printArgument2Gradient(false, false, argument1.getName() + ".T" + " " + getOperationSignature() + " " + getResultGradientName());
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " x " + getArgument2().getName() + ".T";
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return getArgument1().getName() + ".T" + " x d" + getResult().getName();
     }
 
 }

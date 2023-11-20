@@ -32,7 +32,7 @@ public class MeanExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MeanExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
-        super("MEAN", "MEAN", expressionID, argument1, result);
+        super("MEAN", expressionID, argument1, result);
 
         this.executeAsSingleStep = executeAsSingleStep;
     }
@@ -102,20 +102,21 @@ public class MeanExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " / SIZE(" + argument1.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " / SIZE(" + getArgument1().getName() + ")";
     }
 
 }

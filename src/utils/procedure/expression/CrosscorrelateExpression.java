@@ -49,7 +49,7 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public CrosscorrelateExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation, boolean isDepthSeparable) throws MatrixException {
-        super("CROSSCORRELATE", "CROSSCORRELATE", expressionID, argument1, argument2, result);
+        super("CROSSCORRELATE", expressionID, argument1, argument2, result);
 
         crosscorrelationMatrixOperation = new CrosscorrelationMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
         crosscorrelationInputGradientMatrixOperation = new CrosscorrelationInputGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getDepth(), argument2.getRows(), argument2.getColumns(), dilation, stride, isDepthSeparable);
@@ -131,20 +131,30 @@ public class CrosscorrelateExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printSpecificBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ", " + getArgument2().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, getExpressionName() + "_GRADIENT(d" + result.getName() + ", " + argument2.getName() + ")");
-        printArgument2Gradient(false, false, getExpressionName() + "_GRADIENT(d" + result.getName() + ", " + argument1.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_INPUT_GRADIENT(d" + getResult().getName() + ", " + getArgument2().getName() + ")";
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return getExpressionName() + "_FILTER_GRADIENT(d" + getResult().getName() + ", " + getArgument1().getName() + ")";
     }
 
 }

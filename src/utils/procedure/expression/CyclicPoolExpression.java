@@ -50,7 +50,7 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public CyclicPoolExpression(int expressionID, Node argument1, Node result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
-        super("CYCLIC_POOL", "CYCLIC_POOL", expressionID, argument1, result);
+        super("CYCLIC_POOL", expressionID, argument1, result);
 
         cyclicPoolMatrixOperation = new CyclicPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
         cyclicPoolGradientMatrixOperation = new CyclicPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
@@ -120,20 +120,21 @@ public class CyclicPoolExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, getExpressionName() + "_GRADIENT(" + getResultGradientName() + ", ARGMAX(" + argument1.getName() +"))");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_GRADIENT(d" + getResult().getName() + ")";
     }
 
 }

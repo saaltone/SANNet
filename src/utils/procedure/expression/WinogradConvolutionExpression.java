@@ -60,7 +60,7 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
-        super("WINOGRAD_CONVOLUTION", "WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
+        super("WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
 
         Matrix AT = WinogradConvolutionMatrixOperation.getATMatrix(result.getDepth());
         Matrix a = AT.transpose().copy(true);
@@ -152,20 +152,30 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printSpecificBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ", " + getArgument2().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, getExpressionName() + "_GRADIENT(d" + result.getName() + ", " + argument2.getName() + ")");
-        printArgument2Gradient(false, false, getExpressionName() + "_GRADIENT(d" + result.getName() + ", " + argument1.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_INPUT_GRADIENT(d" + getResult().getName() + ", " + getArgument2().getName() + ")";
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return getExpressionName() + "_FILTER_GRADIENT(d" + getResult().getName() + ", " + getArgument1().getName() + ")";
     }
 
 }

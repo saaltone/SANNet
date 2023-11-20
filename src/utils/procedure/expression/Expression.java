@@ -130,16 +130,4 @@ public interface Expression {
      */
     void invokePrintGradientChain();
 
-    /**
-     * Prints expression.
-     *
-     */
-    void printExpression();
-
-    /**
-     * Prints gradient.
-     *
-     */
-    void printGradient();
-
 }

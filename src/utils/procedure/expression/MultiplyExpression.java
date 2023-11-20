@@ -35,7 +35,7 @@ public class MultiplyExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MultiplyExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super("MULTIPLY", "*", expressionID, argument1, argument2, result);
+        super("MULTIPLY", expressionID, argument1, argument2, result);
 
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
@@ -119,20 +119,30 @@ public class MultiplyExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printBasicBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return getArgument1().getName() + " * " + getArgument2().getName();
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " " + getOperationSignature() + " " + argument2.getName());
-        printArgument2Gradient(true, false, " " + getOperationSignature() + " " + argument1.getName());
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " * " + getArgument2().getName();
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return getArgument1().getName() + " * " + "d" + getResult().getName();
     }
 
 }

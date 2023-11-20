@@ -35,7 +35,7 @@ public class SubtractExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SubtractExpression(int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super("SUBTRACT", "-", expressionID, argument1, argument2, result);
+        super("SUBTRACT", expressionID, argument1, argument2, result);
 
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !argument1.isScalar() ? argument1.getRows() : argument2.getRows();
@@ -118,20 +118,30 @@ public class SubtractExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        printBasicBinaryExpression();
+    protected String getExpressionOperationSignature() {
+        return getArgument1().getName() + " - " + getArgument2().getName();
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, null);
-        printArgument2Gradient(true, true, null);
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName();
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return "-d" + getResult().getName();
     }
 
 }

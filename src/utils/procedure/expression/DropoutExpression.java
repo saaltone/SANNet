@@ -45,7 +45,7 @@ public class DropoutExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined or norm p value is not at least 2.
      */
     public DropoutExpression(int expressionID, Node argument1, Node result, double probability, boolean monte_carlo) throws MatrixException {
-        super("DROPOUT", "DROPOUT", expressionID, argument1, result);
+        super("DROPOUT", expressionID, argument1, result);
 
         if (probability < 0 || probability > 1) throw new MatrixException("Probability must be between 0 and 1.");
         this.probability = probability;
@@ -113,20 +113,21 @@ public class DropoutExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + probability + ", " + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + probability + ", "  + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, "d" + result.getName());
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName();
     }
 
 }

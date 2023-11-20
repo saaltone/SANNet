@@ -32,7 +32,7 @@ public class SumExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public SumExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
-        super("SUM", "SUM", expressionID, argument1, result);
+        super("SUM", expressionID, argument1, result);
 
         this.executeAsSingleStep = executeAsSingleStep;
     }
@@ -100,20 +100,21 @@ public class SumExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, null);
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_GRADIENT(d" + getResult().getName() + ")";
     }
 
 }

@@ -53,7 +53,7 @@ public class StandardDeviationExpression extends AbstractUnaryExpression {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException, DynamicParamException {
-        super("STANDARD_DEVIATION", "STANDARD_DEVIATION", expressionID, argument1, result);
+        super("STANDARD_DEVIATION", expressionID, argument1, result);
 
         this.executeAsSingleStep = executeAsSingleStep;
     }
@@ -132,20 +132,21 @@ public class StandardDeviationExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " * SQRT_GRADIENT((" + argument1.getName() + " - MEAN("  + argument1.getName() + ")) * 2 / SIZE(" + argument1.getName() + "))");
+    protected String getGradientOperation1Signature() {
+        return "SQRT(" + "d" + getResult().getName() + " * (" + getArgument1().getName() + " - MEAN(" + getArgument1().getName() + ")) * 2 / SIZE(" + getArgument1().getName() + "))";
     }
 
 }

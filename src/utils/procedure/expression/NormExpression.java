@@ -52,7 +52,7 @@ public class NormExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined or norm p value is not at least 2.
      */
     public NormExpression(int expressionID, Node argument1, Node result, int p) throws MatrixException {
-        super("NORM", "NORM", expressionID, argument1, result);
+        super("NORM", expressionID, argument1, result);
 
         if (p < 2) throw new MatrixException("Norm p value must be at least 2.");
         this.p = p;
@@ -123,20 +123,21 @@ public class NormExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + p + ", " + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, " * (ABS(" + argument1.getName() + ")" + " / " + result.getName() + ")^" + (p - 1) + " * SGN("  + argument1.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName() + " * (ABS(" + getArgument1().getName() + ")" + " / " + getResult().getName() + ")^" + (p - 1) + " * SGN("  + getArgument1().getName() + ")";
     }
 
 }

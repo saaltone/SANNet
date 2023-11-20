@@ -31,12 +31,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
     private final String expressionName;
 
     /**
-     * Operation signature.
-     *
-     */
-    private final String operationSignature;
-
-    /**
      * Unique ID of expression.
      *
      */
@@ -64,15 +58,13 @@ public abstract class AbstractExpression implements Expression, Serializable {
      * Constructor for abstract expression.
      *
      * @param expressionName     name of expression.
-     * @param operationSignature operation signature of expression.
      * @param expressionID       unique ID for expression.
      * @param argument1          first argument.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractExpression(String expressionName, String operationSignature, int expressionID, Node argument1) throws MatrixException {
+    public AbstractExpression(String expressionName, int expressionID, Node argument1) throws MatrixException {
         if (argument1 == null) throw new MatrixException("First argument not defined.");
         this.expressionName = expressionName;
-        this.operationSignature = operationSignature;
         this.expressionID = expressionID;
     }
 
@@ -83,15 +75,6 @@ public abstract class AbstractExpression implements Expression, Serializable {
      */
     public String getExpressionName() {
         return expressionName;
-    }
-
-    /**
-     * Returns signature of operation.
-     *
-     * @return signature of operation.
-     */
-    public String getOperationSignature() {
-        return operationSignature;
     }
 
     /**
@@ -284,6 +267,22 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
+     * Prints expression.
+     *
+     */
+    public void printExpression() {
+        String expression = "Expression" + getExpressionID() + ": " + getExpressionName() + ": " + getExpressionOperationSignature() + " = " + getResult().getName();
+        System.out.println(expression);
+    }
+
+    /**
+     * Returns expression operation signature.
+     *
+     * @return expression operation signature.
+     */
+    protected abstract String getExpressionOperationSignature();
+
+    /**
      * Prints gradient chain.
      *
      */
@@ -302,23 +301,9 @@ public abstract class AbstractExpression implements Expression, Serializable {
     }
 
     /**
-     * Prints expression.
-     *
-     */
-    public abstract void printExpression();
-
-    /**
      * Prints gradient.
      *
      */
-    public abstract void printGradient();
-
-    /**
-     * Prints expression.
-     *
-     */
-    protected void print() {
-        System.out.print("Expression " +getExpressionID() + ": ");
-    }
+    protected abstract void printGradient();
 
 }

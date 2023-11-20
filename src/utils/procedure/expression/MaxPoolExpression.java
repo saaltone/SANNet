@@ -50,7 +50,7 @@ public class MaxPoolExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public MaxPoolExpression(int expressionID, Node argument1, Node result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
-        super("MAX_POOL", "MAX_POOL", expressionID, argument1, result);
+        super("MAX_POOL", expressionID, argument1, result);
 
         maxPoolMatrixOperation = new MaxPoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
         maxPoolGradientMatrixOperation = new MaxPoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), argument1.getRows(), argument1.getColumns(), stride);
@@ -120,20 +120,21 @@ public class MaxPoolExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, getExpressionName() + "_GRADIENT(" + getResultGradientName() + ", ARGMAX(" + argument1.getName() +"))");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_GRADIENT(d" + getResult().getName() + ")";
     }
 
 }

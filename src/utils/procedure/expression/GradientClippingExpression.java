@@ -39,7 +39,7 @@ public class GradientClippingExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined or norm p value is not at least 2.
      */
     public GradientClippingExpression(int expressionID, Node argument1, Node result, double threshold) throws MatrixException {
-        super("GRADIENT_CLIPPING", "GRADIENT_CLIPPING", expressionID, argument1, result);
+        super("GRADIENT_CLIPPING", expressionID, argument1, result);
 
         this.threshold = threshold;
 
@@ -105,20 +105,21 @@ public class GradientClippingExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(argument1.getName() + " = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getArgument1().getName();
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, getExpressionName() + "(" + threshold + ", d" + result.getName() + ")");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "(" + "d" + getResult().getName() + ", " + threshold + ")";
     }
 
 }

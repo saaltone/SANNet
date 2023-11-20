@@ -25,15 +25,14 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
      * Constructor for abstract binary expression.
      *
      * @param name               name of expression.
-     * @param operationSignature operation signature
      * @param expressionID       expression ID
      * @param argument1          first argument.
      * @param argument2          second argument.
      * @param result             result of node.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractBinaryExpression(String name, String operationSignature, int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
-        super(name, operationSignature, expressionID, argument1, result);
+    public AbstractBinaryExpression(String name, int expressionID, Node argument1, Node argument2, Node result) throws MatrixException {
+        super(name, expressionID, argument1, result);
         if (argument2 == null) throw new MatrixException("Second argument not defined.");
         this.argument2 = argument2;
     }
@@ -109,33 +108,21 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Print basic binary expression.
+     * Prints gradient.
      *
      */
-    protected void printBasicBinaryExpression() {
-        print();
-        System.out.println(getExpressionName() + ": " + argument1.getName() + " " + getOperationSignature() + " " + argument2.getName() + " = " + result.getName());
+    protected void printGradient() {
+        super.printGradient();
+        if (getGradientOperation2Signature() != null) {
+            System.out.println(getGradientOperationSignature(getArgument2(), getGradientOperation2Signature()));
+        }
     }
 
     /**
-     * Print basic binary expression.
+     * Returns gradient 2 operation signature.
      *
+     * @return gradient 2 operation signature.
      */
-    protected void printSpecificBinaryExpression() {
-        print();
-        System.out.println(getExpressionName() + ": " + getOperationSignature() + "(" + argument1.getName() + ", " + " " + argument2.getName() + ") = " + result.getName());
-    }
-
-    /**
-     * Prints gradient for argument2
-     *
-     * @param withResultPrefix true if result prefix is added.
-     * @param negateResult true if result is negated.
-     * @param suffix suffix part for gradient expression.
-     */
-    protected void printArgument2Gradient(boolean withResultPrefix, boolean negateResult, String suffix) {
-        print();
-        System.out.println((withResultPrefix ? getNodeGradientWithResultPrefixName(argument2, negateResult) : getNodeGradientPrefixName(argument2, negateResult)) + (suffix != null ? "" + suffix : "") + getNodeSumPostfix(argument2));
-    }
+    protected abstract String getGradientOperation2Signature();
 
 }

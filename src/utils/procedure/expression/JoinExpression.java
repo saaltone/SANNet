@@ -33,7 +33,7 @@ public class JoinExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public JoinExpression(int expressionID, Node argument1, Node argument2, Node result, boolean joinedVertically) throws MatrixException {
-        super("JOIN", joinedVertically ? "VERTICALLY" : "HORIZONTALLY", expressionID, argument1, argument2, result);
+        super("JOIN", expressionID, argument1, argument2, result);
 
         joinMatrixOperation = new JoinMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), joinedVertically);
     }
@@ -111,21 +111,30 @@ public class JoinExpression extends AbstractBinaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + ": " + "JOIN(" + argument1.getName() + " & " + argument2.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ", " + getArgument2().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(true, "");
-        printArgument2Gradient(false, false, getResultGradientName());
+    protected String getGradientOperation1Signature() {
+        return "d" + getResult().getName();
+    }
+
+    /**
+     * Returns gradient 2 operation signature.
+     *
+     * @return gradient 2 operation signature.
+     */
+    protected String getGradientOperation2Signature() {
+        return "d" + getResult().getName();
     }
 
 }

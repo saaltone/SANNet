@@ -32,14 +32,13 @@ public abstract class AbstractUnaryExpression extends AbstractExpression {
      * Constructor for abstract unary expression.
      *
      * @param name               name of expression.
-     * @param operationSignature operation signature
      * @param expressionID       expression ID
      * @param argument1          first argument of expression.
      * @param result             result of expression.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public AbstractUnaryExpression(String name, String operationSignature, int expressionID, Node argument1, Node result) throws MatrixException {
-        super(name, operationSignature, expressionID, argument1);
+    public AbstractUnaryExpression(String name, int expressionID, Node argument1, Node result) throws MatrixException {
+        super(name, expressionID, argument1);
         this.argument1 = argument1;
         this.result = result;
     }
@@ -192,111 +191,31 @@ public abstract class AbstractUnaryExpression extends AbstractExpression {
     protected abstract Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException;
 
     /**
-     * Return gradient name of argument1.
+     * Prints gradient.
      *
-     * @return gradient name of argument1.
      */
-    protected String getArgument1GradientName() {
-        return "d" + argument1.getName();
+    protected void printGradient() {
+        if (getGradientOperation1Signature() != null) {
+            System.out.println(getGradientOperationSignature(getArgument1(), getGradientOperation1Signature()));
+        }
     }
 
     /**
-     * Return gradient name of result.
+     * Return gradient operation signature.
      *
-     * @return gradient name of result.
+     * @param argument node argument.
+     * @param gradientOperationSignature gradient operation signature.
+     * @return gradient operation signature.
      */
-    protected String getResultGradientName() {
-        return "d" + result.getName();
+    protected String getGradientOperationSignature(Node argument, String gradientOperationSignature) {
+        return "Gradient" + getExpressionID() + ": " + getExpressionName() + ": " + (!argument.isMultiIndex() ? "sum(" + gradientOperationSignature + ")" : gradientOperationSignature) + " = d" + argument.getName() + (argument.isStopGradient() ? " [ stop gradient ]" : "");
     }
 
     /**
-     * Returns gradient prefix for argument1.
+     * Returns gradient 1 operation signature.
      *
-     * @return gradient prefix for argument1.
+     * @return gradient 1 operation signature.
      */
-    protected String getArgument1PrefixName() {
-        return getExpressionName() + ": " + getArgument1GradientName() + " = " + "" + getArgument1SumPrefix();
-    }
-
-    /**
-     * Returns argument1 prefix.
-     *
-     * @return argument1 prefix.
-     */
-    protected String getArgument1SumPrefix() {
-        return !argument1.isMultiIndex() ? "sum(" : "";
-    }
-
-    /**
-     * Returns argument1 postfix.
-     *
-     * @return argument1 postfix.
-     */
-    protected String getArgument1SumPostfix() {
-        return !argument1.isMultiIndex() ? ")" : "";
-    }
-
-    /**
-     * Returns node gradient name.
-     *
-     * @param node node
-     * @return node gradient name.
-     */
-    protected String getNodeGradientName(Node node) {
-        return "d" + node.getName();
-    }
-
-    /**
-     * Returns node gradient prefix name.
-     *
-     * @param node node
-     * @param negateResult if true result will be negated.
-     * @return node gradient prefix name.
-     */
-    protected String getNodeGradientPrefixName(Node node, boolean negateResult) {
-        return getExpressionName() + ": " + getNodeGradientName(node) + " = " + (negateResult ? "-" : "") + getNodeSumPrefix(node);
-    }
-
-    /**
-     * Returns node gradient prefix name with result.
-     *
-     * @param node node
-     * @param negateResult if true result will be negated.
-     * @return node gradient prefix name with result.
-     */
-    protected String getNodeGradientWithResultPrefixName(Node node, boolean negateResult) {
-        return getNodeGradientPrefixName(node, negateResult) + getResultGradientName();
-    }
-
-    /**
-     * Returns node sum prefix.
-     *
-     * @param node node.
-     * @return node sum prefix.
-     */
-    protected String getNodeSumPrefix(Node node) {
-        return !node.isMultiIndex() ? "sum(" : "";
-    }
-
-    /**
-     * Returns node sum postfix.
-     *
-     * @param node node.
-     * @return node sum postfix.
-     */
-    protected String getNodeSumPostfix(Node node) {
-        return !node.isMultiIndex() ? ")" : "";
-    }
-
-    /**
-     * Prints gradient for argument1
-     *
-     * @param withResultPrefix true if result prefix is added.
-     * @param suffix suffix part for gradient expression.
-     */
-    protected void printArgument1Gradient(boolean withResultPrefix, String suffix) {
-        print();
-        System.out.println((withResultPrefix ? getNodeGradientWithResultPrefixName(argument1, false) : getNodeGradientPrefixName(argument1, false)) + (suffix != null ? suffix : "") + getNodeSumPostfix(argument1));
-    }
+    protected abstract String getGradientOperation1Signature();
 
 }

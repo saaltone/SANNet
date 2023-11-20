@@ -38,7 +38,7 @@ public class FlattenExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public FlattenExpression(int expressionID, Node argument1, Node result) throws MatrixException {
-        super("FLATTEN", "FLATTEN", expressionID, argument1, result);
+        super("FLATTEN", expressionID, argument1, result);
 
         flattenMatrixOperation = new FlattenMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth());
         unflattenMatrixOperation = new UnflattenMatrixOperation(argument1.getRows(), argument1.getColumns(), argument1.getDepth());
@@ -104,20 +104,21 @@ public class FlattenExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, "UN" + getExpressionName() + "(" + getResultGradientName() + ")");
+    protected String getGradientOperation1Signature() {
+        return "UN" + getExpressionName() + "(d" + getResult().getName() + ")";
     }
 
 }

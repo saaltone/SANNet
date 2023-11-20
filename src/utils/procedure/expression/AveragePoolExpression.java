@@ -42,7 +42,7 @@ public class AveragePoolExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public AveragePoolExpression(int expressionID, Node argument1, Node result, int dilation, int stride, int filterRowSize, int filterColumnSize) throws MatrixException {
-        super("AVERAGE_POOL", "AVERAGE_POOL", expressionID, argument1, result);
+        super("AVERAGE_POOL", expressionID, argument1, result);
 
         averagePoolMatrixOperation = new AveragePoolMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
         averagePoolGradientMatrixOperation = new AveragePoolGradientMatrixOperation(result.getRows(), result.getColumns(), result.getDepth(), filterRowSize, filterColumnSize, dilation, stride);
@@ -108,21 +108,21 @@ public class AveragePoolExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + "(" + argument1.getName() + ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        print();
-        System.out.println(getArgument1PrefixName() + "_GRADIENT(" + result.getName() + ")" + getArgument1SumPostfix());
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_GRADIENT(d" + getResult().getName() + ")";
     }
 
 }

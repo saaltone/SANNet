@@ -46,7 +46,7 @@ public class UnjoinExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
     public UnjoinExpression(int expressionID, Node argument1, Node result, int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth) throws MatrixException {
-        super("UNARY_FUNCTION", "", expressionID, argument1, result);
+        super("UNJOIN", expressionID, argument1, result);
 
         this.unjoinAtRow = unjoinAtRow;
         this.unjoinAtColumn = unjoinAtColumn;
@@ -113,20 +113,21 @@ public class UnjoinExpression extends AbstractUnaryExpression {
     }
 
     /**
-     * Prints expression.
+     * Returns expression operation signature.
      *
+     * @return expression operation signature.
      */
-    public void printExpression() {
-        print();
-        System.out.println(getExpressionName() + ": " + "UNJOIN(" + argument1.getName() + "[" + unjoinAtRow + "," + unjoinAtColumn + "]" +  ") = " + result.getName());
+    protected String getExpressionOperationSignature() {
+        return getExpressionName() + "(" + getArgument1().getName() + "[" + unjoinAtRow + "," + unjoinAtColumn + "]" + ")";
     }
 
     /**
-     * Prints gradient.
+     * Returns gradient 1 operation signature.
      *
+     * @return gradient 1 operation signature.
      */
-    public void printGradient() {
-        printArgument1Gradient(false, "UNJOIN_GRADIENT(d" + result.getName() + "[" + unjoinAtRow + "," + unjoinAtColumn + "]" + ")");
+    protected String getGradientOperation1Signature() {
+        return getExpressionName() + "_GRADIENT(" + "d" + getResult().getName() + "[" + unjoinAtRow + "," + unjoinAtColumn + "]" + ")";
     }
 
 }
