@@ -364,33 +364,6 @@ public abstract class AbstractDSConvolutionalLayer extends AbstractConvolutionLa
     protected abstract Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException;
 
     /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
-    }
-
-    /**
      * Returns layer details as string.
      *
      * @return layer details as string.
