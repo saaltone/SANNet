@@ -84,10 +84,10 @@ public enum UnaryFunctionType {
     CBRT,
 
     /**
-     * Inverse multiplication
+     * Inverse
      *
      */
-    MULINV,
+    INV,
 
     /**
      * Tangent

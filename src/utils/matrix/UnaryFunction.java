@@ -85,7 +85,7 @@ public class UnaryFunction implements Serializable {
      * Stores tau value for Softmax.
      *
      */
-    private double softmaxTau = 1.5;
+    private double softmaxTau = 1;
 
     /**
      * Constructor for custom unary function.
@@ -128,7 +128,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for (Gumbel) Softmax 1.5.<br>
+     *     - tau: default value for (Gumbel) Softmax 1.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters used for function.
@@ -147,7 +147,7 @@ public class UnaryFunction implements Serializable {
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
      *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for (Gumbel) Softmax 1.5.<br>
+     *     - tau: default value for (Gumbel) Softmax 1.<br>
      *
      * @param unaryFunctionType type of function to be used.
      * @param params parameters as DynamicParam type for function.
@@ -204,7 +204,7 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) Math::cbrt;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / (3 * Math.cbrt(value * value));
             }
-            case MULINV -> {
+            case INV -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1 / value;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> -1 / Math.pow(value, 2);
             }
