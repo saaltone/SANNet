@@ -171,7 +171,7 @@ public class JMatrix extends ComputableMatrix {
     public Matrix applyTranspose() throws MatrixException {
         ArrayList<Matrix> transposedSubMatrices = new ArrayList<>();
         for (Matrix subMatrix : getSubMatrices()) transposedSubMatrices.add(subMatrix.transpose());
-        return new JMatrix(transposedSubMatrices, isTransposed());
+        return new JMatrix(transposedSubMatrices, joinedVertically == isTransposed());
     }
 
     /**
