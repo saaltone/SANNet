@@ -71,18 +71,17 @@ public class UnjoinMatrixOperation extends AbstractMatrixOperation {
     /**
      * Calculates gradient.
      *
-     * @param first first matrix.
      * @param outputGradient output gradient.
      * @return input gradient
      */
-    public Matrix applyGradient(Matrix first, Matrix outputGradient) {
-        Matrix result = new DMatrix(first.getRows(), first.getColumns(), getDepth());
+    public Matrix applyGradient(Matrix outputGradient) {
         final int rows = getRows();
         final int columns = getColumns();
         final int totalDepth = getDepth();
-        for (int depth = 0; depth < totalDepth; depth++) {
-            for (int row = 0; row < rows; row++) {
-                for (int column = 0; column < columns; column++) {
+        Matrix result = new DMatrix(rows, columns, totalDepth);
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                for (int depth = 0; depth < totalDepth; depth++) {
                     result.setValue(unjoinAtRow + row, unjoinAtColumn + column, unjoinAtDepth + depth, outputGradient.getValue(row, column, depth));
                 }
             }
