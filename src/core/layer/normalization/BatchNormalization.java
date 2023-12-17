@@ -205,6 +205,8 @@ public class BatchNormalization extends AbstractExecutionLayer {
         super.initializeDefaultParams();
         epsilonMatrix = new DMatrix(10E-8);
         epsilonMatrix.setName("Epsilon");
+        registerConstantMatrix(epsilonMatrix);
+        registerStopGradient(epsilonMatrix);
         meanOnly = false;
         batchSize = -1;
         momentum = 0.99;
@@ -235,13 +237,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
         if (params.hasParam("meanOnly")) meanOnly = params.getValueAsBoolean("meanOnly");
         if (params.hasParam("momentum")) momentum = params.getValueAsDouble("momentum");
     }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
 
     /**
      * Checks if layer works with recurrent layers.
@@ -319,33 +314,6 @@ public class BatchNormalization extends AbstractExecutionLayer {
         }
 
         return outputMap.get(outputMap.firstKey());
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>() {{ add(epsilonMatrix); }};
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>() {{ add(epsilonMatrix); }};
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
