@@ -1234,7 +1234,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
@@ -1263,7 +1263,7 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU), "width = 100");
         int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
