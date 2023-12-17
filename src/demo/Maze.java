@@ -820,7 +820,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
-        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+        int attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 4, inputSize, 1, 1, 1, true);
 
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
@@ -857,7 +857,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
-        int attentionLayerIndex = buildInputNeuralNetworkPart(neuralNetworkConfiguration, inputSize, outputSize);
+        int attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 4, inputSize, 1, 1, 1, true);
 
         int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
@@ -875,30 +875,6 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         neuralNetwork.verboseTraining(10);
 
         return neuralNetwork;
-    }
-
-    /**
-     * Build input part of neural network for travelling salesman (agent).
-     *
-     * @param neuralNetworkConfiguration neural network configuration.
-     * @param inputSize input size of neural network (number of states)
-     * @param attentionOutputSize output size of attention neural network.
-     * @return attention layer index.
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
-     * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    public int buildInputNeuralNetworkPart(NeuralNetworkConfiguration neuralNetworkConfiguration, int inputSize, int attentionOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
-        int historySize = 4;
-
-        boolean includeEncoder = false;
-        int attentionLayerIndex;
-        int feedforwardLayerWidth = 4 * attentionOutputSize;
-        int numberOfAttentionBlocks = 4;
-        if (includeEncoder) attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, attentionOutputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
-        else attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, inputSize, historySize, feedforwardLayerWidth, numberOfAttentionBlocks);
-
-        return attentionLayerIndex;
     }
 
 }
