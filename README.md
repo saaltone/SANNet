@@ -10,11 +10,12 @@ SANNet is written on Java and has been built from ground up starting from implem
 ## Layers, activation and loss functions
 Framework provides
 - feedforward / dense / activation / add / subtract / divide / dot / multiply / positional encoding layers,
+- transform layer to transform dimensions of layer input,
 - connect and join layers to create connections from multiple previous layers,
 - recurrent layers (simple recurrent layer, LSTM layer, Graves LSTM layer, Peephole LSTM layer, GRU layer, Minimal GRU layer) with option to reverse inputs to create bi-directional recurrent layers,
-- attention layers (additive / dot with option for scaling / general / input based),
+- attention layers (additive / location-based / (scaled) dot attention),
 - convolutional layers (convolution / crosscorrelation / Winograd convolution / depth-wise separable convolutional / depth-wise separable crosscorrelation layer, max / average / random / cyclic pooling layer) and
-- flattening layer for convolutional layers.
+- flattening layer for convolutional and attention layers.
 
 All layers are executed as dynamically constructed procedures and expressions that have built-in automatic gradient for backpropagation.
 
@@ -32,7 +33,7 @@ Framework implements most typically used optimization methods starting from basi
 Framework provides following regularization layers: drop-out, gradient clipping, L1 / L2 / Lp regularization and weight noising. Lp regularization is an experimental method and mathematically direct extension of L1 / L2 methods. Early stopping is implemented as function on neural network level.
 
 ## Normalization
-Framework supports following normalization layers: batch normalization, layer normalization and weight normalization.
+Framework supports following normalization layers: batch normalization, layer normalization, instance normalization and weight normalization.
 
 ## Metrics
 Framework provides accuracy metrics for **regression**. Additionally it provides basic metrics for **classification** such as accuracy, precision, recall, specificity and F1 score and calculates confusion matrix as needed. Framework also provides option to show trend and confusion matrix charts.
