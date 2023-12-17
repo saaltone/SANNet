@@ -115,7 +115,7 @@ public class SimpleDemo {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
         int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
