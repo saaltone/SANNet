@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
+ */
+
 package core.layer.reinforcement;
 
 import core.layer.AbstractExecutionLayer;
@@ -32,7 +37,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
     protected class DuelingWeightSet implements WeightSet, Serializable {
 
         @Serial
-        private static final long serialVersionUID = 7859757124635021579L;
+        private static final long serialVersionUID = -8610809232828571461L;
 
         /**
          * Weight matrix for value.
@@ -169,22 +174,6 @@ public class DuelingLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -227,40 +216,13 @@ public class DuelingLayer extends AbstractExecutionLayer {
         Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0));
 
         Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0));
-        actionOutput = actionOutput.subtract(actionOutput.meanAsMatrix());
+        actionOutput = actionOutput.subtract(actionOutput.meanAsMatrix(0));
 
         Matrix output = valueOutput.add(actionOutput);
 
         output.setName("Output");
         return output;
 
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
