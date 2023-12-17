@@ -12,7 +12,6 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
-import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -25,9 +24,13 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
     /**
      * Parameter name types for positional encoding layer.
      *     - positionIndex: Position index for positional encoding.<br>
+     *     - embeddingSize: Embedding size for positional encoding. Default value = 10000.<br>
+     *     - heightWisePositionalEncoding: If true positional encoding is done height wise excluding positionIndex otherwise position index is taken into consideration. Default value = false.<br>
      *
      */
-    private final static String paramNameTypes = "(positionIndex:INT)";
+    private final static String paramNameTypes = "(positionIndex:INT), " +
+                                                 "(embeddingSize:INT), " +
+                                                 "(heightWisePositionalEncoding:BOOLEAN)";
 
     /**
      * Position (token) index of layer.
@@ -36,10 +39,16 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
     private int positionIndex;
 
     /**
-     * Constant for positional encoding.
+     * Embedding size for positional encoding.
      *
      */
-    private static final int n = 10000;
+    private int embeddingSize;
+
+    /**
+     * If true positional encoding is done height wise excluding positionIndex.
+     *
+     */
+    private boolean heightWisePositionalEncoding;
 
     /**
      * Positional encoding matrix.
@@ -73,6 +82,8 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
     public void initializeDefaultParams() {
         super.initializeDefaultParams();
         positionIndex = -1;
+        embeddingSize = 10000;
+        heightWisePositionalEncoding = true;
     }
 
     /**
@@ -89,6 +100,8 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      * <br>
      * Supported parameters are:<br>
      *     - positionIndex: Position index for positional encoding.<br>
+     *     - embeddingSize: Embedding size for positional encoding. Default value = 10000.<br>
+     *     - heightWisePositionalEncoding: If true positional encoding is done height wise excluding positionIndex otherwise position index is taken into consideration.<br>
      *
      * @param params parameters used for positional encoding layer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
@@ -97,22 +110,8 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
     public void setParams(DynamicParam params) throws DynamicParamException, NeuralNetworkException {
         super.setParams(params);
         if (params.hasParam("positionIndex")) positionIndex = params.getValueAsInteger("positionIndex");
-    }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
+        if (params.hasParam("embeddingSize")) embeddingSize = params.getValueAsInteger("embeddingSize");
+        if (params.hasParam("heightWisePositionalEncoding")) heightWisePositionalEncoding = params.getValueAsBoolean("heightWisePositionalEncoding");
     }
 
     /**
@@ -132,13 +131,32 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
         int previousLayerWidth = getDefaultPreviousLayer().getLayerWidth();
         int previousLayerHeight = getDefaultPreviousLayer().getLayerHeight();
         int previousLayerDepth = getDefaultPreviousLayer().getLayerDepth();
+
         positionalEncodingMatrix = new DMatrix(previousLayerWidth, previousLayerHeight, previousLayerDepth);
-        for (int index = 0; index < previousLayerWidth; index++) {
-            double positionalCode = (double)positionIndex / Math.pow(n, 2 * (double)index / (double)previousLayerWidth);
-            double positionalEncodingCode = (positionIndex % 2 == 0) ? Math.sin(positionalCode) : Math.cos(positionalCode);
-            positionalEncodingMatrix.setValue(index, 0, 0, positionalEncodingCode);
+        registerConstantMatrix(positionalEncodingMatrix);
+        registerStopGradient(positionalEncodingMatrix);
+
+        if (heightWisePositionalEncoding) {
+            for (int depth = 0; depth < previousLayerDepth; depth++) {
+                for (int column = 0; column < previousLayerHeight; column++) {
+                    for (int row = 0; row < previousLayerWidth; row++) {
+                        double positionalCode = (double) column / Math.pow(embeddingSize, 2 * (double) row / (double) previousLayerWidth);
+                        double positionalEncodingCode = (column % 2 == 0) ? Math.sin(positionalCode) : Math.cos(positionalCode);
+                        positionalEncodingMatrix.setValue(row, column, depth, positionalEncodingCode);
+                    }
+                }
+            }
+            positionalEncodingMatrix.setName("PositionalEncodingMatrix");
+        } else {
+            for (int depth = 0; depth < previousLayerDepth; depth++) {
+                for (int row = 0; row < previousLayerWidth; row++) {
+                    double positionalCode = (double) positionIndex / Math.pow(embeddingSize, 2 * (double) row / (double) previousLayerWidth);
+                    double positionalEncodingCode = (positionIndex % 2 == 0) ? Math.sin(positionalCode) : Math.cos(positionalCode);
+                    positionalEncodingMatrix.setValue(row, 0, depth, positionalEncodingCode);
+                }
+            }
+            positionalEncodingMatrix.setName("PositionalEncodingMatrix" + positionIndex);
         }
-        positionalEncodingMatrix.setName("PositionalEncodingMatrix" + positionIndex);
     }
 
     /**
@@ -148,7 +166,7 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      * @return input matrix for procedure construction.
      */
     public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
-        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), 1, 1, Initialization.ONE);
+        input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         return new TreeMap<>() {{ put(0, input); }};
     }
@@ -160,38 +178,11 @@ public class PositionalEncodingLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getForwardProcedure() throws MatrixException {
-        if (positionIndex < 0) throw new MatrixException("Position index must have positive value.");
+        if (!heightWisePositionalEncoding && positionIndex < 0) throw new MatrixException("Position index must have positive value.");
         Matrix output = input.add(positionalEncodingMatrix);
 
         output.setName("Output");
         return output;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>() {{ add(positionalEncodingMatrix); }};
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>() {{ add(positionalEncodingMatrix); }};
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
