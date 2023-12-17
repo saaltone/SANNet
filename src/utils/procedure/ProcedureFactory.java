@@ -618,11 +618,12 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createSumExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException {
+    public void createSumExpression(double expressionLock, Matrix argument1, Matrix result, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false));
+        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false, direction));
     }
 
     /**
@@ -632,11 +633,12 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createSumExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
+    public void createSumExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineNode(result), executeAsSingleStep));
+        storeExpression(new SumExpression(currentExpressionID++, defineNode(argument1), defineNode(result), executeAsSingleStep, direction));
     }
 
     /**
@@ -645,11 +647,12 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMeanExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException {
+    public void createMeanExpression(double expressionLock, Matrix argument1, Matrix result, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false));
+        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false, direction));
     }
 
     /**
@@ -659,11 +662,12 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createMeanExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
+    public void createMeanExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), executeAsSingleStep));
+        storeExpression(new MeanExpression(currentExpressionID++, defineNode(argument1), defineSingleNode(result), executeAsSingleStep, direction));
     }
 
     /**
@@ -672,11 +676,12 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createVarianceExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException {
+    public void createVarianceExpression(double expressionLock, Matrix argument1, Matrix result, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false));
+        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false, direction));
     }
 
     /**
@@ -686,11 +691,12 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      */
-    public void createVarianceExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException {
+    public void createVarianceExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep, int direction) throws MatrixException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep));
+        storeExpression(new VarianceExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep, direction));
     }
 
     /**
@@ -700,12 +706,13 @@ public class ProcedureFactory implements Serializable {
      * @param argument1 first argument of expression.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep) throws MatrixException, DynamicParamException {
+    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result, boolean executeAsSingleStep, int direction) throws MatrixException, DynamicParamException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep));
+        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), executeAsSingleStep ? defineSingleNode(result) : defineNode(result), executeAsSingleStep, direction));
     }
 
     /**
@@ -714,12 +721,13 @@ public class ProcedureFactory implements Serializable {
      * @param expressionLock unique expression lock key.
      * @param argument1 first argument of expression.
      * @param result result of expression.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if adding of expression fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result) throws MatrixException, DynamicParamException {
+    public void createStandardDeviationExpression(double expressionLock, Matrix argument1, Matrix result, int direction) throws MatrixException, DynamicParamException {
         if (checkOngoingExpression(expressionLock, argument1)) return;
-        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false));
+        storeExpression(new StandardDeviationExpression(currentExpressionID++, defineNode(argument1), defineNode(result), false, direction));
     }
 
     /**
