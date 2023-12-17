@@ -89,7 +89,6 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
     public UpdateableProximalPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws IOException, ClassNotFoundException, DynamicParamException, AgentException, MatrixException {
         super(executablePolicyType, functionEstimator, params);
         previousFunctionEstimator = functionEstimator.reference();
-//        previousFunctionEstimator = functionEstimator.copy();
     }
 
     /**
