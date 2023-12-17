@@ -13,7 +13,6 @@ import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -33,22 +32,6 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      */
     public AbstractRegularizationLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException {
         super (layerIndex, initialization, params);
-    }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
     }
 
     /**
@@ -95,24 +78,6 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
     }
 
     /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
      * Takes single forward processing step to process layer input(s).<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
@@ -131,15 +96,6 @@ public abstract class AbstractRegularizationLayer extends AbstractExecutionLayer
      */
     public void backwardProcess() throws MatrixException, DynamicParamException {
         passLayerOutputGradients();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**

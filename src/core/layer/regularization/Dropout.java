@@ -15,7 +15,6 @@ import utils.matrix.Initialization;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
-import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -105,22 +104,6 @@ public class Dropout extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -162,33 +145,6 @@ public class Dropout extends AbstractExecutionLayer {
         output.setName("Output");
 
         return output;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
