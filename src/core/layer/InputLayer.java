@@ -47,6 +47,17 @@ public class InputLayer extends AbstractPlainLayer {
     }
 
     /**
+     * Initializes neural network layer dimensions.
+     *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     */
+    public void initializeDimensions() throws NeuralNetworkException {
+        if (getLayerWidth() < 1) throw new NeuralNetworkException("Input layer width must be positive. Invalid value: " + getLayerWidth());
+        if (getLayerHeight() < 1) throw new NeuralNetworkException("Input height width must be positive. Invalid value: " + getLayerHeight());
+        if (getLayerDepth() < 1) throw new NeuralNetworkException("Input depth width must be positive. Invalid value: " + getLayerDepth());
+    }
+
+    /**
      /**
      * Sets reference to previous neural network layer.
      *
