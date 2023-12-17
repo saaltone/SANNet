@@ -689,10 +689,11 @@ public interface Matrix {
      * Takes element wise cumulative sum of this matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return sum of matrix.
      * @throws MatrixException not thrown in any situation.
      */
-    Matrix sumAsMatrix() throws MatrixException;
+    Matrix sumAsMatrix(int direction) throws MatrixException;
 
     /**
      * Takes mean of elements of this matrix.<br>
@@ -707,10 +708,11 @@ public interface Matrix {
      * Takes mean of elements of this matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException not thrown in any situation.
      * @return mean of matrix.
      */
-    Matrix meanAsMatrix() throws MatrixException;
+    Matrix meanAsMatrix(int direction) throws MatrixException;
 
     /**
      * Takes variance of elements of this matrix.<br>
@@ -725,10 +727,11 @@ public interface Matrix {
      * Takes variance of elements of this matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException not thrown in any situation.
      * @return variance of matrix.
      */
-    Matrix varianceAsMatrix() throws MatrixException;
+    Matrix varianceAsMatrix(int direction) throws MatrixException;
 
     /**
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
@@ -744,11 +747,12 @@ public interface Matrix {
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param mean mean value given as input.
+     * @param mean      mean value given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return variance of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    Matrix varianceAsMatrix(Matrix mean) throws MatrixException;
+    Matrix varianceAsMatrix(Matrix mean, int direction) throws MatrixException;
 
     /**
      * Takes standard deviation of elements of this matrix.<br>
@@ -763,11 +767,12 @@ public interface Matrix {
      * Takes standard deviation of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return standard deviation of matrix.
+     * @throws MatrixException       not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException;
+    Matrix standardDeviationAsMatrix(int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
@@ -783,11 +788,13 @@ public interface Matrix {
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param mean mean value given as input.
+     * @param mean      mean value given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return standard deviation of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix standardDeviationAsMatrix(Matrix mean) throws MatrixException;
+    Matrix standardDeviationAsMatrix(Matrix mean, int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes cumulative p- norm (p is number equal or bigger than 1) of this matrix.<br>
@@ -1025,14 +1032,6 @@ public interface Matrix {
      * @throws MatrixException thrown if index dimensions do not match.
      */
     Matrix gumbelSoftmax(double softmaxTau) throws MatrixException;
-
-    /**
-     * Returns softmax gradient of this matrix.
-     *
-     * @return softmax gradient of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix softmaxGrad() throws MatrixException;
 
     /**
      * Sets stride size for convolution and pooling operations.
