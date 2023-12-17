@@ -203,8 +203,8 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable 
      */
     public void initializeDefaultParams() {
         layerWidth = -1;
-        layerHeight = 1;
-        layerDepth = 1;
+        layerHeight = -1;
+        layerDepth = -1;
     }
 
     /**
@@ -215,10 +215,14 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable 
     public void initializeDimensions() throws NeuralNetworkException {
         if (getLayerWidth() == -1) {
             if (getDefaultPreviousLayer().getLayerWidth() < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerWidth());
-            if (getDefaultPreviousLayer().getLayerHeight() < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerHeight());
-            if (getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerDepth());
             setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
+        }
+        if (getLayerHeight() == -1) {
+            if (getDefaultPreviousLayer().getLayerHeight() < 1) throw new NeuralNetworkException("Default previous height width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerHeight());
             setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
+        }
+        if (getLayerDepth() == -1) {
+            if (getDefaultPreviousLayer().getLayerDepth() < 1) throw new NeuralNetworkException("Default previous depth width must be positive. Invalid value: " + getDefaultPreviousLayer().getLayerDepth());
             setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
         }
     }
@@ -701,7 +705,10 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable 
     private void executeLayer(ExecutorService executorService) throws RuntimeException {
         executorService.execute(() -> {
             try {
-                while (!executeLayerOperation()) {}
+                boolean isExecuting = true;
+                while (isExecuting) {
+                    isExecuting = executeLayerOperation();
+                }
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
             }
@@ -711,7 +718,7 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable 
     /**
      * Executes layer operation.
      *
-     * @return return true if layer has been terminated otherwise returns true.
+     * @return return false if layer has been terminated otherwise returns true.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
@@ -757,11 +764,11 @@ public abstract class AbstractLayer implements NeuralNetworkLayer, Serializable 
                         for (NeuralNetworkLayer nextLayer : getNextLayers().values()) nextLayer.waitToComplete();
                     }
                     complete();
-                    return true;
+                    return false;
                 }
                 case IDLE -> executeLockCondition.await();
             }
-            return false;
+            return true;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
