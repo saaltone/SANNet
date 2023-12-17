@@ -5,125 +5,19 @@
 
 package core.layer.attention;
 
-import core.activation.ActivationFunction;
-import core.layer.NeuralNetworkLayer;
-import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
-import utils.matrix.*;
+import utils.matrix.Initialization;
+import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.TreeMap;
+import java.util.Map;
 
 /**
  * Implements additive attention layer.
  *
  */
-public class AdditiveAttentionLayer extends AbstractAttentionLayer {
-
-    /**
-     * Implements weight set for layer.
-     *
-     */
-    protected class AdditiveAttentionWeightSet implements WeightSet, Serializable {
-
-        @Serial
-        private static final long serialVersionUID = -7854770677975563135L;
-
-        /**
-         * Input attention weight matrix.
-         *
-         */
-        private final Matrix attentionWeight;
-
-        /**
-         * Attention bias matrix.
-         *
-         */
-        private final Matrix attentionBias;
-
-        /**
-         * Attention v matrix.
-         *
-         */
-        private final Matrix v;
-
-        /**
-         * Set of weights.
-         *
-         */
-        private final HashSet<Matrix> weights = new HashSet<>();
-
-        /**
-         * Constructor for weight set
-         *
-         * @param initialization weight initialization function.
-         * @param layerWidth width of current layer.
-         * @param previousLayers input layers.
-         */
-        AdditiveAttentionWeightSet(Initialization initialization, int layerWidth, TreeMap<Integer, NeuralNetworkLayer> previousLayers) {
-            int previousLayerWidth = previousLayers.get(previousLayers.firstKey()).getLayerWidth();
-            attentionWeight = new DMatrix(layerWidth, 2 * previousLayerWidth, 1, initialization);
-            attentionWeight.setName("AttentionWeight");
-            attentionBias = new DMatrix(layerWidth, 1, 1);
-            attentionBias.setName("AttentionBias");
-            v = new DMatrix(1, layerWidth, 1);
-            v.setName("vMatrix");
-
-            weights.add(attentionWeight);
-            weights.add(attentionBias);
-            weights.add(v);
-
-            registerWeight(attentionWeight, false, false);
-            registerWeight(attentionBias, false, false);
-            registerWeight(v, false, false);
-        }
-
-        /**
-         * Returns set of weights.
-         *
-         * @return set of weights.
-         */
-        public HashSet<Matrix> getWeights() {
-            return weights;
-        }
-
-        /**
-         * Reinitializes weights.
-         *
-         */
-        public void reinitialize() {
-            attentionWeight.initialize(initialization);
-            attentionBias.reset();
-            v.initialize(initialization);
-        }
-
-        /**
-         * Returns number of parameters.
-         *
-         * @return number of parameters.
-         */
-        public int getNumberOfParameters() {
-            int numberOfParameters = 0;
-            for (Matrix weight : weights) numberOfParameters += weight.size();
-            return numberOfParameters;
-        }
-
-    }
-
-    /**
-     * Weight set.
-     *
-     */
-    protected AdditiveAttentionWeightSet weightSet;
-
-    /**
-     * Tanh activation function.
-     *
-     */
-    protected final ActivationFunction tanhActivationFunction = new ActivationFunction(UnaryFunctionType.TANH);
+public class AdditiveAttentionLayer extends DotAttentionLayer {
 
     /**
      * Constructor for additive attention layer.
@@ -140,35 +34,40 @@ public class AdditiveAttentionLayer extends AbstractAttentionLayer {
     }
 
     /**
-     * Returns weight set.
+     * Initializes default params for attention.
      *
-     * @return weight set.
      */
-    protected WeightSet getWeightSet() {
-        return weightSet;
+    protected void initializeAttentionDefaultParams() {
+        scaled = false;
+        scalingFactor = null;
     }
 
     /**
-     * Initializes neural network layer weights.
+     * Builds forward procedure and implicitly builds backward procedure.
      *
-     */
-    public void initializeWeights() {
-        weightSet = new AdditiveAttentionWeightSet(initialization, getLayerWidth(), getPreviousLayers());
-    }
-
-    /**
-     * Return score matrix for attention.
-     *
-     * @param input input
-     * @param inputIndex input index
-     * @param previousOutput previous output
-     * @return score matrix.
+     * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected Matrix getScoreMatrix(Matrix input, int inputIndex, Matrix previousOutput) throws MatrixException {
-        Matrix scoreMatrix = weightSet.v.dot(weightSet.attentionWeight.dot(input.join(previousOutput, true)).add(weightSet.attentionBias).apply(tanhActivationFunction));
-        scoreMatrix.setName("Score" + inputIndex);
-        return scoreMatrix;
+    public Matrix getForwardProcedure() throws MatrixException {
+        Matrix joinedInput = null;
+        for (Map.Entry<Integer, Matrix> entry : inputs.entrySet()) {
+            joinedInput = joinedInput == null ? entry.getValue() : joinedInput.join(entry.getValue(), false);
+        }
+        assert joinedInput != null;
+        joinedInput.setName("JoinedInput");
+
+        Matrix transposedJoinedInput = joinedInput.apply(transposeFunction);
+        transposedJoinedInput.setName("TransposedInput");
+        Matrix query = transposedJoinedInput.dot(weightSet.queryWeight);
+        query.setName("Query");
+        Matrix key = transposedJoinedInput.dot(weightSet.keyWeight);
+        key.setName("Key");
+        Matrix value = weightSet.valueWeight.dot(joinedInput);
+        value.setName("Value");
+
+        Matrix output = query.add(key).apply(transposeFunction).multiply(value);
+        output.setName("Output");
+        return output;
     }
 
 }
