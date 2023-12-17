@@ -7,6 +7,7 @@ package core.layer;
 
 import core.layer.attention.*;
 import core.layer.normalization.BatchNormalization;
+import core.layer.normalization.InstanceNormalization;
 import core.layer.normalization.LayerNormalization;
 import core.layer.normalization.WeightNormalization;
 import core.layer.regularization.*;
@@ -80,6 +81,7 @@ public class LayerFactory {
             case SINGLE_AVERAGE_POOLING -> new SingleAveragePoolingLayer(layerIndex, initialization, params);
             case BATCH_NORMALIZATION -> new BatchNormalization(layerIndex, initialization, params);
             case LAYER_NORMALIZATION -> new LayerNormalization(layerIndex, initialization, params);
+            case INSTANCE_NORMALIZATION -> new InstanceNormalization(layerIndex, initialization, params);
             case WEIGHT_NORMALIZATION -> new WeightNormalization(layerIndex, initialization, params);
             case DROPOUT -> new Dropout(layerIndex, initialization, params);
             case GRADIENT_CLIPPING -> new GradientClipping(layerIndex, initialization, params);
@@ -94,10 +96,10 @@ public class LayerFactory {
             case MULTIPLY -> new MultiplyLayer(layerIndex, initialization, params);
             case DOT -> new DotLayer(layerIndex, initialization, params);
             case DIVIDE -> new DivideLayer(layerIndex, initialization, params);
+            case TRANSFORM -> new TransformLayer(layerIndex, initialization, params);
             case ADDITIVE_ATTENTION -> new AdditiveAttentionLayer(layerIndex, initialization, params);
-            case GENERAL_ATTENTION -> new GeneralAttentionLayer(layerIndex, initialization, params);
             case DOT_ATTENTION -> new DotAttentionLayer(layerIndex, initialization, params);
-            case INPUT_BASED_ATTENTION -> new InputBasedAttention(layerIndex, initialization, params);
+            case LOCATION_BASED_ATTENTION -> new LocationBasedAttention(layerIndex, initialization, params);
             case POSITIONAL_ENCODING -> new PositionalEncodingLayer(layerIndex, initialization, params);
         };
     }
@@ -142,6 +144,7 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(SingleAveragePoolingLayer.class)) return LayerType.SINGLE_AVERAGE_POOLING;
         if (neuralNetworkLayer.getClass().equals(BatchNormalization.class)) return LayerType.BATCH_NORMALIZATION;
         if (neuralNetworkLayer.getClass().equals(LayerNormalization.class)) return LayerType.LAYER_NORMALIZATION;
+        if (neuralNetworkLayer.getClass().equals(InstanceNormalization.class)) return LayerType.INSTANCE_NORMALIZATION;
         if (neuralNetworkLayer.getClass().equals(WeightNormalization.class)) return LayerType.WEIGHT_NORMALIZATION;
         if (neuralNetworkLayer.getClass().equals(Dropout.class)) return LayerType.DROPOUT;
         if (neuralNetworkLayer.getClass().equals(GradientClipping.class)) return LayerType.GRADIENT_CLIPPING;
@@ -156,10 +159,10 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return LayerType.MULTIPLY;
         if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return LayerType.DOT;
         if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return LayerType.DIVIDE;
+        if (neuralNetworkLayer.getClass().equals(TransformLayer.class)) return LayerType.TRANSFORM;
         if (neuralNetworkLayer.getClass().equals(AdditiveAttentionLayer.class)) return LayerType.ADDITIVE_ATTENTION;
-        if (neuralNetworkLayer.getClass().equals(GeneralAttentionLayer.class)) return LayerType.GENERAL_ATTENTION;
         if (neuralNetworkLayer.getClass().equals(DotAttentionLayer.class)) return LayerType.DOT_ATTENTION;
-        if (neuralNetworkLayer.getClass().equals(InputBasedAttention.class)) return LayerType.INPUT_BASED_ATTENTION;
+        if (neuralNetworkLayer.getClass().equals(LocationBasedAttention.class)) return LayerType.LOCATION_BASED_ATTENTION;
         if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return LayerType.POSITIONAL_ENCODING;
         throw new NeuralNetworkException("Unknown layer type");
     }
@@ -204,6 +207,7 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(SingleAveragePoolingLayer.class)) return "SINGLE_AVERAGE_POOLING";
         if (neuralNetworkLayer.getClass().equals(BatchNormalization.class)) return "BATCH_NORMALIZATION";
         if (neuralNetworkLayer.getClass().equals(LayerNormalization.class)) return "LAYER_NORMALIZATION";
+        if (neuralNetworkLayer.getClass().equals(InstanceNormalization.class)) return "INSTANCE_NORMALIZATION";
         if (neuralNetworkLayer.getClass().equals(WeightNormalization.class)) return "WEIGHT_NORMALIZATION";
         if (neuralNetworkLayer.getClass().equals(Dropout.class)) return "DROPOUT";
         if (neuralNetworkLayer.getClass().equals(GradientClipping.class)) return "GRADIENT_CLIPPING";
@@ -218,10 +222,10 @@ public class LayerFactory {
         if (neuralNetworkLayer.getClass().equals(MultiplyLayer.class)) return "MULTIPLY";
         if (neuralNetworkLayer.getClass().equals(DotLayer.class)) return "DOT";
         if (neuralNetworkLayer.getClass().equals(DivideLayer.class)) return "DIVIDE";
+        if (neuralNetworkLayer.getClass().equals(TransformLayer.class)) return "TRANSFORM";
         if (neuralNetworkLayer.getClass().equals(AdditiveAttentionLayer.class)) return "ADDITIVE_ATTENTION";
-        if (neuralNetworkLayer.getClass().equals(GeneralAttentionLayer.class)) return "GENERAL_ATTENTION";
         if (neuralNetworkLayer.getClass().equals(DotAttentionLayer.class)) return "DOT_ATTENTION";
-        if (neuralNetworkLayer.getClass().equals(InputBasedAttention.class)) return "INPUT_BASED_ATTENTION";
+        if (neuralNetworkLayer.getClass().equals(LocationBasedAttention.class)) return "LOCATION_BASED_ATTENTION";
         if (neuralNetworkLayer.getClass().equals(PositionalEncodingLayer.class)) return "POSITIONAL_ENCODING";
         throw new NeuralNetworkException("Unknown layer type");
     }

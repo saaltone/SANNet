@@ -204,6 +204,12 @@ public enum LayerType {
     LAYER_NORMALIZATION,
 
     /**
+     * Layer normalization layer
+     *
+     */
+    INSTANCE_NORMALIZATION,
+
+    /**
      * Weight normalization layer
      *
      */
@@ -288,16 +294,16 @@ public enum LayerType {
     DIVIDE,
 
     /**
+     * Transform layer.
+     *
+     */
+    TRANSFORM,
+
+    /**
      * Additive Attention layer.
      *
      */
     ADDITIVE_ATTENTION,
-
-    /**
-     * General Attention layer.
-     *
-     */
-    GENERAL_ATTENTION,
 
     /**
      * Dot Attention layer.
@@ -306,10 +312,10 @@ public enum LayerType {
     DOT_ATTENTION,
 
     /**
-     * Input Based Attention layer.
+     * Location-Based Attention layer.
      *
      */
-    INPUT_BASED_ATTENTION,
+    LOCATION_BASED_ATTENTION,
 
     /**
      * Positional encoding layer.
