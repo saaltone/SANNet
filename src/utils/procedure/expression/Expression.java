@@ -1,3 +1,8 @@
+/*
+ * SANNet Neural Network Framework
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
+ */
+
 package utils.procedure.expression;
 
 import utils.configurable.DynamicParamException;

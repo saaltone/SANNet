@@ -17,6 +17,12 @@ import utils.procedure.node.Node;
 public class MeanExpression extends AbstractUnaryExpression {
 
     /**
+     * If value is one applies operation over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     *
+     */
+    private final int direction;
+
+    /**
      * True if calculation is done as single step otherwise false.
      *
      */
@@ -29,12 +35,14 @@ public class MeanExpression extends AbstractUnaryExpression {
      * @param argument1 first argument.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if expression arguments are not defined.
      */
-    public MeanExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException {
+    public MeanExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep, int direction) throws MatrixException {
         super("MEAN", expressionID, argument1, result);
 
         this.executeAsSingleStep = executeAsSingleStep;
+        this.direction = direction;
     }
 
     /**
@@ -73,7 +81,7 @@ public class MeanExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if calculation fails.
      */
     protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
-        return argument1Matrix.meanAsMatrix();
+        return argument1Matrix.meanAsMatrix(direction);
     }
 
     /**

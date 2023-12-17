@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.procedure.node.Node;
@@ -51,8 +52,9 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
      *
      * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
+    public void calculateExpression(int sampleIndex) throws MatrixException, DynamicParamException {
         if (executeAsSingleStep()) return;
         checkArguments(getArgument1(), getArgument2(), sampleIndex);
         calculateExpressionResult(sampleIndex, getArgument1().getMatrix(sampleIndex), getArgument2().getMatrix(sampleIndex));

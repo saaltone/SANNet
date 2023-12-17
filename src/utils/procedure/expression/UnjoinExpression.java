@@ -109,7 +109,7 @@ public class UnjoinExpression extends AbstractUnaryExpression {
      * @return argument1 gradient matrix.
      */
     protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) {
-        return unjoinMatrixOperation.applyGradient(argument1Matrix, resultGradient);
+        return unjoinMatrixOperation.applyGradient(resultGradient);
     }
 
     /**

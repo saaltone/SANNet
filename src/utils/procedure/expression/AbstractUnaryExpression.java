@@ -107,8 +107,9 @@ public abstract class AbstractUnaryExpression extends AbstractExpression {
      *
      * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateExpression(int sampleIndex) throws MatrixException {
+    public void calculateExpression(int sampleIndex) throws MatrixException, DynamicParamException {
         if (executeAsSingleStep()) return;
         checkArgument(getArgument1(), sampleIndex);
         calculateExpressionResult(sampleIndex, getArgument1().getMatrix(sampleIndex), null);
@@ -121,8 +122,9 @@ public abstract class AbstractUnaryExpression extends AbstractExpression {
      * @param argument1Matrix argument1 matrix for a sample index.
      * @param argument2Matrix argument2 matrix for a sample index.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void calculateExpressionResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+    protected void calculateExpressionResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException, DynamicParamException {
         result.setMatrix(sampleIndex, calculateResult(sampleIndex, argument1Matrix, argument2Matrix));
     }
 
@@ -134,8 +136,9 @@ public abstract class AbstractUnaryExpression extends AbstractExpression {
      * @param argument2Matrix argument2 matrix for a sample index.
      * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException;
+    protected abstract Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates gradient of expression.

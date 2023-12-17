@@ -19,6 +19,12 @@ import java.util.Map;
 public class StandardDeviationExpression extends AbstractUnaryExpression {
 
     /**
+     * If value is one applies operation over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     *
+     */
+    private final int direction;
+
+    /**
      * True if calculation is done as single step otherwise false.
      *
      */
@@ -49,13 +55,15 @@ public class StandardDeviationExpression extends AbstractUnaryExpression {
      * @param argument1 first argument.
      * @param result result of expression.
      * @param executeAsSingleStep true if calculation is done per index otherwise over all indices.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @throws MatrixException throws exception if expression arguments are not defined.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep) throws MatrixException, DynamicParamException {
+    public StandardDeviationExpression(int expressionID, Node argument1, Node result, boolean executeAsSingleStep, int direction) throws MatrixException, DynamicParamException {
         super("STANDARD_DEVIATION", expressionID, argument1, result);
 
         this.executeAsSingleStep = executeAsSingleStep;
+        this.direction = direction;
     }
 
     /**
@@ -96,12 +104,13 @@ public class StandardDeviationExpression extends AbstractUnaryExpression {
      * @param argument2Matrix argument2 matrix for a sample index.
      * @return result matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
-        Matrix mean = argument1Matrix.meanAsMatrix();
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException, DynamicParamException {
+        Matrix mean = argument1Matrix.meanAsMatrix(direction);
         if (means == null) means = new HashMap<>();
         means.put(sampleIndex, mean);
-        return argument1Matrix.standardDeviationAsMatrix(mean);
+        return argument1Matrix.standardDeviationAsMatrix(mean, direction);
     }
 
     /**

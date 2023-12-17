@@ -196,8 +196,9 @@ public abstract class AbstractExpression implements Expression, Serializable {
      *
      * @param sampleIndex sample index.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract void calculateExpression(int sampleIndex) throws MatrixException;
+    protected abstract void calculateExpression(int sampleIndex) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates entire gradient expression chain including regulation.
