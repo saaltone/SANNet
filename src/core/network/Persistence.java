@@ -5,8 +5,6 @@
 
 package core.network;
 
-import core.network.NeuralNetwork;
-
 import java.io.*;
 
 /**
