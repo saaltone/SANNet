@@ -174,6 +174,8 @@ public class GRULayer extends AbstractRecurrentLayer {
 
             ones = (ones == null) ? new DMatrix(layerWidth, 1, 1, Initialization.ONE) : ones;
             ones.setName("1");
+            registerConstantMatrix(ones);
+            registerStopGradient(ones);
         }
 
         /**
@@ -381,24 +383,6 @@ public class GRULayer extends AbstractRecurrentLayer {
 
         return s;
 
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>() {{ add(currentWeightSet.ones); }};
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>() {{ add(currentWeightSet.ones); }};
     }
 
 }

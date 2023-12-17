@@ -98,15 +98,6 @@ public abstract class AbstractRecurrentLayer extends AbstractExecutionLayer {
     public boolean isRecurrentLayer() { return true; }
 
     /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
-    }
-
-    /**
      * Check if layer input is reversed.
      *
      * @return if true input layer input is reversed otherwise not.
