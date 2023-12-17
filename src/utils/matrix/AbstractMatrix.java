@@ -1173,37 +1173,57 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes element wise cumulative sum of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return sum of matrix.
      * @throws MatrixException not thrown in any situation.
      */
-    public Matrix sumAsMatrix() throws MatrixException {
-        if (!hasProcedureFactory()) return constantAsMatrix(sum());
+    public Matrix sumAsMatrix(int direction) throws MatrixException {
+        if (!hasProcedureFactory()) return applySumAsMatrix(direction);
         else {
             int expressionLock = getProcedureFactory().startExpression(this);
-            Matrix result = constantAsMatrix(sum());
+            Matrix result = applySumAsMatrix(direction);
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createSumExpression(expressionLock, this, result);
+            getProcedureFactory().createSumExpression(expressionLock, this, result, direction);
             return result;
         }
     }
 
     /**
+     * Calculates sum as matrix.
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return sum as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract Matrix applySumAsMatrix(int direction) throws MatrixException;
+
+    /**
      * Takes mean of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return mean of matrix.
+     * @throws MatrixException not thrown in any situation.
      */
-    public Matrix meanAsMatrix() throws MatrixException {
-        if (!hasProcedureFactory()) return constantAsMatrix(mean());
+    public Matrix meanAsMatrix(int direction) throws MatrixException {
+        if (!hasProcedureFactory()) return applyMeanAsMatrix(direction);
         else {
             int expressionLock = getProcedureFactory().startExpression(this);
-            Matrix result = constantAsMatrix(mean());
+            Matrix result = applyMeanAsMatrix(direction);
             ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createMeanExpression(expressionLock, this, result);
+            getProcedureFactory().createMeanExpression(expressionLock, this, result, direction);
             return result;
         }
     }
+
+    /**
+     * Calculates mean as matrix.
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return mean as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract Matrix applyMeanAsMatrix(int direction) throws MatrixException;
 
     /**
      * Calculates sum or mean.
@@ -1236,7 +1256,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
             Matrix result = applySum(matrices);
             ProcedureFactory.synchronize(firstMatrix, result);
-            firstMatrix.getProcedureFactory().createSumExpression(expressionLock, firstMatrix, result, true);
+            firstMatrix.getProcedureFactory().createSumExpression(expressionLock, firstMatrix, result, true, 0);
             return result;
         }
     }
@@ -1249,7 +1269,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws exception if matrices are incorrectly provided.
      */
     public static Matrix applySum(TreeMap<Integer, Matrix> matrices) throws MatrixException {
-        return AbstractMatrix.sum(matrices);
+        return AbstractMatrix.count(matrices, false);
     }
 
     /**
@@ -1266,7 +1286,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             int expressionLock = firstMatrix.getProcedureFactory().startExpression(firstMatrix);
             Matrix result = applyMean(matrices);
             ProcedureFactory.synchronize(firstMatrix, result);
-            firstMatrix.getProcedureFactory().createMeanExpression(expressionLock, firstMatrix, result, true);
+            firstMatrix.getProcedureFactory().createMeanExpression(expressionLock, firstMatrix, result, true, 0);
             return result;
         }
     }
@@ -1296,29 +1316,41 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes variance of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return variance of matrix.
+     * @throws MatrixException not thrown in any situation.
      */
-    public Matrix varianceAsMatrix() throws MatrixException {
-        if (!hasProcedureFactory()) return constantAsMatrix(variance());
-        else {
-            int expressionLock = getProcedureFactory().startExpression(this);
-            Matrix result = constantAsMatrix(variance());
-            ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createVarianceExpression(expressionLock, this, result);
-            return result;
-        }
+    public Matrix varianceAsMatrix(int direction) throws MatrixException {
+        return varianceAsMatrix(null, direction);
     }
+
+    /**
+     * Calculates variance as matrix.
+     *
+     * @param meanMatrix mean matrix given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return variance as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract Matrix applyVarianceAsMatrix(Matrix meanMatrix, int direction) throws MatrixException;
 
     /**
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param mean mean value given as input.
+     * @param meanMatrix mean matrix given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return variance of matrix.
      */
-    public Matrix varianceAsMatrix(Matrix mean) throws MatrixException {
-        return constantAsMatrix(variance(mean.getValue(0, 0, 0)));
+    public Matrix varianceAsMatrix(Matrix meanMatrix, int direction) throws MatrixException {
+        if (!hasProcedureFactory()) return applyVarianceAsMatrix(meanMatrix, direction);
+        else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyVarianceAsMatrix(meanMatrix, direction);
+            ProcedureFactory.synchronize(this, result);
+            getProcedureFactory().createVarianceExpression(expressionLock, this, result, direction);
+            return result;
+        }
     }
 
     /**
@@ -1339,7 +1371,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             if (result != null) {
                 ProcedureFactory.synchronize(firstMatrix, result);
             }
-            firstMatrix.getProcedureFactory().createVarianceExpression(expressionLock, firstMatrix, result, true);
+            firstMatrix.getProcedureFactory().createVarianceExpression(expressionLock, firstMatrix, result, true, 0);
             return result;
         }
     }
@@ -1392,7 +1424,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             if (result != null) {
                 ProcedureFactory.synchronize(firstMatrix, result);
             }
-            firstMatrix.getProcedureFactory().createStandardDeviationExpression(expressionLock, firstMatrix, result, true);
+            firstMatrix.getProcedureFactory().createStandardDeviationExpression(expressionLock, firstMatrix, result, true, 0);
             return result;
         }
     }
@@ -1420,31 +1452,45 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Takes standard deviation of elements of this matrix.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @throws MatrixException not thrown in any situation.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return standard deviation of matrix.
+     * @throws MatrixException       not thrown in any situation.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix standardDeviationAsMatrix() throws MatrixException, DynamicParamException {
-        if (!hasProcedureFactory()) return constantAsMatrix(standardDeviation());
-        else {
-            int expressionLock = getProcedureFactory().startExpression(this);
-            Matrix result = constantAsMatrix(standardDeviation());
-            ProcedureFactory.synchronize(this, result);
-            getProcedureFactory().createStandardDeviationExpression(expressionLock, this, result);
-            return result;
-        }
+    public Matrix standardDeviationAsMatrix(int direction) throws MatrixException, DynamicParamException {
+        return standardDeviationAsMatrix(null, direction);
     }
+
+    /**
+     * Calculates standard deviation as matrix.
+     *
+     * @param meanMatrix mean value given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return standard deviation as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected abstract Matrix applyStandardDeviationAsMatrix(Matrix meanMatrix, int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
      * Applies masking element wise if this matrix is masked.<br>
      *
-     * @param mean mean value given as input.
+     * @param meanMatrix mean value given as input.
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return standard deviation of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix standardDeviationAsMatrix(Matrix mean) throws MatrixException {
-        return constantAsMatrix(standardDeviation(mean.getValue(0, 0, 0)));
+    public Matrix standardDeviationAsMatrix(Matrix meanMatrix, int direction) throws MatrixException, DynamicParamException {
+        if (!hasProcedureFactory()) return applyStandardDeviationAsMatrix(meanMatrix, direction);
+        else {
+            int expressionLock = getProcedureFactory().startExpression(this);
+            Matrix result = applyStandardDeviationAsMatrix(meanMatrix, direction);
+            ProcedureFactory.synchronize(this, result);
+            getProcedureFactory().createStandardDeviationExpression(expressionLock, this, result, direction);
+            return result;
+        }
     }
 
     /**
