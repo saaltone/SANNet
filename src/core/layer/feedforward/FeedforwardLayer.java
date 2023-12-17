@@ -63,14 +63,15 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
          *
          * @param initialization        weight initialization function.
          * @param previousLayerWidth    width of previous layer.
+         * @param previousLayerHeight   height of previous layer.
          * @param layerWidth            width of current layer.
          * @param previousLayerDepth    depth of previous layer.
          * @param regulateDirectWeights if true direct weights are regulated.
          */
-        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, int previousLayerDepth, boolean regulateDirectWeights) {
+        FeedforwardWeightSet(Initialization initialization, int previousLayerWidth, int previousLayerHeight, int layerWidth, int previousLayerDepth, boolean regulateDirectWeights) {
             weight = new DMatrix(layerWidth, previousLayerWidth, previousLayerDepth, initialization);
             weight.setName("Weight");
-            bias = new DMatrix(layerWidth, 1, previousLayerDepth);
+            bias = new DMatrix(layerWidth, previousLayerHeight, previousLayerDepth);
             bias.setName("Bias");
 
             weights.add(weight);
@@ -166,20 +167,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Initializes neural network layer dimensions.
-     *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     */
-    public void initializeDimensions() throws NeuralNetworkException {
-        if (getLayerWidth() == -1) {
-            if ((getDefaultPreviousLayer().getLayerWidth()) < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + (getDefaultPreviousLayer().getLayerWidth()));
-            setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
-            setLayerHeight(getDefaultPreviousLayer().getLayerHeight());
-            setLayerDepth(getDefaultPreviousLayer().getLayerDepth());
-        }
-    }
-
-    /**
      * Initializes default params.
      *
      */
@@ -213,22 +200,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -242,7 +213,7 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new FeedforwardWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), getDefaultPreviousLayer().getLayerDepth(), regulateDirectWeights);
+        weightSet = new FeedforwardWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getLayerWidth(), getDefaultPreviousLayer().getLayerDepth(), regulateDirectWeights);
     }
 
     /**
@@ -271,33 +242,6 @@ public class FeedforwardLayer extends AbstractExecutionLayer {
 
         output.setName("Output");
         return output;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**

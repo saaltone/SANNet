@@ -119,41 +119,11 @@ public class ConnectLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Initializes neural network layer dimensions.
-     *
-     * @throws NeuralNetworkException thrown if initialization of layer fails.
-     */
-    public void initializeDimensions() throws NeuralNetworkException {
-        if (getLayerWidth() == -1) {
-            if ((getDefaultPreviousLayer().getLayerWidth()) < 1) throw new NeuralNetworkException("Default previous layer width must be positive. Invalid value: " + (getDefaultPreviousLayer().getLayerWidth()));
-            setLayerWidth(getDefaultPreviousLayer().getLayerWidth());
-            setLayerHeight(1);
-            setLayerDepth(1);
-        }
-    }
-
-    /**
      * Checks if layer can have multiple previous layers.
      *
      * @return  if true layer can have multiple previous layers otherwise false.
      */
     public boolean canHaveMultiplePreviousLayers() {
-        return true;
-    }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
         return true;
     }
 
@@ -184,7 +154,8 @@ public class ConnectLayer extends AbstractExecutionLayer {
     public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) throws MatrixException {
         inputs = new TreeMap<>();
 
-        TreeMap<Integer, Matrix> inputMatrices = new TreeMap<>();
+        int inputIndex = 0;
+
         int layerHeight = -1;
         int layerDepth = -1;
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : getPreviousLayers().entrySet()) {
@@ -192,14 +163,10 @@ public class ConnectLayer extends AbstractExecutionLayer {
                 layerHeight = entry.getValue().getLayerHeight();
                 layerDepth = entry.getValue().getLayerDepth();
             }
-            else if (layerHeight != entry.getValue().getLayerHeight() || layerDepth != entry.getValue().getLayerDepth()) throw new MatrixException("All inputs must have same size.");
+            else if (layerHeight != entry.getValue().getLayerHeight() || layerDepth != entry.getValue().getLayerDepth()) throw new MatrixException("All inputs must have same height and depth.");
             Matrix input = new DMatrix(entry.getValue().getLayerWidth(), layerHeight, layerDepth, Initialization.ONE);
             input.setName("Input" + entry.getValue().getLayerIndex());
-            inputMatrices.put(entry.getKey(), input);
-        }
-
-        for (int inputIndex = 0; inputIndex < inputMatrices.size(); inputIndex++) {
-            inputs.put(inputIndex, inputMatrices.get(inputIndex));
+            inputs.put(inputIndex++, input);
         }
 
         return inputs;
@@ -220,33 +187,6 @@ public class ConnectLayer extends AbstractExecutionLayer {
         if (output != null) output.setName("Output");
         return output;
 
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**

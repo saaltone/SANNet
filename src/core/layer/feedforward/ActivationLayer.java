@@ -12,7 +12,6 @@ import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
-import java.util.HashSet;
 import java.util.TreeMap;
 
 /**
@@ -49,22 +48,6 @@ public class ActivationLayer extends AbstractExecutionLayer {
     }
 
     /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
-    }
-
-    /**
      * Returns weight set.
      *
      * @return weight set.
@@ -88,7 +71,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
      */
     public TreeMap<Integer, Matrix> getInputMatrices(boolean resetPreviousInput) {
         inputs = new TreeMap<>();
-        Matrix input = new DMatrix(getLayerWidth(), getLayerHeight(), getLayerDepth(), Initialization.ONE);
+        Matrix input = new DMatrix(getDefaultPreviousLayer().getLayerWidth(), getDefaultPreviousLayer().getLayerHeight(), getDefaultPreviousLayer().getLayerDepth(), Initialization.ONE);
         input.setName("Input" + getDefaultPreviousLayer().getLayerIndex());
         inputs.put(0, input);
         return inputs;
@@ -106,33 +89,6 @@ public class ActivationLayer extends AbstractExecutionLayer {
         output.setName("Output");
 
         return output;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>();
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
