@@ -16,7 +16,6 @@ import utils.procedure.Procedure;
 import utils.procedure.ProcedureFactory;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -85,6 +84,8 @@ public class WeightNormalization extends AbstractExecutionLayer {
         g = 1;
         gMatrix = new DMatrix(g);
         gMatrix.setName("g");
+        registerConstantMatrix(gMatrix);
+        registerStopGradient(gMatrix);
     }
 
     /**
@@ -112,22 +113,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
             g = params.getValueAsInteger("g");
             gMatrix.setValue(0, 0, 0, g);
         }
-    }
-
-    /**
-     * Checks if layer is recurrent layer type.
-     *
-     * @return always false.
-     */
-    public boolean isRecurrentLayer() { return false; }
-
-    /**
-     * Checks if layer works with recurrent layers.
-     *
-     * @return if true layer works with recurrent layers otherwise false.
-     */
-    public boolean worksWithRecurrentLayer() {
-        return true;
     }
 
     /**
@@ -164,6 +149,7 @@ public class WeightNormalization extends AbstractExecutionLayer {
      */
     protected void defineProcedure() throws MatrixException, DynamicParamException {
         input = new DMatrix(1, 1, 1);
+        registerConstantMatrix(input);
         templateProcedure = new ProcedureFactory().getProcedure(this);
     }
 
@@ -194,33 +180,6 @@ public class WeightNormalization extends AbstractExecutionLayer {
         Matrix output = input.multiply(gMatrix).divide(input.normAsMatrix(2));
         output.setName("Output");
         return output;
-    }
-
-    /**
-     * Returns matrices for which gradient is not calculated.
-     *
-     * @return matrices for which gradient is not calculated.
-     */
-    public HashSet<Matrix> getStopGradients() {
-        return new HashSet<>() {{ add(gMatrix); }};
-    }
-
-    /**
-     * Returns constant matrices.
-     *
-     * @return constant matrices.
-     */
-    public HashSet<Matrix> getConstantMatrices() {
-        return new HashSet<>() {{ add(input); add(gMatrix); }};
-    }
-
-    /**
-     * Returns number of truncated steps for gradient calculation. -1 means no truncation.
-     *
-     * @return number of truncated steps.
-     */
-    protected int getTruncateSteps() {
-        return -1;
     }
 
     /**
