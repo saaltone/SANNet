@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2022 Simo Aaltonen
+ * Copyright (C) 2018 - 2023 Simo Aaltonen
  */
 
 package demo;
@@ -140,7 +140,7 @@ public class AutoEncoder {
      */
     private static NeuralNetwork buildNeuralNetwork(int inputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
+        neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 3));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 5));
