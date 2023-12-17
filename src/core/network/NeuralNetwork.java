@@ -552,7 +552,10 @@ public class NeuralNetwork implements Serializable {
     private void executeLayer(ExecutorService executorService) throws RuntimeException {
         executorService.execute(() -> {
             try {
-                while (!executeLayerOperation()) {}
+                boolean isExecuting = true;
+                while (isExecuting) {
+                    isExecuting = executeLayerOperation();
+                }
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
             }
@@ -563,7 +566,7 @@ public class NeuralNetwork implements Serializable {
      * Thread run function.<br>
      * Executes given neural network procedures and synchronizes their execution via neural network thread execution lock.<br>
      *
-     * @return return true if layer has been terminated otherwise returns true.
+     * @return return false if layer has been terminated otherwise returns true.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws IOException throws exception if neural network persistence operation fails.
@@ -587,14 +590,14 @@ public class NeuralNetwork implements Serializable {
                 }
                 case TERMINATED -> {
                     complete();
-                    return true;
+                    return false;
                 }
             }
         }
         finally {
             executeLock.unlock();
         }
-        return false;
+        return true;
     }
 
     /**
