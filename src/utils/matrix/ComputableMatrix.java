@@ -5,6 +5,7 @@
 
 package utils.matrix;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.operation.*;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -365,7 +366,18 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return sum of matrix.
      */
     public double sum() throws MatrixException {
-        return new SumMatrixOperation(getRows(), getColumns(), getDepth()).applySum(this);
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth(), 0).applySum(this);
+    }
+
+    /**
+     * Calculates sum as matrix.
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return sum as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix applySumAsMatrix(int direction) throws MatrixException {
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth(), direction).applySumAsMatrix(this);
     }
 
     /**
@@ -376,7 +388,18 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @return mean of matrix.
      */
     public double mean() throws MatrixException {
-        return new SumMatrixOperation(getRows(), getColumns(), getDepth()).applyMean(this);
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth(), 0).applyMean(this);
+    }
+
+    /**
+     * Calculates mean as matrix.
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return mean as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix applyMeanAsMatrix(int direction) throws MatrixException {
+        return new SumMatrixOperation(getRows(), getColumns(), getDepth(), direction).applyMeanAsMatrix(this);
     }
 
     /**
@@ -392,6 +415,18 @@ public abstract class ComputableMatrix extends AbstractMatrix {
     }
 
     /**
+     * Calculates variance as matrix.
+     *
+     * @param meanMatrix mean matrix
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return variance as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected Matrix applyVarianceAsMatrix(Matrix meanMatrix, int direction) throws MatrixException {
+        return new VarianceMatrixOperation(getRows(), getColumns(), getDepth(), direction).applyVarianceAsMatrix(this, meanMatrix != null ? meanMatrix : meanAsMatrix(direction));
+    }
+
+    /**
      * Calculates standard deviation of matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
@@ -401,6 +436,19 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      */
     public double standardDeviation(double mean) throws MatrixException {
         return new VarianceMatrixOperation(getRows(), getColumns(), getDepth(), mean).applyStandardDeviation(this);
+    }
+
+    /**
+     * Calculates standard deviation as matrix.
+     *
+     * @param meanMatrix mean matrix
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return standard deviation as matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    protected Matrix applyStandardDeviationAsMatrix(Matrix meanMatrix, int direction) throws MatrixException, DynamicParamException {
+        return new VarianceMatrixOperation(getRows(), getColumns(), getDepth(), direction).applyStandardDeviationAsMatrix(this, meanMatrix != null ? meanMatrix : meanAsMatrix(direction));
     }
 
     /**
@@ -588,9 +636,7 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix softmax(double softmaxTau) throws MatrixException {
-        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
-
-        return finalizeSoftmax(softmaxTau == 1 ? this : divide(softmaxTau));
+        return new SoftmaxMatrixOperation(getRows(), getColumns(), getDepth(), softmaxTau, false).applyFunction(this);
     }
 
     /**
@@ -602,46 +648,8 @@ public abstract class ComputableMatrix extends AbstractMatrix {
      * @throws MatrixException thrown if index dimensions do not match.
      */
     public Matrix gumbelSoftmax(double softmaxTau) throws MatrixException {
-        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
-
         // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
-        return finalizeSoftmax(applyFunction(new UnaryFunction(value -> softmaxTau == 1 ? (value + getGumbelNoise()) : (value + getGumbelNoise()) / softmaxTau), false));
-    }
-
-    /**
-     * Finalizes softmax result.<br>
-     *
-     * @param result result matrix.
-     * @return finalized result matrix.
-     * @throws MatrixException thrown if matrix operation fails.
-     */
-    private Matrix finalizeSoftmax(Matrix result) throws MatrixException {
-        final double maxValue = result.max();
-        result.apply(new UnaryFunction(value -> Math.exp(value - maxValue)), true);
-        result.divideBy(result.sum());
-        return result;
-    }
-
-    /**
-     * Returns Gumbel noise.<br>
-     *
-     * @return Gumbel noise.
-     */
-    private double getGumbelNoise() {
-        double epsilon = 10E-20;
-        return -Math.log(-Math.log(random.nextDouble() + epsilon) + epsilon);
-    }
-
-    /**
-     * Returns softmax gradient of matrix.<br>
-     * Assumes that input matrix is softmax result.<br>
-     *
-     * @return softmax gradient of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    public Matrix softmaxGrad() throws MatrixException {
-        if (getColumns() != 1) throw new MatrixException("Matrix must be a column vector.");
-        return new SoftmaxGradientMatrixOperation(getRows(), getRows(), getDepth()).apply(this);
+        return new SoftmaxMatrixOperation(getRows(), getColumns(), getDepth(), softmaxTau, true).applyFunction(this);
     }
 
     /**
@@ -898,6 +906,26 @@ public abstract class ComputableMatrix extends AbstractMatrix {
             if (charAt == '1') encodedMatrix.setValue(charIndex, 0, 0, 1);
         }
         return encodedMatrix;
+    }
+
+    /**
+     * Decodes value from bit column vector.
+     *
+     * @param encodedMatrix encoded matrix.
+     * @return encoded value.
+     */
+    public static int decodeFromBitColumnVector(Matrix encodedMatrix) {
+        int maxBits = encodedMatrix.getRows();
+        int decodedValue = 0;
+
+        for (int bitIndex = 0; bitIndex < maxBits; bitIndex++) {
+            double bitValue = encodedMatrix.getValue(bitIndex, 0, 0);
+            if (bitValue == 1) {
+                decodedValue += Math.pow(2, maxBits - 1 - bitIndex);
+            }
+        }
+
+        return decodedValue;
     }
 
     /**
