@@ -54,6 +54,18 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     private final HashMap<Integer, Matrix> weightsMap = new HashMap<>();
 
     /**
+     * Constant matrices for layer.
+     *
+     */
+    private HashSet<Matrix> constantMatrices;
+
+    /**
+     * Stop gradient matrices for layer.
+     *
+     */
+    private HashSet<Matrix> stopGradients;
+
+    /**
      * If true neural network is in training mode otherwise false.
      *
      */
@@ -118,8 +130,25 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     /**
      * Initializes neural network layer weights.
      *
+     * @throws MatrixException throws exception if layer dimensions are not matching.
      */
-    protected abstract void initializeWeights();
+    protected abstract void initializeWeights() throws MatrixException;
+
+    /**
+     * Checks if layer is recurrent layer type.
+     *
+     * @return always false.
+     */
+    public boolean isRecurrentLayer() { return false; }
+
+    /**
+     * Checks if layer works with recurrent layers.
+     *
+     * @return if true layer works with recurrent layers otherwise false.
+     */
+    public boolean worksWithRecurrentLayer() {
+        return true;
+    }
 
     /**
      * Check if layer input is reversed.
@@ -155,6 +184,44 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      */
     public HashSet<Matrix> getParameterMatrices() {
         return getWeightSet() != null ? getWeightSet().getWeights() : null;
+    }
+
+    /**
+     * Registers constant matrix.
+     *
+     * @param constantMatrix constant matrix.
+     */
+    protected void registerConstantMatrix(Matrix constantMatrix) {
+        if (constantMatrices == null) constantMatrices = new HashSet<>();
+        constantMatrices.add(constantMatrix);
+    }
+
+    /**
+     * Returns constant matrices.
+     *
+     * @return constant matrices.
+     */
+    public HashSet<Matrix> getConstantMatrices() {
+        return constantMatrices;
+    }
+
+    /**
+     * Registers stop gradient.
+     *
+     * @param stopGradient stop gradient.
+     */
+    protected void registerStopGradient(Matrix stopGradient) {
+        if (stopGradients == null) stopGradients = new HashSet<>();
+        stopGradients.add(stopGradient);
+    }
+
+    /**
+     * Returns matrices for which gradient is not calculated.
+     *
+     * @return matrices for which gradient is not calculated.
+     */
+    public HashSet<Matrix> getStopGradients() {
+        return stopGradients;
     }
 
     /**
@@ -216,7 +283,9 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
      *
      * @return number of truncated steps.
      */
-    protected abstract int getTruncateSteps();
+    protected int getTruncateSteps() {
+        return -1;
+    }
 
     /**
      * Registers weights of layer.
