@@ -147,6 +147,12 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
 
         FontMetrics metrics = g.getFontMetrics();
 
+        int maxConfusionValue = 0;
+        for (int predictedRow = 0; predictedRow < numberOfFeatures; predictedRow++) {
+            for (int actualRow = 0; actualRow < numberOfFeatures; actualRow++) {
+                maxConfusionValue = Math.max(maxConfusionValue, getConfusionValue(predictedRow, actualRow));
+            }
+        }
         for (int predictedRow = 0; predictedRow < numberOfFeatures; predictedRow++) {
             for (int actualRow = 0; actualRow < numberOfFeatures; actualRow++) {
                 int currentX = (actualRow + 1) * blockWidth;
@@ -154,7 +160,7 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
 
                 int confusionValue = getConfusionValue(predictedRow, actualRow);
 
-                g.setColor(predictedRow == actualRow ? Color.GREEN : confusionValue != 0 ? Color.RED : Color.LIGHT_GRAY);
+                g.setColor(predictedRow == actualRow ? Color.GREEN : confusionValue != 0 ? new Color(150 + (int)(105 * (1 - (double)confusionValue / (double)maxConfusionValue)), 0, 0) : Color.LIGHT_GRAY);
                 g.fillRect(currentX, currentY, blockWidth, blockHeight);
 
                 g.setColor(Color.BLACK);
@@ -164,7 +170,7 @@ public class ConfusionMatrixChart extends JFrame implements Serializable {
                 int confusionValueStringX = currentX + blockWidth / 2 - metrics.stringWidth(confusionValueString) / 2;
                 int confusionValueStringY = currentY + blockHeight / 2 + metrics.getHeight() / 2;
 
-                g.setColor(Color.BLACK);
+                g.setColor(predictedRow != actualRow && confusionValue != 0 ? Color.WHITE : Color.BLACK);
                 g.drawString(confusionValueString, confusionValueStringX, confusionValueStringY);
             }
         }
