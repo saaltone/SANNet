@@ -7,6 +7,7 @@ package demo;
 
 import core.activation.ActivationFunction;
 import core.layer.LayerType;
+import core.layer.utils.AttentionLayerFactory;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -41,15 +42,14 @@ public class TextSeqDemo {
      * @param args input arguments (not used).
      */
     public static void main(String [] args) {
-
-        int numOfInputs = 5;
-
         NeuralNetwork neuralNetwork;
         try {
             String persistenceName = "<PATH>/TextSeqNN";
+            int numOfInputs = 50;
+            boolean joinInputsVertically = false;
             HashMap<Integer, String> dictionaryIndexMapping = new HashMap<>();
-            HashMap<Integer, HashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping);
-            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows());
+            HashMap<Integer, HashMap<Integer, Matrix>> data = getTextSeqData(numOfInputs, dictionaryIndexMapping, joinInputsVertically);
+            neuralNetwork = buildNeuralNetwork(data.get(0).get(0).getRows(), data.get(1).get(0).getRows(), joinInputsVertically ? 1 : numOfInputs);
 //            neuralNetwork = Persistence.restoreNeuralNetwork(persistenceName);
             Persistence persistence = new Persistence(true, 100, neuralNetwork, persistenceName, true);
             neuralNetwork.setPersistence(persistence);
@@ -78,7 +78,7 @@ public class TextSeqDemo {
                         encodedWords.set(index, encodedWords.get(index + 1));
                     }
                     encodedWords.set(encodedWords.size() - 1, nextEncodedWord);
-                    input = new JMatrix(encodedWords, true);
+                    input = new JMatrix(encodedWords, joinInputsVertically);
                     encodedWords = input.getSubMatrices();
                 }
                 System.out.println();
@@ -95,38 +95,26 @@ public class TextSeqDemo {
     /**
      * Builds recurrent neural network (GRU) instance.
      *
-     * @param inputSize input size of neural network (digits as one hot encoded in sequence).
-     * @param outputSize output size of neural network (digits as one hot encoded in sequence).
+     * @param inputSize   input size of neural network (digits as one hot encoded in sequence).
+     * @param outputSize  output size of neural network (digits as one hot encoded in sequence).
+     * @param layerHeight layer height.
      * @return neural network instance.
-     * @throws DynamicParamException throws exception if setting of neural network parameters fail.
+     * @throws DynamicParamException  throws exception if setting of neural network parameters fail.
      * @throws NeuralNetworkException throws exception if creation of neural network instance fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
      */
-    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    private static NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, int layerHeight) throws DynamicParamException, NeuralNetworkException, MatrixException {
+        double tau = 0.8;
+        int numberOfAttentionBlocks = 2;
+        double dropoutProbability = 0.1;
+        boolean normalize = true;
+
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
-        int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize);
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64");
-        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64");
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64, reversedInput = true");
-        int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.MINGRU, "width = 64, reversedInput = true");
-        int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.JOIN);
-        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
-        int hiddenLayerIndex7 = neuralNetworkConfiguration.addHiddenLayer(LayerType.LAYER_NORMALIZATION);
-        int hiddenLayerIndex8 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
-        int hiddenLayerIndex9 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.GUMBEL_SOFTMAX), "width = " + outputSize);
+        int attentionLayer = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 1, inputSize, layerHeight, 1, numberOfAttentionBlocks, dropoutProbability, normalize, true);
+        int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX, "tau = " + tau), "width = " + outputSize);
+        neuralNetworkConfiguration.connectLayers(attentionLayer, feedforwardLayerIndex);
         int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex1);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex3);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex3, hiddenLayerIndex4);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndex5);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex4, hiddenLayerIndex5);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex5, hiddenLayerIndex6);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex6, hiddenLayerIndex7);
-        neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex8);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex7, hiddenLayerIndex8);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex8, hiddenLayerIndex9);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex9, outputLayerIndex);
+        neuralNetworkConfiguration.connectLayers(feedforwardLayerIndex, outputLayerIndex);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
@@ -138,12 +126,15 @@ public class TextSeqDemo {
      * Function that reads text file and one hot encodes it for inputs and outputs.
      * Output is usually next character in sequence following input characters.
      *
+     * @param numOfInputs number of inputs.
+     * @param dictionaryIndexMapping dictionary index mapping
+     * @param joinInputsVertically if true joins input vertically otherwise horizontally.
      * @return encoded inputs and outputs.
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    private static HashMap<Integer, HashMap<Integer, Matrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
-        return ReadTextFile.readFileAsBinaryEncoded("<PATH>/lorem_ipsum.txt", numOfInputs, 0, dictionaryIndexMapping);
+    private static HashMap<Integer, HashMap<Integer, Matrix>> getTextSeqData(int numOfInputs, HashMap<Integer, String> dictionaryIndexMapping, boolean joinInputsVertically) throws FileNotFoundException, MatrixException {
+        return ReadTextFile.readFileAsBinaryEncoded("<PATH>/lorem_ipsum.txt", numOfInputs, 0, dictionaryIndexMapping, joinInputsVertically);
     }
 
 }
