@@ -144,11 +144,12 @@ public class ReadTextFile {
      * @param numberOfInputWords number of words per input column.
      * @param skipRowsFromStart skips specified number of rows from start.
      * @param dictionaryIndexMapping dictionary index mapping.
+     * @param joinInputsVertically if true joins input vertically otherwise horizontally.
      * @return structure containing input and output matrices.
      * @throws FileNotFoundException throws exception if file is not found.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static HashMap<Integer, HashMap<Integer, Matrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping) throws FileNotFoundException, MatrixException {
+    public static HashMap<Integer, HashMap<Integer, Matrix>> readFileAsBinaryEncoded(String fileName, int numberOfInputWords, int skipRowsFromStart, HashMap<Integer, String> dictionaryIndexMapping, boolean joinInputsVertically) throws FileNotFoundException, MatrixException {
         StringBuilder readText = readText(fileName, skipRowsFromStart);
         String[] words = readText.toString().split(" ");
         Arrays.setAll(words, index -> words[index].trim());
@@ -159,7 +160,6 @@ public class ReadTextFile {
         HashMap<Matrix, Integer> dictionaryBinaryIndexMapping = new HashMap<>();
         HashMap<String, Matrix> dictionaryStringBinaryIndexMapping = new HashMap<>();
         int index = 0;
-        int dictionarySize = dictionary.size();
         for (String word : dictionary) {
             dictionaryIndexMapping.put(index, word);
             Matrix binaryMatrix = ComputableMatrix.encodeToBitColumnVector(index, maxBits);
@@ -181,6 +181,7 @@ public class ReadTextFile {
         result.put(0, inputs);
         result.put(1, outputs);
 
+        int dictionarySize = dictionary.size();
         ArrayDeque<Matrix> encodedWordQueue = new ArrayDeque<>();
         LinkedList<Matrix> encodedWordList = new LinkedList<>();
         int pos = 0;
@@ -193,16 +194,20 @@ public class ReadTextFile {
                 ArrayList<Matrix> outputMatrices = new ArrayList<>();
                 int wordIndex = 0;
                 for (Matrix matrix : encodedWordList) {
-                    if (wordIndex++ < encodedWordList.size() - 1) inputMatrices.add(matrix);
+                    if (wordIndex++ < encodedWordList.size() - 1) {
+                        inputMatrices.add(matrix);
+                    }
                     else {
                         outputMatrices.add(DMatrix.getOneHotVector(dictionarySize, dictionaryBinaryIndexMapping.get(matrix)));
                     }
                 }
 
-                JMatrix joinedInputMatrix = new JMatrix(inputMatrices, true);
-                JMatrix joinedOutputMatrix = new JMatrix(outputMatrices, true);
+                JMatrix joinedInputMatrix = new JMatrix(inputMatrices, joinInputsVertically);
                 inputs.put(pos, joinedInputMatrix);
+
+                JMatrix joinedOutputMatrix = new JMatrix(outputMatrices, true);
                 outputs.put(pos, joinedOutputMatrix);
+
                 pos++;
 
                 encodedWordQueue.removeFirst();
