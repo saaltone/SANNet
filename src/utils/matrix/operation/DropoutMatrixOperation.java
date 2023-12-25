@@ -5,8 +5,12 @@
 
 package utils.matrix.operation;
 
+import utils.matrix.BinaryFunction;
+import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+
+import java.io.Serializable;
 
 /**
  * Implements inverted drop out.<br>
@@ -22,6 +26,14 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
      */
     private final double probability;
 
+    private final Matrix inverseProbabilityMatrix;
+
+    /**
+     * Multiply matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation multiplyMatrixOperation;
+
     /**
      * Constructor for drop out matrix operation.
      *
@@ -33,6 +45,8 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
     public DropoutMatrixOperation(int rows, int columns, int depth, double probability) {
         super(rows, columns, depth, true);
         this.probability = probability;
+        inverseProbabilityMatrix = new DMatrix(1 / probability);
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, depth, new BinaryFunction((Matrix.MatrixBinaryOperation & Serializable) (value1, value2) -> value1 * value2));
     }
 
     /**
@@ -45,8 +59,8 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
      */
     public Matrix apply(Matrix first, boolean inplace) throws MatrixException {
         Matrix result = first;
-        if (inplace) first.multiplyBy(1 / probability);
-        else result = first.multiply(1 / probability);
+        if (inplace) multiplyMatrixOperation.applyFunction(first, inverseProbabilityMatrix, true);
+        else result = multiplyMatrixOperation.applyFunction(first, inverseProbabilityMatrix);
         result.setMask();
         result.getMask().setProbability(probability);
         result.getMask().maskRowByProbability();
