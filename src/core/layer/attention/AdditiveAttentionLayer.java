@@ -34,15 +34,6 @@ public class AdditiveAttentionLayer extends DotAttentionLayer {
     }
 
     /**
-     * Initializes default params for attention.
-     *
-     */
-    protected void initializeAttentionDefaultParams() {
-        scaled = false;
-        scalingFactor = null;
-    }
-
-    /**
      * Builds forward procedure and implicitly builds backward procedure.
      *
      * @return output of forward procedure.
@@ -68,6 +59,15 @@ public class AdditiveAttentionLayer extends DotAttentionLayer {
         Matrix output = query.add(key).apply(transposeFunction).multiply(value);
         output.setName("Output");
         return output;
+    }
+
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerDetailsByName() {
+        return "";
     }
 
 }

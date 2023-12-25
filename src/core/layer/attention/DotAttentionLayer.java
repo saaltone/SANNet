@@ -333,7 +333,7 @@ public class DotAttentionLayer extends AbstractExecutionLayer {
      * @return layer details as string.
      */
     protected String getLayerDetailsByName() {
-        return "";
+        return "Scaled: " + scaled;
     }
 
 }

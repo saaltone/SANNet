@@ -243,4 +243,13 @@ public class LocationBasedAttention extends DotAttentionLayer {
         return output;
     }
 
+    /**
+     * Returns layer details as string.
+     *
+     * @return layer details as string.
+     */
+    protected String getLayerDetailsByName() {
+        return "";
+    }
+
 }
