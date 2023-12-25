@@ -62,6 +62,12 @@ public class OutputLayer extends AbstractPlainLayer {
     private transient boolean training;
 
     /**
+     * Loss matrix operation.
+     *
+     */
+    private BinaryMatrixOperation lossMatrixOperation;
+
+    /**
      * Constructor for output layer.
      *
      * @param layerIndex index of layer.
@@ -86,6 +92,16 @@ public class OutputLayer extends AbstractPlainLayer {
         super(layerIndex, null);
         this.lossFunction = lossFunction;
         this.layerGroupIndex = layerGroupIndex > -1 ? layerGroupIndex : 0;
+    }
+
+    /**
+     * Initializes neural network layer dimensions.
+     *
+     * @throws NeuralNetworkException thrown if initialization of layer fails.
+     */
+    public void initializeDimensions() throws NeuralNetworkException {
+        super.initializeDimensions();
+        lossMatrixOperation = new BinaryMatrixOperation(getLayerWidth(), getLayerHeight(), getLayerDepth(), lossFunction);
     }
 
     /**
@@ -146,7 +162,7 @@ public class OutputLayer extends AbstractPlainLayer {
             int sampleIndex = entry.getKey();
             Matrix output = getLayerOutputs().get(sampleIndex);
             Matrix target = entry.getValue();
-            Matrix currentLoss = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyFunction(output, target);
+            Matrix currentLoss = lossMatrixOperation.applyFunction(output, target);
             if (importanceSamplingWeights != null) currentLoss.multiplyBy(importanceSamplingWeights.get(sampleIndex));
             loss = loss == null ? currentLoss : loss.add(currentLoss);
         }
@@ -175,7 +191,7 @@ public class OutputLayer extends AbstractPlainLayer {
             int sampleIndex = entry.getKey();
             Matrix output = getLayerOutputs().get(sampleIndex);
             Matrix target = entry.getValue();
-            Matrix currentLossGradient = new BinaryMatrixOperation(output.getRows(), output.getColumns(), output.getDepth(), lossFunction).applyGradient(output, target);
+            Matrix currentLossGradient = lossMatrixOperation.applyGradient(output, target);
             if (importanceSamplingWeights != null) currentLossGradient.multiplyBy(importanceSamplingWeights.get(sampleIndex));
             lossGradients.put(sampleIndex, currentLossGradient);
         }
