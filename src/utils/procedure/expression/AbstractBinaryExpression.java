@@ -65,8 +65,9 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
      *
      * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void calculateGradient(int sampleIndex) throws MatrixException {
+    public void calculateGradient(int sampleIndex) throws MatrixException, DynamicParamException {
         if (executeAsSingleStep()) return;
         super.calculateGradient(sampleIndex);
         cumulateArgument2Gradient(sampleIndex);
@@ -77,8 +78,9 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
      *
      * @param sampleIndex sample index
      * @throws MatrixException throws exception if calculation of gradient fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void cumulateArgument2Gradient(int sampleIndex) throws MatrixException {
+    public void cumulateArgument2Gradient(int sampleIndex) throws MatrixException, DynamicParamException {
         if (!argument2.isStopGradient()) argument2.cumulateGradient(sampleIndex, calculateArgument2Gradient(sampleIndex, getResult().getGradient(sampleIndex), getArgument1().getMatrix(sampleIndex), getArgument2().getMatrix(sampleIndex), getResult().getMatrix(sampleIndex)));
     }
 
@@ -92,8 +94,9 @@ public abstract class AbstractBinaryExpression extends AbstractUnaryExpression {
      * @param resultMatrix    result matrix.
      * @return argument1 gradient matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract Matrix calculateArgument2Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException;
+    protected abstract Matrix calculateArgument2Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException, DynamicParamException;
 
     /**
      * Check is argument matrices are defined for specific sample index.

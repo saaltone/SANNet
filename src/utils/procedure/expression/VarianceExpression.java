@@ -98,9 +98,10 @@ public class VarianceExpression extends AbstractUnaryExpression {
      * @param argument1Matrix argument1 matrix for a sample index.
      * @param argument2Matrix argument2 matrix for a sample index.
      * @return result matrix.
-     * @throws MatrixException throws exception if calculation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
+    protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException, DynamicParamException {
         Matrix mean = argument1Matrix.meanAsMatrix(direction);
         if (means == null) means = new HashMap<>();
         means.put(sampleIndex, mean);

@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 import utils.matrix.operation.UnaryMatrixOperation;
 import utils.procedure.node.Node;
@@ -106,8 +107,9 @@ public class UnaryFunctionExpression extends AbstractUnaryExpression {
      * @param resultMatrix    result matrix.
      * @return argument1 gradient matrix.
      * @throws MatrixException throws exception if calculation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
+    protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException, DynamicParamException {
         return unaryMatrixOperation.applyGradient(resultMatrix, resultGradient);
     }
 

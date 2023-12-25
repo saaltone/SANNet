@@ -5,6 +5,7 @@
 
 package utils.procedure.expression;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.operation.CrosscorrelationFilterGradientMatrixOperation;
@@ -58,8 +59,9 @@ public class WinogradConvolutionExpression extends AbstractBinaryExpression {
      * @param stride stride of crosscorrelation operation.
      * @param dilation dilation step size for crosscorrelation operation.
      * @throws MatrixException throws exception if expression arguments are not defined.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException {
+    public WinogradConvolutionExpression(int expressionID, Node argument1, Node argument2, Node result, int stride, int dilation) throws MatrixException, DynamicParamException {
         super("WINOGRAD_CONVOLUTION", expressionID, argument1, argument2, result);
 
         Matrix AT = WinogradConvolutionMatrixOperation.getATMatrix(result.getDepth());

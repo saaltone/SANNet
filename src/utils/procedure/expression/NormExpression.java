@@ -97,7 +97,7 @@ public class NormExpression extends AbstractUnaryExpression {
      * @throws MatrixException throws exception if calculation fails.
      */
     protected Matrix calculateResult(int sampleIndex, Matrix argument1Matrix, Matrix argument2Matrix) throws MatrixException {
-        return argument1Matrix.constantAsMatrix(normMatrixOperation.apply(argument1Matrix));
+        return argument1Matrix.getNewMatrix(normMatrixOperation.apply(argument1Matrix));
     }
 
     /**
