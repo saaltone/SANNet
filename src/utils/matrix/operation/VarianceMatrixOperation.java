@@ -6,10 +6,7 @@
 package utils.matrix.operation;
 
 import utils.configurable.DynamicParamException;
-import utils.matrix.DMatrix;
-import utils.matrix.Matrix;
-import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunctionType;
+import utils.matrix.*;
 
 /**
  * Implements variance matrix operation.
@@ -48,18 +45,27 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
     private transient int count;
 
     /**
+     * Square root matrix operation.
+     *
+     */
+    private final UnaryMatrixOperation sqrtMatrixOperation;
+
+    /**
      * Constructor for variance operation.
      *
      * @param rows number of rows for operation.
      * @param columns number of columns for operation.
      * @param depth depth for operation.
      * @param mean mean value for variance operation.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public VarianceMatrixOperation(int rows, int columns, int depth, double mean) {
+    public VarianceMatrixOperation(int rows, int columns, int depth, double mean) throws MatrixException, DynamicParamException {
         super(rows, columns, depth, true);
         this.mean = mean;
         this.meanMatrix = null;
         this.direction = 0;
+        sqrtMatrixOperation = new UnaryMatrixOperation(rows, columns, depth, new UnaryFunction(UnaryFunctionType.SQRT));
     }
 
     /**
@@ -69,11 +75,14 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * @param columns    number of columns for operation.
      * @param depth      depth for operation.
      * @param direction  if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public VarianceMatrixOperation(int rows, int columns, int depth, int direction) {
+    public VarianceMatrixOperation(int rows, int columns, int depth, int direction) throws MatrixException, DynamicParamException {
         super(rows, columns, depth, true);
         this.mean = 0;
         this.direction = direction;
+        sqrtMatrixOperation = new UnaryMatrixOperation(rows, columns, depth, new UnaryFunction(UnaryFunctionType.SQRT));
     }
 
     /**
@@ -167,10 +176,9 @@ public class VarianceMatrixOperation extends AbstractMatrixOperation {
      * @param meanMatrix mean value matrix for variance operation.
      * @return normalized value matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix applyStandardDeviationAsMatrix(Matrix first, Matrix meanMatrix) throws MatrixException, DynamicParamException {
-        return applyVarianceAsMatrix(first, meanMatrix).apply(UnaryFunctionType.SQRT);
+    public Matrix applyStandardDeviationAsMatrix(Matrix first, Matrix meanMatrix) throws MatrixException {
+        return sqrtMatrixOperation.applyFunction(applyVarianceAsMatrix(first, meanMatrix));
     }
 
     /**
