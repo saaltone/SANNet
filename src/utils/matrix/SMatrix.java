@@ -15,7 +15,7 @@ import java.util.Map;
  * This matrix type is useful when input sample is expected to contain mostly zero values.<br>
  *
  */
-public class SMatrix extends ComputableMatrix {
+public class SMatrix extends AbstractMatrix {
 
     /**
      * Matrix data structure as hash map.
@@ -237,9 +237,8 @@ public class SMatrix extends ComputableMatrix {
      * Creates new matrix with object full copy of this matrix.
      *
      * @return newly created copy of matrix.
-     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
-    public Matrix copy() throws MatrixException {
+    public Matrix copy() {
         Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), isTransposed(), matrix);
         super.setParameters(newMatrix);
         return newMatrix;
@@ -250,9 +249,8 @@ public class SMatrix extends ComputableMatrix {
      *
      * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
      * @return newly created copy of matrix.
-     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
-    public Matrix copy(boolean canBeSliced) throws MatrixException {
+    public Matrix copy(boolean canBeSliced) {
         Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), isTransposed(), canBeSliced, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
@@ -291,9 +289,8 @@ public class SMatrix extends ComputableMatrix {
      * Transposes matrix.
      *
      * @return transposed matrix.
-     * @throws MatrixException throws exception if cloning of mask fails.
      */
-    protected Matrix applyTranspose() throws MatrixException {
+    protected Matrix applyTranspose() {
         Matrix newMatrix = new SMatrix(getPureRows(), getPureColumns(), getPureDepth(), isScalar(), true, matrix);
         super.setParameters(newMatrix);
         return newMatrix;
@@ -361,7 +358,7 @@ public class SMatrix extends ComputableMatrix {
      * @param constant constant
      * @return new matrix
      */
-    protected Matrix getNewMatrix(double constant) {
+    public Matrix getNewMatrix(double constant) {
         return forceDMatrix ? new DMatrix(constant) : new SMatrix(constant);
     }
 
