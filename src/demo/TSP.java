@@ -587,6 +587,10 @@ public class TSP implements Environment, AgentFunctionEstimator {
         setReward(agent);
     }
 
+    /**
+     * Previous total distance.
+     *
+     */
     private double previousTotalDistance = Double.MIN_VALUE;
 
     /**
