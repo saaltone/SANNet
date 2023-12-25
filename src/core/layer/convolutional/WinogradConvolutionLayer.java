@@ -69,8 +69,9 @@ public class WinogradConvolutionLayer extends AbstractConvolutionalLayer {
      * @param filter filter matrix.
      * @return result of convolutional operation.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException {
+    protected Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException, DynamicParamException {
         return input.winogradConvolve(filter);
     }
 

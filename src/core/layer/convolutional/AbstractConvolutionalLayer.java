@@ -294,8 +294,9 @@ public abstract class AbstractConvolutionalLayer extends AbstractConvolutionLaye
      *
      * @return output of forward procedure.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException, DynamicParamException {
         Matrix input = inputs.get(0);
         input.setFilterRowSize(filterRowSize);
         input.setFilterColumnSize(filterColumnSize);
@@ -316,8 +317,9 @@ public abstract class AbstractConvolutionalLayer extends AbstractConvolutionLaye
      * @param filter filter matrix.
      * @return result of convolutional operation.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException;
+    protected abstract Matrix executeConvolutionalOperation(Matrix input, Matrix filter) throws MatrixException, DynamicParamException;
 
     /**
      * Returns layer details as string.
