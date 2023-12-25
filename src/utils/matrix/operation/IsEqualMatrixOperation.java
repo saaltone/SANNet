@@ -34,12 +34,12 @@ public class IsEqualMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public boolean apply(Matrix first, Matrix second) throws MatrixException {
-        int rows = getRows();
-        int columns = getColumns();
-        int totalDepth = getDepth();
-        int otherRows = second.getRows();
-        int otherColumns = second.getColumns();
-        int otherTotalDepth = second.getDepth();
+        final int rows = getRows();
+        final int columns = getColumns();
+        final int totalDepth = getDepth();
+        final int otherRows = second.getRows();
+        final int otherColumns = second.getColumns();
+        final int otherTotalDepth = second.getDepth();
         if (otherRows != rows || otherColumns != columns || otherTotalDepth != totalDepth) {
             throw new MatrixException("Incompatible target matrix size: " + otherRows + "x" + otherColumns + "x" + otherTotalDepth);
         }
