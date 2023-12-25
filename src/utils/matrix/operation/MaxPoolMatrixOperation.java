@@ -29,7 +29,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      * Max value
      *
      */
-    private transient double maxValue = Double.NEGATIVE_INFINITY;
+    private transient double maxValue = Double.MIN_VALUE;
 
     /**
      * Constructor for max pooling matrix operation.
@@ -61,7 +61,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
      */
     protected void applyOperation(int row, int column, int depth, int inputRow, int inputColumn, int filterRow, int filterColumn, double value, Matrix result) {
         double filterValue = getFirst().getValue(inputRow, inputColumn, depth);
-        if (maxValue < filterValue) {
+        if (maxValue < filterValue || maxValue == Double.MIN_VALUE) {
             maxValue = filterValue;
             maxRow = inputRow;
             maxColumn = inputColumn;
@@ -95,7 +95,7 @@ public class MaxPoolMatrixOperation extends AbstractPositionalPoolingMatrixOpera
     protected void startOperation(int row, int column, int depth) {
         maxRow = -1;
         maxColumn = -1;
-        maxValue = Double.NEGATIVE_INFINITY;
+        maxValue = Double.MIN_VALUE;
     }
 
     /**

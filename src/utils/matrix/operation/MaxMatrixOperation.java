@@ -18,7 +18,7 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * Maximum value.
      *
      */
-    private double maxValue = Double.NEGATIVE_INFINITY;
+    private double maxValue = Double.MIN_VALUE;
 
     /**
      * Maximum row.
@@ -57,7 +57,7 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public int[] applyArgMax(Matrix first) throws MatrixException {
-        maxValue = Double.NEGATIVE_INFINITY;
+        maxValue = Double.MIN_VALUE;
         maxRow = -1;
         maxColumn = -1;
         maxDepth = -1;
@@ -91,11 +91,11 @@ public class MaxMatrixOperation extends AbstractMatrixOperation {
      * @param result result matrix.
      */
     public void apply(int row, int column, int depth, double value, Matrix result) {
-        if (value > this.maxValue) {
-            this.maxValue = value;
-            this.maxRow = row;
-            this.maxColumn = column;
-            this.maxDepth = depth;
+        if (maxValue < value || maxValue == Double.MIN_VALUE) {
+            maxValue = value;
+            maxRow = row;
+            maxColumn = column;
+            maxDepth = depth;
         }
     }
 

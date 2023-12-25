@@ -18,7 +18,7 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * Minimum value.
      *
      */
-    private transient double minValue = Double.POSITIVE_INFINITY;
+    private transient double minValue = Double.MAX_VALUE;
 
     /**
      * Minimum row.
@@ -57,7 +57,7 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public int[] applyArgMin(Matrix first) throws MatrixException {
-        minValue = Double.POSITIVE_INFINITY;
+        minValue = Double.MAX_VALUE;
         minRow = -1;
         minColumn = -1;
         minDepth = -1;
@@ -91,11 +91,11 @@ public class MinMatrixOperation extends AbstractMatrixOperation {
      * @param result result matrix.
      */
     public void apply(int row, int column, int depth, double value, Matrix result) {
-        if (value < this.minValue) {
-            this.minValue = value;
-            this.minRow = row;
-            this.minColumn = column;
-            this.minDepth = depth;
+        if (minValue > value || minValue == Double.MAX_VALUE) {
+            minValue = value;
+            minRow = row;
+            minColumn = column;
+            minDepth = depth;
         }
     }
 
