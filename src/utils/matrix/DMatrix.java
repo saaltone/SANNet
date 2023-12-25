@@ -13,7 +13,7 @@ import java.util.Arrays;
  * Dense matrix assumes full array data structure including storage of zero values.<br>
  *
  */
-public class DMatrix extends ComputableMatrix {
+public class DMatrix extends AbstractMatrix {
 
     /**
      * Defines matrix data structure using 1-dimensional row column array.
@@ -261,9 +261,8 @@ public class DMatrix extends ComputableMatrix {
      * Creates new matrix with object full copy of this matrix.
      *
      * @return newly created copy of matrix.
-     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
-    public Matrix copy() throws MatrixException {
+    public Matrix copy() {
         Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, true, isScalar(), isTransposed());
         super.setParameters(newMatrix);
         return newMatrix;
@@ -274,9 +273,8 @@ public class DMatrix extends ComputableMatrix {
      *
      * @param canBeSliced if true matrix can be slides otherwise cannot be sliced.
      * @return newly created copy of matrix.
-     * @throws MatrixException throws exception if mask is not set or cloning of matrix fails.
      */
-    public Matrix copy(boolean canBeSliced) throws MatrixException {
+    public Matrix copy(boolean canBeSliced) {
         Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, true, isScalar(), isTransposed(), canBeSliced);
         super.setParameters(newMatrix);
         return newMatrix;
@@ -316,9 +314,8 @@ public class DMatrix extends ComputableMatrix {
      * Transposes matrix.
      *
      * @return transposed matrix.
-     * @throws MatrixException throws exception if cloning of mask fails.
      */
-    protected Matrix applyTranspose() throws MatrixException {
+    protected Matrix applyTranspose() {
         Matrix newMatrix = new DMatrix(getPureRows(), getPureColumns(), getPureDepth(), matrix, isScalar(), true);
         super.setParameters(newMatrix);
         return newMatrix;
@@ -412,7 +409,7 @@ public class DMatrix extends ComputableMatrix {
      * @param constant constant
      * @return new matrix
      */
-    protected Matrix getNewMatrix(double constant) {
+    public Matrix getNewMatrix(double constant) {
         return new DMatrix(constant);
     }
 
