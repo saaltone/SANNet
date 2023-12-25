@@ -5,6 +5,8 @@
 
 package utils.matrix;
 
+import utils.configurable.DynamicParamException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
@@ -13,7 +15,7 @@ import java.util.TreeMap;
  * Implements joined matrix which consists of horizontally or vertically concatenated matrices
  *
  */
-public class JMatrix extends ComputableMatrix {
+public class JMatrix extends AbstractMatrix {
 
     /**
      * Array list of Matrices forming JMatrix.
@@ -167,8 +169,9 @@ public class JMatrix extends ComputableMatrix {
      *
      * @return transposed matrix.
      * @throws MatrixException throws exception if cloning of mask fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix applyTranspose() throws MatrixException {
+    public Matrix applyTranspose() throws MatrixException, DynamicParamException {
         ArrayList<Matrix> transposedSubMatrices = new ArrayList<>();
         for (Matrix subMatrix : getSubMatrices()) transposedSubMatrices.add(subMatrix.transpose());
         return new JMatrix(transposedSubMatrices, joinedVertically == isTransposed());
@@ -264,7 +267,7 @@ public class JMatrix extends ComputableMatrix {
      * @param constant constant
      * @return new matrix
      */
-    protected Matrix getNewMatrix(double constant) {
+    public Matrix getNewMatrix(double constant) {
         return new DMatrix(constant);
     }
 
