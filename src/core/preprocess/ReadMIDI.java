@@ -308,7 +308,7 @@ public class ReadMIDI {
         ArrayList<Matrix> dataAsMatrix = new ArrayList<>();
         for (Integer integerDataItem : integerData) {
             if (encodeAsBits) {
-                if (maxBits > 0) dataAsMatrix.add(ComputableMatrix.encodeToBitColumnVector(integerDataItem, maxBits));
+                if (maxBits > 0) dataAsMatrix.add(AbstractMatrix.encodeValueToBitColumnVector(integerDataItem, maxBits));
             }
             else {
                 if (outputSize > 0) dataAsMatrix.add(SMatrix.getOneHotVector(outputSize, integerDataItem));
@@ -485,8 +485,8 @@ public class ReadMIDI {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private long addMIDISequenceEntry(Matrix keyMatrix, Matrix velocityMatrix, Matrix tickMatrix, Track track, long currentTick, boolean firstEntry, boolean asInput, double tickScalingConstant) throws MatrixException, InvalidMidiDataException {
-        int keyValue = asInput ? keyMatrix.classify().encodeToValue() : keyMatrix.argmax()[0];
-        int velocityValue = asInput ? velocityMatrix.classify().encodeToValue() : velocityMatrix.argmax()[0];
+        int keyValue = asInput ? keyMatrix.classify().encodeBitColumnVectorToValue() : keyMatrix.argmax()[0];
+        int velocityValue = asInput ? velocityMatrix.classify().encodeBitColumnVectorToValue() : velocityMatrix.argmax()[0];
         if (firstEntry) {
             ShortMessage shortMessage = new ShortMessage();
             shortMessage.setMessage(ShortMessage.PROGRAM_CHANGE, 46, 0);

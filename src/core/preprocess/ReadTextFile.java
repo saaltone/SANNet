@@ -156,13 +156,13 @@ public class ReadTextFile {
         Arrays.setAll(words, index -> words[index].replaceAll("[^a-zäöåA-ZÄÖÅ]", "").toLowerCase());
         TreeSet<String> dictionary = new TreeSet<>();
         Collections.addAll(dictionary, words);
-        int maxBits = ComputableMatrix.numberOfBits(dictionary.size());
+        int maxBits = AbstractMatrix.numberOfBits(dictionary.size());
         HashMap<Matrix, Integer> dictionaryBinaryIndexMapping = new HashMap<>();
         HashMap<String, Matrix> dictionaryStringBinaryIndexMapping = new HashMap<>();
         int index = 0;
         for (String word : dictionary) {
             dictionaryIndexMapping.put(index, word);
-            Matrix binaryMatrix = ComputableMatrix.encodeToBitColumnVector(index, maxBits);
+            Matrix binaryMatrix = AbstractMatrix.encodeValueToBitColumnVector(index, maxBits);
             dictionaryBinaryIndexMapping.put(binaryMatrix, index);
             dictionaryStringBinaryIndexMapping.put(word, binaryMatrix);
             index++;
