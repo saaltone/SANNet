@@ -237,9 +237,10 @@ public abstract class AbstractNormalization extends AbstractExecutionLayer {
      * Builds forward procedure and implicitly builds backward procedure.
      *
      * @return output of forward procedure.
-     * @throws MatrixException       throws exception if matrix operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix getForwardProcedure() throws MatrixException {
+    public Matrix getForwardProcedure() throws MatrixException, DynamicParamException {
         Matrix output = input.subtract(input.meanAsMatrix(direction));
         if (!meanOnly) output = output.multiply(input.varianceAsMatrix(direction).add(epsilonMatrix).apply(sqrtFunction).apply(invFunction));
         output = output.multiply(weightSet.gamma).add(weightSet.beta);
