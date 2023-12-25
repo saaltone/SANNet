@@ -5,6 +5,7 @@
 
 package utils.matrix.operation;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Mask;
 import utils.matrix.Matrix;
@@ -79,8 +80,9 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      * @param columns columns
      * @param depth depth.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public WinogradConvolutionMatrixOperation(int rows, int columns, int depth) throws MatrixException {
+    public WinogradConvolutionMatrixOperation(int rows, int columns, int depth) throws MatrixException, DynamicParamException {
         super(rows, columns, depth, false, 2);
         AT = getATMatrix(getDepth());
         A = AT.transpose().copy(true);
@@ -97,9 +99,8 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param depth depth
      * @return AT matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Matrix getATMatrix(int depth) throws MatrixException {
+    public static Matrix getATMatrix(int depth) {
         Matrix AT = new DMatrix(2, 4, depth).copy(true);
         for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
             AT.setValue(0, 0, currentDepth, 1);
@@ -120,9 +121,8 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param depth depth
      * @return C matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Matrix getCMatrix(int depth) throws MatrixException {
+    public static Matrix getCMatrix(int depth) {
         Matrix C = new DMatrix(4, 4, depth).copy(true);
         for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
             C.setValue(0, 0, currentDepth, 1);
@@ -151,9 +151,8 @@ public class WinogradConvolutionMatrixOperation extends AbstractMatrixOperation 
      *
      * @param depth depth
      * @return G matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Matrix getGMatrix(int depth) throws MatrixException {
+    public static Matrix getGMatrix(int depth) {
         Matrix G = new DMatrix(4, 3, depth).copy(true);
         for (int currentDepth = 0; currentDepth < depth; currentDepth++) {
             G.setValue(0, 0, currentDepth, 1);
