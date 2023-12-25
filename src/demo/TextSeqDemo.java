@@ -73,7 +73,7 @@ public class TextSeqDemo {
                     int wordIndex = nextEncodedWord.argmax()[0];
                     String currentWord = dictionaryIndexMapping.getOrDefault(wordIndex, "???");
                     System.out.print(currentWord + " ");
-                    nextEncodedWord = ComputableMatrix.encodeToBitColumnVector(wordIndex, inputSize);
+                    nextEncodedWord = AbstractMatrix.encodeValueToBitColumnVector(wordIndex, inputSize);
                     for (int index = 0; index < encodedWords.size() - 1; index++) {
                         encodedWords.set(index, encodedWords.get(index + 1));
                     }
