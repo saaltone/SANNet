@@ -5,6 +5,7 @@
 
 package utils.matrix.operation;
 
+import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
@@ -67,8 +68,7 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
         this.matrixUnaryOperation = unaryFunction.getFunction();
         this.matrixGradientUnaryOperation = unaryFunction.getDerivative();
         switch (unaryFunctionType) {
-            case SOFTMAX -> softmaxMatrixOperation = new SoftmaxMatrixOperation(rows, columns, depth, unaryFunction.getSoftmaxTau(), false);
-            case GUMBEL_SOFTMAX -> softmaxMatrixOperation = new SoftmaxMatrixOperation(rows, columns, depth, unaryFunction.getSoftmaxTau(), true);
+            case SOFTMAX -> softmaxMatrixOperation = new SoftmaxMatrixOperation(rows, columns, depth, unaryFunction.getSoftmaxTau(), unaryFunction.isAsGumbelSoftmax());
             default -> softmaxMatrixOperation = null;
         }
     }
@@ -95,7 +95,7 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
     public Matrix applyFunction(Matrix first, boolean inplace) throws MatrixException {
         asFunction = true;
         switch (unaryFunctionType) {
-            case SOFTMAX, GUMBEL_SOFTMAX -> {
+            case SOFTMAX -> {
                 return softmaxMatrixOperation.applyFunction(first);
             }
             case TRANSPOSE -> {
@@ -114,11 +114,12 @@ public class UnaryMatrixOperation extends AbstractMatrixOperation {
      * @param outputGradient output gradient.
      * @return input gradient
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public Matrix applyGradient(Matrix first, Matrix outputGradient) throws MatrixException {
+    public Matrix applyGradient(Matrix first, Matrix outputGradient) throws MatrixException, DynamicParamException {
         asFunction = false;
         switch (unaryFunctionType) {
-            case SOFTMAX, GUMBEL_SOFTMAX -> {
+            case SOFTMAX -> {
                 return softmaxMatrixOperation.applyGradient(first, outputGradient);
             }
             case TRANSPOSE -> {
