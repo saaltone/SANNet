@@ -195,46 +195,6 @@ public interface Matrix {
     int getDepth();
 
     /**
-     * Increment value of specific row, column and depth.
-     *
-     * @param row row of value to be added.
-     * @param column column of value to be added.
-     * @param depth depth of value to be added.
-     * @param value to be added.
-     */
-    void addByValue(int row, int column, int depth, double value);
-
-    /**
-     * Decrease value of specific row, column and depth.
-     *
-     * @param row row of value to be decreased.
-     * @param column column of value to be decreased.
-     * @param depth depth of value to be decreased.
-     * @param value to be decreased.
-     */
-    void subtractByValue(int row, int column, int depth, double value);
-
-    /**
-     * Multiply value of specific row, column and depth.
-     *
-     * @param row row of value to be multiplied.
-     * @param column column of value to be multiplied.
-     * @param depth depth of value to be multiplied.
-     * @param value to be multiplied.
-     */
-    void multiplyByValue(int row, int column, int depth, double value);
-
-    /**
-     * Divide value of specific row, column and depth.
-     *
-     * @param row row of value to be divided.
-     * @param column column of value to be divided.
-     * @param depth depth of value to be divided.
-     * @param value to be divided.
-     */
-    void divideByValue(int row, int column, int depth, double value);
-
-    /**
      * Returns matrix of given size (rows x columns)
      *
      * @param rows rows
@@ -261,6 +221,14 @@ public interface Matrix {
      * @throws MatrixException throws exception if new mask dimensions or mask type are not matching with this mask.
      */
     Matrix getNewMatrix(boolean asTransposed) throws MatrixException;
+
+    /**
+     * Returns constant matrix
+     *
+     * @param constant constant
+     * @return new matrix
+     */
+    Matrix getNewMatrix(double constant);
 
     /**
      * Creates new matrix with object reference to the matrix data of this matrix.
@@ -489,6 +457,32 @@ public interface Matrix {
     Matrix add(double constant) throws MatrixException;
 
     /**
+     * Adds this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void addBy(Matrix other) throws MatrixException;
+
+    /**
+     * Adds this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void addBy(double constant) throws MatrixException;
+
+    /**
+     * Increment value of specific row, column and depth.
+     *
+     * @param row row of value to be added.
+     * @param column column of value to be added.
+     * @param depth depth of value to be added.
+     * @param value to be added.
+     */
+    void addByValue(int row, int column, int depth, double value);
+
+    /**
      * Subtracts other matrix from this matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -507,6 +501,32 @@ public interface Matrix {
      * @throws MatrixException not thrown in any situation.
      */
     Matrix subtract(double constant) throws MatrixException;
+
+    /**
+     * Subtracts this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void subtractBy(Matrix other) throws MatrixException;
+
+    /**
+     * Subtracts this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void subtractBy(double constant) throws MatrixException;
+
+    /**
+     * Decrease value of specific row, column and depth.
+     *
+     * @param row row of value to be decreased.
+     * @param column column of value to be decreased.
+     * @param depth depth of value to be decreased.
+     * @param value to be decreased.
+     */
+    void subtractByValue(int row, int column, int depth, double value);
 
     /**
      * Multiplies other matrix element wise with this matrix.<br>
@@ -529,6 +549,32 @@ public interface Matrix {
     Matrix multiply(double constant) throws MatrixException;
 
     /**
+     * Multiplies this matrix by other matrix.
+     *
+     * @param other other matrix.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void multiplyBy(Matrix other) throws MatrixException;
+
+    /**
+     * Multiplies this matrix by constant.
+     *
+     * @param constant constant.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     */
+    void multiplyBy(double constant) throws MatrixException;
+
+    /**
+     * Multiply value of specific row, column and depth.
+     *
+     * @param row row of value to be multiplied.
+     * @param column column of value to be multiplied.
+     * @param depth depth of value to be multiplied.
+     * @param value to be multiplied.
+     */
+    void multiplyByValue(int row, int column, int depth, double value);
+
+    /**
      * Divides this matrix element wise with other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -549,54 +595,6 @@ public interface Matrix {
     Matrix divide(double constant) throws MatrixException;
 
     /**
-     * Adds this matrix by other matrix.
-     *
-     * @param other other matrix.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void addBy(Matrix other) throws MatrixException;
-
-    /**
-     * Adds this matrix by constant.
-     *
-     * @param constant constant.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void addBy(double constant) throws MatrixException;
-
-    /**
-     * Subtracts this matrix by other matrix.
-     *
-     * @param other other matrix.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void subtractBy(Matrix other) throws MatrixException;
-
-    /**
-     * Subtracts this matrix by constant.
-     *
-     * @param constant constant.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void subtractBy(double constant) throws MatrixException;
-
-    /**
-     * Multiplies this matrix by other matrix.
-     *
-     * @param other other matrix.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void multiplyBy(Matrix other) throws MatrixException;
-
-    /**
-     * Multiplies this matrix by constant.
-     *
-     * @param constant constant.
-     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
-     */
-    void multiplyBy(double constant) throws MatrixException;
-
-    /**
      * Divides this matrix by other matrix.
      *
      * @param other other matrix.
@@ -611,6 +609,27 @@ public interface Matrix {
      * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
      */
     void divideBy(double constant) throws MatrixException;
+
+    /**
+     * Divide value of specific row, column and depth.
+     *
+     * @param row row of value to be divided.
+     * @param column column of value to be divided.
+     * @param depth depth of value to be divided.
+     * @param value to be divided.
+     */
+    void divideByValue(int row, int column, int depth, double value);
+
+    /**
+     *
+     * Takes matrix dot product of this and other matrix.<br>
+     * Applies masking element wise if this or other matrix is masked.<br>
+     *
+     * @param other matrix which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching are not matching.
+     */
+    Matrix dot(Matrix other) throws MatrixException;
 
     /**
      * Raises this matrix element wise to the power of value power.<br>
@@ -658,25 +677,6 @@ public interface Matrix {
     Matrix sgnmul(Matrix other) throws MatrixException, DynamicParamException;
 
     /**
-     *
-     * Takes matrix dot product of this and other matrix.<br>
-     * Applies masking element wise if this or other matrix is masked.<br>
-     *
-     * @param other matrix which acts as second variable in the operation.
-     * @return matrix which stores operation result.
-     * @throws MatrixException throws MatrixException if columns of this matrix and rows of other matrix are not matching are not matching.
-     */
-    Matrix dot(Matrix other) throws MatrixException;
-
-    /**
-     * Returns constant as matrix.
-     *
-     * @param constant constant value.
-     * @return constant matrix.
-     */
-    Matrix constantAsMatrix(double constant);
-
-    /**
      * Takes element wise cumulative sum of this matrix.<br>
      * Applies masking element wise if matrix is masked.<br>
      *
@@ -720,18 +720,9 @@ public interface Matrix {
      *
      * @return variance of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    double variance() throws MatrixException;
-
-    /**
-     * Takes variance of elements of this matrix.<br>
-     * Applies masking element wise if matrix is masked.<br>
-     *
-     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
-     * @throws MatrixException not thrown in any situation.
-     * @return variance of matrix.
-     */
-    Matrix varianceAsMatrix(int direction) throws MatrixException;
+    double variance() throws MatrixException, DynamicParamException;
 
     /**
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
@@ -740,8 +731,20 @@ public interface Matrix {
      * @param mean mean value given as input.
      * @return variance of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    double variance(double mean) throws MatrixException;
+    double variance(double mean) throws MatrixException, DynamicParamException;
+
+    /**
+     * Takes variance of elements of this matrix.<br>
+     * Applies masking element wise if matrix is masked.<br>
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return variance of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix varianceAsMatrix(int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes variance of elements of this matrix with mean value given as input parameter.<br>
@@ -751,8 +754,9 @@ public interface Matrix {
      * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
      * @return variance of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix varianceAsMatrix(Matrix mean, int direction) throws MatrixException;
+    Matrix varianceAsMatrix(Matrix mean, int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes standard deviation of elements of this matrix.<br>
@@ -760,19 +764,9 @@ public interface Matrix {
      *
      * @return standard deviation of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
-     */
-    double standardDeviation() throws MatrixException;
-
-    /**
-     * Takes standard deviation of elements of this matrix.<br>
-     * Applies masking element wise if this matrix is masked.<br>
-     *
-     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
-     * @return standard deviation of matrix.
-     * @throws MatrixException       not thrown in any situation.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix standardDeviationAsMatrix(int direction) throws MatrixException, DynamicParamException;
+    double standardDeviation() throws MatrixException, DynamicParamException;
 
     /**
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
@@ -781,8 +775,20 @@ public interface Matrix {
      * @param mean mean value given as input.
      * @return standard deviation of matrix.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    double standardDeviation(double mean) throws MatrixException;
+    double standardDeviation(double mean) throws MatrixException, DynamicParamException;
+
+    /**
+     * Takes standard deviation of elements of this matrix.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param direction if value is one normalizes over row direction, if two normalizes over column direction, if three normalizes over depth direction, otherwise normalized over all directions.
+     * @return standard deviation of matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix standardDeviationAsMatrix(int direction) throws MatrixException, DynamicParamException;
 
     /**
      * Takes standard deviation of elements of this matrix with mean value given as input parameter.<br>
@@ -817,6 +823,17 @@ public interface Matrix {
     Matrix normAsMatrix(int p) throws MatrixException;
 
     /**
+     * Normalizes matrix by removing mean and variance.<br>
+     * Applies masking element wise if matrix is masked.<br>
+     *
+     * @param inplace if true matrix is normalized in place otherwise copy of normalized matrix is returned.
+     * @return normalized matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix normalize(boolean inplace) throws MatrixException, DynamicParamException;
+
+    /**
      * Calculates exponential moving average.
      *
      * @param currentAverage current average value
@@ -835,16 +852,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix cumulativeMovingAverage(Matrix currentMovingAverage, int sampleCount) throws MatrixException;
-
-    /**
-     * Normalizes matrix by removing mean and variance.<br>
-     * Applies masking element wise if matrix is masked.<br>
-     *
-     * @param inplace if true matrix is normalized in place otherwise copy of normalized matrix is returned.
-     * @return normalized matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix normalize(boolean inplace) throws MatrixException;
 
     /**
      * Normalizes (scales) this matrix to new min and max values.<br>
@@ -931,21 +938,180 @@ public interface Matrix {
     double entropy() throws MatrixException;
 
     /**
-     * Returns binomial distribution.
+     * Implements inverted drop out.<br>
+     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
+     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
      *
-     * @param probability probability.
-     * @return number of successful trials.
+     * @param probability probability
+     * @param monte_carlo if true is monte carlo dropout otherwise normal dropout.
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    int getBinomial(double probability);
+    Matrix dropout(double probability, boolean monte_carlo, boolean inplace) throws MatrixException;
 
     /**
-     * Returns binomial distribution.
+     * Clips gradient matrix against threshold.
      *
-     * @param numberOfTrials number of trials.
-     * @param probability probability.
-     * @return number of successful trials.
+     * @param threshold threshold.
+     * @return clipped gradient matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    int getBinomial(int numberOfTrials, double probability);
+    Matrix gradientClip(double threshold) throws MatrixException;
+
+    /**
+     * Implements matrix noising.
+     *
+     * @param noise noise
+     * @param inplace if true clipping in done in place otherwise not.
+     * @return result of drop out.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix noise(double noise, boolean inplace) throws MatrixException;
+
+    /**
+     * Returns softmax of this matrix.
+     *
+     * @return softmax of matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix softmax() throws MatrixException, DynamicParamException;
+
+    /**
+     * Returns softmax of this matrix.
+     *
+     * @param softmaxTau tau value for Softmax.
+     * @return softmax of matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix softmax(double softmaxTau) throws MatrixException, DynamicParamException;
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
+     *
+     * @return Gumbel softmax matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix gumbelSoftmax() throws MatrixException, DynamicParamException;
+
+    /**
+     * Returns Gumbel softmax of this matrix.<br>
+     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
+     *
+     * @param softmaxTau tau value for Softmax.
+     * @return Gumbel softmax of matrix.
+     * @throws MatrixException thrown if index dimensions do not match.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix gumbelSoftmax(double softmaxTau) throws MatrixException, DynamicParamException;
+
+    /**
+     * Transposes matrix.
+     *
+     * @return new matrix but as transposed that is with flipped rows and columns.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix transpose() throws MatrixException, DynamicParamException;
+
+    /**
+     * Checks if matrix is transposed.
+     *
+     * @return true is matrix is transposed otherwise false.
+     */
+    boolean isTransposed();
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix classify() throws MatrixException;
+
+    /**
+     * Classifies matrix assuming multi-label classification.
+     *
+     * @param multiLabelThreshold threshold value for multi label classification
+     * @return classified matrix.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix classify(double multiLabelThreshold) throws MatrixException;
+
+    /**
+     * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
+     *
+     * @param position position of split
+     * @param splitVertically if true splits vertically otherwise horizontally.
+     * @return split matrix as JMatrix.
+     * @throws MatrixException throws matrix exception if splitting fails.
+     *
+     */
+    Matrix split(int position, boolean splitVertically) throws MatrixException;
+
+    /**
+     * Joins two matrices either vertically or horizontally.
+     *
+     * @param other other matrix
+     * @param joinedVertically if true joined vertically otherwise horizontally
+     * @return joined matrix
+     * @throws MatrixException throws matrix exception if joining fails.
+     */
+    Matrix join(Matrix other, boolean joinedVertically) throws MatrixException;
+
+    /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param unjoinAtRow unjoins at row.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    Matrix unjoin(int unjoinAtRow) throws MatrixException;
+
+    /**
+     * Unjoins matrix at specific row and column.
+     *
+     * @param unjoinAtRow unjoins at row.
+     * @param unjoinAtColumn unjoins at column.
+     * @param unjoinAtDepth unjoins at depth.
+     * @param unjoinRows unjoins specific number of rows.
+     * @param unjoinColumns unjoins specific number of column.
+     * @param unjoinDepth unjoins specific depth.
+     * @return result matrix.
+     * @throws MatrixException throws matrix exception if unjoining fails.
+     */
+    Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException;
+
+    /**
+     * Flattens matrix into one dimensional column vector (matrix)
+     *
+     * @return flattened matrix
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    Matrix flatten() throws MatrixException;
+
+    /**
+     * Returns unflattened matrix i.e. samples that have been unflattened from single column vector.
+     *
+     * @param rows rows of unflattened matrix.
+     * @param columns columns of unflattened matrix.
+     * @param depth depth of unflattened matrix.
+     * @return unflattened matrix.
+     * @throws MatrixException throws matrix exception if joining fails.
+     */
+    Matrix unflatten(int rows, int columns, int depth) throws MatrixException;
+
+    /**
+     * Encodes bit column vector value
+     *
+     * @return value
+     * @throws MatrixException throws exception if matrix is not bit column vector.
+     */
+    int encodeBitColumnVectorToValue() throws MatrixException;
 
     /**
      * Returns multinomial distribution. Assumes single trial.
@@ -963,75 +1129,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix getMultinomial(int numberOfTrials) throws MatrixException;
-
-    /**
-     * Clips gradient matrix against threshold.
-     *
-     * @param threshold threshold.
-     * @param inplace if true gradient clipping in done in place otherwise not.
-     * @return clipped gradient matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix gradientClip(double threshold, boolean inplace) throws MatrixException;
-
-    /**
-     * Implements inverted drop out.<br>
-     * Function selectively masks out certain percentage of node governed by parameter probability during training phase.<br>
-     * During training phase it also compensates all remaining inputs by dividing by probability.<br>
-     *
-     * @param probability probability
-     * @param monte_carlo if true is monte carlo dropout otherwise normal dropout.
-     * @param inplace if true clipping in done in place otherwise not.
-     * @return result of drop out.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix dropout(double probability, boolean monte_carlo, boolean inplace) throws MatrixException;
-
-    /**
-     * Implements matrix noising.
-     *
-     * @param noise noise
-     * @param inplace if true clipping in done in place otherwise not.
-     * @return result of drop out.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix noise(double noise, boolean inplace) throws MatrixException;
-
-    /**
-     * Returns softmax of this matrix.
-     *
-     * @return softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix softmax() throws MatrixException;
-
-    /**
-     * Returns softmax of this matrix.
-     *
-     * @param softmaxTau tau value for Softmax.
-     * @return softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix softmax(double softmaxTau) throws MatrixException;
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @return Gumbel softmax matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix gumbelSoftmax() throws MatrixException;
-
-    /**
-     * Returns Gumbel softmax of this matrix.<br>
-     * Applies sigmoid prior log function plus adds Gumbel noise.<br>
-     *
-     * @param softmaxTau tau value for Softmax.
-     * @return Gumbel softmax of matrix.
-     * @throws MatrixException thrown if index dimensions do not match.
-     */
-    Matrix gumbelSoftmax(double softmaxTau) throws MatrixException;
 
     /**
      * Sets stride size for convolution and pooling operations.
@@ -1141,8 +1238,9 @@ public interface Matrix {
      * @param filter filter matrix.
      * @return calculated value of Winograd convolution.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix winogradConvolve(Matrix filter) throws MatrixException;
+    Matrix winogradConvolve(Matrix filter) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1156,8 +1254,9 @@ public interface Matrix {
      * @param GT G transposed matrix
      * @return calculated value of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException;
+    Matrix winogradConvolve(Matrix filter, Matrix A, Matrix AT, Matrix C, Matrix CT, Matrix G, Matrix GT) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates convolution between this matrix and filter matrix.
@@ -1169,8 +1268,9 @@ public interface Matrix {
      * @param CT C transposed matrix
      * @return calculated value of convolution.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException;
+    Matrix winogradConvolve(Matrix preprocessedFilter, Matrix A, Matrix AT, Matrix C, Matrix CT) throws MatrixException, DynamicParamException;
 
     /**
      * Calculates max pooling operation for this matrix.
@@ -1206,109 +1306,6 @@ public interface Matrix {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     Matrix averagePool() throws MatrixException;
-
-    /**
-     * Transposes matrix.
-     *
-     * @return new matrix but as transposed that is with flipped rows and columns.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix transpose() throws MatrixException;
-
-    /**
-     * Checks if matrix is transposed.
-     *
-     * @return true is matrix is transposed otherwise false.
-     */
-    boolean isTransposed();
-
-    /**
-     * Classifies matrix assuming multi-label classification.
-     *
-     * @return classified matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix classify() throws MatrixException;
-
-    /**
-     * Classifies matrix assuming multi-label classification.
-     *
-     * @param multiLabelThreshold threshold value for multi label classification
-     * @return classified matrix.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix classify(double multiLabelThreshold) throws MatrixException;
-
-    /**
-     * Encodes bit column vector value
-     *
-     * @return value
-     * @throws MatrixException throws exception if matrix is not bit column vector.
-     */
-    int encodeToValue() throws MatrixException;
-
-    /**
-     * Splits matrix at defined position. If splitVertical is true splits vertically otherwise horizontally.
-     *
-     * @param position position of split
-     * @param splitVertically if true splits vertically otherwise horizontally.
-     * @return split matrix as JMatrix.
-     * @throws MatrixException throws matrix exception if splitting fails.
-     *
-     */
-    Matrix split(int position, boolean splitVertically) throws MatrixException;
-
-    /**
-     * Joins two matrices either vertically or horizontally.
-     *
-     * @param other other matrix
-     * @param joinedVertically if true joined vertically otherwise horizontally
-     * @return joined matrix
-     * @throws MatrixException throws matrix exception if joining fails.
-     */
-    Matrix join(Matrix other, boolean joinedVertically) throws MatrixException;
-
-    /**
-     * Unjoins matrix at specific row and column.
-     *
-     * @param unjoinAtRow unjoins at row.
-     * @param unjoinAtColumn unjoins at column.
-     * @param unjoinAtDepth unjoins at depth.
-     * @param unjoinRows unjoins specific number of rows.
-     * @param unjoinColumns unjoins specific number of column.
-     * @param unjoinDepth unjoins specific depth.
-     * @return result matrix.
-     * @throws MatrixException throws matrix exception if unjoining fails.
-     */
-    Matrix unjoin(int unjoinAtRow, int unjoinAtColumn, int unjoinAtDepth, int unjoinRows, int unjoinColumns, int unjoinDepth) throws MatrixException;
-
-    /**
-     * Unjoins matrix at specific row and column.
-     *
-     * @param unjoinAtRow unjoins at row.
-     * @return result matrix.
-     * @throws MatrixException throws matrix exception if unjoining fails.
-     */
-    Matrix unjoin(int unjoinAtRow) throws MatrixException;
-
-    /**
-     * Flattens matrix into one dimensional column vector (matrix)
-     *
-     * @return flattened matrix
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    Matrix flatten() throws MatrixException;
-
-    /**
-     * Returns unflattened matrix i.e. samples that have been unflattened from single column vector.
-     *
-     * @param rows rows of unflattened matrix.
-     * @param columns columns of unflattened matrix.
-     * @param depth depth of unflattened matrix.
-     * @return unflattened matrix.
-     * @throws MatrixException throws matrix exception if joining fails.
-     */
-    Matrix unflatten(int rows, int columns, int depth) throws MatrixException;
 
     /**
      * Prints matrix in row and column format.
