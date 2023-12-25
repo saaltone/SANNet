@@ -15,7 +15,7 @@ import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.ComputableMatrix;
+import utils.matrix.AbstractMatrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -230,7 +230,7 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
             double currentActionValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
             double previousActionValue = getPreviousFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
             double rValue = previousActionValue != 0 ? currentActionValue / previousActionValue : 1;
-            return Math.min(rValue, ComputableMatrix.clipValue(rValue, 1 - epsilon, 1 + epsilon)) * state.tdError;
+            return Math.min(rValue, AbstractMatrix.clipValue(rValue, 1 - epsilon, 1 + epsilon)) * state.tdError;
         }
     }
 

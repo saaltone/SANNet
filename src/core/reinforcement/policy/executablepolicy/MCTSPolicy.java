@@ -8,7 +8,7 @@ package core.reinforcement.policy.executablepolicy;
 import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
-import utils.matrix.ComputableMatrix;
+import utils.matrix.AbstractMatrix;
 import utils.matrix.Matrix;
 
 import java.io.Serial;
@@ -380,7 +380,7 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
             HashMap<Integer, Double> dirichletDistribution = new HashMap<>();
             double cumulativeValue = 0;
             for (Integer action : availableActions) {
-                double gammaValue = ComputableMatrix.sampleGamma(shape, 1, random);
+                double gammaValue = AbstractMatrix.sampleGamma(shape, 1, random);
                 cumulativeValue += gammaValue;
                 dirichletDistribution.put(action, gammaValue);
             }
