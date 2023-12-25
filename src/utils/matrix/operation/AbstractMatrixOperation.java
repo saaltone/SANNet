@@ -152,45 +152,25 @@ public abstract class AbstractMatrixOperation implements MatrixOperation, Serial
      * @throws MatrixException throws exception if matrix operation fails.
      */
     protected Matrix applyMatrixOperation(Matrix first, Matrix second, Matrix result) throws MatrixException {
+        final int rows = getRows();
+        final int columns = getColumns();
+        final int totalDepth = getDepth();
+        final boolean provideValue = getProvideValue();
         if (!hasMask(first, second)) {
-            if (getProvideValue()) {
-                for (int depth = 0; depth < getDepth(); depth++) {
-                    for (int row = 0; row < getRows(); row += getStride()) {
-                        for (int column = 0; column < getColumns(); column += getStride()) {
-                            apply(row, column, depth, first.getValue(row, column, depth), result);
-                        }
-                    }
-                }
-            }
-            else {
-                for (int depth = 0; depth < getDepth(); depth++) {
-                    for (int row = 0; row < getRows(); row += getStride()) {
-                        for (int column = 0; column < getColumns(); column += getStride()) {
-                            apply(row, column, depth, 0, result);
-                        }
+            for (int depth = 0; depth < totalDepth; depth++) {
+                for (int column = 0; column < columns; column += getStride()) {
+                    for (int row = 0; row < rows; row += getStride()) {
+                        apply(row, column, depth, provideValue ? first.getValue(row, column, depth) : 0, result);
                     }
                 }
             }
         }
         else {
-            if (getProvideValue()) {
-                for (int depth = 0; depth < getDepth(); depth++) {
-                    for (int row = 0; row < getRows(); row += getStride()) {
-                        for (int column = 0; column < getColumns(); column += getStride()) {
-                            if (!hasMaskAt(row, column, depth, first, second)) {
-                                applyMask(row, column, depth, first.getValue(row, column, depth), result);
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                for (int depth = 0; depth < getDepth(); depth++) {
-                    for (int row = 0; row < getRows(); row += getStride()) {
-                        for (int column = 0; column < getColumns(); column += getStride()) {
-                            if (!hasMaskAt(row, column, depth, first, second)) {
-                                applyMask(row, column, depth, 0, result);
-                            }
+            for (int depth = 0; depth < totalDepth; depth++) {
+                for (int column = 0; column < columns; column += getStride()) {
+                    for (int row = 0; row < rows; row += getStride()) {
+                        if (!hasMaskAt(row, column, depth, first, second)) {
+                            applyMask(row, column, depth, provideValue ? first.getValue(row, column, depth) : 0, result);
                         }
                     }
                 }
