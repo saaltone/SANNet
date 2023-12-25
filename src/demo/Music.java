@@ -66,10 +66,10 @@ public class Music {
             long minTickDelta = 60;
             long maxTickDelta = 200;
             int maxEncodedTicks = 50;
-            double tickScalingConstant = 0.5;
+            double tickScalingConstant = 0.65;
             int numberOfGeneratedSamples = 500;
             boolean useMultinomial = false;
-            boolean prePlaySequence = false;
+            boolean prePlaySequence = true;
             boolean restoreNeuralNetwork = false;
             String path = "<PATH>/";
             ArrayList<String> fileNames = new ArrayList<>();
@@ -229,8 +229,8 @@ public class Music {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private void getNextSample(TreeMap<Integer, Matrix> currentSample, int targetKey, int targetVelocity, int targetTick, int numberOfKeyInputs, int numberOfVelocityInputs, int numberOfTickInputs, ReadMIDI.Metadata metadata) throws MatrixException {
-        Matrix keyTargetMatrix = ComputableMatrix.encodeToBitColumnVector(targetKey, metadata.checkEncodeNoteOffs() ? 8 :7);
-        Matrix velocityTargetMatrix = ComputableMatrix.encodeToBitColumnVector(targetVelocity, metadata.checkEncodeNoteOffs() ? 8 :7);
+        Matrix keyTargetMatrix = AbstractMatrix.encodeValueToBitColumnVector(targetKey, metadata.checkEncodeNoteOffs() ? 8 :7);
+        Matrix velocityTargetMatrix = AbstractMatrix.encodeValueToBitColumnVector(targetVelocity, metadata.checkEncodeNoteOffs() ? 8 :7);
         Matrix tickTargetMatrix = DMatrix.getOneHotVector(metadata.numberOfEncodedTicks, targetTick);
         int offset = 0;
         for (int inputIndex = 0; inputIndex < numberOfKeyInputs; inputIndex++) {
