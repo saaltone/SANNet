@@ -210,12 +210,6 @@ public enum UnaryFunctionType {
     SOFTMAX,
 
     /**
-     * Gumbel Softmax
-     *
-     */
-    GUMBEL_SOFTMAX,
-
-    /**
      * Gaussian
      *
      */
