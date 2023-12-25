@@ -5,9 +5,12 @@
 
 package utils.matrix.operation;
 
+import utils.matrix.BinaryFunction;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
+
+import java.io.Serializable;
 
 /**
  * Implements sum matrix operation.
@@ -40,6 +43,30 @@ public class SumMatrixOperation extends AbstractMatrixOperation {
     private transient Matrix sumValues;
 
     /**
+     * Multiply matrix operation.
+     *
+     */
+    private final BinaryMatrixOperation multiplyMatrixOperation;
+
+    /**
+     * Constant matrix containing inverse number of rows.
+     *
+     */
+    private final Matrix inverseRowsMatrix;
+
+    /**
+     * Constant matrix containing inverse number of columns.
+     *
+     */
+    private final Matrix inverseColumnsMatrix;
+
+    /**
+     * Constant matrix containing inverse total depth.
+     *
+     */
+    private final Matrix inverseDepthMatrix;
+
+    /**
      * Constructor for sum matrix operation.
      *
      * @param rows          number of rows for operation.
@@ -50,6 +77,10 @@ public class SumMatrixOperation extends AbstractMatrixOperation {
     public SumMatrixOperation(int rows, int columns, int depth, int direction) {
         super(rows, columns, depth, true);
         this.direction = direction;
+        multiplyMatrixOperation = new BinaryMatrixOperation(rows, columns, depth, new BinaryFunction((Matrix.MatrixBinaryOperation &Serializable) (value1, value2) -> value1 * value2));
+        inverseRowsMatrix = new DMatrix(1 / (double)rows);
+        inverseColumnsMatrix = new DMatrix(1 / (double)columns);
+        inverseDepthMatrix = new DMatrix(1 / (double)depth);
     }
 
     /**
@@ -139,13 +170,13 @@ public class SumMatrixOperation extends AbstractMatrixOperation {
         applySumAsMatrix(first);
         switch(direction) {
             case 1 -> {
-                return sumValues.divide(getRows());
+                return multiplyMatrixOperation.applyFunction(sumValues, inverseRowsMatrix);
             }
             case 2 -> {
-                return sumValues.divide(getColumns());
+                return multiplyMatrixOperation.applyFunction(sumValues, inverseColumnsMatrix);
             }
             case 3 -> {
-                return sumValues.divide(getDepth());
+                return multiplyMatrixOperation.applyFunction(sumValues, inverseDepthMatrix);
             }
             default -> {
                 return sumValues.divide(count);
