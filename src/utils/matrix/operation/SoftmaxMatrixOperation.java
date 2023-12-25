@@ -178,6 +178,7 @@ public class SoftmaxMatrixOperation extends AbstractMatrixOperation {
      * @return Gumbel noise.
      */
     private double getGumbelNoise() {
+        // https://blog.evjang.com/2016/11/tutorial-categorical-variational.html
         double epsilon = 10E-20;
         return -Math.log(-Math.log(random.nextDouble() + epsilon) + epsilon);
     }
