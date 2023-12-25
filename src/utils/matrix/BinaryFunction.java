@@ -25,13 +25,13 @@ public class BinaryFunction implements Serializable {
      * Lambda function to calculate function.
      *
      */
-    private Matrix.MatrixBinaryOperation function;
+    private final Matrix.MatrixBinaryOperation function;
 
     /**
      * Lambda function to calculate derivative of function.
      *
      */
-    private Matrix.MatrixBinaryOperation derivative;
+    private final Matrix.MatrixBinaryOperation derivative;
 
     /**
      * Defines type of function such as Sigmoid, ReLU.
@@ -98,22 +98,6 @@ public class BinaryFunction implements Serializable {
      */
     public BinaryFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         this.binaryFunctionType = binaryFunctionType;
-        setFunction(binaryFunctionType, params);
-    }
-
-    /**
-     * Sets function with parameters.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - delta: default value for Huber loss 1.<br>
-     *     - hinge: default value for hinge margin 1.<br>
-     *
-     * @param binaryFunctionType type of function to be used.
-     * @param params parameters as DynamicParam type for function.
-     * @throws DynamicParamException throws exception if parameters are not properly given.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    private void setFunction(BinaryFunctionType binaryFunctionType, String params) throws DynamicParamException, MatrixException {
         switch (binaryFunctionType) {
             case POW -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) Math::pow;
