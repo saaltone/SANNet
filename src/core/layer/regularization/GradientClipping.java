@@ -129,7 +129,7 @@ public class GradientClipping extends AbstractExecutionLayer {
      */
     public Matrix getForwardProcedure() throws MatrixException {
         Matrix output = inputs.get(0);
-        output = output.gradientClip(threshold, false);
+        output = output.gradientClip(threshold);
         output.setName("Output");
 
         return output;
