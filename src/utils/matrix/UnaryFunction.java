@@ -25,13 +25,13 @@ public class UnaryFunction implements Serializable {
      * Lambda function to calculate function.
      *
      */
-    private Matrix.MatrixUnaryOperation function;
+    private final Matrix.MatrixUnaryOperation function;
 
     /**
      * Lambda function to calculate derivative of function.
      *
      */
-    private Matrix.MatrixUnaryOperation derivative;
+    private final Matrix.MatrixUnaryOperation derivative;
 
     /**
      * Defines type of function such as Sigmoid, ReLU.
@@ -88,6 +88,21 @@ public class UnaryFunction implements Serializable {
     private double softmaxTau = 1;
 
     /**
+     * If true softmax is calculated as Gumbel softmax otherwise as normal softmax.
+     *
+     */
+    private boolean asGumbelSoftmax = false;
+
+    /**
+     * Constructor for custom unary function.
+     *
+     * @param function function.
+     */
+    public UnaryFunction(Matrix.MatrixUnaryOperation function) {
+        this(function, null);
+    }
+
+    /**
      * Constructor for custom unary function.
      *
      * @param function function.
@@ -100,17 +115,6 @@ public class UnaryFunction implements Serializable {
     }
 
     /**
-     * Constructor for custom unary function.
-     *
-     * @param function function.
-     */
-    public UnaryFunction(Matrix.MatrixUnaryOperation function) {
-        this.unaryFunctionType = UnaryFunctionType.CUSTOM;
-        this.function = function;
-        this.derivative = null;
-    }
-
-    /**
      * Constructor for unary function.
      *
      * @param unaryFunctionType type of function to be used.
@@ -118,8 +122,7 @@ public class UnaryFunction implements Serializable {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public UnaryFunction(UnaryFunctionType unaryFunctionType) throws DynamicParamException, MatrixException {
-        this.unaryFunctionType = unaryFunctionType;
-        setFunction(unaryFunctionType, null);
+        this(unaryFunctionType, null);
     }
 
     /**
@@ -137,24 +140,6 @@ public class UnaryFunction implements Serializable {
      */
     public UnaryFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
         this.unaryFunctionType = unaryFunctionType;
-        setFunction(unaryFunctionType, params);
-    }
-
-    /**
-     * Sets function with parameters.<br>
-     * <br>
-     * Supported parameters are:<br>
-     *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
-     *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
-     *     - lambda: default value for SELU 1.0507.<br>
-     *     - tau: default value for (Gumbel) Softmax 1.<br>
-     *
-     * @param unaryFunctionType type of function to be used.
-     * @param params parameters as DynamicParam type for function.
-     * @throws DynamicParamException throws exception if parameters are not properly given.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    private void setFunction(UnaryFunctionType unaryFunctionType, String params) throws DynamicParamException, MatrixException {
         switch (unaryFunctionType) {
             case EQUAL -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value;
@@ -300,10 +285,11 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * value * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3))));
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 0.5 * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (value + 0.044715 * Math.pow(value, 3)))) + (value * (0.134145 * Math.pow(value, 2) + 1) * Math.pow(1 / Math.cosh((0.044715 * Math.pow(value, 3) + value) * Math.sqrt(2 / Math.PI)), 2)) / Math.sqrt(2 * Math.PI);
             }
-            case SOFTMAX, GUMBEL_SOFTMAX -> {
+            case SOFTMAX -> {
                 if (params != null) {
-                    DynamicParam dynamicParam = new DynamicParam(params, "(tau:DOUBLE)");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(tau:DOUBLE), (asGumbelSoftmax:BOOLEAN)");
                     if (dynamicParam.hasParam("tau")) softmaxTau = dynamicParam.getValueAsDouble("tau");
+                    if (dynamicParam.hasParam("asGumbelSoftmax")) asGumbelSoftmax = dynamicParam.getValueAsBoolean("asGumbelSoftmax");
                 }
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
@@ -324,7 +310,7 @@ public class UnaryFunction implements Serializable {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> 1;
             }
-            case CUSTOM -> throw new MatrixException("Custom function cannot be defined with this constructor.");
+            case CUSTOM -> throw new MatrixException("This constructor cannot be used for custom function.");
             default -> throw new MatrixException("Undefined unary function.");
         }
     }
@@ -363,6 +349,15 @@ public class UnaryFunction implements Serializable {
      */
     public double getSoftmaxTau() {
         return softmaxTau;
+    }
+
+    /**
+     * Checks if softmax is defined as Gumbel softmax.
+     *
+     * @return true if softmax is Gumbel softmax otherwise is normal softmax.
+     */
+    public boolean isAsGumbelSoftmax() {
+        return asGumbelSoftmax;
     }
 
     /**
