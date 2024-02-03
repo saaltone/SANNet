@@ -142,6 +142,16 @@ public abstract class AbstractPlainLayer extends AbstractLayer {
     }
 
     /**
+     * Compares this and other neural network layer.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @return returns true if parameters of both neural network layers are same otherwise returns false.
+     */
+    public boolean compare(NeuralNetworkLayer otherNeuralNetworkLayer) {
+        return true;
+    }
+
+    /**
      * Returns number of layer parameters.
      *
      * @return number of layer parameters.
