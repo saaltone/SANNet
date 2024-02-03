@@ -391,6 +391,21 @@ public abstract class AbstractExecutionLayer extends AbstractLayer implements Fo
     }
 
     /**
+     * Compares this and other neural network layer.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @return returns true if parameters of both neural network layers are same otherwise returns false.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public boolean compare(NeuralNetworkLayer otherNeuralNetworkLayer) throws MatrixException {
+        HashMap<Integer, Matrix> otherNeuralNetworkWeightsMap = otherNeuralNetworkLayer.getWeightsMap();
+        for (Map.Entry<Integer, Matrix> entry : weightsMap.entrySet()) {
+            if (!entry.getValue().equals(otherNeuralNetworkWeightsMap.get(entry.getKey()))) return false;
+        }
+        return true;
+    }
+
+    /**
      * Returns number of layer parameters.
      *
      * @return number of layer parameters.

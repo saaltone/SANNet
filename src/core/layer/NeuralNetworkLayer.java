@@ -325,6 +325,15 @@ public interface NeuralNetworkLayer {
     void append(NeuralNetworkLayer otherNeuralNetworkLayer, double tau) throws MatrixException;
 
     /**
+     * Compares this and other neural network layer.
+     *
+     * @param otherNeuralNetworkLayer other neural network layer.
+     * @return returns true if parameters of both neural network layers are same otherwise returns false.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    boolean compare(NeuralNetworkLayer otherNeuralNetworkLayer) throws MatrixException;
+
+    /**
      * Returns number of layer parameters.
      *
      * @return number of layer parameters.
