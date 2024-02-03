@@ -50,11 +50,4 @@ public interface SearchTree {
      */
     State getState(double prioritySum);
 
-    /**
-     * Returns random state.
-     *
-     * @return random state.
-     */
-    State getRandomState();
-
 }
