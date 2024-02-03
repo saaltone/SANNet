@@ -5,6 +5,7 @@
 
 package core.layer.recurrent;
 
+import core.activation.ActivationFunctionType;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
@@ -179,7 +180,7 @@ public class RecurrentLayer extends AbstractRecurrentLayer {
      */
     public RecurrentLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
+        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(ActivationFunctionType.RELU);
     }
 
     /**

@@ -5,6 +5,7 @@
 
 package core.layer.recurrent;
 
+import core.activation.ActivationFunctionType;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
 import core.activation.ActivationFunction;
@@ -303,8 +304,8 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      */
     protected PeepholeLSTMLayer(int layerIndex, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        tanh = new ActivationFunction(UnaryFunctionType.TANH);
-        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        tanh = new ActivationFunction(ActivationFunctionType.TANH);
+        sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
         activationFunction = tanh;
     }
 
@@ -321,8 +322,8 @@ public class PeepholeLSTMLayer extends AbstractRecurrentLayer {
      */
     public PeepholeLSTMLayer(int layerIndex, ActivationFunction activationFunction, Initialization initialization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, initialization, params);
-        tanh = new ActivationFunction(UnaryFunctionType.TANH);
-        sigmoid = new ActivationFunction(UnaryFunctionType.SIGMOID);
+        tanh = new ActivationFunction(ActivationFunctionType.TANH);
+        sigmoid = new ActivationFunction(ActivationFunctionType.SIGMOID);
         this.activationFunction = activationFunction == null ? tanh : activationFunction;
     }
 
