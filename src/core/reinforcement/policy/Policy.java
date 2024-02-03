@@ -26,54 +26,30 @@ import java.util.TreeSet;
 public interface Policy extends Configurable {
 
     /**
-     * Return true if policy is updateable otherwise false.
-     *
-     * @return true if policy is updateable otherwise false.
-     */
-    boolean isUpdateablePolicy();
-
-    /**
      * Returns reference to policy.
      *
-     * @param valueFunctionEstimator reference to value function estimator.
-     * @return reference to policy.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    Policy reference(FunctionEstimator valueFunctionEstimator) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException;
-
-    /**
-     * Returns reference to policy.
-     *
-     * @param valueFunctionEstimator        reference to value function estimator.
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedMemory                  if true policy will use shared memory otherwise dedicated memory.
+     * @param memory                        if true policy will use shared memory otherwise dedicated memory.
      * @return reference to policy.
      * @throws IOException            throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
      * @throws MatrixException        throws exception if matrix operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
-     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
      */
-    Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException;
+    Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException;
 
     /**
      * Returns reference to policy.
      *
-     * @param valueFunctionEstimator        reference to value function estimator.
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param policyFunctionEstimator reference to policy function estimator.
      * @param memory                  if true policy will use shared memory otherwise dedicated memory.
      * @return reference to policy.
      * @throws IOException            throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
      * @throws MatrixException        throws exception if matrix operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
-     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
      */
-    Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException;
+    Policy reference(FunctionEstimator policyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException;
 
     /**
      * Starts policy.
@@ -118,46 +94,34 @@ public interface Policy extends Configurable {
     /**
      * Updates policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void increment();
+    void increment() throws MatrixException;
 
     /**
      * Takes action defined by external agent.
      *
-     * @param state state.
+     * @param state  state.
+     * @param action action taken by external agent.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      */
-    void act(State state) throws MatrixException, NeuralNetworkException;
+    void act(State state, int action) throws MatrixException, NeuralNetworkException;
 
     /**
      * Takes action defined by executable policy.
      *
      * @param state state.
-     * @param alwaysGreedy if true greedy action is always taken.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      */
-    void act(State state, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException;
+    void act(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Ends episode
      *
      */
     void endEpisode();
-
-    /**
-     * Resets function estimator.
-     *
-     */
-    void resetFunctionEstimator();
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @return reference to function estimator.
-     */
-    FunctionEstimator getFunctionEstimator();
 
     /**
      * Notifies that agent is ready to update.
@@ -169,16 +133,11 @@ public interface Policy extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updates function estimator.
+     * Returns reference to function estimator.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @return reference to function estimator.
      */
-    void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+    FunctionEstimator getFunctionEstimator();
 
     /**
      * Updates function estimator.
@@ -186,11 +145,8 @@ public interface Policy extends Configurable {
      * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+    void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }
