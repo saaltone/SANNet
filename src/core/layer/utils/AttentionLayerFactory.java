@@ -6,12 +6,12 @@
 package core.layer.utils;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
-import utils.matrix.UnaryFunctionType;
 
 /**
  * Defines factory class to build attention layer components including transformer.
@@ -187,7 +187,7 @@ public class AttentionLayerFactory {
         }
         else nextLayerIndex1 = addLayerIndex1;
 
-        int feedforwardLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU));
+        int feedforwardLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU));
         neuralNetworkConfiguration.connectLayers(nextLayerIndex1, feedforwardLayerIndex1);
 
         int nextLayerIndex2;
@@ -198,7 +198,7 @@ public class AttentionLayerFactory {
         }
         else nextLayerIndex2 = feedforwardLayerIndex1;
 
-        int feedforwardLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.RELU));
+        int feedforwardLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU));
         neuralNetworkConfiguration.connectLayers(nextLayerIndex2, feedforwardLayerIndex2);
 
         int addLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ADD);
