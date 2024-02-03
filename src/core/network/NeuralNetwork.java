@@ -297,8 +297,9 @@ public class NeuralNetwork implements Serializable {
      * @param params parameters for optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException {
+    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
         if (neuralNetworkLayerIndex < 0 || neuralNetworkLayerIndex > neuralNetworkLayers.size() - 1) throw new NeuralNetworkException("No neural network layer index: " + neuralNetworkLayerIndex + " exists.");
         NeuralNetworkLayer neuralNetworkLayer = neuralNetworkLayers.get(neuralNetworkLayerIndex);
@@ -314,8 +315,9 @@ public class NeuralNetwork implements Serializable {
      * @param params parameters for optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setOptimizer(OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException {
+    public void setOptimizer(OptimizationType optimization, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         checkStarted();
         for (NeuralNetworkLayer neuralNetworkLayer : neuralNetworkLayers.values()) {
             if (!(neuralNetworkLayer instanceof InputLayer) && !(neuralNetworkLayer instanceof OutputLayer)) neuralNetworkLayer.setOptimizer(OptimizerFactory.create(optimization, params));
@@ -329,8 +331,9 @@ public class NeuralNetwork implements Serializable {
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization) throws NeuralNetworkException, DynamicParamException {
+    public void setOptimizer(int neuralNetworkLayerIndex, OptimizationType optimization) throws NeuralNetworkException, DynamicParamException, MatrixException {
         setOptimizer(neuralNetworkLayerIndex, optimization, null);
     }
 
@@ -340,8 +343,9 @@ public class NeuralNetwork implements Serializable {
      * @param optimization type of optimizer.
      * @throws NeuralNetworkException throws neural network exception if setting of optimizer fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void setOptimizer(OptimizationType optimization) throws NeuralNetworkException, DynamicParamException {
+    public void setOptimizer(OptimizationType optimization) throws NeuralNetworkException, DynamicParamException, MatrixException {
         setOptimizer(optimization, null);
     }
 
@@ -1390,6 +1394,21 @@ public class NeuralNetwork implements Serializable {
         for (Map.Entry<Integer, NeuralNetworkLayer> entry : neuralNetworkLayers.entrySet()) {
             entry.getValue().append(otherNeuralNetwork.getNeuralNetworkLayers().get(entry.getKey()), tau);
         }
+    }
+
+    /**
+     * Compares this and other neural network.
+     *
+     * @param otherNeuralNetwork other neural network.
+     * @return returns true if parameters of both neural networks are same otherwise returns false.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public boolean compare(NeuralNetwork otherNeuralNetwork) throws MatrixException {
+        waitToComplete();
+        for (Map.Entry<Integer, NeuralNetworkLayer> entry : neuralNetworkLayers.entrySet()) {
+            if (!entry.getValue().compare(otherNeuralNetwork.getNeuralNetworkLayers().get(entry.getKey()))) return false;
+        }
+        return true;
     }
 
 
