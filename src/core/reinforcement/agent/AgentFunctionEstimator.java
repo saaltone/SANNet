@@ -19,27 +19,28 @@ public interface AgentFunctionEstimator {
     /**
      * Build neural network for agent (separate functions for state action value function estimator).
      *
-     * @param inputSize input size of neural network (number of states)
-     * @param outputSize output size of neural network (number of actions and their values).
+     * @param inputSize      input size of neural network (number of states)
+     * @param outputSize     output size of neural network (number of actions and their values).
      * @param policyGradient if true neural network is of type policy gradient.
-     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
+     * @param applyDueling   if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws DynamicParamException  throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
      */
     NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException;
 
     /**
      * Build neural network for agent (shared function for state action value function estimator).
      *
-     * @param inputSize input size of neural network (number of states)
-     * @param outputSize output size of neural network (number of actions and their values).
+     * @param inputSize       input size of neural network (number of states)
+     * @param actorOutputSize actor output size of neural network (number of actions and their values).
+     * @param valueOutputSize value output size of neural network.
      * @return built neural network
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws DynamicParamException  throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
      */
-    NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException;
+    NeuralNetwork buildNeuralNetwork(int inputSize, int actorOutputSize, int valueOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException;
 
 }
