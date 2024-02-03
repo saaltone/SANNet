@@ -20,7 +20,7 @@ import java.util.TreeSet;
  * Reference: <a href="https://arxiv.org/pdf/1511.05952.pdf">...</a><br>
  *
  */
-public class PriorityMemory implements Memory, Serializable {
+public class PriorityMemory extends AbstractMemory implements Serializable {
 
     @Serial
     private static final long serialVersionUID = -160305763452683523L;
@@ -32,7 +32,6 @@ public class PriorityMemory implements Memory, Serializable {
      *     - alpha: proportional prioritization factor for samples in prioritized replay memory. Default value 0.6.<br>
      *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
      *     - betaStepSize: step-size (schedule) which is used to anneal beta value towards 1 (final value). Default value 0.001.<br>
-     *     - proportionalPrioritization: if true sampling is done proportionally other purely based on priority. Default value true.<br>
      *     - applyImportanceSamplingWeights: if true importance sampling weights are to be applied during training. Default value false.<br>
      *     - applyUniformSampling: if true applies random uniform sampling otherwise applies prioritized sampling. Default value false.<br>
      *
@@ -42,7 +41,6 @@ public class PriorityMemory implements Memory, Serializable {
             "(alpha:DOUBLE), " +
             "(beta:DOUBLE), " +
             "(betaStepSize:INT), " +
-            "(proportionalPrioritization:BOOLEAN), " +
             "(applyImportanceSamplingWeights:BOOLEAN), " +
             "(applyUniformSampling:BOOLEAN)";
 
@@ -89,12 +87,6 @@ public class PriorityMemory implements Memory, Serializable {
     private SearchTree searchTree;
 
     /**
-     * If true sampling is done proportionally based on sample priority otherwise purely based on priority.
-     *
-     */
-    private boolean proportionalPrioritization;
-
-    /**
      * If true importance sampling weights are to be applied.
      *
      */
@@ -124,22 +116,20 @@ public class PriorityMemory implements Memory, Serializable {
     /**
      * Constructor for priority memory.
      *
-     * @param capacity capacity
-     * @param batchSize batch size
-     * @param alpha alpha
-     * @param beta beta
-     * @param betaStepSize beta step size
-     * @param proportionalPrioritization if true proportional prioritization if applied otherwise uniform sampling is applied.
+     * @param capacity                       capacity
+     * @param batchSize                      batch size
+     * @param alpha                          alpha
+     * @param beta                           beta
+     * @param betaStepSize                   beta step size
      * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     * @param applyUniformSampling if true uniform sampling is applied.
+     * @param applyUniformSampling           if true uniform sampling is applied.
      */
-    private PriorityMemory(int capacity, int batchSize, double alpha, double beta, double betaStepSize, boolean proportionalPrioritization, boolean applyImportanceSamplingWeights, boolean applyUniformSampling) {
+    private PriorityMemory(int capacity, int batchSize, double alpha, double beta, double betaStepSize, boolean applyImportanceSamplingWeights, boolean applyUniformSampling) {
         this.capacity = capacity;
         this.batchSize = batchSize;
         this.alpha = alpha;
         this.beta = beta;
         this.betaStepSize = betaStepSize;
-        this.proportionalPrioritization = proportionalPrioritization;
         this.applyImportanceSamplingWeights = applyImportanceSamplingWeights;
         this.applyUniformSampling = applyUniformSampling;
         searchTree = new SumTree(capacity);
@@ -155,7 +145,6 @@ public class PriorityMemory implements Memory, Serializable {
         alpha = 0.6;
         beta = 0.4;
         betaStepSize = 0.001;
-        proportionalPrioritization = true;
         applyImportanceSamplingWeights = true;
         applyUniformSampling = false;
     }
@@ -178,7 +167,6 @@ public class PriorityMemory implements Memory, Serializable {
      *     - alpha: proportional prioritization factor for samples in prioritized replay memory. Default value 0.6.<br>
      *     - beta: term that controls how much prioritization is applied. Default value 0.4.<br>
      *     - betaStepSize: step-size (schedule) which is used to anneal beta value towards 1 (final value). Default value 0.001.<br>
-     *     - proportionalPrioritization: if true sampling is done proportionally other purely based on priority. Default value true.<br>
      *     - applyImportanceSamplingWeights: if true importance sampling weights are to be applied during training. Default value false.<br>
      *     - applyUniformSampling: if true applies random uniform sampling otherwise applies prioritized sampling. Default value false.<br>
      *
@@ -194,7 +182,6 @@ public class PriorityMemory implements Memory, Serializable {
         if (params.hasParam("alpha")) alpha = params.getValueAsDouble("alpha");
         if (params.hasParam("beta")) beta = params.getValueAsDouble("beta");
         if (params.hasParam("betaStepSize")) betaStepSize = params.getValueAsInteger("betaStepSize");
-        if (params.hasParam("proportionalPrioritization")) proportionalPrioritization = params.getValueAsBoolean("proportionalPrioritization");
         if (params.hasParam("applyImportanceSamplingWeights")) applyImportanceSamplingWeights = params.getValueAsBoolean("applyImportanceSamplingWeights");
         if (params.hasParam("applyUniformSampling")) applyUniformSampling = params.getValueAsBoolean("applyUniformSampling");
         if (applyUniformSampling) applyImportanceSamplingWeights = false;
@@ -206,7 +193,7 @@ public class PriorityMemory implements Memory, Serializable {
      * @return reference to memory.
      */
     public Memory reference() {
-        return new PriorityMemory(capacity, batchSize, alpha, beta, betaStepSize, proportionalPrioritization, applyImportanceSamplingWeights, applyUniformSampling);
+        return new PriorityMemory(capacity, batchSize, alpha, beta, betaStepSize, applyImportanceSamplingWeights, applyUniformSampling);
     }
 
     /**
@@ -215,7 +202,64 @@ public class PriorityMemory implements Memory, Serializable {
      * @param state state to be stored.
      */
     public void add(State state) {
+        updateStatePriority(state);
         searchTree.add(state);
+    }
+
+    /**
+     * Updates state priority
+     *
+     * @param state state
+     */
+    private void updateStatePriority(State state) {
+        final double epsilon = 10E-8;
+        state.priority = Math.pow(Math.abs(state.tdError) + epsilon, alpha);
+    }
+
+    /**
+     * Samples states from prioritized replay memory.
+     *
+     * @return sampled states.
+     */
+    public TreeSet<State> sample() {
+        if (searchTree.size() < batchSize) return null;
+        if (sampledStates == null) {
+            sampledStates = new TreeSet<>();
+            final double totalPriority = searchTree.getTotalPriority();
+            if (!applyUniformSampling) {
+                final double segment = totalPriority / (double)batchSize;
+                beta = Math.min(beta + betaStepSize, 1);
+                double maxWeight = Double.MIN_VALUE;
+                for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
+                    double prioritySum = segment * ((double)sampleIndex + random.nextDouble());
+                    State state = searchTree.getState(prioritySum);
+                    if (state != null) {
+                        sampledStates.add(state);
+                        state.applyImportanceSamplingWeight = applyImportanceSamplingWeights;
+                        if (applyImportanceSamplingWeights) {
+                            double weight = state.importanceSamplingWeight = Math.pow(1 / prioritySum, beta);
+                            maxWeight = maxWeight == Double.MIN_VALUE ? weight : Math.max(weight, maxWeight);
+                        }
+                    }
+                }
+                if (applyImportanceSamplingWeights) for (State state : sampledStates) state.importanceSamplingWeight /= maxWeight;
+            }
+            else {
+                int maxSampleIndex = Math.min(searchTree.size(), batchSize);
+                while (sampledStates.size() < maxSampleIndex) {
+                    State state = searchTree.getState(totalPriority * random.nextDouble());
+                    if (state != null) sampledStates.add(state);
+                }
+            }
+        }
+        return sampledStates;
+    }
+
+    /**
+     * Updates states in prioritized replay memory with new error values.
+     */
+    public void update() {
+        for (State state : sampledStates) update(state);
     }
 
     /**
@@ -224,18 +268,8 @@ public class PriorityMemory implements Memory, Serializable {
      * @param state state to be updated.
      */
     private void update(State state) {
-        final double epsilon = 10E-8;
-        state.priority = Math.pow(Math.abs(state.tdError) + epsilon, alpha);
+        updateStatePriority(state);
         searchTree.update(state);
-    }
-
-    /**
-     * Updates states in prioritized replay memory with new error values.
-     *
-     * @param states states.
-     */
-    public void update(TreeSet<State> states) {
-        for (State state : states) update(state);
     }
 
     /**
@@ -244,56 +278,6 @@ public class PriorityMemory implements Memory, Serializable {
      */
     public void reset() {
         sampledStates = null;
-    }
-
-    /**
-     * Samples prioritized replay memory.
-     *
-     */
-    public void sample() {
-        if (sampledStates != null) return;
-        sampledStates = new TreeSet<>();
-        if (!applyUniformSampling) {
-            final double totalPriority = searchTree.getTotalPriority();
-            final double segment = totalPriority / (double)batchSize;
-            beta = Math.min(beta + betaStepSize, 1);
-            double maxWeight = Double.MIN_VALUE;
-            for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
-                double prioritySum = proportionalPrioritization ? segment * random.nextDouble() + (double)sampleIndex : (totalPriority - 10E-8) * random.nextDouble() + 10E-8;
-                State state = searchTree.getState(prioritySum);
-                if (state != null) {
-                    sampledStates.add(state);
-                    double weight = state.importanceSamplingWeight = Math.pow(1 / prioritySum, beta);
-                    maxWeight = maxWeight == Double.MIN_VALUE ? weight : Math.max(weight, maxWeight);
-                }
-            }
-            for (State state : sampledStates) state.importanceSamplingWeight /= maxWeight;
-        }
-        else {
-            if (searchTree.size() > 0) {
-                for (int sampleIndex = 0; sampleIndex < batchSize; sampleIndex++) {
-                    sampledStates.add(searchTree.getRandomState());
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns defined number of states from prioritized replay memory. Applies priority sampling.
-     *
-     * @return retrieved states.
-     */
-    public TreeSet<State> getSampledStates() {
-        return sampledStates;
-    }
-
-    /**
-     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     */
-    public boolean applyImportanceSamplingWeights() {
-        return applyImportanceSamplingWeights;
     }
 
 }
