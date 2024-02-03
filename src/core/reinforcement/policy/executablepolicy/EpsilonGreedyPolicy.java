@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Random;
 import java.util.TreeSet;
@@ -75,8 +76,9 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
     /**
      * Constructor for epsilon greedy policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public EpsilonGreedyPolicy() {
+    public EpsilonGreedyPolicy() throws MatrixException {
         super(ExecutablePolicyType.EPSILON_GREEDY);
     }
 
@@ -85,16 +87,18 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      * @param params parameters for epsilon greedy policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public EpsilonGreedyPolicy(String params) throws DynamicParamException {
+    public EpsilonGreedyPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.EPSILON_GREEDY, params, EpsilonGreedyPolicy.paramNameTypes);
     }
 
     /**
      * Initializes default params.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws MatrixException {
         super.initializeDefaultParams();
         epsilonInitial = 1;
         epsilonMin = 0.2;

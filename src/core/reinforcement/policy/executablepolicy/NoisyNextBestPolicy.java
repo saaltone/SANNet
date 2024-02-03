@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Objects;
 import java.util.TreeSet;
@@ -56,8 +57,9 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
     /**
      * Constructor for noisy next best policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NoisyNextBestPolicy() {
+    public NoisyNextBestPolicy() throws MatrixException {
         super(ExecutablePolicyType.NOISY_NEXT_BEST);
     }
 
@@ -66,16 +68,18 @@ public class NoisyNextBestPolicy extends AbstractExecutablePolicy {
      *
      * @param params parameters for noisy next best policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NoisyNextBestPolicy(String params) throws DynamicParamException {
+    public NoisyNextBestPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.NOISY_NEXT_BEST, params, NoisyNextBestPolicy.paramNameTypes);
     }
 
     /**
      * Initializes default params.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws MatrixException {
         super.initializeDefaultParams();
         initialExplorationNoise = 1;
         minExplorationNoise = 0.2;

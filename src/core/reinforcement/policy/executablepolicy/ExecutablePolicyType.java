@@ -63,6 +63,12 @@ public enum ExecutablePolicyType {
      * Noisy policy
      *
      */
-    NOISY
+    NOISY,
+
+    /**
+     * Ornstein-Uhlenbeck process noise policy
+     *
+     */
+    OU_NOISE
 
 }

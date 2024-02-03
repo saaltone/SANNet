@@ -6,6 +6,7 @@
 package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Objects;
 import java.util.TreeSet;
@@ -19,8 +20,9 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
     /**
      * Constructor for greedy policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public GreedyPolicy() {
+    public GreedyPolicy() throws MatrixException {
         super(ExecutablePolicyType.GREEDY);
     }
 
@@ -28,8 +30,9 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * Constructor for greedy policy.
      *
      * @param executablePolicyType executable policy type.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected GreedyPolicy(ExecutablePolicyType executablePolicyType) {
+    protected GreedyPolicy(ExecutablePolicyType executablePolicyType) throws MatrixException {
         super(executablePolicyType);
     }
 
@@ -38,8 +41,9 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      *
      * @param params parameters for Policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public GreedyPolicy(String params) throws DynamicParamException {
+    public GreedyPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.GREEDY, params, null);
     }
 
@@ -50,8 +54,9 @@ public class GreedyPolicy extends AbstractExecutablePolicy {
      * @param params parameters for Policy.
      * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    protected GreedyPolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException {
+    protected GreedyPolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException, MatrixException {
         super(executablePolicyType, params, paramNameTypes);
     }
 

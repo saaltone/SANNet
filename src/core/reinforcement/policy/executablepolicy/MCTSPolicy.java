@@ -51,6 +51,15 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     private final ExecutablePolicyType executablePolicyType = ExecutablePolicyType.MCTS;
 
     /**
+     * Record that defines ActionValueTuple for policy.
+     *
+     * @param action action value.
+     * @param value value for action.
+     */
+    protected record ActionValueTuple(int action, double value) {
+    }
+
+    /**
      * Implements action for state.
      *
      */
@@ -499,17 +508,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Constructor for MCTS policy
-     *
-     * @param params parameters for MCTS policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public MCTSPolicy(String params) throws DynamicParamException {
-        this();
-        setParams(new DynamicParam(params, getParamDefs()));
-    }
-
-    /**
      * Initializes default params.
      *
      */
@@ -580,15 +578,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
     }
 
     /**
-     * Updates state.
-     *
-     */
-    private void updateState() {
-        if (rootMCTSState == null) rootMCTSState = new MCTSState();
-        currentMCTSState = currentMCTSState == null ? rootMCTSState : currentMCTSState.getNextState();
-    }
-
-    /**
      * Takes action decided by external agent.
      *
      * @param policyValueMatrix current state value matrix.
@@ -604,13 +593,21 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * Takes action based on policy.
      *
      * @param policyValueMatrix current state value matrix.
-     * @param availableActions available actions in current state
-     * @param alwaysGreedy if true greedy action is always taken.
+     * @param availableActions  available actions in current state
      * @return action taken.
      */
-    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
         updateState();
-        return currentMCTSState.act(policyValueMatrix, availableActions, !isLearning() || alwaysGreedy);
+        return currentMCTSState.act(policyValueMatrix, availableActions, !isLearning());
+    }
+
+    /**
+     * Updates state.
+     *
+     */
+    private void updateState() {
+        if (rootMCTSState == null) rootMCTSState = new MCTSState();
+        currentMCTSState = currentMCTSState == null ? rootMCTSState : currentMCTSState.getNextState();
     }
 
     /**

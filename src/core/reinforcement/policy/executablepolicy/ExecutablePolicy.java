@@ -8,6 +8,7 @@ package core.reinforcement.policy.executablepolicy;
 import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.util.HashSet;
 
@@ -34,8 +35,9 @@ public interface ExecutablePolicy extends Configurable {
     /**
      * Increments policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void increment();
+    void increment() throws MatrixException;
 
     /**
      * Takes action decided by external agent.
@@ -50,11 +52,10 @@ public interface ExecutablePolicy extends Configurable {
      * Takes action based on policy.
      *
      * @param policyValueMatrix current policy value matrix.
-     * @param availableActions available actions in current state
-     * @param alwaysGreedy if true greedy action is always taken.
+     * @param availableActions  available actions in current state
      * @return action taken.
      */
-    int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy);
+    int action(Matrix policyValueMatrix, HashSet<Integer> availableActions);
 
     /**
      * Adds state for action execution.

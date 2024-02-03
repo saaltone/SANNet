@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Objects;
 import java.util.Random;
@@ -62,8 +63,9 @@ public class SampledPolicy extends AbstractExecutablePolicy {
     /**
      * Default constructor for sampled policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public SampledPolicy() {
+    public SampledPolicy() throws MatrixException {
         super(ExecutablePolicyType.SAMPLED);
     }
 
@@ -72,16 +74,18 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      * @param params parameters for sampled policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public SampledPolicy(String params) throws DynamicParamException {
+    public SampledPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.SAMPLED, params, SampledPolicy.paramNameTypes);
     }
 
     /**
      * Initializes default params.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws MatrixException {
         super.initializeDefaultParams();
         thresholdInitial = 1;
         thresholdMin = 0.2;

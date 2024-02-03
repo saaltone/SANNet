@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Random;
 import java.util.TreeSet;
@@ -38,10 +39,35 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
     private double entropyFactor;
 
     /**
-     * Constructor for entropy greedy policy.
+     * If true uses averaged entropy for exploration / exploitation balance.
      *
      */
-    public EntropyGreedyPolicy() {
+    private boolean useAveragingEntropy;
+
+    /**
+     * Average entropy.
+     *
+     */
+    private transient double averageEntropy = Double.MIN_VALUE;
+
+    /**
+     * Averaging factor for average entropy.
+     *
+     */
+    private double tau;
+
+    /**
+     * Minimum value for greedy policy.
+     *
+     */
+    private double minThreshold;
+
+    /**
+     * Constructor for entropy greedy policy.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    public EntropyGreedyPolicy() throws MatrixException {
         super(ExecutablePolicyType.ENTROPY_GREEDY);
     }
 
@@ -50,18 +76,23 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
      *
      * @param params parameters for entropy greedy policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public EntropyGreedyPolicy(String params) throws DynamicParamException {
+    public EntropyGreedyPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.ENTROPY_GREEDY, params, EntropyGreedyPolicy.paramNameTypes);
     }
 
     /**
      * Initializes default params.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws MatrixException {
         super.initializeDefaultParams();
-        entropyFactor = 0.3;
+        entropyFactor = 1;
+        useAveragingEntropy = true;
+        tau = 0.99;
+        minThreshold = 0.05;
     }
 
     /**
@@ -95,7 +126,13 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
      */
     protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) {
         double entropy = getActionEntropy(stateValueSet);
-        boolean randomChoice = Math.random() < entropy * entropyFactor;
+        double usedEntropy;
+        if (useAveragingEntropy) {
+            averageEntropy = averageEntropy == Double.MIN_VALUE ? entropy : tau * averageEntropy + (1 - tau) * entropy;
+            usedEntropy = averageEntropy;
+        }
+        else usedEntropy = entropy;
+        boolean randomChoice = Math.random() < Math.max(minThreshold, usedEntropy * entropyFactor);
         if (randomChoice) {
             AbstractExecutablePolicy.ActionValueTuple[] actionValueTupleArray = new AbstractExecutablePolicy.ActionValueTuple[stateValueSet.size()];
             actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);

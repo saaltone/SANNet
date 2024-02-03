@@ -6,6 +6,7 @@
 package core.reinforcement.policy.executablepolicy;
 
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.util.Objects;
 import java.util.TreeSet;
@@ -20,8 +21,9 @@ public class EntropyNoisyNextBestPolicy extends AbstractExecutablePolicy {
     /**
      * Constructor for entropy noisy next best policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public EntropyNoisyNextBestPolicy() {
+    public EntropyNoisyNextBestPolicy() throws MatrixException {
         super(ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST);
     }
 
@@ -30,8 +32,9 @@ public class EntropyNoisyNextBestPolicy extends AbstractExecutablePolicy {
      *
      * @param params parameters for Policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public EntropyNoisyNextBestPolicy(String params) throws DynamicParamException {
+    public EntropyNoisyNextBestPolicy(String params) throws DynamicParamException, MatrixException {
         super(ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST, params, null);
     }
 
