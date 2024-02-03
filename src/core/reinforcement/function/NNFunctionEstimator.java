@@ -9,7 +9,6 @@ import core.layer.InputLayer;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.State;
-import core.reinforcement.memory.Memory;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -75,12 +74,6 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private double targetFunctionTau;
 
     /**
-     * If true applies importance sampling weights.
-     *
-     */
-    private boolean applyImportanceSamplingWeights;
-
-    /**
      * Size of state history.
      *
      */
@@ -119,7 +112,6 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Constructor for neural network based function estimator.
      *
-     * @param memory                     memory reference.
      * @param neuralNetwork              neural network reference.
      * @param hasTargetFunctionEstimator if true has target function estimator otherwise not
      * @throws MatrixException throws exception if depth of matrix is less than 1.
@@ -127,14 +119,13 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, boolean hasTargetFunctionEstimator) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        this (memory, neuralNetwork, hasTargetFunctionEstimator, null);
+    public NNFunctionEstimator(NeuralNetwork neuralNetwork, boolean hasTargetFunctionEstimator) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        this (neuralNetwork, hasTargetFunctionEstimator, null);
     }
 
     /**
      * Constructor for neural network based function estimator.
      *
-     * @param memory                     memory reference.
      * @param neuralNetwork              neural network reference.
      * @param hasTargetFunctionEstimator if true has target function estimator otherwise not
      * @param params                     parameters for function
@@ -143,8 +134,8 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public NNFunctionEstimator(Memory memory, NeuralNetwork neuralNetwork, boolean hasTargetFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        super (memory, neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getOutputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().size() == 2, params);
+    public NNFunctionEstimator(NeuralNetwork neuralNetwork, boolean hasTargetFunctionEstimator, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
+        super (neuralNetwork.getInputLayerGroups().get(0).get(0).getLayerWidth(), neuralNetwork.getOutputLayers().get(0).getLayerWidth(), neuralNetwork.getOutputLayers().size() == 2, params);
         this.neuralNetwork = neuralNetwork;
         this.targetNeuralNetwork = hasTargetFunctionEstimator ? neuralNetwork.copy() : null;
 
@@ -163,8 +154,6 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
             actionHistorySize = 0;
             zeroActionInputReference = null;
         }
-
-        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
 
     /**
@@ -183,7 +172,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @return parameters used for neural network based function estimator.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + NNFunctionEstimator.paramNameTypes;
+        return NNFunctionEstimator.paramNameTypes;
     }
 
     /**
@@ -198,14 +187,12 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        super.setParams(params);
         if (params.hasParam("numberOfIterations")) {
             numberOfIterations = params.getValueAsInteger("numberOfIterations");
             if (numberOfIterations < 1) throw new DynamicParamException("Number of iterations must be at least 1.");
         }
         if (params.hasParam("targetFunctionUpdateCycle")) targetFunctionUpdateCycle = params.getValueAsInteger("targetFunctionUpdateCycle");
         if (params.hasParam("targetFunctionTau")) targetFunctionTau = params.getValueAsDouble("targetFunctionTau");
-        applyImportanceSamplingWeights = memory.applyImportanceSamplingWeights();
     }
 
     /**
@@ -218,35 +205,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public FunctionEstimator reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new NNFunctionEstimator(getMemory().reference(), getNeuralNetwork().reference(), getTargetNeuralNetwork() != null, getParams());
-    }
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to value function.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new NNFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNeuralNetwork().reference(), getTargetNeuralNetwork() != null, getParams());
-    }
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param memory reference to memory.
-     * @return reference to value function.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator reference(Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new NNFunctionEstimator(memory, getNeuralNetwork().reference(), getTargetNeuralNetwork() != null, getParams());
+        return new NNFunctionEstimator(getNeuralNetwork().reference(), getTargetNeuralNetwork() != null, getParams());
     }
 
     /**
@@ -259,7 +218,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public FunctionEstimator copy() throws IOException, ClassNotFoundException, DynamicParamException, MatrixException {
-        return new NNFunctionEstimator(memory, getNeuralNetwork().copy(), getTargetNeuralNetwork() != null, getParams());
+        return new NNFunctionEstimator(getNeuralNetwork().copy(), getTargetNeuralNetwork() != null, getParams());
     }
 
     /**
@@ -307,8 +266,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * Resets neural network based function estimator.
      *
      */
-    public void reset() {
-        super.reset();
+    protected void reset() {
         stateCache.clear();
         stateValueMap.clear();
     }
@@ -345,23 +303,22 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private TreeMap<Integer, Matrix> getInputs(State state) throws MatrixException {
         TreeMap<Integer, Matrix> inputs = new TreeMap<>();
 
+        int stateInputIndex = 0;
+        int actionInputIndex = 0;
         State currentState = state;
-        for (int inputIndex = stateHistorySize - 1; inputIndex >= 0; inputIndex--) {
-            if (currentState != null) {
-                inputs.put(inputIndex, currentState.environmentState.state());
-                currentState = currentState.previousState;
-            }
-            else inputs.put(inputIndex, zeroStateInputReference);
+        while (currentState != null) {
+            if (stateInputIndex < stateHistorySize) inputs.put(stateInputIndex++, currentState.environmentState.state());
+            if (actionInputIndex < actionHistorySize) inputs.put(stateHistorySize + actionInputIndex++, state.action < getNumberOfActions() ? DMatrix.getOneHotVector(getNumberOfActions(), state.action) : new DMatrix(state.tdTarget));
+            currentState = currentState.previousState;
+            if (stateInputIndex >= stateHistorySize && actionInputIndex >= actionHistorySize) break;
         }
 
+        for (int paddedStateInputIndex = stateInputIndex; paddedStateInputIndex < stateHistorySize; paddedStateInputIndex++) {
+            inputs.put(paddedStateInputIndex, zeroStateInputReference);
+        }
         if (actionHistorySize > 0) {
-            currentState = state;
-            for (int inputIndex = actionHistorySize - 1; inputIndex >= 0; inputIndex--) {
-                if (currentState != null && currentState.action > -1) {
-                    inputs.put(stateHistorySize + inputIndex, currentState.action < getNumberOfActions() ? DMatrix.getOneHotVector(getNumberOfActions(), currentState.action) : new DMatrix(currentState.tdTarget));
-                    currentState = currentState.previousState;
-                }
-                else inputs.put(stateHistorySize + inputIndex, zeroActionInputReference);
+            for (int paddedActionInputIndex = stateInputIndex; paddedActionInputIndex < stateHistorySize; paddedActionInputIndex++) {
+                inputs.put(stateHistorySize + paddedActionInputIndex, zeroActionInputReference);
             }
         }
 
@@ -401,7 +358,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix predictStateActionValues(State state) throws NeuralNetworkException, MatrixException {
-        return predictValues(getNeuralNetwork(), state).get(!isStateActionValueFunction() ? 0 : 1);
+        return predictValues(getNeuralNetwork(), state).get(isStateActionValueFunction() ? 1 : 0);
     }
 
     /**
@@ -413,7 +370,19 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix predictTargetStateActionValues(State state) throws NeuralNetworkException, MatrixException {
-        return predictValues(getTargetNeuralNetwork(), state).get(!isStateActionValueFunction() ? 0 : 1);
+        return predictValues(getTargetNeuralNetwork(), state).get(isStateActionValueFunction() ? 1 : 0);
+    }
+
+    /**
+     * Stores values.
+     *
+     * @param state state.
+     * @param values values.
+     * @param outputIndex is 1 in case of state action values otherwise 0 (policy value / action values).
+     */
+    private void storeValues(State state, Matrix values, int outputIndex) {
+        if (!stateValueMap.containsKey(state)) stateValueMap.put(state, new TreeMap<>());
+        stateValueMap.get(state).put(outputIndex, values);
     }
 
     /**
@@ -422,8 +391,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param values values.
      */
     public void storePolicyValues(State state, Matrix values) {
-        if (!stateValueMap.containsKey(state)) stateValueMap.put(state, new TreeMap<>());
-        stateValueMap.get(state).put(0, values);
+        storeValues(state, values, 0);
     }
 
     /**
@@ -433,19 +401,15 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @param values values.
      */
     public void storeStateActionValues(State state, Matrix values) {
-        if (!isStateActionValueFunction()) storePolicyValues(state, values);
-        else {
-            if (!stateValueMap.containsKey(state)) stateValueMap.put(state, new TreeMap<>());
-            stateValueMap.get(state).put(1, values);
-        }
+        storeValues(state, values, isStateActionValueFunction() ? 1 : 0);
     }
 
     /**
      * Updates (trains) neural network.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
     public void update() throws NeuralNetworkException, DynamicParamException, MatrixException {
         HashMap<Integer, HashMap<Integer, Matrix>> inputs = new HashMap<>();
@@ -460,17 +424,20 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         HashMap<Integer, Double> importanceSamplingWeights = new HashMap<>();
 
         int index = 0;
+        boolean applyImportanceSamplingWeights = false;
         for (Map.Entry<State, TreeMap<Integer, Matrix>> entry: stateValueMap.entrySet()) {
             State state = entry.getKey();
 
             TreeMap<Integer, Matrix> currentInputs = getInputs(state);
             for (Map.Entry<Integer, Matrix> inputEntry : currentInputs.entrySet()) inputs.get(inputEntry.getKey()).put(index, inputEntry.getValue());
 
-            TreeMap<Integer, Matrix> matrix = entry.getValue();
-            for (Map.Entry<Integer, Matrix> entry1 : matrix.entrySet()) {
-                outputs.get(entry1.getKey()).put(index, entry1.getValue());
+            TreeMap<Integer, Matrix> currentOutputs = entry.getValue();
+            for (Map.Entry<Integer, Matrix> outputEntry : currentOutputs.entrySet()) outputs.get(outputEntry.getKey()).put(index, outputEntry.getValue());
+
+            if (state.applyImportanceSamplingWeight) {
+                importanceSamplingWeights.put(index, state.importanceSamplingWeight);
+                applyImportanceSamplingWeights = true;
             }
-            if (applyImportanceSamplingWeights) importanceSamplingWeights.put(index, state.importanceSamplingWeight);
 
             index++;
         }
@@ -506,15 +473,6 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void append(FunctionEstimator functionEstimator) throws MatrixException {
         getNeuralNetwork().append(((NNFunctionEstimator)functionEstimator).getNeuralNetwork(), 1);
-    }
-
-    /**
-     * Sets if importance sampling weights are applied.
-     *
-     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     */
-    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
-        this.applyImportanceSamplingWeights = applyImportanceSamplingWeights;
     }
 
 }
