@@ -17,7 +17,7 @@ import java.util.*;
  * Implements online memory.<br>
  *
  */
-public class OnlineMemory implements Memory, Serializable {
+public class OnlineMemory extends AbstractMemory implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 8600974850562595903L;
@@ -117,11 +117,22 @@ public class OnlineMemory implements Memory, Serializable {
     }
 
     /**
-     * Updates states in online memory with new error values.
+     * Samples memory.
      *
-     * @param states states.
+     * @return sampled states.
      */
-    public void update(TreeSet<State> states) {
+    public TreeSet<State> sample() {
+        if (sampledStates == null) {
+            sampledStates = new TreeSet<>(stateSet);
+            stateSet.clear();
+        }
+        return sampledStates;
+    }
+
+    /**
+     * Updates states in online memory with new error values.
+     */
+    public void update() {
     }
 
     /**
@@ -131,34 +142,6 @@ public class OnlineMemory implements Memory, Serializable {
     public void reset() {
         sampledStates = null;
         stateSet.clear();
-    }
-
-    /**
-     * Samples memory.
-     *
-     */
-    public void sample() {
-        if (sampledStates != null) return;
-        sampledStates = new TreeSet<>(stateSet);
-        stateSet.clear();
-    }
-
-    /**
-     * Samples defined number of states from online memory.
-     *
-     * @return retrieved states.
-     */
-    public TreeSet<State> getSampledStates() {
-        return sampledStates;
-    }
-
-    /**
-     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     */
-    public boolean applyImportanceSamplingWeights() {
-        return false;
     }
 
 }
