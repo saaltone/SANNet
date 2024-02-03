@@ -259,12 +259,6 @@ public class SumTree implements SearchTree, Serializable {
     }
 
     /**
-     * Capacity of sum tree.
-     *
-     */
-    private final int capacity;
-
-    /**
      * Map that links state store in sum tree to respective leaf node.
      *
      */
@@ -286,13 +280,7 @@ public class SumTree implements SearchTree, Serializable {
      * Current maximum priority of leaf nodes. Used for newly added sample as default priority.
      *
      */
-    private double maxPriority = 0.001;
-
-    /**
-     * Random number generator.
-     *
-     */
-    private final Random random = new Random();
+    private double maxPriority = Double.MIN_VALUE;
 
     /**
      * Default constructor for sum tree.
@@ -300,7 +288,6 @@ public class SumTree implements SearchTree, Serializable {
      * @param capacity capacity (number of leaf nodes) of sum tree.
      */
     SumTree(int capacity) {
-        this.capacity = capacity;
         currentLeafNode = getStartNode(rootNode = construct(capacity));
     }
 
@@ -316,7 +303,7 @@ public class SumTree implements SearchTree, Serializable {
         Node rootNode = new Node();
         nodes.add(rootNode);
 
-        while (nodes.size() < capacity && !nodes.isEmpty()) {
+        while (nodes.size() <= capacity && !nodes.isEmpty()) {
             Node parentNode = nodes.poll();
             nodes.add(parentNode.setLeftNode(new Node(parentNode)));
             nodes.add(parentNode.setRightNode(new Node(parentNode)));
@@ -358,15 +345,6 @@ public class SumTree implements SearchTree, Serializable {
     }
 
     /**
-     * Returns total capacity of sum tree.
-     *
-     * @return total capacity of sum tree.
-     */
-    private int capacity() {
-        return capacity;
-    }
-
-    /**
      * Returns total priority of sum tree i.e. total priority sum of sum tree stored in root node.
      *
      * @return total priority of sum tree.
@@ -379,15 +357,20 @@ public class SumTree implements SearchTree, Serializable {
      * Adds state in sum tree at the location of current node and shifts current node one forward.
      * Updates total priority of sum tree according to priority of added state.
      *
-     * @param state state to be added.
+     * @param newState new state to be added.
      */
-    public void add(State state) {
-        if (currentLeafNode.getState() != null) currentLeafNode.getState().removePreviousState();
-        stateNodeHashMap.remove(currentLeafNode.getState());
-        currentLeafNode.setState(state);
-        stateNodeHashMap.put(state, currentLeafNode);
-        state.priority = maxPriority = Math.max(maxPriority, state.priority);
+    public void add(State newState) {
+        if (currentLeafNode.getState() != null) {
+            currentLeafNode.getState().removePreviousState();
+            stateNodeHashMap.remove(currentLeafNode.getState());
+        }
+
+        currentLeafNode.setState(newState);
+        stateNodeHashMap.put(newState, currentLeafNode);
+
+        newState.priority = maxPriority = getMaxPriority(newState.priority);
         currentLeafNode.updatePrioritySum(maxPriority);
+
         currentLeafNode = currentLeafNode.getNextLeafNode();
     }
 
@@ -397,8 +380,18 @@ public class SumTree implements SearchTree, Serializable {
      * @param state state to be updated.
      */
     public void update(State state) {
-        maxPriority = Math.max(maxPriority, state.priority);
-        stateNodeHashMap.get(state).updatePrioritySum(state.priority);
+        maxPriority = getMaxPriority(state.priority);
+        if (stateNodeHashMap.get(state) != null) stateNodeHashMap.get(state).updatePrioritySum(state.priority);
+    }
+
+    /**
+     * Returns maximum priority.
+     *
+     * @param priority current priority.
+     * @return maximum priority.
+     */
+    private double getMaxPriority(double priority) {
+        return maxPriority == Double.MIN_VALUE ? priority : Math.max(maxPriority, priority);
     }
 
     /**
@@ -409,15 +402,6 @@ public class SumTree implements SearchTree, Serializable {
      */
     public State getState(double prioritySum) {
         return rootNode.getState(prioritySum);
-    }
-
-    /**
-     * Returns random state.
-     *
-     * @return random state.
-     */
-    public State getRandomState() {
-        return size() == 0 ? null : getState(random.nextDouble() * getTotalPriority());
     }
 
 }
