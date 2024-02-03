@@ -5,6 +5,8 @@
 
 package core.reinforcement.agent;
 
+import utils.matrix.Matrix;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -48,7 +50,7 @@ public class State implements Serializable, Comparable<State> {
     public double reward;
 
     /**
-     * Previous state .
+     * Previous state.
      *
      */
     public State previousState;
@@ -66,6 +68,12 @@ public class State implements Serializable, Comparable<State> {
     public double priority;
 
     /**
+     * If true applies importance sampling weight otherwise not.
+     *
+     */
+    public boolean applyImportanceSamplingWeight = false;
+
+    /**
      * Importance sampling weight.
      *
      */
@@ -78,10 +86,22 @@ public class State implements Serializable, Comparable<State> {
     public double policyValue;
 
     /**
+     * Policy values.
+     *
+     */
+    public Matrix policyValues;
+
+    /**
      * State value.
      *
      */
-    public double stateValue;
+    public double value;
+
+    /**
+     * Target action.
+     *
+     */
+    public int targetAction;
 
     /**
      * TD target value.
@@ -94,12 +114,6 @@ public class State implements Serializable, Comparable<State> {
      *
      */
     public double tdError;
-
-    /**
-     * Advantage.
-     *
-     */
-    public double advantage;
 
     /**
      * Constructor for state.
@@ -168,7 +182,7 @@ public class State implements Serializable, Comparable<State> {
      */
     public void print() {
         environmentState.print();
-        System.out.println("Action: " + action + " Policy Value: " + policyValue + " Reward: " + reward + " State Value: " + stateValue + " TD target: " + tdTarget + " TD error: " + tdError + " Advantage: " + advantage);
+        System.out.println("Action: " + action + " Policy Value: " + policyValue + " Reward: " + reward + " State Value: " + value + " TD target: " + tdTarget + " TD error: " + tdError);
     }
 
     /**
@@ -185,4 +199,5 @@ public class State implements Serializable, Comparable<State> {
             if (previousState != null) previousState.print(false);
         }
     }
+
 }
