@@ -6,7 +6,6 @@
 package core.reinforcement.function;
 
 import core.optimization.*;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -56,40 +55,40 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
     /**
      * Constructor for tabular function estimator.
      *
-     * @param memory memory reference.
      * @param numberOfStates number of states for tabular function estimator
      * @param numberOfActions number of actions for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false);
+    public TabularFunctionEstimator(int numberOfStates, int numberOfActions) throws DynamicParamException, MatrixException {
+        super (numberOfStates, numberOfActions, false);
     }
 
     /**
      * Constructor for tabular function estimator.
      *
-     * @param memory memory reference.
      * @param numberOfStates number of states for tabular function estimator
      * @param numberOfActions number of actions for tabular function estimator
      * @param params params for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, String params) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false, params);
+    public TabularFunctionEstimator(int numberOfStates, int numberOfActions, String params) throws DynamicParamException, MatrixException {
+        super (numberOfStates, numberOfActions, false, params);
     }
 
     /**
      * Constructor for tabular function estimator.
      *
-     * @param memory memory reference.
      * @param numberOfStates number of states for tabular function estimator
      * @param numberOfActions number of actions for tabular function estimator
      * @param stateValues state values inherited for tabular function estimator.
      * @param params params for tabular function estimator
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public TabularFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues, String params) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false, params);
+    public TabularFunctionEstimator(int numberOfStates, int numberOfActions, HashMap<Matrix, Matrix> stateValues, String params) throws DynamicParamException, MatrixException {
+        super (numberOfStates, numberOfActions, false, params);
         this.stateValues = stateValues;
     }
 
@@ -97,8 +96,9 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Initializes default params.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() throws DynamicParamException {
+    public void initializeDefaultParams() throws DynamicParamException, MatrixException {
         optimizer = new Adam();
     }
 
@@ -108,7 +108,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @return parameters used for tabular function estimator.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + TabularFunctionEstimator.paramNameTypes;
+        return TabularFunctionEstimator.paramNameTypes;
     }
 
     /**
@@ -122,12 +122,16 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
-        super.setParams(params);
         if (params.hasParam("optimizerName")) {
             String optimizerName = params.getValueAsString("optimizerName");
             double learningRate = 0.001;
             if (params.hasParam("learningRate")) learningRate = params.getValueAsDouble("learningRate");
-            optimizer = OptimizerFactory.create(optimizerName, "learningRate = " + learningRate);
+            try {
+                optimizer = OptimizerFactory.create(optimizerName, "learningRate = " + learningRate);
+            }
+            catch (MatrixException matrixException) {
+                throw new DynamicParamException("Initialization of optimizer failed: " + matrixException);
+            }
         }
     }
 
@@ -150,31 +154,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator reference() throws DynamicParamException {
-        return new TabularFunctionEstimator(getMemory().reference(), getNumberOfStates(), getNumberOfActions(), getParams());
-    }
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
-        return new TabularFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions(), getParams());
-    }
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param memory reference to memory.
-     * @return reference to value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator reference(Memory memory) throws DynamicParamException {
-        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
+    public FunctionEstimator reference() throws DynamicParamException, MatrixException {
+        return new TabularFunctionEstimator(getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
@@ -182,9 +165,10 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @return shallow copy of tabular function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator copy() throws DynamicParamException {
-        return new TabularFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), stateValues, getParams());
+    public FunctionEstimator copy() throws DynamicParamException, MatrixException {
+        return new TabularFunctionEstimator(getNumberOfStates(), getNumberOfActions(), stateValues, getParams());
     }
 
     /**
@@ -208,8 +192,7 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
      * Resets tabular function estimator.
      *
      */
-    public void reset() {
-        super.reset();
+    protected void reset() {
         stateValueMap.clear();
     }
 
@@ -311,14 +294,6 @@ public class TabularFunctionEstimator extends AbstractFunctionEstimator {
 
         updateComplete();
         reset();
-    }
-
-    /**
-     * Sets if importance sampling weights are applied.
-     *
-     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     */
-    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
     /**
