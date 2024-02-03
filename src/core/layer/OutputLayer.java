@@ -71,18 +71,6 @@ public class OutputLayer extends AbstractPlainLayer {
      * Constructor for output layer.
      *
      * @param layerIndex index of layer.
-     * @param lossFunction loss function for output layer.
-     * @throws NeuralNetworkException throws exception if setting of activation function fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public OutputLayer(int layerIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
-        this(layerIndex, -1,  lossFunction);
-    }
-
-    /**
-     * Constructor for output layer.
-     *
-     * @param layerIndex index of layer.
      * @param layerGroupIndex index of layer group.
      * @param lossFunction loss function for output layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
