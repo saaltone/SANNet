@@ -10,13 +10,13 @@ import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.AbstractPolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParamException;
 import utils.matrix.*;
 
-import java.io.IOException;
 import java.util.TreeSet;
 
 /**
@@ -30,59 +30,28 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      * Constructor for abstract updateable policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
+     * @param functionEstimator    reference to function estimator.
+     * @param memory               reference to memory.
+     * @param params               parameters for abstract updateable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator);
+    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(executablePolicyType, functionEstimator, memory, params);
     }
 
     /**
      * Constructor for abstract updateable policy.
      *
-     * @param executablePolicy executable policy.
+     * @param executablePolicy  executable policy.
      * @param functionEstimator reference to function estimator.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @param memory            reference to memory.
+     * @param params            parameters for AbstractExecutablePolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException, DynamicParamException {
-        super(executablePolicy, functionEstimator);
-    }
-
-    /**
-     * Constructor for abstract updateable policy.
-     *
-     * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
-     * @param params parameters for abstract updateable policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public AbstractUpdateablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator, params);
-    }
-
-    /**
-     * Constructor for abstract updateable policy.
-     *
-     * @param executablePolicy executable policy.
-     * @param functionEstimator reference to function estimator.
-     * @param params parameters for AbstractExecutablePolicy.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, String params) throws AgentException, DynamicParamException {
-        super(executablePolicy, functionEstimator, params);
-    }
-
-    /**
-     * Return true if policy is updateable otherwise false.
-     *
-     * @return true if policy is updateable otherwise false.
-     */
-    public boolean isUpdateablePolicy() {
-        return true;
+    public AbstractUpdateablePolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(executablePolicy, functionEstimator, memory, params);
     }
 
     /**
@@ -91,14 +60,6 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
      */
     public void endEpisode() {
         getExecutablePolicy().endEpisode();
-    }
-
-    /**
-     * Resets function estimator.
-     *
-     */
-    public void resetFunctionEstimator() {
-        getFunctionEstimator().reset();
     }
 
     /**
@@ -115,71 +76,35 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     /**
      * Updates function estimator.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
-     */
-    public void updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        updateFunctionEstimator(getFunctionEstimator().getSampledStates());
-    }
-
-    /**
-     * Updates function estimator.
-     *
      * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
-        if (sampledStates == null || sampledStates.isEmpty()) {
-            getFunctionEstimator().abortUpdate();
-            return;
-        }
-
-        for (State state : sampledStates) getFunctionEstimator().storePolicyValues(state, getPolicyValues(state));
-
+    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        for (State state : sampledStates) getFunctionEstimator().storePolicyValues(state, getPolicyGradient(state));
         postProcess();
-
         getFunctionEstimator().update();
     }
 
     /**
-     * Returns policy values.
+     * Returns policy gradient for state.
      *
      * @param state state.
-     * @return policy values.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @return policy gradient.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    private Matrix getPolicyValues(State state) throws MatrixException, NeuralNetworkException {
-        Matrix policyValues = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
-        policyValues.setValue(state.action, 0, 0, getPolicyValue(state));
-        return policyValues;
-    }
-
-    /**
-     * Returns policy value for state.
-     *
-     * @param state state.
-     * @return policy gradient value for sample.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract double getPolicyValue(State state) throws NeuralNetworkException, MatrixException;
+    protected abstract Matrix getPolicyGradient(State state) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
      * Postprocesses policy gradient update.
      *
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void postProcess() throws MatrixException {
+    protected void postProcess() throws MatrixException, DynamicParamException {
     }
 
 }
