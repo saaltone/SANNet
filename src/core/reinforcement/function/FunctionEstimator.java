@@ -8,7 +8,6 @@ package core.reinforcement.function;
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
-import core.reinforcement.memory.Memory;
 import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.configurable.DynamicParamException;
@@ -17,7 +16,6 @@ import utils.matrix.MatrixException;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.TreeSet;
 
 /**
  * Interface defining function estimator.<br>
@@ -37,30 +35,6 @@ public interface FunctionEstimator extends Configurable {
     FunctionEstimator reference() throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
 
     /**
-     * Returns reference to function estimator.
-     *
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to value function.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param memory reference to memory.
-     * @return reference to value function.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    FunctionEstimator reference(Memory memory) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException;
-
-    /**
      * Returns number of states for function estimator.
      *
      * @return number of states for function estimator.
@@ -73,13 +47,6 @@ public interface FunctionEstimator extends Configurable {
      * @return number of actions for function estimator.
      */
     int getNumberOfActions();
-
-    /**
-     * Returns reference to memory of function estimator.
-     *
-     * @return reference to memory of function estimator.
-     */
-    Memory getMemory();
 
     /**
      * Starts function estimator.
@@ -104,32 +71,6 @@ public interface FunctionEstimator extends Configurable {
     void registerAgent(Agent agent);
 
     /**
-     * Resets function estimator.
-     *
-     */
-    void reset();
-
-    /**
-     * Samples memory of function estimator.
-     *
-     */
-    void sample();
-
-    /**
-     * Returns sampled states.
-     *
-     * @return sampled states.
-     */
-    TreeSet<State> getSampledStates();
-
-    /**
-     * Adds new state into memory of function estimator.
-     *
-     * @param state state
-     */
-    void add(State state);
-
-    /**
      * Notifies that agent is ready to update.
      *
      * @param agent current agent.
@@ -137,13 +78,6 @@ public interface FunctionEstimator extends Configurable {
      * @return true if all registered agents are ready to update.
      */
     boolean readyToUpdate(Agent agent) throws AgentException;
-
-    /**
-     * Updates states in memory of function estimator.
-     *
-     * @param states states
-     */
-    void update(TreeSet<State> states);
 
     /**
      * If true value function is combined state action value function.
@@ -229,12 +163,6 @@ public interface FunctionEstimator extends Configurable {
     void update() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Aborts function estimator update.
-     *
-     */
-    void abortUpdate();
-
-    /**
      * Appends from function estimator.
      *
      * @param functionEstimator function estimator.
@@ -243,28 +171,13 @@ public interface FunctionEstimator extends Configurable {
     void append(FunctionEstimator functionEstimator) throws MatrixException;
 
     /**
-     * Returns max value of state given available actions.
-     *
-     * @param stateValues state values.
-     * @param availableActions actions available in state.
-     * @return max value of state.
-     */
-    double max(Matrix stateValues, HashSet<Integer> availableActions);
-
-    /**
      * Returns action with maximum state value given available actions.
      *
      * @param stateValues state values.
      * @param availableActions actions available in state.
      * @return action with maximum state value.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    int argmax(Matrix stateValues, HashSet<Integer> availableActions);
-
-    /**
-     * Sets if importance sampling weights are applied.
-     *
-     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     */
-    void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights);
+    int argmax(Matrix stateValues, HashSet<Integer> availableActions) throws MatrixException;
 
 }
