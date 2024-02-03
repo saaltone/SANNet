@@ -90,6 +90,8 @@ public class BinaryFunction implements Serializable {
      * Supported parameters are:<br>
      *     - delta: default value for Huber loss 1.<br>
      *     - hinge: default value for hinge margin 1.<br>
+     *     - delta: default value for huber delta 1.<br>
+     *     - numberOfQuantiles: number of quantiles for quantile loss. Default value 10.<br>
      *
      * @param binaryFunctionType type of function to be used.
      * @param params parameters used for function.
@@ -124,8 +126,8 @@ public class BinaryFunction implements Serializable {
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.signum(value - constant);
             }
             case MEAN_ABSOLUTE_PERCENTAGE_ERROR -> {
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * Math.abs((value - constant) / constant);
-                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> 100 * (value - constant) / (Math.abs(constant) * Math.abs(value - constant));
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs((value - constant) / constant);
+                derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> (value - constant) / (Math.abs(constant) * Math.abs(value - constant));
             }
             case CROSS_ENTROPY -> {
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> -(constant * Math.log(value));
@@ -164,7 +166,7 @@ public class BinaryFunction implements Serializable {
                     DynamicParam dynamicParam = new DynamicParam(params, "(delta:DOUBLE)");
                     if (dynamicParam.hasParam("delta")) huberDelta = dynamicParam.getValueAsDouble("delta");
                 }
-                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * Math.abs(value - constant) - 0.5 * Math.pow(huberDelta, 2);
+                function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * (Math.abs(value - constant) - 0.5 * huberDelta);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? value - constant : huberDelta * Math.signum(value - constant);
             }
             case DIRECT_GRADIENT -> {
