@@ -5,7 +5,9 @@
 
 package demo;
 
+import core.activation.ActivationFunctionType;
 import core.layer.utils.AttentionLayerFactory;
+import core.loss.LossFunctionType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -494,7 +496,6 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      *
      */
     public void initWindow() {
-        JFrame.setDefaultLookAndFeelDecorated(true);
         jFrame = new JFrame("Maze");
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setBackground(Color.white);
@@ -556,9 +557,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws IOException throws exception if copying of neural network instance fails.
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    public void initializeMazeAgent() throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         agent = createAgent();
         initMaze();
     }
@@ -610,12 +610,10 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException {
+    public void playAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         agent.startEpisode();
         while (true) {
             agent.newTimeStep();
@@ -753,9 +751,8 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
      * @throws IOException throws exception if copying of neural network instance fails.
      * @throws ClassNotFoundException throws exception if copying of neural network instance fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException, AgentException {
+    private Agent createAgent() throws MatrixException, NeuralNetworkException, DynamicParamException, IOException, ClassNotFoundException {
         boolean singleFunctionEstimator = false;
         int policyType = 4;
         ExecutablePolicyType executablePolicyType = null;
@@ -764,7 +761,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 0 -> executablePolicyType = ExecutablePolicyType.GREEDY;
             case 1 -> {
                 executablePolicyType = ExecutablePolicyType.EPSILON_GREEDY;
-                policyTypeParams = "epsilonInitial = 0.05, epsilonMin = 0.05";
+                policyTypeParams = "epsilonInitial = 0.1, epsilonMin = 0.1";
             }
             case 2 -> {
                 executablePolicyType = ExecutablePolicyType.NOISY_NEXT_BEST;
@@ -778,8 +775,9 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             case 5 -> executablePolicyType = ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
             case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
             case 7 -> executablePolicyType = ExecutablePolicyType.NOISY;
+            case 8 -> executablePolicyType = ExecutablePolicyType.OU_NOISE;
         }
-        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDPG;
+        AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.PPO;
         boolean onlineMemory = switch (agentAlgorithmType) {
             case DDQN, DDPG, SACDiscrete -> false;
             default -> true;
@@ -789,9 +787,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case DDPG -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 1000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.01";
-            case SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true, capacity = 1000, targetFunctionUpdateCycle = 0, targetFunctionTau = 0.001";
-            case MCTS -> "gamma = 1, updateValuePerEpisode = true";
+            case DDPG, SACDiscrete -> "applyUniformSampling = true";
             default -> "";
         };
 
@@ -808,29 +804,30 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     /**
      * Build neural network for maze (agent).
      *
-     * @param inputSize input size of neural network (number of states)
-     * @param outputSize output size of neural network (number of actions and their values).
+     * @param inputSize      input size of neural network (number of states)
+     * @param outputSize     output size of neural network (number of actions and their values).
      * @param policyGradient if true neural network is policy gradient network.
-     * @param applyDueling if true applied dueling layer to non policy gradient network otherwise not.
+     * @param applyDueling   if true applied dueling layer to non policy gradient network otherwise not.
      * @return built neural network
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws DynamicParamException  throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
      */
     public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize, boolean policyGradient, boolean applyDueling) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
         int attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 4, inputSize, 1, 1, 1, true);
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(UnaryFunctionType.LINEAR) : new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, policyGradient ? new ActivationFunction(ActivationFunctionType.SOFTMAX) : new ActivationFunction(ActivationFunctionType.STANH), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
 
-        if (!policyGradient && applyDueling) {
+        if (applyDueling) {
             int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
             hiddenLayerIndex = hiddenLayerIndex1;
         }
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(!policyGradient ? BinaryFunctionType.MEAN_SQUARED_ERROR : BinaryFunctionType.DIRECT_GRADIENT);
+
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(policyGradient ? LossFunctionType.DIRECT_GRADIENT : LossFunctionType.MEAN_SQUARED_ERROR);
 
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
@@ -840,6 +837,7 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
         if (!policyGradient) {
             neuralNetwork.verboseTraining(10);
         }
+        neuralNetwork.setShowTrainingMetrics(true);
 
         return neuralNetwork;
     }
@@ -847,32 +845,36 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
     /**
      * Build neural network for maze (agent).
      *
-     * @param inputSize input size of neural network (number of states)
-     * @param outputSize output size of neural network (number of actions and their values).
+     * @param inputSize       input size of neural network (number of states)
+     * @param actorOutputSize actor output size of neural network (number of actions and their values).
+     * @param valueOutputSize value output size of neural network.
      * @return built neural network
-     * @throws DynamicParamException throws exception if setting of dynamic parameters fails.
+     * @throws DynamicParamException  throws exception if setting of dynamic parameters fails.
      * @throws NeuralNetworkException throws exception if building of neural network fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws MatrixException        throws exception if custom function is attempted to be created with this constructor.
      */
-    public NeuralNetwork buildNeuralNetwork(int inputSize, int outputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
+    public NeuralNetwork buildNeuralNetwork(int inputSize, int actorOutputSize, int valueOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
 
         int attentionLayerIndex = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 4, inputSize, 1, 1, 1, true);
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.DIRECT_GRADIENT);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
+        if (actorOutputSize != -1) {
+            int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + actorOutputSize);
+            neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex);
+            int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.DIRECT_GRADIENT);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
+        }
 
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.ELU), "width = 1");
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.TANH), "width = " + valueOutputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayerIndex, hiddenLayerIndex1);
-        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        int outputLayerIndex1 = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, outputLayerIndex1);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
         neuralNetwork.setOptimizer(OptimizationType.RADAM);
         neuralNetwork.verboseTraining(10);
+        neuralNetwork.setShowTrainingMetrics(true);
 
         return neuralNetwork;
     }
