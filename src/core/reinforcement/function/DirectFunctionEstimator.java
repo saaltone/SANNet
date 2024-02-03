@@ -5,11 +5,11 @@
 
 package core.reinforcement.function;
 
-import core.reinforcement.memory.Memory;
 import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 /**
  * Implements direct function estimator (proxy for memory) to be used with plain value function.<br>
@@ -21,34 +21,25 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      * Constructor for direct function estimator.
      *
      * @param functionEstimator function estimator reference.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public DirectFunctionEstimator(FunctionEstimator functionEstimator) throws DynamicParamException {
-        this (functionEstimator, null);
-    }
-
-    /**
-     * Constructor for direct function estimator.
-     *
-     * @param functionEstimator function estimator reference.
      * @param params parameters for function
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public DirectFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
-        this (functionEstimator.getMemory(), functionEstimator.getNumberOfStates(), functionEstimator.getNumberOfActions(), params);
+    public DirectFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException, MatrixException {
+        this (functionEstimator.getNumberOfStates(), functionEstimator.getNumberOfActions(), params);
     }
 
     /**
      * Constructor for direct function estimator.
      *
-     * @param memory memory reference.
      * @param numberOfStates number of states for direct function estimator
      * @param numberOfActions number of actions for direct function estimator
      * @param params parameters for function
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public DirectFunctionEstimator(Memory memory, int numberOfStates, int numberOfActions, String params) throws DynamicParamException {
-        super (memory, numberOfStates, numberOfActions, false, params);
+    public DirectFunctionEstimator(int numberOfStates, int numberOfActions, String params) throws DynamicParamException, MatrixException {
+        super (numberOfStates, numberOfActions, false, params);
     }
 
     /**
@@ -63,31 +54,19 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      *
      * @return reference to value function.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator reference() throws DynamicParamException {
-        return new DirectFunctionEstimator(this, getParams());
+    public FunctionEstimator reference() throws DynamicParamException, MatrixException {
+        return new DirectFunctionEstimator(getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
-     * Returns reference to function estimator.
+     * Returns parameters used for abstract function estimator.
      *
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @return parameters used for abstract function estimator.
      */
-    public FunctionEstimator reference(boolean sharedMemory) throws DynamicParamException {
-        return new DirectFunctionEstimator(sharedMemory ? getMemory() : getMemory().reference(), getNumberOfStates(), getNumberOfActions(), getParams());
-    }
-
-    /**
-     * Returns reference to function estimator.
-     *
-     * @param memory reference to memory.
-     * @return reference to value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public FunctionEstimator reference(Memory memory) throws DynamicParamException {
-        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
+    public String getParamDefs() {
+        return null;
     }
 
     /**
@@ -113,13 +92,21 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
     }
 
     /**
+     * Not used.
+     *
+     */
+    protected void reset() {
+    }
+
+    /**
      * Returns shallow copy of direct function estimator.
      *
      * @return shallow copy of direct function estimator.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public FunctionEstimator copy() throws DynamicParamException {
-        return new DirectFunctionEstimator(memory, getNumberOfStates(), getNumberOfActions(), getParams());
+    public FunctionEstimator copy() throws DynamicParamException, MatrixException {
+        return new DirectFunctionEstimator(getNumberOfStates(), getNumberOfActions(), getParams());
     }
 
     /**
@@ -186,14 +173,6 @@ public class DirectFunctionEstimator extends AbstractFunctionEstimator {
      */
     public void update() {
         updateComplete();
-    }
-
-    /**
-     * Sets if importance sampling weights are applied.
-     *
-     * @param applyImportanceSamplingWeights if true importance sampling weights are applied otherwise not.
-     */
-    public void setEnableImportanceSamplingWeights(boolean applyImportanceSamplingWeights) {
     }
 
     /**
