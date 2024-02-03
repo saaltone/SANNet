@@ -6,16 +6,15 @@
 package core.reinforcement.algorithm;
 
 import core.network.NeuralNetworkException;
-import core.reinforcement.agent.AgentException;
-import core.reinforcement.agent.DeepAgent;
-import core.reinforcement.agent.Environment;
-import core.reinforcement.agent.StateSynchronization;
+import core.reinforcement.agent.*;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
 /**
  * Implements abstract Q Learning functionality.<br>
@@ -27,14 +26,15 @@ public abstract class AbstractQLearning extends DeepAgent {
      * Constructor for abstract Q Learning.
      *
      * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
-     * @param actionablePolicy reference to actionablePolicy.
-     * @param valueFunction reference to value function.
-     * @param params parameters for agent.
+     * @param environment          reference to environment.
+     * @param actionablePolicy     reference to actionablePolicy.
+     * @param valueFunction        reference to value function.
+     * @param memory               reference to memory.
+     * @param params               parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractQLearning(StateSynchronization stateSynchronization, Environment environment, ActionablePolicy actionablePolicy, ValueFunction valueFunction, String params) throws DynamicParamException {
-        super(stateSynchronization, environment, actionablePolicy, valueFunction, params);
+    public AbstractQLearning(StateSynchronization stateSynchronization, Environment environment, ActionablePolicy actionablePolicy, ValueFunction valueFunction, Memory memory, String params) throws DynamicParamException {
+        super(stateSynchronization, environment, actionablePolicy, valueFunction, memory, params);
     }
 
     /**
@@ -46,12 +46,19 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @throws AgentException throws exception if update cycle is ongoing.
      */
     protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        if(valueFunction.readyToUpdate(this)) {
-            valueFunction.sample();
-            if (!updateValuePerEpisode) valueFunction.update();
-            valueFunction.updateFunctionEstimator();
-            valueFunction.resetFunctionEstimator();
+        TreeSet<State> sampledStates = memory.sample();
+        if (sampledStates != null && !sampledStates.isEmpty()) {
+            if(valueFunction.readyToUpdate(this)) {
+                valueFunction.update(sampledStates);
+                valueFunction.updateFunctionEstimator(sampledStates);
+            }
+
+            if (memory.readyToUpdate(this)) {
+                memory.update();
+                memory.reset();
+            }
         }
+
     }
 
     /**
@@ -64,8 +71,7 @@ public abstract class AbstractQLearning extends DeepAgent {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
+    public abstract AbstractQLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException;
 
 }
