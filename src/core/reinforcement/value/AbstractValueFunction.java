@@ -65,6 +65,12 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     private double averageTDError = Double.MIN_VALUE;
 
     /**
+     * Averaging tau.
+     *
+     */
+    private final double averagingTau = 0.99;
+
+    /**
      * Print cycle for average TD data verbosing.
      *
      */
@@ -80,12 +86,10 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * Constructor for abstract value function.
      *
      * @param params parameters for value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    AbstractValueFunction(String params) throws DynamicParamException {
+    AbstractValueFunction(String params) {
         initializeDefaultParams();
         this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -131,82 +135,42 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     }
 
     /**
-     * Updates state value.
-     *
-     * @param state state.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected abstract void updateValue(State state) throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Updates baseline value for states.
-     *
-     * @param states states.
-     */
-    protected abstract void updateBaseline(TreeSet<State> states);
-
-    /**
-     * Returns sampled states.
-     *
-     * @return sampled states.
-     */
-    protected abstract TreeSet<State> getSampledStates();
-
-    /**
      * Updates value function for state set sampled from memory.
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    public void update() throws MatrixException, NeuralNetworkException {
-        updateValue(getSampledStates());
-    }
+    public void update(TreeSet<State> sampledStates) throws MatrixException, NeuralNetworkException, DynamicParamException {
+        if (sampledStates == null) return;
 
-    /**
-     * Updates values for current state chain end from of sequence to start.
-     *
-     * @param state state.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    public void update(State state) throws NeuralNetworkException, MatrixException {
-        TreeSet<State> states = new TreeSet<>();
-        State currentState = state;
-        while (currentState != null) {
-            states.add(currentState);
-            currentState = currentState.previousState;
-        }
-        updateValue(states);
-    }
+        for (State state : sampledStates.descendingSet()) {
+            state.value = getStateValue(state);
+            if (!state.isFinalState()) state.nextState.targetAction = getTargetAction(state.nextState);
+            state.tdTarget = state.reward + (state.isFinalState() ? 0 : gamma * getTargetValue(state.nextState));
+            state.tdError = state.tdTarget - state.value;
 
-    /**
-     * Updates values of states.
-     *
-     * @param states states.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     */
-    private void updateValue(TreeSet<State> states) throws MatrixException, NeuralNetworkException {
-        if (states == null) return;
-
-        for (State state : states.descendingSet()) {
-            updateValue(state);
-            double nextStateValue = state.isFinalState() ? 0 : gamma * getTargetValue(state.nextState);
-            state.tdTarget = state.reward + nextStateValue;
-            state.tdError = state.tdTarget - state.stateValue;
-            state.advantage = state.policyValue - state.stateValue;
-            averageReward = averageReward == Double.MIN_VALUE ? state.reward : 0.99 * averageReward + 0.01 * state.reward;
-            averageTDTarget = averageTDTarget == Double.MIN_VALUE ? state.tdTarget : 0.99 * averageTDTarget + 0.01 * state.tdTarget;
-            averageTDError = averageTDError == Double.MIN_VALUE ? state.tdError : 0.99 * averageTDError + 0.01 * state.tdError;
+            averageReward = averageReward == Double.MIN_VALUE ? state.reward : averagingTau * averageReward + (1 - averagingTau) * state.reward;
+            averageTDTarget = averageTDTarget == Double.MIN_VALUE ? state.tdTarget : averagingTau * averageTDTarget + (1 - averagingTau) * state.tdTarget;
+            averageTDError = averageTDError == Double.MIN_VALUE ? state.tdError : averagingTau * averageTDError + (1 - averagingTau) * state.tdError;
             if (tdDataPrintCycle > 0 && ++tdDataPrintCount >= tdDataPrintCycle) {
                 System.out.println("Average Reward: " + averageReward + ", Average TD target: " + averageTDTarget + ", Average TD error: " + averageTDError);
                 tdDataPrintCount = 0;
             }
         }
 
-        updateBaseline(states);
+        updateBaseline(sampledStates);
     }
+
+    /**
+     * Return predicted state value.
+     *
+     * @param state state
+     * @return predicted state value.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected abstract double getStateValue(State state) throws NeuralNetworkException, MatrixException;
 
     /**
      * Returns target value based on next state.
@@ -214,8 +178,26 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @param nextState next state.
      * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected abstract double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException;
+    protected abstract double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException, DynamicParamException;
+
+    /**
+     * Returns target action based on next state.
+     *
+     * @param nextState next state.
+     * @return target action based on next state
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     */
+    protected abstract int getTargetAction(State nextState) throws NeuralNetworkException, MatrixException;
+
+    /**
+     * Updates baseline value for states.
+     *
+     * @param states states.
+     */
+    protected abstract void updateBaseline(TreeSet<State> states);
 
 }

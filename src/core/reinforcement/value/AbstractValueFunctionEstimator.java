@@ -41,13 +41,11 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      *
      * @param functionEstimator reference to function estimator.
      * @param params parameters for value function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public AbstractValueFunctionEstimator(FunctionEstimator functionEstimator, String params) throws DynamicParamException {
+    public AbstractValueFunctionEstimator(FunctionEstimator functionEstimator, String params) {
         super(params);
         this.functionEstimator = functionEstimator;
         this.isStateActionValueFunction = getFunctionEstimator().isStateActionValueFunction();
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -56,7 +54,7 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @return parameters used for abstract value function estimator.
      */
     public String getParamDefs() {
-        return super.getParamDefs() + ", " + getFunctionEstimator().getParamDefs();
+        return super.getParamDefs() + ", " +  (getFunctionEstimator().getParamDefs() == null ? "" : ", " + getFunctionEstimator().getParamDefs());
     }
 
     /**
@@ -103,41 +101,6 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Returns value function index.
-     *
-     * @param state state.
-     * @return value function index.
-     */
-    protected abstract int getValueFunctionIndex(State state);
-
-    /**
-     * Updates state value.
-     *
-     * @param state state.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    protected void updateValue(State state) throws NeuralNetworkException, MatrixException {
-        state.stateValue = getFunctionEstimator().predictStateActionValues(state).getValue(getValueFunctionIndex(state), 0, 0);
-    }
-
-    /**
-     * Updates baseline value for states.
-     *
-     * @param states states.
-     */
-    protected void updateBaseline(TreeSet<State> states) {
-    }
-
-    /**
-     * Resets function estimator.
-     *
-     */
-    public void resetFunctionEstimator() {
-        getFunctionEstimator().reset();
-    }
-
-    /**
      * Notifies that agent is ready to update.
      *
      * @param agent current agent.
@@ -149,48 +112,35 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
     }
 
     /**
-     * Samples memory of function estimator.
+     * Returns value function index.
      *
+     * @param state state.
+     * @return value function index.
      */
-    public void sample() {
-        getFunctionEstimator().sample();
-    }
+    protected abstract int getValueFunctionIndex(State state);
 
     /**
-     * Returns sampled states.
+     * Return predicted state values.
      *
-     * @return sampled states.
-     */
-    public TreeSet<State> getSampledStates() {
-        return getFunctionEstimator().getSampledStates();
-    }
-
-    /**
-     * Returns function estimator.
-     *
-     * @return function estimator.
-     */
-    public FunctionEstimator getFunctionEstimator() {
-        return functionEstimator;
-    }
-
-    /**
-     * Updates function estimator.
-     *
-     * @return sampled states.
+     * @param state state
+     * @return state values.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public TreeSet<State> updateFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
-        TreeSet<State> sampledStates = getSampledStates();
-        if (sampledStates == null || sampledStates.isEmpty()) getFunctionEstimator().abortUpdate();
-        else {
-            getFunctionEstimator().update(sampledStates);
-            updateTargetValues(getFunctionEstimator(), sampledStates);
-            if (!isStateActionValueFunction()) getFunctionEstimator().update();
-        }
-        return sampledStates;
+    protected Matrix getStateValues(State state) throws MatrixException, NeuralNetworkException {
+        return getFunctionEstimator().predictStateActionValues(state);
+    }
+
+    /**
+     * Return predicted state value.
+     *
+     * @param state state
+     * @return predicted state value.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException throws exception if matrix operation fails.
+     */
+    protected double getStateValue(State state) throws MatrixException, NeuralNetworkException {
+        return getStateValues(state).getValue(getValueFunctionIndex(state), 0, 0);
     }
 
     /**
@@ -207,6 +157,36 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
             targetValues.setValue(getValueFunctionIndex(state), 0, 0, state.tdTarget);
             currentFunctionEstimator.storeStateActionValues(state, targetValues);
         }
+    }
+
+    /**
+     * Returns function estimator.
+     *
+     * @return function estimator.
+     */
+    public FunctionEstimator getFunctionEstimator() {
+        return functionEstimator;
+    }
+
+    /**
+     * Prepares function estimator update.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        updateTargetValues(getFunctionEstimator(), sampledStates);
+        if (!isStateActionValueFunction()) getFunctionEstimator().update();
+    }
+
+    /**
+     * Updates baseline value for states.
+     *
+     * @param states states.
+     */
+    protected void updateBaseline(TreeSet<State> states) {
     }
 
 }
