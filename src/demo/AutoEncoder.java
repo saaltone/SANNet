@@ -6,7 +6,9 @@
 package demo;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
+import core.loss.LossFunctionType;
 import core.metrics.ClassificationMetric;
 import core.network.EarlyStopping;
 import core.network.NeuralNetwork;
@@ -142,16 +144,16 @@ public class AutoEncoder {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 3));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 5));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 5));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + (inputSize - 3));
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + inputSize);
-        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.SOFTMAX));
-        neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.COS_SIM);
+        neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.SOFTMAX));
+        neuralNetworkConfiguration.addOutputLayer(LossFunctionType.COS_SIM);
         neuralNetworkConfiguration.connectLayersSerially();
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
