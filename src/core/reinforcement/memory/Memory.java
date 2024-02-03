@@ -5,6 +5,8 @@
 
 package core.reinforcement.memory;
 
+import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 
@@ -24,6 +26,22 @@ public interface Memory extends Configurable {
     Memory reference();
 
     /**
+     * Registers agent for function estimator.
+     *
+     * @param agent agent.
+     */
+    void registerAgent(Agent agent);
+
+    /**
+     * Notifies that agent is ready to update.
+     *
+     * @param agent current agent.
+     * @return returns true memory is ready for update otherwise returns false.
+     * @throws AgentException throws exception if agent is not registered for function estimator.
+     */
+    boolean readyToUpdate(Agent agent) throws AgentException;
+
+    /**
      * Adds state into memory.
      *
      * @param state sample to be stored.
@@ -31,36 +49,21 @@ public interface Memory extends Configurable {
     void add(State state);
 
     /**
-     * Updates states in memory with new error values.
+     * Samples memory.
      *
-     * @param states states.
+     * @return sampled states.
      */
-    void update(TreeSet<State> states);
+    TreeSet<State> sample();
+
+    /**
+     * Updates states in memory with new error values.
+     */
+    void update();
 
     /**
      * Resets memory.
      *
      */
     void reset();
-
-    /**
-     * Samples memory.
-     *
-     */
-    void sample();
-
-    /**
-     * Samples defined number of states from memory.
-     *
-     * @return retrieved states.
-     */
-    TreeSet<State> getSampledStates();
-
-    /**
-     * Returns true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     *
-     * @return true if memory contains importance sampling weights, and they are to be applied otherwise returns false.
-     */
-    boolean applyImportanceSamplingWeights();
 
 }
