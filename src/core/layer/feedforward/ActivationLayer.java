@@ -6,6 +6,7 @@
 package core.layer.feedforward;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.AbstractExecutionLayer;
 import core.layer.WeightSet;
 import core.network.NeuralNetworkException;
@@ -44,7 +45,7 @@ public class ActivationLayer extends AbstractExecutionLayer {
      */
     public ActivationLayer(int layerIndex, ActivationFunction activationFunction, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
         super (layerIndex, null, params);
-        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(UnaryFunctionType.RELU);
+        this.activationFunction = activationFunction != null ? activationFunction : new ActivationFunction(ActivationFunctionType.RELU);
     }
 
     /**
