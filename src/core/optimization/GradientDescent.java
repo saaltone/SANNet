@@ -35,8 +35,9 @@ public class GradientDescent extends AbstractOptimizer {
      * Default constructor for Gradient Descent.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public GradientDescent() throws DynamicParamException {
+    public GradientDescent() throws DynamicParamException, MatrixException {
         super(OptimizationType.GRADIENT_DESCENT, GradientDescent.paramNameTypes);
     }
 
@@ -45,8 +46,9 @@ public class GradientDescent extends AbstractOptimizer {
      *
      * @param params parameters for Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public GradientDescent(String params) throws DynamicParamException {
+    public GradientDescent(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.GRADIENT_DESCENT, GradientDescent.paramNameTypes, params);
     }
 

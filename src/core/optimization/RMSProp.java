@@ -52,8 +52,9 @@ public class RMSProp extends AbstractOptimizer {
      * Default constructor for RMSProp.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public RMSProp() throws DynamicParamException {
+    public RMSProp() throws DynamicParamException, MatrixException {
         super(OptimizationType.RMSPROP, RMSProp.paramNameTypes);
     }
 
@@ -62,8 +63,9 @@ public class RMSProp extends AbstractOptimizer {
      *
      * @param params parameters for RMSProp.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public RMSProp(String params) throws DynamicParamException {
+    public RMSProp(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.RMSPROP, RMSProp.paramNameTypes, params);
     }
 

@@ -66,8 +66,9 @@ public class AMSGrad extends AbstractOptimizer {
      * Default constructor for AMSGrad.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AMSGrad() throws DynamicParamException {
+    public AMSGrad() throws DynamicParamException, MatrixException {
         super(OptimizationType.AMSGRAD, AMSGrad.paramNameTypes);
     }
 
@@ -76,8 +77,9 @@ public class AMSGrad extends AbstractOptimizer {
      *
      * @param params parameters for AMSGrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AMSGrad(String params) throws DynamicParamException {
+    public AMSGrad(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.AMSGRAD, AMSGrad.paramNameTypes, params);
     }
 

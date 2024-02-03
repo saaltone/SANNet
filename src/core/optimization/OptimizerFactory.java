@@ -7,6 +7,7 @@ package core.optimization;
 
 import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 /**
  * Defines factory class to construct optimizers.<br>
@@ -28,8 +29,9 @@ public class OptimizerFactory {
      * @param params parameters for specific optimizer.
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer create(OptimizationType optimizationType, String params) throws DynamicParamException {
+    public static Optimizer create(OptimizationType optimizationType, String params) throws DynamicParamException, MatrixException {
         return switch (optimizationType) {
             case GRADIENT_DESCENT -> (params == null) ? new GradientDescent() : new GradientDescent(params);
             case MOMENTUM_GRADIENT_DESCENT -> (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
@@ -53,8 +55,9 @@ public class OptimizerFactory {
      * @param params parameters for specific optimizer.
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer create(String optimizationName, String params) throws DynamicParamException {
+    public static Optimizer create(String optimizationName, String params) throws DynamicParamException, MatrixException {
         return switch (optimizationName) {
             case "GradientDescent" -> (params == null) ? new GradientDescent() : new GradientDescent(params);
             case "MomentumGradientDescent" -> (params == null) ? new MomentumGradientDescent() : new MomentumGradientDescent(params);
@@ -78,8 +81,9 @@ public class OptimizerFactory {
      * @param optimization optimizer type.
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer create(OptimizationType optimization) throws DynamicParamException {
+    public static Optimizer create(OptimizationType optimization) throws DynamicParamException, MatrixException {
         return create(optimization, null);
     }
 
@@ -90,8 +94,9 @@ public class OptimizerFactory {
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer create(Optimizer optimizer) throws DynamicParamException, NeuralNetworkException {
+    public static Optimizer create(Optimizer optimizer) throws DynamicParamException, NeuralNetworkException, MatrixException {
         return create(getOptimizationType(optimizer), null);
     }
 
@@ -103,8 +108,9 @@ public class OptimizerFactory {
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws NeuralNetworkException throws exception if optimizer is of an unknown type.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer create(Optimizer optimizer, String params) throws DynamicParamException, NeuralNetworkException {
+    public static Optimizer create(Optimizer optimizer, String params) throws DynamicParamException, NeuralNetworkException, MatrixException {
         return create(getOptimizationType(optimizer), params);
     }
 
@@ -113,8 +119,9 @@ public class OptimizerFactory {
      *
      * @return constructed optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static Optimizer createDefault() throws DynamicParamException {
+    public static Optimizer createDefault() throws DynamicParamException, MatrixException {
         return create(OptimizationType.ADAM);
     }
 

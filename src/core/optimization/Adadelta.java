@@ -58,8 +58,9 @@ public class Adadelta extends AbstractOptimizer {
      * Default constructor for Adadelta.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adadelta() throws DynamicParamException {
+    public Adadelta() throws DynamicParamException, MatrixException {
         super(OptimizationType.ADADELTA, Adadelta.paramNameTypes);
     }
 
@@ -68,8 +69,9 @@ public class Adadelta extends AbstractOptimizer {
      *
      * @param params parameters for Adadelta.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adadelta(String params) throws DynamicParamException {
+    public Adadelta(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.ADADELTA, Adadelta.paramNameTypes, params);
     }
 

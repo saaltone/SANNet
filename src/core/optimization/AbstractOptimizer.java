@@ -10,6 +10,7 @@ import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -37,22 +38,16 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
     private final String paramNameTypes;
 
     /**
-     * Parameters of optimizer.
-     *
-     */
-    private final String params;
-
-    /**
      * Default constructor for AbstractOptimizer.
      *
      * @param optimizationType optimization type.
      * @param paramNameTypes parameter name types for optimizer.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractOptimizer(OptimizationType optimizationType, String paramNameTypes) throws DynamicParamException {
+    public AbstractOptimizer(OptimizationType optimizationType, String paramNameTypes) throws DynamicParamException, MatrixException {
         this.optimizationType = optimizationType;
         this.paramNameTypes = paramNameTypes;
-        this.params = null;
         initializeDefaultParams();
     }
 
@@ -63,11 +58,11 @@ public abstract class AbstractOptimizer implements Configurable, Optimizer, Seri
      * @param paramNameTypes parameter name types.
      * @param params parameters for Adadelta.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractOptimizer(OptimizationType optimizationType, String paramNameTypes, String params) throws DynamicParamException {
+    public AbstractOptimizer(OptimizationType optimizationType, String paramNameTypes, String params) throws DynamicParamException, MatrixException {
         this.optimizationType = optimizationType;
         this.paramNameTypes = paramNameTypes;
-        this.params = params;
         initializeDefaultParams();
         if (paramNameTypes != null && params != null) setParams(new DynamicParam(params, getParamDefs()));
     }

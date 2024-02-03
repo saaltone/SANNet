@@ -57,8 +57,9 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      * Default constructor for Nesterov Accelerated Gradient.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NesterovAcceleratedGradient() throws DynamicParamException {
+    public NesterovAcceleratedGradient() throws DynamicParamException, MatrixException {
         super(OptimizationType.NESTEROV_ACCELERATED_GRADIENT, NesterovAcceleratedGradient.paramNameTypes);
     }
 
@@ -67,8 +68,9 @@ public class NesterovAcceleratedGradient extends AbstractOptimizer {
      *
      * @param params parameters for Nesterov Accelerated Gradient.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NesterovAcceleratedGradient(String params) throws DynamicParamException {
+    public NesterovAcceleratedGradient(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.NESTEROV_ACCELERATED_GRADIENT, NesterovAcceleratedGradient.paramNameTypes, params);
     }
 

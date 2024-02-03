@@ -78,8 +78,9 @@ public class RAdam extends AbstractOptimizer {
      * Default constructor for RAdam.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public RAdam() throws DynamicParamException {
+    public RAdam() throws DynamicParamException, MatrixException {
         super(OptimizationType.RADAM, RAdam.paramNameTypes);
     }
 
@@ -88,8 +89,9 @@ public class RAdam extends AbstractOptimizer {
      *
      * @param params parameters for RAdam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public RAdam(String params) throws DynamicParamException {
+    public RAdam(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.RADAM, RAdam.paramNameTypes, params);
     }
 

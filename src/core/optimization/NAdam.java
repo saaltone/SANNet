@@ -72,8 +72,9 @@ public class NAdam extends AbstractOptimizer {
      * Default constructor for Nadam.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NAdam() throws DynamicParamException {
+    public NAdam() throws DynamicParamException, MatrixException {
         super(OptimizationType.NADAM, NAdam.paramNameTypes);
     }
 
@@ -82,8 +83,9 @@ public class NAdam extends AbstractOptimizer {
      *
      * @param params parameters for Nadam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public NAdam(String params) throws DynamicParamException {
+    public NAdam(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.NADAM, NAdam.paramNameTypes, params);
     }
 

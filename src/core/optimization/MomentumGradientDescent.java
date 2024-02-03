@@ -51,8 +51,9 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      * Default constructor for Momentum Gradient Descent.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MomentumGradientDescent() throws DynamicParamException {
+    public MomentumGradientDescent() throws DynamicParamException, MatrixException {
         super(OptimizationType.MOMENTUM_GRADIENT_DESCENT, MomentumGradientDescent.paramNameTypes);
     }
 
@@ -61,8 +62,9 @@ public class MomentumGradientDescent extends AbstractOptimizer {
      *
      * @param params parameters for Momentum Gradient Descent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MomentumGradientDescent(String params) throws DynamicParamException {
+    public MomentumGradientDescent(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.MOMENTUM_GRADIENT_DESCENT, MomentumGradientDescent.paramNameTypes, params);
     }
 

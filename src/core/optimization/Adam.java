@@ -72,8 +72,9 @@ public class Adam extends AbstractOptimizer {
      * Default constructor for Adam.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adam() throws DynamicParamException {
+    public Adam() throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAM, Adam.paramNameTypes);
     }
 
@@ -82,8 +83,9 @@ public class Adam extends AbstractOptimizer {
      *
      * @param params parameters for Adam.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adam(String params) throws DynamicParamException {
+    public Adam(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAM, Adam.paramNameTypes, params);
     }
 

@@ -44,8 +44,9 @@ public class Adagrad extends AbstractOptimizer {
      * Default constructor for Adagrad.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adagrad() throws DynamicParamException {
+    public Adagrad() throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAGRAD, Adagrad.paramNameTypes);
     }
 
@@ -54,8 +55,9 @@ public class Adagrad extends AbstractOptimizer {
      *
      * @param params parameters for Adagrad.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adagrad(String params) throws DynamicParamException {
+    public Adagrad(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAGRAD, Adagrad.paramNameTypes, params);
     }
 

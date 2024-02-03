@@ -72,8 +72,9 @@ public class Adamax extends AbstractOptimizer {
      * Default constructor for Adamax.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adamax() throws DynamicParamException {
+    public Adamax() throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAMAX, Adamax.paramNameTypes);
     }
 
@@ -82,8 +83,9 @@ public class Adamax extends AbstractOptimizer {
      *
      * @param params parameters for Adamax.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Adamax(String params) throws DynamicParamException {
+    public Adamax(String params) throws DynamicParamException, MatrixException {
         super(OptimizationType.ADAMAX, Adamax.paramNameTypes, params);
     }
 

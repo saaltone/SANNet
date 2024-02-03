@@ -36,8 +36,9 @@ public class ResilientPropagation extends AbstractOptimizer {
      * Default constructor for Resilient Propagation.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public ResilientPropagation() throws DynamicParamException {
+    public ResilientPropagation() throws DynamicParamException, MatrixException {
         super(OptimizationType.RESILIENT_PROPAGATION, null);
     }
 
