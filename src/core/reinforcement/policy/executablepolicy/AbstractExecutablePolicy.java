@@ -9,6 +9,7 @@ import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.Matrix;
+import utils.matrix.MatrixException;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -52,11 +53,18 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     protected boolean asSoftMax;
 
     /**
+     * If true policy is learning otherwise not.
+     *
+     */
+    private boolean isLearning = true;
+
+    /**
      * Default constructor for abstract executable policy.
      *
      * @param executablePolicyType executable policy type.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType) {
+    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType) throws MatrixException {
         this.executablePolicyType = executablePolicyType;
         initializeDefaultParams();
     }
@@ -68,8 +76,9 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @param params parameters for abstract executable policy.
      * @param paramNameTypes parameter names types
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException {
+    AbstractExecutablePolicy(ExecutablePolicyType executablePolicyType, String params, String paramNameTypes) throws DynamicParamException, MatrixException {
         this(executablePolicyType);
         if (params != null) setParams(new DynamicParam(params, AbstractExecutablePolicy.paramNameTypes + (paramNameTypes != null ? ", " + paramNameTypes : "")));
     }
@@ -77,8 +86,9 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
     /**
      * Initializes default params.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void initializeDefaultParams() {
+    public void initializeDefaultParams() throws MatrixException {
         asSoftMax = false;
     }
 
@@ -110,6 +120,16 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @param isLearning if true agent is in learning mode.
      */
     public void setLearning(boolean isLearning) {
+        this.isLearning = isLearning;
+    }
+
+    /**
+     * Returns if policy is learning or not.
+     *
+     * @return returns true is policy is learning otherwise not.
+     */
+    protected boolean isLearning() {
+        return isLearning;
     }
 
     /**
@@ -126,16 +146,15 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * Takes action based on policy.
      *
      * @param policyValueMatrix current state value matrix.
-     * @param availableActions available actions in current state
-     * @param alwaysGreedy if true greedy action is always taken.
+     * @param availableActions  available actions in current state
      * @return action taken.
      */
-    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
         TreeSet<ActionValueTuple> stateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
         for (Integer action : availableActions) {
             stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? policyValueMatrix.getValue(action, 0, 0) : Math.exp(policyValueMatrix.getValue(action, 0, 0))));
         }
-        return stateValueSet.isEmpty() ? -1 : alwaysGreedy ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
+        return stateValueSet.isEmpty() ? -1 : !isLearning() ? Objects.requireNonNull(stateValueSet.pollLast()).action : getAction(stateValueSet);
     }
 
     /**
@@ -146,33 +165,11 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      */
     protected double getActionEntropy(TreeSet<ActionValueTuple> stateValueSet) {
         double entropy = 0;
-        TreeSet<ActionValueTuple> softmaxStateValueSet = softmax(stateValueSet);
-        double base = softmaxStateValueSet.size() > 1 ? Math.log(softmaxStateValueSet.size()) : 1;
-        for (ActionValueTuple actionValueTuple : softmaxStateValueSet) {
+        double base = stateValueSet.size() > 1 ? Math.log(stateValueSet.size()) : 1;
+        for (ActionValueTuple actionValueTuple : stateValueSet) {
             entropy += Math.log(actionValueTuple.value) * actionValueTuple.value / base;
         }
         return -entropy;
-    }
-
-    /**
-     * Turns values into softmax distribution.
-     *
-     * @param stateValueSet state value set
-     * @return state value set softmax distributed.
-     */
-    private TreeSet<ActionValueTuple> softmax(TreeSet<ActionValueTuple> stateValueSet) {
-        double sum = 0;
-        TreeSet<ActionValueTuple> expStateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
-        for (ActionValueTuple actionValueTuple : stateValueSet) {
-            double value = Math.exp(actionValueTuple.value);
-            sum += value;
-            expStateValueSet.add(new ActionValueTuple(actionValueTuple.action, value));
-        }
-        TreeSet<ActionValueTuple> normalizedStateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
-        for (ActionValueTuple actionValueTuple : expStateValueSet) {
-            normalizedStateValueSet.add(new ActionValueTuple(actionValueTuple.action, actionValueTuple.value / sum));
-        }
-        return normalizedStateValueSet;
     }
 
     /**
