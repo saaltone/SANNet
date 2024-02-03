@@ -6,7 +6,9 @@
 package demo;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.utils.AttentionLayerFactory;
+import core.loss.LossFunctionType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -66,9 +68,9 @@ public class Music {
             long minTickDelta = 60;
             long maxTickDelta = 200;
             int maxEncodedTicks = 50;
-            double tickScalingConstant = 0.65;
+            double tickScalingConstant = 1;
             int numberOfGeneratedSamples = 500;
-            boolean useMultinomial = false;
+            boolean useMultinomial = true;
             boolean prePlaySequence = true;
             boolean restoreNeuralNetwork = false;
             String path = "<PATH>/";
@@ -313,11 +315,11 @@ public class Music {
         int attentionLayer = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, numberOfInputs, inputSize, 1, 1, numberOfAttentionBlocks, dropoutProbability, normalize, true);
 
         // Final feedforward layer.
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX, "tau = " + tau), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX, "tau = " + tau), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayer, hiddenLayerIndex);
 
         // Output layer.
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.CROSS_ENTROPY);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
     }
 
