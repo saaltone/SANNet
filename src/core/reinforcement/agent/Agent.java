@@ -40,12 +40,10 @@ public interface Agent {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void newTimeStep() throws MatrixException, DynamicParamException, NeuralNetworkException, AgentException, IOException, ClassNotFoundException;
+    void newTimeStep() throws MatrixException, DynamicParamException, NeuralNetworkException, AgentException;
 
     /**
      * Starts episode.
@@ -58,12 +56,10 @@ public interface Agent {
      *
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws IOException throws exception if creation of FunctionEstimator copy fails.
-     * @throws ClassNotFoundException throws exception if creation of FunctionEstimator copy fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws AgentException throws exception if update cycle is ongoing.
      */
-    void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException, IOException, ClassNotFoundException;
+    void endEpisode() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
 
     /**
      * Disables learning.
@@ -84,15 +80,6 @@ public interface Agent {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     void act() throws NeuralNetworkException, MatrixException;
-
-    /**
-     * Takes action per defined agent policy.
-     *
-     * @param alwaysGreedy if true greedy action is always taken.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     */
-    void act(boolean alwaysGreedy) throws NeuralNetworkException, MatrixException;
 
     /**
      * Takes action defined by external agent.
@@ -131,17 +118,5 @@ public interface Agent {
      *
      */
     void resetRewardMetrics();
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    Agent reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException;
 
 }
