@@ -6,7 +6,9 @@
 package demo;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
+import core.loss.LossFunctionType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -147,9 +149,9 @@ public class TimeSeriesPrediction {
         }
         int joinLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.DOT_ATTENTION, "scaled = true");
         for (int i = 0; i < numberOfInputs; i++) neuralNetworkConfiguration.connectLayers(hiddenLayerIndices[i], joinLayerIndex);
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.TANH), "width = " + outputSize);
+        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.TANH), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(joinLayerIndex, hiddenLayerIndex);
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
