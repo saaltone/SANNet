@@ -7,9 +7,9 @@ package core.reinforcement.policy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.agent.State;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyFactory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
@@ -33,16 +33,22 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     private static final long serialVersionUID = 7604226764648819354L;
 
     /**
+     * Reference to executable policy.
+     *
+     */
+    protected final ExecutablePolicy executablePolicy;
+
+    /**
      * Reference to function estimator.
      *
      */
     protected final FunctionEstimator functionEstimator;
 
     /**
-     * Reference to executable policy.
+     * Reference to memory.
      *
      */
-    protected final ExecutablePolicy executablePolicy;
+    protected final Memory memory;
 
     /**
      * If true agent is in learning mode.
@@ -60,55 +66,32 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * Constructor for abstract policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
+     * @param functionEstimator    reference to function estimator.
+     * @param memory               reference to memory.
+     * @param params               parameters for AbstractExecutablePolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
-        this(executablePolicyType, functionEstimator, null);
+    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        this(ExecutablePolicyFactory.create(executablePolicyType), functionEstimator, memory, params);
     }
 
     /**
      * Constructor for abstract policy.
      *
-     * @param executablePolicyType executable policy type.
+     * @param executablePolicy  executable policy.
      * @param functionEstimator reference to function estimator.
-     * @param params parameters for AbstractExecutablePolicy.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @param memory            reference to memory.
+     * @param params            parameters for AbstractExecutablePolicy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public AbstractPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws DynamicParamException, AgentException {
-        this(ExecutablePolicyFactory.create(executablePolicyType), functionEstimator, params);
-    }
-
-    /**
-     * Constructor for abstract policy.
-     *
-     * @param executablePolicy executable policy.
-     * @param functionEstimator reference to function estimator.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator) throws AgentException, DynamicParamException {
-        this(executablePolicy, functionEstimator, null);
-    }
-
-    /**
-     * Constructor for abstract policy.
-     *
-     * @param executablePolicy executable policy.
-     * @param functionEstimator reference to function estimator.
-     * @param params parameters for AbstractExecutablePolicy.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, String params) throws AgentException, DynamicParamException {
+    public AbstractPolicy(ExecutablePolicy executablePolicy, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
         initializeDefaultParams();
         this.executablePolicy = executablePolicy;
         this.functionEstimator = functionEstimator;
-        if (getFunctionEstimator().isStateActionValueFunction() && !isUpdateablePolicy()) throw new AgentException("Non-updateable policy cannot be applied along state value function estimator.");
+        this.memory = memory;
         this.params = params;
-        if (params != null) setParams(new DynamicParam(params, getParamDefs()));
     }
 
     /**
@@ -117,7 +100,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @return parameters used for abstract policy.
      */
     public String getParamDefs() {
-        return getExecutablePolicy().getParamDefs() + ", " + getFunctionEstimator().getParamDefs();
+        return getExecutablePolicy().getParamDefs() + (getFunctionEstimator().getParamDefs() == null ? "" : ", " + getFunctionEstimator().getParamDefs());
     }
 
     /**
@@ -185,8 +168,9 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     /**
      * Increments executable policy.
      *
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public void increment() {
+    public void increment() throws MatrixException {
         getExecutablePolicy().increment();
     }
 
@@ -204,27 +188,28 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
 
     /**
      * Takes action defined by external agent.
-     * @param state state.
      *
+     * @param state  state.
+     * @param action action taken by external agent.
      */
-    public void act(State state) throws MatrixException, NeuralNetworkException {
-        getExecutablePolicy().action(getValues(state), state.environmentState.availableActions(), state.action);
+    public void act(State state, int action) throws MatrixException, NeuralNetworkException {
+        getExecutablePolicy().action(getValues(state), state.environmentState.availableActions(), action);
     }
 
     /**
      * Takes action defined by executable policy.
      *
      * @param state state.
-     * @param alwaysGreedy if true greedy action is always taken.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      */
-    public void act(State state, boolean alwaysGreedy) throws NeuralNetworkException, MatrixException {
+    public void act(State state) throws NeuralNetworkException, MatrixException {
         Matrix policyValues = getValues(state);
-        state.action = getExecutablePolicy().action(policyValues, state.environmentState.availableActions(), !isLearning() || alwaysGreedy);
-        state.policyValue = policyValues.getValue(state.action, 0, 0);
+        state.action = getExecutablePolicy().action(policyValues, state.environmentState.availableActions());
         if (isLearning()) {
-            getFunctionEstimator().add(state);
+            state.policyValues = policyValues;
+            state.policyValue = policyValues.getValue(state.action, 0, 0);
+            memory.add(state);
             getExecutablePolicy().add(state);
         }
     }
