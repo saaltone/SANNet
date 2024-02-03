@@ -40,6 +40,12 @@ public class DuelingLayer extends AbstractExecutionLayer {
         private static final long serialVersionUID = -8610809232828571461L;
 
         /**
+         * Weight matrix for input.
+         *
+         */
+        private final Matrix inputWeight;
+
+        /**
          * Weight matrix for value.
          *
          */
@@ -60,20 +66,25 @@ public class DuelingLayer extends AbstractExecutionLayer {
         /**
          * Constructor for weight set
          *
-         * @param initialization weight initialization function.
-         * @param previousLayerWidth width of previous layer.
-         * @param layerWidth width of current layer.
+         * @param initialization        weight initialization function.
+         * @param previousLayerWidth    width of previous layer.
+         * @param layerWidth            width of current layer.
+         * @param previousLayerDepth    depth of previous layer
          * @param regulateDirectWeights if true direct weights are regulated.
          */
-        DuelingWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, boolean regulateDirectWeights) {
-            valueWeight = new DMatrix(1, previousLayerWidth, 1, initialization);
+        DuelingWeightSet(Initialization initialization, int previousLayerWidth, int layerWidth, int previousLayerDepth, boolean regulateDirectWeights) {
+            inputWeight = new DMatrix(2 * previousLayerWidth, previousLayerWidth, previousLayerDepth, initialization);
+            inputWeight.setName("ValueWeight");
+            valueWeight = new DMatrix(1, 2 * previousLayerWidth, previousLayerDepth, initialization);
             valueWeight.setName("ValueWeight");
-            actionWeight = new DMatrix(layerWidth, previousLayerWidth, 1, initialization);
+            actionWeight = new DMatrix(layerWidth, 2 * previousLayerWidth, previousLayerDepth, initialization);
             actionWeight.setName("ActionWeight");
 
+            weights.add(inputWeight);
             weights.add(valueWeight);
             weights.add(actionWeight);
 
+            registerWeight(inputWeight, regulateDirectWeights, true);
             registerWeight(valueWeight, regulateDirectWeights, true);
             registerWeight(actionWeight, regulateDirectWeights, true);
         }
@@ -92,6 +103,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
          *
          */
         public void reinitialize() {
+            inputWeight.initialize(initialization);
             valueWeight.initialize(initialization);
             actionWeight.initialize(initialization);
         }
@@ -187,7 +199,7 @@ public class DuelingLayer extends AbstractExecutionLayer {
      *
      */
     public void initializeWeights() {
-        weightSet = new DuelingWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), regulateDirectWeights);
+        weightSet = new DuelingWeightSet(initialization, getDefaultPreviousLayer().getLayerWidth(), getLayerWidth(), getDefaultPreviousLayer().getLayerDepth(), regulateDirectWeights);
     }
 
     /**
@@ -213,9 +225,11 @@ public class DuelingLayer extends AbstractExecutionLayer {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public Matrix getForwardProcedure() throws MatrixException {
-        Matrix valueOutput = weightSet.valueWeight.dot(inputs.get(0));
+        Matrix inputMatrix = weightSet.inputWeight.dot(inputs.get(0));
 
-        Matrix actionOutput = weightSet.actionWeight.dot(inputs.get(0));
+        Matrix valueOutput = weightSet.valueWeight.dot(inputMatrix);
+
+        Matrix actionOutput = weightSet.actionWeight.dot(inputMatrix);
         actionOutput = actionOutput.subtract(actionOutput.meanAsMatrix(0));
 
         Matrix output = valueOutput.add(actionOutput);
