@@ -44,6 +44,12 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
     private boolean asFunction;
 
     /**
+     * Minus one matrix for direct gradient.
+     *
+     */
+    private final Matrix minusOneMatrix = new DMatrix(-1);
+
+    /**
      * Constructor for matrix binary operation.
      *
      * @param rows number of rows for operation.
@@ -53,9 +59,9 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
      */
     public BinaryMatrixOperation(int rows, int columns, int depth, BinaryFunction binaryFunction) {
         super(rows, columns, depth, true);
-        this.binaryFunctionType = binaryFunction.getType();
-        this.matrixBinaryOperation = binaryFunction.getFunction();
-        this.matrixGradientBinaryOperation = binaryFunction.getDerivative();
+        binaryFunctionType = binaryFunction.getType();
+        matrixBinaryOperation = binaryFunction.getFunction();
+        matrixGradientBinaryOperation = binaryFunction.getDerivative();
     }
 
     /**
@@ -122,7 +128,7 @@ public class BinaryMatrixOperation extends AbstractMatrixOperation {
         asFunction = false;
         switch (binaryFunctionType) {
             case DIRECT_GRADIENT -> {
-                return second;
+                return second.multiply(minusOneMatrix);
             }
             case POLICY_VALUE -> {
                 Matrix gradient = second.getNewMatrix();
