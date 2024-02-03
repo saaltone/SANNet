@@ -6,7 +6,9 @@
 package demo;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
+import core.loss.LossFunctionType;
 import core.network.EarlyStopping;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
@@ -118,12 +120,12 @@ public class SimpleDemo {
         int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
         int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.WEIGHT_NORMALIZATION);
         int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = 20");
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.ELU));
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.ELU));
         neuralNetworkConfiguration.addHiddenLayer(LayerType.GRADIENT_CLIPPING);
         int hiddenLayerIndex4 = neuralNetworkConfiguration.addHiddenLayer(LayerType.CONNECT);
         int hiddenLayerIndex5 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DENSE, "width = " + outputSize);
-        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(UnaryFunctionType.RELU));
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.MEAN_SQUARED_ERROR);
+        int hiddenLayerIndex6 = neuralNetworkConfiguration.addHiddenLayer(LayerType.ACTIVATION, new ActivationFunction(ActivationFunctionType.RELU));
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.MEAN_SQUARED_ERROR);
         neuralNetworkConfiguration.connectLayersSerially();
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex4);
 
