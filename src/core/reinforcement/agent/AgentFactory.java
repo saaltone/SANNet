@@ -14,7 +14,10 @@ import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import core.reinforcement.value.SoftQValueFunctionEstimator;
+import core.reinforcement.policy.updateablepolicy.UpdateableQPolicy;
+import core.reinforcement.policy.updateablepolicy.UpdateableSoftQPolicy;
+import core.reinforcement.value.QPolicyValueFunction;
+import core.reinforcement.value.SoftQValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -118,12 +121,13 @@ public class AgentFactory {
      * @throws DynamicParamException throws exception if setting of dynamic parameter fails.
      * @throws IOException throws exception if cloning of neural network fails.
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean onlineMemory, boolean singleFunctionEstimator, boolean applyDueling, ExecutablePolicyType executablePolicyType, String params) throws AgentException, DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
+    public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean onlineMemory, boolean singleFunctionEstimator, boolean applyDueling, ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
         Memory estimatorMemory = onlineMemory ? new OnlineMemory() : new PriorityMemory();
-        FunctionEstimator policyEstimator;
-        FunctionEstimator valueEstimator;
+
+        FunctionEstimator policyFunctionEstimator;
+        FunctionEstimator valueFunctionEstimator;
+
         boolean nnEstimator = switch (agentAlgorithmType) {
             case QN -> false;
             case DQN, DDQN, Sarsa, ActorCritic, PPO, DDPG, SACDiscrete, REINFORCE, MCTS -> true;
@@ -137,33 +141,35 @@ public class AgentFactory {
             case ActorCritic, PPO, MCTS -> true;
         };
         boolean hasTargetPolicyEstimator = switch (agentAlgorithmType) {
-            case DDPG -> true;
             case QN, DQN, DDQN, Sarsa, REINFORCE, ActorCritic, PPO, SACDiscrete, MCTS -> false;
+            case DDPG -> true;
         };
         boolean hasTargetValueEstimator = switch (agentAlgorithmType) {
-            case DDQN, DDPG, SACDiscrete -> true;
             case QN, DQN, Sarsa, REINFORCE, ActorCritic, PPO, MCTS -> false;
+            case DDQN, DDPG, SACDiscrete -> true;
         };
+
         if (singleFunctionEstimator) {
             // Uses single neural network estimator for both policy and value functions (works for policy gradients).
-            policyEstimator = new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize), hasTargetPolicyEstimator || hasTargetValueEstimator);
-            valueEstimator = policyEstimator;
+            valueFunctionEstimator = nnEstimator ? new NNFunctionEstimator(agentFunctionEstimator.buildNeuralNetwork(inputSize, policyGradient ? outputSize : -1, stateValue ? 1 : outputSize), hasTargetPolicyEstimator || hasTargetValueEstimator) : new TabularFunctionEstimator(inputSize, outputSize);
+            policyFunctionEstimator = policyGradient ? valueFunctionEstimator : null;
         }
         else {
             // Uses separate estimators for value and policy functions.
-            policyEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, policyGradient, applyDueling), hasTargetPolicyEstimator) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
-            valueEstimator = nnEstimator ? new NNFunctionEstimator(estimatorMemory, agentFunctionEstimator.buildNeuralNetwork(inputSize, stateValue ? 1 : outputSize, false, applyDueling), hasTargetValueEstimator) : new TabularFunctionEstimator(estimatorMemory, inputSize, outputSize);
+            valueFunctionEstimator = nnEstimator ? new NNFunctionEstimator(agentFunctionEstimator.buildNeuralNetwork(inputSize, stateValue ? 1 : outputSize, false, applyDueling), hasTargetValueEstimator) : new TabularFunctionEstimator(inputSize, outputSize);
+            policyFunctionEstimator = policyGradient ? new NNFunctionEstimator(agentFunctionEstimator.buildNeuralNetwork(inputSize, outputSize, true, false), hasTargetPolicyEstimator) : null;
         }
+
         return switch (agentAlgorithmType) {
-            case QN, DQN -> new DQNLearning(new StateSynchronization(), environment, executablePolicyType, valueEstimator, params);
-            case DDQN -> new DDQNLearning(new StateSynchronization(), environment, executablePolicyType, valueEstimator, params);
-            case Sarsa -> new Sarsa(new StateSynchronization(), environment, executablePolicyType, valueEstimator, params);
-            case ActorCritic -> new ActorCritic(new StateSynchronization(), environment, executablePolicyType, policyEstimator, valueEstimator, params);
-            case PPO -> new PPO(new StateSynchronization(), environment, executablePolicyType, policyEstimator, valueEstimator, params);
-            case DDPG -> new DDPG(new StateSynchronization(), environment, executablePolicyType, policyEstimator, valueEstimator);
-            case SACDiscrete -> new SoftActorCriticDiscrete(new StateSynchronization(), environment, executablePolicyType, policyEstimator, new SoftQValueFunctionEstimator(policyEstimator, valueEstimator), params);
-            case REINFORCE -> new REINFORCE(new StateSynchronization(), environment, executablePolicyType, policyEstimator, params);
-            case MCTS -> new MCTSLearning(new StateSynchronization(), environment, policyEstimator, valueEstimator, params);
+            case QN, DQN -> new DQNLearning(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
+            case DDQN -> new DDQNLearning(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
+            case Sarsa -> new Sarsa(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
+            case ActorCritic -> new ActorCritic(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, valueFunctionEstimator, estimatorMemory, params);
+            case PPO -> new PPO(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, valueFunctionEstimator, estimatorMemory, params);
+            case DDPG -> new DDPG(new StateSynchronization(), environment, new UpdateableQPolicy(executablePolicyType, policyFunctionEstimator, estimatorMemory, params), new QPolicyValueFunction(valueFunctionEstimator, params), estimatorMemory, params);
+            case SACDiscrete -> new SoftActorCriticDiscrete(new StateSynchronization(), environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, estimatorMemory, params), new SoftQValueFunction(valueFunctionEstimator, params), estimatorMemory, params);
+            case REINFORCE -> new REINFORCE(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, estimatorMemory, params);
+            case MCTS -> new MCTSLearning(new StateSynchronization(), environment, policyFunctionEstimator, estimatorMemory, params);
         };
     }
 
