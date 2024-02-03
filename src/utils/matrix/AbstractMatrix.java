@@ -1374,6 +1374,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
     }
 
     /**
+     * Takes element wise max value of this and other value.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param other value which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Matrix max(double other) throws MatrixException, DynamicParamException {
+        return applyBi (getNewMatrix(other), BinaryFunctionType.MAX);
+    }
+
+    /**
      * Takes element wise min value of this and other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -1384,6 +1397,19 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      */
     public Matrix min(Matrix other) throws MatrixException, DynamicParamException {
         return applyBi (other, BinaryFunctionType.MIN);
+    }
+
+    /**
+     * Takes element wise min value of this and other matrix.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param other value which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public Matrix min(double other) throws MatrixException, DynamicParamException {
+        return applyBi (getNewMatrix(other), BinaryFunctionType.MIN);
     }
 
     /**
@@ -2449,18 +2475,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             }
         }
         else return sampleGamma(shape + 1, scale, random) * Math.pow(random.nextDouble(), 1 / shape);
-    }
-
-    /**
-     * Clips value between minimum value and maximum value.
-     *
-     * @param value value
-     * @param minValue minimum value.
-     * @param maxValue maximum value.
-     * @return clipped value.
-     */
-    public static double clipValue(double value, double minValue, double maxValue) {
-        return (value < minValue) ? minValue : Math.min(value, maxValue);
     }
 
     /**

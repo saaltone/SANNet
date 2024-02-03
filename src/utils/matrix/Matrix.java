@@ -654,6 +654,17 @@ public interface Matrix {
     Matrix max(Matrix other) throws MatrixException, DynamicParamException;
 
     /**
+     * Takes element wise max value of this and other value.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param other value which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix max(double other) throws MatrixException, DynamicParamException;
+
+    /**
      * Takes element wise min value of this and other matrix.<br>
      * Applies masking element wise if this or other matrix is masked.<br>
      *
@@ -663,6 +674,17 @@ public interface Matrix {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     Matrix min(Matrix other) throws MatrixException, DynamicParamException;
+
+    /**
+     * Takes element wise min value of this and other matrix.<br>
+     * Applies masking element wise if this matrix is masked.<br>
+     *
+     * @param other value which acts as second variable in the operation.
+     * @return matrix which stores operation result.
+     * @throws MatrixException throws MatrixException if this and other matrix are not of equal dimensions.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    Matrix min(double other) throws MatrixException, DynamicParamException;
 
     /**
      * Takes element wise signum over multiplication of this and other matrix.<br>
