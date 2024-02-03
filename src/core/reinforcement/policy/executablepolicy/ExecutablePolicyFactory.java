@@ -7,6 +7,7 @@ package core.reinforcement.policy.executablepolicy;
 
 import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParamException;
+import utils.matrix.MatrixException;
 
 import java.io.Serializable;
 
@@ -30,18 +31,20 @@ public class ExecutablePolicyFactory implements Serializable {
      * @param params parameters for executable policy.
      * @return constructed executable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException {
+    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException, MatrixException {
         return switch (executablePolicyType) {
             case GREEDY -> params == null ? new GreedyPolicy() : new GreedyPolicy(params);
             case EPSILON_GREEDY -> params == null ? new EpsilonGreedyPolicy() : new EpsilonGreedyPolicy(params);
             case NOISY_NEXT_BEST -> params == null ? new NoisyNextBestPolicy() : new NoisyNextBestPolicy(params);
             case SAMPLED -> params == null ? new SampledPolicy() : new SampledPolicy(params);
-            case MCTS -> params == null ? new MCTSPolicy() : new MCTSPolicy(params);
+            case MCTS -> new MCTSPolicy();
             case ENTROPY_GREEDY -> new EntropyGreedyPolicy(params);
             case ENTROPY_NOISY_NEXT_BEST -> params == null ? new EntropyNoisyNextBestPolicy() : new EntropyNoisyNextBestPolicy(params);
             case MULTINOMIAL -> new MultinomialPolicy(params);
             case NOISY -> new NoisyPolicy(params);
+            case OU_NOISE -> new OUNoisePolicy(params);
         };
     }
 
@@ -51,8 +54,9 @@ public class ExecutablePolicyFactory implements Serializable {
      * @param executablePolicyType type of executable policy.
      * @return constructed executable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType) throws DynamicParamException {
+    public static ExecutablePolicy create(ExecutablePolicyType executablePolicyType) throws DynamicParamException, MatrixException {
         return create(executablePolicyType, null);
     }
 
@@ -73,6 +77,7 @@ public class ExecutablePolicyFactory implements Serializable {
         if (executablePolicy instanceof EntropyNoisyNextBestPolicy) return ExecutablePolicyType.ENTROPY_NOISY_NEXT_BEST;
         if (executablePolicy instanceof MultinomialPolicy) return ExecutablePolicyType.MULTINOMIAL;
         if (executablePolicy instanceof NoisyPolicy) return ExecutablePolicyType.NOISY;
+        if (executablePolicy instanceof OUNoisePolicy) return ExecutablePolicyType.OU_NOISE;
         throw new AgentException("Unknown executable policy type");
     }
 
