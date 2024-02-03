@@ -5,14 +5,12 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.agent.StateSynchronization;
-import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.Policy;
-import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.policy.updateablepolicy.UpdateableQPolicy;
-import core.reinforcement.value.QTargetValueFunctionEstimator;
+import core.reinforcement.value.QPolicyValueFunction;
 import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -29,66 +27,18 @@ public class DDPG extends AbstractPolicyGradient {
     /**
      * Constructor for Deep Deterministic Policy Gradient
      *
-     * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
-     * @param executablePolicyType executable policy type.
-     * @param policyFunctionEstimator reference to policy function estimator.
-     * @param valueFunctionEstimator reference to value function estimator.
+     * @param stateSynchronization    reference to state synchronization.
+     * @param environment             reference to environment.
+     * @param updateableQPolicy       reference to updateable Q policy.
+     * @param qPolicyValueFunction    reference to Q policy value function.
+     * @param memory                  reference to memory.
+     * @param params                  parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public DDPG(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException {
-        super(stateSynchronization, environment, new UpdateableQPolicy(executablePolicyType, policyFunctionEstimator, valueFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator));
-    }
-
-    /**
-     * Constructor for Deep Deterministic Policy Gradient
-     *
-     * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
-     * @param executablePolicyType executable policy type.
-     * @param policyFunctionEstimator reference to policy function estimator.
-     * @param valueFunctionEstimator reference to value function estimator.
-     * @param params parameters for agent.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public DDPG(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
-        super(stateSynchronization, environment, new UpdateableQPolicy(executablePolicyType, policyFunctionEstimator, valueFunctionEstimator), new QTargetValueFunctionEstimator(valueFunctionEstimator), params);
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public DDPG reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        ValueFunction newValueFunction = valueFunction.reference(false, false);
-        Policy newPolicy = policy.reference(newValueFunction.getFunctionEstimator());
-        return new DDPG(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public DDPG reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        ValueFunction newValueFunction = valueFunction.reference(false, sharedMemory);
-        Policy newPolicy = policy.reference(newValueFunction.getFunctionEstimator(), sharedPolicyFunctionEstimator, newValueFunction.getFunctionEstimator().getMemory());
-        return new DDPG(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
+    public DDPG(StateSynchronization stateSynchronization, Environment environment, UpdateableQPolicy updateableQPolicy, QPolicyValueFunction qPolicyValueFunction, Memory memory, String params) throws DynamicParamException {
+        super(stateSynchronization, environment, updateableQPolicy, qPolicyValueFunction, memory, params);
+        updateableQPolicy.setQPolicyValueFunction(qPolicyValueFunction);
+        qPolicyValueFunction.setUpdateableQPolicy(updateableQPolicy);
     }
 
     /**
@@ -102,12 +52,12 @@ public class DDPG extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public DDPG reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        ValueFunction newValueFunction = valueFunction.reference(sharedValueFunctionEstimator, sharedMemory);
-        Policy newPolicy = policy.reference(newValueFunction.getFunctionEstimator(), sharedPolicyFunctionEstimator, newValueFunction.getFunctionEstimator().getMemory());
-        return new DDPG(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
+    public DDPG reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
+        Memory newMemory = sharedMemory ? memory : memory.reference();
+        ValueFunction newValueFunction = valueFunction.reference(sharedValueFunctionEstimator);
+        Policy newPolicy = newValueFunction.getFunctionEstimator().isStateActionValueFunction() ? policy.reference(newValueFunction.getFunctionEstimator(), memory) : policy.reference(sharedPolicyFunctionEstimator, newMemory);
+        return new DDPG(getStateSynchronization(), getEnvironment(), (UpdateableQPolicy)newPolicy, (QPolicyValueFunction) newValueFunction, newMemory, getParams());
     }
 
 }

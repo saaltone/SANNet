@@ -5,11 +5,11 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.agent.StateSynchronization;
 import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.policy.updateablepolicy.UpdateableBasicPolicy;
 import core.reinforcement.value.PlainValueFunction;
@@ -27,46 +27,17 @@ public class REINFORCE extends AbstractPolicyGradient {
     /**
      * Constructor for REINFORCE
      *
-     * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
-     * @param executablePolicyType executable policy type.
+     * @param stateSynchronization    reference to state synchronization.
+     * @param environment             reference to environment.
+     * @param executablePolicyType    executable policy type.
      * @param policyFunctionEstimator reference to policy function estimator.
-     * @param params parameters for agent.
+     * @param memory                  reference to memory.
+     * @param params                  parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException       throws exception if matrix operation fails.
      */
-    public REINFORCE(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, String params) throws DynamicParamException, AgentException {
-        super(stateSynchronization, environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator)), params);
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    public REINFORCE reference() throws IOException, DynamicParamException, ClassNotFoundException, AgentException, MatrixException {
-        return new REINFORCE(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(null).getFunctionEstimator(), getParams());
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if soft Q alpha matrix is non-scalar matrix.
-     */
-    public REINFORCE reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws IOException, DynamicParamException, ClassNotFoundException, AgentException, MatrixException {
-        return new REINFORCE(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(null, sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
+    public REINFORCE(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator policyFunctionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(stateSynchronization, environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator, params), params), memory, params);
     }
 
     /**
@@ -80,10 +51,10 @@ public class REINFORCE extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        return new REINFORCE(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(null, sharedPolicyFunctionEstimator, sharedMemory).getFunctionEstimator(), getParams());
+    public AbstractPolicyGradient reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
+        Memory newMemory = sharedMemory ? memory : memory.reference();
+        return new REINFORCE(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), policy.reference(sharedPolicyFunctionEstimator, newMemory).getFunctionEstimator(), newMemory, getParams());
     }
 
 }

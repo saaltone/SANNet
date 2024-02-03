@@ -5,15 +5,15 @@
 
 package core.reinforcement.algorithm;
 
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.Environment;
 import core.reinforcement.agent.StateSynchronization;
+import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
+import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.MCTSPolicy;
 import core.reinforcement.policy.updateablepolicy.UpdateableMCTSPolicy;
-import core.reinforcement.value.StateValueFunctionEstimator;
-import core.reinforcement.value.ValueFunction;
+import core.reinforcement.value.PlainValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -28,66 +28,32 @@ public class MCTSLearning extends AbstractPolicyGradient {
     /**
      * Constructor for MCTS Learning
      *
-     * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
+     * @param stateSynchronization    reference to state synchronization.
+     * @param environment             reference to environment.
      * @param policyFunctionEstimator reference to policy function estimator.
-     * @param valueFunctionEstimator reference to value function estimator.
-     * @param params parameters for agent.
+     * @param memory                  reference to memory.
+     * @param params                  parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MCTSLearning(StateSynchronization stateSynchronization, Environment environment, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
-        super(stateSynchronization, environment, new UpdateableMCTSPolicy(policyFunctionEstimator), new StateValueFunctionEstimator(valueFunctionEstimator), "gamma = 1, updateValuePerEpisode = true" + (params.isEmpty() ? "" : ", " + params));
+    public MCTSLearning(StateSynchronization stateSynchronization, Environment environment, FunctionEstimator policyFunctionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(stateSynchronization, environment, new UpdateableMCTSPolicy(policyFunctionEstimator, new MCTSPolicy(), memory, params), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator, params), params), memory, "gamma = 1" + (params.isEmpty() ? "" : ", " + params));
     }
 
     /**
      * Constructor for MCTS Learning
      *
-     * @param stateSynchronization reference to state synchronization.
-     * @param environment reference to environment.
-     * @param mctsPolicy reference to MCTS policy.
+     * @param stateSynchronization    reference to state synchronization.
+     * @param environment             reference to environment.
+     * @param mctsPolicy              reference to MCTS policy.
      * @param policyFunctionEstimator reference to policy function estimator.
-     * @param valueFunctionEstimator reference to value function estimator.
-     * @param params parameters for agent.
+     * @param memory                  reference to memory.
+     * @param params                  parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public MCTSLearning(StateSynchronization stateSynchronization, Environment environment, MCTSPolicy mctsPolicy, FunctionEstimator policyFunctionEstimator, FunctionEstimator valueFunctionEstimator, String params) throws DynamicParamException, AgentException {
-        super(stateSynchronization, environment, new UpdateableMCTSPolicy(policyFunctionEstimator, mctsPolicy, null), new StateValueFunctionEstimator(valueFunctionEstimator), "gamma = 1, updateValuePerEpisode = true" + (params.isEmpty() ? "" : ", " + params));
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public MCTSLearning reference() throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        Policy newPolicy = policy.reference(null);
-        ValueFunction newValueFunction = valueFunction.reference(false, newPolicy.getFunctionEstimator().getMemory());
-        return new MCTSLearning(getStateSynchronization(), getEnvironment(), (MCTSPolicy)newPolicy.getExecutablePolicy(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
-    }
-
-    /**
-     * Returns reference to algorithm.
-     *
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedMemory if true shared memory is used between estimators.
-     * @return reference to algorithm.
-     * @throws IOException throws exception if creation of target value function estimator fails.
-     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public MCTSLearning reference(boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        Policy newPolicy = policy.reference(null, sharedPolicyFunctionEstimator, sharedMemory);
-        ValueFunction newValueFunction = valueFunction.reference(false, newPolicy.getFunctionEstimator().getMemory());
-        return new MCTSLearning(getStateSynchronization(), getEnvironment(), (MCTSPolicy)newPolicy.getExecutablePolicy(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
+    public MCTSLearning(StateSynchronization stateSynchronization, Environment environment, MCTSPolicy mctsPolicy, FunctionEstimator policyFunctionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(stateSynchronization, environment, new UpdateableMCTSPolicy(policyFunctionEstimator, mctsPolicy, memory, null), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator, params), params), memory, "gamma = 1" + (params.isEmpty() ? "" : ", " + params));
     }
 
     /**
@@ -101,12 +67,11 @@ public class MCTSLearning extends AbstractPolicyGradient {
      * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if neural network has less output than actions.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
      */
-    public MCTSLearning reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException, AgentException {
-        Policy newPolicy = policy.reference(null, sharedPolicyFunctionEstimator, sharedMemory);
-        ValueFunction newValueFunction = valueFunction.reference(sharedValueFunctionEstimator, newPolicy.getFunctionEstimator().getMemory());
-        return new MCTSLearning(getStateSynchronization(), getEnvironment(), (MCTSPolicy)newPolicy.getExecutablePolicy(), newPolicy.getFunctionEstimator(), newValueFunction.getFunctionEstimator(), getParams());
+    public MCTSLearning reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
+        Memory newMemory = sharedMemory ? memory : memory.reference();
+        Policy newPolicy = policy.reference(sharedPolicyFunctionEstimator, newMemory);
+        return new MCTSLearning(getStateSynchronization(), getEnvironment(), (MCTSPolicy)newPolicy.getExecutablePolicy(), newPolicy.getFunctionEstimator(), newMemory, getParams());
     }
 
 }
