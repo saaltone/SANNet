@@ -5,106 +5,68 @@
 
 package core.activation;
 
-import core.network.NeuralNetworkException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 import utils.matrix.UnaryFunction;
 import utils.matrix.UnaryFunctionType;
 
 /**
- * Implements activation function for neural network and uses implementation of unary function.<br>
- * Provides calculation for both function and it's derivative.<br>
- * <br>
- * Following functions are supported:
- *     LINEAR,
- *     SIGMOID,
- *     SWISH,
- *     HARDSIGMOID,
- *     BIPOLARSIGMOID,
- *     STANH,
- *     TANH,
- *     TANHSIG,
- *     TANHAPPR,
- *     HARDTANH,
- *     EXP,
- *     SOFTPLUS,
- *     SOFTSIGN,
- *     RELU,
- *     RELU_COS,
- *     RELU_SIN,
- *     ELU,
- *     SELU,
- *     GELU,
- *     SOFTMAX,
- *     GAUSSIAN,
- *     SINACT,
- *     LOGIT,
- *     CUSTOM
+ * Implements activation function for neural network.
+ *
  */
 public class ActivationFunction extends UnaryFunction {
 
     /**
-     * List of supported activation functions.
-     *
-     */
-    private final UnaryFunctionType[] activationFunctions = new UnaryFunctionType[] {
-            UnaryFunctionType.LINEAR,
-            UnaryFunctionType.SIGMOID,
-            UnaryFunctionType.SWISH,
-            UnaryFunctionType.HARDSIGMOID,
-            UnaryFunctionType.BIPOLARSIGMOID,
-            UnaryFunctionType.TANH,
-            UnaryFunctionType.STANH,
-            UnaryFunctionType.TANHSIG,
-            UnaryFunctionType.TANHAPPR,
-            UnaryFunctionType.HARDTANH,
-            UnaryFunctionType.EXP,
-            UnaryFunctionType.SOFTPLUS,
-            UnaryFunctionType.SOFTSIGN,
-            UnaryFunctionType.RELU,
-            UnaryFunctionType.RELU_COS,
-            UnaryFunctionType.RELU_SIN,
-            UnaryFunctionType.ELU,
-            UnaryFunctionType.SELU,
-            UnaryFunctionType.GELU,
-            UnaryFunctionType.SOFTMAX,
-            UnaryFunctionType.GAUSSIAN,
-            UnaryFunctionType.SINACT,
-            UnaryFunctionType.LOGIT,
-            UnaryFunctionType.CUSTOM
-    };
-
-    /**
      * Constructor for activation function.
      *
-     * @param unaryFunctionType type of activation function to be used.
-     * @throws NeuralNetworkException throws exception if function is not available as activation function.
+     * @param activationFunctionType activation function type.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ActivationFunction(UnaryFunctionType unaryFunctionType) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        super(unaryFunctionType);
-        for (UnaryFunctionType activationFunctionType : activationFunctions) {
-            if (activationFunctionType == unaryFunctionType) return;
-        }
-        throw new NeuralNetworkException("No such activation function available: " + unaryFunctionType);
+    public ActivationFunction(ActivationFunctionType activationFunctionType) throws MatrixException, DynamicParamException {
+        this(activationFunctionType, null);
     }
 
     /**
      * Constructor for activation function.<br>
+     * Supported parameters are:<br>
+     *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
+     *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
+     *     - lambda: default value for SELU 1.0507.<br>
+     *     - tau: default value for (Gumbel) Softmax 1.<br>
      *
-     * @param unaryFunctionType type of activation function to be used.
+     * @param activationFunctionType activation function type.
      * @param params parameters used for activation function.
-     * @throws NeuralNetworkException throws exception if function is not available as activation function.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public ActivationFunction(UnaryFunctionType unaryFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        super(unaryFunctionType, params);
-        for (UnaryFunctionType activationFunctionType : activationFunctions) {
-            if (activationFunctionType == unaryFunctionType) return;
-        }
-        throw new NeuralNetworkException("No such activation function available: " + unaryFunctionType);
+    public ActivationFunction(ActivationFunctionType activationFunctionType, String params) throws MatrixException, DynamicParamException {
+        super(switch(activationFunctionType) {
+            case LINEAR -> UnaryFunctionType.LINEAR;
+            case SIGMOID -> UnaryFunctionType.SIGMOID;
+            case SWISH -> UnaryFunctionType.SWISH;
+            case HARDSIGMOID -> UnaryFunctionType.HARDSIGMOID;
+            case BIPOLARSIGMOID -> UnaryFunctionType.BIPOLARSIGMOID;
+            case STANH -> UnaryFunctionType.STANH;
+            case TANH -> UnaryFunctionType.TANH;
+            case TANHSIG -> UnaryFunctionType.TANHSIG;
+            case TANHAPPR -> UnaryFunctionType.TANHAPPR;
+            case HARDTANH -> UnaryFunctionType.HARDTANH;
+            case EXP -> UnaryFunctionType.EXP;
+            case SOFTPLUS -> UnaryFunctionType.SOFTPLUS;
+            case SOFTSIGN -> UnaryFunctionType.SOFTSIGN;
+            case RELU -> UnaryFunctionType.RELU;
+            case RELU_COS -> UnaryFunctionType.RELU_COS;
+            case RELU_SIN -> UnaryFunctionType.RELU_SIN;
+            case ELU -> UnaryFunctionType.ELU;
+            case SELU -> UnaryFunctionType.SELU;
+            case GELU -> UnaryFunctionType.GELU;
+            case SOFTMAX -> UnaryFunctionType.SOFTMAX;
+            case GAUSSIAN -> UnaryFunctionType.GAUSSIAN;
+            case SINACT -> UnaryFunctionType.SINACT;
+            case LOGIT -> UnaryFunctionType.LOGIT;
+            case CUSTOM -> UnaryFunctionType.CUSTOM;
+        }, params);
     }
 
 }
