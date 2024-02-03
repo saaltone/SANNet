@@ -6,7 +6,6 @@
 package core.reinforcement.policy;
 
 import core.reinforcement.agent.Agent;
-import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
@@ -27,25 +26,14 @@ public class ActionablePolicy extends AbstractPolicy {
      * Constructor for actionable policy.
      *
      * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
+     * @param functionEstimator    reference to function estimator.
+     * @param memory               reference to memory.
+     * @param params               parameters for actionable policy.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator) throws DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator);
-    }
-
-    /**
-     * Constructor for actionable policy.
-     *
-     * @param executablePolicyType executable policy type.
-     * @param functionEstimator reference to function estimator.
-     * @param params parameters for actionable policy.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, String params) throws DynamicParamException, AgentException {
-        super(executablePolicyType, functionEstimator, params);
+    public ActionablePolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(executablePolicyType, functionEstimator, memory, params);
     }
 
     /**
@@ -56,60 +44,31 @@ public class ActionablePolicy extends AbstractPolicy {
     }
 
     /**
-     * Return true if policy is updateable otherwise false.
-     *
-     * @return true if policy is updateable otherwise false.
-     */
-    public boolean isUpdateablePolicy() {
-        return false;
-    }
-
-    /**
      * Returns reference to policy.
      *
-     * @return reference to policy.
-     * @throws IOException throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if state action value function is applied to non-updateable policy.
-     */
-    public Policy reference(FunctionEstimator valueFunctionEstimator) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), getFunctionEstimator().reference(), params);
-    }
-
-    /**
-     * Returns reference to policy.
-     *
-     * @param valueFunctionEstimator        reference to value function estimator.
-     * @param sharedPolicyFunctionEstimator if true shared policy is used between value functions.
-     * @param sharedMemory                  if true policy will use shared memory otherwise dedicated memory.
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param memory                        if true policy will use shared memory otherwise dedicated memory.
      * @return reference to policy.
      * @throws IOException            throws exception if copying of neural network fails.
      * @throws ClassNotFoundException throws exception if copying of neural network fails.
      * @throws MatrixException        throws exception if matrix operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
-     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, boolean sharedMemory) throws DynamicParamException, AgentException, MatrixException, IOException, ClassNotFoundException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(sharedMemory), params);
+    public Policy reference(boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, MatrixException {
+        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(), memory, params);
     }
 
     /**
      * Returns reference to policy.
      *
-     * @param valueFunctionEstimator        reference to value function estimator.
-     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param policyFunctionEstimator reference to policy function estimator.
      * @param memory                  if true policy will use shared memory otherwise dedicated memory.
      * @return reference to policy.
-     * @throws IOException            throws exception if copying of neural network fails.
-     * @throws ClassNotFoundException throws exception if copying of neural network fails.
      * @throws MatrixException        throws exception if matrix operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
-     * @throws AgentException         throws exception if state action value function is applied to non-updateable policy.
      */
-    public Policy reference(FunctionEstimator valueFunctionEstimator, boolean sharedPolicyFunctionEstimator, Memory memory) throws DynamicParamException, IOException, ClassNotFoundException, AgentException, MatrixException {
-        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), sharedPolicyFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(memory), params);
+    public Policy reference(FunctionEstimator policyFunctionEstimator, Memory memory) throws DynamicParamException, MatrixException {
+        return new ActionablePolicy(executablePolicy.getExecutablePolicyType(), policyFunctionEstimator, memory, params);
     }
 
     /**
@@ -132,23 +91,9 @@ public class ActionablePolicy extends AbstractPolicy {
     /**
      * Updates function estimator.
      *
-     */
-    public void updateFunctionEstimator() {
-    }
-
-    /**
-     * Updates function estimator.
-     *
      * @param sampledStates sampled states.
      */
     public void updateFunctionEstimator(TreeSet<State> sampledStates) {
-    }
-
-    /**
-     * Resets function estimator.
-     *
-     */
-    public void resetFunctionEstimator() {
     }
 
 }
