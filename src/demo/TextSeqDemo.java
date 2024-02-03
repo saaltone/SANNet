@@ -6,8 +6,10 @@
 package demo;
 
 import core.activation.ActivationFunction;
+import core.activation.ActivationFunctionType;
 import core.layer.LayerType;
 import core.layer.utils.AttentionLayerFactory;
+import core.loss.LossFunctionType;
 import core.network.NeuralNetwork;
 import core.network.NeuralNetworkConfiguration;
 import core.network.NeuralNetworkException;
@@ -111,9 +113,9 @@ public class TextSeqDemo {
 
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         int attentionLayer = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 1, inputSize, layerHeight, 1, numberOfAttentionBlocks, dropoutProbability, normalize, true);
-        int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(UnaryFunctionType.SOFTMAX, "tau = " + tau), "width = " + outputSize);
+        int feedforwardLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SOFTMAX, "tau = " + tau), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(attentionLayer, feedforwardLayerIndex);
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(BinaryFunctionType.CROSS_ENTROPY);
+        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.CROSS_ENTROPY);
         neuralNetworkConfiguration.connectLayers(feedforwardLayerIndex, outputLayerIndex);
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
