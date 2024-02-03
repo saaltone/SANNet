@@ -1,6 +1,6 @@
 /*
  * SANNet Neural Network Framework
- * Copyright (C) 2018 - 2023 Simo Aaltonen
+ * Copyright (C) 2018 - 2024 Simo Aaltonen
  */
 
 package utils.configurable;
