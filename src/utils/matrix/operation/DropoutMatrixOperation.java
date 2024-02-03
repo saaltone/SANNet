@@ -26,6 +26,10 @@ public class DropoutMatrixOperation extends AbstractMatrixOperation {
      */
     private final double probability;
 
+    /**
+     * Inverse probability matrix.
+     *
+     */
     private final Matrix inverseProbabilityMatrix;
 
     /**
