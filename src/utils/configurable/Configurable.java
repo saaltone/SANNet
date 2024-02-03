@@ -5,6 +5,8 @@
 
 package utils.configurable;
 
+import utils.matrix.MatrixException;
+
 /**
  * Interface that defines configurable entity.<br>
  *
@@ -15,8 +17,9 @@ public interface Configurable {
      * Initializes default params.
      *
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if matrix operation fails.
      */
-    void initializeDefaultParams() throws DynamicParamException;
+    void initializeDefaultParams() throws DynamicParamException, MatrixException;
 
     /**
      * Returns parameters used for configurable entity.
