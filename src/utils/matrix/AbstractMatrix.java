@@ -838,9 +838,6 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * @throws MatrixException throws MatrixException if this, other and result matrix are not of equal dimensions.
      */
     private Matrix applyBiFunction(Matrix other, BinaryFunction binaryFunction, boolean inplace) throws MatrixException {
-        if (!isScalar() && !other.isScalar() && (getRows() != other.getRows() || getColumns() != other.getColumns() || getDepth() != other.getDepth())) {
-            throw new MatrixException("Incompatible matrix sizes: " + getRows() + "x" + getColumns() + "x" + getDepth() + " by " + other.getRows() + "x" + other.getColumns() + "x" + other.getDepth());
-        }
         // Checks if there is need to broadcast or un-broadcast due to scalar matrix.
         int rows = !isScalar() ? getRows() : other.getRows();
         int columns = !isScalar() ? getColumns() : other.getColumns();
@@ -1931,7 +1928,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if matrix is masked.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @return array containing row and column in this order that points to minimum value of matrix.
+     * @return array containing row, column and depth in this order that points to minimum value of matrix.
      */
     public int[] argmin() throws MatrixException {
         return new MinMatrixOperation(getRows(), getColumns(), getDepth()).applyArgMin(this);
@@ -1963,7 +1960,7 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
      * Applies masking element wise if matrix is masked.<br>
      *
      * @throws MatrixException throws exception if matrix operation fails.
-     * @return array containing row and column in this order that points to maximum value of matrix.
+     * @return array containing row, column and depth in this order that points to maximum value of matrix.
      */
     public int[] argmax() throws MatrixException {
         return new MaxMatrixOperation(getRows(), getColumns(), getDepth()).applyArgMax(this);
@@ -2475,6 +2472,16 @@ public abstract class AbstractMatrix implements Cloneable, Serializable, Matrix 
             }
         }
         else return sampleGamma(shape + 1, scale, random) * Math.pow(random.nextDouble(), 1 / shape);
+    }
+
+    /**
+     * Samples entry from matrix by taking random choice.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return array containing row, column and depth in this order that points to maximum value of matrix.
+     */
+    public int[] sample() throws MatrixException {
+        return new SampleMatrixOperation(getRows(), getColumns(), getDepth()).sample(this);
     }
 
     /**
