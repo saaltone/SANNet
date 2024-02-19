@@ -1183,17 +1183,18 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
                 case 6 -> executablePolicyType = ExecutablePolicyType.MULTINOMIAL;
             }
 
-            AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.QN;
+            AgentFactory.AgentAlgorithmType agentAlgorithmType = AgentFactory.AgentAlgorithmType.DDQN;
             boolean onlineMemory = switch (agentAlgorithmType) {
                 case DDQN, DDPG, SACDiscrete -> false;
                 default -> true;
             };
             boolean applyDueling = switch (agentAlgorithmType) {
-                case DQN, DDQN -> true;
+                case DQN -> true;
                 default -> false;
             };
             String algorithmParams = switch (agentAlgorithmType) {
                 case DDPG, SACDiscrete -> "applyUniformSampling = true";
+                case MCTS -> "gamma = 1";
                 default -> "";
             };
 
@@ -1227,13 +1228,13 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
 
         int inputLayerIndex1 = neuralNetworkConfiguration.addInputLayer(0, "width = " + inputSize + ", height = 1, depth = 1");
 
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SWISH), "width = 100");
         neuralNetworkConfiguration.connectLayers(inputLayerIndex1, hiddenLayerIndex1);
 
-        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SWISH), "width = 100");
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
 
-        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, !policyGradient ? new ActivationFunction(ActivationFunctionType.TANH) : new ActivationFunction(ActivationFunctionType.SOFTMAX), "width = " + outputSize);
+        int hiddenLayerIndex3 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, policyGradient ? new ActivationFunction(ActivationFunctionType.SOFTMAX) : new ActivationFunction(ActivationFunctionType.LINEAR), "width = " + outputSize);
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex2, hiddenLayerIndex3);
 
         int hiddenLayerIndex4 = hiddenLayerIndex3;
@@ -1270,9 +1271,9 @@ public class TicTacToe implements Environment, AgentFunctionEstimator, ActionLis
     public NeuralNetwork buildNeuralNetwork(int inputSize, int actorOutputSize, int valueOutputSize) throws DynamicParamException, NeuralNetworkException, MatrixException {
         NeuralNetworkConfiguration neuralNetworkConfiguration = new NeuralNetworkConfiguration();
         int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
-        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.STANH), "width = 100");
         neuralNetworkConfiguration.connectLayers(inputLayerIndex, hiddenLayerIndex1);
-        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+        int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.STANH), "width = 100");
         neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
 
         if (actorOutputSize != -1) {
