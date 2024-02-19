@@ -78,8 +78,9 @@ public interface Agent {
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    void act() throws NeuralNetworkException, MatrixException;
+    void act() throws NeuralNetworkException, MatrixException, AgentException;
 
     /**
      * Takes action defined by external agent.
@@ -87,8 +88,9 @@ public interface Agent {
      * @param action action.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if defined action is not available in current environment state.
      */
-    void act(int action) throws NeuralNetworkException, MatrixException;
+    void act(int action) throws NeuralNetworkException, MatrixException, AgentException;
 
     /**
      * Assigns immediate reward from environment in response to action agent executed.
