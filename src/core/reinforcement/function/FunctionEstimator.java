@@ -49,6 +49,13 @@ public interface FunctionEstimator extends Configurable {
     int getNumberOfActions();
 
     /**
+     * Sets if function estimator can use importance sampling weights.
+     *
+     * @param canUseImportanceSamplingWeights if true can use importance sampling weights otherwise not.
+     */
+    void setCanUseImportanceSamplingWeights(boolean canUseImportanceSamplingWeights);
+
+    /**
      * Starts function estimator.
      *
      * @throws NeuralNetworkException throws exception if starting of function estimator fails.
@@ -179,5 +186,15 @@ public interface FunctionEstimator extends Configurable {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     int argmax(Matrix stateValues, HashSet<Integer> availableActions) throws MatrixException;
+
+    /**
+     * Samples action weighted random choice.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return sampled action.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     */
+    int sample(Matrix stateValues, HashSet<Integer> availableActions) throws MatrixException;
 
 }
