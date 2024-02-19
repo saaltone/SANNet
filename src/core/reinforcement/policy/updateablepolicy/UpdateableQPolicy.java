@@ -13,6 +13,7 @@ import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.QPolicyValueFunction;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -102,9 +103,16 @@ public class UpdateableQPolicy extends AbstractUpdateablePolicy {
      *
      * @param state state.
      * @return policy gradient value.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    protected Matrix getPolicyGradient(State state) throws MatrixException, NeuralNetworkException {
-        return state.policyValues.multiply(getQPolicyValueFunction().getTargetValues(state, true));
+    protected Matrix getPolicyGradient(State state) throws MatrixException, NeuralNetworkException, DynamicParamException {
+        Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        double policyValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
+        double policyGradientValue = policyValue * getQPolicyValueFunction().getTargetValues(state, false).getValue(state.action, 0, 0);
+        policyGradient.setValue(state.action, 0, 0, policyGradientValue);
+        return policyGradient;
     }
 
 }
