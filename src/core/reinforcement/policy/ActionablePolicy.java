@@ -89,11 +89,17 @@ public class ActionablePolicy extends AbstractPolicy {
     }
 
     /**
-     * Updates function estimator.
+     * Prepares function estimator update.
      *
      * @param sampledStates sampled states.
      */
-    public void updateFunctionEstimator(TreeSet<State> sampledStates) {
+    public void prepareFunctionEstimator(TreeSet<State> sampledStates) {
+    }
+
+    /**
+     * Finishes function estimator update.
+     */
+    public void finishFunctionEstimator() {
     }
 
 }
