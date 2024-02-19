@@ -5,8 +5,10 @@
 
 package core.reinforcement.value;
 
-import core.reinforcement.function.FunctionEstimator;
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.State;
+import core.reinforcement.function.FunctionEstimator;
+import utils.matrix.MatrixException;
 
 /**
  * Implements abstract action value function.<br>
@@ -25,13 +27,16 @@ public abstract class AbstractActionValueFunction extends AbstractValueFunctionE
     }
 
     /**
-     * Returns function index applying potential state action value offset.
+     * Returns target value based on next state.
      *
-     * @param state state.
-     * @return function index.
+     * @param nextState next state.
+     * @return target value based on next state
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      */
-    protected int getValueFunctionIndex(State state) {
-        return state.action;
+    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException {
+        int targetAction = getValueFunctionIndex(nextState);
+        return targetAction == Integer.MIN_VALUE ? 0 : getFunctionEstimator().predictStateActionValues(nextState).getValue(getValueFunctionIndex(nextState), 0, 0);
     }
 
 }
