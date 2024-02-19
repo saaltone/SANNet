@@ -64,16 +64,6 @@ public interface ValueFunction extends Configurable {
     boolean readyToUpdate(Agent agent) throws AgentException;
 
     /**
-     * Updates value function.
-     *
-     * @param sampledStates sampled states.
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
-     */
-    void update(TreeSet<State> sampledStates) throws MatrixException, NeuralNetworkException, DynamicParamException;
-
-    /**
      * Returns function estimator.
      *
      * @return function estimator.
@@ -81,13 +71,23 @@ public interface ValueFunction extends Configurable {
     FunctionEstimator getFunctionEstimator();
 
     /**
-     * Updates function estimator.
+     * Prepares function estimator update.
      *
      * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void prepareFunctionEstimatorUpdate(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
+
+    /**
+     * Finishes function estimator update.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     */
+    void finishFunctionEstimatorUpdate(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }
