@@ -5,8 +5,6 @@
 
 package core.reinforcement.agent;
 
-import utils.matrix.Matrix;
-
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -41,7 +39,7 @@ public class State implements Serializable, Comparable<State> {
      * Action taken to move from current environment state to next state.
      *
      */
-    public int action = -1;
+    public int action = Integer.MIN_VALUE;
 
     /**
      * Immediate reward after taking specific action in current environment state.
@@ -78,30 +76,6 @@ public class State implements Serializable, Comparable<State> {
      *
      */
     public double importanceSamplingWeight;
-
-    /**
-     * Policy value.
-     *
-     */
-    public double policyValue;
-
-    /**
-     * Policy values.
-     *
-     */
-    public Matrix policyValues;
-
-    /**
-     * State value.
-     *
-     */
-    public double value;
-
-    /**
-     * Target action.
-     *
-     */
-    public int targetAction;
 
     /**
      * TD target value.
@@ -182,7 +156,7 @@ public class State implements Serializable, Comparable<State> {
      */
     public void print() {
         environmentState.print();
-        System.out.println("Action: " + action + " Policy Value: " + policyValue + " Reward: " + reward + " State Value: " + value + " TD target: " + tdTarget + " TD error: " + tdError);
+        System.out.println("Action: " + action + " Reward: " + reward + " TD target: " + tdTarget + " TD error: " + tdError);
     }
 
     /**
