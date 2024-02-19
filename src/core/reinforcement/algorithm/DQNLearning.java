@@ -7,11 +7,11 @@ package core.reinforcement.algorithm;
 
 import core.reinforcement.agent.Environment;
 import core.reinforcement.agent.StateSynchronization;
-import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.QValueFunction;
+import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -29,14 +29,14 @@ public class DQNLearning extends AbstractQLearning {
      * @param stateSynchronization   reference to state synchronization.
      * @param environment            reference to environment.
      * @param executablePolicyType   executable policy type.
-     * @param valueFunctionEstimator reference to value function estimator.
+     * @param qValueFunction         reference to Q value function.
      * @param memory                 reference to memory.
      * @param params                 parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public DQNLearning(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
-        super(stateSynchronization, environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator, memory, params), new QValueFunction(valueFunctionEstimator, params), memory, params);
+    public DQNLearning(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, QValueFunction qValueFunction, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(stateSynchronization, environment, new ActionablePolicy(executablePolicyType, qValueFunction.getFunctionEstimator(), memory, params), qValueFunction, memory, params);
     }
 
     /**
@@ -51,8 +51,9 @@ public class DQNLearning extends AbstractQLearning {
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public DQNLearning reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
-        Memory newMemory = sharedMemory ? memory : memory.reference();
-        return new DQNLearning(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), valueFunction.reference(sharedValueFunctionEstimator).getFunctionEstimator(), newMemory, getParams());
+        Memory newMemory = getMemory(sharedMemory);
+        ValueFunction newValueFunction = getValueFunction(sharedValueFunctionEstimator);
+        return new DQNLearning(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), (QValueFunction)newValueFunction, newMemory, getParams());
     }
 
 }

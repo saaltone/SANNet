@@ -44,7 +44,7 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * Returns reference to algorithm.
      *
      * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
-     * @param sharedValueFunctionEstimator if true shared value function estimator is used otherwise new policy function estimator is created.
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used otherwise new value function estimator is created.
      * @param sharedMemory if true shared memory is used between estimators.
      * @return reference to algorithm.
      * @throws IOException throws exception if creation of target value function estimator fails.
@@ -53,9 +53,9 @@ public class SoftActorCriticDiscrete extends AbstractPolicyGradient {
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public SoftActorCriticDiscrete reference(boolean sharedPolicyFunctionEstimator, boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
-        Memory newMemory = sharedMemory ? memory : memory.reference();
-        ValueFunction newValueFunction = valueFunction.reference(sharedValueFunctionEstimator);
-        Policy newPolicy = newValueFunction.getFunctionEstimator().isStateActionValueFunction() ? policy.reference(newValueFunction.getFunctionEstimator(), memory) : policy.reference(sharedPolicyFunctionEstimator, newMemory);
+        Memory newMemory = getMemory(sharedMemory);
+        ValueFunction newValueFunction = getValueFunction(sharedValueFunctionEstimator);
+        Policy newPolicy = getPolicy(sharedPolicyFunctionEstimator, newValueFunction, newMemory);
         return new SoftActorCriticDiscrete(getStateSynchronization(), getEnvironment(), (UpdateableSoftQPolicy) newPolicy, (SoftQValueFunction) newValueFunction, newMemory, getParams());
     }
 

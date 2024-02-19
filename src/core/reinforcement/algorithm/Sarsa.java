@@ -7,11 +7,11 @@ package core.reinforcement.algorithm;
 
 import core.reinforcement.agent.Environment;
 import core.reinforcement.agent.StateSynchronization;
-import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.ActionablePolicy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import core.reinforcement.value.ActionValueFunction;
+import core.reinforcement.value.ValueFunction;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -29,14 +29,14 @@ public class Sarsa extends AbstractQLearning {
      * @param stateSynchronization   reference to state synchronization.
      * @param environment            reference to environment.
      * @param executablePolicyType   executable policy type.
-     * @param valueFunctionEstimator reference to value function estimator.
+     * @param actionValueFunction    reference to action value function.
      * @param memory                 reference to memory.
      * @param params                 parameters for agent.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      * @throws MatrixException throws exception if matrix operation fails.
      */
-    public Sarsa(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, FunctionEstimator valueFunctionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
-        super(stateSynchronization, environment, new ActionablePolicy(executablePolicyType, valueFunctionEstimator, memory, params), new ActionValueFunction(valueFunctionEstimator, params), memory, params);
+    public Sarsa(StateSynchronization stateSynchronization, Environment environment, ExecutablePolicyType executablePolicyType, ActionValueFunction actionValueFunction, Memory memory, String params) throws DynamicParamException, MatrixException {
+        super(stateSynchronization, environment, new ActionablePolicy(executablePolicyType, actionValueFunction.getFunctionEstimator(), memory, params), actionValueFunction, memory, params);
     }
 
     /**
@@ -51,8 +51,9 @@ public class Sarsa extends AbstractQLearning {
      * @throws MatrixException throws exception if neural network has less output than actions.
      */
     public Sarsa reference(boolean sharedValueFunctionEstimator, boolean sharedMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
-        Memory newMemory = sharedMemory ? memory : memory.reference();
-        return new Sarsa(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), valueFunction.reference(sharedValueFunctionEstimator).getFunctionEstimator(), newMemory, getParams());
+        Memory newMemory = getMemory(sharedMemory);
+        ValueFunction newValueFunction = getValueFunction(sharedValueFunctionEstimator);
+        return new Sarsa(getStateSynchronization(), getEnvironment(), policy.getExecutablePolicy().getExecutablePolicyType(), (ActionValueFunction)newValueFunction, newMemory, getParams());
     }
 
 }
