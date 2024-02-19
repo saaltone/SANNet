@@ -1,5 +1,6 @@
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.DMatrix;
@@ -116,8 +117,8 @@ public class OUNoisePolicy extends AbstractExecutablePolicy {
         this.sigma = 0.5;
         this.sigmaMatrix = new DMatrix(numberOfActions, 1, 1);
         this.sigmaMatrix.initializeToValue(sigma);
-        this.minSigma = 0.00;
-        this.sigmaDecay = 0.99;
+        this.minSigma = 0.01;
+        this.sigmaDecay = 0.9999;
         reset();
     }
 
@@ -184,8 +185,9 @@ public class OUNoisePolicy extends AbstractExecutablePolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) throws AgentException {
         int action = -1;
         double maxValue = Double.MIN_VALUE;
 
@@ -194,7 +196,7 @@ public class OUNoisePolicy extends AbstractExecutablePolicy {
             ouNoise = sample();
         }
         catch (MatrixException matrixException) {
-            return action;
+            throw new AgentException("OUNoise policy failed to choose valid action.");
         }
 
         for (ActionValueTuple actionValueTuple : stateValueSet) {
@@ -204,7 +206,8 @@ public class OUNoisePolicy extends AbstractExecutablePolicy {
                 action = actionValueTuple.action();
             }
         }
-        return action;
+        if (action == -1) throw new AgentException("OUNoise policy failed to choose valid action.");
+        else return action;
     }
 
     /**

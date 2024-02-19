@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -152,14 +153,18 @@ public class EpsilonGreedyPolicy extends GreedyPolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
-        if (Math.random() < epsilon) {
-            ActionValueTuple[] actionValueTupleArray = new ActionValueTuple[stateValueSet.size()];
-            actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
-            return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) throws AgentException {
+        if (stateValueSet.isEmpty()) throw new AgentException("Noisy next best policy failed to choose valid action.");
+        else {
+            if (Math.random() < epsilon) {
+                ActionValueTuple[] actionValueTupleArray = new ActionValueTuple[stateValueSet.size()];
+                actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
+                return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
+            }
+            else return super.getAction(stateValueSet);
         }
-        else return super.getAction(stateValueSet);
     }
 
 }

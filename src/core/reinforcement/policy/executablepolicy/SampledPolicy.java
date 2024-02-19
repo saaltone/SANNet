@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -134,8 +135,9 @@ public class SampledPolicy extends AbstractExecutablePolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) throws AgentException {
         double lowValue = stateValueSet.first().value();
         double highValue = stateValueSet.last().value();
         double thresholdValue = highValue - (highValue - lowValue) * thresholdCurrent * random.nextDouble();
@@ -143,7 +145,7 @@ public class SampledPolicy extends AbstractExecutablePolicy {
             ActionValueTuple actionValueTuple = stateValueSet.pollFirst();
             if (Objects.requireNonNull(actionValueTuple).value() >= thresholdValue) return actionValueTuple.action();
         }
-        return -1;
+        throw new AgentException("Sampled policy failed to choose valid action.");
     }
 
 }

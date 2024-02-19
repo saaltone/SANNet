@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import utils.configurable.Configurable;
 import utils.matrix.Matrix;
@@ -54,8 +55,9 @@ public interface ExecutablePolicy extends Configurable {
      * @param policyValueMatrix current policy value matrix.
      * @param availableActions  available actions in current state
      * @return action taken.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    int action(Matrix policyValueMatrix, HashSet<Integer> availableActions);
+    int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) throws AgentException;
 
     /**
      * Adds state for action execution.

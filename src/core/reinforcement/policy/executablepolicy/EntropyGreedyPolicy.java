@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -123,22 +124,26 @@ public class EntropyGreedyPolicy extends GreedyPolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) {
-        double entropy = getActionEntropy(stateValueSet);
-        double usedEntropy;
-        if (useAveragingEntropy) {
-            averageEntropy = averageEntropy == Double.MIN_VALUE ? entropy : tau * averageEntropy + (1 - tau) * entropy;
-            usedEntropy = averageEntropy;
+    protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) throws AgentException {
+        if (stateValueSet.isEmpty()) throw new AgentException("Noisy next best policy failed to choose valid action.");
+        else {
+            double entropy = getActionEntropy(stateValueSet);
+            double usedEntropy;
+            if (useAveragingEntropy) {
+                averageEntropy = averageEntropy == Double.MIN_VALUE ? entropy : tau * averageEntropy + (1 - tau) * entropy;
+                usedEntropy = averageEntropy;
+            }
+            else usedEntropy = entropy;
+            boolean randomChoice = Math.random() < Math.max(minThreshold, usedEntropy * entropyFactor);
+            if (randomChoice) {
+                AbstractExecutablePolicy.ActionValueTuple[] actionValueTupleArray = new AbstractExecutablePolicy.ActionValueTuple[stateValueSet.size()];
+                actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
+                return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
+            }
+            else return super.getAction(stateValueSet);
         }
-        else usedEntropy = entropy;
-        boolean randomChoice = Math.random() < Math.max(minThreshold, usedEntropy * entropyFactor);
-        if (randomChoice) {
-            AbstractExecutablePolicy.ActionValueTuple[] actionValueTupleArray = new AbstractExecutablePolicy.ActionValueTuple[stateValueSet.size()];
-            actionValueTupleArray = stateValueSet.toArray(actionValueTupleArray);
-            return actionValueTupleArray[random.nextInt(actionValueTupleArray.length)].action();
-        }
-        else return super.getAction(stateValueSet);
     }
 
 }

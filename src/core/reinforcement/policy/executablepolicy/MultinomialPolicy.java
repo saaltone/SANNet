@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -46,9 +47,11 @@ public class MultinomialPolicy extends AbstractExecutablePolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) {
-        return stateValueSet.isEmpty() ? -1 : getRandomChoice(stateValueSet);
+    protected int getAction(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) throws AgentException {
+        if (stateValueSet.isEmpty()) throw new AgentException("Noisy next best policy failed to choose valid action.");
+        else return getRandomChoice(stateValueSet);
     }
 
     /**
@@ -56,8 +59,9 @@ public class MultinomialPolicy extends AbstractExecutablePolicy {
      *
      * @param stateValueSet state value set.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    public int getRandomChoice(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) {
+    public int getRandomChoice(TreeSet<AbstractExecutablePolicy.ActionValueTuple> stateValueSet) throws AgentException {
         double valueSum = 0;
         for (ActionValueTuple actionValueTuple : stateValueSet) valueSum += actionValueTuple.value();
 
@@ -69,7 +73,7 @@ public class MultinomialPolicy extends AbstractExecutablePolicy {
             if (valueSum >= threshold) return actionValueTuple.action();
         }
 
-        return -1;
+        throw new AgentException("Multinomial policy failed to choose valid action.");
     }
 
 }

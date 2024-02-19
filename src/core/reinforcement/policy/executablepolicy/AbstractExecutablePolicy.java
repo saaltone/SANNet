@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -148,8 +149,9 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      * @param policyValueMatrix current state value matrix.
      * @param availableActions  available actions in current state
      * @return action taken.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) throws AgentException {
         TreeSet<ActionValueTuple> stateValueSet = new TreeSet<>(Comparator.comparingDouble(o -> o.value));
         for (Integer action : availableActions) {
             stateValueSet.add(new ActionValueTuple(action, !asSoftMax ? policyValueMatrix.getValue(action, 0, 0) : Math.exp(policyValueMatrix.getValue(action, 0, 0))));
@@ -192,8 +194,9 @@ public abstract class AbstractExecutablePolicy implements ExecutablePolicy, Seri
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected abstract int getAction(TreeSet<ActionValueTuple> stateValueSet);
+    protected abstract int getAction(TreeSet<ActionValueTuple> stateValueSet) throws AgentException;
 
     /**
      * Returns executable policy type.

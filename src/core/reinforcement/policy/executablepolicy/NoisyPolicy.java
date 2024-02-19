@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
@@ -95,10 +96,16 @@ public class NoisyPolicy extends AbstractExecutablePolicy {
      *
      * @param stateValueSet priority queue containing action values in decreasing order.
      * @return chosen action.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) {
+    protected int getAction(TreeSet<ActionValueTuple> stateValueSet) throws AgentException {
         TreeSet<ActionValueTuple> noisedStateValueSet = addNoise(stateValueSet);
-        return noisedStateValueSet.isEmpty() ? -1 : Objects.requireNonNull(noisedStateValueSet.pollLast()).action();
+        if (noisedStateValueSet.isEmpty()) throw new AgentException("Noisy policy failed to choose valid action.");
+        else {
+            ActionValueTuple actionValueTuple = noisedStateValueSet.pollLast();
+            if (actionValueTuple == null) throw new AgentException("Noisy policy failed to choose valid action.");
+            else return actionValueTuple.action();
+        }
     }
 
     /**

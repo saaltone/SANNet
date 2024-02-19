@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.executablepolicy;
 
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.agent.State;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
@@ -347,8 +348,9 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
          * @param availableActions available actions in current state
          * @param alwaysGreedy if true greedy action is always taken.
          * @return action taken.
+         * @throws AgentException throws exception if policy fails to choose valid action.
          */
-        public int act(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) {
+        public int act(Matrix policyValueMatrix, HashSet<Integer> availableActions, boolean alwaysGreedy) throws AgentException {
             updateActionProbabilities(policyValueMatrix, availableActions);
             maxMCTSAction = null;
             double maxValue = Double.MIN_VALUE;
@@ -374,7 +376,8 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
                     }
                 }
             }
-            return (maxMCTSAction != null) ? maxMCTSAction.getActionID() : -1;
+            if (maxMCTSAction == null) throw new AgentException("MCTS policy failed to choose valid action.");
+            else return maxMCTSAction.getActionID();
         }
 
         /**
@@ -427,7 +430,6 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
         public void update(Stack<core.reinforcement.agent.State> stateStack) {
             State state = stateStack.pop();
             getMaxAction().updateActionValue(state.tdTarget);
-            state.policyValue = getMaxAction().getPolicyValue();
             if (hasParentState()) getParentState().update(stateStack);
         }
 
@@ -595,8 +597,9 @@ public class MCTSPolicy implements ExecutablePolicy, Serializable {
      * @param policyValueMatrix current state value matrix.
      * @param availableActions  available actions in current state
      * @return action taken.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) {
+    public int action(Matrix policyValueMatrix, HashSet<Integer> availableActions) throws AgentException {
         updateState();
         return currentMCTSState.act(policyValueMatrix, availableActions, !isLearning());
     }
