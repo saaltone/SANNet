@@ -114,8 +114,9 @@ public interface Policy extends Configurable {
      * @param state state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    void act(State state) throws NeuralNetworkException, MatrixException;
+    void act(State state) throws NeuralNetworkException, MatrixException, AgentException;
 
     /**
      * Ends episode
@@ -140,13 +141,22 @@ public interface Policy extends Configurable {
     FunctionEstimator getFunctionEstimator();
 
     /**
-     * Updates function estimator.
+     * Prepares function estimator update.
      *
      * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
+    void prepareFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException;
+
+    /**
+     * Finishes function estimator update.
+     *
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     */
+    void finishFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException;
 
 }
