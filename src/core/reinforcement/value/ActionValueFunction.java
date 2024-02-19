@@ -43,23 +43,13 @@ public class ActionValueFunction extends AbstractActionValueFunction {
     }
 
     /**
-     * Returns target value based on next state.
+     * Returns function index applying potential state action value offset.
      *
-     * @param nextState next state.
-     * @return target value based on next state
+     * @param state state.
+     * @return function index.
      */
-    public double getTargetValue(State nextState) {
-        return nextState.value;
-    }
-
-    /**
-     * Returns target action based on next state.
-     *
-     * @param nextState next state.
-     * @return target action based on next state
-     */
-    protected int getTargetAction(State nextState) {
-        return nextState.action;
+    protected int getValueFunctionIndex(State state) {
+        return state.action;
     }
 
 }
