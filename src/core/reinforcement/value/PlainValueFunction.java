@@ -5,6 +5,7 @@
 
 package core.reinforcement.value;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
 import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.DirectFunctionEstimator;
@@ -130,12 +131,22 @@ public class PlainValueFunction extends AbstractActionValueFunction {
     public void stop() {}
 
     /**
+     * Returns function index applying potential state action value offset.
+     *
+     * @param state state.
+     * @return function index.
+     */
+    protected int getValueFunctionIndex(State state) {
+        return 0;
+    }
+
+    /**
      * Updates state value.
      *
      * @param state state.
      */
     protected double getStateValue(State state) {
-        return state.value;
+        return 0;
     }
 
     /**
@@ -145,17 +156,7 @@ public class PlainValueFunction extends AbstractActionValueFunction {
      * @return target value based on next state
      */
     public double getTargetValue(State nextState) {
-        return useBaseline && averageMean > 0 && averageStandardDeviation > 0? (nextState.tdTarget - averageMean) / averageStandardDeviation : nextState.tdTarget;
-    }
-
-    /**
-     * Returns target action based on next state.
-     *
-     * @param nextState next state.
-     * @return target action based on next state
-     */
-    protected int getTargetAction(State nextState) {
-        return nextState.action;
+        return useBaseline && averageMean > 0 && averageStandardDeviation > 0 ? (nextState.tdTarget - averageMean) / averageStandardDeviation : nextState.tdTarget;
     }
 
     /**
@@ -170,12 +171,12 @@ public class PlainValueFunction extends AbstractActionValueFunction {
         if (size < 2) return;
 
         double mean = 0;
-        for (State state : states) mean += state.value;
+        for (State state : states) mean += state.tdTarget;
         mean /= size;
         averageMean = averageMean == 0 ? mean : tau * averageMean + (1 - tau) * mean;
 
         double standardDeviation = 0;
-        for (State state : states) standardDeviation += Math.pow(state.value - mean, 2);
+        for (State state : states) standardDeviation += Math.pow(state.tdTarget - mean, 2);
         standardDeviation = Math.sqrt(standardDeviation / (size - 1));
         averageStandardDeviation = averageStandardDeviation == 0 ? standardDeviation : tau * averageStandardDeviation + (1 - tau) * standardDeviation;
 
@@ -201,11 +202,23 @@ public class PlainValueFunction extends AbstractActionValueFunction {
     }
 
     /**
-     * Updates function estimator.
+     * Prepares function estimator update.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void prepareFunctionEstimatorUpdate(TreeSet<State> sampledStates) throws MatrixException, NeuralNetworkException, DynamicParamException {
+        update(sampledStates);
+    }
+
+    /**
+     * Finish function estimator update.
      *
      * @param sampledStates sampled states.
      */
-    public void updateFunctionEstimator(TreeSet<State> sampledStates) {
+    public void finishFunctionEstimatorUpdate(TreeSet<State> sampledStates) {
     }
 
 }
