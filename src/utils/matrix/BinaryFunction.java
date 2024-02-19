@@ -88,9 +88,8 @@ public class BinaryFunction implements Serializable {
     /**
      * Constructor for binary function.<br>
      * Supported parameters are:<br>
-     *     - delta: default value for Huber loss 1.<br>
-     *     - hinge: default value for hinge margin 1.<br>
-     *     - delta: default value for huber delta 1.<br>
+     *     - hingeMargin: default value for hinge margin 1.<br>
+     *     - huberDelta: default value for huber delta 1.<br>
      *     - numberOfQuantiles: number of quantiles for quantile loss. Default value 10.<br>
      *
      * @param binaryFunctionType type of function to be used.
@@ -151,8 +150,8 @@ public class BinaryFunction implements Serializable {
             }
             case HINGE -> {
                 if (params != null) {
-                    DynamicParam dynamicParam = new DynamicParam(params, "(margin:DOUBLE)");
-                    if (dynamicParam.hasParam("margin")) hingeMargin = dynamicParam.getValueAsDouble("margin");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(hingeMargin:DOUBLE)");
+                    if (dynamicParam.hasParam("hingeMargin")) hingeMargin = dynamicParam.getValueAsDouble("hingeMargin");
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : hingeMargin - constant * value;
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> hingeMargin - constant * value <= 0 ? 0 : -constant;
@@ -163,8 +162,8 @@ public class BinaryFunction implements Serializable {
             }
             case HUBER -> {
                 if (params != null) {
-                    DynamicParam dynamicParam = new DynamicParam(params, "(delta:DOUBLE)");
-                    if (dynamicParam.hasParam("delta")) huberDelta = dynamicParam.getValueAsDouble("delta");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(huberDelta:DOUBLE)");
+                    if (dynamicParam.hasParam("huberDelta")) huberDelta = dynamicParam.getValueAsDouble("huberDelta");
                 }
                 function = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? 0.5 * Math.pow(value - constant, 2) : huberDelta * (Math.abs(value - constant) - 0.5 * huberDelta);
                 derivative = (Matrix.MatrixBinaryOperation & Serializable) (value, constant) -> Math.abs(value - constant) <= huberDelta ? value - constant : huberDelta * Math.signum(value - constant);
