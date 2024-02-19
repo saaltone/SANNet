@@ -74,20 +74,6 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     }
 
     /**
-     * Updates function estimator.
-     *
-     * @param sampledStates sampled states.
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        for (State state : sampledStates) getFunctionEstimator().storePolicyValues(state, getPolicyGradient(state));
-        postProcess();
-        getFunctionEstimator().update();
-    }
-
-    /**
      * Returns policy gradient for state.
      *
      * @param state state.
@@ -99,12 +85,28 @@ public abstract class AbstractUpdateablePolicy extends AbstractPolicy {
     protected abstract Matrix getPolicyGradient(State state) throws NeuralNetworkException, MatrixException, DynamicParamException;
 
     /**
-     * Postprocesses policy gradient update.
+     * Prepares function estimator update.
      *
+     * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    protected void postProcess() throws MatrixException, DynamicParamException {
+    public void prepareFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        for (State state : sampledStates) {
+            getFunctionEstimator().storePolicyValues(state, getPolicyGradient(state));
+        }
+    }
+
+    /**
+     * Finishes function estimator update.
+     *
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     */
+    public void finishFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
+        getFunctionEstimator().update();
     }
 
 }
