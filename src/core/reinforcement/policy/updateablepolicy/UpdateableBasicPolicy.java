@@ -5,6 +5,7 @@
 
 package core.reinforcement.policy.updateablepolicy;
 
+import core.network.NeuralNetworkException;
 import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.memory.Memory;
@@ -20,12 +21,6 @@ import java.io.IOException;
  *
  */
 public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
-
-    /**
-     * Log function.
-     *
-     */
-    private final UnaryFunction logFunction = new UnaryFunction(UnaryFunctionType.LOG);
 
     /**
      * Constructor for updateable basic policy.
@@ -81,9 +76,15 @@ public class UpdateableBasicPolicy extends AbstractUpdateablePolicy {
      *
      * @param state state.
      * @return policy gradient value.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if neural network operation fails.
      */
-    protected Matrix getPolicyGradient(State state) throws MatrixException {
-        return state.policyValues.apply(logFunction).multiply(state.policyValues.getNewMatrix(state.tdError));
+    protected Matrix getPolicyGradient(State state) throws MatrixException, NeuralNetworkException {
+        Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        double policyValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
+        double policyGradientValue = Math.log(policyValue) * state.tdError;
+        policyGradient.setValue(state.action, 0, 0, policyGradientValue);
+        return policyGradient;
     }
 
 }
