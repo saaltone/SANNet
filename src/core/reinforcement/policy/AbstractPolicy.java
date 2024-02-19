@@ -7,6 +7,7 @@ package core.reinforcement.policy;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.agent.Agent;
+import core.reinforcement.agent.AgentException;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.agent.State;
 import core.reinforcement.memory.Memory;
@@ -126,6 +127,7 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
     public void start(Agent agent) throws NeuralNetworkException, MatrixException, DynamicParamException, IOException, ClassNotFoundException {
         getFunctionEstimator().registerAgent(agent);
         getFunctionEstimator().start();
+        getFunctionEstimator().setCanUseImportanceSamplingWeights(false);
     }
 
     /**
@@ -202,13 +204,12 @@ public abstract class AbstractPolicy implements Policy, Configurable, Serializab
      * @param state state.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    public void act(State state) throws NeuralNetworkException, MatrixException {
+    public void act(State state) throws NeuralNetworkException, MatrixException, AgentException {
         Matrix policyValues = getValues(state);
         state.action = getExecutablePolicy().action(policyValues, state.environmentState.availableActions());
         if (isLearning()) {
-            state.policyValues = policyValues;
-            state.policyValue = policyValues.getValue(state.action, 0, 0);
             memory.add(state);
             getExecutablePolicy().add(state);
         }
