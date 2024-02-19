@@ -14,6 +14,7 @@ import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
 import utils.configurable.DynamicParam;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -181,27 +182,30 @@ public class UpdateableProximalPolicy extends AbstractUpdateablePolicy {
      * @throws MatrixException        throws exception if matrix operation fails.
      */
     protected Matrix getPolicyGradient(State state) throws NeuralNetworkException, MatrixException {
-        if (getPreviousFunctionEstimator() == getFunctionEstimator()) return state.policyValues.getNewMatrix(1);
-        else {
+        Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        double policyGradientValue = 0;
+        if (getPreviousFunctionEstimator() != getFunctionEstimator()) {
             double currentPolicyValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
             double previousPolicyValue = getPreviousFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
-            double policyGradientValue = Math.min(currentPolicyValue / previousPolicyValue * state.tdError, Math.min(1 + epsilon, Math.max(1 - epsilon, state.tdError)));
-            Matrix policyGradient = state.policyValues.getNewMatrix();
-            policyGradient.setValue(state.action, 0, 0, policyGradientValue);
-            return policyGradient;
+            policyGradientValue = Math.min(currentPolicyValue / previousPolicyValue * state.tdError, Math.min(1 + epsilon, Math.max(1 - epsilon, state.tdError)));
         }
+        policyGradient.setValue(state.action, 0, 0, policyGradientValue);
+        return policyGradient;
     }
 
     /**
-     * Postprocesses policy gradient update.
+     * Finishes function estimator update.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    protected void postProcess() throws MatrixException {
+    public void finishFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
         if (++updateCount >= updateCycle) {
             getPreviousFunctionEstimator().append(getFunctionEstimator());
             updateCount = 0;
         }
+        super.finishFunctionEstimator();
     }
 
 }
