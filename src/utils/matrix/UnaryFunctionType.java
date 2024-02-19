@@ -120,7 +120,7 @@ public enum UnaryFunctionType {
     SIGMOID,
 
     /**
-     * Swish
+     * Swish (Silu)
      *
      */
     SWISH,
@@ -220,6 +220,12 @@ public enum UnaryFunctionType {
      *
      */
     SINACT,
+
+    /**
+     * Mish.
+     *
+     */
+    MISH,
 
     /**
      * Logit
