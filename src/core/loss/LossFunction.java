@@ -20,8 +20,8 @@ public class LossFunction extends BinaryFunction {
     /**
      * Constructor for loss function.<br>
      * Supported parameters are:<br>
-     *     - delta: default value for Huber loss 1.<br>
-     *     - hinge: default value for hinge margin 1.<br>
+     *     - hingeMargin: default value for hinge margin 1.<br>
+     *     - huberDelta: default value for Huber loss 1.<br>
      *
      * @param lossFunctionType loss function type.
      * @param params parameters used for loss function.
