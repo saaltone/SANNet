@@ -244,12 +244,11 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
     }
 
-
     /**
      * Number of cities for travelling salesman.
      *
      */
-    private static final int numberOfCities = 10;
+    private static final int numberOfCities = 15;
 
     /**
      * Current tour.
@@ -287,6 +286,12 @@ public class TSP implements Environment, AgentFunctionEstimator {
      *
      */
     private final int yWindowSize = 500;
+
+    /**
+     * Previous total distance.
+     *
+     */
+    private double previousTotalDistance = Double.MIN_VALUE;
 
     /**
      * Random number generator.
@@ -472,12 +477,6 @@ public class TSP implements Environment, AgentFunctionEstimator {
     }
 
     /**
-     * Previous total distance.
-     *
-     */
-    private double previousTotalDistance = Double.MIN_VALUE;
-
-    /**
      * Requests immediate reward from environment after taking action.
      *
      * @param agent agent that is asking for reward.
@@ -486,7 +485,7 @@ public class TSP implements Environment, AgentFunctionEstimator {
         double reward = 0;
         if (isTerminalState()) {
             double currentTotalDistance = getTotalDistance();
-            reward = 1 / currentTotalDistance;
+            reward = Math.max(-1, Math.min(1, 1 - Math.log(currentTotalDistance)));
             previousTotalDistance = currentTotalDistance;
         }
         agent.respond(reward);
@@ -734,8 +733,8 @@ public class TSP implements Environment, AgentFunctionEstimator {
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
-            case DDQN -> "capacity = 1000";
-            case DDPG, SACDiscrete -> "applyUniformSampling = true";
+            case DDPG, SACDiscrete -> "applyImportanceSamplingWeights = false, applyUniformSampling = true";
+            case MCTS -> "gamma = 1";
             default -> "";
         };
 
@@ -770,10 +769,10 @@ public class TSP implements Environment, AgentFunctionEstimator {
         if (feedforwardNetwork) {
             int inputLayerIndex1 = neuralNetworkConfiguration.addInputLayer(0, "width = " + inputSize + ", height = 1, depth = 1");
 
-            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SWISH), "width = 100");
             neuralNetworkConfiguration.connectLayers(inputLayerIndex1, hiddenLayerIndex1);
 
-            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.SWISH), "width = 100");
             neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
 
             hiddenLayerIndexPre = hiddenLayerIndex2;
@@ -782,18 +781,26 @@ public class TSP implements Environment, AgentFunctionEstimator {
             hiddenLayerIndexPre = AttentionLayerFactory.buildTransformer(neuralNetworkConfiguration, 4, inputSize, 1, 1, 1, 0, true, true);
         }
 
-        int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, policyGradient ? new ActivationFunction(ActivationFunctionType.RELU) : new ActivationFunction(ActivationFunctionType.RELU), "width = " + outputSize);
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex);
+        if (policyGradient) {
+            int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = " + outputSize);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex);
 
-        if (applyDueling) {
-            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
-            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
-            hiddenLayerIndex = hiddenLayerIndex1;
+            int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType.DIRECT_GRADIENT);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
         }
+        else {
+            int hiddenLayerIndex = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.LINEAR), "width = " + outputSize);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndexPre, hiddenLayerIndex);
 
-        int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(policyGradient ? LossFunctionType.DIRECT_GRADIENT : LossFunctionType.MEAN_SQUARED_ERROR);
+            if (applyDueling) {
+                int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.DUELING, "width = " + outputSize);
+                neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, hiddenLayerIndex1);
+                hiddenLayerIndex = hiddenLayerIndex1;
+            }
 
-        neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
+            int outputLayerIndex = neuralNetworkConfiguration.addOutputLayer(LossFunctionType. MEAN_SQUARED_ERROR);
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex, outputLayerIndex);
+        }
 
         NeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration);
 
@@ -824,10 +831,14 @@ public class TSP implements Environment, AgentFunctionEstimator {
 
         int hiddenLayerIndexPre;
         if (feedforwardNetwork) {
-            int inputLayerIndex = neuralNetworkConfiguration.addInputLayer("width = " + inputSize + ", height = 1, depth = 1");
-            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
-            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.RELU), "width = 100");
-            neuralNetworkConfiguration.connectLayersSerially();
+            int inputLayerIndex1 = neuralNetworkConfiguration.addInputLayer(0, "width = " + inputSize + ", height = 1, depth = 1");
+
+            int hiddenLayerIndex1 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.STANH), "width = 100");
+            neuralNetworkConfiguration.connectLayers(inputLayerIndex1, hiddenLayerIndex1);
+
+            int hiddenLayerIndex2 = neuralNetworkConfiguration.addHiddenLayer(LayerType.FEEDFORWARD, new ActivationFunction(ActivationFunctionType.STANH), "width = 100");
+            neuralNetworkConfiguration.connectLayers(hiddenLayerIndex1, hiddenLayerIndex2);
+
             hiddenLayerIndexPre = hiddenLayerIndex2;
         }
         else {
