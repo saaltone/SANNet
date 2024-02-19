@@ -16,7 +16,7 @@ import java.io.IOException;
  * Implements state value function (state value function with function estimator).<br>
  *
  */
-public class StateValueFunction extends ActionValueFunction {
+public class StateValueFunction extends AbstractActionValueFunction {
 
     /**
      * Constructor for state value function
