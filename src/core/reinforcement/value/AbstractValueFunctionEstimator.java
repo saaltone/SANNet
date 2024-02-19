@@ -176,8 +176,20 @@ public abstract class AbstractValueFunctionEstimator extends AbstractValueFuncti
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public void updateFunctionEstimator(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
+    public void prepareFunctionEstimatorUpdate(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        update(sampledStates);
         updateTargetValues(getFunctionEstimator(), sampledStates);
+    }
+
+    /**
+     * Finishes function estimator update.
+     *
+     * @param sampledStates sampled states.
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public void finishFunctionEstimatorUpdate(TreeSet<State> sampledStates) throws NeuralNetworkException, MatrixException, DynamicParamException {
         if (!isStateActionValueFunction()) getFunctionEstimator().update();
     }
 
