@@ -137,6 +137,7 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
     /**
      * Updates value function for state set sampled from memory.
      *
+     * @param sampledStates sampled states.
      * @throws MatrixException throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
@@ -145,10 +146,8 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
         if (sampledStates == null) return;
 
         for (State state : sampledStates.descendingSet()) {
-            state.value = getStateValue(state);
-            if (!state.isFinalState()) state.nextState.targetAction = getTargetAction(state.nextState);
             state.tdTarget = state.reward + (state.isFinalState() ? 0 : gamma * getTargetValue(state.nextState));
-            state.tdError = state.tdTarget - state.value;
+            state.tdError = state.tdTarget - getStateValue(state);
 
             averageReward = averageReward == Double.MIN_VALUE ? state.reward : averagingTau * averageReward + (1 - averagingTau) * state.reward;
             averageTDTarget = averageTDTarget == Double.MIN_VALUE ? state.tdTarget : averagingTau * averageTDTarget + (1 - averagingTau) * state.tdTarget;
@@ -179,19 +178,9 @@ public abstract class AbstractValueFunction implements ValueFunction, Configurab
      * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException        throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
     protected abstract double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException, DynamicParamException;
-
-    /**
-     * Returns target action based on next state.
-     *
-     * @param nextState next state.
-     * @return target action based on next state
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException        throws exception if matrix operation fails.
-     */
-    protected abstract int getTargetAction(State nextState) throws NeuralNetworkException, MatrixException;
 
     /**
      * Updates baseline value for states.
