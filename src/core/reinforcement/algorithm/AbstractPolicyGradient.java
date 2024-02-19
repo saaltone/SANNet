@@ -40,26 +40,28 @@ public abstract class AbstractPolicyGradient extends DeepAgent {
     /**
      * Updates policy and value functions of agent.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if update cycle is ongoing.
      */
     protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
         TreeSet<State> sampledStates = null;
-        if (valueFunction.readyToUpdate(this) && policy.readyToUpdate(this)) {
-            sampledStates = memory.sample();
-        }
+        if (valueFunction.readyToUpdate(this) && policy.readyToUpdate(this)) sampledStates = memory.sample();
+
         if (sampledStates != null && !sampledStates.isEmpty()) {
-            valueFunction.update(sampledStates);
-            valueFunction.updateFunctionEstimator(sampledStates);
-            policy.updateFunctionEstimator(sampledStates);
+            valueFunction.prepareFunctionEstimatorUpdate(sampledStates);
+
+            policy.prepareFunctionEstimator(sampledStates);
+
+            valueFunction.finishFunctionEstimatorUpdate(sampledStates);
+
+            policy.finishFunctionEstimator();
 
             if (memory.readyToUpdate(this)) {
                 memory.update();
                 memory.reset();
             }
-
         }
 
     }

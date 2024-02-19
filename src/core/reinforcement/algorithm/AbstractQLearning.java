@@ -40,25 +40,24 @@ public abstract class AbstractQLearning extends DeepAgent {
     /**
      * Updates value function of agent.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update cycle is ongoing.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if update cycle is ongoing.
      */
     protected void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException {
-        TreeSet<State> sampledStates = memory.sample();
+        TreeSet<State> sampledStates = null;
+        if (valueFunction.readyToUpdate(this)) sampledStates = memory.sample();
+
         if (sampledStates != null && !sampledStates.isEmpty()) {
-            if(valueFunction.readyToUpdate(this)) {
-                valueFunction.update(sampledStates);
-                valueFunction.updateFunctionEstimator(sampledStates);
-            }
+            valueFunction.prepareFunctionEstimatorUpdate(sampledStates);
+            valueFunction.finishFunctionEstimatorUpdate(sampledStates);
 
             if (memory.readyToUpdate(this)) {
                 memory.update();
                 memory.reset();
             }
         }
-
     }
 
     /**
