@@ -110,6 +110,12 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     private final TreeMap<State, TreeMap<Integer, Matrix>> stateValueMap = new TreeMap<>();
 
     /**
+     * If true function estimator can use importance sampling weights otherwise not.
+     *
+     */
+    private boolean canUseImportanceSamplingWeights;
+
+    /**
      * Constructor for neural network based function estimator.
      *
      * @param neuralNetwork              neural network reference.
@@ -164,6 +170,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         numberOfIterations = 1;
         targetFunctionUpdateCycle = 0;
         targetFunctionTau = 0.001;
+        canUseImportanceSamplingWeights = true;
     }
 
     /**
@@ -242,6 +249,15 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
     public void stop() {
         if (neuralNetwork.isStarted()) neuralNetwork.stop();
         if (targetNeuralNetwork != null) if (!targetNeuralNetwork.isStarted()) targetNeuralNetwork.stop();
+    }
+
+    /**
+     * Sets if function estimator can use importance sampling weights.
+     *
+     * @param canUseImportanceSamplingWeights if true can use importance sampling weights otherwise not.
+     */
+    public void setCanUseImportanceSamplingWeights(boolean canUseImportanceSamplingWeights) {
+        this.canUseImportanceSamplingWeights = canUseImportanceSamplingWeights;
     }
 
     /**
@@ -434,7 +450,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
             TreeMap<Integer, Matrix> currentOutputs = entry.getValue();
             for (Map.Entry<Integer, Matrix> outputEntry : currentOutputs.entrySet()) outputs.get(outputEntry.getKey()).put(index, outputEntry.getValue());
 
-            if (state.applyImportanceSamplingWeight) {
+            if (state.applyImportanceSamplingWeight && canUseImportanceSamplingWeights) {
                 importanceSamplingWeights.put(index, state.importanceSamplingWeight);
                 applyImportanceSamplingWeights = true;
             }
@@ -443,6 +459,7 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
         }
 
         if (applyImportanceSamplingWeights) neuralNetwork.setImportanceSamplingWeights(new TreeMap<>() {{ put(0, importanceSamplingWeights); }});
+
         neuralNetwork.train(new BasicSampler(new HashMap<>() {{ putAll(inputs); }}, new HashMap<>() {{ putAll(outputs); }}, "fullSet = true, randomOrder = false, numberOfIterations = " + numberOfIterations));
 
         if (getTargetNeuralNetwork() != null) appendTargetNeuralNetwork();
@@ -456,7 +473,9 @@ public class NNFunctionEstimator extends AbstractFunctionEstimator {
      * @throws MatrixException throws exception if matrix operation fails.
      */
     private void appendTargetNeuralNetwork() throws MatrixException {
-        if (targetFunctionUpdateCycle == 0) getTargetNeuralNetwork().append(neuralNetwork, targetFunctionTau);
+        if (targetFunctionUpdateCycle == 0) {
+            getTargetNeuralNetwork().append(neuralNetwork, targetFunctionTau);
+        }
         else {
             if (++targetFunctionUpdateCount >= targetFunctionUpdateCycle) {
                 getTargetNeuralNetwork().append(neuralNetwork, 1);
