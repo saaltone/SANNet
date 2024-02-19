@@ -73,11 +73,12 @@ public class OutputLayer extends AbstractPlainLayer {
      * @param layerIndex index of layer.
      * @param layerGroupIndex index of layer group.
      * @param lossFunction loss function for output layer.
+     * @param params parameters for output layer.
      * @throws NeuralNetworkException throws exception if setting of activation function fails.
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
-    public OutputLayer(int layerIndex, int layerGroupIndex, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
-        super(layerIndex, null);
+    public OutputLayer(int layerIndex, int layerGroupIndex, LossFunction lossFunction, String params) throws NeuralNetworkException, DynamicParamException {
+        super(layerIndex, params);
         this.lossFunction = lossFunction;
         this.layerGroupIndex = layerGroupIndex > -1 ? layerGroupIndex : 0;
     }
