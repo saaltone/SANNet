@@ -1153,6 +1153,14 @@ public interface Matrix {
     Matrix getMultinomial(int numberOfTrials) throws MatrixException;
 
     /**
+     * Samples entry from matrix by taking random choice.
+     *
+     * @throws MatrixException throws exception if matrix operation fails.
+     * @return array containing row, column and depth in this order that points to maximum value of matrix.
+     */
+    int[] sample() throws MatrixException;
+
+    /**
      * Sets stride size for convolution and pooling operations.
      *
      * @param stride stride size.
