@@ -12,6 +12,7 @@ import core.reinforcement.memory.Memory;
 import core.reinforcement.policy.Policy;
 import core.reinforcement.policy.executablepolicy.MCTSPolicy;
 import utils.configurable.DynamicParamException;
+import utils.matrix.DMatrix;
 import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
@@ -79,9 +80,11 @@ public class UpdateableMCTSPolicy extends AbstractUpdateablePolicy {
      * @return policy value.
      */
     protected Matrix getPolicyGradient(State state) throws MatrixException, NeuralNetworkException {
-        Matrix policyValues = state.policyValues.getNewMatrix();
-        policyValues.setValue(state.action, 0, 0, state.policyValue * Math.log(getValues(state).getValue(state.action, 0, 0) + 10E-8));
-        return policyValues;
+        Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        double policyValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
+        double policyGradientValue = policyValue * Math.log(policyValue + 10E-08) * state.tdError;
+        policyGradient.setValue(state.action, 0, 0, policyGradientValue);
+        return policyGradient;
     }
 
 }
