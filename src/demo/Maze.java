@@ -783,11 +783,12 @@ public class Maze implements AgentFunctionEstimator, Environment, ActionListener
             default -> true;
         };
         boolean applyDueling = switch (agentAlgorithmType) {
-            case DQN -> true;
+            case DQN -> false;
             default -> false;
         };
         String algorithmParams = switch (agentAlgorithmType) {
             case DDPG, SACDiscrete -> "applyUniformSampling = true";
+            case MCTS -> "gamma = 1";
             default -> "";
         };
 
