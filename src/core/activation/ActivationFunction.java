@@ -64,6 +64,7 @@ public class ActivationFunction extends UnaryFunction {
             case SOFTMAX -> UnaryFunctionType.SOFTMAX;
             case GAUSSIAN -> UnaryFunctionType.GAUSSIAN;
             case SINACT -> UnaryFunctionType.SINACT;
+            case MISH -> UnaryFunctionType.MISH;
             case LOGIT -> UnaryFunctionType.LOGIT;
             case CUSTOM -> UnaryFunctionType.CUSTOM;
         }, params);

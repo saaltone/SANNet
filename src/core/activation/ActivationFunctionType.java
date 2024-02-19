@@ -24,7 +24,7 @@ public enum ActivationFunctionType {
     SIGMOID,
 
     /**
-     * Swish
+     * Swish (Silu)
      *
      */
     SWISH,
@@ -40,6 +40,7 @@ public enum ActivationFunctionType {
      *
      */
     BIPOLARSIGMOID,
+
     /**
      * Scaled Hyperbolic tangent
      *
@@ -51,6 +52,7 @@ public enum ActivationFunctionType {
      *
      */
     TANH,
+
     /**
      * Hyperbolic tangent sigmoid
      *
@@ -140,6 +142,12 @@ public enum ActivationFunctionType {
      *
      */
     SINACT,
+
+    /**
+     * Mish.
+     *
+     */
+    MISH,
 
     /**
      * Logit
