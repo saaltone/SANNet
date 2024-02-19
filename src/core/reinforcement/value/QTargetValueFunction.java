@@ -5,16 +5,14 @@
 
 package core.reinforcement.value;
 
-import core.network.NeuralNetworkException;
 import core.reinforcement.function.FunctionEstimator;
-import core.reinforcement.agent.State;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
 
 /**
- * Implements target Q value function.<br>
+ * Implements target Q value function including option for dual estimator.<br>
  *
  */
 public class QTargetValueFunction extends QValueFunction {
@@ -26,7 +24,31 @@ public class QTargetValueFunction extends QValueFunction {
      * @param params parameters for target Q value function estimator.
      */
     public QTargetValueFunction(FunctionEstimator functionEstimator, String params) {
-        super(functionEstimator, params);
+        this(functionEstimator, false, params);
+    }
+
+    /**
+     * Constructor for target Q value function.
+     *
+     * @param functionEstimator  reference to value function estimator.
+     * @param dualFunctionEstimation if true soft Q value function estimator has dual function estimator.
+     * @param params             parameters for target Q value function estimator.
+     */
+    public QTargetValueFunction(FunctionEstimator functionEstimator, boolean dualFunctionEstimation, String params) {
+        this(functionEstimator, null, dualFunctionEstimation, true, params);
+    }
+
+    /**
+     * Constructor for target Q value function.
+     *
+     * @param functionEstimator  reference to value function estimator.
+     * @param functionEstimator2 reference to second value function estimator.
+     * @param dualFunctionEstimation if true soft Q value function estimator has dual function estimator.
+     * @param usesTargetValueFunctionEstimator if true uses target value function estimator.
+     * @param params             parameters for target Q value function estimator.
+     */
+    protected QTargetValueFunction(FunctionEstimator functionEstimator, FunctionEstimator functionEstimator2, boolean dualFunctionEstimation, boolean usesTargetValueFunctionEstimator, String params) {
+        super(functionEstimator, functionEstimator2, dualFunctionEstimation, usesTargetValueFunctionEstimator, params);
     }
 
     /**
@@ -40,20 +62,7 @@ public class QTargetValueFunction extends QValueFunction {
      * @throws MatrixException        throws exception if neural network has less output than actions.
      */
     public ValueFunction reference(boolean sharedValueFunctionEstimator) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException {
-        return new QTargetValueFunction(sharedValueFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(), getParams());
-    }
-
-    /**
-     * Returns target value based on next state. Uses target action with maximal value as defined by target FunctionEstimator.
-     *
-     * @param nextState next state.
-     * @return target value based on next state
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException        throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     */
-    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException, DynamicParamException {
-        return getFunctionEstimator().predictTargetStateActionValues(nextState).getValue(nextState.targetAction, 0, 0);
+        return new QTargetValueFunction(sharedValueFunctionEstimator ? getFunctionEstimator() : getFunctionEstimator().reference(), sharedValueFunctionEstimator ? getFunctionEstimator2() : null, dualFunctionEstimation, isUsingTargetValueFunctionEstimator(), getParams());
     }
 
 }
