@@ -271,20 +271,6 @@ public class NeuralNetworkConfiguration {
     /**
      * Adds output layer to neural network.
      *
-     * @param outputLayerGroupID output layer group ID.
-     * @param lossFunctionType loss function type for output layer.
-     * @return neural network layer index.
-     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
-     */
-    public int addOutputLayer(int outputLayerGroupID, LossFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        return addOutputLayer(outputLayerGroupID, lossFunctionType, null);
-    }
-
-    /**
-     * Adds output layer to neural network.
-     *
      * @param lossFunctionType loss function type for output layer.
      * @param params parameters for loss function.
      * @return neural network layer index.
@@ -301,6 +287,20 @@ public class NeuralNetworkConfiguration {
      *
      * @param outputLayerGroupID output layer group ID.
      * @param lossFunctionType loss function type for output layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
+     */
+    public int addOutputLayer(int outputLayerGroupID, LossFunctionType lossFunctionType) throws NeuralNetworkException, DynamicParamException, MatrixException {
+        return addOutputLayer(outputLayerGroupID, lossFunctionType, null);
+    }
+
+    /**
+     * Adds output layer to neural network.
+     *
+     * @param outputLayerGroupID output layer group ID.
+     * @param lossFunctionType loss function type for output layer.
      * @param params parameters for loss function.
      * @return neural network layer index.
      * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
@@ -308,7 +308,7 @@ public class NeuralNetworkConfiguration {
      * @throws MatrixException throws exception if custom function is attempted to be created with this constructor.
      */
     public int addOutputLayer(int outputLayerGroupID, LossFunctionType lossFunctionType, String params) throws NeuralNetworkException, DynamicParamException, MatrixException {
-        return addOutputLayer(outputLayerGroupID, new LossFunction(lossFunctionType, params));
+        return addOutputLayer(outputLayerGroupID, new LossFunction(lossFunctionType, params), params);
     }
 
     /**
@@ -320,7 +320,20 @@ public class NeuralNetworkConfiguration {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public int addOutputLayer(LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
-        return addOutputLayer(-1, lossFunction);
+        return addOutputLayer(lossFunction, null);
+    }
+
+    /**
+     * Adds output layer to neural network.
+     *
+     * @param lossFunction loss function for output layer.
+     * @param params parameters for layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public int addOutputLayer(LossFunction lossFunction, String params) throws NeuralNetworkException, DynamicParamException {
+        return addOutputLayer(-1, lossFunction, params);
     }
 
     /**
@@ -333,10 +346,24 @@ public class NeuralNetworkConfiguration {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     public int addOutputLayer(int outputLayerGroupID, LossFunction lossFunction) throws NeuralNetworkException, DynamicParamException {
+        return addOutputLayer(outputLayerGroupID, lossFunction, null);
+    }
+
+    /**
+     * Adds output layer to neural network.
+     *
+     * @param outputLayerGroupID output layer group ID.
+     * @param lossFunction loss function for output layer.
+     * @param params parameters for layer.
+     * @return neural network layer index.
+     * @throws NeuralNetworkException throws neural network exception if adding of output layer fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     */
+    public int addOutputLayer(int outputLayerGroupID, LossFunction lossFunction, String params) throws NeuralNetworkException, DynamicParamException {
         int currentOutputLayerGroupId = outputLayerGroupID > -1 ? outputLayerGroupID : 0;
         int neuralNetworkLayerIndex = getNextNeuralNetworkLayerIndex();
 
-        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndex, currentOutputLayerGroupId, lossFunction);
+        OutputLayer outputLayer = new OutputLayer(neuralNetworkLayerIndex, currentOutputLayerGroupId, lossFunction, params);
 
         int outputLayerID = outputLayers.size();
         outputLayers.put(outputLayerID, outputLayer);
