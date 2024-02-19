@@ -107,7 +107,7 @@ public class BinaryFunctionExpression extends AbstractBinaryExpression {
      * @throws MatrixException throws exception if calculation fails.
      */
     protected Matrix calculateArgument1Gradient(int sampleIndex, Matrix resultGradient, Matrix argument1Matrix, Matrix argument2Matrix, Matrix resultMatrix) throws MatrixException {
-        return binaryMatrixOperation.applyGradient(resultMatrix, argument2Matrix, resultGradient);
+        return binaryMatrixOperation.applyGradient(argument1Matrix, argument2Matrix, resultGradient);
     }
 
     /**
