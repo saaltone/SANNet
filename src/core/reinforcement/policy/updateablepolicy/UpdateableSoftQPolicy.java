@@ -68,12 +68,6 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     private Matrix softQAlphaLogMatrix;
 
     /**
-     * Alpha parameter gradient for entropy in matrix form.
-     *
-     */
-    private final Matrix softQAlphaGradientMatrix = new DMatrix(0);
-
-    /**
      * Cumulative entropy value.
      *
      */
@@ -110,12 +104,6 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     private SoftQValueFunction softQValueFunction;
 
     /**
-     * Log function.
-     *
-     */
-    private final UnaryFunction logFunction = new UnaryFunction(UnaryFunctionType.LOG);
-
-    /**
      * Target entropy.
      *
      */
@@ -133,7 +121,7 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     public UpdateableSoftQPolicy(ExecutablePolicyType executablePolicyType, FunctionEstimator functionEstimator, Memory memory, String params) throws DynamicParamException, MatrixException {
         super(executablePolicyType, functionEstimator, memory, params);
-        targetEntropy = 0.98 * (-Math.log(1 / (double)functionEstimator.getNumberOfActions()));
+        targetEntropy = -0.98 * (Math.log (1 / (double)functionEstimator.getNumberOfActions()));
     }
 
     /**
@@ -143,9 +131,6 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     public void setSoftQValueFunction(SoftQValueFunction softQValueFunction) {
         this.softQValueFunction = softQValueFunction;
-        this.softQAlphaMatrix = softQValueFunction.getSoftQAlphaMatrix();
-        this.softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
-        this.softQAlphaLogMatrix = new DMatrix(softQAlphaLog);
     }
 
     /**
@@ -163,8 +148,12 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     public void initializeDefaultParams() {
         autoSoftAlpha = true;
-        softQAlpha = 1;
+        softQAlpha = 0.9;
+        softQAlphaMatrix = new DMatrix(0);
+        softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
         softQAlphaLog = Math.log(softQAlpha);
+        softQAlphaLogMatrix = new DMatrix(0);
+        softQAlphaLogMatrix.setValue(0, 0, 0, softQAlphaLog);
         softQAlphaVerboseInterval = 25;
         cumulativeAlphaLoss = 0;
         cumulativeAlphaLossCount = 0;
@@ -192,7 +181,12 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      */
     public void setParams(DynamicParam params) throws DynamicParamException {
         super.setParams(params);
-        if (params.hasParam("softQAlpha")) softQAlpha = softQAlphaLog = Math.log(params.getValueAsDouble("softQAlpha"));
+        if (params.hasParam("softQAlpha")) {
+            softQAlpha = Math.log(params.getValueAsDouble("softQAlpha"));
+            softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
+            softQAlphaLog = Math.log(softQAlpha);
+            softQAlphaLogMatrix.setValue(0, 0, 0, softQAlphaLog);
+        }
         if (params.hasParam("autoSoftAlpha")) autoSoftAlpha = params.getValueAsBoolean("autoSoftAlpha");
         if (params.hasParam("softQAlphaVerboseInterval")) softQAlphaVerboseInterval = params.getValueAsInteger("softQAlphaVerboseInterval");
     }
@@ -235,6 +229,15 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
+     * Returns Soft Q Alpha Matrix.
+     *
+     * @return Soft Q Alpha Matrix.
+     */
+    public Matrix getSoftQAlphaMatrix() {
+        return softQAlphaMatrix;
+    }
+
+    /**
      * Returns policy gradient value for update.
      *
      * @param state state.
@@ -244,22 +247,29 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
     protected Matrix getPolicyGradient(State state) throws MatrixException, NeuralNetworkException, DynamicParamException {
-        if (isAutoSoftAlpha()) cumulateAlphaLoss(state);
-        return state.policyValues.multiply(getSoftQValueFunction().getTargetValues(state, true).subtract(softQAlphaMatrix.multiply(state.policyValues.apply(logFunction))));
+        double policyValue = getFunctionEstimator().predictPolicyValues(state).getValue(state.action, 0, 0);
+
+        if (isAutoSoftAlpha()) cumulateAlphaLoss(policyValue);
+
+        double qValue = getSoftQValueFunction().getTargetValues(state, false).getValue(state.action, 0, 0);
+
+        Matrix policyGradient = new DMatrix(getFunctionEstimator().getNumberOfActions(), 1, 1);
+        double policyGradientValue = policyValue * (qValue - softQAlpha * Math.log(policyValue));
+        policyGradient.setValue(state.action, 0, 0, policyGradientValue);
+        return policyGradient;
     }
 
     /**
      * Cumulates entropy.
      *
-     * @param state state.
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @param policyValue policy value.
      */
-    private void cumulateAlphaLoss(State state) throws MatrixException {
+    private void cumulateAlphaLoss(double policyValue) {
         // https://raw.githubusercontent.com/BY571/Deep-Reinforcement-Learning-Algorithm-Collection/master/ContinousControl/SAC.ipynb
         // self.target_entropy = -action_size  # -dim(A)
         // alpha_loss = - (self.log_alpha * (log_pis + self.target_entropy).detach()).mean()
 
-        cumulativeAlphaLoss += -softQAlpha * (state.policyValues.apply(logFunction).add(targetEntropy)).mean();
+        cumulativeAlphaLoss += -policyValue * softQAlphaLog * (Math.log(policyValue) + targetEntropy);
         cumulativeAlphaLossCount++;
     }
 
@@ -270,11 +280,12 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
      * @throws DynamicParamException throws exception if parameter (params) setting fails.
      */
     private void updateAlpha() throws MatrixException, DynamicParamException {
-        softQAlphaGradientMatrix.setValue(0, 0, 0, cumulativeAlphaLoss / cumulativeAlphaLossCount);
-        optimizer.optimize(softQAlphaLogMatrix, softQAlphaGradientMatrix);
+        optimizer.optimize(softQAlphaLogMatrix, new DMatrix(cumulativeAlphaLoss / cumulativeAlphaLossCount));
+
         softQAlphaLog = softQAlphaLogMatrix.getValue(0,0, 0);
+
         softQAlpha = Math.exp(softQAlphaLog);
-        softQAlphaMatrix.setValue(0,0, 0, softQAlpha);
+        softQAlphaMatrix.setValue(0, 0, 0, softQAlpha);
 
         cumulativeAlphaLoss = 0;
         cumulativeAlphaLossCount = 0;
@@ -286,12 +297,14 @@ public class UpdateableSoftQPolicy extends AbstractUpdateablePolicy {
     }
 
     /**
-     * Postprocesses policy gradient update.
+     * Finishes function estimator update.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws NeuralNetworkException throws exception if starting of value function estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    protected void postProcess() throws MatrixException, DynamicParamException {
+    public void finishFunctionEstimator() throws NeuralNetworkException, MatrixException, DynamicParamException {
+        super.finishFunctionEstimator();
         if (isAutoSoftAlpha()) updateAlpha();
     }
 
