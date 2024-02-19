@@ -15,6 +15,7 @@ import utils.matrix.MatrixException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Random;
 
 /**
  * Implements abstract function estimator containing memory management operations and agent handling.<br>
@@ -60,6 +61,12 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      *
      */
     protected final int numberOfActions;
+
+    /**
+     * Random function for abstract function estimator policy.
+     *
+     */
+    private final Random random = new Random();
 
     /**
      * Constructor for abstract function estimator.
@@ -120,6 +127,14 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
     }
 
     /**
+     * Sets if function estimator can use importance sampling weights.
+     *
+     * @param canUseImportanceSamplingWeights if true can use importance sampling weights otherwise not.
+     */
+    public void setCanUseImportanceSamplingWeights(boolean canUseImportanceSamplingWeights) {
+    }
+
+    /**
      * Registers agent for abstract function estimator.
      *
      * @param agent agent.
@@ -173,9 +188,10 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
      * @throws MatrixException throws exception if matrix operation fails.
      */
     public int argmax(Matrix stateValues, HashSet<Integer> availableActions) throws MatrixException {
+        if (availableActions == null) return stateValues.argmax()[0];
+
         int maxAction = -1;
         double maxValue = Double.NEGATIVE_INFINITY;
-        if (availableActions == null) return stateValues.argmax()[0];
         for (int action : availableActions) {
             double actionValue = stateValues.getValue(action, 0, 0);
             if (maxValue == Double.NEGATIVE_INFINITY || maxValue < actionValue) {
@@ -184,6 +200,31 @@ public abstract class AbstractFunctionEstimator implements Configurable, Functio
             }
         }
         return maxAction;
+    }
+
+    /**
+     * Samples action weighted random choice.
+     *
+     * @param stateValues state values.
+     * @param availableActions actions available in state.
+     * @return sampled action.
+     * @throws MatrixException        throws exception if matrix operation fails.
+     */
+    public int sample(Matrix stateValues, HashSet<Integer> availableActions) throws MatrixException {
+        if (availableActions == null) return stateValues.sample()[0];
+
+        double valueSum = 0;
+        for (Integer action : availableActions) valueSum += stateValues.getValue(action, 0, 0);
+
+        double threshold = valueSum * random.nextDouble();
+
+        valueSum = 0;
+        for (Integer action : availableActions) {
+            valueSum += stateValues.getValue(action, 0, 0);
+            if (valueSum >= threshold) return action;
+        }
+
+        return -1;
     }
 
 }
