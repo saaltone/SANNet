@@ -5,7 +5,6 @@ import core.reinforcement.agent.State;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.policy.updateablepolicy.UpdateableQPolicy;
 import utils.configurable.DynamicParamException;
-import utils.matrix.Matrix;
 import utils.matrix.MatrixException;
 
 import java.io.IOException;
@@ -14,7 +13,7 @@ import java.io.IOException;
  * Implements Q policy value function (Q policy value function with function estimator).<br>
  *
  */
-public class QPolicyValueFunction extends AbstractActionValueFunction {
+public class QPolicyValueFunction extends QValueFunction {
 
     /**
      * Reference to policy.
@@ -29,7 +28,7 @@ public class QPolicyValueFunction extends AbstractActionValueFunction {
      * @param params            parameters for value function.
      */
     public QPolicyValueFunction(FunctionEstimator functionEstimator, String params) {
-        super(functionEstimator, params);
+        super(functionEstimator, null, false, true, params);
     }
 
     /**
@@ -71,22 +70,12 @@ public class QPolicyValueFunction extends AbstractActionValueFunction {
      * @return target value based on next state
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException        throws exception if matrix operation fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
      */
-    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException {
-        return getUpdateableQPolicy().getFunctionEstimator().predictTargetPolicyValues(nextState).multiply(getTargetValues(nextState, false)).getValue(nextState.targetAction, 0, 0);
-    }
-
-    /**
-     * Returns target values based on next state.
-     *
-     * @param state state.
-     * @param useDefaultEstimator if true uses default estimator otherwise uses target estimator.
-     * @return target value based on next state
-     * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws MatrixException        throws exception if matrix operation fails.
-     */
-    public Matrix getTargetValues(State state, boolean useDefaultEstimator) throws NeuralNetworkException, MatrixException {
-        return useDefaultEstimator ? getFunctionEstimator().predictStateActionValues(state) : getFunctionEstimator().predictTargetStateActionValues(state);
+    public double getTargetValue(State nextState) throws NeuralNetworkException, MatrixException, DynamicParamException {
+        int targetAction = getTargetAction(nextState);
+        double policyValue = getUpdateableQPolicy().getFunctionEstimator().predictTargetPolicyValues(nextState).getValue(targetAction, 0, 0);
+        return policyValue * getTargetValues(nextState, isUsingTargetValueFunctionEstimator()).getValue(targetAction, 0, 0);
     }
 
     /**
@@ -97,8 +86,8 @@ public class QPolicyValueFunction extends AbstractActionValueFunction {
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException        throws exception if matrix operation fails.
      */
-    protected int getTargetAction(State nextState) throws NeuralNetworkException, MatrixException {
-        return getUpdateableQPolicy().getFunctionEstimator().argmax(getUpdateableQPolicy().getFunctionEstimator().predictTargetPolicyValues(nextState), nextState.environmentState.availableActions());
+    private int getTargetAction(State nextState) throws NeuralNetworkException, MatrixException {
+        return getUpdateableQPolicy().getFunctionEstimator().sample(getUpdateableQPolicy().getFunctionEstimator().predictTargetPolicyValues(nextState), nextState.environmentState.availableActions());
     }
 
 }
