@@ -259,17 +259,10 @@ public class PriorityMemory extends AbstractMemory implements Serializable {
      * Updates states in prioritized replay memory with new error values.
      */
     public void update() {
-        for (State state : sampledStates) update(state);
-    }
-
-    /**
-     * Updates state in search tree with new error value.
-     *
-     * @param state state to be updated.
-     */
-    private void update(State state) {
-        updateStatePriority(state);
-        searchTree.update(state);
+        for (State state : sampledStates) {
+            updateStatePriority(state);
+            searchTree.update(state);
+        }
     }
 
     /**
