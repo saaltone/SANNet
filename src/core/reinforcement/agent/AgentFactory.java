@@ -7,6 +7,7 @@ package core.reinforcement.agent;
 
 import core.network.NeuralNetworkException;
 import core.reinforcement.algorithm.*;
+import core.reinforcement.function.DirectFunctionEstimator;
 import core.reinforcement.function.FunctionEstimator;
 import core.reinforcement.function.NNFunctionEstimator;
 import core.reinforcement.function.TabularFunctionEstimator;
@@ -14,10 +15,9 @@ import core.reinforcement.memory.Memory;
 import core.reinforcement.memory.OnlineMemory;
 import core.reinforcement.memory.PriorityMemory;
 import core.reinforcement.policy.executablepolicy.ExecutablePolicyType;
-import core.reinforcement.policy.updateablepolicy.UpdateableQPolicy;
-import core.reinforcement.policy.updateablepolicy.UpdateableSoftQPolicy;
-import core.reinforcement.value.QPolicyValueFunction;
-import core.reinforcement.value.SoftQValueFunction;
+import core.reinforcement.policy.executablepolicy.MCTSPolicy;
+import core.reinforcement.policy.updateablepolicy.*;
+import core.reinforcement.value.*;
 import utils.configurable.DynamicParamException;
 import utils.matrix.MatrixException;
 
@@ -123,7 +123,7 @@ public class AgentFactory {
      * @throws ClassNotFoundException throws exception if cloning of neural network fails.
      */
     public static Agent createAgent(AgentFunctionEstimator agentFunctionEstimator, AgentAlgorithmType agentAlgorithmType, Environment environment, int inputSize, int outputSize, boolean onlineMemory, boolean singleFunctionEstimator, boolean applyDueling, ExecutablePolicyType executablePolicyType, String params) throws DynamicParamException, MatrixException, IOException, ClassNotFoundException, NeuralNetworkException {
-        Memory estimatorMemory = onlineMemory ? new OnlineMemory() : new PriorityMemory();
+        Memory memory = onlineMemory ? new OnlineMemory() : new PriorityMemory();
 
         FunctionEstimator policyFunctionEstimator;
         FunctionEstimator valueFunctionEstimator;
@@ -161,15 +161,15 @@ public class AgentFactory {
         }
 
         return switch (agentAlgorithmType) {
-            case QN, DQN -> new DQNLearning(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
-            case DDQN -> new DDQNLearning(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
-            case Sarsa -> new Sarsa(new StateSynchronization(), environment, executablePolicyType, valueFunctionEstimator, estimatorMemory, params);
-            case ActorCritic -> new ActorCritic(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, valueFunctionEstimator, estimatorMemory, params);
-            case PPO -> new PPO(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, valueFunctionEstimator, estimatorMemory, params);
-            case DDPG -> new DDPG(new StateSynchronization(), environment, new UpdateableQPolicy(executablePolicyType, policyFunctionEstimator, estimatorMemory, params), new QPolicyValueFunction(valueFunctionEstimator, params), estimatorMemory, params);
-            case SACDiscrete -> new SoftActorCriticDiscrete(new StateSynchronization(), environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, estimatorMemory, params), new SoftQValueFunction(valueFunctionEstimator, params), estimatorMemory, params);
-            case REINFORCE -> new REINFORCE(new StateSynchronization(), environment, executablePolicyType, policyFunctionEstimator, estimatorMemory, params);
-            case MCTS -> new MCTSLearning(new StateSynchronization(), environment, policyFunctionEstimator, estimatorMemory, params);
+            case QN, DQN -> new DQNLearning(new StateSynchronization(), environment, executablePolicyType, new QValueFunction(valueFunctionEstimator, params), memory, params);
+            case DDQN -> new DDQNLearning(new StateSynchronization(), environment, executablePolicyType, new QTargetValueFunction(valueFunctionEstimator, params), memory, params);
+            case Sarsa -> new Sarsa(new StateSynchronization(), environment, executablePolicyType, new ActionValueFunction(valueFunctionEstimator, params), memory, params);
+            case ActorCritic -> new ActorCritic(new StateSynchronization(), environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new StateValueFunction(valueFunctionEstimator, params), memory, params);
+            case PPO -> new PPO(new StateSynchronization(), environment, new UpdateableProximalPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new StateValueFunction(valueFunctionEstimator, params), memory, params);
+            case DDPG -> new DDPG(new StateSynchronization(), environment, new UpdateableQPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new QPolicyValueFunction(valueFunctionEstimator, params), memory, params);
+            case SACDiscrete -> new SoftActorCriticDiscrete(new StateSynchronization(), environment, new UpdateableSoftQPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new SoftQValueFunction(valueFunctionEstimator, params), memory, params);
+            case REINFORCE -> new REINFORCE(new StateSynchronization(), environment, new UpdateableBasicPolicy(executablePolicyType, policyFunctionEstimator, memory, params), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator, params), params), memory, params);
+            case MCTS -> new MCTSLearning(new StateSynchronization(), environment, new UpdateableMCTSPolicy(policyFunctionEstimator, new MCTSPolicy(), memory, params), new PlainValueFunction(new DirectFunctionEstimator(policyFunctionEstimator, params), params), memory, params);
         };
     }
 
