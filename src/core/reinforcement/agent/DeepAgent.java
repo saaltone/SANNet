@@ -286,6 +286,46 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     }
 
     /**
+     * Returns memory.
+     *
+     * @param sharedMemory if true shared memory is used between estimators.
+     * @return memory.
+     */
+    protected Memory getMemory(boolean sharedMemory) {
+        return sharedMemory ? memory : memory.reference();
+    }
+
+    /**
+     * Returns value function.
+     *
+     * @param sharedValueFunctionEstimator if true shared value function estimator is used otherwise new value function estimator is created.
+     * @return value function.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    protected ValueFunction getValueFunction(boolean sharedValueFunctionEstimator) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
+        return valueFunction.reference(sharedValueFunctionEstimator);
+    }
+
+    /**
+     * Returns policy.
+     *
+     * @param sharedPolicyFunctionEstimator if true shared policy function estimator is used otherwise new policy function estimator is created.
+     * @param valueFunction value function.
+     * @param newMemory new memory.
+     * @return policy.
+     * @throws IOException throws exception if creation of target value function estimator fails.
+     * @throws ClassNotFoundException throws exception if creation of target value function estimator fails.
+     * @throws DynamicParamException throws exception if parameter (params) setting fails.
+     * @throws MatrixException throws exception if neural network has less output than actions.
+     */
+    protected Policy getPolicy(boolean sharedPolicyFunctionEstimator, ValueFunction valueFunction, Memory newMemory) throws MatrixException, IOException, DynamicParamException, ClassNotFoundException {
+        return valueFunction.getFunctionEstimator().isStateActionValueFunction() ? policy.reference(valueFunction.getFunctionEstimator(), memory) : policy.reference(sharedPolicyFunctionEstimator, newMemory);
+    }
+
+    /**
      * Starts deep agent.
      *
      * @throws NeuralNetworkException throws exception if start of neural network estimator(s) fails.
@@ -394,8 +434,9 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      *
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if policy fails to choose valid action.
      */
-    public void act() throws NeuralNetworkException, MatrixException {
+    public void act() throws NeuralNetworkException, MatrixException, AgentException {
         policy.act(state);
         environment.commitAction(this, state.action);
     }
@@ -406,8 +447,10 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
      * @param action action.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
      * @throws MatrixException throws exception if matrix operation fails.
+     * @throws AgentException throws exception if defined action is not available in current environment state.
      */
-    public void act(int action) throws NeuralNetworkException, MatrixException {
+    public void act(int action) throws NeuralNetworkException, MatrixException, AgentException {
+        if (!state.environmentState.availableActions().contains(action)) throw new AgentException("Define action: " + action + " is not available is current environment state.");
         state.action = action;
         policy.act(state, action);
         environment.commitAction(this, state.action);
@@ -470,10 +513,10 @@ public abstract class DeepAgent implements Agent, Configurable, Serializable {
     /**
      * Updates policy and value functions of agent.
      *
-     * @throws MatrixException throws exception if matrix operation fails.
+     * @throws MatrixException        throws exception if matrix operation fails.
      * @throws NeuralNetworkException throws exception if neural network operation fails.
-     * @throws DynamicParamException throws exception if parameter (params) setting fails.
-     * @throws AgentException throws exception if update of estimator fails.
+     * @throws DynamicParamException  throws exception if parameter (params) setting fails.
+     * @throws AgentException         throws exception if update of estimator fails.
      */
     protected abstract void updateFunctionEstimator() throws MatrixException, NeuralNetworkException, DynamicParamException, AgentException;
 
