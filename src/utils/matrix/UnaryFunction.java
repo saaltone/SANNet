@@ -52,6 +52,12 @@ public class UnaryFunction implements Serializable {
     private double RELUAlpha = 0;
 
     /**
+     * Stores maximum value for ReLU function.
+     *
+     */
+    private double RELUMaxValue = Double.MAX_VALUE;
+
+    /**
      * Stores threshold value for ELU function.
      *
      */
@@ -130,6 +136,7 @@ public class UnaryFunction implements Serializable {
      * Supported parameters are:<br>
      *     - threshold: default value for RELU 0, for ELU 0, for SELU 0.<br>
      *     - alpha: default value for RELU 0, for ELU 1, for SELU 1.6732.<br>
+     *     - maxValue: default value for RELU Double.MAX (not applied).<br>
      *     - lambda: default value for SELU 1.0507.<br>
      *     - tau: default value for (Gumbel) Softmax 1.<br>
      *
@@ -247,12 +254,20 @@ public class UnaryFunction implements Serializable {
             }
             case RELU -> {
                 if (params != null) {
-                    DynamicParam dynamicParam = new DynamicParam(params, "(threshold:DOUBLE), (alpha:DOUBLE)");
+                    DynamicParam dynamicParam = new DynamicParam(params, "(threshold:DOUBLE), (alpha:DOUBLE), (maxValue:DOUBLE)");
                     if (dynamicParam.hasParam("threshold")) RELUThreshold = dynamicParam.getValueAsDouble("threshold");
                     if (dynamicParam.hasParam("alpha")) RELUAlpha = dynamicParam.getValueAsDouble("alpha");
+                    if (dynamicParam.hasParam("maxValue")) RELUMaxValue = dynamicParam.getValueAsDouble("maxValue");
+                    if (RELUMaxValue != Double.MAX_VALUE && RELUMaxValue <= RELUThreshold) throw new DynamicParamException("RELU max value cannot be less or equal to threshold value.");
                 }
-                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
-                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
+                if (RELUMaxValue == Double.MAX_VALUE) {
+                    function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : value;
+                    derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : 1;
+                }
+                else {
+                    function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha * value : Math.min(value, RELUMaxValue);
+                    derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < RELUThreshold ? RELUAlpha : value < RELUMaxValue ? 1 : 0;
+                }
             }
             case RELU_COS -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.max(0, value) + Math.cos(value);
@@ -301,6 +316,10 @@ public class UnaryFunction implements Serializable {
             case SINACT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? -1 : value > 0.5 * Math.PI ? 1 : Math.sin(value);
                 derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value < -0.5 * Math.PI ? 0 : value > 0.5 * Math.PI ? 0 : Math.cos(value);
+            }
+            case MISH -> {
+                function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> value * Math.tanh(Math.log(Math.exp(value) + 1));
+                derivative = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.tanh(Math.log(Math.exp(value) + 1)) + (value * Math.exp(value)) / (Math.pow(Math.cosh(Math.log(Math.exp(value) + 1)), 2) * (Math.exp(value) + 1));
             }
             case LOGIT -> {
                 function = (Matrix.MatrixUnaryOperation & Serializable) (value) -> Math.log(value / (1 - value));
